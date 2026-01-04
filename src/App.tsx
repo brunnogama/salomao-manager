@@ -1,22 +1,20 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Login from './Login'
+import { Sidebar } from './components/Sidebar'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [activePage, setActivePage] = useState('dashboard') // Controla qual página aparece
 
   useEffect(() => {
-    // 1. Verificar sessão atual ao carregar
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
     })
 
-    // 2. Escutar mudanças (Login ou Logout)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
     })
 
@@ -31,24 +29,55 @@ export default function App() {
     )
   }
 
-  // SE NÃO TIVER SESSÃO, MOSTRA LOGIN
+  // Se NÃO estiver logado, mostra Login
   if (!session) {
     return <Login />
   }
 
-  // SE TIVER SESSÃO, MOSTRA O DASHBOARD (Futuro Passo)
+  // Se ESTIVER logado, mostra o Layout do Sistema
   return (
-    <div className="flex h-screen items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-[#112240]">Bem-vindo ao Portal</h1>
-        <p className="mb-4">Você está logado!</p>
-        <button 
-          onClick={() => supabase.auth.signOut()}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Sair
-        </button>
-      </div>
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
+      
+      {/* Sidebar Fixa */}
+      <Sidebar activePage={activePage} onNavigate={setActivePage} />
+
+      {/* Área Principal de Conteúdo */}
+      <main className="flex-1 overflow-auto">
+        
+        {/* Header Superior (Título da Página) */}
+        <header className="bg-white shadow-sm h-16 flex items-center px-8 justify-between">
+            <h1 className="text-xl font-bold text-[#112240] capitalize">
+                {activePage}
+            </h1>
+            <div className="text-sm text-gray-500">
+                Salomão Advogados
+            </div>
+        </header>
+
+        {/* Conteúdo Variável */}
+        <div className="p-8">
+            {activePage === 'dashboard' && (
+                <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
+                    <h2 className="text-lg font-semibold mb-2">Resumo da Semana</h2>
+                    <p className="text-gray-600">O conteúdo dos gráficos entrará aqui.</p>
+                </div>
+            )}
+
+            {activePage === 'clientes' && (
+                <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
+                    <h2 className="text-lg font-semibold mb-2">Gestão de Clientes</h2>
+                    <p className="text-gray-600">Lista de clientes entrará aqui.</p>
+                </div>
+            )}
+            
+            {activePage === 'kanban' && (
+                <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
+                    <h2 className="text-lg font-semibold mb-2">Kanban de Processos</h2>
+                    <p className="text-gray-600">Quadro visual entrará aqui.</p>
+                </div>
+            )}
+        </div>
+      </main>
     </div>
   )
 }
