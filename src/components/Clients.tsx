@@ -20,7 +20,7 @@ export function Clients() {
   const [socioFilter, setSocioFilter] = useState('')
   const [brindeFilter, setBrindeFilter] = useState('')
   
-  // Ordenação: 'nome' | 'socio' | null
+  // Ordenação
   const [sortBy, setSortBy] = useState<'nome' | 'socio' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
@@ -92,7 +92,6 @@ export function Clients() {
     return result
   }, [clients, socioFilter, brindeFilter, sortBy, sortDirection])
 
-  // Função auxiliar para alternar a ordenação
   const toggleSort = (field: 'nome' | 'socio') => {
     if (sortBy === field) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
@@ -151,6 +150,12 @@ export function Clients() {
         alert(`Erro ao excluir: ${error.message}`)
       }
     }
+  }
+
+  // DEFINIÇÃO DA FUNÇÃO QUE ESTAVA FALTANDO
+  const handleEdit = (client: Client) => {
+    setClientToEdit(client)
+    setIsModalOpen(true)
   }
 
   const closeModal = () => { setIsModalOpen(false); setClientToEdit(null); }
@@ -223,7 +228,7 @@ export function Clients() {
              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400"><ChevronDown className="h-4 w-4" /></div>
            </div>
 
-           {/* NOVOS BOTÕES DE ORDENAÇÃO */}
+           {/* BOTÕES DE ORDENAÇÃO */}
            <div className="flex bg-white border border-gray-200 rounded-lg p-1 gap-1">
               <button 
                 onClick={() => toggleSort('nome')}
