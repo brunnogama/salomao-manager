@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
+import { supabase } from '../lib/supabase' // Importamos o supabase para buscar a lista
 
 // Interface dos dados do cliente
 export interface ClientData {
@@ -52,16 +53,44 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
   const [formData, setFormData] = useState<ClientData>(initialData)
   const [loadingCep, setLoadingCep] = useState(false)
   const [isNewSocio, setIsNewSocio] = useState(false)
+  
+  // Lista dinâmica de sócios (Começa com os padrões, mas cresce com o banco de dados)
+  const [availableSocios, setAvailableSocios] = useState<string[]>(['Marcio Gama', 'Rodrigo Salomão'])
 
-  // REMOVIDO "Outro Sócio" DA LISTA
-  const socios = ['Marcio Gama', 'Rodrigo Salomão']
+  // Função para buscar sócios existentes no banco
+  const fetchExistingSocios = async () => {
+    try {
+      const { data } = await supabase
+        .from('clientes')
+        .select('socio')
+      
+      if (data) {
+        // Pega todos os sócios do banco, remove vazios/nulos
+        const dbSocios = data.map(c => c.socio).filter(Boolean)
+        
+        // Junta com os padrões e remove duplicatas usando Set
+        const uniqueSocios = Array.from(new Set(['Marcio Gama', 'Rodrigo Salomão', ...dbSocios]))
+        
+        // Ordena alfabeticamente
+        setAvailableSocios(uniqueSocios.sort())
+      }
+    } catch (error) {
+      console.error("Erro ao carregar sócios:", error)
+    }
+  }
 
   useEffect(() => {
     if (isOpen) {
+      // 1. Carrega a lista atualizada de sócios do banco
+      fetchExistingSocios()
+
+      // 2. Preenche o formulário (Edição ou Novo)
       if (clientToEdit) {
         setFormData(clientToEdit)
+        setIsNewSocio(false)
       } else {
         setFormData(initialData)
+        setIsNewSocio(false)
       }
     }
   }, [isOpen, clientToEdit])
@@ -169,17 +198,23 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#112240] focus:ring-1 focus:ring-[#112240] outline-none bg-white"
                   value={formData.socio}
                   onChange={(e) => {
-                    if(e.target.value === 'new') setIsNewSocio(true)
-                    else setFormData({...formData, socio: e.target.value})
+                    if(e.target.value === 'new') {
+                      setIsNewSocio(true)
+                      setFormData({...formData, socio: ''}) // Limpa para obrigar a digitar
+                    } else {
+                      setFormData({...formData, socio: e.target.value})
+                    }
                   }}
                 >
                   <option value="">Selecione um sócio...</option>
-                  {socios.map(s => <option key={s} value={s}>{s}</option>)}
+                  {/* Renderiza a lista dinâmica */}
+                  {availableSocios.map(s => <option key={s} value={s}>{s}</option>)}
                   <option value="new" className="font-bold text-blue-600">+ Adicionar Novo</option>
                 </select>
               ) : (
                 <div className="flex gap-2 animate-fadeIn">
                    <input required type="text" placeholder="Nome do novo sócio" className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#112240] outline-none" autoFocus
+                     value={formData.socio}
                      onChange={e => setFormData({...formData, socio: e.target.value})} />
                    <button type="button" onClick={() => setIsNewSocio(false)} className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-100">Cancelar</button>
                 </div>
