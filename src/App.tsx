@@ -3,13 +3,13 @@ import { supabase } from './lib/supabase'
 import Login from './Login'
 import { Sidebar } from './components/Sidebar'
 import { Clients } from './components/Clients'
+import { Settings } from './components/Settings' // <--- IMPORTAR AQUI
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activePage, setActivePage] = useState('dashboard')
 
-  // Dicionário de descrições (Subtítulos)
   const moduleDescriptions: Record<string, string> = {
     dashboard: 'Visão geral de performance e indicadores chave.',
     clientes: 'Gerencie a base de prospects e clientes ativos.',
@@ -65,9 +65,7 @@ export default function App() {
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         
-        {/* HEADER APRIMORADO (UX MELHORADA) */}
         <header className="bg-white border-b border-gray-200 h-20 flex items-center px-8 justify-between flex-shrink-0 z-10">
-            {/* Lado Esquerdo: Título e Subtítulo empilhados */}
             <div className="flex flex-col justify-center">
                 <h1 className="text-2xl font-bold text-[#112240] capitalize leading-tight">
                     {activePage}
@@ -76,8 +74,6 @@ export default function App() {
                     {moduleDescriptions[activePage] || 'Gestão Estratégica'}
                 </span>
             </div>
-            
-            {/* Lado Direito: VAZIO (Removido Salomão Advogados) */}
             <div></div>
         </header>
 
@@ -92,7 +88,11 @@ export default function App() {
 
             {activePage === 'clientes' && <Clients />}
 
-            {activePage !== 'dashboard' && activePage !== 'clientes' && (
+            {/* ADICIONADO AQUI: RENDERIZA CONFIGURAÇÕES */}
+            {activePage === 'configuracoes' && <Settings />}
+
+            {/* Outros módulos */}
+            {activePage !== 'dashboard' && activePage !== 'clientes' && activePage !== 'configuracoes' && (
                 <div className="bg-white p-12 rounded-lg shadow-sm border border-gray-200 text-center h-full overflow-auto">
                     <h2 className="text-lg font-semibold mb-2 text-gray-400">Módulo em Desenvolvimento</h2>
                     <p className="text-gray-500">A página <strong>{activePage}</strong> será implementada na próxima etapa.</p>
