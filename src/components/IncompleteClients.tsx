@@ -42,6 +42,9 @@ export function IncompleteClients() {
     if (!client.estado) missing.push('UF')
     if (!client.email) missing.push('Email')
     if (!client.socio) missing.push('Sócio')
+    // Telefone pode ou não ser obrigatório, dependendo da sua regra. 
+    // Se for obrigatório, descomente a linha abaixo:
+    // if (!client.telefone) missing.push('Telefone')
 
     return missing
   }
@@ -63,6 +66,7 @@ export function IncompleteClients() {
         nome: item.nome,
         empresa: item.empresa,
         cargo: item.cargo,
+        telefone: item.telefone, // <--- CORREÇÃO AQUI: Adicionado o campo telefone
         tipoBrinde: item.tipo_brinde,
         outroBrinde: item.outro_brinde,
         quantidade: item.quantidade,
@@ -129,6 +133,7 @@ export function IncompleteClients() {
       nome: clientData.nome,
       empresa: clientData.empresa,
       cargo: clientData.cargo,
+      telefone: clientData.telefone, // Também salvamos o telefone aqui se for editado
       tipo_brinde: clientData.tipoBrinde,
       outro_brinde: clientData.outroBrinde,
       quantidade: clientData.quantidade,
@@ -177,14 +182,15 @@ export function IncompleteClients() {
       "Nome": client.nome,
       "Empresa": client.empresa,
       "Cargo": client.cargo,
+      "Telefone": client.telefone,
       "Sócio": client.socio,
       "Email": client.email,
       "Cidade": client.cidade,
-      "PENDÊNCIAS": getMissingFields(client).join(', ') // Coluna no final
+      "PENDÊNCIAS": getMissingFields(client).join(', ') 
     }))
 
     const ws = utils.json_to_sheet(dataToExport)
-    const wscols = [{ wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 40 }]
+    const wscols = [{ wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 40 }]
     ws['!cols'] = wscols
     const wb = utils.book_new()
     utils.book_append_sheet(wb, ws, "Clientes Incompletos")
@@ -199,7 +205,6 @@ export function IncompleteClients() {
   return (
     <div className="h-full flex flex-col relative">
       
-      {/* AQUI ESTAVA O ERRO ANTERIOR: Agora onSave está presente */}
       <NewClientModal 
         isOpen={isModalOpen} 
         onClose={() => { setIsModalOpen(false); setClientToEdit(null); }} 
@@ -288,10 +293,8 @@ export function IncompleteClients() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-red-700" onClick={() => toggleSort('nome')}>Cliente {sortBy === 'nome' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-red-700" onClick={() => toggleSort('socio')}>Sócio {sortBy === 'socio' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                  
-                  {/* COLUNA DE PENDÊNCIAS AGORA NO FINAL */}
+                  {/* COLUNA DE PENDÊNCIAS */}
                   <th className="px-6 py-4 text-left text-xs font-bold text-red-600 uppercase tracking-wider">Pendências (Obrigatórias)</th>
-                  
                   <th className="relative px-6 py-4"><span className="sr-only">Ações</span></th>
                 </tr>
               </thead>
@@ -347,6 +350,7 @@ export function IncompleteClients() {
                         <p className="text-sm text-gray-500">{client.empresa || 'Empresa n/a'}</p>
                     </div>
                   </div>
+                  
                   <div className="mb-4">
                     <p className="text-xs font-bold text-red-600 mb-2 uppercase tracking-wide">Campos Faltantes:</p>
                     <div className="flex flex-wrap gap-1.5">
@@ -357,6 +361,7 @@ export function IncompleteClients() {
                       ))}
                     </div>
                   </div>
+
                   <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end gap-2">
                       <button onClick={() => handleEdit(client)} className="flex-1 py-2 text-sm text-white bg-[#112240] hover:bg-[#1a3a6c] rounded-lg font-medium transition-colors">Completar</button>
                       <button onClick={() => setClientToDelete(client)} className="py-2 px-3 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"><Trash2 className="h-4 w-4" /></button>
