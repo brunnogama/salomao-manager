@@ -1,14 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
-import { Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Users, Pencil, Trash2, Save, X, RefreshCw } from 'lucide-react'
+import { Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Users, Pencil, Trash2, Save, X, RefreshCw, Briefcase } from 'lucide-react'
 import { utils, read, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
+
+interface SocioStats {
+  nome: string;
+  count: number;
+}
 
 export function Settings() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
   
   // Estados para Gestão de Sócios
-  const [socios, setSocios] = useState<string[]>([])
+  const [sociosStats, setSociosStats] = useState<SocioStats[]>([])
   const [loadingSocios, setLoadingSocios] = useState(false)
   const [editingSocio, setEditingSocio] = useState<string | null>(null)
   const [newSocioName, setNewSocioName] = useState('')
@@ -20,6 +25,7 @@ export function Settings() {
   const fetchSocios = async () => {
     setLoadingSocios(true)
     try {
+      // Busca todos os nomes de sócios
       const { data, error } = await supabase
         .from('clientes')
         .select('socio')
@@ -27,9 +33,19 @@ export function Settings() {
       if (error) throw error
 
       if (data) {
-        // Filtra únicos e remove vazios
-        const uniqueSocios = Array.from(new Set(data.map(item => item.socio).filter(Boolean)))
-        setSocios(uniqueSocios.sort())
+        // Conta quantos clientes cada sócio tem
+        const counts: Record<string, number> = {}
+        data.forEach(item => {
+          if (item.socio) {
+            counts[item.socio] = (counts[item.socio] || 0) + 1
+          }
+        })
+
+        // Transforma em array e ordena
+        const statsArray = Object.entries(counts).map(([nome, count]) => ({ nome, count }))
+        statsArray.sort((a, b) => a.nome.localeCompare(b.nome))
+        
+        setSociosStats(statsArray)
       }
     } catch (error) {
       console.error('Erro ao buscar sócios:', error)
@@ -48,7 +64,7 @@ export function Settings() {
       return
     }
 
-    if (confirm(`Deseja renomear "${oldName}" para "${newSocioName}" em todos os clientes?`)) {
+    if (confirm(`Confirmar alteração de "${oldName}" para "${newSocioName}"?\n\nIsso atualizará todos os clientes vinculados.`)) {
       setLoadingSocios(true)
       try {
         const { error } = await supabase
@@ -58,7 +74,7 @@ export function Settings() {
 
         if (error) throw error
 
-        setStatus({ type: 'success', message: 'Nome do sócio atualizado com sucesso!' })
+        setStatus({ type: 'success', message: 'Sócio renomeado com sucesso!' })
         fetchSocios()
       } catch (error: any) {
         setStatus({ type: 'error', message: `Erro ao atualizar: ${error.message}` })
@@ -70,10 +86,9 @@ export function Settings() {
   }
 
   const handleDeleteSocio = async (name: string) => {
-    if (confirm(`ATENÇÃO: Isso removerá o sócio "${name}" de TODOS os clientes vinculados a ele.\n\nOs clientes ficarão "Sem Sócio". Deseja continuar?`)) {
+    if (confirm(`ATENÇÃO: Você está prestes a remover o vínculo do sócio "${name}".\n\nOs clientes desse sócio ficarão "Sem Sócio". Deseja continuar?`)) {
       setLoadingSocios(true)
       try {
-        // Define como NULL onde o sócio é igual ao nome selecionado
         const { error } = await supabase
           .from('clientes')
           .update({ socio: null })
@@ -81,7 +96,7 @@ export function Settings() {
 
         if (error) throw error
 
-        setStatus({ type: 'success', message: `Sócio "${name}" removido dos registros.` })
+        setStatus({ type: 'success', message: `Sócio "${name}" removido.` })
         fetchSocios()
       } catch (error: any) {
         setStatus({ type: 'error', message: `Erro ao excluir: ${error.message}` })
@@ -165,7 +180,6 @@ export function Settings() {
       setStatus({ type: 'success', message: `${clientsToInsert.length} clientes importados com sucesso!` })
       if (fileInputRef.current) fileInputRef.current.value = ''
       
-      // Atualiza a lista de sócios após importar novos dados
       fetchSocios()
 
     } catch (error: any) {
@@ -177,10 +191,10 @@ export function Settings() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-10">
+    <div className="max-w-5xl mx-auto pb-10">
       <h2 className="text-2xl font-bold text-[#112240] mb-6">Configurações do Sistema</h2>
 
-      {/* CARD 1: GESTÃO DE SÓCIOS */}
+      {/* CARD 1: GESTÃO DE SÓCIOS (AGORA EM GRID DE CARDS) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
         <div className="flex items-start gap-4 mb-6">
           <div className="p-3 bg-purple-50 rounded-lg text-purple-700">
@@ -194,70 +208,85 @@ export function Settings() {
                 </button>
             </div>
             <p className="text-gray-500 mt-1 text-sm">
-              Edite nomes incorretos ou remova sócios antigos. As alterações refletem em <strong>todos</strong> os clientes vinculados.
+              Edite nomes incorretos. As alterações refletem em <strong>todos</strong> os clientes vinculados.
             </p>
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-lg border border-gray-100 overflow-hidden">
-            {loadingSocios && socios.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">Carregando lista de sócios...</div>
-            ) : socios.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">Nenhum sócio encontrado na base de dados.</div>
-            ) : (
-                <ul className="divide-y divide-gray-200">
-                    {socios.map((socio, index) => (
-                        <li key={index} className="flex items-center justify-between p-4 hover:bg-white transition-colors">
-                            {editingSocio === socio ? (
-                                <div className="flex items-center gap-2 flex-1 animate-fadeIn">
-                                    <input 
-                                        type="text" 
-                                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:border-[#112240] outline-none"
-                                        value={newSocioName}
-                                        onChange={(e) => setNewSocioName(e.target.value)}
-                                        autoFocus
-                                    />
+        {loadingSocios && sociosStats.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">Carregando lista de sócios...</div>
+        ) : sociosStats.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">Nenhum sócio encontrado na base de dados.</div>
+        ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sociosStats.map((item) => (
+                    <div key={item.nome} className="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all group">
+                        
+                        {editingSocio === item.nome ? (
+                            // MODO EDIÇÃO
+                            <div className="flex flex-col gap-3 animate-fadeIn">
+                                <label className="text-xs font-bold text-gray-400 uppercase">Novo Nome</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:border-[#112240] outline-none bg-white"
+                                    value={newSocioName}
+                                    onChange={(e) => setNewSocioName(e.target.value)}
+                                    autoFocus
+                                />
+                                <div className="flex gap-2 mt-1">
                                     <button 
-                                        onClick={() => handleUpdateSocio(socio)}
-                                        className="p-1.5 bg-green-100 text-green-700 rounded hover:bg-green-200"
-                                        title="Salvar"
+                                        onClick={() => handleUpdateSocio(item.nome)}
+                                        className="flex-1 py-1.5 bg-green-600 text-white rounded text-xs font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-1"
                                     >
-                                        <Save className="h-4 w-4" />
+                                        <Save className="h-3 w-3" /> Salvar
                                     </button>
                                     <button 
                                         onClick={() => setEditingSocio(null)}
-                                        className="p-1.5 bg-gray-200 text-gray-600 rounded hover:bg-gray-300"
-                                        title="Cancelar"
+                                        className="px-3 py-1.5 bg-gray-200 text-gray-600 rounded text-xs font-bold hover:bg-gray-300 transition-colors"
                                     >
-                                        <X className="h-4 w-4" />
+                                        <X className="h-3 w-3" />
                                     </button>
                                 </div>
-                            ) : (
-                                <>
-                                    <span className="text-gray-700 font-medium">{socio}</span>
-                                    <div className="flex items-center gap-2">
-                                        <button 
-                                            onClick={() => { setEditingSocio(socio); setNewSocioName(socio); }}
-                                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                            title="Renomear"
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </button>
-                                        <button 
-                                            onClick={() => handleDeleteSocio(socio)}
-                                            className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                            title="Remover vinculos"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
+                            </div>
+                        ) : (
+                            // MODO VISUALIZAÇÃO (CARD)
+                            <div className="flex flex-col h-full justify-between">
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xs border border-purple-200">
+                                            {item.nome.charAt(0)}
+                                        </div>
+                                        <span className="text-[10px] font-medium bg-white px-2 py-1 rounded-full border border-gray-200 text-gray-500 shadow-sm" title="Clientes Ativos">
+                                            {item.count} clientes
+                                        </span>
                                     </div>
-                                </>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
+                                    <h4 className="font-bold text-gray-900 text-base leading-tight mb-1">{item.nome}</h4>
+                                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                                        <Briefcase className="h-3 w-3" /> Sócio
+                                    </p>
+                                </div>
+
+                                <div className="mt-4 pt-3 border-t border-gray-200 flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <button 
+                                        onClick={() => { setEditingSocio(item.nome); setNewSocioName(item.nome); }}
+                                        className="flex-1 py-1.5 bg-white border border-gray-300 text-gray-700 rounded text-xs font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center gap-1"
+                                    >
+                                        <Pencil className="h-3 w-3" /> Editar
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDeleteSocio(item.nome)}
+                                        className="px-3 py-1.5 bg-white border border-red-200 text-red-600 rounded text-xs font-medium hover:bg-red-50 hover:border-red-300 transition-colors"
+                                        title="Remover Vínculos"
+                                    >
+                                        <Trash2 className="h-3 w-3" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        )}
       </div>
 
       {/* CARD 2: IMPORTAÇÃO */}
