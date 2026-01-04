@@ -16,14 +16,17 @@ export function Clients() {
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null)
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
 
+  // Filtros
   const [socioFilter, setSocioFilter] = useState('')
   const [brindeFilter, setBrindeFilter] = useState('')
   
+  // Ordenação
   const [sortBy, setSortBy] = useState<'nome' | 'socio' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const [clients, setClients] = useState<Client[]>([])
 
+  // 1. BUSCAR DADOS
   const fetchClients = async () => {
     setLoading(true)
     const { data, error } = await supabase
@@ -39,7 +42,7 @@ export function Clients() {
         nome: item.nome,
         empresa: item.empresa,
         cargo: item.cargo,
-        telefone: item.telefone, // Mapeando o novo campo
+        telefone: item.telefone,
         tipoBrinde: item.tipo_brinde,
         outroBrinde: item.outro_brinde,
         quantidade: item.quantidade,
@@ -66,6 +69,7 @@ export function Clients() {
   const uniqueSocios = Array.from(new Set(clients.map(c => c.socio).filter(Boolean)))
   const uniqueBrindes = Array.from(new Set(clients.map(c => c.tipoBrinde).filter(Boolean)))
 
+  // LÓGICA DE FILTRO E ORDENAÇÃO
   const processedClients = useMemo(() => {
     let result = clients.filter(client => {
       const matchesSocio = socioFilter ? client.socio === socioFilter : true
@@ -92,19 +96,35 @@ export function Clients() {
     }
   }
 
-  // AÇÕES DE TELEFONE E WHATSAPP
-  const handleWhatsApp = (phone: string, name: string) => {
-    const cleanPhone = phone.replace(/\D/g, '')
-    // Mensagem formal e amigável
-    const message = `Olá Sr(a). ${name}, somos do Salomão Advogados.\n\nEstamos atualizando nossa base de dados e gostaríamos de confirmar suas informações de contato e endereço.\n\nTeria um momento?`
-    // Link do WhatsApp
+  // AÇÕES DE CONTATO (WHATSAPP FORMAL E 3CX)
+  const handleWhatsApp = (client: Client) => {
+    const cleanPhone = client.telefone.replace(/\D/g, '')
+    
+    // MENSAGEM PADRONIZADA COM DADOS
+    const message = `Olá Sr(a). ${client.nome}, somos do Salomão Advogados.
+
+Estamos atualizando nossa base de dados. Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
+
+🏢 *Empresa:* ${client.empresa || '-'}
+📮 *CEP:* ${client.cep || '-'}
+📍 *Endereço:* ${client.endereco || '-'}
+🔢 *Número:* ${client.numero || '-'}
+🏘️ *Bairro:* ${client.bairro || '-'}
+🏙️ *Cidade/UF:* ${client.cidade || '-'}/${client.estado || '-'}
+📝 *Complemento:* ${client.complemento || '-'}
+📧 *E-mail:* ${client.email || '-'}
+
+📱 *Outro número de telefone:* (Caso possua, por favor informar)
+
+Agradecemos a atenção!`
+
     const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`
     window.open(url, '_blank')
   }
 
   const handle3CX = (phone: string) => {
     const cleanPhone = phone.replace(/\D/g, '')
-    // Protocolo 'tel:' abre o app padrão de chamadas (3CX se configurado)
+    // 'tel:' abre o app padrão de chamadas (3CX se configurado no SO)
     window.location.href = `tel:${cleanPhone}`
   }
 
@@ -113,7 +133,7 @@ export function Clients() {
       nome: clientData.nome,
       empresa: clientData.empresa,
       cargo: clientData.cargo,
-      telefone: clientData.telefone, // Salvando o novo campo
+      telefone: clientData.telefone,
       tipo_brinde: clientData.tipoBrinde,
       outro_brinde: clientData.outroBrinde,
       quantidade: clientData.quantidade,
@@ -307,7 +327,8 @@ export function Clients() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {client.telefone ? (
                             <div className="flex items-center gap-2">
-                              <button onClick={() => handleWhatsApp(client.telefone, client.nome)} className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-full transition-colors" title="Enviar WhatsApp"><MessageCircle className="h-4 w-4" /></button>
+                              {/* BOTÃO WHATSAPP ATUALIZADO */}
+                              <button onClick={() => handleWhatsApp(client)} className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-full transition-colors" title="Enviar WhatsApp"><MessageCircle className="h-4 w-4" /></button>
                               <button onClick={() => handle3CX(client.telefone)} className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full transition-colors" title="Ligar com 3CX"><Phone className="h-4 w-4" /></button>
                             </div>
                           ) : (
@@ -347,7 +368,7 @@ export function Clients() {
                     {/* BOTÕES DE AÇÃO RÁPIDA NO CARD */}
                     {client.telefone && (
                       <div className="flex gap-2 mb-4">
-                        <button onClick={() => handleWhatsApp(client.telefone, client.nome)} className="flex-1 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded text-xs font-bold flex items-center justify-center gap-1"><MessageCircle className="h-3 w-3" /> WhatsApp</button>
+                        <button onClick={() => handleWhatsApp(client)} className="flex-1 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded text-xs font-bold flex items-center justify-center gap-1"><MessageCircle className="h-3 w-3" /> WhatsApp</button>
                         <button onClick={() => handle3CX(client.telefone)} className="flex-1 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-xs font-bold flex items-center justify-center gap-1"><Phone className="h-3 w-3" /> Ligar</button>
                       </div>
                     )}
