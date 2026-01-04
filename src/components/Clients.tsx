@@ -1,5 +1,23 @@
+Com certeza. Vamos reestilizar o card para torná-lo mais compacto ("condensado"), destacar as informações estratégicas (Sócio e Brinde) e ajustar os padrões de visualização conforme solicitado.
+
+As principais mudanças no código abaixo são:
+
+1. **Estado Inicial:** `viewMode` agora começa como `'card'` e `sortBy` como `'nome'`.
+2. **Design do Card:**
+* Reduzi o `padding` e o tamanho dos ícones/textos.
+* O **Sócio** ganhou destaque com uma cor e peso de fonte maior.
+* O **Local** agora mostra apenas o `client.estado` (UF).
+* Os botões de ação (Editar, WhatsApp, Ligar) agora são todos **ícones**, economizando espaço vertical.
+
+
+
+Substitua **todo** o conteúdo de `src/components/Clients.tsx` pelo código abaixo:
+
+### Arquivo: `src/components/Clients.tsx` (Visual Cards Condensado)
+
+```tsx
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Filter, LayoutList, LayoutGrid, Pencil, Trash2, X, AlertTriangle, ChevronDown, FileSpreadsheet, RefreshCw, ArrowUpDown, MessageCircle, Phone } from 'lucide-react'
+import { Plus, Filter, LayoutList, LayoutGrid, Pencil, Trash2, X, AlertTriangle, ChevronDown, FileSpreadsheet, RefreshCw, ArrowUpDown, MessageCircle, Phone, MapPin, Briefcase } from 'lucide-react'
 import { NewClientModal, ClientData } from './NewClientModal'
 import { utils, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -9,31 +27,30 @@ interface Client extends ClientData {
 }
 
 export function Clients() {
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('list')
+  // 1. ALTERAÇÃO: Padrão agora é 'card'
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('card')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null)
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
 
-  // Filtros
   const [socioFilter, setSocioFilter] = useState('')
   const [brindeFilter, setBrindeFilter] = useState('')
   
-  // Ordenação
-  const [sortBy, setSortBy] = useState<'nome' | 'socio' | null>(null)
+  // 2. ALTERAÇÃO: Padrão de ordenação agora é por 'nome'
+  const [sortBy, setSortBy] = useState<'nome' | 'socio' | null>('nome')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const [clients, setClients] = useState<Client[]>([])
 
-  // 1. BUSCAR DADOS
   const fetchClients = async () => {
     setLoading(true)
     const { data, error } = await supabase
       .from('clientes')
       .select('*')
-      .order('created_at', { ascending: false })
-
+      // Removemos o order do banco pois vamos ordenar no front pelo state inicial 'nome'
+    
     if (error) {
       console.error('Erro ao buscar clientes:', error)
     } else {
@@ -69,7 +86,6 @@ export function Clients() {
   const uniqueSocios = Array.from(new Set(clients.map(c => c.socio).filter(Boolean)))
   const uniqueBrindes = Array.from(new Set(clients.map(c => c.tipoBrinde).filter(Boolean)))
 
-  // LÓGICA DE FILTRO E ORDENAÇÃO
   const processedClients = useMemo(() => {
     let result = clients.filter(client => {
       const matchesSocio = socioFilter ? client.socio === socioFilter : true
@@ -96,11 +112,10 @@ export function Clients() {
     }
   }
 
-  // AÇÕES DE CONTATO (WHATSAPP FORMAL E 3CX)
   const handleWhatsApp = (client: Client) => {
-    const cleanPhone = client.telefone.replace(/\D/g, '')
-    
-    // MENSAGEM PADRONIZADA COM DADOS
+    const cleanPhone = client.telefone ? client.telefone.replace(/\D/g, '') : ''
+    if(!cleanPhone) return
+
     const message = `Olá Sr(a). ${client.nome}, somos do Salomão Advogados.
 
 Estamos atualizando nossa base de dados. Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
@@ -123,8 +138,8 @@ Agradecemos a atenção!`
   }
 
   const handle3CX = (phone: string) => {
+    if(!phone) return
     const cleanPhone = phone.replace(/\D/g, '')
-    // 'tel:' abre o app padrão de chamadas (3CX se configurado no SO)
     window.location.href = `tel:${cleanPhone}`
   }
 
@@ -184,7 +199,7 @@ Agradecemos a atenção!`
   }
 
   const closeModal = () => { setIsModalOpen(false); setClientToEdit(null); }
-  const clearFilters = () => { setSocioFilter(''); setBrindeFilter(''); setSortBy(null); }
+  const clearFilters = () => { setSocioFilter(''); setBrindeFilter(''); setSortBy('nome'); setSortDirection('asc'); }
 
   const handleExportExcel = () => {
     const dataToExport = processedClients.map(client => ({
@@ -258,7 +273,7 @@ Agradecemos a atenção!`
               <button onClick={() => toggleSort('socio')} className={`flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${sortBy === 'socio' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}><ArrowUpDown className="h-3 w-3 mr-1" /> Sócio</button>
            </div>
            
-           {(socioFilter || brindeFilter || sortBy) && (
+           {(socioFilter || brindeFilter || sortBy !== 'nome') && (
              <button onClick={clearFilters} className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center px-2 py-1 bg-red-50 rounded whitespace-nowrap"><X className="h-3 w-3 mr-1" /> Limpar</button>
            )}
 
@@ -327,7 +342,6 @@ Agradecemos a atenção!`
                         <td className="px-6 py-4 whitespace-nowrap">
                           {client.telefone ? (
                             <div className="flex items-center gap-2">
-                              {/* BOTÃO WHATSAPP ATUALIZADO */}
                               <button onClick={() => handleWhatsApp(client)} className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-full transition-colors" title="Enviar WhatsApp"><MessageCircle className="h-4 w-4" /></button>
                               <button onClick={() => handle3CX(client.telefone)} className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full transition-colors" title="Ligar com 3CX"><Phone className="h-4 w-4" /></button>
                             </div>
@@ -349,39 +363,88 @@ Agradecemos a atenção!`
             )}
 
             {viewMode === 'card' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              // 3. ALTERAÇÃO: CARD CONDENSADO
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {processedClients.map((client) => (
-                  <div key={client.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all relative group">
-                    <div className="absolute top-4 right-4">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${client.tipoBrinde === 'Brinde VIP' ? 'bg-purple-100 text-purple-800' : client.tipoBrinde === 'Brinde Médio' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {client.tipoBrinde}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 mb-5">
-                      <div className="h-14 w-14 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-[#112240] font-bold text-xl border border-gray-100">{client.nome.charAt(0)}</div>
-                      <div>
-                          <h3 className="text-lg font-bold text-gray-900 leading-tight">{client.nome}</h3>
-                          <p className="text-sm text-gray-500">{client.empresa}</p>
-                      </div>
-                    </div>
+                  <div key={client.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all relative group flex flex-col justify-between">
                     
-                    {/* BOTÕES DE AÇÃO RÁPIDA NO CARD */}
-                    {client.telefone && (
-                      <div className="flex gap-2 mb-4">
-                        <button onClick={() => handleWhatsApp(client)} className="flex-1 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded text-xs font-bold flex items-center justify-center gap-1"><MessageCircle className="h-3 w-3" /> WhatsApp</button>
-                        <button onClick={() => handle3CX(client.telefone)} className="flex-1 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-xs font-bold flex items-center justify-center gap-1"><Phone className="h-3 w-3" /> Ligar</button>
-                      </div>
-                    )}
+                    {/* Cabeçalho do Card: Avatar, Nome, Empresa */}
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex gap-3">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-[#112240] font-bold text-sm border border-gray-100 flex-shrink-0">
+                                {client.nome.charAt(0)}
+                            </div>
+                            <div className="overflow-hidden">
+                                <h3 className="text-sm font-bold text-gray-900 leading-tight truncate" title={client.nome}>{client.nome}</h3>
+                                <p className="text-xs text-gray-500 truncate" title={client.empresa}>{client.empresa}</p>
+                            </div>
+                        </div>
+                        <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full flex-shrink-0 ${
+                            client.tipoBrinde === 'Brinde VIP' ? 'bg-purple-100 text-purple-800' : 
+                            client.tipoBrinde === 'Brinde Médio' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                            {client.tipoBrinde}
+                        </span>
+                    </div>
 
-                    <div className="space-y-2.5 text-sm text-gray-600 bg-gray-50/50 p-3 rounded-lg border border-gray-100">
-                      <p className="flex justify-between"><span className="text-gray-400">Cargo:</span> <span className="font-medium text-gray-800">{client.cargo}</span></p>
-                      <p className="flex justify-between"><span className="text-gray-400">Sócio:</span> <span className="font-medium text-gray-800">{client.socio}</span></p>
-                      <p className="flex justify-between"><span className="text-gray-400">Local:</span> <span className="font-medium text-gray-800">{client.cidade}</span></p>
+                    {/* Informações: Sócio (Destacado) e Local (UF) */}
+                    <div className="bg-gray-50/50 rounded-md p-2 border border-gray-100 mb-3">
+                        <div className="flex justify-between items-center text-xs mb-1">
+                            <span className="text-gray-400">Responsável:</span>
+                            <span className="font-bold text-[#112240]">{client.socio || '-'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-400">UF:</span>
+                            <span className="text-gray-600 font-medium flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {client.estado || '-'}
+                            </span>
+                        </div>
                     </div>
-                    <div className="mt-5 pt-4 border-t border-gray-100 flex justify-end gap-2">
-                        <button onClick={() => handleEdit(client)} className="flex-1 py-2 text-sm text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg font-medium transition-colors">Editar</button>
-                        <button onClick={() => setClientToDelete(client)} className="py-2 px-3 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"><Trash2 className="h-4 w-4" /></button>
+
+                    {/* Barra de Ações: Ícones apenas */}
+                    <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
+                        <div className="flex gap-2">
+                            {client.telefone ? (
+                                <>
+                                    <button 
+                                        onClick={() => handleWhatsApp(client)} 
+                                        className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+                                        title="WhatsApp"
+                                    >
+                                        <MessageCircle className="h-4 w-4" />
+                                    </button>
+                                    <button 
+                                        onClick={() => handle3CX(client.telefone)} 
+                                        className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                                        title="Ligar"
+                                    >
+                                        <Phone className="h-4 w-4" />
+                                    </button>
+                                </>
+                            ) : (
+                                <span className="text-[10px] text-gray-300 italic self-center">Sem tel</span>
+                            )}
+                        </div>
+
+                        <div className="flex gap-1">
+                            <button 
+                                onClick={() => handleEdit(client)} 
+                                className="p-1.5 text-gray-500 hover:text-[#112240] hover:bg-gray-100 rounded-md transition-colors"
+                                title="Editar"
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </button>
+                            <button 
+                                onClick={() => setClientToDelete(client)} 
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                title="Excluir"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </button>
+                        </div>
                     </div>
+
                   </div>
                 ))}
               </div>
@@ -392,3 +455,5 @@ Agradecemos a atenção!`
     </div>
   )
 }
+
+```
