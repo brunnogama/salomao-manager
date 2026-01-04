@@ -29,7 +29,8 @@ export function IncompleteClients() {
     if (!client.nome) missing.push('Nome')
     if (!client.empresa) missing.push('Empresa')
     if (!client.tipoBrinde) missing.push('Tipo Brinde')
-    if (client.tipoBrinde === 'Outro' && !client.outroBrinde) missing.push('Spec. Brinde')
+    // AQUI: Alterado para 'Espec. Brinde'
+    if (client.tipoBrinde === 'Outro' && !client.outroBrinde) missing.push('Espec. Brinde')
     if (!client.quantidade) missing.push('Qtd')
     if (!client.cep) missing.push('CEP')
     if (!client.endereco) missing.push('Endereço')
@@ -148,7 +149,7 @@ export function IncompleteClients() {
   // EXPORTAR XLSX (INCOMPLETOS)
   const handleExportExcel = () => {
     const dataToExport = filteredClients.map(client => ({
-      "PENDÊNCIAS": getMissingFields(client).join(', '), // Coluna Extra Importante
+      "PENDÊNCIAS": getMissingFields(client).join(', '),
       "Nome": client.nome,
       "Empresa": client.empresa,
       "Cargo": client.cargo,
