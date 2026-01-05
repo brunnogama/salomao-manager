@@ -94,9 +94,19 @@ export function Clients() {
   }
 
   const handleWhatsApp = (client: Client, e?: React.MouseEvent) => {
-    if(e) e.stopPropagation();
-    const cleanPhone = client.telefone ? client.telefone.replace(/\D/g, '') : ''
-    if(!cleanPhone) return
+    if(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // Verificação de segurança para o telefone
+    const phoneToClean = client.telefone || '';
+    const cleanPhone = phoneToClean.replace(/\D/g, '');
+    
+    if(!cleanPhone) {
+        alert("Telefone não cadastrado para este cliente.");
+        return;
+    }
 
     const message = `Olá Sr(a). ${client.nome}, somos do Salomão Advogados.
 
@@ -113,16 +123,26 @@ Estamos atualizando nossa base de dados. Poderia, por gentileza, confirmar se as
 
 📱 *Outro número de telefone:* (Caso possua, por favor informar)
 
-Agradecemos a atenção!`
+Agradecemos a atenção!`;
 
-    const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`
-    window.open(url, '_blank')
+    const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
   }
 
-  const handle3CX = (phone: string, e?: React.MouseEvent) => {
-    if(e) e.stopPropagation();
-    if(!phone) return
-    window.location.href = `tel:${phone.replace(/\D/g, '')}`
+  const handle3CX = (client: Client, e?: React.MouseEvent) => {
+    if(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    const phoneToCall = client.telefone || '';
+    const cleanPhone = phoneToCall.replace(/\D/g, '');
+    
+    if(!cleanPhone) {
+        alert("Telefone não cadastrado.");
+        return;
+    }
+    window.location.href = `tel:${cleanPhone}`;
   }
 
   const handleSaveClient = async (clientData: ClientData) => {
@@ -300,8 +320,12 @@ Agradecemos a atenção!`
                   </div>
                   <div className="border-t border-gray-100 pt-3 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="flex gap-2">
-                      <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors"><MessageCircle className="h-4 w-4" /></button>
-                      <button onClick={(e) => handle3CX(client.telefone, e)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"><Phone className="h-4 w-4" /></button>
+                      <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors">
+                        <MessageCircle className="h-4 w-4" />
+                      </button>
+                      <button onClick={(e) => handle3CX(client, e)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
+                        <Phone className="h-4 w-4" />
+                      </button>
                     </div>
                     <div className="flex gap-1">
                       <button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-gray-500 hover:text-[#112240] rounded-md transition-colors"><Pencil className="h-4 w-4" /></button>
@@ -340,7 +364,7 @@ Agradecemos a atenção!`
                         </button>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <button onClick={(e) => handle3CX(client.telefone, e)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
+                        <button onClick={(e) => handle3CX(client, e)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
                           <Phone className="h-4 w-4" />
                         </button>
                       </td>
