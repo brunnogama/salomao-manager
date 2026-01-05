@@ -8,13 +8,17 @@ import { IncompleteClients } from './components/IncompleteClients'
 import { Kanban } from './components/Kanban'
 import { Dashboard } from './components/Dashboard'
 import { History } from './components/History'
+import { Menu } from 'lucide-react' // Importante: Ícone do Menu
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activePage, setActivePage] = useState('dashboard')
   
-  // NOVO: Estado para passar filtros do Dashboard para Clientes
+  // Estado para controlar o Menu Mobile
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  
+  // Estado para passar filtros do Dashboard para Clientes
   const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({})
 
   const moduleDescriptions: Record<string, string> = {
@@ -51,7 +55,6 @@ export default function App() {
     return session.user.email.split('@')[0].split('.').map((p:any) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
   }
 
-  // Função para navegar com filtro (Drill-down)
   const navigateWithFilter = (page: string, filters: { socio?: string; brinde?: string }) => {
     setClientFilters(filters)
     setActivePage(page)
@@ -62,23 +65,40 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden w-full">
-      <Sidebar activePage={activePage} onNavigate={setActivePage} userName={getUserDisplayName()} />
-      <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
-        <header className="bg-white border-b border-gray-200 h-20 flex items-center px-8 justify-between flex-shrink-0 z-10">
-            <div className="flex flex-col justify-center">
-                <h1 className="text-2xl font-bold text-[#112240] capitalize leading-tight">
-                    {pageTitles[activePage] || activePage}
-                </h1>
-                <span className="text-sm text-gray-500 font-normal">{moduleDescriptions[activePage]}</span>
+      {/* Sidebar com as novas props obrigatórias */}
+      <Sidebar 
+        activePage={activePage} 
+        onNavigate={setActivePage} 
+        userName={getUserDisplayName()} 
+        isOpen={isSidebarOpen}            // CORREÇÃO AQUI
+        onClose={() => setIsSidebarOpen(false)} // CORREÇÃO AQUI
+      />
+      
+      <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 relative">
+        <header className="bg-white border-b border-gray-200 h-20 flex items-center px-4 md:px-8 justify-between flex-shrink-0 z-10 gap-3">
+            <div className="flex items-center gap-3 overflow-hidden">
+                {/* BOTÃO MENU HAMBURGUER (VISÍVEL SÓ NO MOBILE) */}
+                <button 
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg shrink-0"
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+
+                <div className="flex flex-col justify-center min-w-0">
+                    <h1 className="text-xl md:text-2xl font-bold text-[#112240] capitalize leading-tight truncate">
+                        {pageTitles[activePage] || activePage}
+                    </h1>
+                    <span className="text-xs md:text-sm text-gray-500 font-normal truncate hidden sm:block">
+                        {moduleDescriptions[activePage]}
+                    </span>
+                </div>
             </div>
         </header>
-        <div className="p-8 flex-1 overflow-hidden h-full">
-            {/* Passando a função de navegação para o Dashboard */}
+        
+        <div className="p-4 md:p-8 flex-1 overflow-hidden h-full">
             {activePage === 'dashboard' && <Dashboard onNavigateWithFilter={navigateWithFilter} />}
-            
-            {/* Passando os filtros iniciais para Clientes */}
             {activePage === 'clientes' && <Clients initialFilters={clientFilters} />}
-            
             {activePage === 'incompletos' && <IncompleteClients />}
             {activePage === 'kanban' && <Kanban />}
             {activePage === 'historico' && <History />} 
