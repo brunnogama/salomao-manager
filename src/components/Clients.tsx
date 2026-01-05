@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Filter, LayoutList, LayoutGrid, Pencil, Trash2, X, AlertTriangle, ChevronDown, FileSpreadsheet, RefreshCw, ArrowUpDown, MessageCircle, Phone, MapPin, Mail, Briefcase, Gift, Info, User } from 'lucide-react'
+import { Plus, Filter, LayoutList, LayoutGrid, Pencil, Trash2, X, AlertTriangle, ChevronDown, FileSpreadsheet, RefreshCw, ArrowUpDown, MessageCircle, Phone, MapPin, Mail, Briefcase, Gift, Info, User, Printer } from 'lucide-react'
 import { NewClientModal, ClientData } from './NewClientModal'
 import { utils, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -95,6 +95,116 @@ export function Clients() {
     }
   }
 
+  // --- FUNÇÃO DE IMPRESSÃO (NOVA) ---
+  const handlePrint = (client: Client) => {
+    const printWindow = window.open('', '', 'width=900,height=800');
+    if (!printWindow) return;
+
+    const htmlContent = `
+      <html>
+        <head>
+          <title>Ficha Cadastral - ${client.nome}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1f2937; background: #fff; }
+            .header { border-bottom: 3px solid #112240; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end; }
+            .logo { font-size: 28px; font-weight: 800; color: #112240; text-transform: uppercase; letter-spacing: -1px; }
+            .subtitle { font-size: 14px; color: #6b7280; font-weight: 500; }
+            .date { font-size: 11px; color: #9ca3af; text-align: right; margin-top: 5px; }
+            
+            .section { margin-bottom: 35px; }
+            .section-title { 
+                font-size: 13px; font-weight: 700; text-transform: uppercase; color: #112240; 
+                background: #f3f4f6; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; 
+                border-left: 4px solid #112240;
+            }
+            
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .full-width { grid-column: span 2; }
+            
+            .field-box { margin-bottom: 5px; }
+            .label { font-size: 10px; color: #6b7280; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px; }
+            .value { font-size: 15px; color: #111827; font-weight: 500; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; display: block; width: 100%; min-height: 24px; }
+            
+            .footer { 
+                position: fixed; bottom: 30px; left: 40px; right: 40px;
+                text-align: center; font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 15px; 
+            }
+            
+            @media print {
+              @page { margin: 0; size: A4; }
+              body { margin: 1.6cm; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+                <div class="logo">Salomão Advogados</div>
+                <div class="subtitle">Ficha Cadastral de Cliente</div>
+            </div>
+            <div>
+                <div class="date">Gerado em: ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Dados Corporativos e Pessoais</div>
+            <div class="grid">
+              <div class="field-box"><span class="label">Nome Completo</span><span class="value">${client.nome}</span></div>
+              <div class="field-box"><span class="label">Sócio Responsável</span><span class="value">${client.socio}</span></div>
+              <div class="field-box"><span class="label">Empresa</span><span class="value">${client.empresa}</span></div>
+              <div class="field-box"><span class="label">Cargo</span><span class="value">${client.cargo || '-'}</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Informações de Contato</div>
+            <div class="grid">
+              <div class="field-box"><span class="label">E-mail</span><span class="value">${client.email || '-'}</span></div>
+              <div class="field-box"><span class="label">Telefone / WhatsApp</span><span class="value">${client.telefone || '-'}</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Endereço e Logística</div>
+            <div class="grid">
+              <div class="field-box full-width"><span class="label">Logradouro</span><span class="value">${client.endereco}, ${client.numero} ${client.complemento ? ' - ' + client.complemento : ''}</span></div>
+              <div class="field-box"><span class="label">Bairro</span><span class="value">${client.bairro}</span></div>
+              <div class="field-box"><span class="label">CEP</span><span class="value">${client.cep}</span></div>
+              <div class="field-box"><span class="label">Cidade</span><span class="value">${client.cidade}</span></div>
+              <div class="field-box"><span class="label">Estado (UF)</span><span class="value">${client.estado}</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Gestão de Brindes</div>
+            <div class="grid">
+              <div class="field-box"><span class="label">Categoria do Brinde</span><span class="value">${client.tipoBrinde} ${client.tipoBrinde === 'Outro' ? `(${client.outroBrinde})` : ''}</span></div>
+              <div class="field-box"><span class="label">Quantidade</span><span class="value">${client.quantidade}</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Observações Internas</div>
+            <div class="field-box"><span class="label">Notas</span><span class="value" style="min-height: 60px; line-height: 1.5;">${client.observacoes || 'Nenhuma observação registrada.'}</span></div>
+          </div>
+
+          <div class="footer">
+            Documento confidencial gerado pelo sistema interno CRM. © ${new Date().getFullYear()} Salomão Advogados.
+          </div>
+          <script>
+            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    logAction('EXPORTAR', 'CLIENTES', `Imprimiu ficha cadastral de: ${client.nome}`);
+  }
+
   // --- AÇÕES DE CONTATO ---
 
   const handleWhatsApp = (client: Client, e?: React.MouseEvent) => {
@@ -166,8 +276,6 @@ Agradecemos desde já!`;
     window.location.href = `mailto:${client.email}?subject=${subject}&body=${body}`;
   }
 
-  // --- FUNÇÕES DE CRUD COM LOG ---
-
   const handleSaveClient = async (clientData: ClientData) => {
     const dbData = {
       nome: clientData.nome,
@@ -209,7 +317,6 @@ Agradecemos desde já!`;
     }
   }
 
-  // FUNÇÃO QUE ESTAVA FALTANDO
   const handleEdit = (client: Client, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     setSelectedClient(null);
@@ -290,14 +397,27 @@ Agradecemos desde já!`;
                 <p className="text-sm text-gray-600 italic">{selectedClient.observacoes || 'Nenhuma observação cadastrada.'}</p>
               </div>
             </div>
-            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-              <button onClick={(e) => handleEdit(selectedClient, e)} className="px-5 py-2.5 bg-[#112240] text-white rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-[#1a3a6c] transition-all shadow-md"><Pencil className="h-4 w-4" /> Editar Cadastro</button>
-              <button onClick={(e) => handleDeleteClick(selectedClient, e)} className="px-5 py-2.5 bg-red-50 text-red-600 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-red-100 transition-all border border-red-100"><Trash2 className="h-4 w-4" /> Excluir</button>
+            
+            {/* FOOTER AÇÕES ATUALIZADO */}
+            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+              <button onClick={() => handlePrint(selectedClient)} className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-gray-50 transition-all shadow-sm">
+                <Printer className="h-4 w-4" /> Imprimir Ficha
+              </button>
+              
+              <div className="flex gap-3">
+                <button onClick={(e) => handleEdit(selectedClient, e)} className="px-5 py-2.5 bg-[#112240] text-white rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-[#1a3a6c] transition-all shadow-md">
+                    <Pencil className="h-4 w-4" /> Editar
+                </button>
+                <button onClick={(e) => handleDeleteClick(selectedClient, e)} className="px-5 py-2.5 bg-red-50 text-red-600 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-red-100 transition-all border border-red-100">
+                    <Trash2 className="h-4 w-4" /> Excluir
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* TOOLBAR */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
         <div className="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 px-1">
            <div className="relative group">
