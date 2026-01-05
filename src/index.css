@@ -6,15 +6,21 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-body {
+/* Reset básico para garantir que o layout ocupe 100% da tela */
+html, body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: #f3f4f6;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
+body {
+  background-color: #f3f4f6;
+  color: #112240;
+  overflow: hidden; /* Evita scroll duplo na página principal */
+}
+
+/* Animações para Modais e Kanban */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -33,6 +39,7 @@ body {
   animation: scaleIn 0.2s ease-out forwards;
 }
 
+/* Garante que descrições longas não quebrem o card */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -40,6 +47,7 @@ body {
   overflow: hidden;
 }
 
+/* Estilização das barras de rolagem */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
