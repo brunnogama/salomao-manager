@@ -22,11 +22,14 @@ interface DashboardStats {
   stateData: StateData[];
 }
 
-// --- COMPONENTE DE TOOLTIP UNIFICADO ---
+// DEFINIÇÃO DA INTERFACE DE PROPS (IMPORTANTE)
+interface DashboardProps {
+  onNavigateWithFilter: (page: string, filters: { socio?: string; brinde?: string }) => void;
+}
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
-    // Pega a cor do payload ou define um fallback
     const color = data.payload.fill || data.color || '#3b82f6';
     
     return (
@@ -51,7 +54,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function Dashboard() {
+// RECEBENDO A PROP AQUI
+export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
   const [stats, setStats] = useState<DashboardStats>({ 
     totalClients: 0, 
     brindeCounts: {}, 
@@ -144,10 +148,7 @@ export function Dashboard() {
   return (
     <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-8 pb-10">
       
-      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
-        {/* CARD TOTAL GERAL */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4 relative overflow-hidden group">
             <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
             <div className="p-3 bg-blue-50 rounded-xl text-blue-700 group-hover:scale-110 transition-transform">
@@ -159,9 +160,12 @@ export function Dashboard() {
             </div>
         </div>
 
-        {/* Cards de Tipos de Brindes */}
         {Object.entries(stats.brindeCounts).map(([tipo, qtd]) => (
-          <div key={tipo} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4">
+          <div 
+            key={tipo} 
+            onClick={() => onNavigateWithFilter('clientes', { brinde: tipo })}
+            className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4 cursor-pointer hover:border-blue-300 transition-colors"
+          >
             <div className="p-3 rounded-xl" style={{ backgroundColor: `${getBrindeColor(tipo)}15`, color: getBrindeColor(tipo) }}>
               <Gift className="h-8 w-8" />
             </div>
@@ -184,9 +188,13 @@ export function Dashboard() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {stats.socioData.map((socio) => (
-              <div key={socio.name} className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 hover:border-blue-200 transition-colors flex flex-col h-full">
+              <div 
+                key={socio.name} 
+                className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 hover:border-blue-300 transition-colors flex flex-col h-full cursor-pointer group"
+                onClick={() => onNavigateWithFilter('clientes', { socio: socio.name })}
+              >
                 <div className="flex justify-between items-start mb-4">
-                  <h4 className="font-bold text-[#112240] text-base leading-tight pr-2">{socio.name}</h4>
+                  <h4 className="font-bold text-[#112240] text-base leading-tight pr-2 group-hover:text-blue-700">{socio.name}</h4>
                   <div className="text-right flex flex-col items-end">
                     <span className="text-2xl font-black text-blue-600 leading-none">{socio.total}</span>
                     <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">Total</span>
@@ -207,11 +215,7 @@ export function Dashboard() {
                         tick={{fill: '#64748b', fontWeight: 600}}
                         interval={0} 
                       />
-                      {/* TOOLTIP UNIFICADA AQUI */}
-                      <Tooltip 
-                        content={<CustomTooltip />} 
-                        cursor={{fill: '#f8fafc', radius: 4}} 
-                      />
+                      <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
                       <Bar dataKey="qtd" radius={[0, 4, 4, 0]} barSize={16} name="Quantidade">
                         {socio.brindes.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={getBrindeColor(entry.tipo)} />
@@ -226,10 +230,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* COLUNA LATERAL DIREITA */}
         <div className="space-y-8">
-            
-            {/* Bloco Distribuição Geográfica (Estados) */}
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><Map className="h-6 w-6" /></div>
@@ -249,11 +250,7 @@ export function Dashboard() {
                                 tick={{fill: '#64748b', fontWeight: 700}}
                                 interval={0} 
                             />
-                            {/* TOOLTIP UNIFICADA AQUI TAMBÉM */}
-                            <Tooltip 
-                                content={<CustomTooltip />} 
-                                cursor={{fill: '#f8fafc', radius: 4}} 
-                            />
+                            <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
                             <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24} fill="#6366f1" name="Clientes">
                                 <LabelList dataKey="value" position="right" style={{ fontSize: '12px', fontWeight: 'bold', fill: '#112240' }} />
                             </Bar>
@@ -262,33 +259,31 @@ export function Dashboard() {
                 </div>
             </div>
 
-            {/* Bloco Últimos Cadastros */}
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col h-fit">
-            <div className="flex items-center gap-3 mb-8">
-                <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Users className="h-6 w-6" /></div>
-                <h3 className="font-bold text-[#112240] text-xl">Últimos</h3>
-            </div>
-            <div className="space-y-4 overflow-y-auto custom-scrollbar pr-2 max-h-[400px]">
-                {stats.lastClients.map((client) => (
-                <div key={client.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-transparent hover:border-gray-200 transition-all group">
-                    <div className="min-w-0">
-                    <p className="text-sm font-bold text-gray-800 truncate mb-1">{client.nome}</p>
-                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide group-hover:text-blue-600 transition-colors">
-                        {client.socio || 'Sem Sócio'}
-                    </p>
-                    </div>
-                    <span 
-                    className="text-[10px] px-3 py-1 rounded-full font-bold bg-white border border-gray-200 shadow-sm shrink-0 uppercase tracking-wider" 
-                    style={{ color: getBrindeColor(client.tipo_brinde), borderColor: `${getBrindeColor(client.tipo_brinde)}30` }}
-                    >
-                    {client.tipo_brinde?.replace('Brinde ', '') || 'BRINDE'}
-                    </span>
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Users className="h-6 w-6" /></div>
+                    <h3 className="font-bold text-[#112240] text-xl">Últimos</h3>
                 </div>
-                ))}
-            </div>
+                <div className="space-y-4 overflow-y-auto custom-scrollbar pr-2 max-h-[400px]">
+                    {stats.lastClients.map((client) => (
+                    <div key={client.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-transparent hover:border-gray-200 transition-all group">
+                        <div className="min-w-0">
+                        <p className="text-sm font-bold text-gray-800 truncate mb-1">{client.nome}</p>
+                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide group-hover:text-blue-600 transition-colors">
+                            {client.socio || 'Sem Sócio'}
+                        </p>
+                        </div>
+                        <span 
+                        className="text-[10px] px-3 py-1 rounded-full font-bold bg-white border border-gray-200 shadow-sm shrink-0 uppercase tracking-wider" 
+                        style={{ color: getBrindeColor(client.tipo_brinde), borderColor: `${getBrindeColor(client.tipo_brinde)}30` }}
+                        >
+                        {client.tipo_brinde?.replace('Brinde ', '') || 'BRINDE'}
+                        </span>
+                    </div>
+                    ))}
+                </div>
             </div>
         </div>
-
       </div>
     </div>
   );
