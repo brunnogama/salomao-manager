@@ -56,22 +56,19 @@ export function Sidebar({ activePage, onNavigate, userName, isOpen, onClose }: S
     return () => clearInterval(interval)
   }, [])
 
-  // --- FUNÇÃO DE LOGOUT CORRIGIDA ---
+  // --- LOGOUT BLINDADO ---
   const handleLogout = async (e: React.MouseEvent) => {
-    e.preventDefault() // Evita recarregamento imediato
+    e.preventDefault()
+    
+    // 1. Tenta avisar o Supabase (SignOut)
     try {
-      // 1. Aguarda o Supabase destruir a sessão
-      const { error } = await supabase.auth.signOut()
-      
-      if (error) throw error
-
-      // 2. O App.tsx detectará a mudança de sessão automaticamente
-      // Mas por segurança, podemos forçar a ida para a home (login)
-      window.location.href = '/'
-      
+      await supabase.auth.signOut()
     } catch (error) {
-      console.error("Erro ao sair:", error)
-      alert("Erro ao tentar sair. Por favor, tente novamente.")
+      console.error("Erro silencioso ao deslogar:", error)
+    } finally {
+      // 2. INDEPENDENTE de erro ou sucesso, força a limpeza local e o reload
+      localStorage.clear() // Limpa qualquer lixo local
+      window.location.href = '/' // Força o reload para a tela de login
     }
   }
   
@@ -167,7 +164,7 @@ export function Sidebar({ activePage, onNavigate, userName, isOpen, onClose }: S
                   </span>
               </div>
               <button 
-                onClick={handleLogout} // Chama a função corrigida
+                onClick={handleLogout}
                 className="text-red-500 hover:text-red-400 transition-colors p-1 hover:bg-white/5 rounded"
                 title="Sair do Sistema"
               >
