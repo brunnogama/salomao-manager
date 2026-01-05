@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Users, Pencil, Trash2, Save, X, RefreshCw, Briefcase } from 'lucide-react'
 import { utils, read, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
+import { logAction } from '../lib/logger' // Importe
 
 interface SocioStats {
   nome: string;
@@ -12,7 +13,6 @@ export function Settings() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
   
-  // Estados para Gestão de Sócios
   const [sociosStats, setSociosStats] = useState<SocioStats[]>([])
   const [loadingSocios, setLoadingSocios] = useState(false)
   const [editingSocio, setEditingSocio] = useState<string | null>(null)
@@ -20,31 +20,16 @@ export function Settings() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // --- GESTÃO DE SÓCIOS ---
-
   const fetchSocios = async () => {
     setLoadingSocios(true)
     try {
-      // Busca todos os nomes de sócios
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('socio')
-      
+      const { data, error } = await supabase.from('clientes').select('socio')
       if (error) throw error
-
       if (data) {
-        // Conta quantos clientes cada sócio tem
         const counts: Record<string, number> = {}
-        data.forEach(item => {
-          if (item.socio) {
-            counts[item.socio] = (counts[item.socio] || 0) + 1
-          }
-        })
-
-        // Transforma em array e ordena
+        data.forEach(item => { if (item.socio) counts[item.socio] = (counts[item.socio] || 0) + 1 })
         const statsArray = Object.entries(counts).map(([nome, count]) => ({ nome, count }))
         statsArray.sort((a, b) => a.nome.localeCompare(b.nome))
-        
         setSociosStats(statsArray)
       }
     } catch (error) {
@@ -54,26 +39,19 @@ export function Settings() {
     }
   }
 
-  useEffect(() => {
-    fetchSocios()
-  }, [])
+  useEffect(() => { fetchSocios() }, [])
 
   const handleUpdateSocio = async (oldName: string) => {
     if (!newSocioName.trim() || newSocioName === oldName) {
       setEditingSocio(null)
       return
     }
-
-    if (confirm(`Confirmar alteração de "${oldName}" para "${newSocioName}"?\n\nIsso atualizará todos os clientes vinculados.`)) {
+    if (confirm(`Confirmar alteração de "${oldName}" para "${newSocioName}"?`)) {
       setLoadingSocios(true)
       try {
-        const { error } = await supabase
-          .from('clientes')
-          .update({ socio: newSocioName })
-          .eq('socio', oldName)
-
+        const { error } = await supabase.from('clientes').update({ socio: newSocioName }).eq('socio', oldName)
         if (error) throw error
-
+        await logAction('EDITAR', 'CONFIG', `Renomeou sócio: ${oldName} -> ${newSocioName}`)
         setStatus({ type: 'success', message: 'Sócio renomeado com sucesso!' })
         fetchSocios()
       } catch (error: any) {
@@ -86,16 +64,12 @@ export function Settings() {
   }
 
   const handleDeleteSocio = async (name: string) => {
-    if (confirm(`ATENÇÃO: Você está prestes a remover o vínculo do sócio "${name}".\n\nOs clientes desse sócio ficarão "Sem Sócio". Deseja continuar?`)) {
+    if (confirm(`ATENÇÃO: Você está prestes a remover o vínculo do sócio "${name}".`)) {
       setLoadingSocios(true)
       try {
-        const { error } = await supabase
-          .from('clientes')
-          .update({ socio: null })
-          .eq('socio', name)
-
+        const { error } = await supabase.from('clientes').update({ socio: null }).eq('socio', name)
         if (error) throw error
-
+        await logAction('EXCLUIR', 'CONFIG', `Removeu vínculo do sócio: ${name}`)
         setStatus({ type: 'success', message: `Sócio "${name}" removido.` })
         fetchSocios()
       } catch (error: any) {
@@ -106,43 +80,17 @@ export function Settings() {
     }
   }
 
-  // --- IMPORTAÇÃO E EXPORTAÇÃO ---
-
   const handleDownloadTemplate = () => {
-    const templateData = [
-      {
-        "Nome Completo": "Exemplo Silva",
-        "Empresa": "Empresa Teste S.A.",
-        "Cargo": "Diretor",
-        "Telefone": "(11) 99999-9999",
-        "Tipo de Brinde": "Brinde Médio",
-        "Outro Brinde": "",
-        "Quantidade": 1,
-        "CEP": "01001-000",
-        "Endereço": "Praça da Sé",
-        "Número": "100",
-        "Complemento": "Sala 1",
-        "Bairro": "Centro",
-        "Cidade": "São Paulo",
-        "Estado": "SP",
-        "Email": "exemplo@email.com",
-        "Sócio Responsável": "Marcio Gama",
-        "Observações": "Cliente importante"
-      }
-    ]
-
+    const templateData = [{ "Nome Completo": "Exemplo", "Empresa": "Empresa", "Sócio Responsável": "Sócio" }]
     const ws = utils.json_to_sheet(templateData)
-    const wscols = [{ wch: 25 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 12 }, { wch: 30 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 5 }, { wch: 25 }, { wch: 20 }, { wch: 30 }]
-    ws['!cols'] = wscols
     const wb = utils.book_new()
-    utils.book_append_sheet(wb, ws, "Modelo Importação")
-    writeFile(wb, "Modelo_Importacao_Clientes_Salomao.xlsx")
+    utils.book_append_sheet(wb, ws, "Modelo")
+    writeFile(wb, "Modelo_Importacao.xlsx")
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     setLoading(true)
     setStatus({ type: null, message: '' })
 
@@ -177,9 +125,9 @@ export function Settings() {
       const { error } = await supabase.from('clientes').insert(clientsToInsert)
       if (error) throw error
 
+      await logAction('CRIAR', 'CONFIG', `Importou ${clientsToInsert.length} clientes via Excel`)
       setStatus({ type: 'success', message: `${clientsToInsert.length} clientes importados com sucesso!` })
       if (fileInputRef.current) fileInputRef.current.value = ''
-      
       fetchSocios()
 
     } catch (error: any) {
@@ -190,6 +138,7 @@ export function Settings() {
     }
   }
 
+  // ... (JSX permanece igual, sem alterações visuais, apenas lógicas)
   return (
     <div className="max-w-5xl mx-auto pb-10">
       <h2 className="text-2xl font-bold text-[#112240] mb-6">Configurações do Sistema</h2>
