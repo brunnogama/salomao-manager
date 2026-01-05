@@ -9,16 +9,19 @@ import { Kanban } from './components/Kanban'
 import { Dashboard } from './components/Dashboard'
 import { History } from './components/History'
 import { Menu } from 'lucide-react'
+import { ModuleSelector } from './components/ModuleSelector' // Novo
+import { UnderConstruction } from './components/UnderConstruction' // Novo
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  
+  // Controle de Navegação Principal
+  const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators'>('home')
+  
+  // Controle do CRM
   const [activePage, setActivePage] = useState('dashboard')
-  
-  // Estado para controlar o Menu Mobile
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  
-  // Estado para passar filtros do Dashboard para Clientes
   const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({})
 
   const moduleDescriptions: Record<string, string> = {
@@ -61,8 +64,24 @@ export default function App() {
   }
 
   if (loading) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
+  
+  // 1. Se não tiver sessão, mostra Login
   if (!session) return <Login />
 
+  // 2. Se tiver sessão mas nenhum módulo escolhido, mostra o Seletor
+  if (currentModule === 'home') {
+    return <ModuleSelector onSelect={setCurrentModule} userName={getUserDisplayName()} />
+  }
+
+  // 3. Se escolheu Família ou Colaboradores, mostra Em Construção
+  if (currentModule === 'family') {
+    return <UnderConstruction moduleName="Gestão da Família" onBack={() => setCurrentModule('home')} />
+  }
+  if (currentModule === 'collaborators') {
+    return <UnderConstruction moduleName="Colaboradores" onBack={() => setCurrentModule('home')} />
+  }
+
+  // 4. Se escolheu CRM, mostra o sistema completo
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden w-full">
       <Sidebar 
@@ -71,12 +90,12 @@ export default function App() {
         userName={getUserDisplayName()} 
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        onSwitchModule={() => setCurrentModule('home')} // Passando a função de voltar
       />
       
       <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 relative">
         <header className="bg-white border-b border-gray-200 h-20 flex items-center px-4 md:px-8 justify-between flex-shrink-0 z-10 gap-3">
             
-            {/* LADO ESQUERDO: Título e Menu Hambúrguer */}
             <div className="flex items-center gap-3 overflow-hidden">
                 <button 
                   onClick={() => setIsSidebarOpen(true)}
@@ -95,7 +114,6 @@ export default function App() {
                 </div>
             </div>
 
-            {/* LADO DIREITO: CRM (NOVO) */}
             <div className="flex-shrink-0">
                 <span className="text-2xl font-extrabold text-[#112240] tracking-tighter opacity-90 select-none">
                     CRM
