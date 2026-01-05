@@ -3,6 +3,7 @@ import { LayoutList, LayoutGrid, Pencil, X, RefreshCw, Briefcase, Mail, Gift, In
 import { NewClientModal, ClientData } from './NewClientModal'
 import { utils, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
+import { logAction } from '../lib/logger' // Adicionado import do Logger
 
 interface Client extends ClientData {
   id: number;
@@ -97,12 +98,13 @@ export function IncompleteClients() {
     if (error) {
       alert('Erro ao atualizar. Tente novamente.');
     } else {
+      await logAction('EDITAR', 'INCOMPLETOS', `Dispensou campo '${field}' de: ${client.nome}`); // LOG ADICIONADO
       fetchIncompleteClients();
       if(selectedClient?.id === client.id) setSelectedClient(null);
     }
   }
 
-  // NOVA FUNÇÃO: Descartar Cliente da Lista
+  // Função: Descartar Cliente da Lista (AGORA COM LOG)
   const handleDiscardClient = async (client: Client, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
 
@@ -121,12 +123,13 @@ export function IncompleteClients() {
     if (error) {
       alert('Erro ao descartar cliente.');
     } else {
+      await logAction('EDITAR', 'INCOMPLETOS', `Descartou da lista de pendências: ${client.nome}`); // LOG ADICIONADO
       fetchIncompleteClients();
       if (selectedClient?.id === client.id) setSelectedClient(null);
     }
   }
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     const dataToExport = filteredClients.map(client => ({
       "Nome": client.nome,
       "Empresa": client.empresa,
@@ -137,6 +140,7 @@ export function IncompleteClients() {
     const wb = utils.book_new()
     utils.book_append_sheet(wb, ws, "Pendências")
     writeFile(wb, "Relatorio_Incompletos_Salomao.xlsx")
+    await logAction('EXPORTAR', 'INCOMPLETOS', `Exportou ${dataToExport.length} cadastros incompletos`); // LOG ADICIONADO
   }
 
   const handleEdit = (client: Client, e?: React.MouseEvent) => {
@@ -153,6 +157,7 @@ export function IncompleteClients() {
         if (error) {
             alert('Erro ao excluir cliente.');
         } else {
+            await logAction('EXCLUIR', 'INCOMPLETOS', `Removeu cliente permanentemente: ${client.nome}`); // LOG ADICIONADO
             fetchIncompleteClients();
             if(selectedClient?.id === client.id) setSelectedClient(null);
         }
