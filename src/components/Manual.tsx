@@ -37,14 +37,16 @@ export function Manual() {
             <button
               key={section.id}
               onClick={() => scrollTo(section.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+              // ADICIONADO 'text-left' AQUI ABAIXO PARA CORRIGIR O ALINHAMENTO
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors text-left ${
                 activeSection === section.id 
                   ? 'bg-blue-50 text-blue-700' 
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
-              <section.icon className="h-4 w-4" />
-              {section.label}
+              {/* shrink-0 garante que o ícone não amasse se o texto for muito grande */}
+              <section.icon className="h-4 w-4 flex-shrink-0" />
+              <span className="leading-tight">{section.label}</span>
             </button>
           ))}
         </div>
