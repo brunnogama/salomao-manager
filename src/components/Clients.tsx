@@ -59,7 +59,6 @@ export function Clients() {
 
   useEffect(() => { fetchClients() }, [])
 
-  // Menus suspensos em ordem alfabética
   const uniqueSocios = useMemo(() => {
     return Array.from(new Set(clients.map(c => c.socio).filter(Boolean))).sort();
   }, [clients]);
@@ -94,21 +93,16 @@ export function Clients() {
     }
   }
 
-  // --- CORREÇÃO NOS HANDLERS DE AÇÃO ---
   const handleWhatsApp = (client: Client, e?: React.MouseEvent) => {
     if(e) {
         e.preventDefault();
         e.stopPropagation();
     }
     
-    // Verificação de segurança: garante que existe telefone antes de tentar limpar
     const phoneToClean = client.telefone || '';
     const cleanPhone = phoneToClean.replace(/\D/g, '');
     
-    if(!cleanPhone) {
-        alert(`O cliente ${client.nome} não possui um telefone válido cadastrado para WhatsApp.`);
-        return;
-    }
+    if(!cleanPhone) return;
 
     const message = `Olá Sr(a). ${client.nome}, somos do Salomão Advogados.
 
@@ -131,19 +125,16 @@ Agradecemos a atenção!`;
     window.open(url, '_blank');
   }
 
-  const handle3CX = (phone: string, e?: React.MouseEvent) => {
+  const handle3CX = (client: Client, e?: React.MouseEvent) => {
     if(e) {
         e.preventDefault();
         e.stopPropagation();
     }
     
-    const phoneToCall = phone || '';
+    const phoneToCall = client.telefone || '';
     const cleanPhone = phoneToCall.replace(/\D/g, '');
     
-    if(!cleanPhone) {
-        alert("Número de telefone inválido ou não cadastrado.");
-        return;
-    }
+    if(!cleanPhone) return;
     window.location.href = `tel:${cleanPhone}`;
   }
 
@@ -186,20 +177,14 @@ Agradecemos a atenção!`;
   }
 
   const handleEdit = (client: Client, e?: React.MouseEvent) => {
-    if(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+    if(e) e.stopPropagation();
     setSelectedClient(null);
     setClientToEdit(client);
     setTimeout(() => { setIsModalOpen(true); }, 10);
   }
 
   const handleDeleteClick = (client: Client, e?: React.MouseEvent) => {
-    if(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+    if(e) e.stopPropagation();
     setClientToDelete(client);
   }
 
@@ -322,14 +307,27 @@ Agradecemos a atenção!`;
                     </div>
                     <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full flex-shrink-0 ${client.tipoBrinde === 'Brinde VIP' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>{client.tipoBrinde}</span>
                   </div>
-                  <div className="bg-gray-50/50 rounded-md p-2 border border-gray-100 mb-3 text-xs">
-                    <div className="flex justify-between mb-1"><span className="text-gray-400">Sócio:</span><span className="font-bold text-[#112240]">{client.socio}</span></div>
-                    <div className="flex justify-between"><span className="text-gray-400">UF:</span><span className="text-gray-600 font-medium">{client.estado || '-'}</span></div>
+                  
+                  {/* ENDEREÇO E TELEFONE NO CARD */}
+                  <div className="bg-gray-50/50 rounded-md p-2 border border-gray-100 mb-3 text-xs space-y-1">
+                    <div className="flex justify-between items-center"><span className="text-gray-400">Sócio:</span><span className="font-bold text-[#112240]">{client.socio}</span></div>
+                    {(client.cidade || client.estado) && (
+                        <div className="flex justify-between items-center"><span className="text-gray-400">Local:</span><span className="text-gray-600 font-medium">{client.cidade ? `${client.cidade}/${client.estado}` : client.estado}</span></div>
+                    )}
+                    {client.telefone && (
+                        <div className="flex justify-between items-center"><span className="text-gray-400">Tel:</span><span className="text-gray-600 font-medium">{client.telefone}</span></div>
+                    )}
                   </div>
+
                   <div className="border-t border-gray-100 pt-3 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="flex gap-2">
-                      <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors"><MessageCircle className="h-4 w-4" /></button>
-                      <button onClick={(e) => handle3CX(client.telefone, e)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"><Phone className="h-4 w-4" /></button>
+                      {/* Ícones de contato só aparecem se houver telefone */}
+                      {client.telefone && (
+                        <>
+                            <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors"><MessageCircle className="h-4 w-4" /></button>
+                            <button onClick={(e) => handle3CX(client, e)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"><Phone className="h-4 w-4" /></button>
+                        </>
+                      )}
                     </div>
                     <div className="flex gap-1">
                       <button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-gray-500 hover:text-[#112240] rounded-md transition-colors"><Pencil className="h-4 w-4" /></button>
@@ -363,14 +361,18 @@ Agradecemos a atenção!`;
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors">
-                          <MessageCircle className="h-4 w-4" />
-                        </button>
+                        {client.telefone && (
+                            <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors">
+                            <MessageCircle className="h-4 w-4" />
+                            </button>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <button onClick={(e) => handle3CX(client.telefone, e)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
-                          <Phone className="h-4 w-4" />
-                        </button>
+                        {client.telefone && (
+                            <button onClick={(e) => handle3CX(client, e)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
+                            <Phone className="h-4 w-4" />
+                            </button>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
