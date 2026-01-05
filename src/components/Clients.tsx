@@ -9,7 +9,12 @@ interface Client extends ClientData {
   id: number;
 }
 
-export function Clients() {
+// --- INTERFACE DE PROPS (CORREÇÃO DO ERRO) ---
+interface ClientsProps {
+  initialFilters?: { socio?: string; brinde?: string };
+}
+
+export function Clients({ initialFilters }: ClientsProps) {
   const [viewMode, setViewMode] = useState<'list' | 'card'>('card')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -18,8 +23,17 @@ export function Clients() {
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
 
-  const [socioFilter, setSocioFilter] = useState('')
-  const [brindeFilter, setBrindeFilter] = useState('')
+  // Inicializa os filtros com o que veio via props (do Dashboard) ou vazio
+  const [socioFilter, setSocioFilter] = useState(initialFilters?.socio || '')
+  const [brindeFilter, setBrindeFilter] = useState(initialFilters?.brinde || '')
+  
+  // Atualiza os filtros se as props mudarem
+  useEffect(() => {
+    if (initialFilters) {
+        if (initialFilters.socio !== undefined) setSocioFilter(initialFilters.socio);
+        if (initialFilters.brinde !== undefined) setBrindeFilter(initialFilters.brinde);
+    }
+  }, [initialFilters])
   
   const [sortBy, setSortBy] = useState<'nome' | 'socio' | null>('nome')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -95,7 +109,7 @@ export function Clients() {
     }
   }
 
-  // --- FUNÇÃO DE IMPRESSÃO INDIVIDUAL ---
+  // --- IMPRESSÃO INDIVIDUAL ---
   const handlePrint = (client: Client) => {
     const printWindow = window.open('', '', 'width=900,height=800');
     if (!printWindow) return;
@@ -105,11 +119,10 @@ export function Clients() {
         <head>
           <title>Ficha Cadastral - ${client.nome}</title>
           <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1f2937; background: #fff; }
+            body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #1f2937; background: #fff; }
             .header { border-bottom: 3px solid #112240; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end; }
-            .logo { font-size: 28px; font-weight: 800; color: #112240; text-transform: uppercase; letter-spacing: -1px; }
+            .logo { font-size: 28px; font-weight: 800; color: #112240; text-transform: uppercase; }
             .subtitle { font-size: 14px; color: #6b7280; font-weight: 500; }
-            .date { font-size: 11px; color: #9ca3af; text-align: right; margin-top: 5px; }
             .section { margin-bottom: 35px; }
             .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #112240; background: #f3f4f6; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #112240; }
             .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -117,14 +130,14 @@ export function Clients() {
             .field-box { margin-bottom: 5px; }
             .label { font-size: 10px; color: #6b7280; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px; }
             .value { font-size: 15px; color: #111827; font-weight: 500; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; display: block; width: 100%; min-height: 24px; }
-            .footer { position: fixed; bottom: 30px; left: 40px; right: 40px; text-align: center; font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 15px; }
+            .footer { position: fixed; bottom: 30px; width: 100%; text-align: center; font-size: 10px; color: #9ca3af; }
             @media print { @page { margin: 0; size: A4; } body { margin: 1.6cm; } }
           </style>
         </head>
         <body>
           <div class="header">
             <div><div class="logo">Salomão Advogados</div><div class="subtitle">Ficha Cadastral de Cliente</div></div>
-            <div><div class="date">Gerado em: ${new Date().toLocaleDateString()}</div></div>
+            <div style="font-size: 11px; color: #9ca3af;">${new Date().toLocaleDateString()}</div>
           </div>
           <div class="section"><div class="section-title">Dados</div><div class="grid"><div class="field-box"><span class="label">Nome</span><span class="value">${client.nome}</span></div><div class="field-box"><span class="label">Sócio</span><span class="value">${client.socio}</span></div><div class="field-box"><span class="label">Empresa</span><span class="value">${client.empresa}</span></div><div class="field-box"><span class="label">Cargo</span><span class="value">${client.cargo || '-'}</span></div></div></div>
           <div class="section"><div class="section-title">Contato</div><div class="grid"><div class="field-box"><span class="label">E-mail</span><span class="value">${client.email || '-'}</span></div><div class="field-box"><span class="label">Tel</span><span class="value">${client.telefone || '-'}</span></div></div></div>
@@ -138,29 +151,23 @@ export function Clients() {
     logAction('EXPORTAR', 'CLIENTES', `Imprimiu ficha cadastral de: ${client.nome}`);
   }
 
-  // --- FUNÇÃO DE IMPRESSÃO EM LOTE ---
+  // --- IMPRESSÃO EM LOTE ---
   const handlePrintList = () => {
     if (processedClients.length === 0) {
         alert("Nenhum cliente na lista para imprimir.");
         return;
     }
-
     const printWindow = window.open('', '', 'width=900,height=800');
     if (!printWindow) return;
 
     const clientsHtml = processedClients.map(client => `
       <div class="card">
-        <div class="card-header">
-            <span class="name">${client.nome}</span>
-            <span class="socio">${client.socio}</span>
-        </div>
+        <div class="card-header"><span class="name">${client.nome}</span><span class="socio">${client.socio}</span></div>
         <div class="card-body">
             <div class="row"><strong>Empresa:</strong> ${client.empresa}</div>
-            <div class="row"><strong>Cargo:</strong> ${client.cargo || '-'}</div>
             <div class="row"><strong>Email:</strong> ${client.email || '-'}</div>
             <div class="row"><strong>Tel:</strong> ${client.telefone || '-'}</div>
             <div class="row"><strong>Local:</strong> ${client.cidade}/${client.estado}</div>
-            <div class="row"><strong>Brinde:</strong> ${client.tipoBrinde}</div>
         </div>
       </div>
     `).join('');
@@ -170,104 +177,52 @@ export function Clients() {
         <head>
           <title>Lista de Clientes</title>
           <style>
-            body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #fff; }
-            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #112240; padding-bottom: 10px; }
-            .title { font-size: 20px; font-weight: 800; color: #112240; text-transform: uppercase; }
-            .meta { font-size: 12px; color: #666; margin-top: 5px; }
+            body { font-family: sans-serif; padding: 20px; }
+            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #112240; }
             .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
             .card { border: 1px solid #ddd; border-radius: 6px; padding: 10px; page-break-inside: avoid; background: #f9fafb; }
-            .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
-            .name { font-weight: 800; font-size: 14px; color: #112240; }
-            .socio { font-size: 10px; background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-            .card-body { font-size: 11px; color: #374151; }
-            .row { margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            @media print { @page { margin: 1cm; size: A4; } body { padding: 0; } }
+            .card-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; color: #112240; }
+            .socio { font-size: 10px; background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; }
+            .row { font-size: 11px; margin-bottom: 2px; }
+            @media print { @page { margin: 1cm; } }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div class="title">Relatório de Clientes</div>
-            <div class="meta">Total: ${processedClients.length} registros | Gerado em: ${new Date().toLocaleDateString()}</div>
-          </div>
+          <div class="header"><h3>Relatório de Clientes</h3><p style="font-size: 12px">Total: ${processedClients.length} | ${new Date().toLocaleDateString()}</p></div>
           <div class="grid-container">${clientsHtml}</div>
           <script>window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); };</script>
         </body>
       </html>
     `;
-
     printWindow.document.write(htmlContent);
     printWindow.document.close();
     logAction('EXPORTAR', 'CLIENTES', `Imprimiu lista com ${processedClients.length} clientes`);
   }
 
-  // --- AÇÕES DE CONTATO (TEXTOS CORRIGIDOS) ---
-
+  // --- AÇÕES DE CONTATO ---
   const handleWhatsApp = (client: Client, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
-    
     const phoneToClean = client.telefone || '';
     const cleanPhone = phoneToClean.replace(/\D/g, '');
-    
     if(!cleanPhone) { alert("Telefone não cadastrado."); return; }
-
-    const message = `Olá Sr(a). ${client.nome}.
-
-Somos do Salomão Advogados e estamos atualizando nossa base de dados.
-Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
-
-🏢 Empresa: ${client.empresa || '-'}
-📮 CEP: ${client.cep || '-'}
-📍 Endereço: ${client.endereco || '-'}
-🔢 Número: ${client.numero || '-'}
-🏘️ Bairro: ${client.bairro || '-'}
-🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}
-📝 Complemento: ${client.complemento || '-'}
-📧 E-mail: ${client.email || '-'}
-
-📱 Outro número de telefone: (Caso possua, por favor informar)
-
-Agradecemos a atenção!`;
-
+    const message = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados e estamos atualizando nossa base de dados.\nPoderia, por gentileza, confirmar se as informações abaixo estão corretas?\n\n🏢 Empresa: ${client.empresa || '-'}\n📮 CEP: ${client.cep || '-'}\n📍 Endereço: ${client.endereco || '-'}\n🔢 Número: ${client.numero || '-'}\n🏘️ Bairro: ${client.bairro || '-'}\n🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}\n📝 Complemento: ${client.complemento || '-'}\n📧 E-mail: ${client.email || '-'}\n\n📱 Outro número de telefone: (Caso possua, por favor informar)\n\nAgradecemos a atenção!`;
     const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   }
 
   const handle3CX = (client: Client, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
-    
     const phoneToCall = client.telefone || '';
     const cleanPhone = phoneToCall.replace(/\D/g, '');
-    
     if(!cleanPhone) { alert("Telefone não cadastrado."); return; }
     window.location.href = `tel:${cleanPhone}`;
   }
 
   const handleEmail = (client: Client, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
-
     if(!client.email) { alert("E-mail não cadastrado."); return; }
-
     const subject = encodeURIComponent("Atualização Cadastral - Salomão Advogados");
-    
-    const bodyText = `Olá Sr(a). ${client.nome}.
-
-Somos do Salomão Advogados e estamos atualizando nossa base de dados.
-Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
-
-🏢 Empresa: ${client.empresa || '-'}
-📮 CEP: ${client.cep || '-'}
-📍 Endereço: ${client.endereco || '-'}
-🔢 Número: ${client.numero || '-'}
-🏘️ Bairro: ${client.bairro || '-'}
-🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}
-📝 Complemento: ${client.complemento || '-'}
-📧 E-mail: ${client.email || '-'}
-📱 Outro número de telefone: (Caso possua, por favor informar)
-
-Agradecemos a atenção!
-
-Agradecemos desde já!`;
-
+    const bodyText = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados e estamos atualizando nossa base de dados.\nPoderia, por gentileza, confirmar se as informações abaixo estão corretas?\n\n🏢 Empresa: ${client.empresa || '-'}\n📮 CEP: ${client.cep || '-'}\n📍 Endereço: ${client.endereco || '-'}\n🔢 Número: ${client.numero || '-'}\n🏘️ Bairro: ${client.bairro || '-'}\n🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}\n📝 Complemento: ${client.complemento || '-'}\n📧 E-mail: ${client.email || '-'}\n📱 Outro número de telefone: (Caso possua, por favor informar)\n\nAgradecemos a atenção!\n\nAgradecemos desde já!`;
     const body = encodeURIComponent(bodyText);
     window.location.href = `mailto:${client.email}?subject=${subject}&body=${body}`;
   }
@@ -411,6 +366,7 @@ Agradecemos desde já!`;
         </div>
       )}
 
+      {/* TOOLBAR */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
         <div className="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 px-1">
            <div className="relative group">
@@ -554,7 +510,7 @@ Agradecemos desde já!`;
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2"> {/* Removed opacity-0 classes */}
+                        <div className="flex justify-end gap-2">
                           <button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md">
                             <Pencil className="h-4 w-4" />
                           </button>
