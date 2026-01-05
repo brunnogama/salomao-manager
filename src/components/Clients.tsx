@@ -104,22 +104,23 @@ export function Clients() {
     
     if(!cleanPhone) { alert("Telefone não cadastrado."); return; }
 
-    const message = `Olá Sr(a). ${client.nome}, somos do Salomão Advogados.
+    const message = `Olá Sr(a). ${client.nome}.
 
-Estamos atualizando nossa base de dados. Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
+Somos do Salomão Advogados e estamos atualizando nossa base de dados.
+Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
 
-🏢 *Empresa:* ${client.empresa || '-'}
-📮 *CEP:* ${client.cep || '-'}
-📍 *Endereço:* ${client.endereco || '-'}
-🔢 *Número:* ${client.numero || '-'}
-🏘️ *Bairro:* ${client.bairro || '-'}
-🏙️ *Cidade/UF:* ${client.cidade || '-'}/${client.estado || '-'}
-📝 *Complemento:* ${client.complemento || '-'}
-📧 *E-mail:* ${client.email || '-'}
+🏢 Empresa: ${client.empresa || '-'}
+📮 CEP: ${client.cep || '-'}
+📍 Endereço: ${client.endereco || '-'}
+🔢 Número: ${client.numero || '-'}
+🏘️ Bairro: ${client.bairro || '-'}
+🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}
+📝 Complemento: ${client.complemento || '-'}
+📧 E-mail: ${client.email || '-'}
 
-📱 *Outro número de telefone:* (Caso possua, por favor informar)
+📱 Outro número de telefone: (Caso possua, por favor informar)
 
-Agradecemos a atenção!`;
+Agradecemos desde já!`;
 
     const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
@@ -141,9 +142,12 @@ Agradecemos a atenção!`;
     if(!client.email) { alert("E-mail não cadastrado."); return; }
 
     const subject = encodeURIComponent("Atualização Cadastral - Salomão Advogados");
-    const bodyText = `Olá Sr(a). ${client.nome}, somos do Salomão Advogados.
+    
+    // Texto formatado com quebras de linha explícitas para funcionar em diferentes clientes de e-mail
+    const bodyText = `Olá Sr(a). ${client.nome}.
 
-Estamos atualizando nossa base de dados. Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
+Somos do Salomão Advogados e estamos atualizando nossa base de dados.
+Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
 
 🏢 Empresa: ${client.empresa || '-'}
 📮 CEP: ${client.cep || '-'}
@@ -156,7 +160,7 @@ Estamos atualizando nossa base de dados. Poderia, por gentileza, confirmar se as
 
 📱 Outro número de telefone: (Caso possua, por favor informar)
 
-Agradecemos a atenção!`;
+Agradecemos desde já!`;
 
     const body = encodeURIComponent(bodyText);
     window.location.href = `mailto:${client.email}?subject=${subject}&body=${body}`;
@@ -284,7 +288,7 @@ Agradecemos a atenção!`;
       )}
 
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
-        <div className="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 px-1">
+        <div className="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 px-1">
            <div className="relative group">
              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Filter className="h-4 w-4" /></div>
              <select value={socioFilter} onChange={(e) => setSocioFilter(e.target.value)} className="appearance-none pl-9 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-300 outline-none focus:ring-2 focus:ring-[#112240]/20 min-w-[160px]">
@@ -361,7 +365,6 @@ Agradecemos a atenção!`;
 
                   <div className="border-t border-gray-100 pt-3 flex justify-between items-center transition-opacity">
                     <div className="flex gap-2">
-                      {/* BOTÕES DE CONTATO - SEMPRE VISÍVEIS SE HOUVER DADO */}
                       {client.telefone && (
                         <>
                             <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors"><MessageCircle className="h-4 w-4" /></button>
