@@ -181,13 +181,13 @@ export function Dashboard() {
                         fontSize={10} 
                         width={70}
                         tick={{fill: '#64748b', fontWeight: 600}}
-                        interval={0} // Força exibir todos os labels
+                        interval={0} 
                       />
                       <Tooltip 
                         cursor={{fill: 'transparent'}}
                         contentStyle={{borderRadius: '8px', border: 'none', fontSize: '11px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'}}
                       />
-                      <Bar dataKey="qtd" radius={[0, 4, 4, 0]} barSize={16}>
+                      <Bar dataKey="qtd" radius={[0, 4, 4, 0]} barSize={16} name="Quantidade">
                         {socio.brindes.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={getBrindeColor(entry.tipo)} />
                         ))}
@@ -210,7 +210,6 @@ export function Dashboard() {
                     <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><Map className="h-6 w-6" /></div>
                     <h3 className="font-bold text-[#112240] text-xl">Por Estado</h3>
                 </div>
-                {/* Altura aumentada para comportar mais estados se necessário */}
                 <div className="h-64 w-full"> 
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={stats.stateData} layout="vertical" margin={{ left: 0, right: 30, top: 5, bottom: 5 }}>
@@ -220,16 +219,17 @@ export function Dashboard() {
                                 type="category" 
                                 axisLine={false} 
                                 tickLine={false} 
-                                fontSize={12} // Fonte um pouco maior
-                                width={35}   // Largura maior para garantir que caiba a sigla
+                                fontSize={12} 
+                                width={35}   
                                 tick={{fill: '#64748b', fontWeight: 700}}
-                                interval={0} // OBRIGATÓRIO: Exibe todos os nomes mesmo se houver pouco espaço
+                                interval={0} 
                             />
                             <Tooltip 
                                 cursor={{fill: '#f1f5f9'}}
                                 contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'}}
                             />
-                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24} fill="#6366f1">
+                            {/* Adicionado name="Clientes" para corrigir o texto do Tooltip */}
+                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24} fill="#6366f1" name="Clientes">
                                 <LabelList dataKey="value" position="right" style={{ fontSize: '12px', fontWeight: 'bold', fill: '#112240' }} />
                             </Bar>
                         </BarChart>
