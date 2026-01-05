@@ -1,0 +1,141 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import { History as HistoryIcon, Search, Filter, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
+import { utils, writeFile } from 'xlsx'
+
+interface LogItem {
+  id: number
+  created_at: string
+  user_email: string
+  action: string
+  module: string
+  details: string
+}
+
+export function History() {
+  const [logs, setLogs] = useState<LogItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('')
+  const [moduleFilter, setModuleFilter] = useState('TODOS')
+
+  const fetchLogs = async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100) // Limita aos últimos 100 para performance
+
+    if (error) console.error(error)
+    else setLogs(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchLogs()
+  }, [])
+
+  const filteredLogs = logs.filter(log => {
+    const matchesText = 
+      log.user_email.toLowerCase().includes(filter.toLowerCase()) ||
+      log.details.toLowerCase().includes(filter.toLowerCase()) ||
+      log.action.toLowerCase().includes(filter.toLowerCase())
+    
+    const matchesModule = moduleFilter === 'TODOS' ? true : log.module === moduleFilter
+
+    return matchesText && matchesModule
+  })
+
+  const getActionColor = (action: string) => {
+    switch (action) {
+      case 'CRIAR': return 'bg-green-100 text-green-700 border-green-200'
+      case 'EDITAR': return 'bg-blue-100 text-blue-700 border-blue-200'
+      case 'EXCLUIR': return 'bg-red-100 text-red-700 border-red-200'
+      case 'EXPORTAR': return 'bg-orange-100 text-orange-700 border-orange-200'
+      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+    }
+  }
+
+  const handleExport = () => {
+    const ws = utils.json_to_sheet(filteredLogs)
+    const wb = utils.book_new()
+    utils.book_append_sheet(wb, ws, "Logs")
+    writeFile(wb, "Historico_Atividades.xlsx")
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Buscar por usuário, ação..." 
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#112240]"
+              value={filter}
+              onChange={e => setFilter(e.target.value)}
+            />
+          </div>
+          <select 
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#112240]"
+            value={moduleFilter}
+            onChange={e => setModuleFilter(e.target.value)}
+          >
+            <option value="TODOS">Todos Módulos</option>
+            <option value="CLIENTES">Clientes</option>
+            <option value="KANBAN">Kanban</option>
+            <option value="CONFIG">Configurações</option>
+            <option value="INCOMPLETOS">Incompletos</option>
+          </select>
+        </div>
+        <div className="flex gap-2">
+            <button onClick={fetchLogs} className="p-2 text-gray-500 hover:text-[#112240] bg-white border border-gray-200 rounded-lg"><RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} /></button>
+            <button onClick={handleExport} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50">Exportar Logs</button>
+        </div>
+      </div>
+
+      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+        <div className="overflow-y-auto custom-scrollbar flex-1">
+          <table className="min-w-full divide-y divide-gray-100">
+            <thead className="bg-gray-50 sticky top-0 z-10">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Data/Hora</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Usuário</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Módulo</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ação</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Detalhes</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {filteredLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                    {new Date(log.created_at).toLocaleString('pt-BR')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900">
+                    {log.user_email}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                    {log.module}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-[10px] font-bold rounded border ${getActionColor(log.action)}`}>
+                      {log.action}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-xs text-gray-600">
+                    {log.details}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filteredLogs.length === 0 && !loading && (
+            <div className="text-center py-10 text-gray-400 text-sm">Nenhum registro encontrado.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
