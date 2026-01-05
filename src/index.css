@@ -6,8 +6,7 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-/* Reset básico para garantir que o layout ocupe 100% da tela */
-html, body {
+html, body, #root {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -17,10 +16,9 @@ html, body {
 body {
   background-color: #f3f4f6;
   color: #112240;
-  overflow: hidden; /* Evita scroll duplo na página principal */
+  overflow: hidden;
 }
 
-/* Animações para Modais e Kanban */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -39,7 +37,6 @@ body {
   animation: scaleIn 0.2s ease-out forwards;
 }
 
-/* Garante que descrições longas não quebrem o card */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -47,21 +44,21 @@ body {
   overflow: hidden;
 }
 
-/* Estilização das barras de rolagem */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Customização de Scrollbar para as colunas e áreas de conteúdo */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
 
-::-webkit-scrollbar-track {
+.custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
+.custom-scrollbar::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
