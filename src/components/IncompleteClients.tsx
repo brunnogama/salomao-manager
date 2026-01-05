@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Filter, LayoutList, LayoutGrid, Pencil, X, ChevronDown, FileSpreadsheet, RefreshCw, ArrowUpDown, Briefcase, Mail, Gift, Info } from 'lucide-react'
+import { Filter, LayoutList, LayoutGrid, Pencil, X, ChevronDown, FileSpreadsheet, RefreshCw, ArrowUpDown, Briefcase, Mail, Gift, Info, User } from 'lucide-react'
 import { NewClientModal, ClientData } from './NewClientModal'
 import { utils, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -23,7 +23,7 @@ export function IncompleteClients() {
 
   const [incompleteClients, setIncompleteClients] = useState<Client[]>([])
 
-  // LÓGICA DE PENDÊNCIAS: Identifica campos obrigatórios vazios
+  // Lógica de identificação de pendências
   const getMissingFields = (client: Client) => {
     const missing: string[] = []
     if (!client.nome) missing.push('Nome')
@@ -104,6 +104,7 @@ export function IncompleteClients() {
   const handleExportExcel = () => {
     const dataToExport = filteredClients.map(client => ({
       "Nome": client.nome,
+      "Empresa": client.empresa,
       "Sócio": client.socio,
       "Pendências": getMissingFields(client).join(', ')
     }))
@@ -145,11 +146,11 @@ export function IncompleteClients() {
                 <h3 className="text-xs font-bold text-red-400 uppercase border-b pb-2">Pendências</h3>
                 <div className="flex flex-wrap gap-2">
                   {getMissingFields(selectedClient).map(field => (
-                    <span key={field} className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded border border-red-100 font-bold">{field}</span>
+                    <span key={field} className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded border border-red-200 font-bold">{field}</span>
                   ))}
                 </div>
-                <p className="text-sm flex items-center gap-3"><Briefcase className="h-4 w-4 text-gray-400" /> {selectedClient.empresa || '-'}</p>
-                <p className="text-sm flex items-center gap-3"><Mail className="h-4 w-4 text-gray-400" /> {selectedClient.email || '-'}</p>
+                <p className="text-sm flex items-center gap-3"><Briefcase className="h-4 w-4 text-gray-400" /> <strong>Empresa:</strong> {selectedClient.empresa || '-'}</p>
+                <p className="text-sm flex items-center gap-3"><Mail className="h-4 w-4 text-gray-400" /> <strong>E-mail:</strong> {selectedClient.email || '-'}</p>
               </div>
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-gray-400 uppercase border-b pb-2">Outros Dados</h3>
@@ -200,6 +201,7 @@ export function IncompleteClients() {
         </div>
       </div>
 
+      {/* CONTEÚDO COM AS COLUNAS REORGANIZADAS */}
       <div className="flex-1 overflow-auto pb-4 font-medium">
         {viewMode === 'list' ? (
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
@@ -207,6 +209,8 @@ export function IncompleteClients() {
               <thead className="bg-red-50/50">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-bold text-red-700 uppercase">Cliente</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-red-700 uppercase">Empresa</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-red-700 uppercase">Sócio</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-red-700 uppercase">Pendências</th>
                   <th className="px-6 py-4 text-right"></th>
                 </tr>
@@ -214,9 +218,25 @@ export function IncompleteClients() {
               <tbody className="divide-y divide-gray-100">
                 {filteredClients.map(client => (
                   <tr key={client.id} onClick={() => setSelectedClient(client)} className="hover:bg-red-50/10 transition-colors cursor-pointer group">
-                    <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-bold text-gray-900">{client.nome || 'Sem Nome'}</div><div className="text-xs text-gray-500">{client.empresa || '-'}</div></td>
-                    <td className="px-6 py-4"><div className="flex flex-wrap gap-1">{getMissingFields(client).map(f => <span key={f} className="px-2 py-0.5 text-[9px] font-bold bg-red-100 text-red-700 rounded border border-red-200 uppercase">{f}</span>)}</div></td>
-                    <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md"><Pencil className="h-4 w-4" /></button></td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-bold text-gray-900">{client.nome || 'Sem Nome'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-600">{client.empresa || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-600">{client.socio || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {getMissingFields(client).map(f => (
+                          <span key={f} className="px-2 py-0.5 text-[9px] font-bold bg-red-100 text-red-700 rounded border border-red-200 uppercase">{f}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md"><Pencil className="h-4 w-4" /></button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -228,7 +248,13 @@ export function IncompleteClients() {
               <div key={client.id} onClick={() => setSelectedClient(client)} className="bg-white rounded-xl shadow-sm border border-red-200 p-6 hover:shadow-md transition-all cursor-pointer relative">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="h-10 w-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 font-bold border border-red-100">!</div>
-                  <h3 className="text-base font-bold text-gray-900 truncate">{client.nome || 'Sem Nome'}</h3>
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900 truncate">{client.nome || 'Sem Nome'}</h3>
+                    <p className="text-xs text-gray-500">{client.empresa}</p>
+                  </div>
+                </div>
+                <div className="bg-gray-50/50 rounded-md p-2 border border-gray-100 mb-3 text-xs">
+                  <div className="flex justify-between mb-1"><span className="text-gray-400">Sócio:</span><span className="font-bold text-gray-700">{client.socio}</span></div>
                 </div>
                 <div className="flex flex-wrap gap-1.5">{getMissingFields(client).map(f => <span key={f} className="px-2 py-0.5 text-[10px] font-bold bg-red-50 text-red-700 rounded border border-red-200 uppercase">{f}</span>)}</div>
                 <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end"><button onClick={(e) => handleEdit(client, e)} className="w-full py-2 text-sm text-white bg-[#112240] hover:bg-black rounded-lg font-bold transition-colors">Completar</button></div>
