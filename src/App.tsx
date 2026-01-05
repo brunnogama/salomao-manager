@@ -90,7 +90,8 @@ export default function App() {
         userName={getUserDisplayName()} 
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onSwitchModule={() => setCurrentModule('home')} // AQUI ESTÁ A CORREÇÃO (PASSANDO A FUNÇÃO)
+        // A LINHA ABAIXO CORRIGE O ERRO TS2741:
+        onSwitchModule={() => setCurrentModule('home')} 
       />
       
       <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 relative">
