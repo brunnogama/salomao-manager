@@ -9,17 +9,17 @@ import { Kanban } from './components/Kanban'
 import { Dashboard } from './components/Dashboard'
 import { History } from './components/History'
 import { Menu } from 'lucide-react'
-import { ModuleSelector } from './components/ModuleSelector' // Novo
-import { UnderConstruction } from './components/UnderConstruction' // Novo
+import { ModuleSelector } from './components/ModuleSelector'
+import { UnderConstruction } from './components/UnderConstruction'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   
-  // Controle de Navegação Principal
+  // 1. Controle de Navegação entre Sistemas (Home = Seleção)
   const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators'>('home')
   
-  // Controle do CRM
+  // 2. Controle interno do CRM
   const [activePage, setActivePage] = useState('dashboard')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({})
@@ -65,15 +65,15 @@ export default function App() {
 
   if (loading) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
   
-  // 1. Se não tiver sessão, mostra Login
+  // CASO 1: Não logado -> Tela de Login
   if (!session) return <Login />
 
-  // 2. Se tiver sessão mas nenhum módulo escolhido, mostra o Seletor
+  // CASO 2: Logado, mas não escolheu módulo -> Tela de Seleção
   if (currentModule === 'home') {
     return <ModuleSelector onSelect={setCurrentModule} userName={getUserDisplayName()} />
   }
 
-  // 3. Se escolheu Família ou Colaboradores, mostra Em Construção
+  // CASO 3: Módulos em Construção
   if (currentModule === 'family') {
     return <UnderConstruction moduleName="Gestão da Família" onBack={() => setCurrentModule('home')} />
   }
@@ -81,7 +81,7 @@ export default function App() {
     return <UnderConstruction moduleName="Colaboradores" onBack={() => setCurrentModule('home')} />
   }
 
-  // 4. Se escolheu CRM, mostra o sistema completo
+  // CASO 4: CRM Selecionado (Sistema Principal)
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden w-full">
       <Sidebar 
@@ -90,7 +90,7 @@ export default function App() {
         userName={getUserDisplayName()} 
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onSwitchModule={() => setCurrentModule('home')} // Passando a função de voltar
+        onSwitchModule={() => setCurrentModule('home')} // AQUI ESTÁ A CORREÇÃO (PASSANDO A FUNÇÃO)
       />
       
       <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 relative">
