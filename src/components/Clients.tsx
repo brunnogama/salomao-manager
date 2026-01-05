@@ -59,8 +59,14 @@ export function Clients() {
 
   useEffect(() => { fetchClients() }, [])
 
-  const uniqueSocios = Array.from(new Set(clients.map(c => c.socio).filter(Boolean)))
-  const uniqueBrindes = Array.from(new Set(clients.map(c => c.tipoBrinde).filter(Boolean)))
+  // Menus suspensos em ordem alfabética
+  const uniqueSocios = useMemo(() => {
+    return Array.from(new Set(clients.map(c => c.socio).filter(Boolean))).sort();
+  }, [clients]);
+
+  const uniqueBrindes = useMemo(() => {
+    return Array.from(new Set(clients.map(c => c.tipoBrinde).filter(Boolean))).sort();
+  }, [clients]);
 
   const processedClients = useMemo(() => {
     let result = [...clients].filter(client => {
@@ -134,19 +140,17 @@ export function Clients() {
       await fetchClients()
       setIsModalOpen(false)
       setClientToEdit(null)
+      setSelectedClient(null) 
     } catch (error: any) {
       alert(`Erro ao salvar: ${error.message}`)
     }
   }
 
-  // FUNÇÃO CORRIGIDA PARA EVITAR SOBREPOSIÇÃO
   const handleEdit = (client: Client, e?: React.MouseEvent) => {
     if(e) e.stopPropagation();
-    setSelectedClient(null); // FECHA o modal de visualização primeiro
+    setSelectedClient(null);
     setClientToEdit(client);
-    setTimeout(() => {
-      setIsModalOpen(true); // ABRE o modal de edição logo em seguida
-    }, 10);
+    setTimeout(() => { setIsModalOpen(true); }, 10);
   }
 
   const handleDeleteClick = (client: Client, e?: React.MouseEvent) => {
@@ -163,15 +167,8 @@ export function Clients() {
 
   return (
     <div className="h-full flex flex-col relative">
-      {/* FORMULÁRIO (Novo/Editar) - Nível mais alto de Z-INDEX */}
-      <NewClientModal 
-        isOpen={isModalOpen} 
-        onClose={() => { setIsModalOpen(false); setClientToEdit(null); }} 
-        onSave={handleSaveClient} 
-        clientToEdit={clientToEdit} 
-      />
+      <NewClientModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setClientToEdit(null); }} onSave={handleSaveClient} clientToEdit={clientToEdit} />
 
-      {/* MODAL DE EXCLUSÃO */}
       {clientToDelete && (
         <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-scaleIn">
@@ -193,7 +190,6 @@ export function Clients() {
         </div>
       )}
 
-      {/* VISUALIZAÇÃO DETALHADA - Z-INDEX INTERMEDIÁRIO */}
       {selectedClient && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-gray-100 animate-scaleIn">
@@ -225,14 +221,13 @@ export function Clients() {
               </div>
             </div>
             <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-              <button onClick={(e) => handleEdit(selectedClient, e)} className="px-5 py-2.5 bg-[#112240] text-white rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-[#1a3a6c] transition-all"><Pencil className="h-4 w-4" /> Editar Cadastro</button>
+              <button onClick={(e) => handleEdit(selectedClient, e)} className="px-5 py-2.5 bg-[#112240] text-white rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-[#1a3a6c] transition-all shadow-md"><Pencil className="h-4 w-4" /> Editar Cadastro</button>
               <button onClick={(e) => handleDeleteClick(selectedClient, e)} className="px-5 py-2.5 bg-red-50 text-red-600 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-red-100 transition-all border border-red-100"><Trash2 className="h-4 w-4" /> Excluir</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* TOOLBAR */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
         <div className="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 px-1">
            <div className="relative group">
@@ -251,7 +246,7 @@ export function Clients() {
              </select>
              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400"><ChevronDown className="h-4 w-4" /></div>
            </div>
-           <div className="flex bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+           <div className="flex bg-white border border-gray-200 rounded-lg p-1 gap-1 shadow-sm">
               <button onClick={() => toggleSort('nome')} className={`flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${sortBy === 'nome' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}><ArrowUpDown className="h-3 w-3 mr-1" /> Nome</button>
               <button onClick={() => toggleSort('socio')} className={`flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${sortBy === 'socio' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}><ArrowUpDown className="h-3 w-3 mr-1" /> Sócio</button>
            </div>
@@ -267,7 +262,6 @@ export function Clients() {
         </div>
       </div>
 
-      {/* GRID DE CARDS */}
       <div className="flex-1 overflow-auto pb-4">
         {loading && clients.length === 0 ? (
           <div className="flex h-full items-center justify-center"><RefreshCw className="h-8 w-8 animate-spin text-[#112240]" /></div>
