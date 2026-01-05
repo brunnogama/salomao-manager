@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Save, AlertCircle } from 'lucide-react'
+import { X, Save, AlertCircle, Search, Loader2 } from 'lucide-react'
 
 export interface ClientData {
   nome: string
@@ -35,6 +35,8 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
     quantidade: 1, cep: '', endereco: '', numero: '', complemento: '', bairro: '',
     cidade: '', estado: '', email: '', socio: '', observacoes: '', ignored_fields: []
   })
+  
+  const [loadingCep, setLoadingCep] = useState(false)
 
   useEffect(() => {
     if (clientToEdit) {
@@ -49,6 +51,40 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
   }, [clientToEdit, isOpen])
 
   if (!isOpen) return null
+
+  // Função para buscar o CEP
+  const handleSearchCep = async () => {
+    const cep = formData.cep.replace(/\D/g, '')
+
+    if (cep.length !== 8) {
+      alert('Por favor, digite um CEP válido com 8 números.')
+      return
+    }
+
+    setLoadingCep(true)
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      const data = await response.json()
+
+      if (data.erro) {
+        alert('CEP não encontrado na base de dados.')
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          endereco: data.logradouro,
+          bairro: data.bairro,
+          cidade: data.localidade,
+          estado: data.uf
+        }))
+      }
+    } catch (error) {
+      alert('Erro ao buscar o CEP. Verifique sua conexão.')
+      console.error(error)
+    } finally {
+      setLoadingCep(false)
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,7 +125,6 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                 <AlertCircle className="h-4 w-4" /> Dados Essenciais
               </h3>
               
-              {/* Grid ajustado para comportar os novos campos */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-bold text-gray-700 mb-1">Nome Completo *</label>
@@ -133,7 +168,6 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                   </select>
                 </div>
 
-                {/* Campo condicional para especificar 'Outro' */}
                 {formData.tipoBrinde === 'Outro' && (
                   <div className="md:col-span-3 animate-fadeIn">
                     <label className="block text-sm font-bold text-gray-700 mb-1">Qual Brinde? *</label>
@@ -147,7 +181,6 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                   </div>
                 )}
 
-                {/* Campo de Quantidade */}
                 <div className="md:col-span-1">
                    <label className="block text-sm font-bold text-gray-700 mb-1">Quantidade</label>
                    <input 
@@ -186,10 +219,30 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
             <section>
               <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest border-b pb-2 mb-4">Endereço</h3>
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                
+                {/* CAMPO CEP COM LUPA */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">CEP</label>
-                  <input type="text" value={formData.cep} onChange={e => setFormData({...formData, cep: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#112240] outline-none" />
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      value={formData.cep} 
+                      onChange={e => setFormData({...formData, cep: e.target.value})} 
+                      className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#112240] outline-none"
+                      placeholder="00000-000"
+                    />
+                    <button 
+                      type="button" 
+                      onClick={handleSearchCep} 
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
+                      title="Buscar CEP"
+                      disabled={loadingCep}
+                    >
+                      {loadingCep ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
+
                 <div className="md:col-span-3">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Endereço (Rua/Av)</label>
                   <input type="text" value={formData.endereco} onChange={e => setFormData({...formData, endereco: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#112240] outline-none" />
