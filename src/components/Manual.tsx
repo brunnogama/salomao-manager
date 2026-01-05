@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { 
   BookOpen, LayoutDashboard, Users, UserX, KanbanSquare, 
   Settings, History, Shield, Smartphone, FileSpreadsheet, 
-  Printer, Search, MousePointerClick, Menu 
+  Search, MousePointerClick, Menu 
 } from 'lucide-react'
 
 export function Manual() {
