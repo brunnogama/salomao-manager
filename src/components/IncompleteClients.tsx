@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Filter, LayoutList, LayoutGrid, Pencil, Trash2, X, AlertTriangle, ChevronDown, FileSpreadsheet, RefreshCw, ArrowUpDown, Briefcase, Mail, Gift, Info } from 'lucide-react'
+import { Filter, LayoutList, LayoutGrid, Pencil, X, ChevronDown, FileSpreadsheet, RefreshCw, ArrowUpDown, Briefcase, Mail, Gift, Info } from 'lucide-react'
 import { NewClientModal, ClientData } from './NewClientModal'
 import { utils, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -14,7 +14,6 @@ export function IncompleteClients() {
   const [loading, setLoading] = useState(true)
   
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null)
-  const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
 
   const [socioFilter, setSocioFilter] = useState('')
@@ -24,6 +23,7 @@ export function IncompleteClients() {
 
   const [incompleteClients, setIncompleteClients] = useState<Client[]>([])
 
+  // LÓGICA DE PENDÊNCIAS: Identifica campos obrigatórios vazios
   const getMissingFields = (client: Client) => {
     const missing: string[] = []
     if (!client.nome) missing.push('Nome')
@@ -93,8 +93,8 @@ export function IncompleteClients() {
     })
     if (sortBy) {
       result.sort((a, b) => {
-        let valA = (sortBy === 'nome' ? a.nome : a.socio) || ''
-        let valB = (sortBy === 'nome' ? b.nome : b.socio) || ''
+        const valA = (sortBy === 'nome' ? a.nome : a.socio) || ''
+        const valB = (sortBy === 'nome' ? b.nome : b.socio) || ''
         return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
       })
     }
@@ -102,7 +102,12 @@ export function IncompleteClients() {
   }, [incompleteClients, socioFilter, brindeFilter, sortBy, sortDirection])
 
   const handleExportExcel = () => {
-    const ws = utils.json_to_sheet(filteredClients.map(c => ({ "Nome": c.nome, "Pendências": getMissingFields(c).join(', ') })))
+    const dataToExport = filteredClients.map(client => ({
+      "Nome": client.nome,
+      "Sócio": client.socio,
+      "Pendências": getMissingFields(client).join(', ')
+    }))
+    const ws = utils.json_to_sheet(dataToExport)
     const wb = utils.book_new()
     utils.book_append_sheet(wb, ws, "Pendências")
     writeFile(wb, "Relatorio_Incompletos_Salomao.xlsx")
@@ -112,7 +117,7 @@ export function IncompleteClients() {
     if(e) e.stopPropagation();
     setSelectedClient(null);
     setClientToEdit(client);
-    setTimeout(() => { setIsModalOpen(true); }, 10);
+    setTimeout(() => setIsModalOpen(true), 10);
   }
 
   const toggleSort = (field: 'nome' | 'socio') => {
@@ -124,6 +129,7 @@ export function IncompleteClients() {
     <div className="h-full flex flex-col relative">
       <NewClientModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setClientToEdit(null); }} onSave={fetchIncompleteClients} clientToEdit={clientToEdit} />
 
+      {/* VISUALIZAÇÃO DETALHADA */}
       {selectedClient && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-red-100 animate-scaleIn">
@@ -160,6 +166,7 @@ export function IncompleteClients() {
         </div>
       )}
 
+      {/* TOOLBAR */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
         <div className="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 px-1">
           <div className="relative group">
@@ -189,11 +196,11 @@ export function IncompleteClients() {
           <button onClick={fetchIncompleteClients} className="p-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 shadow-sm"><RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} /></button>
         </div>
         <div className="flex items-center gap-3 w-full xl:w-auto">
-          <button onClick={handleExportExcel} className="flex-1 xl:flex-none flex items-center justify-center px-4 py-2.5 bg-green-600 text-white rounded-lg gap-2 font-medium text-sm"><FileSpreadsheet className="h-5 w-5" /> Exportar</button>
+          <button onClick={handleExportExcel} className="flex-1 xl:flex-none flex items-center justify-center px-4 py-2.5 bg-green-600 text-white rounded-lg gap-2 font-medium text-sm transition-all hover:bg-green-700"><FileSpreadsheet className="h-5 w-5" /> Exportar</button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto pb-4">
+      <div className="flex-1 overflow-auto pb-4 font-medium">
         {viewMode === 'list' ? (
           <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
@@ -209,7 +216,7 @@ export function IncompleteClients() {
                   <tr key={client.id} onClick={() => setSelectedClient(client)} className="hover:bg-red-50/10 transition-colors cursor-pointer group">
                     <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-bold text-gray-900">{client.nome || 'Sem Nome'}</div><div className="text-xs text-gray-500">{client.empresa || '-'}</div></td>
                     <td className="px-6 py-4"><div className="flex flex-wrap gap-1">{getMissingFields(client).map(f => <span key={f} className="px-2 py-0.5 text-[9px] font-bold bg-red-100 text-red-700 rounded border border-red-200 uppercase">{f}</span>)}</div></td>
-                    <td className="px-6 py-4 text-right"><button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md"><Pencil className="h-4 w-4" /></button></td>
+                    <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md"><Pencil className="h-4 w-4" /></button></td>
                   </tr>
                 ))}
               </tbody>
@@ -223,7 +230,7 @@ export function IncompleteClients() {
                   <div className="h-10 w-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 font-bold border border-red-100">!</div>
                   <h3 className="text-base font-bold text-gray-900 truncate">{client.nome || 'Sem Nome'}</h3>
                 </div>
-                <div className="flex flex-wrap gap-1.5">{getMissingFields(client).map(f => <span key={f} className="px-2 py-0.5 text-[10px] font-bold bg-red-50 text-red-700 rounded border border-red-100 uppercase">{f}</span>)}</div>
+                <div className="flex flex-wrap gap-1.5">{getMissingFields(client).map(f => <span key={f} className="px-2 py-0.5 text-[10px] font-bold bg-red-50 text-red-700 rounded border border-red-200 uppercase">{f}</span>)}</div>
                 <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end"><button onClick={(e) => handleEdit(client, e)} className="w-full py-2 text-sm text-white bg-[#112240] hover:bg-black rounded-lg font-bold transition-colors">Completar</button></div>
               </div>
             ))}
