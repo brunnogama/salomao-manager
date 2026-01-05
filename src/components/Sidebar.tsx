@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import { LayoutDashboard, Users, AlertCircle, UserCircle, LogOut } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-// Interface atualizada para garantir compatibilidade
+// Interface alinhada com a chamada no App.tsx
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: any) => void;
-  userName?: string; // Adicionado como opcional para evitar quebra se não passado
-  onLogout?: () => void; // Adicionado para suportar logout se necessário
+  userName?: string; 
+  onLogout?: () => void;
 }
 
 export function Sidebar({ activeTab, setActiveTab, userName, onLogout }: SidebarProps) {
@@ -33,6 +33,7 @@ export function Sidebar({ activeTab, setActiveTab, userName, onLogout }: Sidebar
         if (!c.email) missing.push('Email')
         if (!c.socio) missing.push('Sócio')
         
+        // Filtra se a pendência não foi ignorada
         return missing.filter(f => !ignored.includes(f)).length > 0
       }).length
       setIncompleteCount(count)
