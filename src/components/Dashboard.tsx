@@ -25,6 +25,13 @@ export function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
 
+  // Mapeamento de cores baseado no tipo de brinde (Padrão Clientes)
+  const getBrindeColor = (tipo: string) => {
+    if (tipo === 'Brinde VIP') return '#a855f7'; // Purple-500
+    if (tipo === 'Brinde Médio') return '#22c55e'; // Green-500
+    return '#94a3b8'; // Slate-400 (Outros)
+  };
+
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
@@ -51,7 +58,7 @@ export function Dashboard() {
             socioMap[item.socio] = { name: item.socio, total: 0, brindes: {} };
           }
           socioMap[item.socio].total += 1;
-          const tBrinde = item.tipo_brinde || 'Não Informado';
+          const tBrinde = item.tipo_brinde || 'Outro';
           socioMap[item.socio].brindes[tBrinde] = (socioMap[item.socio].brindes[tBrinde] || 0) + 1;
         }
       });
@@ -82,8 +89,6 @@ export function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  const COLORS = ['#112240', '#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa'];
-
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -93,64 +98,63 @@ export function Dashboard() {
   }
 
   return (
-    <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-8 pb-10">
+    <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-10">
       
+      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Object.entries(stats.brindeCounts).map(([tipo, qtd]) => (
-          <div key={tipo} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-              <Gift className="h-6 w-6" />
+          <div key={tipo} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-lg" style={{ backgroundColor: `${getBrindeColor(tipo)}15`, color: getBrindeColor(tipo) }}>
+              <Gift className="h-5 w-5" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{tipo}</p>
-              <p className="text-2xl font-black text-[#112240]">{qtd}</p>
+              <p className="text-xl font-black text-[#112240]">{qtd}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center gap-2">
-            <LayoutGrid className="h-5 w-5 text-blue-600" />
-            <h3 className="font-bold text-[#112240] text-lg">Clientes por Sócio</h3>
+            <LayoutGrid className="h-4 w-4 text-blue-600" />
+            <h3 className="font-bold text-[#112240] text-base">Clientes por Sócio</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {stats.socioData.map((socio) => (
-              <div key={socio.name} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h4 className="font-bold text-[#112240] text-base">{socio.name}</h4>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Performance Individual</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-2xl font-black text-blue-600">{socio.total}</span>
-                    <p className="text-[8px] text-gray-400 font-bold uppercase">Total</p>
+              <div key={socio.name} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-bold text-[#112240] text-sm truncate">{socio.name}</h4>
+                  <div className="text-right flex items-baseline gap-1">
+                    <span className="text-lg font-black text-blue-600">{socio.total}</span>
+                    <span className="text-[8px] text-gray-400 font-bold uppercase">Total</span>
                   </div>
                 </div>
 
-                <div className="h-40 w-full">
+                <div className="h-28 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart layout="vertical" data={socio.brindes} margin={{ left: -20, right: 30 }}>
+                    <BarChart layout="vertical" data={socio.brindes} margin={{ left: -30, right: 30 }}>
                       <XAxis type="number" hide />
                       <YAxis 
                         dataKey="tipo" 
                         type="category" 
                         axisLine={false} 
                         tickLine={false} 
-                        fontSize={10} 
+                        fontSize={9} 
                         width={80}
+                        tick={{fill: '#64748b', fontWeight: 500}}
                       />
                       <Tooltip 
                         cursor={{fill: 'transparent'}}
-                        contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'}}
+                        contentStyle={{borderRadius: '8px', border: 'none', fontSize: '10px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'}}
                       />
-                      <Bar dataKey="qtd" radius={[0, 4, 4, 0]} barSize={20}>
-                        {socio.brindes.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Bar dataKey="qtd" radius={[0, 4, 4, 0]} barSize={12}>
+                        {socio.brindes.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={getBrindeColor(entry.tipo)} />
                         ))}
-                        <LabelList dataKey="qtd" position="right" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#112240' }} />
+                        <LabelList dataKey="qtd" position="right" style={{ fontSize: '9px', fontWeight: 'bold', fill: '#112240' }} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -160,19 +164,19 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-fit max-h-[600px]">
-          <div className="flex items-center gap-2 mb-6">
-            <Users className="h-5 w-5 text-blue-600" />
-            <h3 className="font-bold text-[#112240]">Últimos Cadastros</h3>
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col h-fit max-h-[500px]">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="h-4 w-4 text-blue-600" />
+            <h3 className="font-bold text-[#112240] text-base">Últimos Cadastros</h3>
           </div>
-          <div className="space-y-4 overflow-y-auto custom-scrollbar pr-1">
+          <div className="space-y-3 overflow-y-auto custom-scrollbar pr-1">
             {stats.lastClients.map((client) => (
-              <div key={client.id} className="flex items-center justify-between p-3 bg-gray-50/50 rounded-xl border border-transparent hover:border-gray-200 transition-all">
+              <div key={client.id} className="flex items-center justify-between p-2.5 bg-gray-50/50 rounded-lg border border-transparent hover:border-gray-200 transition-all">
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-gray-800 truncate">{client.nome}</p>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">{client.socio || 'Sem Sócio'}</p>
+                  <p className="text-xs font-bold text-gray-800 truncate">{client.nome}</p>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase">{client.socio || 'Sem Sócio'}</p>
                 </div>
-                <span className="text-[9px] px-2 py-1 rounded-full font-black bg-white border border-gray-100 text-[#112240] shadow-sm">
+                <span className="text-[8px] px-2 py-0.5 rounded-full font-black bg-white border border-gray-100 shadow-xs" style={{ color: getBrindeColor(client.tipo_brinde) }}>
                   {client.tipo_brinde?.split(' ')[1] || 'BRINDE'}
                 </span>
               </div>
