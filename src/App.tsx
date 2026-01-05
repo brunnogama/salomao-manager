@@ -8,7 +8,7 @@ import { IncompleteClients } from './components/IncompleteClients'
 import { Kanban } from './components/Kanban'
 import { Dashboard } from './components/Dashboard'
 import { History } from './components/History'
-import { Menu } from 'lucide-react' // Importante: Ícone do Menu
+import { Menu } from 'lucide-react'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
@@ -65,19 +65,19 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden w-full">
-      {/* Sidebar com as novas props obrigatórias */}
       <Sidebar 
         activePage={activePage} 
         onNavigate={setActivePage} 
         userName={getUserDisplayName()} 
-        isOpen={isSidebarOpen}            // CORREÇÃO AQUI
-        onClose={() => setIsSidebarOpen(false)} // CORREÇÃO AQUI
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
       
       <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 relative">
         <header className="bg-white border-b border-gray-200 h-20 flex items-center px-4 md:px-8 justify-between flex-shrink-0 z-10 gap-3">
+            
+            {/* LADO ESQUERDO: Título e Menu Hambúrguer */}
             <div className="flex items-center gap-3 overflow-hidden">
-                {/* BOTÃO MENU HAMBURGUER (VISÍVEL SÓ NO MOBILE) */}
                 <button 
                   onClick={() => setIsSidebarOpen(true)}
                   className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg shrink-0"
@@ -94,6 +94,14 @@ export default function App() {
                     </span>
                 </div>
             </div>
+
+            {/* LADO DIREITO: CRM (NOVO) */}
+            <div className="flex-shrink-0">
+                <span className="text-2xl font-extrabold text-[#112240] tracking-tighter opacity-90 select-none">
+                    CRM
+                </span>
+            </div>
+
         </header>
         
         <div className="p-4 md:p-8 flex-1 overflow-hidden h-full">
