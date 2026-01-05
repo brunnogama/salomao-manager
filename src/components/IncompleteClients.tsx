@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Filter, LayoutList, LayoutGrid, Pencil, Trash2, X, AlertTriangle, ChevronDown, FileSpreadsheet, RefreshCw, AlertCircle, ArrowUpDown, Briefcase, User, Mail, Phone, MapPin, Gift, Info } from 'lucide-react'
+import { LayoutList, LayoutGrid, Pencil, Trash2, X, AlertTriangle, RefreshCw, ArrowRight, Briefcase, Mail, Gift, Info } from 'lucide-react'
 import { NewClientModal, ClientData } from './NewClientModal'
-import { utils, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
 
 interface Client extends ClientData {
@@ -17,10 +16,10 @@ export function IncompleteClients() {
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
 
-  const [socioFilter, setSocioFilter] = useState('')
-  const [brindeFilter, setBrindeFilter] = useState('')
-  const [sortBy, setSortBy] = useState<'nome' | 'socio' | null>(null)
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [socioFilter] = useState('')
+  const [brindeFilter] = useState('')
+  const [sortBy] = useState<'nome' | 'socio' | null>(null)
+  const [sortDirection] = useState<'asc' | 'desc'>('asc')
 
   const [incompleteClients, setIncompleteClients] = useState<Client[]>([])
 
@@ -42,7 +41,7 @@ export function IncompleteClients() {
     if (error) {
       console.error('Erro ao buscar:', error)
     } else {
-      const allClients: Client[] = data.map((item: any) => ({
+      const formatted: Client[] = data.map((item: any) => ({
         id: item.id,
         nome: item.nome,
         empresa: item.empresa,
@@ -62,7 +61,7 @@ export function IncompleteClients() {
         socio: item.socio,
         observacoes: item.observacoes
       }))
-      const incomplete = allClients.filter(c => getMissingFields(c).length > 0)
+      const incomplete = formatted.filter(c => getMissingFields(c).length > 0)
       setIncompleteClients(incomplete)
     }
     setLoading(false)
@@ -78,8 +77,8 @@ export function IncompleteClients() {
     })
     if (sortBy) {
       result.sort((a, b) => {
-        let valA = (sortBy === 'nome' ? a.nome : a.socio) || ''
-        let valB = (sortBy === 'nome' ? b.nome : b.socio) || ''
+        const valA = (sortBy === 'nome' ? a.nome : a.socio) || ''
+        const valB = (sortBy === 'nome' ? b.nome : b.socio) || ''
         return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
       })
     }
@@ -110,6 +109,7 @@ export function IncompleteClients() {
       await fetchIncompleteClients()
       setIsModalOpen(false)
       setClientToEdit(null)
+      setSelectedClient(null)
     } catch (error: any) {
       alert(`Erro ao salvar: ${error.message}`)
     }
@@ -117,16 +117,16 @@ export function IncompleteClients() {
 
   const handleEdit = (client: Client, e?: React.MouseEvent) => {
     if(e) e.stopPropagation();
-    setSelectedClient(null); // Fecha visualização para evitar sobreposição
+    setSelectedClient(null); // Resolve sobreposição fechando a visualização primeiro
     setClientToEdit(client);
-    setTimeout(() => { setIsModalOpen(true); }, 10); // Abre edição com segurança
+    setTimeout(() => { setIsModalOpen(true); }, 10);
   }
 
   return (
     <div className="h-full flex flex-col relative">
       <NewClientModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setClientToEdit(null); }} onSave={handleSaveClient} clientToEdit={clientToEdit} />
 
-      {/* MODAL DE EXCLUSÃO - Z-INDEX 200 */}
+      {/* MODAL DE EXCLUSÃO */}
       {clientToDelete && (
         <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
@@ -134,7 +134,7 @@ export function IncompleteClients() {
                <div className="bg-red-100 p-3 rounded-full"><AlertTriangle className="h-6 w-6" /></div>
                <h3 className="text-xl font-bold">Excluir Registro?</h3>
              </div>
-             <p className="text-gray-600 mb-6">Deseja remover este cadastro incompleto permanentemente?</p>
+             <p className="text-gray-600 mb-6">Deseja remover permanentemente?</p>
              <div className="flex justify-end gap-3">
                <button onClick={() => setClientToDelete(null)} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg">Cancelar</button>
                <button onClick={async () => {
@@ -148,38 +148,35 @@ export function IncompleteClients() {
         </div>
       )}
 
-      {/* VISUALIZAÇÃO DETALHADA - Z-INDEX 100 */}
+      {/* VISUALIZAÇÃO DETALHADA */}
       {selectedClient && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-red-100 animate-scaleIn">
             <div className="bg-red-600 p-6 text-white flex justify-between items-center">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold border border-white/30">!</div>
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold">!</div>
                 <h2 className="text-xl font-bold">{selectedClient.nome || 'Cadastro Incompleto'}</h2>
               </div>
               <button onClick={() => setSelectedClient(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="h-6 w-6" /></button>
             </div>
-            
             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto max-h-[70vh]">
               <div className="space-y-4">
-                <h3 className="text-xs font-bold text-red-400 uppercase tracking-widest border-b border-red-50 pb-2">Informações Pendentes</h3>
+                <h3 className="text-xs font-bold text-red-400 uppercase border-b pb-2">Pendências</h3>
                 <div className="flex flex-wrap gap-2">
                   {getMissingFields(selectedClient).map(field => (
                     <span key={field} className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded border border-red-100 font-bold">{field}</span>
                   ))}
                 </div>
-                <p className="text-sm flex items-center gap-3"><Briefcase className="h-4 w-4 text-gray-400" /> <strong>Empresa:</strong> {selectedClient.empresa || '-'}</p>
-                <p className="text-sm flex items-center gap-3"><Mail className="h-4 w-4 text-gray-400" /> <strong>E-mail:</strong> {selectedClient.email || '-'}</p>
+                <p className="text-sm flex items-center gap-3"><Briefcase className="h-4 w-4 text-gray-400" /> {selectedClient.empresa || '-'}</p>
+                <p className="text-sm flex items-center gap-3"><Mail className="h-4 w-4 text-gray-400" /> {selectedClient.email || '-'}</p>
               </div>
-
               <div className="space-y-4">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Outros Dados</h3>
-                <p className="text-sm flex items-center gap-3"><Gift className="h-4 w-4 text-gray-400" /> <strong>Brinde:</strong> {selectedClient.tipoBrinde || '-'}</p>
-                <p className="text-sm flex items-center gap-3"><Info className="h-4 w-4 text-gray-400" /> <strong>Sócio:</strong> {selectedClient.socio || '-'}</p>
+                <h3 className="text-xs font-bold text-gray-400 uppercase border-b pb-2">Outros Dados</h3>
+                <p className="text-sm flex items-center gap-3"><Gift className="h-4 w-4 text-gray-400" /> {selectedClient.tipoBrinde || '-'}</p>
+                <p className="text-sm flex items-center gap-3"><Info className="h-4 w-4 text-gray-400" /> {selectedClient.socio || '-'}</p>
               </div>
             </div>
-
-            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end">
               <button onClick={(e) => handleEdit(selectedClient, e)} className="px-5 py-2.5 bg-[#112240] text-white rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-black transition-all shadow-md">
                 <Pencil className="h-4 w-4" /> Completar Cadastro
               </button>
@@ -188,9 +185,9 @@ export function IncompleteClients() {
         </div>
       )}
 
-      {/* HEADER / TOOLBAR */}
+      {/* TOOLBAR */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
-        <div className="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 px-1">
+        <div className="flex items-center gap-3 w-full xl:w-auto">
           <div className="flex bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
             <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-gray-100 text-[#112240]' : 'text-gray-400'}`}><LayoutList className="h-5 w-5" /></button>
             <button onClick={() => setViewMode('card')} className={`p-1.5 rounded-md ${viewMode === 'card' ? 'bg-gray-100 text-[#112240]' : 'text-gray-400'}`}><LayoutGrid className="h-5 w-5" /></button>
@@ -216,7 +213,7 @@ export function IncompleteClients() {
                   <tr key={client.id} onClick={() => setSelectedClient(client)} className="hover:bg-red-50/10 transition-colors cursor-pointer group">
                     <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-bold text-gray-900">{client.nome || 'Sem Nome'}</div><div className="text-xs text-gray-500">{client.empresa || '-'}</div></td>
                     <td className="px-6 py-4"><div className="flex flex-wrap gap-1">{getMissingFields(client).map(f => <span key={f} className="px-2 py-0.5 text-[9px] font-bold bg-red-100 text-red-700 rounded border border-red-200 uppercase">{f}</span>)}</div></td>
-                    <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md"><Pencil className="h-4 w-4" /></button></td>
+                    <td className="px-6 py-4 text-right"><ArrowRight className="h-5 w-5 text-gray-300" /></td>
                   </tr>
                 ))}
               </tbody>
@@ -230,7 +227,7 @@ export function IncompleteClients() {
                   <div className="h-10 w-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 font-bold border border-red-100">!</div>
                   <h3 className="text-base font-bold text-gray-900 truncate">{client.nome || 'Sem Nome'}</h3>
                 </div>
-                <div className="flex flex-wrap gap-1.5">{getMissingFields(client).map(f => <span key={f} className="px-2 py-0.5 text-[10px] font-bold bg-red-50 text-red-700 rounded border border-red-100 uppercase">{f}</span>)}</div>
+                <div className="flex flex-wrap gap-1.5">{getMissingFields(client).map(f => <span key={f} className="px-2 py-0.5 text-[10px] font-bold bg-red-50 text-red-700 rounded border border-red-200 uppercase">{f}</span>)}</div>
                 <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end"><button onClick={(e) => handleEdit(client, e)} className="w-full py-2 text-sm text-white bg-[#112240] hover:bg-black rounded-lg font-bold transition-colors">Completar</button></div>
               </div>
             ))}
