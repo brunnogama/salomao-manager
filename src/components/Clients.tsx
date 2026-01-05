@@ -200,31 +200,74 @@ export function Clients() {
     logAction('EXPORTAR', 'CLIENTES', `Imprimiu lista com ${processedClients.length} clientes`);
   }
 
-  // --- AÇÕES DE CONTATO ---
+  // --- AÇÕES DE CONTATO (TEXTOS CORRIGIDOS) ---
 
   const handleWhatsApp = (client: Client, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
+    
     const phoneToClean = client.telefone || '';
     const cleanPhone = phoneToClean.replace(/\D/g, '');
+    
     if(!cleanPhone) { alert("Telefone não cadastrado."); return; }
-    const message = `Olá Sr(a). ${client.nome}, somos do Salomão Advogados.\n\nEstamos atualizando nossa base de dados...`;
+
+    const message = `Olá Sr(a). ${client.nome}.
+
+Somos do Salomão Advogados e estamos atualizando nossa base de dados.
+Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
+
+🏢 Empresa: ${client.empresa || '-'}
+📮 CEP: ${client.cep || '-'}
+📍 Endereço: ${client.endereco || '-'}
+🔢 Número: ${client.numero || '-'}
+🏘️ Bairro: ${client.bairro || '-'}
+🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}
+📝 Complemento: ${client.complemento || '-'}
+📧 E-mail: ${client.email || '-'}
+
+📱 Outro número de telefone: (Caso possua, por favor informar)
+
+Agradecemos a atenção!`;
+
     const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   }
 
   const handle3CX = (client: Client, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
+    
     const phoneToCall = client.telefone || '';
     const cleanPhone = phoneToCall.replace(/\D/g, '');
+    
     if(!cleanPhone) { alert("Telefone não cadastrado."); return; }
     window.location.href = `tel:${cleanPhone}`;
   }
 
   const handleEmail = (client: Client, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
+
     if(!client.email) { alert("E-mail não cadastrado."); return; }
+
     const subject = encodeURIComponent("Atualização Cadastral - Salomão Advogados");
-    const bodyText = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados...`;
+    
+    const bodyText = `Olá Sr(a). ${client.nome}.
+
+Somos do Salomão Advogados e estamos atualizando nossa base de dados.
+Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
+
+🏢 Empresa: ${client.empresa || '-'}
+📮 CEP: ${client.cep || '-'}
+📍 Endereço: ${client.endereco || '-'}
+🔢 Número: ${client.numero || '-'}
+🏘️ Bairro: ${client.bairro || '-'}
+🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}
+📝 Complemento: ${client.complemento || '-'}
+📧 E-mail: ${client.email || '-'}
+📱 Outro número de telefone: (Caso possua, por favor informar)
+
+Agradecemos a atenção!
+
+Agradecemos desde já!`;
+
     const body = encodeURIComponent(bodyText);
     window.location.href = `mailto:${client.email}?subject=${subject}&body=${body}`;
   }
