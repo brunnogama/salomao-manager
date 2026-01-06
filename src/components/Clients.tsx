@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Filter, LayoutList, LayoutGrid, Pencil, Trash2, X, AlertTriangle, ChevronDown, FileSpreadsheet, RefreshCw, ArrowUpDown, MessageCircle, Phone, MapPin, Mail, Briefcase, Gift, Info, User, Printer } from 'lucide-react'
+import { Plus, Filter, LayoutList, LayoutGrid, Pencil, Trash2, X, AlertTriangle, ChevronDown, FileSpreadsheet, RefreshCw, ArrowUpDown, MessageCircle, Phone, MapPin, Mail, Briefcase, Gift, Info, User, Printer, Calendar } from 'lucide-react'
 import { NewClientModal, ClientData } from './NewClientModal'
 import { utils, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -9,7 +9,6 @@ interface Client extends ClientData {
   id: number;
 }
 
-// --- INTERFACE DE PROPS (CORREÇÃO DO ERRO) ---
 interface ClientsProps {
   initialFilters?: { socio?: string; brinde?: string };
 }
@@ -23,11 +22,9 @@ export function Clients({ initialFilters }: ClientsProps) {
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
 
-  // Inicializa os filtros com o que veio via props (do Dashboard) ou vazio
   const [socioFilter, setSocioFilter] = useState(initialFilters?.socio || '')
   const [brindeFilter, setBrindeFilter] = useState(initialFilters?.brinde || '')
   
-  // Atualiza os filtros se as props mudarem
   useEffect(() => {
     if (initialFilters) {
         if (initialFilters.socio !== undefined) setSocioFilter(initialFilters.socio);
@@ -66,7 +63,8 @@ export function Clients({ initialFilters }: ClientsProps) {
         email: item.email,
         socio: item.socio,
         observacoes: item.observacoes,
-        ignored_fields: item.ignored_fields
+        ignored_fields: item.ignored_fields || [],
+        historico_brindes: item.historico_brindes || [] // Adicionado aqui para corrigir o erro TS
       }))
       setClients(formattedClients)
     }
@@ -109,122 +107,56 @@ export function Clients({ initialFilters }: ClientsProps) {
     }
   }
 
-  // --- IMPRESSÃO INDIVIDUAL ---
+  // --- IMPRESSÃO ---
   const handlePrint = (client: Client) => {
     const printWindow = window.open('', '', 'width=900,height=800');
     if (!printWindow) return;
+
+    const historyRows = client.historico_brindes?.map(h => 
+        `<tr><td style="padding:4px;border:1px solid #ddd">${h.ano}</td><td style="padding:4px;border:1px solid #ddd">${h.tipo}</td><td style="padding:4px;border:1px solid #ddd">${h.obs}</td></tr>`
+    ).join('') || '<tr><td colspan="3" style="padding:4px;text-align:center;font-style:italic">Sem histórico</td></tr>';
 
     const htmlContent = `
       <html>
         <head>
           <title>Ficha Cadastral - ${client.nome}</title>
           <style>
-            body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #1f2937; background: #fff; }
+            body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #1f2937; }
             .header { border-bottom: 3px solid #112240; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: end; }
             .logo { font-size: 28px; font-weight: 800; color: #112240; text-transform: uppercase; }
-            .subtitle { font-size: 14px; color: #6b7280; font-weight: 500; }
-            .section { margin-bottom: 35px; }
+            .section { margin-bottom: 30px; }
             .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #112240; background: #f3f4f6; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #112240; }
-            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-            .full-width { grid-column: span 2; }
-            .field-box { margin-bottom: 5px; }
-            .label { font-size: 10px; color: #6b7280; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px; }
-            .value { font-size: 15px; color: #111827; font-weight: 500; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; display: block; width: 100%; min-height: 24px; }
-            .footer { position: fixed; bottom: 30px; width: 100%; text-align: center; font-size: 10px; color: #9ca3af; }
-            @media print { @page { margin: 0; size: A4; } body { margin: 1.6cm; } }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            .label { font-size: 10px; color: #6b7280; font-weight: 700; text-transform: uppercase; display: block; }
+            .value { font-size: 14px; color: #111827; font-weight: 500; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; display: block; width: 100%; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th { background: #f3f4f6; text-align: left; padding: 6px; border: 1px solid #ddd; }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div><div class="logo">Salomão Advogados</div><div class="subtitle">Ficha Cadastral de Cliente</div></div>
-            <div style="font-size: 11px; color: #9ca3af;">${new Date().toLocaleDateString()}</div>
+          <div class="header"><div><div class="logo">Salomão Advogados</div><div>Ficha Cadastral</div></div></div>
+          <div class="section"><div class="section-title">Dados</div><div class="grid"><div><span class="label">Nome</span><span class="value">${client.nome}</span></div><div><span class="label">Sócio</span><span class="value">${client.socio}</span></div></div></div>
+          <div class="section"><div class="section-title">Histórico de Brindes</div>
+            <table><thead><tr><th>Ano</th><th>Brinde</th><th>Obs</th></tr></thead><tbody>${historyRows}</tbody></table>
           </div>
-          <div class="section"><div class="section-title">Dados</div><div class="grid"><div class="field-box"><span class="label">Nome</span><span class="value">${client.nome}</span></div><div class="field-box"><span class="label">Sócio</span><span class="value">${client.socio}</span></div><div class="field-box"><span class="label">Empresa</span><span class="value">${client.empresa}</span></div><div class="field-box"><span class="label">Cargo</span><span class="value">${client.cargo || '-'}</span></div></div></div>
-          <div class="section"><div class="section-title">Contato</div><div class="grid"><div class="field-box"><span class="label">E-mail</span><span class="value">${client.email || '-'}</span></div><div class="field-box"><span class="label">Tel</span><span class="value">${client.telefone || '-'}</span></div></div></div>
-          <div class="section"><div class="section-title">Endereço</div><div class="grid"><div class="field-box full-width"><span class="label">Logradouro</span><span class="value">${client.endereco}, ${client.numero}</span></div><div class="field-box"><span class="label">Bairro</span><span class="value">${client.bairro}</span></div><div class="field-box"><span class="label">Cidade/UF</span><span class="value">${client.cidade}/${client.estado}</span></div></div></div>
-          <div class="footer">Documento Confidencial - Salomão Advogados</div>
           <script>window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); };</script>
         </body>
       </html>`;
     printWindow.document.write(htmlContent);
     printWindow.document.close();
-    logAction('EXPORTAR', 'CLIENTES', `Imprimiu ficha cadastral de: ${client.nome}`);
   }
 
-  // --- IMPRESSÃO EM LOTE ---
   const handlePrintList = () => {
-    if (processedClients.length === 0) {
-        alert("Nenhum cliente na lista para imprimir.");
-        return;
-    }
+    if (processedClients.length === 0) { alert("Nenhum cliente."); return; }
     const printWindow = window.open('', '', 'width=900,height=800');
     if (!printWindow) return;
-
     const clientsHtml = processedClients.map(client => `
-      <div class="card">
-        <div class="card-header"><span class="name">${client.nome}</span><span class="socio">${client.socio}</span></div>
-        <div class="card-body">
-            <div class="row"><strong>Empresa:</strong> ${client.empresa}</div>
-            <div class="row"><strong>Email:</strong> ${client.email || '-'}</div>
-            <div class="row"><strong>Tel:</strong> ${client.telefone || '-'}</div>
-            <div class="row"><strong>Local:</strong> ${client.cidade}/${client.estado}</div>
-        </div>
-      </div>
-    `).join('');
-
-    const htmlContent = `
-      <html>
-        <head>
-          <title>Lista de Clientes</title>
-          <style>
-            body { font-family: sans-serif; padding: 20px; }
-            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #112240; }
-            .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-            .card { border: 1px solid #ddd; border-radius: 6px; padding: 10px; page-break-inside: avoid; background: #f9fafb; }
-            .card-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; color: #112240; }
-            .socio { font-size: 10px; background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; }
-            .row { font-size: 11px; margin-bottom: 2px; }
-            @media print { @page { margin: 1cm; } }
-          </style>
-        </head>
-        <body>
-          <div class="header"><h3>Relatório de Clientes</h3><p style="font-size: 12px">Total: ${processedClients.length} | ${new Date().toLocaleDateString()}</p></div>
-          <div class="grid-container">${clientsHtml}</div>
-          <script>window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); };</script>
-        </body>
-      </html>
-    `;
-    printWindow.document.write(htmlContent);
+      <div style="border:1px solid #ddd;border-radius:4px;padding:10px;background:#f9fafb;">
+        <div style="font-weight:bold;color:#112240;display:flex;justify-content:space-between"><span>${client.nome}</span><span style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 6px;border-radius:4px">${client.socio}</span></div>
+        <div style="font-size:11px;margin-top:5px">Empresa: ${client.empresa} | Brinde: ${client.tipoBrinde}</div>
+      </div>`).join('');
+    printWindow.document.write(`<html><body style="font-family:sans-serif;padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:15px">${clientsHtml}<script>window.onload=()=>{setTimeout(()=>{window.print();window.close();},500);};</script></body></html>`);
     printWindow.document.close();
-    logAction('EXPORTAR', 'CLIENTES', `Imprimiu lista com ${processedClients.length} clientes`);
-  }
-
-  // --- AÇÕES DE CONTATO ---
-  const handleWhatsApp = (client: Client, e?: React.MouseEvent) => {
-    if(e) { e.preventDefault(); e.stopPropagation(); }
-    const phoneToClean = client.telefone || '';
-    const cleanPhone = phoneToClean.replace(/\D/g, '');
-    if(!cleanPhone) { alert("Telefone não cadastrado."); return; }
-    const message = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados e estamos atualizando nossa base de dados.\nPoderia, por gentileza, confirmar se as informações abaixo estão corretas?\n\n🏢 Empresa: ${client.empresa || '-'}\n📮 CEP: ${client.cep || '-'}\n📍 Endereço: ${client.endereco || '-'}\n🔢 Número: ${client.numero || '-'}\n🏘️ Bairro: ${client.bairro || '-'}\n🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}\n📝 Complemento: ${client.complemento || '-'}\n📧 E-mail: ${client.email || '-'}\n\n📱 Outro número de telefone: (Caso possua, por favor informar)\n\nAgradecemos a atenção!`;
-    const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
-  }
-
-  const handle3CX = (client: Client, e?: React.MouseEvent) => {
-    if(e) { e.preventDefault(); e.stopPropagation(); }
-    const phoneToCall = client.telefone || '';
-    const cleanPhone = phoneToCall.replace(/\D/g, '');
-    if(!cleanPhone) { alert("Telefone não cadastrado."); return; }
-    window.location.href = `tel:${cleanPhone}`;
-  }
-
-  const handleEmail = (client: Client, e?: React.MouseEvent) => {
-    if(e) { e.preventDefault(); e.stopPropagation(); }
-    if(!client.email) { alert("E-mail não cadastrado."); return; }
-    const subject = encodeURIComponent("Atualização Cadastral - Salomão Advogados");
-    const bodyText = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados e estamos atualizando nossa base de dados.\nPoderia, por gentileza, confirmar se as informações abaixo estão corretas?\n\n🏢 Empresa: ${client.empresa || '-'}\n📮 CEP: ${client.cep || '-'}\n📍 Endereço: ${client.endereco || '-'}\n🔢 Número: ${client.numero || '-'}\n🏘️ Bairro: ${client.bairro || '-'}\n🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}\n📝 Complemento: ${client.complemento || '-'}\n📧 E-mail: ${client.email || '-'}\n📱 Outro número de telefone: (Caso possua, por favor informar)\n\nAgradecemos a atenção!\n\nAgradecemos desde já!`;
-    const body = encodeURIComponent(bodyText);
-    window.location.href = `mailto:${client.email}?subject=${subject}&body=${body}`;
   }
 
   const handleSaveClient = async (clientData: ClientData) => {
@@ -246,7 +178,8 @@ export function Clients({ initialFilters }: ClientsProps) {
       email: clientData.email,
       socio: clientData.socio,
       observacoes: clientData.observacoes,
-      ignored_fields: clientData.ignored_fields
+      ignored_fields: clientData.ignored_fields,
+      historico_brindes: clientData.historico_brindes
     }
 
     try {
@@ -320,35 +253,54 @@ export function Clients({ initialFilters }: ClientsProps) {
 
       {selectedClient && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-gray-100 animate-scaleIn">
-            <div className="bg-[#112240] p-6 text-white flex justify-between items-center">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-gray-100 animate-scaleIn flex flex-col max-h-[85vh]">
+            <div className="bg-[#112240] p-6 text-white flex justify-between items-center shrink-0">
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-xl font-bold border border-white/20">{selectedClient.nome.charAt(0)}</div>
                 <h2 className="text-xl font-bold">{selectedClient.nome}</h2>
               </div>
               <button onClick={() => setSelectedClient(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="h-6 w-6" /></button>
             </div>
-            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto max-h-[70vh]">
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Informações Pessoais</h3>
-                <p className="text-sm flex items-center gap-3"><Briefcase className="h-4 w-4 text-blue-600" /> <strong>Empresa:</strong> {selectedClient.empresa}</p>
-                <p className="text-sm flex items-center gap-3"><User className="h-4 w-4 text-blue-600" /> <strong>Cargo:</strong> {selectedClient.cargo || '-'}</p>
-                <p className="text-sm flex items-center gap-3"><Mail className="h-4 w-4 text-blue-600" /> <strong>E-mail:</strong> {selectedClient.email || '-'}</p>
-                <p className="text-sm flex items-center gap-3"><Phone className="h-4 w-4 text-blue-600" /> <strong>Telefone:</strong> {selectedClient.telefone || '-'}</p>
+            
+            <div className="p-8 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Dados</h3>
+                    <p className="text-sm flex items-center gap-3"><Briefcase className="h-4 w-4 text-blue-600" /> <strong>Empresa:</strong> {selectedClient.empresa}</p>
+                    <p className="text-sm flex items-center gap-3"><User className="h-4 w-4 text-blue-600" /> <strong>Cargo:</strong> {selectedClient.cargo || '-'}</p>
+                    <p className="text-sm flex items-center gap-3"><Mail className="h-4 w-4 text-blue-600" /> <strong>Email:</strong> {selectedClient.email || '-'}</p>
+                    <p className="text-sm flex items-center gap-3"><Phone className="h-4 w-4 text-blue-600" /> <strong>Tel:</strong> {selectedClient.telefone || '-'}</p>
+                </div>
+                <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Logística</h3>
+                    <p className="text-sm flex items-center gap-3"><MapPin className="h-4 w-4 text-blue-600" /> {selectedClient.endereco}, {selectedClient.numero}</p>
+                    <p className="text-sm text-gray-600 ml-7">{selectedClient.bairro} - {selectedClient.cidade}/{selectedClient.estado}</p>
+                    <p className="text-sm flex items-center gap-3"><Gift className="h-4 w-4 text-blue-600" /> <strong>Brinde Atual:</strong> {selectedClient.tipoBrinde}</p>
+                    <p className="text-sm flex items-center gap-3"><Info className="h-4 w-4 text-blue-600" /> <strong>Sócio:</strong> {selectedClient.socio}</p>
+                </div>
               </div>
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Endereço e Logística</h3>
-                <p className="text-sm flex items-center gap-3"><MapPin className="h-4 w-4 text-blue-600" /> {selectedClient.endereco}, {selectedClient.numero}</p>
-                <p className="text-sm text-gray-600 ml-7">{selectedClient.bairro} - {selectedClient.cidade}/{selectedClient.estado}</p>
-                <p className="text-sm flex items-center gap-3"><Gift className="h-4 w-4 text-blue-600" /> <strong>Brinde:</strong> {selectedClient.tipoBrinde} ({selectedClient.quantidade}x)</p>
-                <p className="text-sm flex items-center gap-3"><Info className="h-4 w-4 text-blue-600" /> <strong>Sócio:</strong> {selectedClient.socio}</p>
-              </div>
-              <div className="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p className="text-xs font-bold text-gray-400 uppercase mb-2">Observações</p>
-                <p className="text-sm text-gray-600 italic">{selectedClient.observacoes || 'Nenhuma observação cadastrada.'}</p>
+
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-5">
+                <h3 className="text-sm font-bold text-[#112240] mb-4 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" /> Histórico de Brindes Anuais
+                </h3>
+                {selectedClient.historico_brindes && selectedClient.historico_brindes.length > 0 ? (
+                    <div className="space-y-2">
+                        {selectedClient.historico_brindes.map((h, i) => (
+                            <div key={i} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 text-sm">
+                                <span className="font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded">{h.ano}</span>
+                                <span className="font-medium text-gray-700">{h.tipo || '-'}</span>
+                                <span className="text-gray-500 text-xs italic truncate max-w-[150px]">{h.obs || '-'}</span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-xs text-gray-400 italic text-center py-2">Nenhum histórico registrado.</p>
+                )}
               </div>
             </div>
-            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+
+            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-between items-center shrink-0">
               <button onClick={() => handlePrint(selectedClient)} className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-gray-50 transition-all shadow-sm">
                 <Printer className="h-4 w-4" /> Imprimir Ficha
               </button>
@@ -366,7 +318,6 @@ export function Clients({ initialFilters }: ClientsProps) {
         </div>
       )}
 
-      {/* TOOLBAR */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
         <div className="flex items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 px-1">
            <div className="relative group">
@@ -423,21 +374,6 @@ export function Clients({ initialFilters }: ClientsProps) {
                         <span className="text-gray-400">Sócio:</span>
                         <span className="font-bold text-[#112240]">{client.socio || '-'}</span>
                     </div>
-                    
-                    <div className="flex justify-between items-start gap-2">
-                        <span className="text-gray-400 whitespace-nowrap">End:</span>
-                        <span className="text-gray-600 font-medium truncate text-right" title={`${client.endereco}, ${client.numero || ''} - ${client.bairro || ''}`}>
-                            {client.endereco ? `${client.endereco}, ${client.numero || ''}` : '-'}
-                        </span>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Local:</span>
-                        <span className="text-gray-600 font-medium">
-                            {client.cidade || client.estado ? `${client.cidade || ''}/${client.estado || ''}` : '-'}
-                        </span>
-                    </div>
-
                     <div className="flex justify-between items-center">
                         <span className="text-gray-400">Tel:</span>
                         <span className="text-gray-600 font-medium">{client.telefone || '-'}</span>
@@ -446,15 +382,8 @@ export function Clients({ initialFilters }: ClientsProps) {
 
                   <div className="border-t border-gray-100 pt-2 flex justify-between items-center transition-opacity">
                     <div className="flex gap-2">
-                      {client.telefone && (
-                        <>
-                            <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors"><MessageCircle className="h-4 w-4" /></button>
-                            <button onClick={(e) => handle3CX(client, e)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"><Phone className="h-4 w-4" /></button>
-                        </>
-                      )}
-                      {client.email && (
-                        <button onClick={(e) => handleEmail(client, e)} className="p-1.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"><Mail className="h-4 w-4" /></button>
-                      )}
+                      <button className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors"><MessageCircle className="h-4 w-4" /></button>
+                      <button className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"><Phone className="h-4 w-4" /></button>
                     </div>
                     <div className="flex gap-1">
                       <button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-gray-500 hover:text-[#112240] rounded-md transition-colors"><Pencil className="h-4 w-4" /></button>
@@ -471,9 +400,6 @@ export function Clients({ initialFilters }: ClientsProps) {
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Empresa</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Sócio</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Brinde</th>
-                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">WhatsApp</th>
-                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Ligar</th>
-                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">E-mail</th>
                     <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
@@ -484,39 +410,12 @@ export function Clients({ initialFilters }: ClientsProps) {
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">{client.empresa}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">{client.socio}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${client.tipoBrinde === 'Brinde VIP' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
-                          {client.tipoBrinde}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {client.telefone && (
-                            <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-md transition-colors">
-                            <MessageCircle className="h-4 w-4" />
-                            </button>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {client.telefone && (
-                            <button onClick={(e) => handle3CX(client, e)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
-                            <Phone className="h-4 w-4" />
-                            </button>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {client.email && (
-                            <button onClick={(e) => handleEmail(client, e)} className="p-1.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors">
-                            <Mail className="h-4 w-4" />
-                            </button>
-                        )}
+                        <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${client.tipoBrinde === 'Brinde VIP' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>{client.tipoBrinde}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md">
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button onClick={(e) => handleDeleteClick(client, e)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <button onClick={(e) => handleEdit(client, e)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md"><Pencil className="h-4 w-4" /></button>
+                          <button onClick={(e) => handleDeleteClick(client, e)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md"><Trash2 className="h-4 w-4" /></button>
                         </div>
                       </td>
                     </tr>
