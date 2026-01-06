@@ -46,6 +46,18 @@ export function Settings() {
   // --- CHANGELOG ATUALIZADO ---
   const changelog = [
     {
+      version: '1.5',
+      date: '06/01/2026',
+      type: 'feat',
+      title: 'Ecossistema e Histórico',
+      items: [
+        'Novo módulo de Histórico Anual de Brindes (visualização e edição).',
+        'Tela de Login renovada com acesso ao Ecossistema (CRM, Família, Colaboradores).',
+        'Inclusão do Manual do Sistema integrado.',
+        'Correções críticas de build e estabilidade no Kanban e Modal de Clientes.'
+      ]
+    },
+    {
       version: '1.4',
       date: '05/01/2026',
       type: 'feat',
