@@ -27,20 +27,19 @@ export function Clients({ initialFilters }: ClientsProps) {
   const [filterBrinde, setFilterBrinde] = useState<string>('')
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest')
 
-  // Listas únicas para os dropdowns (calculadas dinamicamente)
+  // Listas únicas para os dropdowns
   const [availableSocios, setAvailableSocios] = useState<string[]>([])
   const [availableBrindes, setAvailableBrindes] = useState<string[]>([])
 
   const fetchClients = async () => {
     setLoading(true)
-    // Buscamos tudo para permitir filtragem client-side rápida
     let query = supabase.from('clientes').select('*')
     
     const { data, error } = await query
     if (!error && data) {
         setClients(data)
         
-        // Extrair listas únicas para os filtros
+        // Extrair listas únicas usando tipo_brinde (snake_case)
         const socios = Array.from(new Set(data.map(c => c.socio).filter(Boolean))) as string[]
         const brindes = Array.from(new Set(data.map(c => c.tipo_brinde).filter(Boolean))) as string[]
         setAvailableSocios(socios.sort())
@@ -49,18 +48,17 @@ export function Clients({ initialFilters }: ClientsProps) {
     setLoading(false)
   }
 
-  // Sincronizar filtros iniciais vindos do Dashboard
   useEffect(() => {
     if (initialFilters?.socio) setFilterSocio(initialFilters.socio)
     if (initialFilters?.brinde) setFilterBrinde(initialFilters.brinde)
     fetchClients()
   }, [initialFilters])
 
-  // --- LÓGICA CENTRAL DE FILTRAGEM E ORDENAÇÃO ---
+  // --- LÓGICA CENTRAL DE FILTRAGEM ---
   const processedClients = useMemo(() => {
     let result = [...clients]
 
-    // 1. Busca por Texto (Search Anything)
+    // 1. Busca por Texto
     if (searchTerm) {
         const lowerTerm = searchTerm.toLowerCase()
         result = result.filter(c => 
@@ -72,7 +70,7 @@ export function Clients({ initialFilters }: ClientsProps) {
         )
     }
 
-    // 2. Filtros Específicos
+    // 2. Filtros Específicos (usando tipo_brinde)
     if (filterSocio) {
         result = result.filter(c => c.socio === filterSocio)
     }
@@ -186,14 +184,13 @@ export function Clients({ initialFilters }: ClientsProps) {
             </div>
         </div>
 
-        {/* Linha 3: Barra de Filtros e Ordenação (RESTAURADA) */}
+        {/* Linha 3: Barra de Filtros e Ordenação */}
         <div className="flex flex-wrap items-center gap-3 pb-2 border-b border-gray-100">
             <div className="flex items-center gap-2 text-sm text-gray-500 mr-2">
                 <Filter className="h-4 w-4" />
                 <span className="font-bold">Filtrar por:</span>
             </div>
 
-            {/* Dropdown Sócio */}
             <div className="relative">
                 <select 
                     value={filterSocio}
@@ -206,7 +203,6 @@ export function Clients({ initialFilters }: ClientsProps) {
                 </select>
             </div>
 
-            {/* Dropdown Brinde */}
             <div className="relative">
                 <select 
                     value={filterBrinde}
@@ -219,7 +215,6 @@ export function Clients({ initialFilters }: ClientsProps) {
                 </select>
             </div>
 
-            {/* Botão Limpar Filtros */}
             {(filterSocio || filterBrinde) && (
                 <button 
                     onClick={() => { setFilterSocio(''); setFilterBrinde(''); }}
@@ -229,7 +224,6 @@ export function Clients({ initialFilters }: ClientsProps) {
                 </button>
             )}
 
-            {/* Ordenação (Direita) */}
             <div className="ml-auto flex items-center gap-2">
                 <span className="text-xs text-gray-400 font-medium hidden sm:inline">Ordem:</span>
                 <Menu as="div" className="relative">
@@ -272,6 +266,7 @@ export function Clients({ initialFilters }: ClientsProps) {
       {/* LISTA DE CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {processedClients.map((client) => (
+            // CORREÇÃO: Usando client.id ou client.email como chave
             <div key={client.id || client.email} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow group relative animate-fadeIn">
                 
                 <div className="flex justify-between items-start mb-3">
@@ -303,9 +298,9 @@ export function Clients({ initialFilters }: ClientsProps) {
                 <div className="space-y-2 mb-4">
                     <div className="flex flex-wrap gap-2">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide
-                            ${client.tipoBrinde === 'Brinde VIP' ? 'bg-purple-100 text-purple-700' : 
-                              client.tipoBrinde === 'Não Recebe' ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-700'}`}>
-                            {client.tipoBrinde || 'Brinde Médio'}
+                            ${client.tipo_brinde === 'Brinde VIP' ? 'bg-purple-100 text-purple-700' : 
+                              client.tipo_brinde === 'Não Recebe' ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-700'}`}>
+                            {client.tipo_brinde || 'Brinde Médio'}
                         </span>
                         {client.socio && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-orange-50 text-orange-700 border border-orange-100 uppercase tracking-wide">

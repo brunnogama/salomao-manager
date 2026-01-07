@@ -9,14 +9,15 @@ export interface GiftHistoryItem {
   obs: string;
 }
 
+// CORREÇÃO: Propriedades renomeadas para snake_case para bater com o Banco de Dados
 export interface ClientData {
-  id?: number; // ADICIONADO: ID opcional para compatibilidade
+  id?: number;
   nome: string;
   empresa: string;
   cargo: string;
   telefone: string;
-  tipoBrinde: string;
-  outroBrinde: string;
+  tipo_brinde: string; // Antes: tipoBrinde
+  outro_brinde: string; // Antes: outroBrinde
   quantidade: number;
   cep: string;
   endereco: string;
@@ -44,9 +45,10 @@ const BRINDE_OPTIONS = ['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno', 'Não R
 export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewClientModalProps) {
   const [activeTab, setActiveTab] = useState<'geral' | 'endereco' | 'historico'>('geral')
   
+  // Estado inicial atualizado com snake_case
   const [formData, setFormData] = useState<ClientData>({
     nome: '', empresa: '', cargo: '', telefone: '',
-    tipoBrinde: 'Brinde Médio', outroBrinde: '', quantidade: 1,
+    tipo_brinde: 'Brinde Médio', outro_brinde: '', quantidade: 1,
     cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
     email: '', socio: '', observacoes: '', ignored_fields: [],
     historico_brindes: []
@@ -74,7 +76,7 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
     } else {
       setFormData({
         nome: '', empresa: '', cargo: '', telefone: '',
-        tipoBrinde: 'Brinde Médio', outroBrinde: '', quantidade: 1,
+        tipo_brinde: 'Brinde Médio', outro_brinde: '', quantidade: 1,
         cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
         email: '', socio: '', observacoes: '', ignored_fields: [],
         historico_brindes: initializeHistory([])
@@ -198,14 +200,14 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo de Brinde (Atual)</label>
-                                <select value={formData.tipoBrinde} onChange={e => setFormData({...formData, tipoBrinde: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none">
+                                <select value={formData.tipo_brinde} onChange={e => setFormData({...formData, tipo_brinde: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none">
                                     {BRINDE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                 </select>
                             </div>
-                            {formData.tipoBrinde === 'Outro' && (
+                            {formData.tipo_brinde === 'Outro' && (
                                 <div className="md:col-span-2">
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Especifique o Brinde</label>
-                                    <input type="text" value={formData.outroBrinde} onChange={e => setFormData({...formData, outroBrinde: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
+                                    <input type="text" value={formData.outro_brinde} onChange={e => setFormData({...formData, outro_brinde: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
                                 </div>
                             )}
                             <div>
