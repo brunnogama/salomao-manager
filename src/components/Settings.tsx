@@ -9,11 +9,6 @@ import { utils, read, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
 
-interface SocioStats {
-  nome: string;
-  count: number;
-}
-
 interface AppUser {
   id: number;
   nome: string;
@@ -22,16 +17,118 @@ interface AppUser {
   ativo: boolean;
 }
 
+// === CHANGELOG COM VERSIONAMENTO SEMÂNTICO ===
+// Versão Atual: 1.5.0
+// Formato: MAJOR.MINOR.PATCH
+// - MAJOR (X): Mudanças radicais na arquitetura ou breaking changes
+// - MINOR (X.X): Novas funcionalidades
+// - PATCH (X.X.X): Correções de bugs
+
+const CHANGELOG = [
+  {
+    version: '1.5.0',
+    date: '08/01/2026',
+    type: 'minor',
+    title: 'Modal LGPD e Simplificação de Interface',
+    changes: [
+      'Adicionado modal de boas-vindas com informações sobre LGPD e confidencialidade',
+      'Simplificação dos cards de clientes (removida empresa duplicada e barra lateral)',
+      'Modo visualização/edição no modal de clientes',
+      'Histórico do modal com design elegante (cards coloridos)',
+      'Removida gestão de sócios de configurações'
+    ]
+  },
+  {
+    version: '1.4.2',
+    date: '07/01/2026',
+    type: 'patch',
+    title: 'Correções e Melhorias de UX',
+    changes: [
+      'Botão "Limpar Filtros" com destaque visual (pulsante)',
+      'Padronização de fontes entre BrindeSelector e SocioSelector',
+      'Tick de seleção movido para o lado correto',
+      'Cards do dashboard maiores e melhor distribuídos'
+    ]
+  },
+  {
+    version: '1.4.1',
+    date: '07/01/2026',
+    type: 'patch',
+    title: 'Correções de Build e Dependências',
+    changes: [
+      'Correção de erro de dependências (@hello-pangea/dnd)',
+      'Fix de build no Cloudflare Pages',
+      'Atualização do package.json'
+    ]
+  },
+  {
+    version: '1.4.0',
+    date: '07/01/2026',
+    type: 'minor',
+    title: 'Sistema de Tipos de Brinde Dinâmico',
+    changes: [
+      'CRUD completo para tipos de brinde (criar, editar, excluir)',
+      'BrindeSelector com menu dropdown avançado',
+      'Cascade update ao editar tipos',
+      'Soft delete para preservar histórico'
+    ]
+  },
+  {
+    version: '1.3.0',
+    date: '07/01/2026',
+    type: 'minor',
+    title: 'Melhorias Visuais nos Cards',
+    changes: [
+      'Redesign premium dos cards de clientes',
+      'Avatares com gradientes coloridos',
+      'Sidebar colorida por tipo de brinde',
+      'Animações hover melhoradas',
+      'Cards mais compactos e eficientes'
+    ]
+  },
+  {
+    version: '1.2.0',
+    date: '18/12/2025',
+    type: 'minor',
+    title: 'Restauração de Funcionalidades',
+    changes: [
+      'Restauração de templates WhatsApp e Email completos',
+      'SocioSelector reintegrado ao NewClientModal',
+      'Dashboard com layout de linha única',
+      'Filtro de tipos de brinde antigos'
+    ]
+  },
+  {
+    version: '1.1.0',
+    date: '07/12/2025',
+    type: 'minor',
+    title: 'Módulo Magistrados e Segurança',
+    changes: [
+      'Novo módulo restrito para Magistrados',
+      'Sistema de PIN e controle de acesso',
+      'Auditoria visual aprimorada',
+      'Tela de PIN com design moderno'
+    ]
+  },
+  {
+    version: '1.0.0',
+    date: '29/11/2025',
+    type: 'major',
+    title: 'Lançamento Inicial',
+    changes: [
+      'Sistema CRM completo',
+      'Gestão de clientes e brindes',
+      'Dashboard com métricas',
+      'Sistema de autenticação',
+      'Kanban de tarefas'
+    ]
+  }
+]
+
 export function Settings() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
   
-  // --- GESTÃO DE SÓCIOS ---
-  const [sociosStats, setSociosStats] = useState<SocioStats[]>([])
-  const [loadingSocios, setLoadingSocios] = useState(false)
-  const [editingSocio, setEditingSocio] = useState<string | null>(null)
-  const [newSocioName, setNewSocioName] = useState('')
-
   // --- GESTÃO DE USUÁRIOS ---
   const [users, setUsers] = useState<AppUser[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -45,8 +142,7 @@ export function Settings() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { 
-    fetchSocios();
+  useEffect(() => {
     fetchUsers();
     fetchMagistradosConfig();
   }, [])
@@ -61,24 +157,6 @@ export function Settings() {
             emails: (data.emails_permitidos || []).join(', ')
         })
     }
-  }
-
-  const fetchSocios = async () => {
-    setLoadingSocios(true)
-    const { data: clients } = await supabase.from('clientes').select('socio')
-    
-    if (clients) {
-        const counts: Record<string, number> = {}
-        clients.forEach((c: any) => {
-            const socio = c.socio || 'Sem Sócio'
-            counts[socio] = (counts[socio] || 0) + 1
-        })
-        const stats = Object.entries(counts)
-            .map(([nome, count]) => ({ nome, count }))
-            .sort((a, b) => b.count - a.count)
-        setSociosStats(stats)
-    }
-    setLoadingSocios(false)
   }
 
   const fetchUsers = async () => {
@@ -128,29 +206,6 @@ export function Settings() {
     }
     alert('Configurações de segurança salvas!')
     setLoadingConfig(false)
-  }
-
-  const handleUpdateSocio = async (oldName: string) => {
-    if (!newSocioName.trim() || newSocioName === oldName) {
-        setEditingSocio(null)
-        return
-    }
-    if (confirm(`Renomear "${oldName}" para "${newSocioName}"?`)) {
-        setLoadingSocios(true)
-        await supabase.from('clientes').update({ socio: newSocioName }).eq('socio', oldName)
-        fetchSocios()
-        setEditingSocio(null)
-        setLoadingSocios(false)
-    }
-  }
-
-  const handleDeleteSocio = async (name: string) => {
-    if (confirm(`Remover sócio "${name}"?`)) {
-        setLoadingSocios(true)
-        await supabase.from('clientes').update({ socio: null }).eq('socio', name)
-        fetchSocios()
-        setLoadingSocios(false)
-    }
   }
 
   const handleSaveUser = async () => {
@@ -417,65 +472,6 @@ export function Settings() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* --- GESTÃO DE SÓCIOS --- */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-purple-50 rounded-lg text-purple-700"><Building className="h-6 w-6" /></div>
-                <div>
-                    <h3 className="font-bold text-[#112240] text-lg">Gestão de Sócios</h3>
-                    <p className="text-sm text-gray-500">Renomeie ou remova sócios da base.</p>
-                </div>
-            </div>
-
-            <div className="max-h-64 overflow-y-auto custom-scrollbar pr-2 space-y-2">
-                {loadingSocios ? <p className="text-center text-sm text-gray-400 py-4">Carregando...</p> : sociosStats.map((socio) => (
-                    <div key={socio.nome} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
-                        <div className="flex items-center gap-3 min-w-0">
-                            <div className="h-8 w-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs shrink-0">
-                                {socio.nome.charAt(0)}
-                            </div>
-                            <div className="min-w-0">
-                                {editingSocio === socio.nome ? (
-                                    <input 
-                                        autoFocus
-                                        className="text-sm font-bold bg-white border border-purple-300 rounded px-2 py-0.5 w-full outline-none"
-                                        defaultValue={socio.nome}
-                                        onBlur={() => handleUpdateSocio(socio.nome)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                setNewSocioName(e.currentTarget.value)
-                                                handleUpdateSocio(socio.nome)
-                                            }
-                                        }}
-                                        onChange={(e) => setNewSocioName(e.target.value)}
-                                    />
-                                ) : (
-                                    <>
-                                        <p className="text-sm font-bold text-gray-800 truncate">{socio.nome}</p>
-                                        <p className="text-xs text-gray-500">{socio.count} clientes vinculados</p>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button 
-                                onClick={() => { setEditingSocio(socio.nome); setNewSocioName(socio.nome); }}
-                                className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-md" 
-                                title="Renomear"
-                            >
-                                <Pencil className="h-3.5 w-3.5" />
-                            </button>
-                            <button 
-                                onClick={() => handleDeleteSocio(socio.nome)}
-                                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md" 
-                                title="Remover Sócio"
-                            >
-                                <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
 
         {/* --- IMPORTAÇÃO DE DADOS --- */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
@@ -676,8 +672,66 @@ export function Settings() {
                             <span className="text-xs font-medium text-gray-600">Versão do Sistema</span>
                         </div>
                         <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
-                            v2.5.0
+                            v1.5.0
                         </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* SEÇÃO DE CHANGELOG */}
+        <div className="md:col-span-2 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-6">
+                <History className="h-5 w-5 text-gray-600" />
+                <h3 className="font-bold text-[#112240] text-lg">Histórico de Versões</h3>
+            </div>
+
+            <div className="space-y-6">
+                {CHANGELOG.map((log) => (
+                    <div key={log.version} className="border-l-4 border-blue-200 pl-4 relative">
+                        {/* Badge de Versão */}
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className={`px-2.5 py-1 text-xs font-black rounded-lg ${
+                                log.type === 'major' ? 'bg-red-100 text-red-700 border border-red-200' :
+                                log.type === 'minor' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                                'bg-green-100 text-green-700 border border-green-200'
+                            }`}>
+                                v{log.version}
+                            </span>
+                            <span className="text-xs text-gray-500 font-medium">{log.date}</span>
+                        </div>
+
+                        {/* Título */}
+                        <h4 className="font-bold text-gray-900 text-sm mb-3">{log.title}</h4>
+
+                        {/* Lista de mudanças */}
+                        <ul className="space-y-1.5">
+                            {log.changes.map((change, idx) => (
+                                <li key={idx} className="text-xs text-gray-600 flex items-start gap-2 leading-relaxed">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
+                                    <span>{change}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ))}
+            </div>
+
+            {/* Legenda */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-xs font-bold text-gray-600 mb-2">Legenda de Versionamento:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded border border-red-200">MAJOR</span>
+                        <span className="text-xs text-gray-600">Mudanças radicais</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 rounded border border-blue-200">MINOR</span>
+                        <span className="text-xs text-gray-600">Novas funcionalidades</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded border border-green-200">PATCH</span>
+                        <span className="text-xs text-gray-600">Correções de bugs</span>
                     </div>
                 </div>
             </div>
