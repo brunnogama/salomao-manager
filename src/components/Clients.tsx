@@ -114,7 +114,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     return result
   }, [clients, searchTerm, filterSocio, filterBrinde, sortOrder])
 
-  // --- DELETE FUNCTION ---
+  // --- FUNÇÃO DE DELETAR (Corrigida) ---
   const handleDelete = async (client: ClientData) => {
     if (!client.id) return alert("Erro: Registro sem ID.")
 
@@ -123,24 +123,20 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
             const { error } = await supabase.from(tableName).delete().eq('id', client.id)
             
             if (error) {
-                // Se for erro de permissão (RLS)
-                if (error.code === '42501') {
-                    throw new Error("Permissão negada. Verifique as configurações de segurança (RLS) no Supabase.")
-                }
-                throw error
+                console.error("Erro Supabase:", error)
+                throw new Error(error.message)
             }
 
             setClients(current => current.filter(c => c.id !== client.id))
             await logAction('EXCLUIR', tableName.toUpperCase(), `Excluiu: ${client.nome}`)
             
         } catch (error: any) {
-            console.error('Erro ao excluir:', error)
             alert(`Falha ao excluir: ${error.message}`)
         }
     }
   }
 
-  // --- IMPORT FUNCTION ---
+  // --- FUNÇÃO DE IMPORTAR (Corrigida) ---
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -163,29 +159,44 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
       const { data: { user } } = await supabase.auth.getUser()
       const userEmail = user?.email || 'Importação'
 
-      const itemsToInsert = jsonData.map((row: any) => ({
-        nome: row.nome || row.Nome,
-        empresa: row.empresa || row.Empresa || '',
-        cargo: row.cargo || row.Cargo || '',
-        email: row.email || row.Email || '',
-        telefone: row.telefone || row.Telefone || '',
-        socio: row.socio || row.Socio || '',
-        tipo_brinde: row.tipo_brinde || row['Tipo Brinde'] || 'Brinde Médio',
-        quantidade: row.quantidade || row.Quantidade || 1,
-        cep: row.cep || row.CEP || '',
-        endereco: row.endereco || row.Endereco || '',
-        numero: row.numero || row.Numero || '',
-        bairro: row.bairro || row.Bairro || '',
-        cidade: row.cidade || row.Cidade || '',
-        estado: row.estado || row.Estado || '',
-        created_by: userEmail,
-        updated_by: userEmail
-      }))
+      // Normaliza as chaves do Excel
+      const normalizeKeys = (obj: any) => {
+          const newObj: any = {};
+          Object.keys(obj).forEach(key => {
+              newObj[key.trim().toLowerCase()] = obj[key];
+          });
+          return newObj;
+      }
+
+      const itemsToInsert = jsonData.map((rawRow: any) => {
+        const row = normalizeKeys(rawRow);
+        
+        if (!row.nome && !row['nome completo']) return null;
+
+        return {
+            nome: row.nome || row['nome completo'] || 'Sem Nome',
+            empresa: row.empresa || '',
+            cargo: row.cargo || '',
+            email: row.email || row['e-mail'] || '',
+            telefone: row.telefone || row.celular || '',
+            socio: row.socio || row['sócio'] || '',
+            tipo_brinde: row.tipo_brinde || row['tipo de brinde'] || row.brinde || 'Brinde Médio',
+            quantidade: row.quantidade || 1,
+            cep: row.cep || '',
+            endereco: row.endereco || row['endereço'] || '',
+            numero: row.numero || row['número'] || '',
+            bairro: row.bairro || '',
+            cidade: row.cidade || '',
+            estado: row.estado || row.uf || '',
+            created_by: userEmail,
+            updated_by: userEmail
+        }
+      }).filter(Boolean);
       
       const { error } = await supabase.from(tableName).insert(itemsToInsert)
       if (error) throw error
       
-      alert(`${itemsToInsert.length} registros importados!`)
+      alert(`${itemsToInsert.length} registros importados com sucesso!`)
       await logAction('IMPORTAR', tableName.toUpperCase(), `Importou ${itemsToInsert.length} itens`)
       fetchClients()
 
@@ -195,6 +206,14 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
       setImporting(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
+  }
+
+  // Gatilho para o input de arquivo oculto
+  const triggerFileInput = () => {
+      if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+          fileInputRef.current.click();
+      }
   }
 
   const handleSave = async (client: ClientData) => {
@@ -296,7 +315,14 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
 
   return (
     <div className="h-full flex flex-col gap-4">
-      <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx, .xls" className="hidden" />
+      {/* Input de arquivo invisível para a importação */}
+      <input 
+        type="file" 
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept=".xlsx, .xls"
+        className="hidden" 
+      />
 
       <div className="flex-shrink-0 flex flex-col gap-4">
         {/* HEADER */}
@@ -308,7 +334,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-                {/* ÍCONE DE FILTRO (Agora utilizado para não dar erro de build) */}
                 <div className="flex items-center gap-1 text-gray-400 mr-1 hidden sm:flex">
                     <Filter className="h-4 w-4" />
                 </div>
@@ -359,7 +384,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
                 </button>
                 
                 <div className="flex items-center gap-1">
-                    <button onClick={() => fileInputRef.current?.click()} disabled={importing} className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-colors" title="Importar Excel">
+                    <button onClick={triggerFileInput} disabled={importing} className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-colors" title="Importar Excel">
                         {importing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
                     </button>
                     <button onClick={handleExportExcel} className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition-colors" title="Exportar Excel"><FileSpreadsheet className="h-5 w-5" /></button>
