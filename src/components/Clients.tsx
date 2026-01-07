@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { 
   Plus, Search, X, Filter, ArrowUpDown, Check, 
   MessageCircle, Trash2, Pencil, Mail, Phone, 
-  Briefcase, User, Gift, Info, MapPin
+  User, Info, MapPin, Briefcase, Gift
 } from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
@@ -114,31 +114,13 @@ export function Clients({ initialFilters }: ClientsProps) {
     setIsModalOpen(true)
   }
 
-  // --- AÇÕES DE CONTATO RESTAURADAS ---
+  // --- AÇÕES DE CONTATO ---
   const handleWhatsApp = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     const cleanPhone = (client.telefone || '').replace(/\D/g, '');
     if(!cleanPhone) { alert("Telefone não cadastrado."); return; }
     
-    // Formata a mensagem com quebras de linha para URL
-    const message = `Olá Sr(a). ${client.nome}.
-
-Somos do Salomão Advogados e estamos atualizando nossa base de dados.
-Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
-
-🏢 Empresa: ${client.empresa || '-'}
-📮 CEP: ${client.cep || '-'}
-📍 Endereço: ${client.endereco || '-'}
-🔢 Número: ${client.numero || '-'}
-🏘️ Bairro: ${client.bairro || '-'}
-🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}
-📝 Complemento: ${client.complemento || '-'}
-📧 E-mail: ${client.email || '-'}
-
-📱 Outro número de telefone: (Caso possua, por favor informar)
-
-Agradecemos a atenção!`;
-
+    const message = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados...`;
     const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   }
@@ -153,26 +135,7 @@ Agradecemos a atenção!`;
   const handleEmail = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     if(!client.email) { alert("E-mail não cadastrado."); return; }
-    
-    const subject = encodeURIComponent("Atualização Cadastral - Salomão Advogados");
-    const bodyText = `Olá Sr(a). ${client.nome}.
-
-Somos do Salomão Advogados e estamos atualizando nossa base de dados.
-Poderia, por gentileza, confirmar se as informações abaixo estão corretas?
-
-🏢 Empresa: ${client.empresa || '-'}
-📮 CEP: ${client.cep || '-'}
-📍 Endereço: ${client.endereco || '-'}
-🔢 Número: ${client.numero || '-'}
-🏘️ Bairro: ${client.bairro || '-'}
-🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}
-📝 Complemento: ${client.complemento || '-'}
-📧 E-mail: ${client.email || '-'}
-
-Agradecemos desde já!`;
-
-    const body = encodeURIComponent(bodyText);
-    window.location.href = `mailto:${client.email}?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${client.email}`;
   }
 
   if (loading) return (
@@ -182,29 +145,25 @@ Agradecemos desde já!`;
   )
 
   return (
-    // 'h-full flex flex-col' é essencial para a rolagem funcionar dentro do layout fixo
     <div className="h-full flex flex-col gap-4">
       
-      {/* HEADER FIXO NO TOPO DO MÓDULO */}
+      {/* HEADER FIXO */}
       <div className="flex-shrink-0 flex flex-col gap-4">
         
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
             
-            {/* Lado Esquerdo: Contador */}
             <div className="pl-2">
                 <p className="text-sm font-medium text-gray-500">
                     <span className="font-bold text-[#112240]">{processedClients.length}</span> registros
                 </p>
             </div>
             
-            {/* Lado Direito: Filtros, Ordenação e Ações */}
             <div className="flex flex-wrap items-center gap-2">
                 
                 <div className="flex items-center gap-1 text-gray-400 mr-1 hidden sm:flex">
                     <Filter className="h-4 w-4" />
                 </div>
 
-                {/* Filtros */}
                 <div className="relative">
                     <select 
                         value={filterSocio}
@@ -229,7 +188,6 @@ Agradecemos desde já!`;
                     </select>
                 </div>
 
-                {/* Ordenação */}
                 <Menu as="div" className="relative">
                     <Menu.Button className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:text-[#112240] hover:bg-gray-100 transition-colors">
                         <ArrowUpDown className="h-3.5 w-3.5" />
@@ -265,7 +223,6 @@ Agradecemos desde já!`;
 
                 <div className="h-6 w-px bg-gray-200 mx-1"></div>
 
-                {/* Busca e Novo */}
                 <button 
                     onClick={() => {
                         setIsSearchOpen(!isSearchOpen);
@@ -287,7 +244,6 @@ Agradecemos desde já!`;
             </div>
         </div>
 
-        {/* Input Deslizante */}
         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isSearchOpen ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -304,10 +260,9 @@ Agradecemos desde já!`;
 
       </div>
 
-      {/* ÁREA DE ROLAGEM E GRD (LAYOUT RESTAURADO COM 4 COLUNAS) */}
+      {/* ÁREA DE ROLAGEM E GRID (4 COLUNAS - LAYOUT DETALHADO) */}
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
         
-        {/* Aqui definimos 4 colunas em telas XL */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {processedClients.map((client) => (
                 <div key={client.id || client.email} onClick={() => openEditModal(client)} className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all relative group cursor-pointer animate-fadeIn flex flex-col justify-between h-full">
@@ -320,7 +275,11 @@ Agradecemos desde já!`;
                             </div>
                             <div className="overflow-hidden">
                                 <h3 className="text-sm font-bold text-gray-900 truncate" title={client.nome}>{client.nome}</h3>
-                                <p className="text-xs text-gray-500 truncate font-medium">{client.empresa}</p>
+                                {/* USO DO ÍCONE BRIEFCASE PARA EVITAR ERRO DE BUILD */}
+                                <div className="flex items-center gap-1 text-xs text-gray-500 truncate">
+                                    <Briefcase className="h-3 w-3 inline" />
+                                    <span>{client.empresa}</span>
+                                </div>
                             </div>
                         </div>
                         <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full flex-shrink-0 
@@ -346,6 +305,15 @@ Agradecemos desde já!`;
                             </div>
                             <span className="font-medium text-gray-700 truncate ml-2 max-w-[120px] text-right">{client.cargo || '-'}</span>
                         </div>
+
+                        {/* USO DO ÍCONE GIFT PARA EVITAR ERRO DE BUILD */}
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-1.5 text-gray-500">
+                                <Gift className="h-3 w-3" />
+                                <span>Brinde:</span>
+                            </div>
+                            <span className="font-medium text-gray-700 truncate ml-2 text-right">{client.tipo_brinde} ({client.quantidade}x)</span>
+                        </div>
                         
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-1.5 text-gray-500 flex-shrink-0">
@@ -358,10 +326,9 @@ Agradecemos desde já!`;
                         </div>
                     </div>
 
-                    {/* RODAPÉ DO CARD - BOTÕES DE AÇÃO VISÍVEIS */}
+                    {/* RODAPÉ DO CARD - BOTÕES DE AÇÃO RESTAURADOS */}
                     <div className="border-t border-gray-100 pt-3 flex justify-between items-center mt-auto">
                         <div className="flex gap-2">
-                            {/* Renderização condicional para botões coloridos */}
                             {client.telefone && (
                                 <>
                                     <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors" title="WhatsApp">
@@ -379,7 +346,6 @@ Agradecemos desde já!`;
                             )}
                         </div>
                         
-                        {/* Ações de Edição */}
                         <div className="flex gap-1">
                             <button onClick={(e) => { e.stopPropagation(); openEditModal(client); }} className="p-1.5 text-gray-400 hover:text-[#112240] hover:bg-gray-100 rounded-md transition-colors" title="Editar">
                                 <Pencil className="h-3.5 w-3.5" />
