@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { 
   Plus, Search, X, Filter, ArrowUpDown, Check, 
   MessageCircle, Trash2, Pencil, Mail, Phone, 
-  Briefcase, User, Gift, Info, MapPin, Printer, FileSpreadsheet, RefreshCw
+  Briefcase, User, Gift, Info, MapPin, Printer, FileSpreadsheet
 } from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
@@ -38,14 +38,13 @@ export function Clients({ initialFilters }: ClientsProps) {
     
     const { data, error } = await query
     if (!error && data) {
-        // MAPEAMENTO EXPLÍCITO (Restaurado para garantir integridade dos dados)
+        // Mapeamento explícito para garantir compatibilidade
         const formattedClients: ClientData[] = data.map((item: any) => ({
             id: item.id,
             nome: item.nome,
             empresa: item.empresa,
             cargo: item.cargo,
             telefone: item.telefone,
-            // Mantendo snake_case pois padronizamos no Modal e Interface
             tipo_brinde: item.tipo_brinde, 
             outro_brinde: item.outro_brinde,
             quantidade: item.quantidade,
@@ -60,12 +59,11 @@ export function Clients({ initialFilters }: ClientsProps) {
             socio: item.socio,
             observacoes: item.observacoes,
             ignored_fields: item.ignored_fields,
-            historico_brindes: item.historico_brindes // Importante para o histórico
+            historico_brindes: item.historico_brindes
         }))
 
         setClients(formattedClients)
         
-        // Extrai listas para filtros
         const socios = Array.from(new Set(formattedClients.map(c => c.socio).filter(Boolean))) as string[]
         const brindes = Array.from(new Set(formattedClients.map(c => c.tipo_brinde).filter(Boolean))) as string[]
         setAvailableSocios(socios.sort())
@@ -98,7 +96,6 @@ export function Clients({ initialFilters }: ClientsProps) {
     if (filterBrinde) result = result.filter(c => c.tipo_brinde === filterBrinde)
 
     result.sort((a: any, b: any) => {
-        // Fallback seguro para datas
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
 
@@ -174,7 +171,7 @@ export function Clients({ initialFilters }: ClientsProps) {
     setIsModalOpen(true)
   }
 
-  // --- AÇÕES DE CONTATO (Restauradas do código original) ---
+  // --- AÇÕES DE CONTATO ---
   const handleWhatsApp = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     const cleanPhone = (client.telefone || '').replace(/\D/g, '');
@@ -197,7 +194,7 @@ export function Clients({ initialFilters }: ClientsProps) {
     if(!client.email) { alert("E-mail não cadastrado."); return; }
     
     const subject = encodeURIComponent("Atualização Cadastral - Salomão Advogados");
-    const bodyText = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados... (Texto padrão)`;
+    const bodyText = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados e estamos atualizando nossa base de dados.\nPoderia, por gentileza, confirmar se as informações abaixo estão corretas?\n\n🏢 Empresa: ${client.empresa || '-'}\n📮 CEP: ${client.cep || '-'}\n📍 Endereço: ${client.endereco || '-'}\n🔢 Número: ${client.numero || '-'}\n🏘️ Bairro: ${client.bairro || '-'}\n🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}\n📝 Complemento: ${client.complemento || '-'}\n📧 E-mail: ${client.email || '-'}\n\nAgradecemos desde já!`;
     const body = encodeURIComponent(bodyText);
     window.location.href = `mailto:${client.email}?subject=${subject}&body=${body}`;
   }
@@ -237,7 +234,7 @@ export function Clients({ initialFilters }: ClientsProps) {
   return (
     <div className="h-full flex flex-col gap-4">
       
-      {/* HEADER UNIFICADO (Busca + Filtros) */}
+      {/* HEADER UNIFICADO */}
       <div className="flex-shrink-0 flex flex-col gap-4">
         
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
@@ -366,14 +363,14 @@ export function Clients({ initialFilters }: ClientsProps) {
 
       </div>
 
-      {/* GRANDE DOS CARDS (4 COLUNAS - CARD ANTIGO RESTAURADO) */}
+      {/* ÁREA DE ROLAGEM E GRD (4 COLUNAS - LAYOUT DETALHADO) */}
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {processedClients.map((client) => (
                 <div key={client.id || client.email} onClick={() => openEditModal(client)} className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all relative group cursor-pointer animate-fadeIn flex flex-col justify-between h-full">
                     
-                    {/* CABEÇALHO */}
+                    {/* CABEÇALHO DO CARD */}
                     <div className="flex items-start justify-between mb-2">
                         <div className="flex gap-3 overflow-hidden">
                             <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-[#112240] font-bold border border-gray-200 flex-shrink-0">
@@ -393,7 +390,7 @@ export function Clients({ initialFilters }: ClientsProps) {
                         </span>
                     </div>
                     
-                    {/* CORPO (DETALHES) */}
+                    {/* CORPO DO CARD - DESIGN DETALHADO */}
                     <div className="bg-gray-50 rounded-md p-2.5 mb-3 text-xs space-y-2 border border-gray-100">
                         <div className="flex justify-between items-center border-b border-gray-200 pb-1.5">
                             <div className="flex items-center gap-1.5 text-gray-500">
@@ -430,10 +427,9 @@ export function Clients({ initialFilters }: ClientsProps) {
                         </div>
                     </div>
 
-                    {/* RODAPÉ (AÇÕES) - COPIADO DO CÓDIGO FUNCIONAL */}
+                    {/* RODAPÉ DO CARD - BOTÕES DE AÇÃO */}
                     <div className="border-t border-gray-100 pt-3 flex justify-between items-center mt-auto">
                         <div className="flex gap-2">
-                            {/* Renderização condicional para botões coloridos */}
                             {client.telefone && (
                                 <>
                                     <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors" title="WhatsApp">
