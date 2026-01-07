@@ -152,32 +152,38 @@ export function Sidebar({ activePage, onNavigate, userName, isOpen, onClose, onS
           ))}
         </div>
 
-        {/* USUÁRIO & AÇÕES */}
-        <div className="p-4 bg-[#0d1b33] flex-shrink-0 pb-8 md:pb-4 space-y-2">
-          
-          <div className="flex items-center justify-between rounded-lg bg-[#112240] p-3 border border-gray-800/50">
-              <div className="flex items-center gap-3 overflow-hidden">
-                  <UserCircle className="h-8 w-8 text-gray-400 flex-shrink-0" />
-                  <span className="text-sm font-medium text-white truncate capitalize leading-none">
-                    {userName}
-                  </span>
-              </div>
+        {/* USUÁRIO & AÇÕES (REDESENHADO) */}
+        <div className="p-4 bg-[#0d1b33] flex-shrink-0 pb-8 md:pb-4">
+          <div className="rounded-xl bg-[#112240] border border-gray-800/50 p-3 shadow-sm">
               
-              {/* BOTÕES: TROCAR MÓDULO E SAIR */}
-              <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Linha 1: Identificação (Avatar + Nome) */}
+              <div className="flex items-center gap-3 mb-3 pb-3 border-b border-gray-700/50">
+                  <div className="h-10 w-10 rounded-full bg-blue-900/30 flex items-center justify-center text-blue-200 border border-blue-800/30 shrink-0">
+                    <UserCircle className="h-6 w-6" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-white truncate leading-tight" title={userName}>{userName}</p>
+                    <p className="text-[10px] text-gray-500 font-medium truncate">Usuário Conectado</p>
+                  </div>
+              </div>
+
+              {/* Linha 2: Botões de Ação (Módulos | Sair) */}
+              <div className="grid grid-cols-2 gap-2">
                 <button 
                   onClick={onSwitchModule} 
-                  className="text-blue-400 hover:text-blue-300 transition-colors p-1.5 hover:bg-white/5 rounded"
+                  className="flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg bg-gray-800/50 hover:bg-blue-600/20 text-gray-400 hover:text-blue-300 transition-all border border-transparent hover:border-blue-500/30 text-xs font-medium group"
                   title="Trocar Módulo"
                 >
-                    <Grid className="h-5 w-5" />
+                    <Grid className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                    <span>Módulos</span>
                 </button>
                 <button 
                   onClick={handleLogout} 
-                  className="text-red-500 hover:text-red-400 transition-colors p-1.5 hover:bg-white/5 rounded"
-                  title="Sair do Sistema"
+                  className="flex items-center justify-center gap-2 px-2 py-1.5 rounded-lg bg-gray-800/50 hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all border border-transparent hover:border-red-500/30 text-xs font-medium group"
+                  title="Sair"
                 >
-                    <LogOut className="h-5 w-5" />
+                    <LogOut className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                    <span>Sair</span>
                 </button>
               </div>
           </div>
