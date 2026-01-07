@@ -1,14 +1,12 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { 
-  MoreHorizontal, Plus, Search, X, 
-  MapPin, Mail, Phone, Filter, ArrowUpDown, Check, 
-  MessageCircle, Trash2, Pencil, Briefcase, User, Gift, Info
+  Plus, Search, X, Filter, ArrowUpDown, Check, 
+  MessageCircle, Trash2, Pencil, Mail, Phone
 } from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
 import { NewClientModal, ClientData } from './NewClientModal'
-import { logAction } from '../lib/logger'
 
 interface ClientsProps {
   initialFilters?: { socio?: string; brinde?: string };
@@ -83,7 +81,7 @@ export function Clients({ initialFilters }: ClientsProps) {
   const handleSave = async (client: ClientData) => {
     try {
         if (clientToEdit) {
-            const { error } = await supabase.from('clientes').update(client).eq('id', clientToEdit.id) // Use ID se possível
+            const { error } = await supabase.from('clientes').update(client).eq('id', clientToEdit.id)
             if (error) throw error
         } else {
             const { error } = await supabase.from('clientes').insert([client])
@@ -100,7 +98,7 @@ export function Clients({ initialFilters }: ClientsProps) {
 
   const handleDelete = async (client: ClientData) => {
     if (confirm(`Tem certeza que deseja excluir ${client.nome}?`)) {
-        const { error } = await supabase.from('clientes').delete().eq('id', client.id) // Use ID
+        const { error } = await supabase.from('clientes').delete().eq('id', client.id)
         if (!error) fetchClients()
     }
   }
@@ -115,7 +113,7 @@ export function Clients({ initialFilters }: ClientsProps) {
     setIsModalOpen(true)
   }
 
-  // --- AÇÕES DE CONTATO (RESTAURADAS) ---
+  // --- AÇÕES DE CONTATO ---
   const handleWhatsApp = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     const cleanPhone = (client.telefone || '').replace(/\D/g, '');
@@ -147,7 +145,7 @@ export function Clients({ initialFilters }: ClientsProps) {
   return (
     <div className="space-y-6">
       
-      {/* HEADER UNIFICADO (NOVO) */}
+      {/* HEADER UNIFICADO */}
       <div className="flex flex-col gap-4">
         
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
@@ -269,7 +267,7 @@ export function Clients({ initialFilters }: ClientsProps) {
 
       </div>
 
-      {/* LISTA DE CARDS (RESTAURADA - DESIGN ORIGINAL) */}
+      {/* LISTA DE CARDS (LAYOUT ANTIGO RESTAURADO) */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {processedClients.map((client) => (
             <div key={client.id || client.email} onClick={() => openEditModal(client)} className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all relative group cursor-pointer animate-fadeIn flex flex-col justify-between">
