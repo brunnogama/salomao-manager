@@ -1,14 +1,15 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { 
   Plus, Search, X, Filter, ArrowUpDown, Check, 
   MessageCircle, Trash2, Pencil, Mail, Phone, 
-  Briefcase, User, Gift, Info, MapPin, Printer, FileSpreadsheet
+  Briefcase, User, Gift, Info, MapPin, Printer, FileSpreadsheet,
+  Upload, Loader2
 } from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
 import { NewClientModal, ClientData } from './NewClientModal'
-import { utils, writeFile } from 'xlsx'
+import { utils, writeFile, read } from 'xlsx'
 import { logAction } from '../lib/logger'
 
 interface ClientsProps {
@@ -19,8 +20,12 @@ interface ClientsProps {
 export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps) {
   const [clients, setClients] = useState<ClientData[]>([])
   const [loading, setLoading] = useState(true)
+  const [importing, setImporting] = useState(false) // Estado para loading da importação
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [clientToEdit, setClientToEdit] = useState<ClientData | null>(null)
+  
+  // Ref para o input de arquivo invisível
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // --- ESTADOS DE BUSCA E FILTRO ---
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -35,7 +40,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
 
   const fetchClients = async () => {
     setLoading(true)
-    // Usa a tabela dinâmica definida na prop
     let query = supabase.from(tableName).select('*')
     
     const { data, error } = await query
@@ -61,7 +65,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
             observacoes: item.observacoes,
             ignored_fields: item.ignored_fields,
             historico_brindes: item.historico_brindes,
-            // Auditoria
             created_at: item.created_at,
             updated_at: item.updated_at,
             created_by: item.created_by,
@@ -82,7 +85,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     if (initialFilters?.socio) setFilterSocio(initialFilters.socio)
     if (initialFilters?.brinde) setFilterBrinde(initialFilters.brinde)
     fetchClients()
-  }, [initialFilters, tableName]) // Recarrega se a tabela mudar
+  }, [initialFilters, tableName])
 
   const processedClients = useMemo(() => {
     let result = [...clients]
@@ -115,6 +118,67 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     return result
   }, [clients, searchTerm, filterSocio, filterBrinde, sortOrder])
 
+  // --- IMPORTAÇÃO DE EXCEL ---
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if(!confirm(`Deseja importar este arquivo para a tabela: ${tableName.toUpperCase()}?`)) {
+        if (fileInputRef.current) fileInputRef.current.value = ''
+        return;
+    }
+
+    setImporting(true)
+
+    try {
+      const data = await file.arrayBuffer()
+      const workbook = read(data)
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+      const jsonData = utils.sheet_to_json(worksheet)
+
+      if (jsonData.length === 0) throw new Error('Arquivo vazio')
+
+      // Mapeia os dados do Excel para o formato do banco
+      const { data: { user } } = await supabase.auth.getUser();
+      const userEmail = user?.email || 'Importação';
+
+      const itemsToInsert = jsonData.map((row: any) => ({
+        nome: row.nome || row.Nome,
+        empresa: row.empresa || row.Empresa || '',
+        cargo: row.cargo || row.Cargo || '',
+        email: row.email || row.Email || '',
+        telefone: row.telefone || row.Telefone || '',
+        socio: row.socio || row.Socio || '',
+        tipo_brinde: row.tipo_brinde || row['Tipo Brinde'] || 'Brinde Médio',
+        quantidade: row.quantidade || row.Quantidade || 1,
+        cep: row.cep || row.CEP || '',
+        endereco: row.endereco || row.Endereco || '',
+        numero: row.numero || row.Numero || '',
+        bairro: row.bairro || row.Bairro || '',
+        cidade: row.cidade || row.Cidade || '',
+        estado: row.estado || row.Estado || '',
+        created_by: userEmail,
+        updated_by: userEmail
+      }))
+      
+      const { error } = await supabase.from(tableName).insert(itemsToInsert)
+      
+      if (error) throw error
+      
+      alert(`${itemsToInsert.length} registros importados com sucesso em ${tableName.toUpperCase()}!`)
+      await logAction('IMPORTAR', tableName.toUpperCase(), `Importou ${itemsToInsert.length} via Excel`)
+      
+      fetchClients()
+
+    } catch (error: any) {
+      console.error('Erro na importação:', error)
+      alert('Erro ao importar: ' + error.message)
+    } finally {
+      setImporting(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
   const handleSave = async (client: ClientData) => {
     const { data: { user } } = await supabase.auth.getUser();
     const userEmail = user?.email || 'Sistema';
@@ -146,12 +210,10 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
 
     try {
         if (clientToEdit && clientToEdit.id) {
-            // EDITAR na tabela correta
             const { error } = await supabase.from(tableName).update(dbData).eq('id', clientToEdit.id)
             if (error) throw error
             await logAction('EDITAR', logModule, `Atualizou: ${client.nome}`)
         } else {
-            // CRIAR na tabela correta
             dbData.created_by = userEmail;
             const { error } = await supabase.from(tableName).insert([dbData])
             if (error) throw error
@@ -168,7 +230,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
 
   const handleDelete = async (client: ClientData) => {
     if (confirm(`Tem certeza que deseja excluir ${client.nome}?`)) {
-        // EXCLUIR na tabela correta
         const { error } = await supabase.from(tableName).delete().eq('id', client.id)
         if (!error) {
             await logAction('EXCLUIR', tableName.toUpperCase(), `Excluiu: ${client.nome}`)
@@ -204,7 +265,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     window.location.href = `tel:${cleanPhone}`;
   }
 
-  // --- ALTERAÇÃO AQUI: ABERTURA EM NOVA ABA ---
   const handleEmail = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     if(!client.email) { alert("E-mail não cadastrado."); return; }
@@ -213,7 +273,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     const bodyText = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados e estamos atualizando nossa base de dados.\nPoderia, por gentileza, confirmar se as informações abaixo estão corretas?\n\n🏢 Empresa: ${client.empresa || '-'}\n📮 CEP: ${client.cep || '-'}\n📍 Endereço: ${client.endereco || '-'}\n🔢 Número: ${client.numero || '-'}\n🏘️ Bairro: ${client.bairro || '-'}\n🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}\n📝 Complemento: ${client.complemento || '-'}\n📧 E-mail: ${client.email || '-'}\n\nAgradecemos desde já!`;
     const body = encodeURIComponent(bodyText);
     
-    // Usa window.open com '_blank' para nova aba
     window.open(`mailto:${client.email}?subject=${subject}&body=${body}`, '_blank');
   }
 
@@ -249,6 +308,15 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
 
   return (
     <div className="h-full flex flex-col gap-4">
+      {/* Input de arquivo invisível para a importação */}
+      <input 
+        type="file" 
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept=".xlsx, .xls"
+        className="hidden" 
+      />
+
       <div className="flex-shrink-0 flex flex-col gap-4">
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
             <div className="pl-2">
@@ -300,9 +368,19 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
                 <button onClick={() => { setIsSearchOpen(!isSearchOpen); if(isSearchOpen) setSearchTerm(''); }} className={`p-2 rounded-lg transition-colors ${isSearchOpen ? 'bg-blue-100 text-blue-600' : 'bg-gray-50 text-gray-400 hover:text-[#112240] hover:bg-gray-100 border border-gray-200'}`} title="Buscar">
                     {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
                 </button>
-
-                <button onClick={handleExportExcel} className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition-colors" title="Exportar Excel"><FileSpreadsheet className="h-5 w-5" /></button>
-                <button onClick={handlePrintList} className="p-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors" title="Imprimir Lista"><Printer className="h-5 w-5" /></button>
+                
+                <div className="flex items-center gap-1">
+                    <button 
+                        onClick={() => fileInputRef.current?.click()} 
+                        disabled={importing}
+                        className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-colors" 
+                        title="Importar Excel"
+                    >
+                        {importing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
+                    </button>
+                    <button onClick={handleExportExcel} className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition-colors" title="Exportar Excel"><FileSpreadsheet className="h-5 w-5" /></button>
+                    <button onClick={handlePrintList} className="p-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors" title="Imprimir Lista"><Printer className="h-5 w-5" /></button>
+                </div>
 
                 <button onClick={openNewModal} className="flex items-center gap-2 bg-[#112240] hover:bg-[#1a3a6c] text-white px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-colors shadow-sm whitespace-nowrap">
                     <Plus className="h-4 w-4" /><span className="hidden sm:inline">Novo Registro</span>
