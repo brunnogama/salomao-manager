@@ -379,7 +379,24 @@ Equipe Salomão Advogados`)
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1 text-gray-400 mr-1 hidden sm:flex"><Filter className="h-4 w-4" /></div>
+                {/* Botão de Limpar Filtros (quando há filtros ativos) */}
+                {(filterSocio || filterBrinde) ? (
+                    <button
+                        onClick={() => {
+                            setFilterSocio('')
+                            setFilterBrinde('')
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 bg-red-50 border-2 border-red-200 rounded-lg text-xs font-bold text-red-700 hover:bg-red-100 hover:border-red-300 transition-all animate-pulse"
+                        title="Limpar todos os filtros"
+                    >
+                        <X className="h-4 w-4" />
+                        <span>Limpar Filtros</span>
+                    </button>
+                ) : (
+                    <div className="flex items-center gap-1 text-gray-400 mr-1 hidden sm:flex">
+                        <Filter className="h-4 w-4" />
+                    </div>
+                )}
 
                 <div className="relative">
                     <select value={filterSocio} onChange={(e) => setFilterSocio(e.target.value)} className={`appearance-none pl-3 pr-8 py-2 rounded-lg text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors cursor-pointer ${filterSocio ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
