@@ -36,6 +36,7 @@ export function Clients({ initialFilters }: ClientsProps) {
     const { data, error } = await query
     if (!error && data) {
         setClients(data)
+        // Extrai listas únicas para os filtros
         const socios = Array.from(new Set(data.map(c => c.socio).filter(Boolean))) as string[]
         const brindes = Array.from(new Set(data.map(c => c.tipo_brinde).filter(Boolean))) as string[]
         setAvailableSocios(socios.sort())
@@ -122,7 +123,7 @@ export function Clients({ initialFilters }: ClientsProps) {
   return (
     <div className="space-y-6">
       
-      {/* HEADER UNIFICADO (TUDO NA MESMA LINHA) */}
+      {/* HEADER UNIFICADO */}
       <div className="flex flex-col gap-4">
         
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
@@ -137,6 +138,11 @@ export function Clients({ initialFilters }: ClientsProps) {
             {/* Lado Direito: Filtros, Ordenação e Ações */}
             <div className="flex flex-wrap items-center gap-2">
                 
+                {/* Ícone de Filtro (CORRIGE O ERRO DE BUILD AO USAR O COMPONENTE IMPORTADO) */}
+                <div className="flex items-center gap-1 text-gray-400 mr-1 hidden sm:flex">
+                    <Filter className="h-4 w-4" />
+                </div>
+
                 {/* Filtro Sócio */}
                 <div className="relative">
                     <select 
