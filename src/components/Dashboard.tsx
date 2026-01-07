@@ -158,15 +158,15 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
       <div className="flex flex-wrap gap-4">
         
         {/* Card Total Geral (Clientes) */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-2 relative overflow-hidden group min-w-[160px]">
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3 relative overflow-hidden group flex-1 min-w-[180px]">
             <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-blue-50 rounded-lg text-blue-700">
-                <Award className="h-5 w-5" />
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-blue-50 rounded-xl text-blue-700">
+                <Award className="h-6 w-6" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Clientes</p>
-                <p className="text-2xl font-black text-[#112240] leading-none">{stats.totalClients}</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Clientes</p>
+                <p className="text-3xl font-black text-[#112240] leading-none mt-1">{stats.totalClients}</p>
               </div>
             </div>
         </div>
@@ -178,41 +178,41 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
           <div 
             key={tipo} 
             onClick={() => onNavigateWithFilter('clientes', { brinde: tipo })}
-            className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-2 cursor-pointer hover:border-blue-300 transition-colors min-w-[160px]"
+            className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all flex-1 min-w-[180px]"
           >
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: `${getBrindeColor(tipo)}15`, color: getBrindeColor(tipo) }}>
-                <Gift className="h-5 w-5" />
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl" style={{ backgroundColor: `${getBrindeColor(tipo)}15`, color: getBrindeColor(tipo) }}>
+                <Gift className="h-6 w-6" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide line-clamp-1">{tipo}</p>
-                <p className="text-2xl font-black text-[#112240] leading-none">{qtd}</p>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide line-clamp-1">{tipo}</p>
+                <p className="text-3xl font-black text-[#112240] leading-none mt-1">{qtd}</p>
               </div>
             </div>
           </div>
         ))}
 
         {/* Separador Visual */}
-        <div className="hidden lg:flex items-center justify-center">
-          <div className="h-16 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+        <div className="hidden lg:flex items-center justify-center mx-2">
+          <div className="h-20 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
         </div>
 
         {/* Card Magistrados (Separado) */}
         <div 
-          className="bg-gradient-to-br from-amber-50 to-white p-4 rounded-xl shadow-sm border-2 border-amber-200 flex flex-col gap-2 cursor-pointer hover:border-amber-400 transition-all group relative overflow-hidden min-w-[180px]"
+          className="bg-gradient-to-br from-amber-50 to-white p-5 rounded-xl shadow-sm border-2 border-amber-200 flex flex-col gap-3 cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group relative overflow-hidden flex-1 min-w-[200px]"
           onClick={() => onNavigateWithFilter('magistrados', {})}
         >
             <div className="absolute right-0 top-0 h-full w-1 bg-amber-600"></div>
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-amber-100 rounded-lg text-amber-700 group-hover:scale-110 transition-transform">
-                <Gavel className="h-5 w-5" />
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-amber-100 rounded-xl text-amber-700 group-hover:scale-110 transition-transform">
+                <Gavel className="h-6 w-6" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Magistrados</p>
-                <p className="text-2xl font-black text-amber-900 leading-none">{stats.totalMagistrados}</p>
+                <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide">Magistrados</p>
+                <p className="text-3xl font-black text-amber-900 leading-none mt-1">{stats.totalMagistrados}</p>
               </div>
             </div>
-            <div className="absolute bottom-1 right-2 text-[8px] text-amber-600/60 font-bold">
+            <div className="absolute bottom-2 right-3 text-[9px] text-amber-600/60 font-bold">
               ÁREA RESTRITA
             </div>
         </div>
