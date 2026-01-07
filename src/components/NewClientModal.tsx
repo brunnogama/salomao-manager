@@ -147,17 +147,15 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
     }));
   }
 
-  // --- Função para Formatar Data e Hora ---
+  // Helper para formatar data e hora
   const formatAuditDate = (dateString?: string) => {
     if (!dateString) return '-';
     try {
         return new Date(dateString).toLocaleString('pt-BR', {
-        day: '2-digit', month: '2-digit', year: '2-digit',
-        hour: '2-digit', minute: '2-digit'
+            day: '2-digit', month: '2-digit', year: '2-digit',
+            hour: '2-digit', minute: '2-digit'
         });
-    } catch (e) {
-        return dateString;
-    }
+    } catch { return '-'; }
   }
 
   return (
@@ -309,28 +307,28 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                     )}
                 </div>
 
-                {/* --- FOOTER UNIFICADO COM AÇÕES E AUDITORIA --- */}
+                {/* --- FOOTER UNIFICADO COM AUDITORIA VISUAL --- */}
                 <div className="bg-gray-50 border-t border-gray-200 shrink-0">
                   
-                  {/* Seção de Auditoria Visual (Só aparece se for edição) */}
+                  {/* Informações de Auditoria: Visível apenas se o cliente já existe (Edição) */}
                   {clientToEdit && (
                     <div className="px-6 py-2 bg-gray-100 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] text-gray-500">
-                      <div className="flex items-center gap-1.5" title="Data de Criação">
+                      <div className="flex items-center gap-1.5">
                         <Clock className="h-3 w-3" />
-                        <span>Criado em <strong>{formatAuditDate(formData.created_at)}</strong></span>
+                        <span>Criado: <strong>{formatAuditDate(formData.created_at)}</strong></span>
                         {formData.created_by && (
                            <span className="flex items-center gap-1 ml-1 border-l border-gray-300 pl-2">
-                             <UserCircle className="h-3 w-3" /> por {formData.created_by}
+                             <UserCircle className="h-3 w-3" /> {formData.created_by}
                            </span>
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-1.5" title="Última Edição">
+                      <div className="flex items-center gap-1.5">
                         <Save className="h-3 w-3" />
-                        <span>Editado em <strong>{formatAuditDate(formData.updated_at)}</strong></span>
+                        <span>Editado: <strong>{formatAuditDate(formData.updated_at)}</strong></span>
                         {formData.updated_by && (
                            <span className="flex items-center gap-1 ml-1 border-l border-gray-300 pl-2">
-                             <UserCircle className="h-3 w-3" /> por {formData.updated_by}
+                             <UserCircle className="h-3 w-3" /> {formData.updated_by}
                            </span>
                         )}
                       </div>

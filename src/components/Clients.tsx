@@ -38,7 +38,6 @@ export function Clients({ initialFilters }: ClientsProps) {
     
     const { data, error } = await query
     if (!error && data) {
-        // Mapeamento explícito incluindo auditoria
         const formattedClients: ClientData[] = data.map((item: any) => ({
             id: item.id,
             nome: item.nome,
@@ -114,8 +113,8 @@ export function Clients({ initialFilters }: ClientsProps) {
     return result
   }, [clients, searchTerm, filterSocio, filterBrinde, sortOrder])
 
+  // --- LÓGICA DE SALVAR COM AUDITORIA ---
   const handleSave = async (client: ClientData) => {
-    // Captura o usuário atual para auditoria
     const { data: { user } } = await supabase.auth.getUser();
     const userEmail = user?.email || 'Sistema';
 
@@ -139,7 +138,7 @@ export function Clients({ initialFilters }: ClientsProps) {
         observacoes: client.observacoes,
         ignored_fields: client.ignored_fields,
         historico_brindes: client.historico_brindes,
-        // Auditoria: Sempre atualiza quem editou por último
+        // Auditoria: Sempre atualiza quem editou por último ao salvar
         updated_by: userEmail,
         updated_at: new Date().toISOString()
     }
@@ -151,7 +150,7 @@ export function Clients({ initialFilters }: ClientsProps) {
             if (error) throw error
             await logAction('EDITAR', 'CLIENTES', `Atualizou: ${client.nome}`)
         } else {
-            // CRIAR: Adiciona o criador
+            // CRIAR: Define o criador
             dbData.created_by = userEmail;
             
             const { error } = await supabase.from('clientes').insert([dbData])
@@ -187,7 +186,7 @@ export function Clients({ initialFilters }: ClientsProps) {
     setIsModalOpen(true)
   }
 
-  // --- AÇÕES DE CONTATO ---
+  // --- AÇÕES DE CONTATO (MANTIDAS) ---
   const handleWhatsApp = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     const cleanPhone = (client.telefone || '').replace(/\D/g, '');
@@ -248,7 +247,7 @@ export function Clients({ initialFilters }: ClientsProps) {
   return (
     <div className="h-full flex flex-col gap-4">
       
-      {/* HEADER UNIFICADO */}
+      {/* HEADER (SEM ALTERAÇÕES) */}
       <div className="flex-shrink-0 flex flex-col gap-4">
         
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
@@ -383,6 +382,7 @@ export function Clients({ initialFilters }: ClientsProps) {
             {processedClients.map((client) => (
                 <div key={client.id || client.email} onClick={() => openEditModal(client)} className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all relative group cursor-pointer animate-fadeIn flex flex-col justify-between h-full">
                     
+                    {/* CABEÇALHO DO CARD */}
                     <div className="flex items-start justify-between mb-2">
                         <div className="flex gap-3 overflow-hidden">
                             <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-[#112240] font-bold border border-gray-200 flex-shrink-0">
@@ -402,6 +402,7 @@ export function Clients({ initialFilters }: ClientsProps) {
                         </span>
                     </div>
                     
+                    {/* CORPO DO CARD */}
                     <div className="bg-gray-50 rounded-md p-2.5 mb-3 text-xs space-y-2 border border-gray-100">
                         <div className="flex justify-between items-center border-b border-gray-200 pb-1.5">
                             <div className="flex items-center gap-1.5 text-gray-500">
@@ -438,6 +439,7 @@ export function Clients({ initialFilters }: ClientsProps) {
                         </div>
                     </div>
 
+                    {/* RODAPÉ DO CARD - BOTÕES DE AÇÃO RESTAURADOS */}
                     <div className="border-t border-gray-100 pt-3 flex justify-between items-center mt-auto">
                         <div className="flex gap-2">
                             {client.telefone && (
