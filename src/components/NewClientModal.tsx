@@ -2,8 +2,6 @@ import { Fragment, useState, useEffect } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { X, Save, Gift, Calendar, Clock, UserCircle } from 'lucide-react'
 import { IMaskInput } from 'react-imask'
-import { BrindeSelector } from './BrindeSelector'
-import { SocioSelector } from './SocioSelector'
 
 export interface GiftHistoryItem {
   ano: string;
@@ -46,39 +44,18 @@ interface NewClientModalProps {
   clientToEdit?: ClientData | null;
 }
 
-// Constantes removidas - agora gerenciadas pelo BrindeSelector
-import { supabase } from '../lib/supabase'
+const BRINDE_OPTIONS = ['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno', 'Não Recebe', 'Outro']
 
 export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewClientModalProps) {
   const [activeTab, setActiveTab] = useState<'geral' | 'endereco' | 'historico'>('geral')
-  const [brindeOptions, setBrindeOptions] = useState<string[]>([])
   
   const [formData, setFormData] = useState<ClientData>({
     nome: '', empresa: '', cargo: '', telefone: '',
-    tipo_brinde: '', outro_brinde: '', quantidade: 1,
+    tipo_brinde: 'Brinde Médio', outro_brinde: '', quantidade: 1,
     cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
     email: '', socio: '', observacoes: '', ignored_fields: [],
     historico_brindes: []
   })
-
-  // Buscar tipos de brinde do banco
-  useEffect(() => {
-    const fetchBrindes = async () => {
-      const { data } = await supabase
-        .from('tipos_brinde')
-        .select('nome')
-        .eq('ativo', true)
-        .order('nome')
-      
-      if (data) {
-        setBrindeOptions(data.map(b => b.nome))
-      }
-    }
-    
-    if (isOpen) {
-      fetchBrindes()
-    }
-  }, [isOpen])
 
   const initializeHistory = (currentHistory?: GiftHistoryItem[] | null) => {
     const defaultYears = ['2025', '2024'];
@@ -233,17 +210,13 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Sócio Responsável</label>
-                                <SocioSelector 
-                                    value={formData.socio} 
-                                    onChange={(value) => setFormData({...formData, socio: value})} 
-                                />
+                                <input type="text" value={formData.socio} onChange={e => setFormData({...formData, socio: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo de Brinde (Atual)</label>
-                                <BrindeSelector 
-                                    value={formData.tipo_brinde} 
-                                    onChange={(value) => setFormData({...formData, tipo_brinde: value})} 
-                                />
+                                <select value={formData.tipo_brinde} onChange={e => setFormData({...formData, tipo_brinde: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none">
+                                    {BRINDE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
                             </div>
                             {formData.tipo_brinde === 'Outro' && (
                                 <div className="md:col-span-2">
@@ -317,7 +290,7 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                                                     className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-[#112240] outline-none bg-white"
                                                 >
                                                     <option value="">Selecione...</option>
-                                                    {brindeOptions.map(opt => (
+                                                    {BRINDE_OPTIONS.map(opt => (
                                                         <option key={opt} value={opt}>{opt}</option>
                                                     ))}
                                                 </select>
@@ -335,29 +308,45 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                 </div>
 
                 {/* --- FOOTER UNIFICADO COM AUDITORIA VISUAL --- */}
-                <div className="bg-gray-50 border-t border-gray-200 shrink-0">
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 shrink-0">
                   
                   {/* Informações de Auditoria: Visível apenas se o cliente já existe (Edição) */}
                   {clientToEdit && (
-                    <div className="px-6 py-2 bg-gray-100 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] text-gray-500">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-3 w-3" />
-                        <span>Criado: <strong>{formatAuditDate(formData.created_at)}</strong></span>
-                        {formData.created_by && (
-                           <span className="flex items-center gap-1 ml-1 border-l border-gray-300 pl-2">
-                             <UserCircle className="h-3 w-3" /> {formData.created_by}
-                           </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-1.5">
-                        <Save className="h-3 w-3" />
-                        <span>Editado: <strong>{formatAuditDate(formData.updated_at)}</strong></span>
-                        {formData.updated_by && (
-                           <span className="flex items-center gap-1 ml-1 border-l border-gray-300 pl-2">
-                             <UserCircle className="h-3 w-3" /> {formData.updated_by}
-                           </span>
-                        )}
+                    <div className="px-6 py-3 bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-100/50">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        
+                        {/* Criado */}
+                        <div className="flex items-center gap-2 bg-white/70 rounded-lg px-3 py-2 border border-blue-100 shadow-sm">
+                          <div className="flex items-center justify-center h-7 w-7 rounded-full bg-blue-100">
+                            <Clock className="h-3.5 w-3.5 text-blue-600" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-wide">Criado</span>
+                            <span className="text-xs font-bold text-gray-900">{formatAuditDate(formData.created_at)}</span>
+                            {formData.created_by && (
+                              <span className="flex items-center gap-1 text-[10px] text-gray-600 mt-0.5">
+                                <UserCircle className="h-3 w-3" /> {formData.created_by}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Editado */}
+                        <div className="flex items-center gap-2 bg-white/70 rounded-lg px-3 py-2 border border-purple-100 shadow-sm">
+                          <div className="flex items-center justify-center h-7 w-7 rounded-full bg-purple-100">
+                            <Save className="h-3.5 w-3.5 text-purple-600" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-wide">Última Edição</span>
+                            <span className="text-xs font-bold text-gray-900">{formatAuditDate(formData.updated_at)}</span>
+                            {formData.updated_by && (
+                              <span className="flex items-center gap-1 text-[10px] text-gray-600 mt-0.5">
+                                <UserCircle className="h-3 w-3" /> {formData.updated_by}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
                       </div>
                     </div>
                   )}
