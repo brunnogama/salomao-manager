@@ -62,9 +62,10 @@ export default function Login() {
               <label className="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">
                 Usuário Corporativo
               </label>
-              {/* ALTERADO: ring-gray-300 e focus-within:ring-gray-500 (Cinza Escuro) */}
-              <div className="flex rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-gray-500 overflow-hidden transition-all">
-                <div className="flex items-center pl-3 text-gray-400">
+              {/* ALTERADO: Adicionado outline-none na div principal */}
+              <div className="flex rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-gray-500 overflow-hidden transition-all outline-none">
+                {/* ALTERADO: Adicionado outline-none na div do ícone conforme solicitado */}
+                <div className="flex items-center pl-3 text-gray-400 outline-none">
                   <User className="h-5 w-5" />
                 </div>
                 <input
@@ -72,9 +73,9 @@ export default function Login() {
                   required
                   value={emailPrefix}
                   onChange={(e) => setEmailPrefix(e.target.value.toLowerCase().replace(/\s/g, ''))}
-                  // FORÇADO: Cor do cursor cinza escuro via estilo inline
                   style={{ caretColor: '#374151' }} 
-                  className="block flex-1 border-0 bg-transparent py-3 pl-2 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+                  // ALTERADO: Adicionado outline-none explícito no input também
+                  className="block flex-1 border-0 bg-transparent py-3 pl-2 text-gray-900 placeholder:text-gray-400 focus:ring-0 outline-none sm:text-sm sm:leading-6"
                   placeholder="nome.sobrenome"
                 />
                 <span className="flex select-none items-center bg-gray-100 px-3 text-gray-500 sm:text-sm font-medium border-l border-gray-200">
@@ -88,9 +89,9 @@ export default function Login() {
               <label className="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">
                 Senha
               </label>
-              {/* ALTERADO: ring-gray-300 e focus-within:ring-gray-500 */}
-              <div className="relative rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-gray-500 transition-all">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+              {/* ALTERADO: Adicionado outline-none */}
+              <div className="relative rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-gray-500 transition-all outline-none">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 outline-none">
                   <Lock className="h-5 w-5" />
                 </div>
                 <input
@@ -98,9 +99,9 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  // FORÇADO: Cor do cursor cinza escuro via estilo inline
                   style={{ caretColor: '#374151' }}
-                  className="block w-full border-0 bg-transparent py-3 pl-10 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+                  // ALTERADO: Adicionado outline-none explícito
+                  className="block w-full border-0 bg-transparent py-3 pl-10 text-gray-900 placeholder:text-gray-400 focus:ring-0 outline-none sm:text-sm sm:leading-6"
                   placeholder="••••••••"
                 />
               </div>
