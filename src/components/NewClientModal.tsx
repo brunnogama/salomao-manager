@@ -51,7 +51,6 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
     historico_brindes: []
   })
 
-  // Garante que a lista não seja nula ao iniciar
   const initializeHistory = (currentHistory?: GiftHistoryItem[] | null) => {
     const defaultYears = ['2025', '2024'];
     let newHistory = currentHistory ? [...currentHistory] : [];
@@ -117,11 +116,31 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
     }
   }
 
+  // --- NOVA LÓGICA DE ADICIONAR ANO ---
   const addHistoryYear = () => {
-    const nextYear = (new Date().getFullYear() + 1).toString();
+    const yearInput = window.prompt("Digite o ano que deseja adicionar (ex: 2026):");
+    
+    if (!yearInput) return; // Usuário cancelou
+
+    // Validação simples de 4 dígitos
+    if (!/^\d{4}$/.test(yearInput)) {
+        alert("Por favor, digite um ano válido (4 dígitos).");
+        return;
+    }
+
+    // Verificar se já existe
+    const exists = formData.historico_brindes?.some(h => h.ano === yearInput);
+    if (exists) {
+        alert("Este ano já existe no histórico.");
+        return;
+    }
+
     setFormData(prev => ({
         ...prev,
-        historico_brindes: [{ ano: nextYear, tipo: '', obs: '' }, ...(prev.historico_brindes || [])]
+        historico_brindes: [
+            { ano: yearInput, tipo: '', obs: '' }, 
+            ...(prev.historico_brindes || [])
+        ].sort((a, b) => Number(b.ano) - Number(a.ano)) // Ordena decrescente
     }));
   }
 
@@ -242,7 +261,6 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                                 <button onClick={addHistoryYear} className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">+ Adicionar Ano Futuro</button>
                             </div>
                             <div className="space-y-3">
-                                {/* AQUI ESTAVA O ERRO: Usando proteção extra (|| []) */}
                                 {(formData.historico_brindes || []).map((item, idx) => (
                                     <div key={item.ano} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                         <div className="flex items-center gap-2 mb-2">
@@ -252,7 +270,17 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             <div>
                                                 <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tipo de Brinde</label>
-                                                <input type="text" value={item.tipo} onChange={(e) => updateHistoryItem(idx, 'tipo', e.target.value)} className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-[#112240] outline-none bg-white" placeholder="Ex: Brinde Médio" />
+                                                {/* CAMPO ALTERADO PARA SELECT */}
+                                                <select 
+                                                    value={item.tipo} 
+                                                    onChange={(e) => updateHistoryItem(idx, 'tipo', e.target.value)}
+                                                    className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-[#112240] outline-none bg-white"
+                                                >
+                                                    <option value="">Selecione...</option>
+                                                    {BRINDE_OPTIONS.map(opt => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
                                             </div>
                                             <div>
                                                 <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Observações</label>
