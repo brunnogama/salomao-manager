@@ -1,290 +1,170 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { Users, Gift, LayoutGrid, Award, Map } from 'lucide-react';
+import { useEffect, useState } from 'react'
+import { Users, CheckSquare, Gift, AlertTriangle, Briefcase } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts'
 
-interface SocioData {
-  name: string;
-  total: number;
-  brindes: { tipo: string; qtd: number }[];
-}
-
-interface StateData {
-  name: string;
-  value: number;
-}
-
-interface DashboardStats {
-  totalClients: number;
-  brindeCounts: Record<string, number>;
-  lastClients: any[];
-  socioData: SocioData[];
-  stateData: StateData[];
-}
-
-// DEFINIÇÃO DA INTERFACE DE PROPS (IMPORTANTE)
+// CORREÇÃO: Adicionada a interface DashboardProps
 interface DashboardProps {
-  onNavigateWithFilter: (page: string, filters: { socio?: string; brinde?: string }) => void;
+  onNavigate: (filters?: { socio?: string; brinde?: string }) => void;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0];
-    const color = data.payload.fill || data.color || '#3b82f6';
-    
-    return (
-      <div className="bg-white p-3 rounded-xl shadow-xl border border-gray-100 min-w-[140px] animate-fadeIn">
-        <p className="text-xs font-bold text-gray-800 border-b border-gray-100 pb-1 mb-2 capitalize">
-          {label}
-        </p>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: color }} />
-            <span className="text-xs text-gray-500 font-medium capitalize">
-              {data.name || 'Quantidade'}:
-            </span>
-          </div>
-          <span className="text-sm font-bold text-[#112240]">
-            {data.value}
-          </span>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
-// RECEBENDO A PROP AQUI
-export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
-  const [stats, setStats] = useState<DashboardStats>({ 
-    totalClients: 0, 
-    brindeCounts: {}, 
-    lastClients: [], 
-    socioData: [],
-    stateData: []
-  });
-  const [loading, setLoading] = useState(true);
-
-  const getBrindeColor = (tipo: string) => {
-    if (tipo === 'Brinde VIP') return '#a855f7'; 
-    if (tipo === 'Brinde Médio') return '#22c55e'; 
-    return '#94a3b8'; 
-  };
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      const { data: lastClients } = await supabase
-        .from('clientes')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      const { data: allData } = await supabase
-        .from('clientes')
-        .select('tipo_brinde, socio, estado');
-
-      const brindeCounts: Record<string, number> = {};
-      const socioMap: Record<string, any> = {};
-      const stateMap: Record<string, number> = {};
-
-      allData?.forEach(item => {
-        if (item.tipo_brinde) {
-          brindeCounts[item.tipo_brinde] = (brindeCounts[item.tipo_brinde] || 0) + 1;
-        }
-
-        if (item.socio) {
-          if (!socioMap[item.socio]) {
-            socioMap[item.socio] = { name: item.socio, total: 0, brindes: {} };
-          }
-          socioMap[item.socio].total += 1;
-          const tBrinde = item.tipo_brinde || 'Outro';
-          socioMap[item.socio].brindes[tBrinde] = (socioMap[item.socio].brindes[tBrinde] || 0) + 1;
-        }
-
-        const estado = item.estado ? item.estado.toUpperCase().trim() : 'ND';
-        stateMap[estado] = (stateMap[estado] || 0) + 1;
-      });
-
-      const formattedSocioData = Object.values(socioMap).map((s: any) => ({
-        name: s.name,
-        total: s.total,
-        brindes: Object.entries(s.brindes).map(([tipo, qtd]) => ({
-          tipo,
-          qtd: qtd as number
-        }))
-      }));
-
-      const formattedStateData = Object.entries(stateMap)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value);
-
-      setStats({
-        totalClients: allData?.length || 0,
-        brindeCounts,
-        lastClients: lastClients || [],
-        socioData: formattedSocioData,
-        stateData: formattedStateData
-      });
-    } catch (err) {
-      console.error("Erro ao carregar dashboard:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+export function Dashboard({ onNavigate }: DashboardProps) {
+  const [stats, setStats] = useState({
+    totalClientes: 0,
+    tarefasPendentes: 0,
+    cadastrosIncompletos: 0,
+    brindesVip: 0
+  })
+  
+  const [brindeData, setBrindeData] = useState<any[]>([])
+  const [socioData, setSocioData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    fetchStats()
+  }, [])
 
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#112240]"></div>
-      </div>
-    );
+  const fetchStats = async () => {
+    setLoading(true)
+    
+    // Consultas paralelas
+    const [clientes, tarefas, incompletos] = await Promise.all([
+      supabase.from('clientes').select('id, tipo_brinde, socio'),
+      supabase.from('tasks').select('id', { count: 'exact' }).eq('status', 'todo'),
+      supabase.from('clientes').select('id', { count: 'exact' }).not('ignored_fields', 'is', null)
+    ])
+
+    const clientesData = clientes.data || []
+    
+    // Processar dados de Brindes
+    const brindesCount: Record<string, number> = {}
+    clientesData.forEach(c => {
+      const tipo = c.tipo_brinde || 'Não Definido'
+      brindesCount[tipo] = (brindesCount[tipo] || 0) + 1
+    })
+    const brindeChartData = Object.entries(brindesCount).map(([name, value]) => ({ name, value }))
+
+    // Processar dados de Sócios
+    const sociosCount: Record<string, number> = {}
+    clientesData.forEach(c => {
+      const socio = c.socio || 'Sem Sócio'
+      sociosCount[socio] = (sociosCount[socio] || 0) + 1
+    })
+    const socioChartData = Object.entries(sociosCount)
+      .map(([name, clientes]) => ({ name, clientes }))
+      .sort((a, b) => b.clientes - a.clientes)
+      .slice(0, 5)
+
+    setStats({
+      totalClientes: clientes.count || clientesData.length,
+      tarefasPendentes: tarefas.count || 0,
+      cadastrosIncompletos: incompletos.count || 0,
+      brindesVip: brindesCount['Brinde VIP'] || 0
+    })
+
+    setBrindeData(brindeChartData)
+    setSocioData(socioChartData)
+    setLoading(false)
   }
 
+  const COLORS = ['#112240', '#2563eb', '#10b981', '#f59e0b', '#ef4444']
+
   return (
-    <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-8 pb-10">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-[#112240]">Visão Geral</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4 relative overflow-hidden group">
-            <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
-            <div className="p-3 bg-blue-50 rounded-xl text-blue-700 group-hover:scale-110 transition-transform">
-              <Award className="h-8 w-8" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Total Geral</p>
-              <p className="text-3xl font-black text-[#112240]">{stats.totalClients}</p>
-            </div>
+      {/* Cards de Métricas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div onClick={() => onNavigate()} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
+          <div>
+            <p className="text-sm font-medium text-gray-500">Total de Clientes</p>
+            <p className="text-3xl font-bold text-[#112240]">{stats.totalClientes}</p>
+          </div>
+          <div className="p-3 bg-blue-50 rounded-lg text-blue-600"><Users className="h-6 w-6" /></div>
         </div>
 
-        {Object.entries(stats.brindeCounts).map(([tipo, qtd]) => (
-          <div 
-            key={tipo} 
-            onClick={() => onNavigateWithFilter('clientes', { brinde: tipo })}
-            className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4 cursor-pointer hover:border-blue-300 transition-colors"
-          >
-            <div className="p-3 rounded-xl" style={{ backgroundColor: `${getBrindeColor(tipo)}15`, color: getBrindeColor(tipo) }}>
-              <Gift className="h-8 w-8" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{tipo}</p>
-              <p className="text-3xl font-black text-[#112240]">{qtd}</p>
-            </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-500">Tarefas Pendentes</p>
+            <p className="text-3xl font-bold text-orange-600">{stats.tarefasPendentes}</p>
           </div>
-        ))}
+          <div className="p-3 bg-orange-50 rounded-lg text-orange-600"><CheckSquare className="h-6 w-6" /></div>
+        </div>
+
+        <div onClick={() => onNavigate({ brinde: 'Brinde VIP' })} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-all hover:-translate-y-1">
+          <div>
+            <p className="text-sm font-medium text-gray-500">Brindes VIP</p>
+            <p className="text-3xl font-bold text-purple-600">{stats.brindesVip}</p>
+          </div>
+          <div className="p-3 bg-purple-50 rounded-lg text-purple-600"><Gift className="h-6 w-6" /></div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-500">Cadastros Pendentes</p>
+            <p className="text-3xl font-bold text-red-600">{stats.cadastrosIncompletos}</p>
+          </div>
+          <div className="p-3 bg-red-50 rounded-lg text-red-600"><AlertTriangle className="h-6 w-6" /></div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Bloco Clientes por Sócio */}
-        <div className="xl:col-span-2 bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><LayoutGrid className="h-6 w-6" /></div>
-            <h3 className="font-bold text-[#112240] text-xl">Clientes por Sócio</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {stats.socioData.map((socio) => (
-              <div 
-                key={socio.name} 
-                className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 hover:border-blue-300 transition-colors flex flex-col h-full cursor-pointer group"
-                onClick={() => onNavigateWithFilter('clientes', { socio: socio.name })}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h4 className="font-bold text-[#112240] text-base leading-tight pr-2 group-hover:text-blue-700">{socio.name}</h4>
-                  <div className="text-right flex flex-col items-end">
-                    <span className="text-2xl font-black text-blue-600 leading-none">{socio.total}</span>
-                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">Total</span>
-                  </div>
-                </div>
-
-                <div className="h-32 w-full mt-auto">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart layout="vertical" data={socio.brindes} margin={{ left: -20, right: 30, top: 5, bottom: 5 }}>
-                      <XAxis type="number" hide />
-                      <YAxis 
-                        dataKey="tipo" 
-                        type="category" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        fontSize={10} 
-                        width={70}
-                        tick={{fill: '#64748b', fontWeight: 600}}
-                        interval={0} 
-                      />
-                      <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
-                      <Bar dataKey="qtd" radius={[0, 4, 4, 0]} barSize={16} name="Quantidade">
-                        {socio.brindes.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={getBrindeColor(entry.tipo)} />
-                        ))}
-                        <LabelList dataKey="qtd" position="right" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#112240' }} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            ))}
+        {/* Gráfico de Brindes */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <Gift className="h-5 w-5 text-blue-600" /> Distribuição de Brindes
+          </h3>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie 
+                  data={brindeData} 
+                  cx="50%" cy="50%" 
+                  innerRadius={60} 
+                  outerRadius={80} 
+                  paddingAngle={5} 
+                  dataKey="value"
+                  cursor="pointer"
+                  onClick={(data) => onNavigate({ brinde: data.name })}
+                >
+                  {brindeData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="space-y-8">
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><Map className="h-6 w-6" /></div>
-                    <h3 className="font-bold text-[#112240] text-xl">Por Estado</h3>
-                </div>
-                <div className="h-64 w-full"> 
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={stats.stateData} layout="vertical" margin={{ left: 0, right: 30, top: 5, bottom: 5 }}>
-                            <XAxis type="number" hide />
-                            <YAxis 
-                                dataKey="name" 
-                                type="category" 
-                                axisLine={false} 
-                                tickLine={false} 
-                                fontSize={12} 
-                                width={35}   
-                                tick={{fill: '#64748b', fontWeight: 700}}
-                                interval={0} 
-                            />
-                            <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
-                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24} fill="#6366f1" name="Clientes">
-                                <LabelList dataKey="value" position="right" style={{ fontSize: '12px', fontWeight: 'bold', fill: '#112240' }} />
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col h-fit">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Users className="h-6 w-6" /></div>
-                    <h3 className="font-bold text-[#112240] text-xl">Últimos</h3>
-                </div>
-                <div className="space-y-4 overflow-y-auto custom-scrollbar pr-2 max-h-[400px]">
-                    {stats.lastClients.map((client) => (
-                    <div key={client.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-transparent hover:border-gray-200 transition-all group">
-                        <div className="min-w-0">
-                        <p className="text-sm font-bold text-gray-800 truncate mb-1">{client.nome}</p>
-                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide group-hover:text-blue-600 transition-colors">
-                            {client.socio || 'Sem Sócio'}
-                        </p>
-                        </div>
-                        <span 
-                        className="text-[10px] px-3 py-1 rounded-full font-bold bg-white border border-gray-200 shadow-sm shrink-0 uppercase tracking-wider" 
-                        style={{ color: getBrindeColor(client.tipo_brinde), borderColor: `${getBrindeColor(client.tipo_brinde)}30` }}
-                        >
-                        {client.tipo_brinde?.replace('Brinde ', '') || 'BRINDE'}
-                        </span>
-                    </div>
-                    ))}
-                </div>
-            </div>
+        {/* Gráfico de Sócios */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <Briefcase className="h-5 w-5 text-blue-600" /> Top 5 Sócios
+          </h3>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={socioData} layout="vertical" margin={{ left: 20 }}>
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" width={100} tick={{fontSize: 11}} />
+                <Tooltip cursor={{fill: 'transparent'}} />
+                <Bar 
+                    dataKey="clientes" 
+                    fill="#112240" 
+                    radius={[0, 4, 4, 0]} 
+                    barSize={20}
+                    cursor="pointer"
+                    onClick={(data) => onNavigate({ socio: data.name })}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
+
       </div>
     </div>
-  );
+  )
 }

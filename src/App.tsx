@@ -8,7 +8,6 @@ import { Clients } from './components/Clients'
 import { IncompleteClients } from './components/IncompleteClients'
 import { Settings } from './components/Settings'
 
-// Componente para seleção de módulo
 function ModuleSelector({ onSelect }: { onSelect: (module: string) => void }) {
     return (
         <div className="min-h-screen bg-[#112240] flex items-center justify-center p-4">
@@ -39,7 +38,7 @@ function ModuleSelector({ onSelect }: { onSelect: (module: string) => void }) {
 function App() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('dashboard') // Usamos 'activeTab' agora
+  const [activeTab, setActiveTab] = useState('dashboard')
   const [selectedModule, setSelectedModule] = useState<string | null>(null)
   const [clientFilters, setClientFilters] = useState<{socio?: string, brinde?: string} | undefined>(undefined)
 
@@ -69,7 +68,6 @@ function App() {
 
   return (
     <div className="flex h-screen bg-[#f0f2f5] overflow-hidden flex-col lg:flex-row">
-      {/* CORREÇÃO: Passando as props corretas que a Sidebar espera */}
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 

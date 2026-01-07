@@ -1,92 +1,100 @@
-import { useState, useEffect } from 'react'
-import { supabase } from './lib/supabase'
-import Login from './Login'
-import { Sidebar } from './components/Sidebar'
-import { Dashboard } from './components/Dashboard'
-import { Kanban } from './components/Kanban'
-import { Clients } from './components/Clients'
-import { IncompleteClients } from './components/IncompleteClients'
-import { Settings } from './components/Settings'
+import { useState } from 'react'
+import { 
+  LayoutDashboard, Users, CheckSquare, Settings, LogOut, 
+  Menu, X, LayoutGrid, AlertTriangle 
+} from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
-// Componente para seleção de módulo (placeholder simples para lógica futura)
-function ModuleSelector({ onSelect }: { onSelect: (module: string) => void }) {
-    return (
-        <div className="min-h-screen bg-[#112240] flex items-center justify-center p-4">
-            <div className="max-w-4xl w-full">
-                <h1 className="text-3xl font-bold text-white mb-8 text-center">Selecione o Módulo de Acesso</h1>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <button onClick={() => onSelect('CRM')} className="bg-white p-8 rounded-xl hover:scale-105 transition-transform group text-left">
-                        <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600 font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">CRM</div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">Jurídico (CRM)</h3>
-                        <p className="text-sm text-gray-500">Gestão de clientes, brindes e tarefas do escritório.</p>
-                    </button>
-                    <button disabled className="bg-gray-100 p-8 rounded-xl opacity-60 cursor-not-allowed text-left">
-                        <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center mb-4 text-gray-400 font-bold">FAM</div>
-                        <h3 className="text-xl font-bold text-gray-500 mb-2">Família</h3>
-                        <p className="text-sm text-gray-400">Em desenvolvimento.</p>
-                    </button>
-                    <button disabled className="bg-gray-100 p-8 rounded-xl opacity-60 cursor-not-allowed text-left">
-                        <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center mb-4 text-gray-400 font-bold">RH</div>
-                        <h3 className="text-xl font-bold text-gray-500 mb-2">Colaboradores</h3>
-                        <p className="text-sm text-gray-400">Em desenvolvimento.</p>
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
+interface SidebarProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  userEmail?: string;
 }
 
-function App() {
-  const [session, setSession] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('dashboard')
-  const [selectedModule, setSelectedModule] = useState<string | null>(null)
-  const [clientFilters, setClientFilters] = useState<{socio?: string, brinde?: string} | undefined>(undefined)
+export function Sidebar({ activeTab, setActiveTab, userEmail }: SidebarProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const handleNavigateToClients = (filters?: {socio?: string, brinde?: string}) => {
-      setClientFilters(filters);
-      setActiveTab('clientes');
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    window.location.reload()
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#f0f2f5] text-[#112240] font-bold">Carregando Salomão Manager...</div>
+  const handleSwitchModule = () => {
+    window.location.reload()
+  }
 
-  if (!session) return <Login />
-
-  if (!selectedModule) return <ModuleSelector onSelect={setSelectedModule} />
+  const menuItems = [
+    { id: 'dashboard', label: 'Visão Geral', icon: LayoutDashboard },
+    { id: 'kanban', label: 'Tarefas (Kanban)', icon: CheckSquare },
+    { id: 'clientes', label: 'Base de Clientes', icon: Users },
+    { id: 'incompletos', label: 'Cadastros Pendentes', icon: AlertTriangle },
+    { id: 'config', label: 'Configurações', icon: Settings },
+  ]
 
   return (
-    <div className="flex h-screen bg-[#f0f2f5] overflow-hidden flex-col lg:flex-row">
-      {/* CORREÇÃO AQUI: Passando as props corretas para a nova Sidebar */}
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        userEmail={session.user.email} 
-      />
+    <>
+      {/* HEADER SUPERIOR */}
+      <div className="h-16 bg-[#112240] text-white flex items-center justify-between px-4 lg:px-6 shadow-md z-20 relative shrink-0">
+        
+        <div className="flex items-center gap-4">
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden p-1 rounded-md hover:bg-white/10">
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
 
-      <main className="flex-1 overflow-auto p-4 lg:p-8 w-full relative">
-        <div className="max-w-7xl mx-auto h-full">
-          {activeTab === 'dashboard' && <Dashboard onNavigate={handleNavigateToClients} />}
-          {activeTab === 'kanban' && <Kanban />}
-          {activeTab === 'clientes' && <Clients initialFilters={clientFilters} />}
-          {activeTab === 'incompletos' && <IncompleteClients />}
-          {activeTab === 'config' && <Settings />}
+          <div className="flex flex-col">
+            <h1 className="text-lg font-bold leading-none tracking-tight">Salomão Manager</h1>
+            <span className="text-[10px] text-gray-400 font-medium tracking-widest uppercase">Módulo Jurídico</span>
+          </div>
+
+          <div className="hidden sm:block h-6 w-px bg-white/20 mx-2"></div>
+          
+          <button onClick={handleSwitchModule} className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs font-bold transition-all hover:scale-105" title="Voltar para seleção de módulos">
+            <LayoutGrid className="h-3.5 w-3.5 text-blue-300" />
+            <span>Trocar Módulo</span>
+          </button>
         </div>
-      </main>
-    </div>
+
+        <div className="flex items-center gap-4">
+          {userEmail && <span className="hidden md:block text-xs text-gray-400">{userEmail}</span>}
+          <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-200 rounded-lg text-xs font-bold transition-colors border border-red-500/20">
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Sair</span>
+          </button>
+        </div>
+      </div>
+
+      {/* SIDEBAR */}
+      <div className={`fixed inset-y-0 left-0 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition duration-200 ease-in-out w-64 bg-white border-r border-gray-200 z-10 flex flex-col pt-16 lg:pt-0 h-full`}>
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <button onClick={handleSwitchModule} className="lg:hidden w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-lg mb-4 border border-gray-100">
+            <LayoutGrid className="h-5 w-5 text-blue-600" />
+            Trocar Módulo
+          </button>
+
+          {menuItems.map((item) => {
+             const Icon = item.icon
+             const isActive = activeTab === item.id
+             return (
+               <button key={item.id} onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all ${isActive ? 'bg-[#112240] text-white shadow-md shadow-blue-900/20' : 'text-gray-500 hover:bg-gray-50 hover:text-[#112240]'}`}>
+                 <Icon className={`h-5 w-5 ${isActive ? 'text-blue-400' : 'text-gray-400'}`} />
+                 {item.label}
+               </button>
+             )
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+           <div className="flex items-center gap-3 px-2">
+              <div className="h-8 w-8 rounded-full bg-[#112240] flex items-center justify-center text-white text-xs font-bold">SA</div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold text-gray-900 truncate">Salomão Advogados</p>
+                <p className="text-[10px] text-gray-500 truncate">© 2026 Flow Metrics</p>
+              </div>
+           </div>
+        </div>
+      </div>
+
+      {isMobileMenuOpen && <div className="fixed inset-0 bg-black/50 z-0 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />}
+    </>
   )
 }
-
-export default App
