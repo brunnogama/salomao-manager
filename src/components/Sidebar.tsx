@@ -85,21 +85,23 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
         md:translate-x-0 shadow-2xl md:shadow-none
       `}>
       
-        {/* 1. LOGO & MÓDULO (OPÇÃO 2 - PREMIUM) */}
-        <div className="h-24 flex items-center justify-between px-6 bg-[#112240] flex-shrink-0">
-          <div className="flex flex-col justify-center">
+        {/* 1. LOGO & MÓDULO (COM TRAÇOS LATERAIS) */}
+        <div className="h-24 flex items-center justify-center px-6 bg-[#112240] flex-shrink-0 relative">
+          <div className="flex flex-col items-center w-full">
             {/* Logo */}
-            <img src="/logo-branca.png" alt="Salomão" className="h-10 w-auto object-contain block mb-1.5" />
+            <img src="/logo-branca.png" alt="Salomão" className="h-10 w-auto object-contain block mb-2" />
             
-            {/* Opção 2: Tipografia Premium */}
-            <div className="pl-1">
-                <p className="text-[9px] text-gray-400 font-medium tracking-[0.35em] uppercase opacity-80 leading-none">
+            {/* Subtítulo Estilizado: --- Módulo CRM --- */}
+            <div className="flex items-center justify-center gap-2 w-full opacity-80">
+                <div className="h-[1px] w-6 bg-blue-500 rounded-full"></div>
+                <span className="text-[9px] text-gray-400 font-bold tracking-[0.2em] uppercase leading-none whitespace-nowrap">
                   Módulo CRM
-                </p>
+                </span>
+                <div className="h-[1px] w-6 bg-blue-500 rounded-full"></div>
             </div>
           </div>
 
-          <button onClick={onClose} className="md:hidden p-1 hover:bg-white/10 rounded text-gray-400 transition-colors">
+          <button onClick={onClose} className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded text-gray-400 transition-colors">
             <X className="h-6 w-6" />
           </button>
         </div>
