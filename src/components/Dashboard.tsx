@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { Users, Gift, LayoutGrid, Award, Map } from 'lucide-react';
+import { Users, Gift, LayoutGrid, Award, Map, Gavel } from 'lucide-react';
 
 interface SocioData {
   name: string;
@@ -16,6 +16,7 @@ interface StateData {
 
 interface DashboardStats {
   totalClients: number;
+  totalMagistrados: number;
   brindeCounts: Record<string, number>;
   lastClients: any[];
   socioData: SocioData[];
@@ -55,7 +56,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
   const [stats, setStats] = useState<DashboardStats>({ 
-    totalClients: 0, 
+    totalClients: 0,
+    totalMagistrados: 0,
     brindeCounts: {}, 
     lastClients: [], 
     socioData: [],
@@ -81,6 +83,11 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
       const { data: allData } = await supabase
         .from('clientes')
         .select('tipo_brinde, socio, estado');
+
+      // Buscar total de magistrados
+      const { data: magistradosData } = await supabase
+        .from('magistrados')
+        .select('id');
 
       const brindeCounts: Record<string, number> = {};
       const socioMap: Record<string, any> = {};
@@ -119,6 +126,7 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
 
       setStats({
         totalClients: allData?.length || 0,
+        totalMagistrados: magistradosData?.length || 0,
         brindeCounts,
         lastClients: lastClients || [],
         socioData: formattedSocioData,
@@ -155,6 +163,20 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Total Geral</p>
               <p className="text-3xl font-black text-[#112240]">{stats.totalClients}</p>
+            </div>
+        </div>
+
+        <div 
+          className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4 relative overflow-hidden group cursor-pointer hover:border-amber-300 transition-colors"
+          onClick={() => onNavigateWithFilter('magistrados', {})}
+        >
+            <div className="absolute right-0 top-0 h-full w-1 bg-amber-600"></div>
+            <div className="p-3 bg-amber-50 rounded-xl text-amber-700 group-hover:scale-110 transition-transform">
+              <Gavel className="h-8 w-8" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Magistrados</p>
+              <p className="text-3xl font-black text-[#112240]">{stats.totalMagistrados}</p>
             </div>
         </div>
 
