@@ -106,6 +106,20 @@ export function Settings() {
     setLoadingUsers(false)
   }
 
+  // --- ACTIONS: FUNÇÕES AUXILIARES ---
+  
+  // Definida aqui para evitar erro de referência
+  const openUserModal = (user?: AppUser) => {
+    if (user) {
+        setEditingUser(user)
+        setUserForm({ nome: user.nome, email: user.email, cargo: user.cargo })
+    } else {
+        setEditingUser(null)
+        setUserForm({ nome: '', email: '', cargo: 'Colaborador' })
+    }
+    setIsUserModalOpen(true)
+  }
+
   // --- ACTIONS ---
   const handleSaveConfigMagistrados = async () => {
     setLoadingConfig(true)
@@ -172,9 +186,9 @@ export function Settings() {
     }
   }
 
-  // --- NOVA ESTRATÉGIA DE RESET (MANUAL E AGRESSIVA) ---
+  // --- NOVA ESTRATÉGIA DE RESET (SEM .catch()) ---
   const handleSystemReset = async () => {
-    if (!confirm('PERIGO: Isso apagará TODOS os dados (Clientes e Magistrados). Tem certeza?')) return;
+    if (!confirm('PERIGO: Isso apagará TODOS os dados (Clientes e Magistrados). Tem certeza absoluta?')) return;
     const confirmText = prompt('Digite APAGAR para confirmar a exclusão total:')
     if (confirmText !== 'APAGAR') return;
 
@@ -182,9 +196,9 @@ export function Settings() {
     setStatus({ type: null, message: 'Limpando base de dados...' })
 
     try {
-        // 1. Tenta apagar TUDO da tabela de tarefas (para remover dependências)
-        // Ignora erros se a tabela estiver vazia
-        await supabase.from('tasks').delete().neq('id', 0).catch(e => console.warn(e));
+        // 1. Tenta apagar TUDO da tabela de tarefas
+        const { error: errTasks } = await supabase.from('tasks').delete().neq('id', 0);
+        if (errTasks) console.warn("Aviso ao limpar tarefas:", errTasks);
 
         // 2. Apaga Magistrados
         const { error: err1 } = await supabase.from('magistrados').delete().neq('id', 0)
@@ -209,7 +223,7 @@ export function Settings() {
 
   const handleDownloadTemplate = () => {
     const ws = utils.json_to_sheet([
-      { nome: 'Cliente Exemplo', empresa: 'Empresa SA', cargo: 'Diretor', email: 'email@teste.com', telefone: '11999999999', socio: 'Dr. João', tipo_brinde: 'Brinde VIP', quantidade: 1, cep: '01001000', endereco: 'Rua X', numero: '1', bairro: 'Centro', cidade: 'SP', estado: 'SP' }
+      { nome: 'Cliente Exemplo', empresa: 'Empresa SA', cargo: 'Diretor', email: 'email@teste.com', telefone: '11999999999', socio: 'Dr. João', tipo_brinde: 'Brinde VIP', quantidade: 1, cep: '01001000', endereco: 'Praça da Sé', numero: '1', bairro: 'Centro', cidade: 'São Paulo', estado: 'SP' }
     ])
     const wb = utils.book_new()
     utils.book_append_sheet(wb, ws, "Template")
@@ -226,7 +240,8 @@ export function Settings() {
     try {
       const data = await file.arrayBuffer()
       const workbook = read(data)
-      const jsonData = utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]])
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+      const jsonData = utils.sheet_to_json(worksheet)
 
       if (jsonData.length === 0) throw new Error('Arquivo vazio')
 
@@ -238,25 +253,27 @@ export function Settings() {
         telefone: row.telefone || row.Telefone || '',
         socio: row.socio || row.Socio || '',
         tipo_brinde: row.tipo_brinde || row['Tipo Brinde'] || 'Brinde Médio',
-        quantidade: row.quantidade || 1,
-        cep: row.cep || '',
-        endereco: row.endereco || '',
-        numero: row.numero || '',
-        bairro: row.bairro || '',
-        cidade: row.cidade || '',
-        estado: row.estado || ''
+        quantidade: row.quantidade || row.Quantidade || 1,
+        cep: row.cep || row.CEP || '',
+        endereco: row.endereco || row.Endereco || '',
+        numero: row.numero || row.Numero || '',
+        bairro: row.bairro || row.Bairro || '',
+        cidade: row.cidade || row.Cidade || '',
+        estado: row.estado || row.Estado || ''
       }))
       
       const { error } = await supabase.from('clientes').insert(clientsToInsert)
+      
       if (error) throw error
       
-      setStatus({ type: 'success', message: `${clientsToInsert.length} importados!` })
-      await logAction('IMPORTAR', 'SISTEMA', `Importou ${clientsToInsert.length} via Excel`)
+      setStatus({ type: 'success', message: `${clientsToInsert.length} clientes importados com sucesso!` })
+      await logAction('IMPORTAR', 'SISTEMA', `Importou ${clientsToInsert.length} clientes via Excel`)
+      
       fetchSocios()
 
     } catch (error: any) {
-      console.error('Erro importação:', error)
-      setStatus({ type: 'error', message: 'Erro: ' + error.message })
+      console.error('Erro na importação:', error)
+      setStatus({ type: 'error', message: 'Erro ao importar: ' + error.message })
     } finally {
       setLoading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -264,27 +281,40 @@ export function Settings() {
   }
 
   const getVersionColor = (type: string) => {
-      return type === 'feature' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-700 border-gray-200'
+      switch(type) {
+          case 'feature': return 'bg-green-100 text-green-700 border-green-200'
+          default: return 'bg-gray-100 text-gray-700 border-gray-200'
+      }
   }
 
   return (
     <div className="max-w-6xl mx-auto pb-12 space-y-8 relative">
-      
       {/* MODAL USUÁRIO */}
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
              <h3 className="text-lg font-bold text-[#112240] mb-4">{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</h3>
              <div className="space-y-3">
-                 <input type="text" className="w-full border rounded p-2" value={userForm.nome} onChange={e => setUserForm({...userForm, nome: e.target.value})} placeholder="Nome" />
-                 <input type="email" className="w-full border rounded p-2" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} placeholder="Email" />
-                 <select className="w-full border rounded p-2" value={userForm.cargo} onChange={e => setUserForm({...userForm, cargo: e.target.value})}>
-                     <option>Administrador</option><option>Sócio</option><option>Colaborador</option>
-                 </select>
+                 <div>
+                     <label className="text-xs font-bold text-gray-500">Nome</label>
+                     <input type="text" className="w-full border rounded p-2" value={userForm.nome} onChange={e => setUserForm({...userForm, nome: e.target.value})} />
+                 </div>
+                 <div>
+                     <label className="text-xs font-bold text-gray-500">E-mail</label>
+                     <input type="email" className="w-full border rounded p-2" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} />
+                 </div>
+                 <div>
+                     <label className="text-xs font-bold text-gray-500">Cargo</label>
+                     <select className="w-full border rounded p-2" value={userForm.cargo} onChange={e => setUserForm({...userForm, cargo: e.target.value})}>
+                         <option>Administrador</option>
+                         <option>Sócio</option>
+                         <option>Colaborador</option>
+                     </select>
+                 </div>
              </div>
              <div className="flex justify-end gap-3 mt-6">
                  <button onClick={() => setIsUserModalOpen(false)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded">Cancelar</button>
-                 <button onClick={handleSaveUser} className="px-4 py-2 bg-[#112240] text-white rounded font-bold">Salvar</button>
+                 <button onClick={handleSaveUser} className="px-4 py-2 bg-[#112240] text-white rounded font-bold hover:bg-blue-900">Salvar</button>
              </div>
           </div>
         </div>

@@ -117,14 +117,13 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
 
   // --- NOVA ESTRATÉGIA DE DELETE ---
   const handleDelete = async (client: ClientData) => {
-    if (!client.id) return alert("Erro: ID do registro não encontrado.")
+    if (!client.id) return alert("Erro: Registro sem ID.")
 
     if (confirm(`Tem certeza que deseja excluir permanentemente: ${client.nome}?`)) {
         try {
             console.log(`Iniciando exclusão manual para ID ${client.id}...`)
 
-            // 1. Tenta limpar tarefas vinculadas primeiro (se houver coluna client_id)
-            // O try/catch interno evita que o erro pare o processo se a coluna não existir
+            // 1. Tenta limpar tarefas vinculadas primeiro
             try {
                await supabase.from('tasks').delete().eq('client_id', client.id);
             } catch (e) { console.warn("Aviso: Não foi possível limpar tarefas vinculadas.", e) }
@@ -134,7 +133,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
             
             if (error) {
                 console.error("Erro Supabase:", error)
-                throw new Error(error.message) // Lança para o catch externo
+                throw new Error(error.message)
             }
 
             // 3. Sucesso na interface
@@ -142,7 +141,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
             await logAction('EXCLUIR', tableName.toUpperCase(), `Excluiu: ${client.nome}`)
             
         } catch (error: any) {
-            alert(`Erro ao excluir: ${error.message}\nVerifique se o usuário tem permissão ou se existem outros vínculos.`)
+            alert(`Erro ao excluir: ${error.message}\nVerifique permissões.`)
         }
     }
   }
@@ -166,8 +165,9 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
 
       if (jsonData.length === 0) throw new Error('Arquivo vazio.')
 
-      const { data: { user } } = await supabase.auth.getUser()
-      const userEmail = user?.email || 'Importação'
+      // Correção: usar getSession ao invés de getUser
+      const { data: { session } } = await supabase.auth.getSession()
+      const userEmail = session?.user?.email || 'Importação'
 
       const normalizeKeys = (obj: any) => {
           const newObj: any = {};
@@ -224,8 +224,9 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
   }
 
   const handleSave = async (client: ClientData) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    const userEmail = user?.email || 'Sistema'
+    // Correção: usar getSession ao invés de getUser
+    const { data: { session } } = await supabase.auth.getSession()
+    const userEmail = session?.user?.email || 'Sistema'
     
     const dbData: any = {
         nome: client.nome,
