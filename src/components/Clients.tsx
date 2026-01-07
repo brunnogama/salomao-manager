@@ -35,10 +35,8 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
   const [availableSocios, setAvailableSocios] = useState<string[]>([])
   const [availableBrindes, setAvailableBrindes] = useState<string[]>([])
 
-  // --- BUSCAR DADOS ---
   const fetchClients = async () => {
     setLoading(true)
-    // Busca dinâmica baseada na prop tableName
     const { data, error } = await supabase.from(tableName).select('*')
     
     if (!error && data) {
@@ -75,7 +73,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
         setAvailableSocios(socios.sort())
         setAvailableBrindes(brindes.sort())
     } else if (error) {
-        console.error(`Erro ao buscar ${tableName}:`, error)
+        console.error("Erro fetch:", error)
     }
     setLoading(false)
   }
@@ -116,40 +114,36 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     return result
   }, [clients, searchTerm, filterSocio, filterBrinde, sortOrder])
 
-  // --- FUNÇÃO EXCLUIR ROBUSTA ---
+  // --- DELETE COM DEBUG ---
   const handleDelete = async (client: ClientData) => {
-    if (!client.id) return window.alert("Erro: ID do registro não encontrado.")
+    if (!client.id) return alert("Erro: Registro sem ID.")
 
-    const modulo = tableName.toUpperCase() // CLIENTES ou MAGISTRADOS
-
-    if (window.confirm(`ATENÇÃO: Deseja excluir "${client.nome}" do módulo ${modulo}?\n\nEsta ação é irreversível.`)) {
+    if (confirm(`Excluir permanentemente: ${client.nome}?`)) {
         try {
-            console.log(`Excluindo ID ${client.id} de ${tableName}...`)
-            
+            console.log(`Deletando ID ${client.id} de ${tableName}...`)
             const { error } = await supabase.from(tableName).delete().eq('id', client.id)
             
             if (error) {
                 console.error("Erro Supabase:", error)
-                throw new Error(error.message)
+                throw error
             }
 
-            // Sucesso: remove da lista localmente
             setClients(current => current.filter(c => c.id !== client.id))
-            
-            await logAction('EXCLUIR', modulo, `Excluiu: ${client.nome}`)
+            await logAction('EXCLUIR', tableName.toUpperCase(), `Excluiu: ${client.nome}`)
+            console.log("Sucesso!")
             
         } catch (error: any) {
-            window.alert(`ERRO AO EXCLUIR:\n${error.message}\n\nVerifique se o usuário tem permissão.`)
+            alert(`Erro ao excluir: ${error.message}`)
         }
     }
   }
 
-  // --- FUNÇÃO IMPORTAR ---
+  // --- IMPORT ---
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if(!window.confirm(`Confirmar importação para o módulo: ${tableName.toUpperCase()}?`)) {
+    if(!confirm(`Importar para: ${tableName.toUpperCase()}?`)) {
         if (fileInputRef.current) fileInputRef.current.value = ''
         return
     }
@@ -167,7 +161,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
       const { data: { user } } = await supabase.auth.getUser()
       const userEmail = user?.email || 'Importação'
 
-      // Normalização de chaves
       const normalizeKeys = (obj: any) => {
           const newObj: any = {};
           Object.keys(obj).forEach(key => {
@@ -178,8 +171,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
 
       const itemsToInsert = jsonData.map((rawRow: any) => {
         const row = normalizeKeys(rawRow);
-        
-        // Validação mínima: precisa ter nome
         if (!row.nome && !row['nome completo']) return null;
 
         return {
@@ -205,19 +196,18 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
       const { error } = await supabase.from(tableName).insert(itemsToInsert)
       if (error) throw error
       
-      window.alert(`Sucesso! ${itemsToInsert.length} registros importados em ${tableName.toUpperCase()}.`)
+      alert(`${itemsToInsert.length} importados com sucesso!`)
       await logAction('IMPORTAR', tableName.toUpperCase(), `Importou ${itemsToInsert.length} itens`)
       fetchClients()
 
     } catch (error: any) {
-      window.alert('Falha na importação: ' + error.message)
+      alert('Erro na importação: ' + error.message)
     } finally {
       setImporting(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
-  // Gatilho para input file
   const triggerFileInput = () => {
       if (fileInputRef.current) {
           fileInputRef.current.value = '';
@@ -225,7 +215,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
       }
   }
 
-  // --- SALVAR (CRIAR/EDITAR) ---
   const handleSave = async (client: ClientData) => {
     const { data: { user } } = await supabase.auth.getUser()
     const userEmail = user?.email || 'Sistema'
@@ -269,15 +258,14 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
         setClientToEdit(null)
         fetchClients()
     } catch (error: any) {
-        window.alert(`Erro ao salvar: ${error.message}`)
+        alert(`Erro ao salvar: ${error.message}`)
     }
   }
 
-  // Contatos
   const handleWhatsApp = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     const cleanPhone = (client.telefone || '').replace(/\D/g, '')
-    if(!cleanPhone) return window.alert("Telefone não cadastrado.")
+    if(!cleanPhone) return alert("Telefone não cadastrado.")
     const message = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados...`
     window.open(`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank')
   }
@@ -285,13 +273,13 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
   const handle3CX = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     const cleanPhone = (client.telefone || '').replace(/\D/g, '')
-    if(!cleanPhone) return window.alert("Telefone não cadastrado.")
+    if(!cleanPhone) return alert("Telefone não cadastrado.")
     window.location.href = `tel:${cleanPhone}`
   }
 
   const handleEmail = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
-    if(!client.email) return window.alert("E-mail não cadastrado.")
+    if(!client.email) return alert("E-mail não cadastrado.")
     const subject = encodeURIComponent("Atualização Cadastral - Salomão Advogados")
     const body = encodeURIComponent(`Olá Sr(a). ${client.nome}...`)
     window.open(`mailto:${client.email}?subject=${subject}&body=${body}`, '_blank')
@@ -305,7 +293,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
   }
 
   const handlePrintList = () => {
-    if (processedClients.length === 0) return window.alert("Lista vazia.")
+    if (processedClients.length === 0) return alert("Lista vazia.")
     const printWindow = window.open('', '', 'width=900,height=800')
     if (!printWindow) return
     const listHtml = processedClients.map(c => `<div><strong>${c.nome}</strong> (${c.empresa})</div>`).join('')
@@ -326,14 +314,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
 
   return (
     <div className="h-full flex flex-col gap-4">
-      {/* Input de arquivo invisível */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileUpload} 
-        accept=".xlsx, .xls" 
-        className="hidden" 
-      />
+      <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx, .xls" className="hidden" />
 
       <div className="flex-shrink-0 flex flex-col gap-4">
         {/* HEADER */}
@@ -343,32 +324,23 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
                     <span className="font-bold text-[#112240]">{processedClients.length}</span> registros
                 </p>
             </div>
-            
             <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1 text-gray-400 mr-1 hidden sm:flex">
-                    <Filter className="h-4 w-4" />
-                </div>
-
+                <div className="flex items-center gap-1 text-gray-400 mr-1 hidden sm:flex"><Filter className="h-4 w-4" /></div>
                 <div className="relative">
                     <select value={filterSocio} onChange={(e) => setFilterSocio(e.target.value)} className={`appearance-none pl-3 pr-8 py-2 rounded-lg text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors cursor-pointer ${filterSocio ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
                         <option value="">Todos os Sócios</option>
                         {availableSocios.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
-
                 <div className="relative">
                     <select value={filterBrinde} onChange={(e) => setFilterBrinde(e.target.value)} className={`appearance-none pl-3 pr-8 py-2 rounded-lg text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors cursor-pointer ${filterBrinde ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
                         <option value="">Todos os Brindes</option>
                         {availableBrindes.map(b => <option key={b} value={b}>{b}</option>)}
                     </select>
                 </div>
-
                 <Menu as="div" className="relative">
                     <Menu.Button className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:text-[#112240] hover:bg-gray-100 transition-colors">
-                        <ArrowUpDown className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">
-                            {sortOrder === 'newest' ? 'Recentes' : sortOrder === 'oldest' ? 'Antigos' : 'Nome'}
-                        </span>
+                        <ArrowUpDown className="h-3.5 w-3.5" /><span className="hidden sm:inline">{sortOrder === 'newest' ? 'Recentes' : sortOrder === 'oldest' ? 'Antigos' : 'Nome'}</span>
                     </Menu.Button>
                     <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100" leave="transition ease-in duration-75" leaveFrom="transform opacity-100 scale-100" leaveTo="transform opacity-0 scale-95">
                         <Menu.Items className="absolute right-0 mt-1 w-40 origin-top-right rounded-lg bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
@@ -377,8 +349,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
                                     <Menu.Item key={opt.id}>
                                         {({ active }) => (
                                             <button onClick={() => setSortOrder(opt.id as any)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded-md`}>
-                                                {opt.label}
-                                                {sortOrder === opt.id && <Check className="h-3 w-3 text-blue-600" />}
+                                                {opt.label}{sortOrder === opt.id && <Check className="h-3 w-3 text-blue-600" />}
                                             </button>
                                         )}
                                     </Menu.Item>
@@ -387,13 +358,10 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
                         </Menu.Items>
                     </Transition>
                 </Menu>
-
                 <div className="h-6 w-px bg-gray-200 mx-1"></div>
-
                 <button onClick={() => { setIsSearchOpen(!isSearchOpen); if(isSearchOpen) setSearchTerm(''); }} className={`p-2 rounded-lg transition-colors ${isSearchOpen ? 'bg-blue-100 text-blue-600' : 'bg-gray-50 text-gray-400 hover:text-[#112240] hover:bg-gray-100 border border-gray-200'}`} title="Buscar">
                     {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
                 </button>
-                
                 <div className="flex items-center gap-1">
                     <button onClick={triggerFileInput} disabled={importing} className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-colors" title="Importar Excel">
                         {importing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
@@ -401,14 +369,12 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
                     <button onClick={handleExportExcel} className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition-colors" title="Exportar Excel"><FileSpreadsheet className="h-5 w-5" /></button>
                     <button onClick={handlePrintList} className="p-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors" title="Imprimir Lista"><Printer className="h-5 w-5" /></button>
                 </div>
-
                 <button onClick={() => { setClientToEdit(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-[#112240] hover:bg-[#1a3a6c] text-white px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-colors shadow-sm whitespace-nowrap">
                     <Plus className="h-4 w-4" /><span className="hidden sm:inline">Novo Registro</span>
                 </button>
             </div>
         </div>
 
-        {/* BUSCA */}
         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isSearchOpen ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -417,7 +383,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
         </div>
       </div>
 
-      {/* GRID */}
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
         {processedClients.length === 0 && !loading ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-400">
