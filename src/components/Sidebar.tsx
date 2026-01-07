@@ -85,18 +85,17 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
         md:translate-x-0 shadow-2xl md:shadow-none
       `}>
       
-        {/* 1. LOGO & MÓDULO (Topo) */}
+        {/* 1. LOGO & MÓDULO (OPÇÃO 2 - PREMIUM) */}
         <div className="h-24 flex items-center justify-between px-6 bg-[#112240] flex-shrink-0">
-          <div className="flex flex-col">
+          <div className="flex flex-col justify-center">
             {/* Logo */}
-            <img src="/logo-branca.png" alt="Salomão" className="h-9 w-auto object-contain block" />
+            <img src="/logo-branca.png" alt="Salomão" className="h-10 w-auto object-contain block mb-1.5" />
             
-            {/* Nome do Módulo Estilizado */}
-            <div className="flex items-center gap-2 mt-1.5 pl-1">
-                <div className="h-0.5 w-3 bg-blue-500 rounded-full opacity-70"></div>
-                <span className="text-[10px] font-black text-gray-400 tracking-[0.3em] uppercase leading-none">
-                    CRM
-                </span>
+            {/* Opção 2: Tipografia Premium */}
+            <div className="pl-1">
+                <p className="text-[9px] text-gray-400 font-medium tracking-[0.35em] uppercase opacity-80 leading-none">
+                  Módulo CRM
+                </p>
             </div>
           </div>
 
@@ -105,7 +104,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
           </button>
         </div>
 
-        {/* 2. MENU PRINCIPAL (Meio - Flex-1 para ocupar espaço) */}
+        {/* 2. MENU PRINCIPAL */}
         <div className="flex-1 overflow-y-auto py-2 px-3 space-y-1 custom-scrollbar pt-6">
           {mainItems.map((item) => (
             <button
@@ -130,7 +129,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
           ))}
         </div>
 
-        {/* 3. MENU BASE (Rodapé - mt-auto para forçar para baixo) */}
+        {/* 3. MENU BASE */}
         <div className="pt-4 pb-6 px-3 bg-[#112240] flex-shrink-0 mt-auto">
           <div className="border-t border-gray-700/50 mb-4 mx-2"></div>
           {bottomItems.map((item) => (
