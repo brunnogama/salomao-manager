@@ -112,74 +112,22 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     return result
   }, [clients, searchTerm, filterSocio, filterBrinde, sortOrder])
 
-  // ✅ FUNÇÃO DE EXCLUSÃO COM ALERTAS VISUAIS EXTREMOS
   const handleDelete = async (client: ClientData) => {
-    // ALERTA 1: Confirma que a função foi chamada
-    alert(`🔴 DEBUG 1: Função handleDelete foi chamada para: ${client.nome}`)
-    console.log('🔴 DEBUG 1: handleDelete iniciado', client)
-    
-    const confirmDelete = confirm(`⚠️ CONFIRMA EXCLUSÃO?\n\nCliente: ${client.nome}\nID: ${client.id}\n\nEsta ação NÃO pode ser desfeita!`)
-    
-    if (!confirmDelete) {
-        alert('🟢 DEBUG: Exclusão cancelada pelo usuário')
-        console.log('🟢 Exclusão cancelada')
+    if (!confirm(`Tem certeza que deseja excluir: ${client.nome}?\n\nEsta ação não pode ser desfeita.`)) {
         return
     }
 
-    // ALERTA 2: Usuário confirmou
-    alert(`🔴 DEBUG 2: Usuário confirmou exclusão. Iniciando processo...`)
-    console.log('🔴 DEBUG 2: Iniciando exclusão real')
-
     try {
-        // PASSO 1: Deletar tasks
-        alert(`🔴 DEBUG 3: Deletando tasks vinculadas ao cliente ID ${client.id}...`)
-        console.log('🔴 DEBUG 3: Deletando tasks para client_id:', client.id)
+        await supabase.from('tasks').delete().eq('client_id', client.id)
+        const { error } = await supabase.from(tableName).delete().eq('id', client.id)
         
-        const { error: errTasks } = await supabase
-            .from('tasks')
-            .delete()
-            .eq('client_id', client.id)
-        
-        if (errTasks) {
-            alert(`🟡 DEBUG 4: Aviso ao deletar tasks: ${errTasks.message}`)
-            console.warn('🟡 DEBUG 4: Erro tasks:', errTasks)
-        } else {
-            alert('🟢 DEBUG 4: Tasks deletadas com sucesso (ou não existiam)')
-            console.log('🟢 DEBUG 4: Tasks removidas')
-        }
+        if (error) throw new Error(error.message)
 
-        // PASSO 2: Deletar cliente
-        alert(`🔴 DEBUG 5: Deletando cliente da tabela ${tableName}...`)
-        console.log('🔴 DEBUG 5: Deletando cliente ID:', client.id, 'tabela:', tableName)
-        
-        const { error: errCliente, data: deleteData } = await supabase
-            .from(tableName)
-            .delete()
-            .eq('id', client.id)
-            .select()
-        
-        alert(`🔴 DEBUG 6: Resultado do DELETE:\nErro: ${errCliente ? errCliente.message : 'nenhum'}\nData: ${JSON.stringify(deleteData)}`)
-        console.log('🔴 DEBUG 6: Resultado DELETE:', { error: errCliente, data: deleteData })
-        
-        if (errCliente) {
-            throw new Error(`Erro Supabase: ${errCliente.message} (Código: ${errCliente.code})`)
-        }
-
-        // PASSO 3: Atualizar UI
-        alert('🟢 DEBUG 7: Cliente deletado! Atualizando interface...')
-        console.log('🟢 DEBUG 7: Atualizando UI')
-        
         setClients(current => current.filter(c => c.id !== client.id))
-        
         await logAction('EXCLUIR', tableName.toUpperCase(), `Excluiu: ${client.nome}`)
         
-        alert('✅ SUCESSO TOTAL! Cliente excluído com sucesso!')
-        console.log('✅ Exclusão concluída com sucesso')
-        
     } catch (error: any) {
-        alert(`❌ ERRO FATAL!\n\nMensagem: ${error.message}\n\nVeja o console (F12) para mais detalhes`)
-        console.error('❌ ERRO COMPLETO:', error)
-        console.error('Stack trace:', error.stack)
+        alert(`Erro ao excluir: ${error.message}`)
     }
   }
 
@@ -243,12 +191,11 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
 
       if (error) throw error
 
-      alert(`✅ ${itemsToInsert.length} registros importados!`)
+      alert(`✅ ${itemsToInsert.length} registros importados com sucesso!`)
       await logAction('IMPORTAR', tableName.toUpperCase(), `Importou ${itemsToInsert.length} registros`)
       fetchClients()
       
     } catch (error: any) {
-      console.error('Erro na importação:', error)
       alert(`Erro ao importar:\n${error.message}`)
     } finally {
       setImporting(false)
@@ -256,9 +203,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     }
   }
 
-  const triggerFileInput = () => {
-    fileInputRef.current?.click()
-  }
+  const triggerFileInput = () => fileInputRef.current?.click()
 
   const handleWhatsApp = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
@@ -399,7 +344,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
             <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                 <AlertTriangle className="h-12 w-12 mb-2 opacity-20" />
                 <p>Nenhum registro encontrado em {tableName}.</p>
-                {tableName === 'magistrados' && <p className="text-xs mt-2">Verifique se você importou a base corretamente.</p>}
             </div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -439,17 +383,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
                             </div>
                             <div className="flex gap-1">
                                 <button onClick={(e) => { e.stopPropagation(); openEditModal(client); }} className="p-1.5 text-gray-400 hover:text-[#112240] hover:bg-gray-100 rounded-md transition-colors" title="Editar"><Pencil className="h-3.5 w-3.5" /></button>
-                                <button 
-                                    onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        console.log('🔴 BOTÃO DELETAR CLICADO!', client); 
-                                        handleDelete(client); 
-                                    }} 
-                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors z-10" 
-                                    title="Excluir"
-                                >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete(client); }} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors z-10" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
                             </div>
                         </div>
                     </div>
