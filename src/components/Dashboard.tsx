@@ -155,10 +155,10 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
     <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-8 pb-10">
       
       {/* CARDS DE MÉTRICAS - LINHA ÚNICA */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="flex flex-wrap gap-4">
         
         {/* Card Total Geral (Clientes) */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-2 relative overflow-hidden group">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-2 relative overflow-hidden group min-w-[160px]">
             <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
             <div className="flex items-center gap-2">
               <div className="p-2 bg-blue-50 rounded-lg text-blue-700">
@@ -171,12 +171,14 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
             </div>
         </div>
 
-        {/* Cards de Brindes */}
-        {Object.entries(stats.brindeCounts).map(([tipo, qtd]) => (
+        {/* Cards de Brindes - Filtrar apenas os tipos corretos */}
+        {Object.entries(stats.brindeCounts)
+          .filter(([tipo]) => tipo !== 'Brinde Pequeno') // Remover tipo antigo
+          .map(([tipo, qtd]) => (
           <div 
             key={tipo} 
             onClick={() => onNavigateWithFilter('clientes', { brinde: tipo })}
-            className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-2 cursor-pointer hover:border-blue-300 transition-colors"
+            className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-2 cursor-pointer hover:border-blue-300 transition-colors min-w-[160px]"
           >
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg" style={{ backgroundColor: `${getBrindeColor(tipo)}15`, color: getBrindeColor(tipo) }}>
@@ -197,7 +199,7 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
 
         {/* Card Magistrados (Separado) */}
         <div 
-          className="bg-gradient-to-br from-amber-50 to-white p-4 rounded-xl shadow-sm border-2 border-amber-200 flex flex-col gap-2 cursor-pointer hover:border-amber-400 transition-all group relative overflow-hidden"
+          className="bg-gradient-to-br from-amber-50 to-white p-4 rounded-xl shadow-sm border-2 border-amber-200 flex flex-col gap-2 cursor-pointer hover:border-amber-400 transition-all group relative overflow-hidden min-w-[180px]"
           onClick={() => onNavigateWithFilter('magistrados', {})}
         >
             <div className="absolute right-0 top-0 h-full w-1 bg-amber-600"></div>

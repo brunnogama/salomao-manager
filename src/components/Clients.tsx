@@ -275,7 +275,29 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     if(e) { e.preventDefault(); e.stopPropagation(); }
     const cleanPhone = (client.telefone || '').replace(/\D/g, '')
     if(!cleanPhone) return alert("Telefone não cadastrado.")
-    const message = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados...`
+    
+    const message = `Olá Sr(a). ${client.nome}.
+
+Somos do escritório Salomão Advogados e gostaríamos de confirmar seus dados cadastrais para o envio do brinde de final de ano.
+
+📋 *Dados Cadastrados:*
+• Nome: ${client.nome}
+• Empresa: ${client.empresa || 'Não informado'}
+• Cargo: ${client.cargo || 'Não informado'}
+• Brinde: ${client.tipo_brinde} (${client.quantidade}x)
+
+📍 *Endereço de Entrega:*
+• CEP: ${client.cep || 'Não informado'}
+• Endereço: ${client.endereco || 'Não informado'}, ${client.numero || 'S/N'}
+${client.complemento ? `• Complemento: ${client.complemento}` : ''}
+• Bairro: ${client.bairro || 'Não informado'}
+• Cidade/UF: ${client.cidade || 'Não informado'}/${client.estado || 'Não informado'}
+
+Por favor, confirme se todos os dados estão corretos ou nos informe quaisquer alterações necessárias.
+
+Atenciosamente,
+Equipe Salomão Advogados`
+    
     window.open(`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank')
   }
 
@@ -289,8 +311,32 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
   const handleEmail = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     if(!client.email) return alert("E-mail não cadastrado.")
-    const subject = encodeURIComponent("Atualização Cadastral - Salomão Advogados")
-    const body = encodeURIComponent(`Olá Sr(a). ${client.nome}...`)
+    
+    const subject = encodeURIComponent("Confirmação de Dados Cadastrais - Salomão Advogados")
+    const body = encodeURIComponent(`Prezado(a) Sr(a). ${client.nome},
+
+Somos do escritório Salomão Advogados e gostaríamos de confirmar seus dados cadastrais para o envio do brinde de final de ano.
+
+DADOS CADASTRADOS:
+• Nome: ${client.nome}
+• Empresa: ${client.empresa || 'Não informado'}
+• Cargo: ${client.cargo || 'Não informado'}
+• Telefone: ${client.telefone || 'Não informado'}
+• E-mail: ${client.email}
+• Brinde: ${client.tipo_brinde} (${client.quantidade}x)
+• Sócio Responsável: ${client.socio || 'Não informado'}
+
+ENDEREÇO DE ENTREGA:
+• CEP: ${client.cep || 'Não informado'}
+• Endereço: ${client.endereco || 'Não informado'}, ${client.numero || 'S/N'}
+${client.complemento ? `• Complemento: ${client.complemento}\n` : ''}• Bairro: ${client.bairro || 'Não informado'}
+• Cidade/UF: ${client.cidade || 'Não informado'}/${client.estado || 'Não informado'}
+
+Por favor, confirme se todos os dados estão corretos ou nos informe quaisquer alterações necessárias respondendo a este e-mail.
+
+Atenciosamente,
+Equipe Salomão Advogados`)
+    
     window.open(`mailto:${client.email}?subject=${subject}&body=${body}`, '_blank')
   }
 
