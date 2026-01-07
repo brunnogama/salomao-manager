@@ -258,7 +258,7 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit }: NewCli
                         <div className="space-y-4">
                             <div className="flex justify-between items-center mb-4">
                                 <p className="text-sm text-gray-500">Registro anual de presentes enviados.</p>
-                                <button onClick={addHistoryYear} className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">+ Adicionar Ano Futuro</button>
+                                <button onClick={addHistoryYear} className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">+ Adicionar Ano</button>
                             </div>
                             <div className="space-y-3">
                                 {(formData.historico_brindes || []).map((item, idx) => (
