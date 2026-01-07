@@ -3,11 +3,13 @@ import { supabase } from '../lib/supabase'
 import { 
   Plus, Search, X, Filter, ArrowUpDown, Check, 
   MessageCircle, Trash2, Pencil, Mail, Phone, 
-  User, Info, MapPin, Briefcase, Gift
+  Briefcase, User, Gift, Info, MapPin, Printer, FileSpreadsheet, RefreshCw
 } from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
 import { NewClientModal, ClientData } from './NewClientModal'
+import { utils, writeFile } from 'xlsx'
+import { logAction } from '../lib/logger'
 
 interface ClientsProps {
   initialFilters?: { socio?: string; brinde?: string };
@@ -36,9 +38,36 @@ export function Clients({ initialFilters }: ClientsProps) {
     
     const { data, error } = await query
     if (!error && data) {
-        setClients(data)
-        const socios = Array.from(new Set(data.map(c => c.socio).filter(Boolean))) as string[]
-        const brindes = Array.from(new Set(data.map(c => c.tipo_brinde).filter(Boolean))) as string[]
+        // MAPEAMENTO EXPLÍCITO (Restaurado para garantir integridade dos dados)
+        const formattedClients: ClientData[] = data.map((item: any) => ({
+            id: item.id,
+            nome: item.nome,
+            empresa: item.empresa,
+            cargo: item.cargo,
+            telefone: item.telefone,
+            // Mantendo snake_case pois padronizamos no Modal e Interface
+            tipo_brinde: item.tipo_brinde, 
+            outro_brinde: item.outro_brinde,
+            quantidade: item.quantidade,
+            cep: item.cep,
+            endereco: item.endereco,
+            numero: item.numero,
+            complemento: item.complemento,
+            bairro: item.bairro,
+            cidade: item.cidade,
+            estado: item.estado,
+            email: item.email,
+            socio: item.socio,
+            observacoes: item.observacoes,
+            ignored_fields: item.ignored_fields,
+            historico_brindes: item.historico_brindes // Importante para o histórico
+        }))
+
+        setClients(formattedClients)
+        
+        // Extrai listas para filtros
+        const socios = Array.from(new Set(formattedClients.map(c => c.socio).filter(Boolean))) as string[]
+        const brindes = Array.from(new Set(formattedClients.map(c => c.tipo_brinde).filter(Boolean))) as string[]
         setAvailableSocios(socios.sort())
         setAvailableBrindes(brindes.sort())
     }
@@ -69,8 +98,12 @@ export function Clients({ initialFilters }: ClientsProps) {
     if (filterBrinde) result = result.filter(c => c.tipo_brinde === filterBrinde)
 
     result.sort((a: any, b: any) => {
-        if (sortOrder === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        if (sortOrder === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        // Fallback seguro para datas
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+
+        if (sortOrder === 'newest') return dateB - dateA
+        if (sortOrder === 'oldest') return dateA - dateB
         if (sortOrder === 'az') return (a.nome || '').localeCompare(b.nome || '')
         if (sortOrder === 'za') return (b.nome || '').localeCompare(a.nome || '')
         return 0
@@ -80,27 +113,54 @@ export function Clients({ initialFilters }: ClientsProps) {
   }, [clients, searchTerm, filterSocio, filterBrinde, sortOrder])
 
   const handleSave = async (client: ClientData) => {
+    const dbData = {
+        nome: client.nome,
+        empresa: client.empresa,
+        cargo: client.cargo,
+        telefone: client.telefone,
+        tipo_brinde: client.tipo_brinde,
+        outro_brinde: client.outro_brinde,
+        quantidade: client.quantidade,
+        cep: client.cep,
+        endereco: client.endereco,
+        numero: client.numero,
+        complemento: client.complemento,
+        bairro: client.bairro,
+        cidade: client.cidade,
+        estado: client.estado,
+        email: client.email,
+        socio: client.socio,
+        observacoes: client.observacoes,
+        ignored_fields: client.ignored_fields,
+        historico_brindes: client.historico_brindes
+    }
+
     try {
-        if (clientToEdit) {
-            const { error } = await supabase.from('clientes').update(client).eq('id', clientToEdit.id)
+        if (clientToEdit && clientToEdit.id) {
+            const { error } = await supabase.from('clientes').update(dbData).eq('id', clientToEdit.id)
             if (error) throw error
+            await logAction('EDITAR', 'CLIENTES', `Atualizou: ${client.nome}`)
         } else {
-            const { error } = await supabase.from('clientes').insert([client])
+            const { error } = await supabase.from('clientes').insert([dbData])
             if (error) throw error
+            await logAction('CRIAR', 'CLIENTES', `Criou: ${client.nome}`)
         }
         setIsModalOpen(false)
         setClientToEdit(null)
         fetchClients()
-    } catch (error) {
+    } catch (error: any) {
         console.error('Erro ao salvar:', error)
-        alert('Erro ao salvar cliente.')
+        alert(`Erro ao salvar: ${error.message}`)
     }
   }
 
   const handleDelete = async (client: ClientData) => {
     if (confirm(`Tem certeza que deseja excluir ${client.nome}?`)) {
         const { error } = await supabase.from('clientes').delete().eq('id', client.id)
-        if (!error) fetchClients()
+        if (!error) {
+            await logAction('EXCLUIR', 'CLIENTES', `Excluiu: ${client.nome}`)
+            fetchClients()
+        }
     }
   }
 
@@ -114,13 +174,13 @@ export function Clients({ initialFilters }: ClientsProps) {
     setIsModalOpen(true)
   }
 
-  // --- AÇÕES DE CONTATO ---
+  // --- AÇÕES DE CONTATO (Restauradas do código original) ---
   const handleWhatsApp = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     const cleanPhone = (client.telefone || '').replace(/\D/g, '');
     if(!cleanPhone) { alert("Telefone não cadastrado."); return; }
     
-    const message = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados...`;
+    const message = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados e estamos atualizando nossa base de dados.\nPoderia, por gentileza, confirmar se as informações abaixo estão corretas?\n\n🏢 Empresa: ${client.empresa || '-'}\n📮 CEP: ${client.cep || '-'}\n📍 Endereço: ${client.endereco || '-'}\n🔢 Número: ${client.numero || '-'}\n🏘️ Bairro: ${client.bairro || '-'}\n🏙️ Cidade/UF: ${client.cidade || '-'}/${client.estado || '-'}\n📝 Complemento: ${client.complemento || '-'}\n📧 E-mail: ${client.email || '-'}\n\n📱 Outro número de telefone: (Caso possua, por favor informar)\n\nAgradecemos a atenção!`;
     const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   }
@@ -135,7 +195,37 @@ export function Clients({ initialFilters }: ClientsProps) {
   const handleEmail = (client: ClientData, e?: React.MouseEvent) => {
     if(e) { e.preventDefault(); e.stopPropagation(); }
     if(!client.email) { alert("E-mail não cadastrado."); return; }
-    window.location.href = `mailto:${client.email}`;
+    
+    const subject = encodeURIComponent("Atualização Cadastral - Salomão Advogados");
+    const bodyText = `Olá Sr(a). ${client.nome}.\n\nSomos do Salomão Advogados... (Texto padrão)`;
+    const body = encodeURIComponent(bodyText);
+    window.location.href = `mailto:${client.email}?subject=${subject}&body=${body}`;
+  }
+
+  // --- EXPORTAR EXCEL ---
+  const handleExportExcel = async () => {
+    const ws = utils.json_to_sheet(processedClients)
+    const wb = utils.book_new()
+    utils.book_append_sheet(wb, ws, "Clientes")
+    writeFile(wb, "Relatorio_Clientes.xlsx")
+    await logAction('EXPORTAR', 'CLIENTES', `Exportou ${processedClients.length} clientes`)
+  }
+
+  // --- IMPRESSÃO ---
+  const handlePrintList = () => {
+    if (processedClients.length === 0) return alert("Lista vazia.")
+    const printWindow = window.open('', '', 'width=900,height=800');
+    if (!printWindow) return;
+    
+    const listHtml = processedClients.map(c => 
+        `<div style="border:1px solid #ddd; padding:10px; margin-bottom:10px; break-inside:avoid;">
+            <strong>${c.nome}</strong> (${c.empresa})<br/>
+            <small>Sócio: ${c.socio} | Brinde: ${c.tipo_brinde}</small>
+        </div>`
+    ).join('');
+
+    printWindow.document.write(`<html><body><h2>Lista de Clientes</h2>${listHtml}<script>window.print()</script></body></html>`);
+    printWindow.document.close();
   }
 
   if (loading) return (
@@ -147,7 +237,7 @@ export function Clients({ initialFilters }: ClientsProps) {
   return (
     <div className="h-full flex flex-col gap-4">
       
-      {/* HEADER FIXO */}
+      {/* HEADER UNIFICADO (Busca + Filtros) */}
       <div className="flex-shrink-0 flex flex-col gap-4">
         
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
@@ -235,6 +325,22 @@ export function Clients({ initialFilters }: ClientsProps) {
                 </button>
 
                 <button 
+                    onClick={handleExportExcel}
+                    className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition-colors"
+                    title="Exportar Excel"
+                >
+                    <FileSpreadsheet className="h-5 w-5" />
+                </button>
+
+                <button 
+                    onClick={handlePrintList}
+                    className="p-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors"
+                    title="Imprimir Lista"
+                >
+                    <Printer className="h-5 w-5" />
+                </button>
+
+                <button 
                     onClick={openNewModal}
                     className="flex items-center gap-2 bg-[#112240] hover:bg-[#1a3a6c] text-white px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-colors shadow-sm whitespace-nowrap"
                 >
@@ -260,14 +366,14 @@ export function Clients({ initialFilters }: ClientsProps) {
 
       </div>
 
-      {/* ÁREA DE ROLAGEM E GRID (4 COLUNAS - LAYOUT DETALHADO) */}
+      {/* GRANDE DOS CARDS (4 COLUNAS - CARD ANTIGO RESTAURADO) */}
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {processedClients.map((client) => (
                 <div key={client.id || client.email} onClick={() => openEditModal(client)} className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all relative group cursor-pointer animate-fadeIn flex flex-col justify-between h-full">
                     
-                    {/* CABEÇALHO DO CARD */}
+                    {/* CABEÇALHO */}
                     <div className="flex items-start justify-between mb-2">
                         <div className="flex gap-3 overflow-hidden">
                             <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-[#112240] font-bold border border-gray-200 flex-shrink-0">
@@ -275,7 +381,6 @@ export function Clients({ initialFilters }: ClientsProps) {
                             </div>
                             <div className="overflow-hidden">
                                 <h3 className="text-sm font-bold text-gray-900 truncate" title={client.nome}>{client.nome}</h3>
-                                {/* USO DO ÍCONE BRIEFCASE PARA EVITAR ERRO DE BUILD */}
                                 <div className="flex items-center gap-1 text-xs text-gray-500 truncate">
                                     <Briefcase className="h-3 w-3 inline" />
                                     <span>{client.empresa}</span>
@@ -288,7 +393,7 @@ export function Clients({ initialFilters }: ClientsProps) {
                         </span>
                     </div>
                     
-                    {/* CORPO DO CARD - DESIGN DETALHADO */}
+                    {/* CORPO (DETALHES) */}
                     <div className="bg-gray-50 rounded-md p-2.5 mb-3 text-xs space-y-2 border border-gray-100">
                         <div className="flex justify-between items-center border-b border-gray-200 pb-1.5">
                             <div className="flex items-center gap-1.5 text-gray-500">
@@ -306,7 +411,6 @@ export function Clients({ initialFilters }: ClientsProps) {
                             <span className="font-medium text-gray-700 truncate ml-2 max-w-[120px] text-right">{client.cargo || '-'}</span>
                         </div>
 
-                        {/* USO DO ÍCONE GIFT PARA EVITAR ERRO DE BUILD */}
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-1.5 text-gray-500">
                                 <Gift className="h-3 w-3" />
@@ -326,9 +430,10 @@ export function Clients({ initialFilters }: ClientsProps) {
                         </div>
                     </div>
 
-                    {/* RODAPÉ DO CARD - BOTÕES DE AÇÃO RESTAURADOS */}
+                    {/* RODAPÉ (AÇÕES) - COPIADO DO CÓDIGO FUNCIONAL */}
                     <div className="border-t border-gray-100 pt-3 flex justify-between items-center mt-auto">
                         <div className="flex gap-2">
+                            {/* Renderização condicional para botões coloridos */}
                             {client.telefone && (
                                 <>
                                     <button onClick={(e) => handleWhatsApp(client, e)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors" title="WhatsApp">
