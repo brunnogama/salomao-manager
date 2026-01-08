@@ -19,6 +19,7 @@ import { UnderConstruction } from './components/UnderConstruction'
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [loggingOut, setLoggingOut] = useState(false)
   
   const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators'>('home')
   const [activePage, setActivePage] = useState('dashboard')
@@ -64,7 +65,23 @@ export default function App() {
   }
 
   const handleLogout = async () => {
-    try { await supabase.auth.signOut() } catch (error) { console.error("Erro silencioso ao deslogar:", error) } finally { localStorage.clear(); window.location.href = '/' }
+    setLoggingOut(true)
+    
+    try {
+      // Limpar localStorage
+      localStorage.clear()
+      
+      // Fazer signOut (aguarda conclusão)
+      await supabase.auth.signOut()
+      
+      // Atualizar estado (mostra Login sem flash)
+      setSession(null)
+    } catch (error) {
+      console.error("Erro ao deslogar:", error)
+      setSession(null)
+    } finally {
+      setLoggingOut(false)
+    }
   }
 
   const navigateWithFilter = (page: string, filters: { socio?: string; brinde?: string }) => {
@@ -73,6 +90,7 @@ export default function App() {
   }
 
   if (loading) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
+  if (loggingOut) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="text-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div><p className="text-white text-sm">Saindo...</p></div></div>
   if (!session) return <Login />
 
   if (currentModule === 'home') return <ModuleSelector onSelect={setCurrentModule} userName={getUserDisplayName()} />
