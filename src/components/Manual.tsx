@@ -1,24 +1,9 @@
-import { BookOpen, Search, CheckCircle, AlertTriangle, Gift, Users, Settings } from 'lucide-react'
+import { Search, CheckCircle, AlertTriangle, Gift, Users, Settings } from 'lucide-react'
 
 export function Manual() {
   return (
     <div className="max-w-5xl mx-auto pb-12">
       
-      {/* HEADER DO MANUAL */}
-      <div className="bg-[#112240] rounded-2xl p-8 text-white shadow-xl mb-8 relative overflow-hidden">
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm"><BookOpen className="h-6 w-6 text-blue-300" /></div>
-            <h2 className="text-3xl font-bold">Manual do Sistema</h2>
-          </div>
-          <p className="text-gray-300 max-w-2xl text-lg">
-            Guia completo de utilização do Salomão Manager v1.6. Aprenda a gerenciar clientes, brindes e usuários de forma eficiente.
-          </p>
-        </div>
-        {/* Elemento decorativo de fundo */}
-        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         
         {/* SIDEBAR DE NAVEGAÇÃO DO MANUAL */}
