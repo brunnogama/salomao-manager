@@ -60,12 +60,17 @@ export function Presencial() {
   // --- HELPER NORMALIZAÇÃO ---
   const normalizeKey = (text: string) => {
       if (!text) return ""
+      return text.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ")
+  }
+
+  // --- HELPER FORMATAÇÃO (CAMEL CASE / TITLE CASE) ---
+  const toTitleCase = (text: string) => {
+      if (!text) return ""
       return text
-        .trim()
         .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") 
-        .replace(/\s+/g, " ") 
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
   }
 
   // --- 1. BUSCAR DADOS ---
@@ -91,7 +96,7 @@ export function Presencial() {
     if (presenceData && presenceData.length > 0) {
         setRecords(presenceData)
         
-        // --- RESTAURADO: AUTO-SELEÇÃO DE DATA ---
+        // --- AUTO-SELEÇÃO DE DATA RESTAURADA ---
         // Ajusta o filtro para o mês/ano do registro mais recente
         const lastDate = new Date(presenceData[0].data_hora)
         setSelectedMonth(lastDate.getMonth())
@@ -114,7 +119,7 @@ export function Presencial() {
       }
   }, [showSearch])
 
-  // --- MAPA E LISTAS PARA FILTROS (MEMOIZED) ---
+  // --- MAPA E LISTAS PARA FILTROS (MEMOIZED & FORMATTED) ---
   const socioMap = useMemo(() => {
       const map = new Map<string, string>()
       socioRules.forEach(rule => {
@@ -124,16 +129,18 @@ export function Presencial() {
   }, [socioRules])
 
   const uniqueSocios = useMemo(() => {
-      const socios = new Set(socioRules.map(r => r.socio_responsavel).filter(s => s !== 'Não Definido'))
+      // Usa toTitleCase para formatar a lista
+      const socios = new Set(socioRules.map(r => toTitleCase(r.socio_responsavel)).filter(s => s !== 'Não Definido' && s !== ''))
       return Array.from(socios).sort()
   }, [socioRules])
 
   const uniqueColaboradores = useMemo(() => {
       let rules = socioRules;
       if (filterSocio) {
-          rules = rules.filter(r => r.socio_responsavel === filterSocio)
+          // Compara formatado com formatado
+          rules = rules.filter(r => toTitleCase(r.socio_responsavel) === filterSocio)
       }
-      return Array.from(new Set(rules.map(r => r.nome_colaborador))).sort()
+      return Array.from(new Set(rules.map(r => toTitleCase(r.nome_colaborador)))).sort()
   }, [socioRules, filterSocio])
 
   // --- FILTRAGEM CENTRALIZADA (APLICA A TUDO) ---
@@ -146,19 +153,23 @@ export function Presencial() {
           if (dateObj.getMonth() !== selectedMonth || dateObj.getFullYear() !== selectedYear) return false
 
           const normName = normalizeKey(record.nome_colaborador)
-          const socio = socioMap.get(normName) || '-'
+          const socioRaw = socioMap.get(normName) || '-'
+          
+          // Formata para comparação com os filtros que estão em TitleCase
+          const socioFormatted = toTitleCase(socioRaw)
+          const nameFormatted = toTitleCase(record.nome_colaborador)
 
           // Filtro de Sócio
-          if (filterSocio && socio !== filterSocio) return false
+          if (filterSocio && socioFormatted !== filterSocio) return false
           
           // Filtro de Colaborador
-          if (filterColaborador && normName !== normalizeKey(filterColaborador)) return false
+          if (filterColaborador && nameFormatted !== filterColaborador) return false
 
           // Pesquisa Livre
           if (searchText) {
               const lowerSearch = searchText.toLowerCase()
               const matchesName = record.nome_colaborador.toLowerCase().includes(lowerSearch)
-              const matchesSocio = socio.toLowerCase().includes(lowerSearch)
+              const matchesSocio = socioRaw.toLowerCase().includes(lowerSearch)
               if (!matchesName && !matchesSocio) return false
           }
 
@@ -167,8 +178,11 @@ export function Presencial() {
 
       // 2. Filtra regras de sócios (para a aba de Sócios)
       const filteredRules = socioRules.filter(rule => {
-          if (filterSocio && rule.socio_responsavel !== filterSocio) return false
-          if (filterColaborador && normalizeKey(rule.nome_colaborador) !== normalizeKey(filterColaborador)) return false
+          const socioFormatted = toTitleCase(rule.socio_responsavel)
+          const nameFormatted = toTitleCase(rule.nome_colaborador)
+
+          if (filterSocio && socioFormatted !== filterSocio) return false
+          if (filterColaborador && nameFormatted !== filterColaborador) return false
           
           if (searchText) {
               const lowerSearch = searchText.toLowerCase()
@@ -182,7 +196,7 @@ export function Presencial() {
   }, [records, socioRules, selectedMonth, selectedYear, filterSocio, filterColaborador, searchText, socioMap])
 
 
-  // --- 2. LÓGICA DO RELATÓRIO (USANDO DADOS FILTRADOS) ---
+  // --- 2. LÓGICA DO RELATÓRIO ---
   const reportData = useMemo(() => {
     const grouped: { [key: string]: { originalName: string, uniqueDays: Set<string>, weekDays: { [key: number]: number } } } = {}
 
@@ -190,7 +204,9 @@ export function Presencial() {
     filteredData.filteredRecords.forEach(record => {
       const dateObj = new Date(record.data_hora)
       const normalizedName = normalizeKey(record.nome_colaborador)
-      const displayName = record.nome_colaborador.trim()
+      
+      // Usa TitleCase para exibição bonita
+      const displayName = toTitleCase(record.nome_colaborador)
       
       const dayKey = dateObj.toLocaleDateString('pt-BR')
       const weekDay = dateObj.getDay()
@@ -215,11 +231,12 @@ export function Presencial() {
       const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
       Object.entries(item.weekDays).forEach(([i, count]) => weekDaysMap[days[Number(i)]] = count)
       
-      const socioResponsavel = socioMap.get(key) || '-'
+      const socioRaw = socioMap.get(key) || '-'
+      const socioFormatted = toTitleCase(socioRaw)
 
       return { 
           nome: item.originalName, 
-          socio: socioResponsavel, 
+          socio: socioFormatted, 
           diasPresentes: item.uniqueDays.size, 
           diasSemana: weekDaysMap 
       }
@@ -229,7 +246,7 @@ export function Presencial() {
 
   }, [filteredData.filteredRecords, socioMap])
 
-  // --- UTILS EXCEL E CRUD (MANTIDOS) ---
+  // --- UTILS EXCEL ---
   const findValue = (row: any, keys: string[]) => {
     const rowKeys = Object.keys(row)
     for (const searchKey of keys) {
@@ -239,6 +256,7 @@ export function Presencial() {
     return null
   }
 
+  // --- UPLOADS ---
   const handlePresenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setUploading(true); setProgress(0);
@@ -299,6 +317,7 @@ export function Presencial() {
     reader.readAsBinaryString(file)
   }
 
+  // --- CRUD ---
   const handleOpenModal = (rule?: SocioRule) => { setEditingRule(rule || { socio_responsavel: '', nome_colaborador: '', meta_semanal: 3 }); setIsModalOpen(true); }
   const handleSaveRule = async () => {
       if (!editingRule?.socio_responsavel || !editingRule?.nome_colaborador) return alert("Preencha campos.")
@@ -469,7 +488,7 @@ export function Presencial() {
                         <tbody className="divide-y divide-gray-100">
                             {reportData.map((item, idx) => (
                                 <tr key={idx} className="hover:bg-blue-50/50">
-                                    <td className="px-6 py-4 font-medium text-[#112240] text-sm capitalize">{item.nome.toLowerCase()}</td>
+                                    <td className="px-6 py-4 font-medium text-[#112240] text-sm">{item.nome}</td>
                                     <td className="px-6 py-4 text-sm text-gray-600">
                                         {item.socio !== '-' ? <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded border border-gray-200 text-xs font-semibold">{item.socio}</span> : <span className="text-red-400 text-xs italic bg-red-50 px-2 py-1 rounded">Sem Sócio</span>}
                                     </td>
@@ -514,8 +533,8 @@ export function Presencial() {
                     <tbody className="divide-y divide-gray-100">
                         {filteredData.filteredRules.map((rule) => (
                             <tr key={rule.id} className="hover:bg-gray-50 text-sm text-gray-700 group">
-                                <td className="px-6 py-3 font-medium capitalize text-[#112240]">{rule.nome_colaborador.toLowerCase()}</td>
-                                <td className="px-6 py-3">{rule.socio_responsavel}</td>
+                                <td className="px-6 py-3 font-medium text-[#112240]">{toTitleCase(rule.nome_colaborador)}</td>
+                                <td className="px-6 py-3">{toTitleCase(rule.socio_responsavel)}</td>
                                 <td className="px-6 py-3"><span className="bg-gray-100 px-2 py-1 rounded border border-gray-200 font-medium">{rule.meta_semanal}x</span></td>
                                 <td className="px-6 py-3 text-right">
                                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -542,7 +561,7 @@ export function Presencial() {
                         const date = new Date(record.data_hora)
                         return (
                             <tr key={record.id} className="hover:bg-gray-50 text-sm text-gray-700">
-                                <td className="px-6 py-3 font-medium capitalize">{record.nome_colaborador.toLowerCase()}</td>
+                                <td className="px-6 py-3 font-medium">{toTitleCase(record.nome_colaborador)}</td>
                                 <td className="px-6 py-3">{date.toLocaleDateString('pt-BR')}</td>
                                 <td className="px-6 py-3 text-gray-500 font-mono">{date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</td>
                             </tr>
