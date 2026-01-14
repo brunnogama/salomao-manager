@@ -51,9 +51,14 @@ export function Presencial() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
   // --- HELPER NORMALIZAÇÃO ---
-  const normalizeText = (text: string) => {
+  const normalizeKey = (text: string) => {
       if (!text) return ""
-      return text.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+      return text
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+        .replace(/\s+/g, " ") // Remove espaços duplos
   }
 
   // --- 1. BUSCAR DADOS ---
@@ -72,18 +77,19 @@ export function Presencial() {
       .from('socios_regras')
       .select('*')
       .order('nome_colaborador', { ascending: true })
-      .limit(2000)
+      .limit(3000)
 
     if (rulesData) setSocioRules(rulesData)
 
     if (presenceData && presenceData.length > 0) {
         setRecords(presenceData)
         
-        // --- RESTAURADO: AUTO-SELEÇÃO DE DATA ---
-        // Pega a data do registro mais recente e força o filtro para ela
-        const lastDate = new Date(presenceData[0].data_hora)
-        setSelectedMonth(lastDate.getMonth())
-        setSelectedYear(lastDate.getFullYear())
+        // Auto-seleção de data apenas na primeira carga
+        if (loading) {
+            const lastDate = new Date(presenceData[0].data_hora)
+            setSelectedMonth(lastDate.getMonth())
+            setSelectedYear(lastDate.getFullYear())
+        }
     } else {
         setRecords([])
     }
@@ -97,46 +103,57 @@ export function Presencial() {
 
   // --- 2. LÓGICA DO RELATÓRIO ---
   const reportData = useMemo(() => {
-    // Mapa de Sócios
+    // 1. Criar Mapa de Sócios
     const socioMap = new Map<string, string>()
+    
     socioRules.forEach(rule => {
-        socioMap.set(normalizeText(rule.nome_colaborador), rule.socio_responsavel)
+        const key = normalizeKey(rule.nome_colaborador)
+        socioMap.set(key, rule.socio_responsavel)
     })
 
-    const grouped: { [key: string]: { uniqueDays: Set<string>, weekDays: { [key: number]: number } } } = {}
+    const grouped: { [key: string]: { originalName: string, uniqueDays: Set<string>, weekDays: { [key: number]: number } } } = {}
 
     records.forEach(record => {
       const dateObj = new Date(record.data_hora)
       if (dateObj.getMonth() !== selectedMonth || dateObj.getFullYear() !== selectedYear) return
 
-      const nome = record.nome_colaborador.trim().toUpperCase()
+      const normalizedName = normalizeKey(record.nome_colaborador)
+      const displayName = record.nome_colaborador.trim() // Nome original para exibição
+      
       const dayKey = dateObj.toLocaleDateString('pt-BR')
       const weekDay = dateObj.getDay()
 
-      if (!grouped[nome]) grouped[nome] = { uniqueDays: new Set(), weekDays: {} }
-      if (!grouped[nome].uniqueDays.has(dayKey)) {
-        grouped[nome].uniqueDays.add(dayKey)
-        grouped[nome].weekDays[weekDay] = (grouped[nome].weekDays[weekDay] || 0) + 1
+      if (!grouped[normalizedName]) {
+          grouped[normalizedName] = { 
+              originalName: displayName, 
+              uniqueDays: new Set(), 
+              weekDays: {} 
+          }
+      }
+      
+      if (!grouped[normalizedName].uniqueDays.has(dayKey)) {
+        grouped[normalizedName].uniqueDays.add(dayKey)
+        grouped[normalizedName].weekDays[weekDay] = (grouped[normalizedName].weekDays[weekDay] || 0) + 1
       }
     })
 
-    const result: ReportItem[] = Object.keys(grouped).map(nome => {
+    const result: ReportItem[] = Object.keys(grouped).map(key => {
+      const item = grouped[key]
       const weekDaysMap: { [key: string]: number } = {}
       const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-      Object.entries(grouped[nome].weekDays).forEach(([i, count]) => weekDaysMap[days[Number(i)]] = count)
       
-      // Busca o sócio
-      const socioResponsavel = socioMap.get(normalizeText(nome)) || '-'
+      Object.entries(item.weekDays).forEach(([i, count]) => weekDaysMap[days[Number(i)]] = count)
+      
+      const socioResponsavel = socioMap.get(key) || '-'
 
       return { 
-          nome, 
+          nome: item.originalName, 
           socio: socioResponsavel, 
-          diasPresentes: grouped[nome].uniqueDays.size, 
+          diasPresentes: item.uniqueDays.size, 
           diasSemana: weekDaysMap 
       }
     })
     
-    // Ordenação
     return result.sort((a, b) => {
         if (a.socio === '-' && b.socio !== '-') return 1;
         if (a.socio !== '-' && b.socio === '-') return -1;
@@ -150,13 +167,13 @@ export function Presencial() {
   const findValue = (row: any, keys: string[]) => {
     const rowKeys = Object.keys(row)
     for (const searchKey of keys) {
-        const foundKey = rowKeys.find(k => normalizeText(k) === normalizeText(searchKey))
+        const foundKey = rowKeys.find(k => normalizeKey(k) === normalizeKey(searchKey))
         if (foundKey) return row[foundKey]
     }
     return null
   }
 
-  // --- 3. UPLOADS ---
+  // --- 3. UPLOAD PRESENÇA ---
   const handlePresenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setUploading(true); setProgress(0);
@@ -187,13 +204,14 @@ export function Presencial() {
             await supabase.from('presenca_portaria').insert(recordsToInsert.slice(i, i + BATCH_SIZE))
             setProgress(Math.round(((i / BATCH_SIZE) + 1) / total * 100))
         }
-        alert(`${recordsToInsert.length} registros importados!`); fetchRecords()
+        alert(`${recordsToInsert.length} registros de presença importados!`); fetchRecords()
       } catch (err) { alert("Erro ao importar.") } 
       finally { setUploading(false); if (presenceInputRef.current) presenceInputRef.current.value = '' }
     }
     reader.readAsBinaryString(file)
   }
 
+  // --- 4. UPLOAD SÓCIOS (SEM FILTRO DE DESLIGADOS) ---
   const handleSocioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setUploading(true); setProgress(0);
@@ -203,29 +221,51 @@ export function Presencial() {
         const wb = XLSX.read(evt.target?.result, { type: 'binary' });
         const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
         
-        const rulesToInsert = data.map((row: any) => {
+        const uniqueRules = new Map<string, any>();
+
+        data.forEach((row: any) => {
           let socio = findValue(row, ['socio', 'sócio', 'responsavel', 'gestor', 'partner']) || 'Não Definido'
           let colab = findValue(row, ['nome', 'colaborador', 'funcionario']) || 'Desconhecido'
           
           if (typeof socio === 'string') socio = socio.trim()
           if (typeof colab === 'string') colab = colab.trim()
 
-          const meta = findValue(row, ['meta', 'dias', 'regra']) || 3 
-          return { socio_responsavel: socio, nome_colaborador: colab, meta_semanal: Number(meta) || 3 }
-        }).filter((r:any) => r.nome_colaborador !== 'Desconhecido')
+          if (colab === 'Desconhecido') return;
 
-        if(confirm(`Substituir base de sócios por ${rulesToInsert.length} registros?`)) {
+          // [REMOVIDO] Filtro de Desligados foi retirado conforme solicitação.
+          
+          const meta = findValue(row, ['meta', 'dias', 'regra']) || 3 
+          
+          // Mantém remoção de duplicatas (mesmo colaborador aparecendo 2x no arquivo)
+          const key = normalizeKey(colab);
+          
+          uniqueRules.set(key, { 
+              socio_responsavel: socio, 
+              nome_colaborador: colab, 
+              meta_semanal: Number(meta) || 3 
+          })
+        });
+
+        const rulesToInsert = Array.from(uniqueRules.values());
+
+        if(confirm(`Foram encontrados ${rulesToInsert.length} colaboradores (Incluindo Desligados). Substituir base?`)) {
             await supabase.from('socios_regras').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-            await supabase.from('socios_regras').insert(rulesToInsert)
-            alert("Atualizado!"); fetchRecords()
+            const { error } = await supabase.from('socios_regras').insert(rulesToInsert)
+            
+            if (error) throw error;
+            alert("Base de Sócios atualizada com sucesso!"); 
+            fetchRecords()
         }
-      } catch (err) { alert("Erro ao importar.") } 
+      } catch (err) { 
+          console.error(err)
+          alert("Erro ao importar sócios.") 
+      } 
       finally { setUploading(false); if (socioInputRef.current) socioInputRef.current.value = '' }
     }
     reader.readAsBinaryString(file)
   }
 
-  // --- 4. EDIÇÃO MANUAL (CRUD) ---
+  // --- CRUD MANUAL ---
   const handleOpenModal = (rule?: SocioRule) => {
       setEditingRule(rule || { socio_responsavel: '', nome_colaborador: '', meta_semanal: 3 })
       setIsModalOpen(true)
@@ -292,7 +332,7 @@ export function Presencial() {
   return (
     <div className="flex flex-col h-full bg-gray-100 space-y-6 relative">
       
-      {/* MODAL DE EDIÇÃO */}
+      {/* MODAL */}
       {isModalOpen && editingRule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-fadeIn">
@@ -415,7 +455,6 @@ export function Presencial() {
                         <thead className="bg-gray-50 sticky top-0 z-10 text-xs uppercase text-gray-500 font-semibold tracking-wider">
                             <tr>
                                 <th className="px-6 py-4 border-b">Colaborador</th>
-                                {/* RESTAURADO: COLUNA SÓCIO RESPONSÁVEL */}
                                 <th className="px-6 py-4 border-b">Sócio Responsável</th> 
                                 <th className="px-6 py-4 border-b w-64">Frequência Mensal</th>
                                 <th className="px-6 py-4 border-b">Semana</th>
@@ -424,9 +463,8 @@ export function Presencial() {
                         <tbody className="divide-y divide-gray-100">
                             {reportData.map((item, idx) => (
                                 <tr key={idx} className="hover:bg-blue-50/50">
-                                    <td className="px-6 py-4 font-medium text-[#112240] text-sm">{item.nome}</td>
+                                    <td className="px-6 py-4 font-medium text-[#112240] text-sm capitalize">{item.nome.toLowerCase()}</td>
                                     
-                                    {/* RESTAURADO: CÉLULA SÓCIO RESPONSÁVEL */}
                                     <td className="px-6 py-4 text-sm text-gray-600">
                                         {item.socio !== '-' ? (
                                             <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded border border-gray-200 text-xs font-semibold">
