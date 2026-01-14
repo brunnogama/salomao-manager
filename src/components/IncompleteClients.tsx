@@ -1,12 +1,12 @@
 // src/components/IncompleteClients.tsx
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, Fragment } from 'react'
 import { supabase } from '../lib/supabase'
 import { 
   CheckCircle, Pencil, XCircle, Search, X, 
-  Filter, ArrowUpDown, Check, Download 
+  Filter, ArrowUpDown, Check, Download,
+  Users, Gift
 } from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
-import { Fragment } from 'react'
 import { NewClientModal, ClientData } from './NewClientModal'
 import * as XLSX from 'xlsx'
 
@@ -99,7 +99,7 @@ export function IncompleteClients() {
         result = result.filter(c => c.tipo_brinde === filterBrinde)
     }
 
-    // 3. Ordenação (Assumindo que há created_at, senão usa nome como fallback)
+    // 3. Ordenação
     result.sort((a: any, b: any) => {
         if (sortOrder === 'newest') return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
         if (sortOrder === 'oldest') return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
@@ -192,36 +192,78 @@ export function IncompleteClients() {
             {/* Lado Direito: Filtros, Ordenação e Ações */}
             <div className="flex flex-wrap items-center gap-2">
                 
-                {/* Ícone de Filtro */}
+                {/* Ícone de Filtro Geral */}
                 <div className="flex items-center gap-1 text-gray-400 mr-1 hidden sm:flex">
                     <Filter className="h-4 w-4" />
                 </div>
 
-                {/* Filtro Sócio */}
-                <div className="relative">
-                    <select 
-                        value={filterSocio}
-                        onChange={(e) => setFilterSocio(e.target.value)}
-                        className={`appearance-none pl-3 pr-8 py-2 rounded-lg text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors cursor-pointer
-                            ${filterSocio ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
-                    >
-                        <option value="">Todos os Sócios</option>
-                        {availableSocios.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                </div>
+                {/* Filtro Sócio (MENU ELEGANTE) */}
+                <Menu as="div" className="relative">
+                    <Menu.Button className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-xs font-bold transition-colors ${filterSocio ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:text-[#112240] hover:bg-gray-100'}`}>
+                        <Users className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">
+                            {filterSocio ? filterSocio : 'Sócios'}
+                        </span>
+                    </Menu.Button>
+                    <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100" leave="transition ease-in duration-75" leaveFrom="transform opacity-100 scale-100" leaveTo="transform opacity-0 scale-95">
+                        <Menu.Items className="absolute right-0 mt-1 w-48 origin-top-right rounded-lg bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none z-20 max-h-60 overflow-y-auto custom-scrollbar">
+                            <div className="p-1">
+                                <Menu.Item>
+                                    {({ active }) => (
+                                        <button onClick={() => setFilterSocio('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded-md`}>
+                                            <span>Todos os Sócios</span>
+                                            {filterSocio === '' && <Check className="h-3 w-3 text-blue-600" />}
+                                        </button>
+                                    )}
+                                </Menu.Item>
+                                {availableSocios.map((s) => (
+                                    <Menu.Item key={s}>
+                                        {({ active }) => (
+                                            <button onClick={() => setFilterSocio(s)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded-md`}>
+                                                <span className="truncate">{s}</span>
+                                                {filterSocio === s && <Check className="h-3 w-3 text-blue-600" />}
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                ))}
+                            </div>
+                        </Menu.Items>
+                    </Transition>
+                </Menu>
 
-                {/* Filtro Brinde */}
-                <div className="relative">
-                    <select 
-                        value={filterBrinde}
-                        onChange={(e) => setFilterBrinde(e.target.value)}
-                        className={`appearance-none pl-3 pr-8 py-2 rounded-lg text-xs font-bold border focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors cursor-pointer
-                            ${filterBrinde ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
-                    >
-                        <option value="">Todos os Brindes</option>
-                        {availableBrindes.map(b => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                </div>
+                {/* Filtro Brinde (MENU ELEGANTE) */}
+                <Menu as="div" className="relative">
+                    <Menu.Button className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-xs font-bold transition-colors ${filterBrinde ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:text-[#112240] hover:bg-gray-100'}`}>
+                        <Gift className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">
+                            {filterBrinde ? filterBrinde : 'Brindes'}
+                        </span>
+                    </Menu.Button>
+                    <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100" leave="transition ease-in duration-75" leaveFrom="transform opacity-100 scale-100" leaveTo="transform opacity-0 scale-95">
+                        <Menu.Items className="absolute right-0 mt-1 w-48 origin-top-right rounded-lg bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none z-20 max-h-60 overflow-y-auto custom-scrollbar">
+                            <div className="p-1">
+                                <Menu.Item>
+                                    {({ active }) => (
+                                        <button onClick={() => setFilterBrinde('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded-md`}>
+                                            <span>Todos os Brindes</span>
+                                            {filterBrinde === '' && <Check className="h-3 w-3 text-blue-600" />}
+                                        </button>
+                                    )}
+                                </Menu.Item>
+                                {availableBrindes.map((b) => (
+                                    <Menu.Item key={b}>
+                                        {({ active }) => (
+                                            <button onClick={() => setFilterBrinde(b)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded-md`}>
+                                                <span className="truncate">{b}</span>
+                                                {filterBrinde === b && <Check className="h-3 w-3 text-blue-600" />}
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                ))}
+                            </div>
+                        </Menu.Items>
+                    </Transition>
+                </Menu>
 
                 {/* Botão Limpar Filtros */}
                 {hasActiveFilters && (
@@ -234,6 +276,8 @@ export function IncompleteClients() {
                         <span className="text-xs font-bold hidden sm:inline">Limpar</span>
                     </button>
                 )}
+
+                <div className="h-6 w-px bg-gray-200 mx-1"></div>
 
                 {/* Ordenação */}
                 <Menu as="div" className="relative">
