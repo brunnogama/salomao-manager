@@ -37,13 +37,13 @@ export function Presencial() {
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   
-  // --- NOVOS ESTADOS DE FILTRO ---
+  // --- ESTADOS DE FILTRO ---
   const [filterSocio, setFilterSocio] = useState('')
   const [filterColaborador, setFilterColaborador] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [searchText, setSearchText] = useState('')
 
-  // Estado para Edição/Criação de Regra
+  // Estado para Edição/Criação
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingRule, setEditingRule] = useState<Partial<SocioRule> | null>(null)
 
@@ -57,10 +57,22 @@ export function Presencial() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
-  // --- HELPER NORMALIZAÇÃO ---
+  // --- HELPERS DE FORMATAÇÃO ---
+  
+  // Normaliza para comparação (remove acentos, espaços extras, lowercase)
   const normalizeKey = (text: string) => {
       if (!text) return ""
       return text.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ")
+  }
+
+  // Formata para Exibição (Camel Case / Title Case: "JOAO SILVA" -> "Joao Silva")
+  const toTitleCase = (text: string) => {
+      if (!text) return "-"
+      return text
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
   }
 
   // --- 1. BUSCAR DADOS ---
@@ -74,7 +86,7 @@ export function Presencial() {
       .order('data_hora', { ascending: false })
       .limit(10000)
 
-    // Busca Regras de Sócios
+    // Busca Regras
     const { data: rulesData } = await supabase
       .from('socios_regras')
       .select('*')
@@ -85,6 +97,9 @@ export function Presencial() {
 
     if (presenceData && presenceData.length > 0) {
         setRecords(presenceData)
+        
+        // --- RESTAURADO: AUTO-SELEÇÃO DE DATA ---
+        // Se for a primeira carga (loading true), ajusta a data para o último registro encontrado
         if (loading) {
             const lastDate = new Date(presenceData[0].data_hora)
             setSelectedMonth(lastDate.getMonth())
@@ -101,14 +116,14 @@ export function Presencial() {
     fetchRecords()
   }, [])
 
-  // --- EFEITO: FOCA NO INPUT DE BUSCA AO ABRIR ---
+  // Foca no input de busca ao abrir
   useEffect(() => {
       if (showSearch && searchInputRef.current) {
           searchInputRef.current.focus()
       }
   }, [showSearch])
 
-  // --- MAPA E LISTAS PARA FILTROS (MEMOIZED) ---
+  // --- MAPA E LISTAS PARA FILTROS ---
   const socioMap = useMemo(() => {
       const map = new Map<string, string>()
       socioRules.forEach(rule => {
@@ -118,52 +133,56 @@ export function Presencial() {
   }, [socioRules])
 
   const uniqueSocios = useMemo(() => {
-      const socios = new Set(socioRules.map(r => r.socio_responsavel).filter(s => s !== 'Não Definido'))
+      const socios = new Set(socioRules.map(r => toTitleCase(r.socio_responsavel)).filter(s => s !== 'Não Definido' && s !== '-'))
       return Array.from(socios).sort()
   }, [socioRules])
 
   const uniqueColaboradores = useMemo(() => {
       let rules = socioRules;
-      // Se tiver sócio selecionado, mostra apenas os colaboradores dele
       if (filterSocio) {
-          rules = rules.filter(r => r.socio_responsavel === filterSocio)
+          // Filtra regras baseadas no nome normalizado ou formatado
+          rules = rules.filter(r => toTitleCase(r.socio_responsavel) === filterSocio)
       }
-      return Array.from(new Set(rules.map(r => r.nome_colaborador))).sort()
+      return Array.from(new Set(rules.map(r => toTitleCase(r.nome_colaborador)))).sort()
   }, [socioRules, filterSocio])
 
-  // --- FILTRAGEM CENTRALIZADA (APLICA A TUDO) ---
+  // --- FILTRAGEM CENTRALIZADA ---
   const filteredData = useMemo(() => {
       // 1. Filtra registros de presença
       const filteredRecords = records.filter(record => {
           const dateObj = new Date(record.data_hora)
           
-          // Filtro de Data
           if (dateObj.getMonth() !== selectedMonth || dateObj.getFullYear() !== selectedYear) return false
 
           const normName = normalizeKey(record.nome_colaborador)
-          const socio = socioMap.get(normName) || '-'
+          const socioRaw = socioMap.get(normName) || '-'
+          const socioFormatted = toTitleCase(socioRaw)
+          const nameFormatted = toTitleCase(record.nome_colaborador)
 
           // Filtro de Sócio
-          if (filterSocio && socio !== filterSocio) return false
+          if (filterSocio && socioFormatted !== filterSocio) return false
           
           // Filtro de Colaborador
-          if (filterColaborador && normName !== normalizeKey(filterColaborador)) return false
+          if (filterColaborador && nameFormatted !== filterColaborador) return false
 
           // Pesquisa Livre
           if (searchText) {
               const lowerSearch = searchText.toLowerCase()
               const matchesName = record.nome_colaborador.toLowerCase().includes(lowerSearch)
-              const matchesSocio = socio.toLowerCase().includes(lowerSearch)
+              const matchesSocio = socioRaw.toLowerCase().includes(lowerSearch)
               if (!matchesName && !matchesSocio) return false
           }
 
           return true
       })
 
-      // 2. Filtra regras de sócios (para a aba de Sócios)
+      // 2. Filtra regras de sócios
       const filteredRules = socioRules.filter(rule => {
-          if (filterSocio && rule.socio_responsavel !== filterSocio) return false
-          if (filterColaborador && normalizeKey(rule.nome_colaborador) !== normalizeKey(filterColaborador)) return false
+          const socioFormatted = toTitleCase(rule.socio_responsavel)
+          const nameFormatted = toTitleCase(rule.nome_colaborador)
+
+          if (filterSocio && socioFormatted !== filterSocio) return false
+          if (filterColaborador && nameFormatted !== filterColaborador) return false
           
           if (searchText) {
               const lowerSearch = searchText.toLowerCase()
@@ -177,15 +196,16 @@ export function Presencial() {
   }, [records, socioRules, selectedMonth, selectedYear, filterSocio, filterColaborador, searchText, socioMap])
 
 
-  // --- 2. LÓGICA DO RELATÓRIO (USANDO DADOS FILTRADOS) ---
+  // --- 2. LÓGICA DO RELATÓRIO ---
   const reportData = useMemo(() => {
     const grouped: { [key: string]: { originalName: string, uniqueDays: Set<string>, weekDays: { [key: number]: number } } } = {}
 
-    // Usa filteredRecords em vez de records brutos
     filteredData.filteredRecords.forEach(record => {
       const dateObj = new Date(record.data_hora)
       const normalizedName = normalizeKey(record.nome_colaborador)
-      const displayName = record.nome_colaborador.trim()
+      
+      // Usa a função toTitleCase para o nome de exibição
+      const displayName = toTitleCase(record.nome_colaborador)
       
       const dayKey = dateObj.toLocaleDateString('pt-BR')
       const weekDay = dateObj.getDay()
@@ -210,11 +230,13 @@ export function Presencial() {
       const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
       Object.entries(item.weekDays).forEach(([i, count]) => weekDaysMap[days[Number(i)]] = count)
       
-      const socioResponsavel = socioMap.get(key) || '-'
+      const socioRaw = socioMap.get(key) || '-'
+      // Formata o nome do sócio também
+      const socioFormatted = toTitleCase(socioRaw)
 
       return { 
           nome: item.originalName, 
-          socio: socioResponsavel, 
+          socio: socioFormatted, 
           diasPresentes: item.uniqueDays.size, 
           diasSemana: weekDaysMap 
       }
@@ -224,7 +246,7 @@ export function Presencial() {
 
   }, [filteredData.filteredRecords, socioMap])
 
-  // --- UTILS EXCEL E CRUD (MANTIDOS) ---
+  // --- UTILS EXCEL ---
   const findValue = (row: any, keys: string[]) => {
     const rowKeys = Object.keys(row)
     for (const searchKey of keys) {
@@ -234,6 +256,7 @@ export function Presencial() {
     return null
   }
 
+  // --- UPLOADS ---
   const handlePresenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setUploading(true); setProgress(0);
@@ -294,6 +317,7 @@ export function Presencial() {
     reader.readAsBinaryString(file)
   }
 
+  // --- CRUD ---
   const handleOpenModal = (rule?: SocioRule) => { setEditingRule(rule || { socio_responsavel: '', nome_colaborador: '', meta_semanal: 3 }); setIsModalOpen(true); }
   const handleSaveRule = async () => {
       if (!editingRule?.socio_responsavel || !editingRule?.nome_colaborador) return alert("Preencha campos.")
@@ -348,7 +372,7 @@ export function Presencial() {
         </div>
       )}
 
-      {/* HEADER PRINCIPAL */}
+      {/* HEADER */}
       <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -373,63 +397,46 @@ export function Presencial() {
             </div>
         </div>
 
-        {/* BARRA DE FERRAMENTAS: FILTROS E VIEW */}
+        {/* FILTROS */}
         <div className="flex flex-col lg:flex-row items-center justify-between border-t border-gray-100 pt-4 gap-4">
             
-            {/* 1. SELETORES DE VISUALIZAÇÃO */}
             <div className="flex bg-gray-100 p-1 rounded-lg w-full lg:w-auto overflow-x-auto">
                 <button onClick={() => setViewMode('report')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'report' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><BarChart3 className="h-4 w-4" /> Relatório</button>
                 <button onClick={() => setViewMode('list')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'list' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><LayoutList className="h-4 w-4" /> Bruto</button>
                 <button onClick={() => setViewMode('socios')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'socios' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><Briefcase className="h-4 w-4" /> Regras</button>
             </div>
 
-            {/* 2. ÁREA DE PESQUISA E FILTROS */}
             <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
                 
-                {/* BOTÃO/CAMPO DE PESQUISA */}
+                {/* PESQUISA */}
                 <div className={`flex items-center bg-gray-50 border border-gray-200 rounded-lg transition-all duration-300 ${showSearch ? 'w-full sm:w-64 px-2' : 'w-10 justify-center'}`}>
                     <button onClick={() => setShowSearch(!showSearch)} className="p-2 text-gray-400 hover:text-blue-600">
                         {showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
                     </button>
                     {showSearch && (
-                        <input 
-                            ref={searchInputRef}
-                            type="text" 
-                            placeholder="Buscar nome..." 
-                            className="bg-transparent border-none focus:ring-0 text-sm w-full outline-none text-gray-700"
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                        />
+                        <input ref={searchInputRef} type="text" placeholder="Buscar nome..." className="bg-transparent border-none focus:ring-0 text-sm w-full outline-none text-gray-700" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
                     )}
                 </div>
 
-                {/* FILTROS DROPDOWN */}
+                {/* FILTROS SÓCIO/COLABORADOR */}
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     <div className="relative w-full sm:w-40">
                         <FilterIcon className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                        <select 
-                            value={filterSocio} 
-                            onChange={(e) => setFilterSocio(e.target.value)}
-                            className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg pl-8 p-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                        >
+                        <select value={filterSocio} onChange={(e) => setFilterSocio(e.target.value)} className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg pl-8 p-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
                             <option value="">Todos Sócios</option>
                             {uniqueSocios.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
                     <div className="relative w-full sm:w-40">
                         <Users className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                        <select 
-                            value={filterColaborador} 
-                            onChange={(e) => setFilterColaborador(e.target.value)}
-                            className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg pl-8 p-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                        >
+                        <select value={filterColaborador} onChange={(e) => setFilterColaborador(e.target.value)} className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg pl-8 p-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
                             <option value="">Todos Colab.</option>
                             {uniqueColaboradores.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                     </div>
                 </div>
 
-                {/* FILTRO DE DATA (APARECE EM REPORT E LIST) */}
+                {/* FILTRO DE DATA */}
                 {(viewMode === 'report' || viewMode === 'list') && (
                     <div className="flex items-center gap-2 w-full sm:w-auto border-l pl-2 ml-2 border-gray-200">
                         <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2">
@@ -464,7 +471,7 @@ export function Presencial() {
                         <tbody className="divide-y divide-gray-100">
                             {reportData.map((item, idx) => (
                                 <tr key={idx} className="hover:bg-blue-50/50">
-                                    <td className="px-6 py-4 font-medium text-[#112240] text-sm capitalize">{item.nome.toLowerCase()}</td>
+                                    <td className="px-6 py-4 font-medium text-[#112240] text-sm">{item.nome}</td>
                                     <td className="px-6 py-4 text-sm text-gray-600">
                                         {item.socio !== '-' ? <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded border border-gray-200 text-xs font-semibold">{item.socio}</span> : <span className="text-red-400 text-xs italic bg-red-50 px-2 py-1 rounded">Sem Sócio</span>}
                                     </td>
@@ -509,8 +516,8 @@ export function Presencial() {
                     <tbody className="divide-y divide-gray-100">
                         {filteredData.filteredRules.map((rule) => (
                             <tr key={rule.id} className="hover:bg-gray-50 text-sm text-gray-700 group">
-                                <td className="px-6 py-3 font-medium capitalize text-[#112240]">{rule.nome_colaborador.toLowerCase()}</td>
-                                <td className="px-6 py-3">{rule.socio_responsavel}</td>
+                                <td className="px-6 py-3 font-medium text-[#112240]">{toTitleCase(rule.nome_colaborador)}</td>
+                                <td className="px-6 py-3">{toTitleCase(rule.socio_responsavel)}</td>
                                 <td className="px-6 py-3"><span className="bg-gray-100 px-2 py-1 rounded border border-gray-200 font-medium">{rule.meta_semanal}x</span></td>
                                 <td className="px-6 py-3 text-right">
                                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -537,7 +544,7 @@ export function Presencial() {
                         const date = new Date(record.data_hora)
                         return (
                             <tr key={record.id} className="hover:bg-gray-50 text-sm text-gray-700">
-                                <td className="px-6 py-3 font-medium capitalize">{record.nome_colaborador.toLowerCase()}</td>
+                                <td className="px-6 py-3 font-medium">{toTitleCase(record.nome_colaborador)}</td>
                                 <td className="px-6 py-3">{date.toLocaleDateString('pt-BR')}</td>
                                 <td className="px-6 py-3 text-gray-500 font-mono">{date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</td>
                             </tr>
