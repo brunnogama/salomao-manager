@@ -22,7 +22,7 @@ interface SocioRule {
 
 interface ReportItem {
   nome: string;
-  socio: string; // Nova propriedade
+  socio: string; 
   diasPresentes: number;
   diasSemana: { [key: string]: number };
 }
@@ -48,8 +48,9 @@ export function Presencial() {
 
   // --- HELPER NORMALIZAÇÃO ---
   const normalizeText = (text: string) => {
+      if (!text) return ""
       return text
-        .trim()
+        .trim() // Garante remoção de espaços aqui também
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "") 
@@ -59,19 +60,34 @@ export function Presencial() {
   const fetchRecords = async () => {
     setLoading(true)
     
+    // Busca Presença (Aumentei o limite para garantir histórico)
     const { data: presenceData } = await supabase
       .from('presenca_portaria')
       .select('*')
       .order('data_hora', { ascending: false })
-      .limit(5000)
+      .limit(10000)
 
+    // Busca Regras de Sócios
     const { data: rulesData } = await supabase
       .from('socios_regras')
       .select('*')
       .order('socio_responsavel', { ascending: true })
 
-    if (presenceData) setRecords(presenceData)
     if (rulesData) setSocioRules(rulesData)
+
+    if (presenceData && presenceData.length > 0) {
+        setRecords(presenceData)
+        
+        // --- AUTO-AJUSTE DE DATA ---
+        // Se houver dados, ajusta o filtro para o mês/ano do registro mais recente
+        // para evitar que a tela pareça vazia ao entrar.
+        const lastDate = new Date(presenceData[0].data_hora)
+        // Só atualiza se for a primeira carga (loading true) ou se o mês atual estiver vazio
+        setSelectedMonth(lastDate.getMonth())
+        setSelectedYear(lastDate.getFullYear())
+    } else {
+        setRecords([])
+    }
     
     setLoading(false)
   }
@@ -80,22 +96,21 @@ export function Presencial() {
     fetchRecords()
   }, [])
 
-  // --- 2. LÓGICA DO RELATÓRIO (CRUZAMENTO DE DADOS) ---
+  // --- 2. LÓGICA DO RELATÓRIO ---
   const reportData = useMemo(() => {
-    // 1. Criar mapa de Colaborador -> Sócio para busca rápida
     const socioMap = new Map<string, string>()
     socioRules.forEach(rule => {
         socioMap.set(normalizeText(rule.nome_colaborador), rule.socio_responsavel)
     })
 
-    // 2. Agrupar dados de presença
     const grouped: { [key: string]: { uniqueDays: Set<string>, weekDays: { [key: number]: number } } } = {}
 
     records.forEach(record => {
       const dateObj = new Date(record.data_hora)
       if (dateObj.getMonth() !== selectedMonth || dateObj.getFullYear() !== selectedYear) return
 
-      const nome = record.nome_colaborador.toUpperCase()
+      // Normaliza e Trim no nome para agrupamento
+      const nome = record.nome_colaborador.trim().toUpperCase()
       const dayKey = dateObj.toLocaleDateString('pt-BR')
       const weekDay = dateObj.getDay()
 
@@ -106,24 +121,21 @@ export function Presencial() {
       }
     })
 
-    // 3. Montar resultado final cruzando com o mapa de sócios
     const result: ReportItem[] = Object.keys(grouped).map(nome => {
       const weekDaysMap: { [key: string]: number } = {}
       const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
       Object.entries(grouped[nome].weekDays).forEach(([i, count]) => weekDaysMap[days[Number(i)]] = count)
       
-      // Busca o sócio usando o nome normalizado
       const socioResponsavel = socioMap.get(normalizeText(nome)) || '-'
 
       return { 
           nome, 
-          socio: socioResponsavel, // Define o sócio
+          socio: socioResponsavel, 
           diasPresentes: grouped[nome].uniqueDays.size, 
           diasSemana: weekDaysMap 
       }
     })
     
-    // Ordena por Sócio (A-Z) e depois por Presença
     return result.sort((a, b) => {
         if (a.socio === '-' && b.socio !== '-') return 1;
         if (a.socio !== '-' && b.socio === '-') return -1;
@@ -143,7 +155,7 @@ export function Presencial() {
     return null
   }
 
-  // --- 3. UPLOAD PRESENÇA ---
+  // --- 3. UPLOAD PRESENÇA (COM TRIM) ---
   const handlePresenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setUploading(true); setProgress(0);
@@ -154,7 +166,11 @@ export function Presencial() {
         const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
         
         const recordsToInsert = data.map((row: any) => {
-          const nome = findValue(row, ['nome', 'colaborador', 'funcionario']) || 'Desconhecido'
+          let nome = findValue(row, ['nome', 'colaborador', 'funcionario']) || 'Desconhecido'
+          
+          // --- CORREÇÃO: TRIM ---
+          if (typeof nome === 'string') nome = nome.trim()
+            
           const tempoRaw = findValue(row, ['tempo', 'data', 'horario'])
           let dataFinal = new Date()
           if (typeof tempoRaw === 'string') dataFinal = new Date(tempoRaw)
@@ -172,14 +188,14 @@ export function Presencial() {
             await supabase.from('presenca_portaria').insert(recordsToInsert.slice(i, i + BATCH_SIZE))
             setProgress(Math.round(((i / BATCH_SIZE) + 1) / total * 100))
         }
-        alert(`${recordsToInsert.length} registros importados!`); fetchRecords()
+        alert(`${recordsToInsert.length} registros de presença importados!`); fetchRecords()
       } catch (err) { alert("Erro ao importar.") } 
       finally { setUploading(false); if (presenceInputRef.current) presenceInputRef.current.value = '' }
     }
     reader.readAsBinaryString(file)
   }
 
-  // --- 4. UPLOAD SÓCIOS ---
+  // --- 4. UPLOAD SÓCIOS (COM TRIM) ---
   const handleSocioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setUploading(true); setProgress(0);
@@ -190,8 +206,13 @@ export function Presencial() {
         const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
         
         const rulesToInsert = data.map((row: any) => {
-          const socio = findValue(row, ['socio', 'sócio', 'responsavel', 'gestor', 'partner']) || 'Não Definido'
-          const colab = findValue(row, ['nome', 'colaborador', 'funcionario']) || 'Desconhecido'
+          let socio = findValue(row, ['socio', 'sócio', 'responsavel', 'gestor', 'partner']) || 'Não Definido'
+          let colab = findValue(row, ['nome', 'colaborador', 'funcionario']) || 'Desconhecido'
+          
+          // --- CORREÇÃO: TRIM ---
+          if (typeof socio === 'string') socio = socio.trim()
+          if (typeof colab === 'string') colab = colab.trim()
+
           const meta = findValue(row, ['meta', 'dias', 'regra']) || 3 
           return { socio_responsavel: socio, nome_colaborador: colab, meta_semanal: Number(meta) || 3 }
         }).filter((r:any) => r.nome_colaborador !== 'Desconhecido')
@@ -290,7 +311,7 @@ export function Presencial() {
                         <thead className="bg-gray-50 sticky top-0 z-10 text-xs uppercase text-gray-500 font-semibold tracking-wider">
                             <tr>
                                 <th className="px-6 py-4 border-b">Colaborador</th>
-                                <th className="px-6 py-4 border-b">Sócio Responsável</th> {/* NOVA COLUNA */}
+                                <th className="px-6 py-4 border-b">Sócio Responsável</th> 
                                 <th className="px-6 py-4 border-b w-64">Frequência Mensal</th>
                                 <th className="px-6 py-4 border-b">Semana</th>
                             </tr>
@@ -300,7 +321,6 @@ export function Presencial() {
                                 <tr key={idx} className="hover:bg-blue-50/50">
                                     <td className="px-6 py-4 font-medium text-[#112240] text-sm">{item.nome}</td>
                                     
-                                    {/* Célula do Sócio */}
                                     <td className="px-6 py-4 text-sm text-gray-600">
                                         {item.socio !== '-' ? (
                                             <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded border border-gray-200 text-xs font-semibold">
