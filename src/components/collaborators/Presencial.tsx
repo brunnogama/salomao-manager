@@ -67,23 +67,23 @@ export function Presencial() {
       .order('data_hora', { ascending: false })
       .limit(10000)
 
-    // Busca Regras de Sócios (Aumentei o limite para garantir que traga todos)
+    // Busca Regras de Sócios
     const { data: rulesData } = await supabase
       .from('socios_regras')
       .select('*')
-      .order('nome_colaborador', { ascending: true }) // Ordenar por colaborador facilita achar erros
+      .order('nome_colaborador', { ascending: true })
       .limit(2000)
 
     if (rulesData) setSocioRules(rulesData)
 
     if (presenceData && presenceData.length > 0) {
         setRecords(presenceData)
-        // Auto-seleção de data apenas na primeira carga se não houver seleção
-        if (loading) {
-            const lastDate = new Date(presenceData[0].data_hora)
-            setSelectedMonth(lastDate.getMonth())
-            setSelectedYear(lastDate.getFullYear())
-        }
+        
+        // --- RESTAURADO: AUTO-SELEÇÃO DE DATA ---
+        // Pega a data do registro mais recente e força o filtro para ela
+        const lastDate = new Date(presenceData[0].data_hora)
+        setSelectedMonth(lastDate.getMonth())
+        setSelectedYear(lastDate.getFullYear())
     } else {
         setRecords([])
     }
@@ -97,6 +97,7 @@ export function Presencial() {
 
   // --- 2. LÓGICA DO RELATÓRIO ---
   const reportData = useMemo(() => {
+    // Mapa de Sócios
     const socioMap = new Map<string, string>()
     socioRules.forEach(rule => {
         socioMap.set(normalizeText(rule.nome_colaborador), rule.socio_responsavel)
@@ -124,6 +125,7 @@ export function Presencial() {
       const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
       Object.entries(grouped[nome].weekDays).forEach(([i, count]) => weekDaysMap[days[Number(i)]] = count)
       
+      // Busca o sócio
       const socioResponsavel = socioMap.get(normalizeText(nome)) || '-'
 
       return { 
@@ -134,6 +136,7 @@ export function Presencial() {
       }
     })
     
+    // Ordenação
     return result.sort((a, b) => {
         if (a.socio === '-' && b.socio !== '-') return 1;
         if (a.socio !== '-' && b.socio === '-') return -1;
@@ -153,7 +156,7 @@ export function Presencial() {
     return null
   }
 
-  // --- 3. UPLOADS (COM TRIM) ---
+  // --- 3. UPLOADS ---
   const handlePresenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
     setUploading(true); setProgress(0);
@@ -237,7 +240,6 @@ export function Presencial() {
       setLoading(true)
       try {
           if (editingRule.id) {
-              // Atualizar existente
               const { error } = await supabase
                 .from('socios_regras')
                 .update({ 
@@ -248,7 +250,6 @@ export function Presencial() {
                 .eq('id', editingRule.id)
               if (error) throw error
           } else {
-              // Criar novo
               const { error } = await supabase
                 .from('socios_regras')
                 .insert({ 
@@ -414,6 +415,7 @@ export function Presencial() {
                         <thead className="bg-gray-50 sticky top-0 z-10 text-xs uppercase text-gray-500 font-semibold tracking-wider">
                             <tr>
                                 <th className="px-6 py-4 border-b">Colaborador</th>
+                                {/* RESTAURADO: COLUNA SÓCIO RESPONSÁVEL */}
                                 <th className="px-6 py-4 border-b">Sócio Responsável</th> 
                                 <th className="px-6 py-4 border-b w-64">Frequência Mensal</th>
                                 <th className="px-6 py-4 border-b">Semana</th>
@@ -424,6 +426,7 @@ export function Presencial() {
                                 <tr key={idx} className="hover:bg-blue-50/50">
                                     <td className="px-6 py-4 font-medium text-[#112240] text-sm">{item.nome}</td>
                                     
+                                    {/* RESTAURADO: CÉLULA SÓCIO RESPONSÁVEL */}
                                     <td className="px-6 py-4 text-sm text-gray-600">
                                         {item.socio !== '-' ? (
                                             <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded border border-gray-200 text-xs font-semibold">
