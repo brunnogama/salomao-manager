@@ -63,8 +63,8 @@ export default function Login() {
                 Usuário Corporativo
               </label>
               
-              {/* Container unificado com foco visual */}
-              <div className="group flex rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-[#112240] overflow-hidden transition-all outline-none bg-white">
+              {/* Container unificado corrigido: removido ring-inset e usado border/ring externo */}
+              <div className="group flex rounded-lg shadow-sm border border-gray-300 focus-within:border-[#112240] focus-within:ring-1 focus-within:ring-[#112240] overflow-hidden transition-all outline-none bg-white">
                 <div className="flex items-center pl-3 text-gray-400">
                   <User className="h-5 w-5" />
                 </div>
@@ -89,7 +89,7 @@ export default function Login() {
                 Senha
               </label>
               
-              <div className="relative rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-[#112240] transition-all outline-none bg-white">
+              <div className="relative rounded-lg shadow-sm border border-gray-300 focus-within:border-[#112240] focus-within:ring-1 focus-within:ring-[#112240] transition-all outline-none bg-white">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                   <Lock className="h-5 w-5" />
                 </div>
