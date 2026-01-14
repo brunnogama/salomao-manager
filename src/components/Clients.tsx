@@ -113,6 +113,13 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     window.open(`https://wa.me/55${cleanPhone}`, '_blank')
   }
 
+  // Função para iniciar ligação via 3CX (protocolo tel:)
+  const handlePhoneCall = (phone: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const cleanPhone = phone.replace(/\D/g, '')
+    window.location.href = `tel:${cleanPhone}`
+  }
+
   const handleEmail = (email: string, e: React.MouseEvent) => {
     e.stopPropagation()
     window.open(`mailto:${email}`, '_blank')
@@ -426,9 +433,14 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
                                 <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                                     <div className="flex gap-1">
                                         {client.telefone && (
-                                            <button onClick={(e) => handleWhatsApp(client.telefone, e)} className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors" title="WhatsApp">
-                                                <MessageCircle className="h-3.5 w-3.5" />
-                                            </button>
+                                            <>
+                                                <button onClick={(e) => handleWhatsApp(client.telefone, e)} className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors" title="WhatsApp">
+                                                    <MessageCircle className="h-3.5 w-3.5" />
+                                                </button>
+                                                <button onClick={(e) => handlePhoneCall(client.telefone, e)} className="p-1.5 rounded-lg bg-cyan-50 text-cyan-600 hover:bg-cyan-100 transition-colors" title="Ligar com 3CX">
+                                                    <Phone className="h-3.5 w-3.5" />
+                                                </button>
+                                            </>
                                         )}
                                         {client.email && (
                                             <button onClick={(e) => handleEmail(client.email, e)} className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="E-mail">
@@ -493,9 +505,14 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
                                                 {client.telefone && (
-                                                    <button onClick={(e) => handleWhatsApp(client.telefone, e)} className="p-1 rounded bg-green-50 text-green-600 hover:bg-green-100" title="WhatsApp">
-                                                        <MessageCircle className="h-3.5 w-3.5" />
-                                                    </button>
+                                                    <>
+                                                        <button onClick={(e) => handleWhatsApp(client.telefone, e)} className="p-1 rounded bg-green-50 text-green-600 hover:bg-green-100" title="WhatsApp">
+                                                            <MessageCircle className="h-3.5 w-3.5" />
+                                                        </button>
+                                                        <button onClick={(e) => handlePhoneCall(client.telefone, e)} className="p-1 rounded bg-cyan-50 text-cyan-600 hover:bg-cyan-100" title="Ligar com 3CX">
+                                                            <Phone className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    </>
                                                 )}
                                                 {client.email && (
                                                     <button onClick={(e) => handleEmail(client.email, e)} className="p-1 rounded bg-blue-50 text-blue-600 hover:bg-blue-100" title="E-mail">
