@@ -117,13 +117,39 @@ export function Settings() {
   const [loadingConfig, setLoadingConfig] = useState(false)
 
   const [showAllVersions, setShowAllVersions] = useState(false)
+  
+  // --- CONTROLE DE PERMISSÃO ---
+  const [currentUserRole, setCurrentUserRole] = useState<string>('')
+  // Define se o usuário é admin
+  const isAdmin = currentUserRole === 'Administrador'
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    fetchCurrentUserRole(); // Busca a permissão ao carregar
     fetchUsers();
     fetchMagistradosConfig();
   }, [])
+
+  // Função para checar o cargo do usuário logado
+  const fetchCurrentUserRole = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.email) {
+        const { data } = await supabase
+          .from('usuarios_permitidos')
+          .select('cargo')
+          .eq('email', user.email)
+          .single()
+          
+        if (data) {
+          setCurrentUserRole(data.cargo)
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao verificar permissão:", error)
+    }
+  }
 
   const fetchMagistradosConfig = async () => {
     const { data } = await supabase.from('config_magistrados').select('*').single()
@@ -151,6 +177,9 @@ export function Settings() {
   }
 
   const openUserModal = (user?: AppUser) => {
+    // Bloqueia abertura do modal se não for admin
+    if (!isAdmin) return alert("Apenas administradores podem gerenciar usuários.");
+
     if (user) {
         setEditingUser(user)
         setUserForm({ nome: user.nome, email: user.email, cargo: user.cargo })
@@ -162,6 +191,8 @@ export function Settings() {
   }
 
   const handleSaveConfigMagistrados = async () => {
+    if (!isAdmin) return alert("Acesso negado.");
+
     setLoadingConfig(true)
     const emailsArray = magistradosConfig.emails.split(',').map(e => e.trim()).filter(e => e)
     
@@ -183,6 +214,8 @@ export function Settings() {
   }
 
   const handleSaveUser = async () => {
+    if (!isAdmin) return; // Segurança extra
+
     if (!userForm.email) return alert("E-mail obrigatório")
     try {
         if (editingUser) {
@@ -198,11 +231,15 @@ export function Settings() {
   }
 
   const handleToggleActive = async (user: AppUser) => {
+    if (!isAdmin) return alert("Apenas administradores podem alterar status.");
+
     await supabase.from('usuarios_permitidos').update({ ativo: !user.ativo }).eq('id', user.id)
     fetchUsers()
   }
 
   const handleDeleteUser = async (user: AppUser) => {
+    if (!isAdmin) return alert("Apenas administradores podem excluir usuários.");
+
     if (confirm(`Excluir usuário ${user.email}?`)) {
         await supabase.from('usuarios_permitidos').delete().eq('id', user.id)
         fetchUsers()
@@ -210,6 +247,8 @@ export function Settings() {
   }
 
   const handleSystemReset = async () => {
+    if (!isAdmin) return alert("Ação restrita a administradores.");
+
     if (!confirm('PERIGO: Isso apagará TODOS os dados. Tem certeza?')) return;
     
     const confirmText = prompt('Digite APAGAR para confirmar:')
@@ -249,6 +288,13 @@ export function Settings() {
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Bloqueia upload se não for admin
+    if (!isAdmin) {
+        alert("Apenas administradores podem importar dados.");
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+    }
+
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -298,6 +344,22 @@ export function Settings() {
 
   return (
     <div className="max-w-7xl mx-auto pb-12 space-y-6">
+
+      {/* Aviso se não for admin */}
+      {!isAdmin && currentUserRole && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <div className="flex">
+                  <div className="flex-shrink-0">
+                      <Lock className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                  </div>
+                  <div className="ml-3">
+                      <p className="text-sm text-yellow-700">
+                          Modo de Visualização: Você está logado como <strong>{currentUserRole}</strong>. Apenas Administradores podem realizar alterações nesta página.
+                      </p>
+                  </div>
+              </div>
+          </div>
+      )}
       
       {/* MODAL USUÁRIO */}
       {isUserModalOpen && (
@@ -343,7 +405,11 @@ export function Settings() {
                       <p className="text-xs text-gray-500">Controle de acesso ao sistema</p>
                   </div>
               </div>
-              <button onClick={() => openUserModal()} className="flex items-center gap-2 text-xs bg-gray-100 text-gray-700 px-3 py-2 rounded-lg font-bold hover:bg-gray-200">
+              <button 
+                onClick={() => openUserModal()} 
+                disabled={!isAdmin}
+                className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg font-bold transition-colors ${isAdmin ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'}`}
+              >
                   <UserPlus className="h-4 w-4" /> Novo
               </button>
           </div>
@@ -372,14 +438,14 @@ export function Settings() {
                                   }
                               </td>
                               <td className="py-2.5 px-2 text-right">
-                                  <div className="inline-flex gap-1">
-                                      <button onClick={(e) => { e.stopPropagation(); handleToggleActive(user); }} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded" title={user.ativo ? "Bloquear" : "Ativar"}>
+                                  <div className={`inline-flex gap-1 ${!isAdmin ? 'opacity-50 pointer-events-none' : ''}`}>
+                                      <button onClick={(e) => { e.stopPropagation(); handleToggleActive(user); }} disabled={!isAdmin} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded" title={user.ativo ? "Bloquear" : "Ativar"}>
                                           <Shield className="h-3.5 w-3.5" />
                                       </button>
-                                      <button onClick={(e) => { e.stopPropagation(); openUserModal(user); }} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded" title="Editar">
+                                      <button onClick={(e) => { e.stopPropagation(); openUserModal(user); }} disabled={!isAdmin} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded" title="Editar">
                                           <Pencil className="h-3.5 w-3.5" />
                                       </button>
-                                      <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user); }} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded" title="Excluir">
+                                      <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user); }} disabled={!isAdmin} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded" title="Excluir">
                                           <Trash2 className="h-3.5 w-3.5" />
                                       </button>
                                   </div>
@@ -408,8 +474,9 @@ export function Settings() {
                       type="text" 
                       maxLength={4}
                       value={magistradosConfig.pin}
+                      readOnly={!isAdmin}
                       onChange={e => setMagistradosConfig({...magistradosConfig, pin: e.target.value.replace(/\D/g,'')})}
-                      className="w-full border border-gray-300 rounded-lg p-3 font-mono text-center tracking-widest text-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      className={`w-full border border-gray-300 rounded-lg p-3 font-mono text-center tracking-widest text-lg focus:outline-none focus:ring-2 focus:ring-gray-900 ${!isAdmin ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                       placeholder="0000"
                   />
               </div>
@@ -418,8 +485,9 @@ export function Settings() {
                   <textarea 
                       rows={4}
                       value={magistradosConfig.emails}
+                      readOnly={!isAdmin}
                       onChange={e => setMagistradosConfig({...magistradosConfig, emails: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg p-3 text-xs focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      className={`w-full border border-gray-300 rounded-lg p-3 text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 ${!isAdmin ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                       placeholder="email1@salomao.adv.br, email2@salomao.adv.br"
                   />
               </div>
@@ -427,8 +495,8 @@ export function Settings() {
           <div className="mt-6 flex justify-end">
               <button 
                   onClick={handleSaveConfigMagistrados}
-                  disabled={loadingConfig}
-                  className="px-4 py-2.5 bg-gray-900 text-white font-bold rounded-lg hover:bg-gray-800 flex items-center gap-2"
+                  disabled={loadingConfig || !isAdmin}
+                  className={`px-4 py-2.5 font-bold rounded-lg flex items-center gap-2 ${isAdmin ? 'bg-gray-900 text-white hover:bg-gray-800' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
               >
                   <Save className="h-4 w-4" /> Salvar
               </button>
@@ -469,10 +537,10 @@ export function Settings() {
                             type="file" 
                             accept=".xlsx, .xls"
                             onChange={handleFileUpload}
-                            disabled={loading}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            disabled={loading || !isAdmin}
+                            className={`absolute inset-0 w-full h-full z-10 ${!isAdmin ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         />
-                        <div className={`flex flex-col items-center justify-center gap-2 p-4 h-full bg-gray-900 text-white rounded-lg ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-800 cursor-pointer'}`}>
+                        <div className={`flex flex-col items-center justify-center gap-2 p-4 h-full rounded-lg ${loading || !isAdmin ? 'bg-gray-300 text-gray-500 opacity-70' : 'bg-gray-900 text-white hover:bg-gray-800'}`}>
                             {loading ? (
                                 <>
                                     <RefreshCw className="h-6 w-6 animate-spin" />
@@ -483,7 +551,8 @@ export function Settings() {
                                     <Upload className="h-6 w-6" />
                                     <div className="text-center">
                                         <p className="font-bold text-xs">Selecionar Arquivo</p>
-                                        <p className="text-[10px] text-gray-400">Excel (.xlsx, .xls)</p>
+                                        <p className="text-[10px] opacity-70">Excel (.xlsx, .xls)</p>
+                                        {!isAdmin && <p className="text-[9px] mt-1 text-red-300">(Apenas Admin)</p>}
                                     </div>
                                 </>
                             )}
@@ -531,20 +600,27 @@ export function Settings() {
 
             <button 
               onClick={handleSystemReset}
-              className="w-full flex items-center justify-center gap-3 py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg"
+              disabled={!isAdmin}
+              className={`w-full flex items-center justify-center gap-3 py-4 font-bold rounded-lg ${isAdmin ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
             >
               <Trash2 className="h-5 w-5" />
               <div className="text-left">
                   <p>Resetar Sistema</p>
-                  <p className="text-xs font-normal text-red-100">Apagar todos os dados</p>
+                  <p className={`text-xs font-normal ${isAdmin ? 'text-red-100' : 'text-gray-400'}`}>
+                    {isAdmin ? 'Apagar todos os dados' : 'Apenas Administradores'}
+                  </p>
               </div>
             </button>
 
-            <p className="text-center text-xs text-gray-500 mt-3">
-                Você precisará digitar "APAGAR" para confirmar
-            </p>
+            {isAdmin && (
+                <p className="text-center text-xs text-gray-500 mt-3">
+                    Você precisará digitar "APAGAR" para confirmar
+                </p>
+            )}
         </div>
       </div>
+
+      
 
       {/* LINHA 3: CRÉDITOS + CHANGELOG */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
