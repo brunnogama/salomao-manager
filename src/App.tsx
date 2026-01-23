@@ -19,7 +19,7 @@ import { ModuleSelector } from './components/ModuleSelector'
 import { UnderConstruction } from './components/UnderConstruction'
 
 // Componentes do RH
-import { Presencial } from './components/collaborators/Presencial' // <--- IMPORTANTE: Importando o novo componente
+import { Presencial } from './components/collaborators/Presencial' 
 
 import { 
   Menu, 
@@ -43,7 +43,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
   
-  const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators'>('home')
+  const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators' | 'financial'>('home')
   const [activePage, setActivePage] = useState('dashboard')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({})
@@ -154,7 +154,7 @@ export default function App() {
     setActivePage(page)
   }
 
-  const handleModuleSelect = (module: 'crm' | 'family' | 'collaborators') => {
+  const handleModuleSelect = (module: 'crm' | 'family' | 'collaborators' | 'financial') => {
     setCurrentModule(module)
     setActivePage('dashboard') // Reseta para a dashboard ao trocar de módulo
   }
@@ -168,6 +168,7 @@ export default function App() {
   // Lógica de Roteamento de Módulos
   if (currentModule === 'home') return <ModuleSelector onSelect={handleModuleSelect} userName={getUserDisplayName()} />
   if (currentModule === 'family') return <UnderConstruction moduleName="Gestão da Família" onBack={() => setCurrentModule('home')} />
+  if (currentModule === 'financial') return <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />
 
   return (
     <>

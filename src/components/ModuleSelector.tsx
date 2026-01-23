@@ -1,8 +1,8 @@
-import { Briefcase, UserCog, Home, LogOut } from 'lucide-react'
+import { Gift, UserCog, Home, LogOut, Banknote } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
-  onSelect: (module: 'crm' | 'family' | 'collaborators') => void;
+  onSelect: (module: 'crm' | 'family' | 'collaborators' | 'financial') => void;
   userName: string;
 }
 
@@ -37,7 +37,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             <p className="text-gray-500">Selecione o módulo que deseja acessar hoje.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl w-full">
             
             {/* CARD CRM */}
             <div 
@@ -45,7 +45,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
                 className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:-translate-y-1 hover:border-blue-200 transition-all cursor-pointer group flex flex-col items-center text-center h-64 justify-center"
             >
                 <div className="p-4 bg-blue-50 text-blue-700 rounded-full mb-6 group-hover:scale-110 transition-transform">
-                    <Briefcase className="h-10 w-10" />
+                    <Gift className="h-10 w-10" />
                 </div>
                 <h2 className="text-xl font-bold text-[#112240] mb-2">Controle de Brindes de Clientes</h2>
                 <p className="text-sm text-gray-500">Gestão de clientes e controle de brindes de final de ano.</p>
@@ -63,7 +63,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
                 <p className="text-sm text-gray-500">Administração patrimonial e familiar.</p>
             </div>
 
-            {/* CARD RECURSOS HUMANOS (ATUALIZADO) */}
+            {/* CARD RECURSOS HUMANOS */}
             <div 
                 onClick={() => onSelect('collaborators')}
                 className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:-translate-y-1 hover:border-green-200 transition-all cursor-pointer group flex flex-col items-center text-center h-64 justify-center"
@@ -73,6 +73,18 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
                 </div>
                 <h2 className="text-xl font-bold text-[#112240] mb-2">Recursos Humanos</h2>
                 <p className="text-sm text-gray-500">Gestão estratégica de pessoas, benefícios e departamento pessoal.</p>
+            </div>
+
+            {/* CARD FINANCEIRO */}
+            <div 
+                onClick={() => onSelect('financial')}
+                className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:-translate-y-1 hover:border-emerald-200 transition-all cursor-pointer group flex flex-col items-center text-center h-64 justify-center"
+            >
+                <div className="p-4 bg-emerald-50 text-emerald-700 rounded-full mb-6 group-hover:scale-110 transition-transform">
+                    <Banknote className="h-10 w-10" />
+                </div>
+                <h2 className="text-xl font-bold text-[#112240] mb-2">Financeiro</h2>
+                <p className="text-sm text-gray-500">Controle de notas fiscais, emissão, boletos etc.</p>
             </div>
 
         </div>
