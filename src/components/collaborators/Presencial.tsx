@@ -1,3 +1,14 @@
+CONTEXTO: Estou enviando o código oficial e atualizado do arquivo: Presencial.tsx
+
+Atualize esse e me peça o restante que eu vou enviando, vamos atualizar um arquivo por vez.
+Veja se precisamos criar tabelas no Supabase
+
+SUA TAREFA: 
+1.Coloque um botao de exportar na aba Descritivo, nos mesmos moldes do da aba Relatório
+2. Coloque o icone com as iniciais na frente de cada nome, identico ao que tem na aba Relatório em Descritivo e em Regras
+3. Remova o titulo e o subtitulo Controle de Presença Gestão de acessos e regras de sócios, pois ja tem no App.tsx, mova os botoes de aba para o lugar deles
+4. IMPORTANTE, nao mexa na logica do codigo, apenas se prenda ao que estou solicitando acima
+CÓDIGO FONTE:
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Upload, FileSpreadsheet, RefreshCw, Download,
