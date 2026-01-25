@@ -497,13 +497,9 @@ export function Presencial() {
           `• ${rawRecords.length} linhas processadas`
         );
         
-        if (recordsToInsert.length > 0) {
-          const firstDate = new Date(recordsToInsert[0].data_hora);
-          setSelectedMonth(firstDate.getUTCMonth());
-          setSelectedYear(firstDate.getUTCFullYear());
-        } else {
-          fetchRecords();
-        }
+        // REFORÇO DA REGRA: Buscar sempre o mês mais recente no banco, 
+        // em vez de focar no arquivo importado
+        fetchInitialMonth();
         
       } catch (err) {
         console.error('Erro ao processar arquivo:', err);
@@ -664,7 +660,7 @@ export function Presencial() {
       <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             
-            {/* 1. SELETORES DE VISUALIZAÇÃO (MOVIDO PARA O TOPO) */}
+            {/* 1. SELETORES DE VISUALIZAÇÃO */}
             <div className="flex bg-gray-100 p-1 rounded-lg w-full md:w-auto overflow-x-auto">
                 <button onClick={() => setViewMode('report')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'report' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><BarChart3 className="h-4 w-4" /> Relatório</button>
                 <button onClick={() => setViewMode('descriptive')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'descriptive' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><FileText className="h-4 w-4" /> Descritivo</button>
@@ -683,7 +679,7 @@ export function Presencial() {
                   <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
                 </button>
 
-                {/* BOTÃO EXPORTAR ATUALIZADO PARA FUNCIONAR EM REPORT E DESCRIPTIVE */}
+                {/* BOTÃO EXPORTAR */}
                 {(viewMode === 'report' || viewMode === 'descriptive') && (reportData.length > 0 || descriptiveData.length > 0) && (
                   <button 
                     onClick={handleExportXLSX} 
@@ -755,19 +751,19 @@ export function Presencial() {
                             {uniqueColaboradores.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                     </div>
-                </div>
 
-                {/* FILTRO DE MÊS (APARECE EM REPORT E DESCRITIVO) */}
-                {(viewMode === 'report' || viewMode === 'descriptive') && (
-                    <div className="flex items-center gap-2 w-full sm:w-auto border-l pl-2 ml-2 border-gray-200">
-                        <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2">
-                            {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                        </select>
-                        <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2">
-                            {years.map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
-                    </div>
-                )}
+                    {/* FILTRO DE MÊS (MOVIDO PARA A MESMA LINHA) */}
+                    {(viewMode === 'report' || viewMode === 'descriptive') && (
+                        <div className="flex items-center gap-2 w-full sm:w-auto border-l pl-2 border-gray-200">
+                            <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2">
+                                {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                            </select>
+                            <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2">
+                                {years.map(y => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
       </div>
