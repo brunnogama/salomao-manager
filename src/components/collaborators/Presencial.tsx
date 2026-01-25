@@ -112,26 +112,63 @@ export function Presencial() {
       fim: endDate
     });
 
-    // Busca Presença do Mês Selecionado
-    const { data: presenceData, error } = await supabase
-      .from('presenca_portaria')
-      .select('*')
-      .gte('data_hora', startDate)
-      .lte('data_hora', endDate)
-      .order('data_hora', { ascending: true }) 
-      .limit(100000)
+    // Busca TODOS os registros do mês usando paginação
+    let allPresenceData: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    if (error) {
-      console.error('Erro ao buscar presença:', error);
+    while (hasMore) {
+      const { data: presenceData, error, count } = await supabase
+        .from('presenca_portaria')
+        .select('*', { count: 'exact' })
+        .gte('data_hora', startDate)
+        .lte('data_hora', endDate)
+        .order('data_hora', { ascending: true })
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        console.error('Erro ao buscar presença:', error);
+        break;
+      }
+
+      if (presenceData && presenceData.length > 0) {
+        allPresenceData = [...allPresenceData, ...presenceData];
+        console.log(`📄 Página ${Math.floor(from / pageSize) + 1}: ${presenceData.length} registros (Total acumulado: ${allPresenceData.length})`);
+        
+        if (presenceData.length < pageSize) {
+          hasMore = false;
+        } else {
+          from += pageSize;
+        }
+      } else {
+        hasMore = false;
+      }
     }
 
-    console.log('📊 Registros encontrados:', presenceData?.length || 0);
-    if (presenceData && presenceData.length > 0) {
-      console.log('Primeiros 3 registros do banco:', presenceData.slice(0, 3).map(r => ({
+    console.log('📊 Total de registros encontrados:', allPresenceData.length);
+    if (allPresenceData.length > 0) {
+      console.log('Primeiros 3 registros do banco:', allPresenceData.slice(0, 3).map(r => ({
         nome: r.nome_colaborador,
         data: r.data_hora,
         parseada: new Date(r.data_hora).toISOString()
       })));
+      
+      // Log específico para ALEX e RICARDO
+      const alexRecords = allPresenceData.filter(r => r.nome_colaborador.includes('ALEX COSTA'));
+      const ricardoRecords = allPresenceData.filter(r => r.nome_colaborador.includes('RICARDO FREITAG'));
+      
+      console.log('🔍 ALEX COSTA - Total de registros:', alexRecords.length);
+      console.log('Datas únicas ALEX:', [...new Set(alexRecords.map(r => {
+        const d = new Date(r.data_hora);
+        return `${d.getUTCDate().toString().padStart(2, '0')}/${(d.getUTCMonth() + 1).toString().padStart(2, '0')}`;
+      }))].sort());
+      
+      console.log('🔍 RICARDO FREITAG - Total de registros:', ricardoRecords.length);
+      console.log('Datas únicas RICARDO:', [...new Set(ricardoRecords.map(r => {
+        const d = new Date(r.data_hora);
+        return `${d.getUTCDate().toString().padStart(2, '0')}/${(d.getUTCMonth() + 1).toString().padStart(2, '0')}`;
+      }))].sort());
     }
 
     // Busca Regras de Sócios
@@ -143,12 +180,7 @@ export function Presencial() {
 
     if (rulesData) setSocioRules(rulesData)
 
-    if (presenceData) {
-        setRecords(presenceData)
-    } else {
-        setRecords([])
-    }
-    
+    setRecords(allPresenceData)
     setLoading(false)
   }
 
