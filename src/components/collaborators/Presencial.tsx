@@ -25,8 +25,9 @@ interface ReportItem {
   nome: string;
   socio: string; 
   diasPresentes: number;
-  diasSemana: { [key: string]: number };
-  datas: string[];
+  // Agora armazena as datas (strings formatadas) para cada dia da semana
+  // Ex: { 1: ['02/12/24', '09/12/24'], ... } (1 = Segunda)
+  diasSemanaDetalhado: { [key: number]: string[] };
 }
 
 export function Presencial() {
@@ -99,77 +100,21 @@ export function Presencial() {
 
     setLoading(true)
     
+    // Define intervalo cobrindo todo o mês em UTC (00:00:00 dia 1 até 23:59:59 ultimo dia)
     const startObj = new Date(Date.UTC(selectedYear, selectedMonth, 1, 0, 0, 0))
     const endObj = new Date(Date.UTC(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999))
     
     const startDate = startObj.toISOString()
     const endDate = endObj.toISOString()
 
-    console.log('🔍 Buscando dados:', {
-      mes: selectedMonth + 1,
-      ano: selectedYear,
-      inicio: startDate,
-      fim: endDate
-    });
-
-    // Busca TODOS os registros do mês usando paginação
-    let allPresenceData: any[] = [];
-    let from = 0;
-    const pageSize = 1000;
-    let hasMore = true;
-
-    while (hasMore) {
-      const { data: presenceData, error, count } = await supabase
-        .from('presenca_portaria')
-        .select('*', { count: 'exact' })
-        .gte('data_hora', startDate)
-        .lte('data_hora', endDate)
-        .order('data_hora', { ascending: true })
-        .range(from, from + pageSize - 1);
-
-      if (error) {
-        console.error('Erro ao buscar presença:', error);
-        break;
-      }
-
-      if (presenceData && presenceData.length > 0) {
-        allPresenceData = [...allPresenceData, ...presenceData];
-        console.log(`📄 Página ${Math.floor(from / pageSize) + 1}: ${presenceData.length} registros (Total acumulado: ${allPresenceData.length})`);
-        
-        if (presenceData.length < pageSize) {
-          hasMore = false;
-        } else {
-          from += pageSize;
-        }
-      } else {
-        hasMore = false;
-      }
-    }
-
-    console.log('📊 Total de registros encontrados:', allPresenceData.length);
-    if (allPresenceData.length > 0) {
-      console.log('Primeiros 3 registros do banco:', allPresenceData.slice(0, 3).map(r => ({
-        nome: r.nome_colaborador,
-        data: r.data_hora,
-        parseada: new Date(r.data_hora).toISOString()
-      })));
-      
-      // Log específico para ALEX e RICARDO
-      const alexRecords = allPresenceData.filter(r => r.nome_colaborador.includes('ALEX COSTA'));
-      const ricardoRecords = allPresenceData.filter(r => r.nome_colaborador.includes('RICARDO FREITAG'));
-      
-      console.log('🔍 ALEX COSTA - Total de registros:', alexRecords.length);
-      console.log('Datas únicas ALEX:', [...new Set(alexRecords.map(r => {
-        const d = new Date(r.data_hora);
-        return `${d.getUTCDate().toString().padStart(2, '0')}/${(d.getUTCMonth() + 1).toString().padStart(2, '0')}`;
-      }))].sort());
-      
-      console.log('🔍 RICARDO FREITAG - Total de registros:', ricardoRecords.length);
-      console.log('Datas únicas RICARDO:', [...new Set(ricardoRecords.map(r => {
-        const d = new Date(r.data_hora);
-        return `${d.getUTCDate().toString().padStart(2, '0')}/${(d.getUTCMonth() + 1).toString().padStart(2, '0')}`;
-      }))].sort());
-    }
+    // Busca Presença do Mês Selecionado (Limite 100k para garantir tudo)
+    const { data: presenceData } = await supabase
+      .from('presenca_portaria')
+      .select('*')
+      .gte('data_hora', startDate)
+      .lte('data_hora', endDate)
+      .order('data_hora', { ascending: true }) 
+      .limit(100000) 
 
     // Busca Regras de Sócios
     const { data: rulesData } = await supabase
@@ -180,7 +125,12 @@ export function Presencial() {
 
     if (rulesData) setSocioRules(rulesData)
 
-    setRecords(allPresenceData)
+    if (presenceData) {
+        setRecords(presenceData)
+    } else {
+        setRecords([])
+    }
+    
     setLoading(false)
   }
 
@@ -269,64 +219,65 @@ export function Presencial() {
 
   // --- 2. LÓGICA DO RELATÓRIO ---
   const reportData = useMemo(() => {
-    const grouped: { [key: string]: { originalName: string, uniqueDays: Set<string>, weekDays: { [key: number]: number }, datesSet: Set<string> } } = {}
+    // Agrupamento: Nome -> { dados }
+    const grouped: { 
+        [key: string]: { 
+            originalName: string, 
+            uniqueDays: Set<string>, 
+            weekDaysDetail: { [key: number]: string[] } 
+        } 
+    } = {}
 
     filteredData.filteredRecords.forEach(record => {
       const dateObj = new Date(record.data_hora)
       const normalizedName = normalizeKey(record.nome_colaborador)
       const displayName = toTitleCase(record.nome_colaborador)
       
-      // Usa UTC para garantir consistência
-      const year = dateObj.getUTCFullYear()
-      const month = dateObj.getUTCMonth() + 1 // 1-12
-      const day = dateObj.getUTCDate()
+      // Chave única do dia (YYYY-MM-DD) para contagem
+      const dayKey = dateObj.toISOString().split('T')[0] 
       
-      // Chave única: YYYY-MM-DD
-      const dayKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      
-      // Dia do mês para exibição (1-31)
-      const dayNumber = String(day).padStart(2, '0')
-      
+      // Dia da semana (0=Dom, 1=Seg...)
       const weekDay = dateObj.getUTCDay()
+      
+      // Data formatada para exibição no tooltip (DD/MM/AA)
+      const displayDate = `${String(dateObj.getUTCDate()).padStart(2, '0')}/${String(dateObj.getUTCMonth()+1).padStart(2, '0')}/${String(dateObj.getUTCFullYear()).slice(-2)}`;
 
       if (!grouped[normalizedName]) {
           grouped[normalizedName] = { 
               originalName: displayName, 
               uniqueDays: new Set(), 
-              weekDays: {},
-              datesSet: new Set()
+              weekDaysDetail: {} 
           }
       }
       
-      // Adiciona o dia apenas se ainda não existe
+      // Se este dia ainda não foi computado para esta pessoa
       if (!grouped[normalizedName].uniqueDays.has(dayKey)) {
         grouped[normalizedName].uniqueDays.add(dayKey)
-        grouped[normalizedName].datesSet.add(dayNumber)
-        grouped[normalizedName].weekDays[weekDay] = (grouped[normalizedName].weekDays[weekDay] || 0) + 1
+        
+        // Adiciona ao detalhamento da semana
+        if (!grouped[normalizedName].weekDaysDetail[weekDay]) {
+            grouped[normalizedName].weekDaysDetail[weekDay] = []
+        }
+        grouped[normalizedName].weekDaysDetail[weekDay].push(displayDate)
       }
     })
 
     const result: ReportItem[] = Object.keys(grouped).map(key => {
       const item = grouped[key]
-      const weekDaysMap: { [key: string]: number } = {}
-      const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-      Object.entries(item.weekDays).forEach(([i, count]) => weekDaysMap[days[Number(i)]] = count)
-      
       const socioRaw = socioMap.get(key) || '-'
       const socioFormatted = toTitleCase(socioRaw)
 
-      // Converte Set para Array e ordena numericamente
-      const sortedDates = Array.from(item.datesSet)
-        .map(d => parseInt(d))
-        .sort((a, b) => a - b)
-        .map(d => String(d).padStart(2, '0'))
+      // Ordena as datas dentro de cada dia da semana para ficar bonito no tooltip
+      Object.keys(item.weekDaysDetail).forEach(wd => {
+          item.weekDaysDetail[Number(wd)].sort();
+      });
 
       return { 
           nome: item.originalName, 
           socio: socioFormatted, 
           diasPresentes: item.uniqueDays.size, 
-          diasSemana: weekDaysMap,
-          datas: sortedDates
+          diasSemanaDetalhado: item.weekDaysDetail,
+          datas: [] // Campo mantido na interface mas não usado na UI nova
       }
     })
     
@@ -344,255 +295,123 @@ export function Presencial() {
     return null
   }
 
-  // --- UPLOAD DE PRESENÇA (ATUALIZADO) ---
+  // --- UPLOADS ---
   const handlePresenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; 
-    if (!file) return;
-    
-    setUploading(true); 
-    setProgress(0);
-    
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploading(true); setProgress(0);
     const reader = new FileReader();
-    
     reader.onload = async (evt) => {
       try {
         const wb = XLSX.read(evt.target?.result, { type: 'binary' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
         
-        // ===== PASSO 1: CONVERTER SHEET PARA ARRAY, PULANDO O CABEÇALHO =====
-        const allData = XLSX.utils.sheet_to_json(ws, { 
-          header: 1,  // Retorna array de arrays (não objetos)
-          raw: false  // Mantém strings quando possível
-        }) as any[][];
-        
-        // Encontra a primeira linha de dados (pula cabeçalhos até achar nome válido)
-        let startIndex = 0;
-        for (let i = 0; i < allData.length; i++) {
-          const row = allData[i];
-          if (row && row[0] && typeof row[0] === 'string') {
-            const firstCol = row[0].trim().toLowerCase();
-            // Pula linhas que contenham palavras de cabeçalho
-            if (firstCol !== 'nome' && firstCol !== 'colaborador' && firstCol !== '' && !firstCol.includes('departamento')) {
-              startIndex = i;
-              break;
-            }
+        const rawRecords = data.map((row: any) => {
+          let nome = findValue(row, ['nome', 'colaborador', 'funcionario']) || 'Desconhecido'
+          if (typeof nome === 'string') nome = nome.trim()
+          
+          const tempoRaw = findValue(row, ['tempo', 'data', 'horario'])
+          let dataFinal: Date | null = null
+          
+          // PARSING MANUAL COM SUPORTE A DD/MM/AAAA
+          if (typeof tempoRaw === 'string') {
+               const datePart = tempoRaw.trim()
+               
+               // Tenta DD/MM/YYYY primeiro
+               if (datePart.includes('/')) {
+                   const parts = datePart.split('/')
+                   if (parts.length === 3) {
+                       const d = parseInt(parts[0])
+                       const m = parseInt(parts[1]) - 1 
+                       const y = parseInt(parts[2])
+                       // Cria UTC 12:00 para evitar problemas de fuso
+                       if(d > 0 && d <= 31 && m >= 0 && m <= 11 && y > 2000) {
+                           dataFinal = new Date(Date.UTC(y, m, d, 12, 0, 0))
+                       }
+                   }
+               }
+               // Tenta YYYY-MM-DD
+               else if (datePart.includes('-')) {
+                   const parts = datePart.split('-')
+                   if (parts.length === 3) {
+                       const y = parseInt(parts[0])
+                       const m = parseInt(parts[1]) - 1
+                       const d = parseInt(parts[2])
+                       if(d > 0 && d <= 31 && m >= 0 && m <= 11 && y > 2000) {
+                           dataFinal = new Date(Date.UTC(y, m, d, 12, 0, 0))
+                       }
+                   }
+               }
+               
+               // Se falhou, tenta Date() nativo mas ajusta para UTC
+               if (!dataFinal) {
+                   const tryDate = new Date(tempoRaw)
+                   if (!isNaN(tryDate.getTime())) {
+                       // Pega os componentes locais e cria UTC
+                       dataFinal = new Date(Date.UTC(tryDate.getFullYear(), tryDate.getMonth(), tryDate.getDate(), 12, 0, 0))
+                   }
+               }
           }
-        }
-        
-        const dataRows = allData.slice(startIndex);
-        console.log(`Linhas puladas: ${startIndex}, Total de dados: ${dataRows.length}`);
-        
-        console.log(`Total de linhas após pular cabeçalho: ${dataRows.length}`);
-        console.log('Primeiras 3 linhas:', dataRows.slice(0, 3));
-        
-        // ===== PASSO 2: PROCESSAR CADA LINHA =====
-        const rawRecords = dataRows
-          .map((row: any[], rowIndex: number) => {
-            // Assume estrutura: [Nome, Departamento, Tempo]
-            // Coluna 0: Nome
-            // Coluna 1: Departamento (ignorar)
-            // Coluna 2: Tempo (data e hora)
-            
-            if (!row || row.length < 3) return null;
-            
-            let nome = row[0];
-            const tempoRaw = row[2];
-            
-            // Debug das primeiras 5 linhas
-            if (rowIndex < 5) {
-              console.log(`Linha ${rowIndex}:`, { nome, tempoRaw, tipo: typeof tempoRaw });
-            }
-            
-            // Valida nome
-            if (!nome || typeof nome !== 'string' || nome.trim() === '') return null;
-            nome = nome.trim();
-            
-            // ===== PASSO 3: PROCESSAR CAMPO TEMPO (data + hora) =====
-            let dataFinal: Date | null = null;
-            
-            if (typeof tempoRaw === 'string') {
-              const tempoStr = tempoRaw.trim();
-              
-              // Formato esperado: "YYYY-MM-DD HH:MM:SS" ou "DD/MM/YYYY HH:MM:SS"
-              // Vamos extrair apenas a parte da data (antes do espaço)
-              const parts = tempoStr.split(' ');
-              const datePart = parts[0];
-              
-              // Tenta formato YYYY-MM-DD
-              if (datePart.includes('-')) {
-                const dateParts = datePart.split('-');
-                if (dateParts.length === 3) {
-                  const year = parseInt(dateParts[0]);
-                  const month = parseInt(dateParts[1]);
-                  const day = parseInt(dateParts[2]);
-                  
-                  if (year && month && day && !isNaN(year) && !isNaN(month) && !isNaN(day)) {
-                    dataFinal = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-                  }
-                }
-              }
-              // Tenta formato DD/MM/YYYY
-              else if (datePart.includes('/')) {
-                const dateParts = datePart.split('/');
-                if (dateParts.length === 3) {
-                  const day = parseInt(dateParts[0]);
-                  const month = parseInt(dateParts[1]);
-                  const year = parseInt(dateParts[2]);
-                  
-                  if (year && month && day && !isNaN(year) && !isNaN(month) && !isNaN(day)) {
-                    dataFinal = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-                  }
-                }
-              }
-            }
-            // Se for número (serial do Excel)
-            else if (typeof tempoRaw === 'number') {
-              const dateObj = new Date((tempoRaw - 25569) * 86400 * 1000);
-              dataFinal = new Date(Date.UTC(
-                dateObj.getUTCFullYear(), 
-                dateObj.getUTCMonth(), 
-                dateObj.getUTCDate(), 
-                12, 0, 0
-              ));
-            }
-            
-            // Valida data
-            if (!dataFinal || isNaN(dataFinal.getTime())) {
-              console.warn(`Data inválida para ${nome}: ${tempoRaw}`);
-              return null;
-            }
-            
-            // Debug das primeiras 5 datas processadas
-            if (rowIndex < 5) {
-              console.log(`Data processada [${rowIndex}]:`, dataFinal.toISOString(), 'UTC:', {
-                dia: dataFinal.getUTCDate(),
-                mes: dataFinal.getUTCMonth() + 1,
-                ano: dataFinal.getUTCFullYear()
-              });
-            }
-            
-            return { 
-              nome_colaborador: nome, 
-              data_hora: dataFinal, 
-              arquivo_origem: file.name 
-            };
-          })
-          .filter((r: any) => r !== null);
-        
-        console.log(`Registros válidos extraídos: ${rawRecords.length}`);
-        console.log('Primeiros 5 registros:', rawRecords.slice(0, 5).map(r => ({
-          nome: r.nome_colaborador,
-          data: r.data_hora.toISOString()
-        })));
-        
-        // ===== PASSO 4: DEDUPLICAÇÃO =====
-        // 4.1 - Buscar registros existentes no banco para este período
-        const uniqueSet = new Set<string>();
-        
-        // Pega todas as datas únicas dos novos registros
-        const allDates = rawRecords.map((r: any) => r.data_hora);
-        const minDate = new Date(Math.min(...allDates.map((d: Date) => d.getTime())));
-        const maxDate = new Date(Math.max(...allDates.map((d: Date) => d.getTime())));
-        
-        // Busca registros existentes neste intervalo
-        const { data: existingRecords } = await supabase
-          .from('presenca_portaria')
-          .select('nome_colaborador, data_hora')
-          .gte('data_hora', minDate.toISOString())
-          .lte('data_hora', maxDate.toISOString());
-        
-        // 4.2 - Criar set com assinaturas existentes (nome_data)
-        const existingSignatures = new Set<string>();
-        if (existingRecords) {
-          existingRecords.forEach(r => {
-            const d = new Date(r.data_hora);
-            const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
-            const key = `${normalizeKey(r.nome_colaborador)}_${dateStr}`;
-            existingSignatures.add(key);
-          });
-        }
-        
-        console.log(`Registros já existentes no período: ${existingSignatures.size}`);
-        
-        // 4.3 - Filtrar registros novos (remove duplicatas internas E do banco)
+          else if (typeof tempoRaw === 'number') {
+               // Excel serial date (dias desde 1900)
+               const dateObj = new Date((tempoRaw - 25569) * 86400 * 1000)
+               dataFinal = new Date(Date.UTC(dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(), 12, 0, 0))
+          }
+
+          if (!dataFinal || isNaN(dataFinal.getTime())) return null;
+          
+          return { nome_colaborador: nome, data_hora: dataFinal, arquivo_origem: file.name }
+        }).filter((r:any) => r && r.nome_colaborador !== 'Desconhecido')
+
+        // DEDUPLICAÇÃO
+        const uniqueSet = new Set();
+        const existingSignatures = new Set(records.map(r => {
+             const d = new Date(r.data_hora);
+             const dateStr = d.toISOString().split('T')[0]; 
+             return `${normalizeKey(r.nome_colaborador)}_${dateStr}`
+        }));
+
         const recordsToInsert = rawRecords.filter((r: any) => {
-          const d = r.data_hora;
-          const dateStr = d.toISOString().split('T')[0];
-          const key = `${normalizeKey(r.nome_colaborador)}_${dateStr}`;
-          
-          // Já existe no banco?
-          if (existingSignatures.has(key)) return false;
-          
-          // Já foi processado neste upload?
-          if (uniqueSet.has(key)) return false;
-          
-          // Marca como processado
-          uniqueSet.add(key);
-          return true;
+            const d = r.data_hora;
+            const dateStr = d.toISOString().split('T')[0]; 
+            const key = `${normalizeKey(r.nome_colaborador)}_${dateStr}`;
+            
+            if (uniqueSet.has(key)) return false;
+            if (existingSignatures.has(key)) return false;
+
+            uniqueSet.add(key);
+            return true;
         });
-        
-        const duplicatesSkipped = rawRecords.length - recordsToInsert.length;
-        console.log(`Registros únicos para inserir: ${recordsToInsert.length}`);
-        console.log(`Duplicatas ignoradas: ${duplicatesSkipped}`);
-        
-        // ===== PASSO 5: INSERÇÃO EM LOTE =====
-        if (recordsToInsert.length === 0) {
-          alert('Nenhum registro novo para importar. Todos já existem no sistema.');
-          setUploading(false);
-          if (presenceInputRef.current) presenceInputRef.current.value = '';
-          return;
-        }
-        
-        const BATCH_SIZE = 1000;
-        const totalBatches = Math.ceil(recordsToInsert.length / BATCH_SIZE);
+
+        const BATCH_SIZE = 1000; 
+        const total = Math.ceil(recordsToInsert.length / BATCH_SIZE)
         
         for (let i = 0; i < recordsToInsert.length; i += BATCH_SIZE) {
-          const batch = recordsToInsert.slice(i, i + BATCH_SIZE).map((r: any) => ({
-            nome_colaborador: r.nome_colaborador,
-            data_hora: r.data_hora.toISOString(), // Converte para ISO string
-            arquivo_origem: r.arquivo_origem
-          }));
-          
-          const { error } = await supabase
-            .from('presenca_portaria')
-            .insert(batch);
-          
-          if (error) {
-            console.error('Erro ao inserir batch:', error);
-            throw error;
-          }
-          
-          setProgress(Math.round(((i / BATCH_SIZE) + 1) / totalBatches * 100));
+            const batch = recordsToInsert.slice(i, i + BATCH_SIZE).map(r => ({
+                nome_colaborador: r.nome_colaborador,
+                data_hora: r.data_hora.toISOString(),
+                arquivo_origem: file.name
+            }))
+            
+            await supabase.from('presenca_portaria').insert(batch)
+            setProgress(Math.round(((i / BATCH_SIZE) + 1) / total * 100))
         }
         
-        // ===== PASSO 6: FEEDBACK E ATUALIZAÇÃO =====
-        alert(
-          `✅ Importação concluída!\n\n` +
-          `• ${recordsToInsert.length} registros NOVOS importados\n` +
-          `• ${duplicatesSkipped} duplicatas ignoradas\n` +
-          `• ${rawRecords.length} linhas processadas`
-        );
+        const skipped = rawRecords.length - recordsToInsert.length;
+        alert(`${recordsToInsert.length} registros novos importados! (${skipped} duplicados/ignorados)`); 
         
-        // Atualiza para o mês do primeiro registro importado
         if (recordsToInsert.length > 0) {
-          const firstDate = new Date(recordsToInsert[0].data_hora);
-          setSelectedMonth(firstDate.getUTCMonth());
-          setSelectedYear(firstDate.getUTCFullYear());
+            const firstDate = new Date(recordsToInsert[0].data_hora)
+            setSelectedMonth(firstDate.getUTCMonth())
+            setSelectedYear(firstDate.getUTCFullYear())
         } else {
-          fetchRecords();
+            fetchRecords()
         }
-        
-      } catch (err) {
-        console.error('Erro ao processar arquivo:', err);
-        alert('❌ Erro ao importar arquivo. Verifique o formato da planilha.');
-      } finally {
-        setUploading(false);
-        if (presenceInputRef.current) presenceInputRef.current.value = '';
-      }
-    };
-    
-    reader.readAsBinaryString(file);
-  };
+
+      } catch (err) { alert("Erro ao importar.") } 
+      finally { setUploading(false); if (presenceInputRef.current) presenceInputRef.current.value = '' }
+    }
+    reader.readAsBinaryString(file)
+  }
 
   const handleSocioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -786,35 +605,48 @@ export function Presencial() {
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-gray-50 sticky top-0 z-10 text-xs uppercase text-gray-500 font-semibold tracking-wider">
                             <tr>
-                                <th className="px-2 py-2 border-b">Colaborador</th>
-                                <th className="px-2 py-2 border-b">Sócio</th> 
-                                <th className="px-2 py-2 border-b w-24">Freq.</th>
-                                <th className="px-2 py-2 border-b">Semana</th>
-                                <th className="px-2 py-2 border-b">Datas</th>
+                                <th className="px-4 py-2 border-b">Colaborador</th>
+                                <th className="px-4 py-2 border-b">Sócio</th> 
+                                <th className="px-4 py-2 border-b w-32">Frequência</th>
+                                <th className="px-4 py-2 border-b">Semana</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {reportData.map((item, idx) => (
                                 <tr key={idx} className="hover:bg-blue-50/50">
-                                    <td className="px-2 py-1 font-medium text-[#112240] text-xs whitespace-nowrap">{item.nome}</td>
-                                    <td className="px-2 py-1 text-xs text-gray-600 whitespace-nowrap">
+                                    <td className="px-4 py-2 font-medium text-[#112240] text-sm whitespace-nowrap">{item.nome}</td>
+                                    <td className="px-4 py-2 text-sm text-gray-600 whitespace-nowrap">
                                         {item.socio !== '-' ? <span className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded border border-gray-200">{item.socio}</span> : <span className="text-red-400 text-xs italic bg-red-50 px-1.5 py-0.5 rounded">Sem Sócio</span>}
                                     </td>
-                                    <td className="px-2 py-1">
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-xs font-bold text-[#112240]">{item.diasPresentes}d</span>
-                                            <div className="w-10 h-1 bg-gray-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${item.diasPresentes >= 20 ? 'bg-green-500' : item.diasPresentes >= 10 ? 'bg-blue-500' : 'bg-yellow-500'}`} style={{ width: `${Math.min((item.diasPresentes / 22) * 100, 100)}%` }} /></div>
+                                    <td className="px-4 py-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-bold text-[#112240] w-6">{item.diasPresentes}d</span>
+                                            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full rounded-full ${item.diasPresentes >= 20 ? 'bg-green-500' : item.diasPresentes >= 10 ? 'bg-blue-500' : 'bg-yellow-500'}`} 
+                                                    style={{ width: `${Math.min((item.diasPresentes / 22) * 100, 100)}%` }} 
+                                                />
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-2 py-1">
+                                    <td className="px-4 py-2">
                                         <div className="flex gap-1">
-                                            {['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].map(day => (
-                                                <div key={day} className={`text-[10px] px-1 py-0.5 rounded border ${item.diasSemana[day] ? 'bg-green-50 border-green-200 text-green-700 font-bold' : 'bg-gray-50 border-gray-100 text-gray-300'}`}>{day.charAt(0)}{item.diasSemana[day] ? `(${item.diasSemana[day]})` : ''}</div>
-                                            ))}
+                                            {[1, 2, 3, 4, 5].map(weekDay => {
+                                                const dayName = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'][weekDay - 1];
+                                                const count = item.diasSemanaDetalhado[weekDay]?.length || 0;
+                                                const dates = item.diasSemanaDetalhado[weekDay]?.join(', ') || 'Nenhum dia';
+                                                
+                                                return (
+                                                    <div 
+                                                        key={weekDay} 
+                                                        title={dates}
+                                                        className={`cursor-help text-[10px] px-2 py-0.5 rounded border ${count > 0 ? 'bg-green-50 border-green-200 text-green-700 font-bold' : 'bg-gray-50 border-gray-100 text-gray-300'}`}
+                                                    >
+                                                        {dayName} {count > 0 && `(${count})`}
+                                                    </div>
+                                                )
+                                            })}
                                         </div>
-                                    </td>
-                                    <td className="px-2 py-1 text-[10px] text-gray-500 font-mono tracking-tighter truncate max-w-xs" title={item.datas.join(', ')}>
-                                        {item.datas.join(', ')}
                                     </td>
                                 </tr>
                             ))}
