@@ -1,15 +1,3 @@
-CONTEXTO: Estou enviando o código oficial e atualizado do arquivo: Presencial.tsx
-
-Atualize esse e me peça o restante que eu vou enviando, vamos atualizar um arquivo por vez.
-Veja se precisamos criar tabelas no Supabase
-
-SUA TAREFA: 
-1. Agora só esta importando os 11 primeiros dias.
-Reveja toda a logica, tente entender o motivo do problema e resolva.
-Quero todos os dias do mes importados.
-
-
-CÓDIGO FONTE:
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Upload, FileSpreadsheet, RefreshCw, Trash2, 
@@ -99,21 +87,24 @@ export function Presencial() {
       
       if (data && data.length > 0) {
           const lastDate = new Date(data[0].data_hora)
-          setSelectedMonth(lastDate.getMonth())
-          setSelectedYear(lastDate.getFullYear())
+          // Ajuste para garantir que o mês seja o correto considerando timezone
+          // Usa UTC methods para extrair ano e mês do banco que salva em UTC
+          setSelectedMonth(lastDate.getUTCMonth())
+          setSelectedYear(lastDate.getUTCFullYear())
       }
       setIsInitialLoad(false)
   }
 
   // --- 2. BUSCAR DADOS (Filtrando por Mês/Ano no Banco) ---
   const fetchRecords = async () => {
-    if (isInitialLoad) return; // Espera definir o mês inicial
+    if (isInitialLoad) return; 
 
     setLoading(true)
     
-    // Calcula intervalo do mês selecionado
-    const startObj = new Date(selectedYear, selectedMonth, 1)
-    const endObj = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59)
+    // Calcula intervalo do mês selecionado CORRIGIDO PARA UTC
+    // Garante que pegamos desde o milissegundo 0 do dia 1 até o último do último dia
+    const startObj = new Date(Date.UTC(selectedYear, selectedMonth, 1, 0, 0, 0))
+    const endObj = new Date(Date.UTC(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999))
     
     const startDate = startObj.toISOString()
     const endDate = endObj.toISOString()
@@ -189,9 +180,12 @@ export function Presencial() {
   // --- FILTRAGEM CENTRALIZADA ---
   const filteredData = useMemo(() => {
       const filteredRecords = records.filter(record => {
+          // Importante: Usar UTC para extrair mês/ano do registro vindo do banco
           const dateObj = new Date(record.data_hora)
+          const recordMonth = dateObj.getUTCMonth()
+          const recordYear = dateObj.getUTCFullYear()
           
-          if (dateObj.getMonth() !== selectedMonth || dateObj.getFullYear() !== selectedYear) return false
+          if (recordMonth !== selectedMonth || recordYear !== selectedYear) return false
 
           const normName = normalizeKey(record.nome_colaborador)
           const socioRaw = socioMap.get(normName) || '-'
@@ -238,8 +232,9 @@ export function Presencial() {
       const normalizedName = normalizeKey(record.nome_colaborador)
       const displayName = toTitleCase(record.nome_colaborador)
       
+      // UsatoISOString e split para pegar a data correta em UTC (YYYY-MM-DD)
       const dayKey = dateObj.toISOString().split('T')[0] 
-      const weekDay = dateObj.getDay()
+      const weekDay = dateObj.getUTCDay() // getUTCDay para dia da semana correto em UTC
 
       if (!grouped[normalizedName]) {
           grouped[normalizedName] = { 
@@ -316,14 +311,17 @@ export function Presencial() {
                    const y = parseInt(parts[0])
                    const m = parseInt(parts[1]) - 1 
                    const d = parseInt(parts[2])
-                   dataFinal = new Date(y, m, d, 12, 0, 0)
+                   // Salva como UTC meio-dia para evitar shifts
+                   dataFinal = new Date(Date.UTC(y, m, d, 12, 0, 0))
                } else {
                    dataFinal = new Date(tempoRaw)
                }
           }
           else if (typeof tempoRaw === 'number') {
-               dataFinal = new Date((tempoRaw - 25569) * 86400 * 1000)
-               dataFinal.setHours(12, 0, 0, 0) 
+               // Excel date serial number to JS Date
+               const dateObj = new Date((tempoRaw - 25569) * 86400 * 1000)
+               // Extrai componentes e cria UTC
+               dataFinal = new Date(Date.UTC(dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(), 12, 0, 0))
           }
 
           if (isNaN(dataFinal.getTime())) return null;
@@ -334,7 +332,7 @@ export function Presencial() {
         // DEDUPLICAÇÃO
         const uniqueSet = new Set();
         
-        // Verifica existentes
+        // Verifica existentes (usando UTC date string)
         const existingSignatures = new Set(records.map(r => {
              const d = new Date(r.data_hora);
              const dateStr = d.toISOString().split('T')[0]; 
@@ -347,7 +345,7 @@ export function Presencial() {
             const key = `${normalizeKey(r.nome_colaborador)}_${dateStr}`;
             
             if (uniqueSet.has(key)) return false;
-            // if (existingSignatures.has(key)) return false; // Desabilitado temporariamente para garantir inserção se houver dúvidas
+            // if (existingSignatures.has(key)) return false; // Desabilitado para garantir inserção
 
             uniqueSet.add(key);
             return true;
@@ -362,12 +360,11 @@ export function Presencial() {
         const skipped = rawRecords.length - recordsToInsert.length;
         alert(`${recordsToInsert.length} registros novos importados! (${skipped} duplicados/ignorados)`); 
         
-        // Atualiza a visualização para o mês do primeiro registro importado, se houver
         if (recordsToInsert.length > 0) {
+            // Usa o primeiro registro para setar a view, garantindo que use UTC
             const firstDate = new Date(recordsToInsert[0].data_hora)
-            setSelectedMonth(firstDate.getMonth())
-            setSelectedYear(firstDate.getFullYear())
-            // O useEffect vai disparar o fetchRecords automaticamente
+            setSelectedMonth(firstDate.getUTCMonth())
+            setSelectedYear(firstDate.getUTCFullYear())
         } else {
             fetchRecords()
         }
