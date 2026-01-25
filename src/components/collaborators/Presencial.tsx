@@ -1,8 +1,10 @@
+// src/pages/Presencial.tsx
+
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Upload, FileSpreadsheet, RefreshCw, Download,
   BarChart3, Users, Briefcase, FileText,
-  Pencil, Plus, X, Search, Filter as FilterIcon
+  Pencil, Plus, X, Search, Filter as FilterIcon, Calendar
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
@@ -56,9 +58,19 @@ export function Presencial() {
   // --- NAVEGAÇÃO ---
   const [viewMode, setViewMode] = useState<'report' | 'descriptive' | 'socios'>('report')
   
-  // Inicializa com o mês atual
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  // --- NOVO FILTRO DE PERÍODO ---
+  // Inicializa com o primeiro e último dia do mês atual
+  const getFirstDayOfMonth = () => {
+    const date = new Date();
+    return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+  }
+  const getLastDayOfMonth = () => {
+    const date = new Date();
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+  }
+
+  const [startDate, setStartDate] = useState(getFirstDayOfMonth())
+  const [endDate, setEndDate] = useState(getLastDayOfMonth())
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   // --- HELPER NORMALIZAÇÃO ---
@@ -77,8 +89,8 @@ export function Presencial() {
         .join(' ');
   }
 
-  // --- 1. BUSCAR MÊS MAIS RECENTE ---
-  const fetchInitialMonth = async () => {
+  // --- 1. BUSCAR ÚLTIMA DATA PARA DEFINIR PERÍODO INICIAL ---
+  const fetchInitialPeriod = async () => {
       const { data } = await supabase
           .from('presenca_portaria')
           .select('data_hora')
@@ -87,8 +99,14 @@ export function Presencial() {
       
       if (data && data.length > 0) {
           const lastDate = new Date(data[0].data_hora)
-          setSelectedMonth(lastDate.getUTCMonth())
-          setSelectedYear(lastDate.getUTCFullYear())
+          // Define o fim como a última data encontrada
+          const lastDateStr = lastDate.toISOString().split('T')[0]
+          setEndDate(lastDateStr)
+          
+          // Define o início como o dia 1 do mesmo mês da última data
+          const firstDate = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1)
+          const firstDateStr = firstDate.toISOString().split('T')[0]
+          setStartDate(firstDateStr)
       }
       setIsInitialLoad(false)
   }
@@ -99,31 +117,27 @@ export function Presencial() {
 
     setLoading(true)
     
-    const startObj = new Date(Date.UTC(selectedYear, selectedMonth, 1, 0, 0, 0))
-    const endObj = new Date(Date.UTC(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999))
-    
-    const startDate = startObj.toISOString()
-    const endDate = endObj.toISOString()
+    // Ajusta as datas para cobrir o dia inteiro (00:00:00 até 23:59:59)
+    const startIso = `${startDate}T00:00:00.000Z` // Simplificação: assumindo UTC ou ajustando conforme input
+    const endIso = `${endDate}T23:59:59.999Z`
 
-    console.log('🔍 Buscando dados:', {
-      mes: selectedMonth + 1,
-      ano: selectedYear,
-      inicio: startDate,
-      fim: endDate
+    console.log('🔍 Buscando dados por período:', {
+      inicio: startIso,
+      fim: endIso
     });
 
-    // Busca TODOS os registros do mês usando paginação
+    // Busca TODOS os registros do período usando paginação
     let allPresenceData: any[] = [];
     let from = 0;
     const pageSize = 1000;
     let hasMore = true;
 
     while (hasMore) {
-      const { data: presenceData, error, count } = await supabase
+      const { data: presenceData, error } = await supabase
         .from('presenca_portaria')
         .select('*', { count: 'exact' })
-        .gte('data_hora', startDate)
-        .lte('data_hora', endDate)
+        .gte('data_hora', startDate + 'T00:00:00') // Garante abrangência local
+        .lte('data_hora', endDate + 'T23:59:59')
         .order('data_hora', { ascending: true })
         .range(from, from + pageSize - 1);
 
@@ -160,14 +174,14 @@ export function Presencial() {
   }
 
   useEffect(() => {
-      fetchInitialMonth()
+      fetchInitialPeriod()
   }, [])
 
   useEffect(() => {
     if (!isInitialLoad) {
         fetchRecords()
     }
-  }, [selectedMonth, selectedYear, isInitialLoad])
+  }, [startDate, endDate, isInitialLoad])
 
   useEffect(() => {
       if (showSearch && searchInputRef.current) {
@@ -201,10 +215,13 @@ export function Presencial() {
   const filteredData = useMemo(() => {
       const filteredRecords = records.filter(record => {
           const dateObj = new Date(record.data_hora)
-          const recordMonth = dateObj.getUTCMonth()
-          const recordYear = dateObj.getUTCFullYear()
           
-          if (recordMonth !== selectedMonth || recordYear !== selectedYear) return false
+          // Filtro de Período (Local ou UTC, comparando timestamps)
+          const start = new Date(startDate + 'T00:00:00');
+          const end = new Date(endDate + 'T23:59:59');
+          
+          // Ajuste básico para garantir comparação correta
+          if (dateObj < start || dateObj > end) return false
 
           const normName = normalizeKey(record.nome_colaborador)
           const socioRaw = socioMap.get(normName) || '-'
@@ -240,7 +257,7 @@ export function Presencial() {
       })
 
       return { filteredRecords, filteredRules }
-  }, [records, socioRules, selectedMonth, selectedYear, filterSocio, filterColaborador, searchText, socioMap])
+  }, [records, socioRules, startDate, endDate, filterSocio, filterColaborador, searchText, socioMap])
 
   // --- 2. LÓGICA DO RELATÓRIO ---
   const reportData = useMemo(() => {
@@ -497,9 +514,7 @@ export function Presencial() {
           `• ${rawRecords.length} linhas processadas`
         );
         
-        // REFORÇO DA REGRA: Buscar sempre o mês mais recente no banco, 
-        // em vez de focar no arquivo importado
-        fetchInitialMonth();
+        fetchInitialPeriod();
         
       } catch (err) {
         console.error('Erro ao processar arquivo:', err);
@@ -611,17 +626,13 @@ export function Presencial() {
         } else if (filterSocio) {
             fileName = `Presencial_Socio_${filterSocio.replace(/\s+/g, '_')}`
         } else {
-            const monthName = months[selectedMonth]
-            fileName = `Presencial_${monthName}_${selectedYear}`
+            fileName = `Presencial_Periodo_${startDate}_a_${endDate}`
         }
     }
 
     // Download
     XLSX.writeFile(wb, `${fileName}.xlsx`)
   }
-
-  const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-  const years = Array.from({length: 5}, (_, i) => new Date().getFullYear() - i)
 
   return (
     <div className="flex flex-col h-full bg-gray-100 space-y-6 relative">
@@ -704,7 +715,7 @@ export function Presencial() {
         {/* BARRA DE FERRAMENTAS: FILTROS */}
         <div className="flex flex-col lg:flex-row items-center justify-between border-t border-gray-100 pt-4 gap-4">
             
-            {/* ESPAÇO VAZIO PARA MANTER O ALINHAMENTO A DIREITA SE NECESSÁRIO, OU APENAS O FLEX START */}
+            {/* ESPAÇO VAZIO PARA MANTER O ALINHAMENTO A DIREITA SE NECESSÁRIO */}
             <div className="hidden lg:block"></div>
 
             {/* 2. ÁREA DE PESQUISA E FILTROS */}
@@ -752,15 +763,27 @@ export function Presencial() {
                         </select>
                     </div>
 
-                    {/* FILTRO DE MÊS (MOVIDO PARA A MESMA LINHA) */}
+                    {/* FILTRO DE PERÍODO (Substitui Mês/Ano) */}
                     {(viewMode === 'report' || viewMode === 'descriptive') && (
                         <div className="flex items-center gap-2 w-full sm:w-auto border-l pl-2 border-gray-200">
-                            <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2">
-                                {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                            </select>
-                            <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2">
-                                {years.map(y => <option key={y} value={y}>{y}</option>)}
-                            </select>
+                            <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-1">
+                                <span className="text-xs text-gray-400 pl-2">De</span>
+                                <input 
+                                    type="date" 
+                                    value={startDate} 
+                                    onChange={(e) => setStartDate(e.target.value)} 
+                                    className="bg-transparent border-none text-gray-700 text-sm p-1 focus:ring-0 outline-none"
+                                />
+                            </div>
+                            <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-1">
+                                <span className="text-xs text-gray-400 pl-2">Até</span>
+                                <input 
+                                    type="date" 
+                                    value={endDate} 
+                                    onChange={(e) => setEndDate(e.target.value)} 
+                                    className="bg-transparent border-none text-gray-700 text-sm p-1 focus:ring-0 outline-none"
+                                />
+                            </div>
                         </div>
                     )}
                 </div>
@@ -897,7 +920,6 @@ export function Presencial() {
                                 return (
                                     <tr key={record.id || idx} className="hover:bg-blue-50/40 transition-colors">
                                         <td className="px-6 py-4">
-                                            {/* ADICIONADO ÍCONE COM INICIAIS */}
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
                                                     {displayName.split(' ').map(n => n[0]).slice(0, 2).join('')}
