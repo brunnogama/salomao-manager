@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Upload, FileSpreadsheet, RefreshCw, Trash2, 
-  LayoutList, BarChart3, Calendar, Users, Briefcase,
+  LayoutDashboard, BarChart3, Calendar, Users, Briefcase,
   Pencil, Plus, X, Save, Search, Filter as FilterIcon
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -26,6 +26,14 @@ interface ReportItem {
   socio: string; 
   diasPresentes: number;
   diasSemana: { [key: string]: number };
+}
+
+interface DashboardItem {
+  nome: string;
+  socio: string;
+  diasPresentes: number;
+  mediaSemanal: string;
+  meta: number;
 }
 
 export function Presencial() {
@@ -53,9 +61,16 @@ export function Presencial() {
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // --- NAVEGAÇÃO ---
-  const [viewMode, setViewMode] = useState<'list' | 'report' | 'socios'>('report')
+  const [viewMode, setViewMode] = useState<'dashboard' | 'report' | 'socios'>('report')
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+
+  // Filtros Dashboard
+  const [dashboardStart, setDashboardStart] = useState(() => {
+      const d = new Date(); d.setDate(1); 
+      return d.toISOString().split('T')[0]
+  })
+  const [dashboardEnd, setDashboardEnd] = useState(() => new Date().toISOString().split('T')[0])
 
   // --- HELPER NORMALIZAÇÃO ---
   const normalizeKey = (text: string) => {
@@ -128,6 +143,14 @@ export function Presencial() {
       return map
   }, [socioRules])
 
+  const metaMap = useMemo(() => {
+    const map = new Map<string, number>()
+    socioRules.forEach(rule => {
+        map.set(normalizeKey(rule.nome_colaborador), rule.meta_semanal)
+    })
+    return map
+  }, [socioRules])
+
   const uniqueSocios = useMemo(() => {
       // Usa toTitleCase para formatar a lista
       const socios = new Set(socioRules.map(r => toTitleCase(r.socio_responsavel)).filter(s => s !== 'Não Definido' && s !== ''))
@@ -143,7 +166,23 @@ export function Presencial() {
       return Array.from(new Set(rules.map(r => toTitleCase(r.nome_colaborador)))).sort()
   }, [socioRules, filterSocio])
 
-  // --- FILTRAGEM CENTRALIZADA (APLICA A TUDO) ---
+  // --- REGRA DA EQUIPE SELECIONADA ---
+  const selectedTeamRule = useMemo(() => {
+      if (!filterSocio) return null;
+      // Pega as regras dos colaboradores desse sócio
+      const rules = socioRules.filter(r => toTitleCase(r.socio_responsavel) === filterSocio);
+      if (rules.length === 0) return null;
+      
+      // Encontra a meta mais comum (moda)
+      const counts: {[key: number]: number} = {};
+      rules.forEach(r => { counts[r.meta_semanal] = (counts[r.meta_semanal] || 0) + 1 });
+      
+      const mostCommonMeta = Object.keys(counts).reduce((a, b) => counts[Number(a)] > counts[Number(b)] ? a : b);
+      return Number(mostCommonMeta);
+  }, [filterSocio, socioRules]);
+
+
+  // --- FILTRAGEM CENTRALIZADA (RELATÓRIO MENSAL & REGRAS) ---
   const filteredData = useMemo(() => {
       // 1. Filtra registros de presença
       const filteredRecords = records.filter(record => {
@@ -195,19 +234,75 @@ export function Presencial() {
       return { filteredRecords, filteredRules }
   }, [records, socioRules, selectedMonth, selectedYear, filterSocio, filterColaborador, searchText, socioMap])
 
+  // --- DADOS DO DASHBOARD ---
+  const dashboardData = useMemo(() => {
+      const start = new Date(dashboardStart + 'T00:00:00');
+      const end = new Date(dashboardEnd + 'T23:59:59');
+      
+      // Cálculo de semanas no período (mínimo 1 para evitar divisão por zero)
+      const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const weeks = Math.max(1, daysDiff / 7);
 
-  // --- 2. LÓGICA DO RELATÓRIO ---
+      const grouped: { [key: string]: { originalName: string, uniqueDays: Set<string> } } = {}
+
+      records.forEach(record => {
+          const dateObj = new Date(record.data_hora);
+          if (dateObj < start || dateObj > end) return;
+
+          const normalizedName = normalizeKey(record.nome_colaborador);
+          const socioRaw = socioMap.get(normalizedName) || '-';
+          const socioFormatted = toTitleCase(socioRaw);
+          const nameFormatted = toTitleCase(record.nome_colaborador);
+
+          // Aplica filtros
+          if (filterSocio && socioFormatted !== filterSocio) return;
+          if (filterColaborador && nameFormatted !== filterColaborador) return;
+          if (searchText) {
+              const lowerSearch = searchText.toLowerCase();
+              const matchesName = record.nome_colaborador.toLowerCase().includes(lowerSearch);
+              const matchesSocio = socioRaw.toLowerCase().includes(lowerSearch);
+              if (!matchesName && !matchesSocio) return;
+          }
+
+          if (!grouped[normalizedName]) {
+              grouped[normalizedName] = { 
+                  originalName: toTitleCase(record.nome_colaborador), 
+                  uniqueDays: new Set() 
+              }
+          }
+          grouped[normalizedName].uniqueDays.add(dateObj.toLocaleDateString('pt-BR'));
+      });
+
+      const result: DashboardItem[] = Object.keys(grouped).map(key => {
+          const item = grouped[key];
+          const totalDays = item.uniqueDays.size;
+          const media = totalDays / weeks;
+          const socioRaw = socioMap.get(key) || '-';
+          const meta = metaMap.get(key) || 3;
+
+          return {
+              nome: item.originalName,
+              socio: toTitleCase(socioRaw),
+              diasPresentes: totalDays,
+              mediaSemanal: media.toFixed(1),
+              meta: meta
+          };
+      });
+
+      return result.sort((a, b) => b.diasPresentes - a.diasPresentes);
+
+  }, [records, dashboardStart, dashboardEnd, filterSocio, filterColaborador, searchText, socioMap, metaMap]);
+
+
+  // --- 2. LÓGICA DO RELATÓRIO (MENSAL) ---
   const reportData = useMemo(() => {
     const grouped: { [key: string]: { originalName: string, uniqueDays: Set<string>, weekDays: { [key: number]: number } } } = {}
 
-    // Usa filteredRecords em vez de records brutos
     filteredData.filteredRecords.forEach(record => {
       const dateObj = new Date(record.data_hora)
       const normalizedName = normalizeKey(record.nome_colaborador)
       
-      // Usa TitleCase para exibição bonita
       const displayName = toTitleCase(record.nome_colaborador)
-      
       const dayKey = dateObj.toLocaleDateString('pt-BR')
       const weekDay = dateObj.getDay()
 
@@ -403,7 +498,7 @@ export function Presencial() {
             {/* 1. SELETORES DE VISUALIZAÇÃO */}
             <div className="flex bg-gray-100 p-1 rounded-lg w-full lg:w-auto overflow-x-auto">
                 <button onClick={() => setViewMode('report')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'report' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><BarChart3 className="h-4 w-4" /> Relatório</button>
-                <button onClick={() => setViewMode('list')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'list' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><LayoutList className="h-4 w-4" /> Bruto</button>
+                <button onClick={() => setViewMode('dashboard')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'dashboard' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><LayoutDashboard className="h-4 w-4" /> Dashboard</button>
                 <button onClick={() => setViewMode('socios')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'socios' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><Briefcase className="h-4 w-4" /> Regras</button>
             </div>
 
@@ -440,6 +535,13 @@ export function Presencial() {
                             {uniqueSocios.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
+                    {/* CAMPO DINÂMICO: REGRA DA EQUIPE */}
+                    {viewMode === 'dashboard' && filterSocio && selectedTeamRule && (
+                        <div className="bg-blue-50 text-blue-800 border border-blue-200 px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap" title="Regra predominante da equipe">
+                            Meta: {selectedTeamRule}x
+                        </div>
+                    )}
+                    
                     <div className="relative w-full sm:w-40">
                         <Users className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
                         <select 
@@ -453,8 +555,8 @@ export function Presencial() {
                     </div>
                 </div>
 
-                {/* FILTRO DE DATA (APARECE EM REPORT E LIST) */}
-                {(viewMode === 'report' || viewMode === 'list') && (
+                {/* FILTRO DE MÊS (APARECE APENAS EM REPORT) */}
+                {viewMode === 'report' && (
                     <div className="flex items-center gap-2 w-full sm:w-auto border-l pl-2 ml-2 border-gray-200">
                         <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2">
                             {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
@@ -462,6 +564,25 @@ export function Presencial() {
                         <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2">
                             {years.map(y => <option key={y} value={y}>{y}</option>)}
                         </select>
+                    </div>
+                )}
+                
+                {/* FILTRO DE DATAS (APARECE APENAS EM DASHBOARD) */}
+                {viewMode === 'dashboard' && (
+                    <div className="flex items-center gap-2 w-full sm:w-auto border-l pl-2 ml-2 border-gray-200">
+                        <input 
+                            type="date" 
+                            value={dashboardStart}
+                            onChange={(e) => setDashboardStart(e.target.value)}
+                            className="bg-gray-50 border border-gray-200 text-gray-700 text-xs rounded-lg p-2 outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <span className="text-gray-400">-</span>
+                        <input 
+                            type="date" 
+                            value={dashboardEnd}
+                            onChange={(e) => setDashboardEnd(e.target.value)}
+                            className="bg-gray-50 border border-gray-200 text-gray-700 text-xs rounded-lg p-2 outline-none focus:ring-1 focus:ring-blue-500"
+                        />
                     </div>
                 )}
             </div>
@@ -550,25 +671,47 @@ export function Presencial() {
              </div>
         )}
 
-        {viewMode === 'list' && (
+        {viewMode === 'dashboard' && (
              <div className="flex-1 overflow-auto">
-                <table className="w-full text-left border-collapse">
-                <thead className="bg-gray-50 sticky top-0 z-10 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-                    <tr><th className="px-6 py-4 border-b">Nome</th><th className="px-6 py-4 border-b">Data</th><th className="px-6 py-4 border-b">Hora</th></tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                    {filteredData.filteredRecords.map((record) => {
-                        const date = new Date(record.data_hora)
-                        return (
-                            <tr key={record.id} className="hover:bg-gray-50 text-sm text-gray-700">
-                                <td className="px-6 py-3 font-medium">{toTitleCase(record.nome_colaborador)}</td>
-                                <td className="px-6 py-3">{date.toLocaleDateString('pt-BR')}</td>
-                                <td className="px-6 py-3 text-gray-500 font-mono">{date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</td>
+                {dashboardData.length === 0 ? (
+                    <div className="h-64 flex flex-col items-center justify-center text-gray-400">
+                        <BarChart3 className="h-12 w-12 mb-3 opacity-20" />
+                        <p>Sem dados para o período selecionado.</p>
+                    </div>
+                ) : (
+                    <table className="w-full text-left border-collapse">
+                    <thead className="bg-gray-50 sticky top-0 z-10 text-xs uppercase text-gray-500 font-semibold tracking-wider">
+                        <tr>
+                            <th className="px-6 py-4 border-b">Nome</th>
+                            <th className="px-6 py-4 border-b">Qde de Dias</th>
+                            <th className="px-6 py-4 border-b">Média Semanal</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {dashboardData.map((item, idx) => (
+                            <tr key={idx} className="hover:bg-gray-50 text-sm text-gray-700">
+                                <td className="px-6 py-3 font-medium text-[#112240]">{item.nome}</td>
+                                <td className="px-6 py-3">
+                                    <span className="font-bold">{item.diasPresentes}</span>
+                                </td>
+                                <td className="px-6 py-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-1 rounded text-xs font-bold ${
+                                            Number(item.mediaSemanal) >= item.meta 
+                                                ? 'bg-green-100 text-green-700' 
+                                                : Number(item.mediaSemanal) >= (item.meta - 1) 
+                                                    ? 'bg-yellow-100 text-yellow-700' 
+                                                    : 'bg-red-100 text-red-700'
+                                        }`}>
+                                            {item.mediaSemanal}x
+                                        </span>
+                                    </div>
+                                </td>
                             </tr>
-                        )
-                    })}
-                </tbody>
-                </table>
+                        ))}
+                    </tbody>
+                    </table>
+                )}
              </div>
         )}
       </div>
