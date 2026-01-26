@@ -3,7 +3,7 @@ import {
   Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, 
   Users, Pencil, Trash2, Save, RefreshCw, 
   AlertTriangle, History, Code, Shield, UserPlus, Ban, Check, Lock, Building,
-  Plus, X, Tag, Briefcase, EyeOff
+  Plus, X, Tag, Briefcase, EyeOff, LayoutGrid, ArrowRight
 } from 'lucide-react'
 import { utils, read, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -43,24 +43,24 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
 
 const CHANGELOG = [
   {
+    version: '1.7.0',
+    date: '26/01/2026',
+    type: 'major',
+    title: 'Dashboard de Módulos',
+    changes: [
+      'Nova tela inicial de seleção de módulos',
+      'Navegação centralizada',
+      'Visualização de bloqueio nos cards de menu'
+    ]
+  },
+  {
     version: '1.6.0',
     date: '26/01/2026',
     type: 'major',
     title: 'Controle de Permissões Granular',
     changes: [
       'Gestão individual de acesso por módulo',
-      'Interface de bloqueio para áreas não autorizadas',
-      'Atualização na estrutura de usuários'
-    ]
-  },
-  {
-    version: '1.5.0',
-    date: '08/01/2026',
-    type: 'minor',
-    title: 'Modal LGPD e Simplificação',
-    changes: [
-      'Adicionado modal de boas-vindas LGPD',
-      'Simplificação dos cards de clientes'
+      'Interface de bloqueio para áreas não autorizadas'
     ]
   }
 ]
@@ -69,8 +69,8 @@ export function Settings() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
   
-  // Controle de Módulos (Tabs)
-  const [activeModule, setActiveModule] = useState<'geral' | 'crm' | 'juridico' | 'rh' | 'sistema'>('geral')
+  // Controle de Módulos (Tabs) - 'menu' é o estado inicial agora
+  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'sistema'>('menu')
   
   const [users, setUsers] = useState<AppUser[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -356,16 +356,12 @@ export function Settings() {
   }
 
   // --- RENDERIZAR BLOQUEIO DE ACESSO ---
-  if (!currentUserPermissions[activeModule] && !isAdmin) {
+  if (activeModule !== 'menu' && !currentUserPermissions[activeModule] && !isAdmin) {
       return (
           <div className="max-w-7xl mx-auto space-y-6">
-              {/* HEADER DE NAVEGAÇÃO (VISÍVEL) */}
+               {/* HEADER DE NAVEGAÇÃO */}
               <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
-                  <button onClick={() => setActiveModule('geral')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'geral' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}><Shield className="h-4 w-4" /> Geral</button>
-                  <button onClick={() => setActiveModule('crm')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'crm' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-blue-50'}`}><Briefcase className="h-4 w-4" /> CRM</button>
-                  <button onClick={() => setActiveModule('juridico')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'juridico' ? 'bg-[#112240] text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}><Lock className="h-4 w-4" /> Jurídico</button>
-                  <button onClick={() => setActiveModule('rh')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'rh' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 hover:bg-green-50'}`}><Users className="h-4 w-4" /> RH</button>
-                  <button onClick={() => setActiveModule('sistema')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'sistema' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-red-50'}`}><Code className="h-4 w-4" /> Sistema</button>
+                   <button onClick={() => setActiveModule('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"><LayoutGrid className="h-4 w-4" /> Menu</button>
               </div>
 
               {/* TELA DE BLOQUEIO */}
@@ -378,19 +374,71 @@ export function Settings() {
                       Você não possui permissão para acessar o módulo <strong>{activeModule.toUpperCase()}</strong>.<br/>
                       Entre em contato com o administrador se precisar de acesso.
                   </p>
-                  <button onClick={() => setActiveModule('geral')} className="px-6 py-2 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-800 transition-colors">
-                      Voltar para Geral
+                  <button onClick={() => setActiveModule('menu')} className="px-6 py-2 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-800 transition-colors">
+                      Voltar para Menu
                   </button>
               </div>
           </div>
       )
   }
 
+  // --- RENDERIZAR MENU INICIAL ---
+  if (activeModule === 'menu') {
+      const modules = [
+          { id: 'geral', label: 'Geral', icon: Shield, desc: 'Gestão de Usuários', color: 'bg-gray-900', perm: currentUserPermissions.geral },
+          { id: 'crm', label: 'CRM', icon: Briefcase, desc: 'Clientes e Brindes', color: 'bg-blue-600', perm: currentUserPermissions.crm },
+          { id: 'juridico', label: 'Jurídico', icon: Lock, desc: 'Área de Magistrados', color: 'bg-[#112240]', perm: currentUserPermissions.juridico },
+          { id: 'rh', label: 'RH', icon: Users, desc: 'Controle de Pessoal', color: 'bg-green-600', perm: currentUserPermissions.rh },
+          { id: 'sistema', label: 'Sistema', icon: Code, desc: 'Configurações Globais', color: 'bg-red-600', perm: currentUserPermissions.sistema },
+      ]
+
+      return (
+          <div className="max-w-5xl mx-auto py-12 animate-in fade-in zoom-in-95 duration-500">
+              <div className="text-center mb-10">
+                  <h1 className="text-3xl font-bold text-gray-900">Painel de Controle</h1>
+                  <p className="text-gray-500 mt-2">Selecione um módulo para acessar</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {modules.map((m) => {
+                      const hasAccess = isAdmin || m.perm;
+                      return (
+                          <button 
+                              key={m.id}
+                              onClick={() => hasAccess && setActiveModule(m.id as any)}
+                              className={`relative group flex flex-col items-start p-6 rounded-2xl border transition-all duration-300 text-left ${hasAccess ? 'bg-white border-gray-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'bg-gray-50 border-gray-200 opacity-70 cursor-not-allowed'}`}
+                          >
+                              <div className={`p-3 rounded-xl mb-4 text-white shadow-md ${hasAccess ? m.color : 'bg-gray-400'}`}>
+                                  <m.icon className="h-6 w-6" />
+                              </div>
+                              <h3 className="text-lg font-bold text-gray-900 mb-1">{m.label}</h3>
+                              <p className="text-sm text-gray-500">{m.desc}</p>
+                              
+                              {hasAccess ? (
+                                  <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <ArrowRight className="h-5 w-5 text-gray-400" />
+                                  </div>
+                              ) : (
+                                  <div className="absolute top-6 right-6">
+                                      <Lock className="h-5 w-5 text-gray-300" />
+                                  </div>
+                              )}
+                          </button>
+                      )
+                  })}
+              </div>
+          </div>
+      )
+  }
+
+  // --- RENDERIZAR CONTEÚDO DOS MÓDULOS ---
   return (
     <div className="max-w-7xl mx-auto pb-12 space-y-6">
       
-      {/* SELETOR DE MÓDULOS */}
+      {/* SELETOR DE MÓDULOS (NAVBAR) */}
       <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+          <button onClick={() => setActiveModule('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors mr-2"><LayoutGrid className="h-4 w-4" /> Menu</button>
+          
           <button onClick={() => setActiveModule('geral')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'geral' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}><Shield className="h-4 w-4" /> Geral</button>
           <button onClick={() => setActiveModule('crm')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'crm' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-blue-50'}`}><Briefcase className="h-4 w-4" /> CRM</button>
           <button onClick={() => setActiveModule('juridico')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'juridico' ? 'bg-[#112240] text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}><Lock className="h-4 w-4" /> Jurídico</button>
@@ -593,7 +641,7 @@ export function Settings() {
               </div>
               <div className="space-y-6">
                 <div className="bg-white rounded-xl shadow-sm border-2 border-red-200 p-6"><div className="flex items-center gap-3 mb-6"><div className="p-2 bg-red-50 rounded-lg"><AlertTriangle className="h-5 w-5 text-red-600" /></div><div><h3 className="font-bold text-gray-900 text-base">Reset Geral do Sistema</h3><p className="text-xs text-gray-500">Ações irreversíveis</p></div></div><div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4"><p className="text-xs font-bold text-red-900 mb-2">⚠️ Atenção</p><ul className="text-xs text-red-700 space-y-1"><li>• Apagará TODOS os dados do sistema</li><li>• Clientes, magistrados e tarefas serão removidos</li></ul></div><button onClick={handleSystemReset} disabled={!isAdmin} className={`w-full flex items-center justify-center gap-3 py-4 font-bold rounded-lg ${isAdmin ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}><Trash2 className="h-5 w-5" /><div className="text-left"><p>Resetar Sistema Completo</p><p className="text-xs font-normal text-red-100">{isAdmin ? 'Apagar todos os dados' : 'Apenas Administradores'}</p></div></button></div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"><div className="flex items-center gap-3 mb-6"><Code className="h-5 w-5 text-gray-700" /><h3 className="font-bold text-gray-900 text-base">Créditos</h3></div><div className="p-4 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2 mb-2"><Building className="h-4 w-4 text-gray-600" /><p className="font-bold text-gray-900 text-xs">Empresa</p></div><p className="font-bold text-gray-900">Flow Metrics</p><p className="text-xs text-gray-600 mt-1">Análise de Dados e Desenvolvimento</p></div><div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2"><Shield className="h-4 w-4 text-gray-600" /><span className="text-xs font-medium text-gray-600">Versão</span></div><span className="px-3 py-1 bg-gray-900 text-white rounded-full text-xs font-bold">v1.6.0</span></div></div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"><div className="flex items-center gap-3 mb-6"><Code className="h-5 w-5 text-gray-700" /><h3 className="font-bold text-gray-900 text-base">Créditos</h3></div><div className="p-4 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2 mb-2"><Building className="h-4 w-4 text-gray-600" /><p className="font-bold text-gray-900 text-xs">Empresa</p></div><p className="font-bold text-gray-900">Flow Metrics</p><p className="text-xs text-gray-600 mt-1">Análise de Dados e Desenvolvimento</p></div><div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2"><Shield className="h-4 w-4 text-gray-600" /><span className="text-xs font-medium text-gray-600">Versão</span></div><span className="px-3 py-1 bg-gray-900 text-white rounded-full text-xs font-bold">v1.7.0</span></div></div>
               </div>
           </div>
       )}
