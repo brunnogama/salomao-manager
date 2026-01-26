@@ -89,18 +89,14 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   }
 
   const renderCard = (
-    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'settings',
+    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial',
     title: string,
     description: string,
     Icon: any,
     colorClass: string,
-    bgClass: string,
-    adminOnly: boolean = false
+    bgClass: string
   ) => {
-    // Se for adminOnly, só mostra para admins
-    if (adminOnly && !isAdmin) return null
-    
-    const allowed = adminOnly ? isAdmin : isModuleAllowed(key)
+    const allowed = isModuleAllowed(key)
 
     return (
       <div 
@@ -127,10 +123,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         {!allowed && (
           <span className="mt-2 text-xs font-bold text-red-400 uppercase tracking-widest">Bloqueado</span>
         )}
-        
-        {adminOnly && allowed && (
-          <span className="mt-2 text-xs font-bold text-yellow-600 uppercase tracking-widest">Admin</span>
-        )}
       </div>
     )
   }
@@ -145,13 +137,25 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header Simples */}
+      {/* Header com botão de Configurações */}
       <header className="bg-[#112240] h-20 flex items-center justify-between px-8 shadow-md">
         <img src="/logo-branca.png" alt="Salomão" className="h-10 w-auto object-contain" />
         <div className="flex items-center gap-4">
             <span className="text-white text-sm font-medium">
               Olá, {userName} {isAdmin && <span className="text-yellow-400 ml-1">(Admin)</span>}
             </span>
+            
+            {/* Botão de Configurações (apenas para admins) */}
+            {isAdmin && (
+              <button 
+                onClick={() => onSelect('settings')}
+                className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                title="Configurações"
+              >
+                <Settings className="h-5 w-5" />
+              </button>
+            )}
+            
             <button 
                 onClick={handleLogout}
                 className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
@@ -169,8 +173,8 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             <p className="text-gray-500">Selecione o módulo que deseja acessar hoje.</p>
         </div>
 
-        {/* Grid de Módulos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8 max-w-7xl w-full">
+        {/* Grid de Módulos (SEM Configurações) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 max-w-7xl w-full">
             
             {renderCard(
               'crm', 
@@ -215,17 +219,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
               Banknote, 
               'text-emerald-700', 
               'bg-emerald-50'
-            )}
-
-            {/* NOVO: Card de Configurações (apenas para admins) */}
-            {renderCard(
-              'settings', 
-              'Configurações', 
-              'Gestão centralizada de usuários, permissões e sistema.', 
-              Settings, 
-              'text-gray-700', 
-              'bg-gray-50',
-              true // adminOnly
             )}
 
         </div>
