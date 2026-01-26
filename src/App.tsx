@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Login from './Login'
-// Importação das Sidebars (CRM e RH)
+// Importação das Sidebars (CRM, RH e Financeiro)
 import { Sidebar as CrmSidebar } from './components/Sidebar'
 import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
+import { SidebarFinanceiro } from './components/SidebarFinanceiro'
 
 // Componentes Gerais e do CRM
 import { Clients } from './components/Clients'
@@ -42,7 +43,12 @@ import {
   RefreshCw,  
   Briefcase,  
   Banknote,   
-  Megaphone // Alterado de Scale para Megaphone
+  Megaphone,
+  // Novos ícones Financeiro
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Plane,
+  FolderSearch
 } from 'lucide-react'
 
 export default function App() {
@@ -50,7 +56,6 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
   
-  // Atualizado para incluir 'settings'
   const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators' | 'financial' | 'operational' | 'settings'>('home')
   const [activePage, setActivePage] = useState('dashboard')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -101,7 +106,7 @@ export default function App() {
     turnover: RefreshCw,
     vagas: Briefcase,
     remuneracao: Banknote,
-    acoes: Megaphone, // Ícone atualizado
+    acoes: Megaphone,
     kanban: KanbanSquare,
     historico: HistoryIcon
   }
@@ -116,7 +121,7 @@ export default function App() {
     turnover: 'Turnover',
     vagas: 'Vagas',
     remuneracao: 'Remuneração',
-    acoes: 'Ações Internas & Marketing', // Título atualizado
+    acoes: 'Ações Internas & Marketing',
     kanban: 'Kanban RH',
     historico: 'Histórico'
   }
@@ -131,15 +136,53 @@ export default function App() {
     turnover: 'Índices de rotatividade de pessoal.',
     vagas: 'Gestão de processos seletivos abertos.',
     remuneracao: 'Gestão salarial e benefícios.',
-    acoes: 'Gestão de endomarketing, eventos e campanhas.', // Descrição atualizada
+    acoes: 'Gestão de endomarketing, eventos e campanhas.',
     kanban: 'Fluxo de contratações e tarefas de RH.',
     historico: 'Registro de atividades do setor.'
   }
 
-  // Seleciona os metadados com base no módulo atual
-  const activeIcons = currentModule === 'collaborators' ? rhPageIcons : crmPageIcons
-  const activeTitles = currentModule === 'collaborators' ? rhPageTitles : crmPageTitles
-  const activeDescriptions = currentModule === 'collaborators' ? rhDescriptions : crmDescriptions
+  // --- CONFIGURAÇÕES DO FINANCEIRO ---
+  const financialPageIcons: Record<string, any> = {
+    dashboard: LayoutDashboard,
+    'contas-pagar': ArrowUpCircle,
+    'contas-receber': ArrowDownCircle,
+    'gestao-aeronave': Plane,
+    ged: FolderSearch,
+    historico: HistoryIcon
+  }
+
+  const financialPageTitles: Record<string, string> = {
+    dashboard: 'Dashboard Financeiro',
+    'contas-pagar': 'Contas a Pagar',
+    'contas-receber': 'Contas a Receber',
+    'gestao-aeronave': 'Gestão da Aeronave',
+    ged: 'Gestão Eletrônica de Documentos',
+    historico: 'Histórico'
+  }
+
+  const financialDescriptions: Record<string, string> = {
+    dashboard: 'Visão geral do fluxo de caixa e indicadores.',
+    'contas-pagar': 'Gestão de despesas e obrigações.',
+    'contas-receber': 'Controle de receitas e faturamentos.',
+    'gestao-aeronave': 'Controle de custos e manutenção da aeronave.',
+    ged: 'Arquivo digital e organização de documentos.',
+    historico: 'Log de transações e atividades financeiras.'
+  }
+
+  // Seleção dinâmica de metadados
+  let activeIcons = crmPageIcons
+  let activeTitles = crmPageTitles
+  let activeDescriptions = crmDescriptions
+
+  if (currentModule === 'collaborators') {
+    activeIcons = rhPageIcons
+    activeTitles = rhPageTitles
+    activeDescriptions = rhDescriptions
+  } else if (currentModule === 'financial') {
+    activeIcons = financialPageIcons
+    activeTitles = financialPageTitles
+    activeDescriptions = financialDescriptions
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -160,22 +203,14 @@ export default function App() {
   const handleLogout = async () => {
     setLoggingOut(true)
     try {
-      // ✅ SALVAR o flag do modal de boas-vindas antes de limpar
       const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
-      
-      // Limpeza agressiva para garantir que nenhum dado do usuário anterior persista
       localStorage.clear()
       sessionStorage.clear()
-      
-      // ✅ RESTAURAR o flag do modal depois de limpar
       if (hasSeenWelcome) {
         localStorage.setItem('hasSeenWelcomeModal', hasSeenWelcome)
       }
-      
       await supabase.auth.signOut()
       setSession(null)
-      
-      // Recarrega a página para limpar qualquer estado em memória
       window.location.reload()
     } catch (error) {
       console.error("Erro ao deslogar:", error)
@@ -193,7 +228,7 @@ export default function App() {
 
   const handleModuleSelect = (module: 'crm' | 'family' | 'collaborators' | 'financial' | 'operational' | 'settings') => {
     setCurrentModule(module)
-    setActivePage('dashboard') // Reseta para a dashboard ao trocar de módulo
+    setActivePage('dashboard')
   }
 
   const CurrentIcon = activeIcons[activePage]
@@ -202,10 +237,8 @@ export default function App() {
   if (loggingOut) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="text-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div><p className="text-white text-sm">Saindo...</p></div></div>
   if (!session) return <Login />
 
-  // Lógica de Roteamento de Módulos
   if (currentModule === 'home') return <ModuleSelector onSelect={handleModuleSelect} userName={getUserDisplayName()} />
   
-  // Roteamento para Configurações Centralizadas
   if (currentModule === 'settings') {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -237,9 +270,8 @@ export default function App() {
     )
   }
   
-  // Roteamento para módulos em construção
+  // Módulos ainda não implementados
   if (currentModule === 'family') return <UnderConstruction moduleName="Gestão da Família" onBack={() => setCurrentModule('home')} />
-  if (currentModule === 'financial') return <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />
   if (currentModule === 'operational') return <UnderConstruction moduleName="Operacional" onBack={() => setCurrentModule('home')} />
 
   return (
@@ -251,6 +283,8 @@ export default function App() {
         {/* Renderiza a Sidebar correta baseada no módulo */}
         {currentModule === 'collaborators' ? (
            <RhSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        ) : currentModule === 'financial' ? (
+           <SidebarFinanceiro activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         ) : (
            <CrmSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         )}
@@ -305,7 +339,6 @@ export default function App() {
                       {activePage === 'dashboard' && <UnderConstruction moduleName="Dashboard RH" onBack={() => {}} showBackButton={false} />}
                       {activePage === 'presencial' && <Presencial />}
                       
-                      {/* Novas Rotas em Construção */}
                       {activePage === 'colaboradores' && <UnderConstruction moduleName="Colaboradores" onBack={() => setActivePage('dashboard')} />}
                       {activePage === 'evolucao' && <UnderConstruction moduleName="Evolução de Pessoal" onBack={() => setActivePage('dashboard')} />}
                       {activePage === 'tempo-casa' && <UnderConstruction moduleName="Tempo de Casa" onBack={() => setActivePage('dashboard')} />}
@@ -316,6 +349,18 @@ export default function App() {
                       {activePage === 'acoes' && <UnderConstruction moduleName="Ações Internas & Marketing" onBack={() => setActivePage('dashboard')} />}
                       
                       {activePage === 'kanban' && <Kanban />}
+                      {activePage === 'historico' && <History />}
+                    </>
+                  )}
+
+                  {/* ROTAS DO FINANCEIRO */}
+                  {currentModule === 'financial' && (
+                    <>
+                      {activePage === 'dashboard' && <UnderConstruction moduleName="Dashboard Financeiro" onBack={() => {}} showBackButton={false} />}
+                      {activePage === 'contas-pagar' && <UnderConstruction moduleName="Contas a Pagar" onBack={() => setActivePage('dashboard')} />}
+                      {activePage === 'contas-receber' && <UnderConstruction moduleName="Contas a Receber" onBack={() => setActivePage('dashboard')} />}
+                      {activePage === 'gestao-aeronave' && <UnderConstruction moduleName="Gestão da Aeronave" onBack={() => setActivePage('dashboard')} />}
+                      {activePage === 'ged' && <UnderConstruction moduleName="GED" onBack={() => setActivePage('dashboard')} />}
                       {activePage === 'historico' && <History />}
                     </>
                   )}
