@@ -85,7 +85,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
                     <Package className="h-10 w-10" />
                 </div>
                 <h2 className="text-xl font-bold text-[#112240] mb-2">Operacional</h2>
-                <p className="text-sm text-gray-500">Gestão de insumos, papelaria e gestão operacional do escritório.</p>
+                <p className="text-sm text-gray-500">Gestão de insumos, papelaria e operacional do escritório.</p>
             </div>
 
             {/* CARD FINANCEIRO */}
