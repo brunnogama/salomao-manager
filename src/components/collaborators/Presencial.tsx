@@ -4,10 +4,11 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Upload, FileSpreadsheet, RefreshCw, Download,
   BarChart3, Users, Briefcase, FileText,
-  Pencil, Plus, X, Search, Filter as FilterIcon, Calendar
+  Pencil, Plus, X, Search, Filter as FilterIcon, Mail, Eraser
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
+import html2canvas from 'html2canvas'
 
 // --- TIPOS ---
 interface PresenceRecord {
@@ -35,11 +36,11 @@ export function Presencial() {
   // --- ESTADOS GERAIS ---
   const [records, setRecords] = useState<PresenceRecord[]>([])
   const [socioRules, setSocioRules] = useState<SocioRule[]>([]) 
-  
+   
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
-  
+   
   // --- ESTADOS DE FILTRO ---
   const [filterSocio, setFilterSocio] = useState('')
   const [filterColaborador, setFilterColaborador] = useState('')
@@ -54,12 +55,12 @@ export function Presencial() {
   const presenceInputRef = useRef<HTMLInputElement>(null)
   const socioInputRef = useRef<HTMLInputElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const reportRef = useRef<HTMLDivElement>(null) // Ref para o print
 
   // --- NAVEGAÇÃO ---
   const [viewMode, setViewMode] = useState<'report' | 'descriptive' | 'socios'>('report')
-  
+   
   // --- NOVO FILTRO DE PERÍODO ---
-  // Inicializa com o primeiro e último dia do mês atual
   const getFirstDayOfMonth = () => {
     const date = new Date();
     return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
@@ -96,14 +97,12 @@ export function Presencial() {
           .select('data_hora')
           .order('data_hora', { ascending: false })
           .limit(1)
-      
+       
       if (data && data.length > 0) {
           const lastDate = new Date(data[0].data_hora)
-          // Define o fim como a última data encontrada
           const lastDateStr = lastDate.toISOString().split('T')[0]
           setEndDate(lastDateStr)
           
-          // Define o início como o dia 1 do mesmo mês da última data
           const firstDate = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1)
           const firstDateStr = firstDate.toISOString().split('T')[0]
           setStartDate(firstDateStr)
@@ -117,16 +116,6 @@ export function Presencial() {
 
     setLoading(true)
     
-    // Ajusta as datas para cobrir o dia inteiro (00:00:00 até 23:59:59)
-    const startIso = `${startDate}T00:00:00.000Z` // Simplificação: assumindo UTC ou ajustando conforme input
-    const endIso = `${endDate}T23:59:59.999Z`
-
-    console.log('🔍 Buscando dados por período:', {
-      inicio: startIso,
-      fim: endIso
-    });
-
-    // Busca TODOS os registros do período usando paginação
     let allPresenceData: any[] = [];
     let from = 0;
     const pageSize = 1000;
@@ -136,7 +125,7 @@ export function Presencial() {
       const { data: presenceData, error } = await supabase
         .from('presenca_portaria')
         .select('*', { count: 'exact' })
-        .gte('data_hora', startDate + 'T00:00:00') // Garante abrangência local
+        .gte('data_hora', startDate + 'T00:00:00')
         .lte('data_hora', endDate + 'T23:59:59')
         .order('data_hora', { ascending: true })
         .range(from, from + pageSize - 1);
@@ -148,7 +137,6 @@ export function Presencial() {
 
       if (presenceData && presenceData.length > 0) {
         allPresenceData = [...allPresenceData, ...presenceData];
-        console.log(`📄 Página ${Math.floor(from / pageSize) + 1}: ${presenceData.length} registros (Total acumulado: ${allPresenceData.length})`);
         
         if (presenceData.length < pageSize) {
           hasMore = false;
@@ -160,7 +148,6 @@ export function Presencial() {
       }
     }
 
-    // Busca Regras de Sócios
     const { data: rulesData } = await supabase
       .from('socios_regras')
       .select('*')
@@ -216,11 +203,9 @@ export function Presencial() {
       const filteredRecords = records.filter(record => {
           const dateObj = new Date(record.data_hora)
           
-          // Filtro de Período (Local ou UTC, comparando timestamps)
           const start = new Date(startDate + 'T00:00:00');
           const end = new Date(endDate + 'T23:59:59');
           
-          // Ajuste básico para garantir comparação correta
           if (dateObj < start || dateObj > end) return false
 
           const normName = normalizeKey(record.nome_colaborador)
@@ -319,18 +304,13 @@ export function Presencial() {
 
   }, [filteredData.filteredRecords, socioMap])
 
-  // --- LÓGICA DO DESCRITIVO (NOVA) ---
+  // --- LÓGICA DO DESCRITIVO ---
   const descriptiveData = useMemo(() => {
-    // Cria uma lista plana de registros para exibição
     return [...filteredData.filteredRecords].sort((a, b) => {
-        // Ordena por Nome e depois por Data
         const nameA = toTitleCase(a.nome_colaborador);
         const nameB = toTitleCase(b.nome_colaborador);
-        
         if (nameA < nameB) return -1;
         if (nameA > nameB) return 1;
-        
-        // Se nomes iguais, ordena por data
         return new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime();
     });
   }, [filteredData.filteredRecords]);
@@ -573,6 +553,61 @@ export function Presencial() {
   }
   const handleDeleteRule = async (id: string) => { if (!confirm("Excluir?")) return; setLoading(true); await supabase.from('socios_regras').delete().eq('id', id); fetchRecords() }
 
+  // --- AÇÃO 1: LIMPAR FILTROS ---
+  const clearFilters = () => {
+    setFilterSocio('');
+    setFilterColaborador('');
+    setSearchText('');
+  }
+  
+  const hasActiveFilters = filterSocio !== '' || filterColaborador !== '' || searchText !== '';
+
+  // --- AÇÃO 2: ENVIAR EMAIL (SCREENSHOT) ---
+  const handleSendEmail = async () => {
+    if (!reportRef.current || viewMode !== 'report') {
+        return alert("Vá para a aba 'Relatório' para usar esta função.");
+    }
+    
+    setLoading(true);
+    try {
+        // Gera o canvas apenas da tabela
+        const canvas = await html2canvas(reportRef.current, {
+            scale: 2, // Melhor qualidade
+            backgroundColor: '#ffffff'
+        });
+
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                setLoading(false);
+                return alert("Erro ao gerar imagem.");
+            }
+
+            // Copia para a área de transferência
+            try {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
+                
+                // Abre o cliente de e-mail padrão
+                const subject = `Relatório de Presença - ${new Date().toLocaleDateString()}`;
+                const body = `Segue em anexo (colado) o relatório filtrado.\n\n(Pressione Ctrl+V para colar a imagem aqui)`;
+                
+                window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                
+                alert("📸 Imagem copiada para a área de transferência!\n\nSeu e-mail deve abrir agora. Basta colar (Ctrl+V) no corpo da mensagem.");
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao copiar imagem. Verifique as permissões do navegador.");
+            }
+        });
+    } catch (error) {
+        console.error("Erro no print:", error);
+        alert("Erro ao gerar a imagem do relatório.");
+    } finally {
+        setLoading(false);
+    }
+  }
+
   // --- EXPORTAR XLSX ---
   const handleExportXLSX = () => {
     let dataToExport: any[] = [];
@@ -609,17 +644,15 @@ export function Presencial() {
         sheetName = 'Descritivo';
         fileName = 'Presencial_Descritivo';
     } else {
-        return; // Não exporta na aba Sócios por enquanto ou sem viewMode válido
+        return;
     }
 
     if (dataToExport.length === 0) return alert('Sem dados para exportar.');
 
-    // Cria worksheet e workbook
     const ws = XLSX.utils.json_to_sheet(dataToExport)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, sheetName)
 
-    // Ajusta nome do arquivo
     if (viewMode === 'report') {
         if (filterColaborador) {
             fileName = `Presencial_${filterColaborador.replace(/\s+/g, '_')}`
@@ -630,7 +663,6 @@ export function Presencial() {
         }
     }
 
-    // Download
     XLSX.writeFile(wb, `${fileName}.xlsx`)
   }
 
@@ -690,21 +722,36 @@ export function Presencial() {
                   <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
                 </button>
 
-                {/* BOTÃO EXPORTAR */}
+                {/* BOTÕES DE EXPORTAÇÃO E EMAIL */}
                 {(viewMode === 'report' || viewMode === 'descriptive') && (reportData.length > 0 || descriptiveData.length > 0) && (
-                  <button 
-                    onClick={handleExportXLSX} 
-                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
-                  >
-                    <Download className="h-4 w-4" /> 
-                    Exportar
-                  </button>
+                  <div className="flex gap-2">
+                    {/* BOTÃO EMAIL */}
+                    {viewMode === 'report' && (
+                        <button 
+                            onClick={handleSendEmail} 
+                            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+                            title="Copiar imagem e abrir email"
+                        >
+                            <Mail className="h-4 w-4" /> 
+                            Email
+                        </button>
+                    )}
+                    
+                    {/* BOTÃO EXCEL */}
+                    <button 
+                        onClick={handleExportXLSX} 
+                        className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+                    >
+                        <Download className="h-4 w-4" /> 
+                        Exportar
+                    </button>
+                  </div>
                 )}
                 
                 {viewMode === 'socios' ? (
                     <div className="flex gap-2">
-                         <button onClick={() => handleOpenModal()} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"><Plus className="h-4 w-4" /> Novo</button>
-                         <button onClick={() => socioInputRef.current?.click()} disabled={uploading} className="bg-[#112240] hover:bg-[#1e3a8a] text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors">{uploading ? '...' : <><Users className="h-4 w-4" /> Importar</>}</button>
+                          <button onClick={() => handleOpenModal()} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"><Plus className="h-4 w-4" /> Novo</button>
+                          <button onClick={() => socioInputRef.current?.click()} disabled={uploading} className="bg-[#112240] hover:bg-[#1e3a8a] text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors">{uploading ? '...' : <><Users className="h-4 w-4" /> Importar</>}</button>
                     </div>
                 ) : (
                     <button onClick={() => presenceInputRef.current?.click()} disabled={uploading} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors">{uploading ? '...' : <><FileSpreadsheet className="h-4 w-4" /> Importar</>}</button>
@@ -715,8 +762,18 @@ export function Presencial() {
         {/* BARRA DE FERRAMENTAS: FILTROS */}
         <div className="flex flex-col lg:flex-row items-center justify-between border-t border-gray-100 pt-4 gap-4">
             
-            {/* ESPAÇO VAZIO PARA MANTER O ALINHAMENTO A DIREITA SE NECESSÁRIO */}
-            <div className="hidden lg:block"></div>
+            <div className="hidden lg:block">
+                {/* BOTÃO LIMPAR FILTROS */}
+                {hasActiveFilters && (
+                    <button 
+                        onClick={clearFilters}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+                    >
+                        <Eraser className="h-3.5 w-3.5" />
+                        Limpar Filtros
+                    </button>
+                )}
+            </div>
 
             {/* 2. ÁREA DE PESQUISA E FILTROS */}
             <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
@@ -763,7 +820,7 @@ export function Presencial() {
                         </select>
                     </div>
 
-                    {/* FILTRO DE PERÍODO (Substitui Mês/Ano) */}
+                    {/* FILTRO DE PERÍODO */}
                     {(viewMode === 'report' || viewMode === 'descriptive') && (
                         <div className="flex items-center gap-2 w-full sm:w-auto border-l pl-2 border-gray-200">
                             <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-1">
@@ -788,6 +845,19 @@ export function Presencial() {
                     )}
                 </div>
             </div>
+            
+            {/* BOTÃO LIMPAR MOBILE (visível apenas em telas pequenas) */}
+            <div className="lg:hidden w-full flex justify-end">
+                 {hasActiveFilters && (
+                    <button 
+                        onClick={clearFilters}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+                    >
+                        <Eraser className="h-3.5 w-3.5" />
+                        Limpar Filtros
+                    </button>
+                )}
+            </div>
         </div>
       </div>
 
@@ -795,7 +865,7 @@ export function Presencial() {
       <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
         
         {viewMode === 'report' && (
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto bg-white" >
                 {reportData.length === 0 ? (
                     <div className="h-64 flex flex-col items-center justify-center text-gray-400">
                         <BarChart3 className="h-16 w-16 mb-4 opacity-20" />
@@ -803,89 +873,96 @@ export function Presencial() {
                         <p className="text-sm">Importe uma planilha ou ajuste os filtros</p>
                     </div>
                 ) : (
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10">
-                            <tr className="border-b-2 border-gray-200">
-                                <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Colaborador</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Sócio</th> 
-                                <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider text-center">Frequência</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Distribuição Semanal</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {reportData.map((item, idx) => (
-                                <tr key={idx} className="hover:bg-blue-50/40 transition-colors group">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-                                                {item.nome.split(' ').map(n => n[0]).slice(0, 2).join('')}
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-[#112240] text-base">{item.nome}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {item.socio !== '-' ? (
-                                            <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium">
-                                                <Briefcase className="h-3.5 w-3.5" />
-                                                {item.socio}
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1.5 text-red-500 text-sm italic bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
-                                                <X className="h-3.5 w-3.5" />
-                                                Sem Sócio
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-2xl font-bold text-[#112240]">{item.diasPresentes}</span>
-                                                <span className="text-sm text-gray-500 font-medium">dias</span>
-                                            </div>
-                                            <div className="w-full max-w-[120px] h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                <div 
-                                                    className={`h-full rounded-full transition-all ${
-                                                        item.diasPresentes >= 20 ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 
-                                                        item.diasPresentes >= 15 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 
-                                                        item.diasPresentes >= 10 ? 'bg-gradient-to-r from-yellow-500 to-amber-500' :
-                                                        'bg-gradient-to-r from-red-500 to-rose-500'
-                                                    }`} 
-                                                    style={{ width: `${Math.min((item.diasPresentes / 22) * 100, 100)}%` }} 
-                                                />
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex gap-2">
-                                            {['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].map(day => (
-                                                <div 
-                                                    key={day} 
-                                                    className={`flex flex-col items-center justify-center min-w-[44px] h-14 rounded-lg border-2 transition-all ${
-                                                        item.diasSemana[day] 
-                                                            ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-sm' 
-                                                            : 'bg-gray-50 border-gray-200'
-                                                    }`}
-                                                >
-                                                    <span className={`text-[10px] font-bold uppercase tracking-wide ${
-                                                        item.diasSemana[day] ? 'text-green-700' : 'text-gray-400'
-                                                    }`}>
-                                                        {day}
-                                                    </span>
-                                                    <span className={`text-lg font-bold ${
-                                                        item.diasSemana[day] ? 'text-green-600' : 'text-gray-300'
-                                                    }`}>
-                                                        {item.diasSemana[day] || '–'}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </td>
+                    /* DIV DE ENVOLVIMENTO PARA O PRINT (REF) */
+                    <div ref={reportRef} className="bg-white p-4">
+                        <div className="mb-4 text-center block md:hidden">
+                            <h3 className="text-lg font-bold text-[#112240]">Relatório de Presença</h3>
+                            <p className="text-sm text-gray-500">Período: {new Date(startDate).toLocaleDateString()} a {new Date(endDate).toLocaleDateString()}</p>
+                        </div>
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10">
+                                <tr className="border-b-2 border-gray-200">
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Colaborador</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Sócio</th> 
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider text-center">Frequência</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-wider">Distribuição Semanal</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {reportData.map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-blue-50/40 transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                                    {item.nome.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-[#112240] text-base">{item.nome}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {item.socio !== '-' ? (
+                                                <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium">
+                                                    <Briefcase className="h-3.5 w-3.5" />
+                                                    {item.socio}
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 text-red-500 text-sm italic bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
+                                                    <X className="h-3.5 w-3.5" />
+                                                    Sem Sócio
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-2xl font-bold text-[#112240]">{item.diasPresentes}</span>
+                                                    <span className="text-sm text-gray-500 font-medium">dias</span>
+                                                </div>
+                                                <div className="w-full max-w-[120px] h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div 
+                                                        className={`h-full rounded-full transition-all ${
+                                                            item.diasPresentes >= 20 ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 
+                                                            item.diasPresentes >= 15 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 
+                                                            item.diasPresentes >= 10 ? 'bg-gradient-to-r from-yellow-500 to-amber-500' :
+                                                            'bg-gradient-to-r from-red-500 to-rose-500'
+                                                        }`} 
+                                                        style={{ width: `${Math.min((item.diasPresentes / 22) * 100, 100)}%` }} 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex gap-2">
+                                                {['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].map(day => (
+                                                    <div 
+                                                        key={day} 
+                                                        className={`flex flex-col items-center justify-center min-w-[44px] h-14 rounded-lg border-2 transition-all ${
+                                                            item.diasSemana[day] 
+                                                                ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-sm' 
+                                                                : 'bg-gray-50 border-gray-200'
+                                                        }`}
+                                                    >
+                                                        <span className={`text-[10px] font-bold uppercase tracking-wide ${
+                                                            item.diasSemana[day] ? 'text-green-700' : 'text-gray-400'
+                                                        }`}>
+                                                            {day}
+                                                        </span>
+                                                        <span className={`text-lg font-bold ${
+                                                            item.diasSemana[day] ? 'text-green-600' : 'text-gray-300'
+                                                        }`}>
+                                                            {item.diasSemana[day] || '–'}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
         )}
@@ -977,7 +1054,6 @@ export function Presencial() {
                              return (
                                 <tr key={rule.id} className="hover:bg-gray-50 transition-colors group">
                                     <td className="px-6 py-4">
-                                         {/* ADICIONADO ÍCONE COM INICIAIS */}
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
                                                 {displayName.split(' ').map(n => n[0]).slice(0, 2).join('')}
