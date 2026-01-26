@@ -1,3 +1,15 @@
+CONTEXTO: Estou enviando o código oficial e atualizado do arquivo: Settings.tsx
+Atualize esse e me peça o restante que eu vou enviando, vamos atualizar um arquivo por vez.
+Veja se precisamos criar tabelas no Supabase
+
+SUA TAREFA: 
+1.	Todos que logarem irão direto para a tela de modulos, para escolher o seu modulo.
+2. Caso alguém escolha um modulo que não tem permissão para acessar, apareça uma mensgam elegante informando que não tem permissaoe que contacte o administrador
+3.Eu, márcio.gama@salomaoadv.com.br sempre terei acesso a todos os módulos e sempre que logar irei para a tela de escolha de módulos, como todos os usuários
+4. Quando qualquer usuário entrar no modulo, vai automaticamente para o primeiro item da sidebar.
+
+
+CÓDIGO FONTE:
 import { useState, useRef, useEffect } from 'react'
 import { 
   Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, 
@@ -8,7 +20,6 @@ import {
 import { utils, read, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
-
 // --- INTERFACES ---
 interface UserPermissions {
   geral: boolean;
@@ -17,7 +28,6 @@ interface UserPermissions {
   rh: boolean;
   sistema: boolean;
 }
-
 interface AppUser {
   id: number;
   nome: string;
@@ -26,13 +36,11 @@ interface AppUser {
   ativo: boolean;
   modulos_acesso: UserPermissions;
 }
-
 interface GenericItem {
   id: number;
   nome: string;
   ativo?: boolean;
 }
-
 const DEFAULT_PERMISSIONS: UserPermissions = {
   geral: true,
   crm: true,
@@ -40,7 +48,6 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   rh: true,
   sistema: true
 }
-
 const CHANGELOG = [
   {
     version: '1.7.0',
@@ -64,7 +71,6 @@ const CHANGELOG = [
     ]
   }
 ]
-
 export function Settings() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
@@ -84,7 +90,6 @@ export function Settings() {
     cargo: 'Colaborador',
     modulos_acesso: DEFAULT_PERMISSIONS
   })
-
   const [magistradosConfig, setMagistradosConfig] = useState({ pin: '', emails: '' })
   const [loadingConfig, setLoadingConfig] = useState(false)
   const [showAllVersions, setShowAllVersions] = useState(false)
@@ -95,7 +100,6 @@ export function Settings() {
   
   const isAdmin = ['Administrador', 'Admin'].includes(currentUserRole)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
   // --- ESTADOS PARA TIPOS DE BRINDE E SÓCIOS ---
   const [brindes, setBrindes] = useState<GenericItem[]>([])
   const [newBrinde, setNewBrinde] = useState('')
@@ -103,7 +107,6 @@ export function Settings() {
   const [socios, setSocios] = useState<GenericItem[]>([])
   const [newSocio, setNewSocio] = useState('')
   const [isAddingSocio, setIsAddingSocio] = useState(false)
-
   useEffect(() => {
     fetchCurrentUserMetadata();
     fetchUsers();
@@ -111,7 +114,6 @@ export function Settings() {
     fetchBrindes();
     fetchSocios();
   }, [])
-
   // --- FUNÇÕES DE BRINDE ---
   const fetchBrindes = async () => {
     const { data } = await supabase.from('tipos_brinde').select('*').order('nome')
@@ -133,7 +135,6 @@ export function Settings() {
     const { error } = await supabase.from('tipos_brinde').delete().eq('id', id)
     if (!error) { await logAction('DELETE', 'TIPOS_BRINDE', `Excluiu ${nome}`); fetchBrindes() }
   }
-
   // --- FUNÇÕES DE SÓCIOS ---
   const fetchSocios = async () => {
     const { data } = await supabase.from('socios').select('*').order('nome')
@@ -155,7 +156,6 @@ export function Settings() {
     const { error } = await supabase.from('socios').delete().eq('id', id)
     if (!error) { await logAction('DELETE', 'SOCIOS', `Excluiu ${nome}`); fetchSocios() }
   }
-
   // --- FUNÇÕES GERAIS ---
   const fetchCurrentUserMetadata = async () => {
     try {
@@ -178,7 +178,6 @@ export function Settings() {
       console.error("Erro ao verificar permissão:", error)
     }
   }
-
   const fetchMagistradosConfig = async () => {
     const { data } = await supabase.from('config_magistrados').select('*').single()
     if (data) {
@@ -188,7 +187,6 @@ export function Settings() {
         })
     }
   }
-
   const fetchUsers = async () => {
     setLoadingUsers(true)
     const { data } = await supabase.from('usuarios_permitidos').select('*').order('nome')
@@ -204,7 +202,6 @@ export function Settings() {
     }
     setLoadingUsers(false)
   }
-
   const openUserModal = (user?: AppUser) => {
     if (!isAdmin) return alert("Apenas administradores podem gerenciar usuários.");
     if (user) {
@@ -226,7 +223,6 @@ export function Settings() {
     }
     setIsUserModalOpen(true)
   }
-
   const handleTogglePermission = (module: keyof UserPermissions) => {
       setUserForm(prev => ({
           ...prev,
@@ -236,7 +232,6 @@ export function Settings() {
           }
       }))
   }
-
   const handleSaveConfigMagistrados = async () => {
     if (!isAdmin) return alert("Acesso negado.");
     setLoadingConfig(true)
@@ -258,7 +253,6 @@ export function Settings() {
     alert('Configurações salvas!')
     setLoadingConfig(false)
   }
-
   const handleSaveUser = async () => {
     if (!isAdmin) return;
     if (!userForm.email) return alert("E-mail obrigatório")
@@ -269,7 +263,6 @@ export function Settings() {
             cargo: userForm.cargo,
             modulos_acesso: userForm.modulos_acesso
         }
-
         if (editingUser) {
              await supabase.from('usuarios_permitidos').update(payload).eq('id', editingUser.id)
         } else {
@@ -281,13 +274,11 @@ export function Settings() {
         alert("Erro: " + e.message)
     }
   }
-
   const handleToggleActive = async (user: AppUser) => {
     if (!isAdmin) return alert("Apenas administradores podem alterar status.");
     await supabase.from('usuarios_permitidos').update({ ativo: !user.ativo }).eq('id', user.id)
     fetchUsers()
   }
-
   const handleDeleteUser = async (user: AppUser) => {
     if (!isAdmin) return alert("Apenas administradores podem excluir usuários.");
     if (confirm(`Excluir usuário ${user.email}?`)) {
@@ -295,7 +286,6 @@ export function Settings() {
         fetchUsers()
     }
   }
-
   const handleSystemReset = async () => {
     if (!isAdmin) return alert("Ação restrita a administradores.");
     if (!confirm('PERIGO: Isso apagará TODOS os dados do SISTEMA. Tem certeza?')) return;
@@ -314,7 +304,6 @@ export function Settings() {
         setStatus({ type: 'error', message: 'Erro: ' + error.message })
     } finally { setLoading(false) }
   }
-
   const handleResetPresence = async () => {
     if (!isAdmin) return alert("Ação restrita a administradores.");
     if (!confirm('ATENÇÃO: Apagar todo o histórico de Presença?')) return;
@@ -331,13 +320,11 @@ export function Settings() {
         setStatus({ type: 'error', message: 'Erro: ' + error.message })
     } finally { setLoading(false) }
   }
-
   const handleDownloadTemplate = () => {
     const ws = utils.json_to_sheet([{ nome: 'Cliente Exemplo', empresa: 'Empresa SA', cargo: 'Diretor', email: 'email@teste.com', telefone: '11999999999', socio: 'Dr. João', tipo_brinde: 'Brinde VIP', quantidade: 1, cep: '01001000', endereco: 'Praça da Sé', numero: '1', bairro: 'Centro', cidade: 'São Paulo', estado: 'SP' }])
     const wb = utils.book_new(); utils.book_append_sheet(wb, ws, "Template")
     writeFile(wb, "template_importacao.xlsx")
   }
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isAdmin) { alert("Apenas administradores."); if (fileInputRef.current) fileInputRef.current.value = ''; return; }
     const file = e.target.files?.[0]; if (!file) return
@@ -354,7 +341,6 @@ export function Settings() {
     } catch (error: any) { setStatus({ type: 'error', message: 'Erro: ' + error.message }) } 
     finally { setLoading(false); if (fileInputRef.current) fileInputRef.current.value = '' }
   }
-
   // --- RENDERIZAR BLOQUEIO DE ACESSO ---
   if (activeModule !== 'menu' && !currentUserPermissions[activeModule] && !isAdmin) {
       return (
@@ -363,7 +349,6 @@ export function Settings() {
               <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
                    <button onClick={() => setActiveModule('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"><LayoutGrid className="h-4 w-4" /> Menu</button>
               </div>
-
               {/* TELA DE BLOQUEIO */}
               <div className="flex flex-col items-center justify-center h-[500px] bg-white rounded-2xl shadow-sm border border-gray-200 animate-in zoom-in-95 duration-300">
                   <div className="bg-red-50 p-6 rounded-full mb-6">
@@ -381,7 +366,6 @@ export function Settings() {
           </div>
       )
   }
-
   // --- RENDERIZAR MENU INICIAL ---
   if (activeModule === 'menu') {
       const modules = [
@@ -391,7 +375,6 @@ export function Settings() {
           { id: 'rh', label: 'RH', icon: Users, desc: 'Controle de Pessoal', color: 'bg-green-600', perm: currentUserPermissions.rh },
           { id: 'sistema', label: 'Sistema', icon: Code, desc: 'Configurações Globais', color: 'bg-red-600', perm: currentUserPermissions.sistema },
       ]
-
       return (
           <div className="max-w-5xl mx-auto py-12 animate-in fade-in zoom-in-95 duration-500">
               <div className="text-center mb-10">
@@ -430,7 +413,6 @@ export function Settings() {
           </div>
       )
   }
-
   // --- RENDERIZAR CONTEÚDO DOS MÓDULOS ---
   return (
     <div className="max-w-7xl mx-auto pb-12 space-y-6">
@@ -475,7 +457,6 @@ export function Settings() {
                      <label className="text-xs font-bold text-gray-600 uppercase">E-mail (Login)</label>
                      <input type="email" className="w-full border border-gray-300 rounded-lg p-2.5 mt-1" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} />
                  </div>
-
                  {/* SELEÇÃO DE PERMISSÕES */}
                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <label className="text-xs font-bold text-gray-900 uppercase flex items-center gap-2 mb-3">
@@ -513,7 +494,6 @@ export function Settings() {
           </div>
         </div>
       )}
-
       {/* FEEDBACK STATUS */}
       {status.type && (
         <div className={`p-4 rounded-lg flex items-start gap-3 animate-in slide-in-from-top-2 ${status.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
@@ -521,7 +501,6 @@ export function Settings() {
             <p className={`text-sm font-medium ${status.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>{status.message}</p>
         </div>
       )}
-
       {/* --- CONTEÚDO: MÓDULO GERAL --- */}
       {activeModule === 'geral' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in">
@@ -585,7 +564,6 @@ export function Settings() {
             </div>
           </div>
       )}
-
       {/* --- OUTROS MÓDULOS (CONTEÚDO) --- */}
       {activeModule === 'juridico' && (
           <div className="animate-in fade-in">
@@ -602,7 +580,6 @@ export function Settings() {
             </div>
           </div>
       )}
-
       {activeModule === 'crm' && (
           <div className="space-y-6 animate-in fade-in">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -623,7 +600,6 @@ export function Settings() {
             </div>
           </div>
       )}
-
       {activeModule === 'rh' && (
           <div className="animate-in fade-in">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -632,7 +608,6 @@ export function Settings() {
               </div>
           </div>
       )}
-
       {activeModule === 'sistema' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -647,4 +622,3 @@ export function Settings() {
       )}
     </div>
   )
-}
