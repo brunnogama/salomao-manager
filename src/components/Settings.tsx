@@ -33,18 +33,29 @@ interface GenericItem {
   ativo?: boolean;
 }
 
+// ALTERAÇÃO 1: Permissões iniciam como FALSE para segurança (Deny by default)
 const DEFAULT_PERMISSIONS: UserPermissions = {
-  geral: true,
-  crm: true,
-  juridico: true,
-  rh: true,
-  sistema: true
+  geral: false,
+  crm: false,
+  juridico: false,
+  rh: false,
+  sistema: false
 }
 
 // EMAIL DO SUPER ADMIN (Hardcoded para segurança total)
 const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
 const CHANGELOG = [
+  {
+    version: '1.9.0',
+    date: '26/01/2026',
+    type: 'patch',
+    title: 'Security & Session Fixes',
+    changes: [
+      'Correção no fluxo de logout/login para resetar menu',
+      'Padrão de segurança alterado para bloqueio inicial'
+    ]
+  },
   {
     version: '1.8.0',
     date: '26/01/2026',
@@ -54,16 +65,6 @@ const CHANGELOG = [
       'Fluxo obrigatório de seleção de módulos no login',
       'Feedback visual de permissão negada',
       'Hardcode de Super Administrador implementado'
-    ]
-  },
-  {
-    version: '1.7.0',
-    date: '26/01/2026',
-    type: 'major',
-    title: 'Dashboard de Módulos',
-    changes: [
-      'Nova tela inicial de seleção de módulos',
-      'Navegação centralizada'
     ]
   }
 ]
@@ -85,7 +86,7 @@ export function Settings() {
     nome: '', 
     email: '', 
     cargo: 'Colaborador',
-    modulos_acesso: DEFAULT_PERMISSIONS
+    modulos_acesso: { ...DEFAULT_PERMISSIONS, geral: true } // No form de criação, sugerimos Geral como true
   })
 
   const [magistradosConfig, setMagistradosConfig] = useState({ pin: '', emails: '' })
@@ -112,11 +113,28 @@ export function Settings() {
   const [isAddingSocio, setIsAddingSocio] = useState(false)
 
   useEffect(() => {
+    // Carregamento inicial
     fetchCurrentUserMetadata();
     fetchUsers();
     fetchMagistradosConfig();
     fetchBrindes();
     fetchSocios();
+
+    // ALTERAÇÃO 2: Listener de Auth para Resetar Menu ao Logar/Deslogar
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+            // Força o retorno ao menu de módulos
+            setActiveModule('menu');
+            // Recarrega permissões se for login
+            if (event === 'SIGNED_IN') {
+                fetchCurrentUserMetadata();
+            }
+        }
+    });
+
+    return () => {
+        authListener.subscription.unsubscribe();
+    }
   }, [])
 
   // --- FUNÇÕES DE BRINDE ---
@@ -187,6 +205,7 @@ export function Settings() {
           
         if (data) {
           setCurrentUserRole(data.cargo)
+          // Se tiver modulos_acesso, usa. Se for null, mantém o DEFAULT_PERMISSIONS (que agora é tudo false)
           if (data.modulos_acesso) {
             setCurrentUserPermissions(data.modulos_acesso)
           }
@@ -217,7 +236,7 @@ export function Settings() {
             email: u.email,
             cargo: u.cargo || 'Colaborador',
             ativo: u.ativo !== false,
-            modulos_acesso: u.modulos_acesso || DEFAULT_PERMISSIONS
+            modulos_acesso: u.modulos_acesso || { ...DEFAULT_PERMISSIONS, geral: true } // Fallback visual apenas
         })))
     }
     setLoadingUsers(false)
@@ -231,7 +250,7 @@ export function Settings() {
             nome: user.nome, 
             email: user.email, 
             cargo: user.cargo,
-            modulos_acesso: user.modulos_acesso || DEFAULT_PERMISSIONS
+            modulos_acesso: user.modulos_acesso || { ...DEFAULT_PERMISSIONS, geral: true }
         })
     } else {
         setEditingUser(null)
@@ -239,7 +258,7 @@ export function Settings() {
             nome: '', 
             email: '', 
             cargo: 'Colaborador',
-            modulos_acesso: DEFAULT_PERMISSIONS 
+            modulos_acesso: { ...DEFAULT_PERMISSIONS, geral: true } 
         })
     }
     setIsUserModalOpen(true)
@@ -671,7 +690,7 @@ export function Settings() {
               </div>
               <div className="space-y-6">
                 <div className="bg-white rounded-xl shadow-sm border-2 border-red-200 p-6"><div className="flex items-center gap-3 mb-6"><div className="p-2 bg-red-50 rounded-lg"><AlertTriangle className="h-5 w-5 text-red-600" /></div><div><h3 className="font-bold text-gray-900 text-base">Reset Geral do Sistema</h3><p className="text-xs text-gray-500">Ações irreversíveis</p></div></div><div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4"><p className="text-xs font-bold text-red-900 mb-2">⚠️ Atenção</p><ul className="text-xs text-red-700 space-y-1"><li>• Apagará TODOS os dados do sistema</li><li>• Clientes, magistrados e tarefas serão removidos</li></ul></div><button onClick={handleSystemReset} disabled={!isAdmin} className={`w-full flex items-center justify-center gap-3 py-4 font-bold rounded-lg ${isAdmin ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}><Trash2 className="h-5 w-5" /><div className="text-left"><p>Resetar Sistema Completo</p><p className="text-xs font-normal text-red-100">{isAdmin ? 'Apagar todos os dados' : 'Apenas Administradores'}</p></div></button></div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"><div className="flex items-center gap-3 mb-6"><Code className="h-5 w-5 text-gray-700" /><h3 className="font-bold text-gray-900 text-base">Créditos</h3></div><div className="p-4 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2 mb-2"><Building className="h-4 w-4 text-gray-600" /><p className="font-bold text-gray-900 text-xs">Empresa</p></div><p className="font-bold text-gray-900">Flow Metrics</p><p className="text-xs text-gray-600 mt-1">Análise de Dados e Desenvolvimento</p></div><div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2"><Shield className="h-4 w-4 text-gray-600" /><span className="text-xs font-medium text-gray-600">Versão</span></div><span className="px-3 py-1 bg-gray-900 text-white rounded-full text-xs font-bold">v1.8.0</span></div></div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"><div className="flex items-center gap-3 mb-6"><Code className="h-5 w-5 text-gray-700" /><h3 className="font-bold text-gray-900 text-base">Créditos</h3></div><div className="p-4 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2 mb-2"><Building className="h-4 w-4 text-gray-600" /><p className="font-bold text-gray-900 text-xs">Empresa</p></div><p className="font-bold text-gray-900">Flow Metrics</p><p className="text-xs text-gray-600 mt-1">Análise de Dados e Desenvolvimento</p></div><div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2"><Shield className="h-4 w-4 text-gray-600" /><span className="text-xs font-medium text-gray-600">Versão</span></div><span className="px-3 py-1 bg-gray-900 text-white rounded-full text-xs font-bold">v1.9.0</span></div></div>
               </div>
           </div>
       )}
