@@ -95,12 +95,12 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
       )}
 
       {/* Sidebar */}
-      <aside className={`
-        fixed top-0 left-0 z-50 h-screen w-64 bg-[#112240] text-gray-300 flex flex-col font-sans border-r border-gray-800 shadow-2xl
-        transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-        md:translate-x-0
-      `}>
+     <aside className={`
+  fixed md:static top-0 left-0 z-50 md:z-auto h-screen w-64 bg-[#112240] text-gray-300 flex flex-col font-sans border-r border-gray-800 shadow-2xl md:shadow-none
+  transition-transform duration-300 ease-in-out
+  ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
+  md:translate-x-0
+`}>
         
         {/* Botão Fechar (Apenas Mobile) */}
         <button 
