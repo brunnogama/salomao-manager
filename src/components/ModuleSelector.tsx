@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Gift, UserCog, Home, LogOut, Banknote, Package, Lock, Loader2, Settings } from 'lucide-react'
+import { Gift, UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
@@ -189,7 +189,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
               'family', 
               'Secretaria Executiva', 
               'Suporte e gestão de agendas, viagens e demandas dos sócios.', 
-              Home, 
+              Briefcase, 
               'text-purple-700', 
               'bg-purple-50'
             )}
