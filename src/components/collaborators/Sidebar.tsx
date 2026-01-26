@@ -201,31 +201,3 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
     </>
   )
 }
-```
-
----
-
-## ✅ MUDANÇAS APLICADAS
-
-1. ✅ **Histórico removido** do array `mainItems`
-2. ✅ **Histórico adicionado** acima do User Profile
-3. ✅ **Divisória** antes do Histórico (linha horizontal)
-4. ✅ **Divisória** entre Histórico e User Profile
-
----
-
-## 📊 ESTRUTURA FINAL
-```
-┌─────────────────┐
-│ Logo + Badge    │
-├─────────────────┤
-│ Dashboard       │
-│ Presencial      │
-│ Kanban          │
-│                 │ ← Espaço flexível
-├─────────────────┤ ← Divisória
-│ Histórico       │
-├─────────────────┤ ← Divisória
-│ User Profile    │
-│ + Logout        │
-└─────────────────┘
