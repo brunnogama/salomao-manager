@@ -43,8 +43,8 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
   
-  // Atualizado para incluir 'operational'
-  const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators' | 'financial' | 'operational'>('home')
+  // Atualizado para incluir 'settings'
+  const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators' | 'financial' | 'operational' | 'settings'>('home')
   const [activePage, setActivePage] = useState('dashboard')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({})
@@ -57,7 +57,6 @@ export default function App() {
     incompletos: FileWarning,
     logistica: Truck,
     kanban: KanbanSquare,
-    configuracoes: SettingsIcon,
     historico: HistoryIcon,
     manual: BookOpen
   }
@@ -69,7 +68,6 @@ export default function App() {
     incompletos: 'Cadastros Incompletos',
     logistica: 'Logística',
     kanban: 'Kanban',
-    configuracoes: 'Configurações',
     historico: 'Histórico de Atividades',
     manual: 'Manual do Sistema'
   }
@@ -81,7 +79,6 @@ export default function App() {
     incompletos: 'Atenção: Cadastros que necessitam de preenchimento.',
     logistica: 'Gestão de entregas e controle logístico.',
     kanban: 'Gerencie suas tarefas de forma visual.',
-    configuracoes: 'Preferências do sistema e gestão de acessos.',
     historico: 'Audit Log: Rastreabilidade de ações no sistema.',
     manual: 'Documentação completa e guias de uso.'
   }
@@ -91,7 +88,6 @@ export default function App() {
     dashboard: LayoutDashboard,
     presencial: MapPin,
     kanban: KanbanSquare,
-    configuracoes: SettingsIcon,
     historico: HistoryIcon
   }
 
@@ -99,7 +95,6 @@ export default function App() {
     dashboard: 'Dashboard RH',
     presencial: 'Controle Presencial',
     kanban: 'Kanban RH',
-    configuracoes: 'Configurações',
     historico: 'Histórico'
   }
 
@@ -107,7 +102,6 @@ export default function App() {
     dashboard: 'Visão geral de colaboradores e métricas de RH.',
     presencial: 'Gestão de presença e alocação física.',
     kanban: 'Fluxo de contratações e tarefas de RH.',
-    configuracoes: 'Configurações do módulo de RH.',
     historico: 'Registro de atividades do setor.'
   }
 
@@ -166,7 +160,7 @@ export default function App() {
     setActivePage(page)
   }
 
-  const handleModuleSelect = (module: 'crm' | 'family' | 'collaborators' | 'financial' | 'operational') => {
+  const handleModuleSelect = (module: 'crm' | 'family' | 'collaborators' | 'financial' | 'operational' | 'settings') => {
     setCurrentModule(module)
     setActivePage('dashboard') // Reseta para a dashboard ao trocar de módulo
   }
@@ -179,6 +173,38 @@ export default function App() {
 
   // Lógica de Roteamento de Módulos
   if (currentModule === 'home') return <ModuleSelector onSelect={handleModuleSelect} userName={getUserDisplayName()} />
+  
+  // Roteamento para Configurações Centralizadas
+  if (currentModule === 'settings') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-[#112240] h-20 flex items-center justify-between px-8 shadow-md">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setCurrentModule('home')} 
+              className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+              title="Voltar"
+            >
+              <Grid className="h-5 w-5" />
+            </button>
+            <img src="/logo-branca.png" alt="Salomão" className="h-10 w-auto object-contain" />
+            <div className="bg-yellow-900/30 border border-yellow-700/30 rounded-lg px-3 py-1">
+              <span className="text-[10px] text-yellow-300 font-bold tracking-wider uppercase">Configurações</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-white text-sm font-medium">{getUserDisplayName()}</span>
+            <button onClick={handleLogout} className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10" title="Sair">
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
+        </header>
+        <div className="p-8">
+          <Settings />
+        </div>
+      </div>
+    )
+  }
   
   // Roteamento para módulos em construção
   if (currentModule === 'family') return <UnderConstruction moduleName="Gestão da Família" onBack={() => setCurrentModule('home')} />
@@ -238,23 +264,17 @@ export default function App() {
                       {activePage === 'logistica' && <UnderConstruction moduleName="Logística" onBack={() => setActivePage('dashboard')} />}
                       {activePage === 'kanban' && <Kanban />}
                       {activePage === 'historico' && <History />} 
-                      {activePage === 'manual' && <Manual />} 
-                      {activePage === 'configuracoes' && <Settings />}
+                      {activePage === 'manual' && <Manual />}
                     </>
                   )}
 
                   {/* ROTAS DO RH */}
                   {currentModule === 'collaborators' && (
                     <>
-                      {/* Dashboard ainda em construção */}
                       {activePage === 'dashboard' && <UnderConstruction moduleName="Dashboard RH" onBack={() => {}} showBackButton={false} />}
-                      
-                      {/* Presencial agora renderiza o novo componente */}
                       {activePage === 'presencial' && <Presencial />}
-                      
                       {activePage === 'kanban' && <Kanban />}
                       {activePage === 'historico' && <History />}
-                      {activePage === 'configuracoes' && <Settings />}
                     </>
                   )}
 

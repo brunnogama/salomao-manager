@@ -5,11 +5,10 @@ import {
   KanbanSquare, 
   BookOpen, 
   History, 
-  Settings, 
   FileWarning,
   X,
   Gavel,
-  Truck // Ícone para Logística
+  Truck
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -65,14 +64,13 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'magistrados', label: 'Autoridades', icon: Gavel }, 
     { id: 'incompletos', label: 'Incompletos', icon: FileWarning, badge: incompleteCount },
-    { id: 'logistica', label: 'Logística', icon: Truck }, // Novo Módulo
+    { id: 'logistica', label: 'Logística', icon: Truck },
     { id: 'kanban', label: 'Kanban', icon: KanbanSquare },
   ]
 
   const bottomItems = [
     { id: 'manual', label: 'Manual do Sistema', icon: BookOpen },
     { id: 'historico', label: 'Histórico', icon: History },
-    { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ]
 
   return (
@@ -108,7 +106,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
               onClick={() => { onNavigate(item.id); onClose(); }} 
               className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all group ${
                 activePage === item.id 
-                  ? 'bg-[#1e3a8a] text-white font-medium shadow-md border-l-4 border-salomao-gold' 
+                  ? 'bg-[#1e3a8a] text-white font-medium shadow-md border-l-4 border-yellow-500' 
                   : 'hover:bg-white/5 hover:text-white border-l-4 border-transparent'
               }`}
             >

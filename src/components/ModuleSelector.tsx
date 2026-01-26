@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Gift, UserCog, Home, LogOut, Banknote, Package, Lock, Loader2 } from 'lucide-react'
+import { Gift, UserCog, Home, LogOut, Banknote, Package, Lock, Loader2, Settings } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
-  onSelect: (module: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial') => void;
+  onSelect: (module: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'settings') => void;
   userName: string;
 }
 
@@ -89,14 +89,18 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   }
 
   const renderCard = (
-    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial',
+    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'settings',
     title: string,
     description: string,
     Icon: any,
     colorClass: string,
-    bgClass: string
+    bgClass: string,
+    adminOnly: boolean = false
   ) => {
-    const allowed = isModuleAllowed(key)
+    // Se for adminOnly, só mostra para admins
+    if (adminOnly && !isAdmin) return null
+    
+    const allowed = adminOnly ? isAdmin : isModuleAllowed(key)
 
     return (
       <div 
@@ -122,6 +126,10 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         
         {!allowed && (
           <span className="mt-2 text-xs font-bold text-red-400 uppercase tracking-widest">Bloqueado</span>
+        )}
+        
+        {adminOnly && allowed && (
+          <span className="mt-2 text-xs font-bold text-yellow-600 uppercase tracking-widest">Admin</span>
         )}
       </div>
     )
@@ -162,7 +170,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         </div>
 
         {/* Grid de Módulos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 max-w-7xl w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8 max-w-7xl w-full">
             
             {renderCard(
               'crm', 
@@ -207,6 +215,17 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
               Banknote, 
               'text-emerald-700', 
               'bg-emerald-50'
+            )}
+
+            {/* NOVO: Card de Configurações (apenas para admins) */}
+            {renderCard(
+              'settings', 
+              'Configurações', 
+              'Gestão centralizada de usuários, permissões e sistema.', 
+              Settings, 
+              'text-gray-700', 
+              'bg-gray-50',
+              true // adminOnly
             )}
 
         </div>
