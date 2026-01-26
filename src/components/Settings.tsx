@@ -1,25 +1,14 @@
-CONTEXTO: Estou enviando o código oficial e atualizado do arquivo: Settings.tsx
-Atualize esse e me peça o restante que eu vou enviando, vamos atualizar um arquivo por vez.
-Veja se precisamos criar tabelas no Supabase
-
-SUA TAREFA: 
-1.	Todos que logarem irão direto para a tela de modulos, para escolher o seu modulo.
-2. Caso alguém escolha um modulo que não tem permissão para acessar, apareça uma mensgam elegante informando que não tem permissaoe que contacte o administrador
-3.Eu, márcio.gama@salomaoadv.com.br sempre terei acesso a todos os módulos e sempre que logar irei para a tela de escolha de módulos, como todos os usuários
-4. Quando qualquer usuário entrar no modulo, vai automaticamente para o primeiro item da sidebar.
-
-
-CÓDIGO FONTE:
 import { useState, useRef, useEffect } from 'react'
 import { 
   Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, 
   Users, Pencil, Trash2, Save, RefreshCw, 
   AlertTriangle, History, Code, Shield, UserPlus, Ban, Check, Lock, Building,
-  Plus, X, Tag, Briefcase, EyeOff, LayoutGrid, ArrowRight
+  Plus, X, Tag, Briefcase, EyeOff, LayoutGrid, ArrowRight, MessageSquare
 } from 'lucide-react'
 import { utils, read, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
+
 // --- INTERFACES ---
 interface UserPermissions {
   geral: boolean;
@@ -28,6 +17,7 @@ interface UserPermissions {
   rh: boolean;
   sistema: boolean;
 }
+
 interface AppUser {
   id: number;
   nome: string;
@@ -36,11 +26,13 @@ interface AppUser {
   ativo: boolean;
   modulos_acesso: UserPermissions;
 }
+
 interface GenericItem {
   id: number;
   nome: string;
   ativo?: boolean;
 }
+
 const DEFAULT_PERMISSIONS: UserPermissions = {
   geral: true,
   crm: true,
@@ -48,7 +40,21 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   rh: true,
   sistema: true
 }
+
+const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
+
 const CHANGELOG = [
+  {
+    version: '1.8.0',
+    date: '26/01/2026',
+    type: 'major',
+    title: 'Super Admin & UX Flow',
+    changes: [
+      'Fluxo obrigatório de seleção de módulos no login',
+      'Feedback visual de permissão negada',
+      'Hardcode de Super Administrador implementado'
+    ]
+  },
   {
     version: '1.7.0',
     date: '26/01/2026',
@@ -56,26 +62,16 @@ const CHANGELOG = [
     title: 'Dashboard de Módulos',
     changes: [
       'Nova tela inicial de seleção de módulos',
-      'Navegação centralizada',
-      'Visualização de bloqueio nos cards de menu'
-    ]
-  },
-  {
-    version: '1.6.0',
-    date: '26/01/2026',
-    type: 'major',
-    title: 'Controle de Permissões Granular',
-    changes: [
-      'Gestão individual de acesso por módulo',
-      'Interface de bloqueio para áreas não autorizadas'
+      'Navegação centralizada'
     ]
   }
 ]
+
 export function Settings() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
   
-  // Controle de Módulos (Tabs) - 'menu' é o estado inicial agora
+  // Controle de Módulos (Tabs) - 'menu' é o estado inicial OBRIGATÓRIO
   const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'sistema'>('menu')
   
   const [users, setUsers] = useState<AppUser[]>([])
@@ -90,16 +86,22 @@ export function Settings() {
     cargo: 'Colaborador',
     modulos_acesso: DEFAULT_PERMISSIONS
   })
+
   const [magistradosConfig, setMagistradosConfig] = useState({ pin: '', emails: '' })
   const [loadingConfig, setLoadingConfig] = useState(false)
   const [showAllVersions, setShowAllVersions] = useState(false)
    
   // Permissões do Usuário LOGADO
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>('')
   const [currentUserRole, setCurrentUserRole] = useState<string>('')
   const [currentUserPermissions, setCurrentUserPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS)
   
-  const isAdmin = ['Administrador', 'Admin'].includes(currentUserRole)
+  // Lógica de Admin: Verifica Cargo no banco OU se é o Super Admin hardcoded
+  const isSuperAdmin = currentUserEmail === SUPER_ADMIN_EMAIL;
+  const isAdmin = ['Administrador', 'Admin'].includes(currentUserRole) || isSuperAdmin;
+
   const fileInputRef = useRef<HTMLInputElement>(null)
+
   // --- ESTADOS PARA TIPOS DE BRINDE E SÓCIOS ---
   const [brindes, setBrindes] = useState<GenericItem[]>([])
   const [newBrinde, setNewBrinde] = useState('')
@@ -107,6 +109,7 @@ export function Settings() {
   const [socios, setSocios] = useState<GenericItem[]>([])
   const [newSocio, setNewSocio] = useState('')
   const [isAddingSocio, setIsAddingSocio] = useState(false)
+
   useEffect(() => {
     fetchCurrentUserMetadata();
     fetchUsers();
@@ -114,6 +117,7 @@ export function Settings() {
     fetchBrindes();
     fetchSocios();
   }, [])
+
   // --- FUNÇÕES DE BRINDE ---
   const fetchBrindes = async () => {
     const { data } = await supabase.from('tipos_brinde').select('*').order('nome')
@@ -135,6 +139,7 @@ export function Settings() {
     const { error } = await supabase.from('tipos_brinde').delete().eq('id', id)
     if (!error) { await logAction('DELETE', 'TIPOS_BRINDE', `Excluiu ${nome}`); fetchBrindes() }
   }
+
   // --- FUNÇÕES DE SÓCIOS ---
   const fetchSocios = async () => {
     const { data } = await supabase.from('socios').select('*').order('nome')
@@ -156,11 +161,23 @@ export function Settings() {
     const { error } = await supabase.from('socios').delete().eq('id', id)
     if (!error) { await logAction('DELETE', 'SOCIOS', `Excluiu ${nome}`); fetchSocios() }
   }
+
   // --- FUNÇÕES GERAIS ---
   const fetchCurrentUserMetadata = async () => {
     try {
       const { data: { user } } = await (supabase.auth as any).getUser()
       if (user?.email) {
+        setCurrentUserEmail(user.email);
+        
+        // Se for Super Admin, força permissões totais localmente
+        if (user.email === SUPER_ADMIN_EMAIL) {
+            setCurrentUserRole('Administrador');
+            setCurrentUserPermissions({
+                geral: true, crm: true, juridico: true, rh: true, sistema: true
+            });
+            return; // Retorna cedo, não precisa buscar do banco para o Super Admin
+        }
+
         const { data } = await supabase
           .from('usuarios_permitidos')
           .select('cargo, modulos_acesso')
@@ -178,6 +195,7 @@ export function Settings() {
       console.error("Erro ao verificar permissão:", error)
     }
   }
+
   const fetchMagistradosConfig = async () => {
     const { data } = await supabase.from('config_magistrados').select('*').single()
     if (data) {
@@ -187,6 +205,7 @@ export function Settings() {
         })
     }
   }
+
   const fetchUsers = async () => {
     setLoadingUsers(true)
     const { data } = await supabase.from('usuarios_permitidos').select('*').order('nome')
@@ -202,6 +221,7 @@ export function Settings() {
     }
     setLoadingUsers(false)
   }
+
   const openUserModal = (user?: AppUser) => {
     if (!isAdmin) return alert("Apenas administradores podem gerenciar usuários.");
     if (user) {
@@ -223,6 +243,7 @@ export function Settings() {
     }
     setIsUserModalOpen(true)
   }
+
   const handleTogglePermission = (module: keyof UserPermissions) => {
       setUserForm(prev => ({
           ...prev,
@@ -232,6 +253,7 @@ export function Settings() {
           }
       }))
   }
+
   const handleSaveConfigMagistrados = async () => {
     if (!isAdmin) return alert("Acesso negado.");
     setLoadingConfig(true)
@@ -253,6 +275,7 @@ export function Settings() {
     alert('Configurações salvas!')
     setLoadingConfig(false)
   }
+
   const handleSaveUser = async () => {
     if (!isAdmin) return;
     if (!userForm.email) return alert("E-mail obrigatório")
@@ -263,6 +286,7 @@ export function Settings() {
             cargo: userForm.cargo,
             modulos_acesso: userForm.modulos_acesso
         }
+
         if (editingUser) {
              await supabase.from('usuarios_permitidos').update(payload).eq('id', editingUser.id)
         } else {
@@ -274,11 +298,13 @@ export function Settings() {
         alert("Erro: " + e.message)
     }
   }
+
   const handleToggleActive = async (user: AppUser) => {
     if (!isAdmin) return alert("Apenas administradores podem alterar status.");
     await supabase.from('usuarios_permitidos').update({ ativo: !user.ativo }).eq('id', user.id)
     fetchUsers()
   }
+
   const handleDeleteUser = async (user: AppUser) => {
     if (!isAdmin) return alert("Apenas administradores podem excluir usuários.");
     if (confirm(`Excluir usuário ${user.email}?`)) {
@@ -286,6 +312,7 @@ export function Settings() {
         fetchUsers()
     }
   }
+
   const handleSystemReset = async () => {
     if (!isAdmin) return alert("Ação restrita a administradores.");
     if (!confirm('PERIGO: Isso apagará TODOS os dados do SISTEMA. Tem certeza?')) return;
@@ -304,6 +331,7 @@ export function Settings() {
         setStatus({ type: 'error', message: 'Erro: ' + error.message })
     } finally { setLoading(false) }
   }
+
   const handleResetPresence = async () => {
     if (!isAdmin) return alert("Ação restrita a administradores.");
     if (!confirm('ATENÇÃO: Apagar todo o histórico de Presença?')) return;
@@ -320,11 +348,13 @@ export function Settings() {
         setStatus({ type: 'error', message: 'Erro: ' + error.message })
     } finally { setLoading(false) }
   }
+
   const handleDownloadTemplate = () => {
     const ws = utils.json_to_sheet([{ nome: 'Cliente Exemplo', empresa: 'Empresa SA', cargo: 'Diretor', email: 'email@teste.com', telefone: '11999999999', socio: 'Dr. João', tipo_brinde: 'Brinde VIP', quantidade: 1, cep: '01001000', endereco: 'Praça da Sé', numero: '1', bairro: 'Centro', cidade: 'São Paulo', estado: 'SP' }])
     const wb = utils.book_new(); utils.book_append_sheet(wb, ws, "Template")
     writeFile(wb, "template_importacao.xlsx")
   }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isAdmin) { alert("Apenas administradores."); if (fileInputRef.current) fileInputRef.current.value = ''; return; }
     const file = e.target.files?.[0]; if (!file) return
@@ -341,7 +371,12 @@ export function Settings() {
     } catch (error: any) { setStatus({ type: 'error', message: 'Erro: ' + error.message }) } 
     finally { setLoading(false); if (fileInputRef.current) fileInputRef.current.value = '' }
   }
-  // --- RENDERIZAR BLOQUEIO DE ACESSO ---
+
+  // 
+
+[Image of access control system flow chart]
+
+  // --- RENDERIZAR BLOQUEIO DE ACESSO (MENSAGEM ELEGANTE) ---
   if (activeModule !== 'menu' && !currentUserPermissions[activeModule] && !isAdmin) {
       return (
           <div className="max-w-7xl mx-auto space-y-6">
@@ -349,24 +384,32 @@ export function Settings() {
               <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
                    <button onClick={() => setActiveModule('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"><LayoutGrid className="h-4 w-4" /> Menu</button>
               </div>
+
               {/* TELA DE BLOQUEIO */}
               <div className="flex flex-col items-center justify-center h-[500px] bg-white rounded-2xl shadow-sm border border-gray-200 animate-in zoom-in-95 duration-300">
-                  <div className="bg-red-50 p-6 rounded-full mb-6">
+                  <div className="bg-red-50 p-6 rounded-full mb-6 relative">
                       <EyeOff className="h-16 w-16 text-red-400" />
+                      <div className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-sm border border-red-100">
+                          <Lock className="h-6 w-6 text-red-600" />
+                      </div>
                   </div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Restrito</h2>
-                  <p className="text-gray-500 text-center max-w-md mb-8">
-                      Você não possui permissão para acessar o módulo <strong>{activeModule.toUpperCase()}</strong>.<br/>
-                      Entre em contato com o administrador se precisar de acesso.
+                  <p className="text-gray-500 text-center max-w-md mb-8 px-4">
+                      Você não possui as permissões necessárias para acessar o módulo <strong>{activeModule.toUpperCase()}</strong>.<br/><br/>
+                      <span className="text-sm bg-gray-50 p-2 rounded-lg border border-gray-200 inline-block">
+                          <MessageSquare className="h-3 w-3 inline mr-1"/>
+                          Por favor, contacte o administrador do sistema.
+                      </span>
                   </p>
-                  <button onClick={() => setActiveModule('menu')} className="px-6 py-2 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-800 transition-colors">
-                      Voltar para Menu
+                  <button onClick={() => setActiveModule('menu')} className="px-6 py-2 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200 flex items-center gap-2">
+                      <LayoutGrid className="h-4 w-4" /> Voltar para o Menu
                   </button>
               </div>
           </div>
       )
   }
-  // --- RENDERIZAR MENU INICIAL ---
+
+  // --- RENDERIZAR MENU INICIAL (DASHBOARD) ---
   if (activeModule === 'menu') {
       const modules = [
           { id: 'geral', label: 'Geral', icon: Shield, desc: 'Gestão de Usuários', color: 'bg-gray-900', perm: currentUserPermissions.geral },
@@ -375,11 +418,17 @@ export function Settings() {
           { id: 'rh', label: 'RH', icon: Users, desc: 'Controle de Pessoal', color: 'bg-green-600', perm: currentUserPermissions.rh },
           { id: 'sistema', label: 'Sistema', icon: Code, desc: 'Configurações Globais', color: 'bg-red-600', perm: currentUserPermissions.sistema },
       ]
+
       return (
           <div className="max-w-5xl mx-auto py-12 animate-in fade-in zoom-in-95 duration-500">
               <div className="text-center mb-10">
                   <h1 className="text-3xl font-bold text-gray-900">Painel de Controle</h1>
-                  <p className="text-gray-500 mt-2">Selecione um módulo para acessar</p>
+                  <p className="text-gray-500 mt-2">
+                      {isSuperAdmin ? 
+                        <span className="text-blue-600 font-bold flex items-center justify-center gap-1"><Shield className="h-3 w-3"/> Super Administrador Logado</span> : 
+                        "Selecione um módulo para acessar"
+                      }
+                  </p>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -388,10 +437,11 @@ export function Settings() {
                       return (
                           <button 
                               key={m.id}
-                              onClick={() => hasAccess && setActiveModule(m.id as any)}
-                              className={`relative group flex flex-col items-start p-6 rounded-2xl border transition-all duration-300 text-left ${hasAccess ? 'bg-white border-gray-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'bg-gray-50 border-gray-200 opacity-70 cursor-not-allowed'}`}
+                              // IMPORTANTE: Permitimos o clique mesmo sem acesso para mostrar a mensagem "Elegante" de bloqueio
+                              onClick={() => setActiveModule(m.id as any)}
+                              className={`relative group flex flex-col items-start p-6 rounded-2xl border transition-all duration-300 text-left ${hasAccess ? 'bg-white border-gray-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'bg-gray-50 border-gray-200 opacity-80 cursor-pointer hover:bg-gray-100'}`}
                           >
-                              <div className={`p-3 rounded-xl mb-4 text-white shadow-md ${hasAccess ? m.color : 'bg-gray-400'}`}>
+                              <div className={`p-3 rounded-xl mb-4 text-white shadow-md ${hasAccess ? m.color : 'bg-gray-400 grayscale'}`}>
                                   <m.icon className="h-6 w-6" />
                               </div>
                               <h3 className="text-lg font-bold text-gray-900 mb-1">{m.label}</h3>
@@ -403,7 +453,7 @@ export function Settings() {
                                   </div>
                               ) : (
                                   <div className="absolute top-6 right-6">
-                                      <Lock className="h-5 w-5 text-gray-300" />
+                                      <Lock className="h-5 w-5 text-red-300" />
                                   </div>
                               )}
                           </button>
@@ -413,11 +463,12 @@ export function Settings() {
           </div>
       )
   }
+
   // --- RENDERIZAR CONTEÚDO DOS MÓDULOS ---
   return (
     <div className="max-w-7xl mx-auto pb-12 space-y-6">
       
-      {/* SELETOR DE MÓDULOS (NAVBAR) */}
+      {/* SELETOR DE MÓDULOS (NAVBAR - Para navegação rápida) */}
       <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
           <button onClick={() => setActiveModule('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors mr-2"><LayoutGrid className="h-4 w-4" /> Menu</button>
           
@@ -457,6 +508,7 @@ export function Settings() {
                      <label className="text-xs font-bold text-gray-600 uppercase">E-mail (Login)</label>
                      <input type="email" className="w-full border border-gray-300 rounded-lg p-2.5 mt-1" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} />
                  </div>
+
                  {/* SELEÇÃO DE PERMISSÕES */}
                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <label className="text-xs font-bold text-gray-900 uppercase flex items-center gap-2 mb-3">
@@ -494,6 +546,7 @@ export function Settings() {
           </div>
         </div>
       )}
+
       {/* FEEDBACK STATUS */}
       {status.type && (
         <div className={`p-4 rounded-lg flex items-start gap-3 animate-in slide-in-from-top-2 ${status.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
@@ -501,6 +554,7 @@ export function Settings() {
             <p className={`text-sm font-medium ${status.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>{status.message}</p>
         </div>
       )}
+
       {/* --- CONTEÚDO: MÓDULO GERAL --- */}
       {activeModule === 'geral' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in">
@@ -564,6 +618,7 @@ export function Settings() {
             </div>
           </div>
       )}
+
       {/* --- OUTROS MÓDULOS (CONTEÚDO) --- */}
       {activeModule === 'juridico' && (
           <div className="animate-in fade-in">
@@ -580,6 +635,7 @@ export function Settings() {
             </div>
           </div>
       )}
+
       {activeModule === 'crm' && (
           <div className="space-y-6 animate-in fade-in">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -600,6 +656,7 @@ export function Settings() {
             </div>
           </div>
       )}
+
       {activeModule === 'rh' && (
           <div className="animate-in fade-in">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -608,6 +665,7 @@ export function Settings() {
               </div>
           </div>
       )}
+
       {activeModule === 'sistema' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -616,9 +674,10 @@ export function Settings() {
               </div>
               <div className="space-y-6">
                 <div className="bg-white rounded-xl shadow-sm border-2 border-red-200 p-6"><div className="flex items-center gap-3 mb-6"><div className="p-2 bg-red-50 rounded-lg"><AlertTriangle className="h-5 w-5 text-red-600" /></div><div><h3 className="font-bold text-gray-900 text-base">Reset Geral do Sistema</h3><p className="text-xs text-gray-500">Ações irreversíveis</p></div></div><div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4"><p className="text-xs font-bold text-red-900 mb-2">⚠️ Atenção</p><ul className="text-xs text-red-700 space-y-1"><li>• Apagará TODOS os dados do sistema</li><li>• Clientes, magistrados e tarefas serão removidos</li></ul></div><button onClick={handleSystemReset} disabled={!isAdmin} className={`w-full flex items-center justify-center gap-3 py-4 font-bold rounded-lg ${isAdmin ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}><Trash2 className="h-5 w-5" /><div className="text-left"><p>Resetar Sistema Completo</p><p className="text-xs font-normal text-red-100">{isAdmin ? 'Apagar todos os dados' : 'Apenas Administradores'}</p></div></button></div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"><div className="flex items-center gap-3 mb-6"><Code className="h-5 w-5 text-gray-700" /><h3 className="font-bold text-gray-900 text-base">Créditos</h3></div><div className="p-4 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2 mb-2"><Building className="h-4 w-4 text-gray-600" /><p className="font-bold text-gray-900 text-xs">Empresa</p></div><p className="font-bold text-gray-900">Flow Metrics</p><p className="text-xs text-gray-600 mt-1">Análise de Dados e Desenvolvimento</p></div><div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2"><Shield className="h-4 w-4 text-gray-600" /><span className="text-xs font-medium text-gray-600">Versão</span></div><span className="px-3 py-1 bg-gray-900 text-white rounded-full text-xs font-bold">v1.7.0</span></div></div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"><div className="flex items-center gap-3 mb-6"><Code className="h-5 w-5 text-gray-700" /><h3 className="font-bold text-gray-900 text-base">Créditos</h3></div><div className="p-4 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2 mb-2"><Building className="h-4 w-4 text-gray-600" /><p className="font-bold text-gray-900 text-xs">Empresa</p></div><p className="font-bold text-gray-900">Flow Metrics</p><p className="text-xs text-gray-600 mt-1">Análise de Dados e Desenvolvimento</p></div><div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2"><Shield className="h-4 w-4 text-gray-600" /><span className="text-xs font-medium text-gray-600">Versão</span></div><span className="px-3 py-1 bg-gray-900 text-white rounded-full text-xs font-bold">v1.8.0</span></div></div>
               </div>
           </div>
       )}
     </div>
   )
+}
