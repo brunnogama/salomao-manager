@@ -47,6 +47,149 @@ const ESTADOS_BRASIL = [
   { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }
 ];
 
+// Componente de Dropdown Customizado com Busca
+function SearchableSelect({ 
+  label, 
+  value, 
+  onChange, 
+  options, 
+  onManage,
+  placeholder = "Selecione"
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: GenericOption[];
+  onManage: () => void;
+  placeholder?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const toTitleCase = (str: string) => {
+    if (!str) return ''
+    return str.toLowerCase().split(' ').map(word => {
+      return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
+    }).join(' ');
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+        setSearchTerm('')
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const filteredOptions = options.filter(opt => 
+    opt.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const selectedOption = options.find(opt => opt.nome === value)
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{label}</label>
+      
+      {/* Campo principal */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full border border-gray-300 rounded-lg p-2.5 text-left focus:ring-2 focus:ring-blue-500 outline-none bg-white transition-all hover:border-blue-400 flex items-center justify-between"
+      >
+        <span className={value ? "text-gray-900" : "text-gray-400"}>
+          {selectedOption ? toTitleCase(selectedOption.nome) : placeholder}
+        </span>
+        <svg 
+          className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-hidden">
+          {/* Campo de busca */}
+          <div className="p-3 border-b border-gray-100">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+
+          {/* Lista de opções */}
+          <div className="max-h-48 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => {
+                onChange('')
+                setIsOpen(false)
+                setSearchTerm('')
+              }}
+              className="w-full px-4 py-2 text-left text-sm text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              Selecione
+            </button>
+            {filteredOptions.map(opt => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => {
+                  onChange(opt.nome)
+                  setIsOpen(false)
+                  setSearchTerm('')
+                }}
+                className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                  value === opt.nome 
+                    ? 'bg-blue-50 text-blue-700 font-medium' 
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {toTitleCase(opt.nome)}
+              </button>
+            ))}
+            {filteredOptions.length === 0 && (
+              <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                Nenhum resultado encontrado
+              </div>
+            )}
+          </div>
+
+          {/* Botão Gerenciar */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onManage()
+              setIsOpen(false)
+              setSearchTerm('')
+            }}
+            className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 border-t border-gray-100 flex items-center gap-2 transition-colors"
+          >
+            <SettingsIcon className="h-4 w-4" />
+            Gerenciar {label}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Colaboradores() {
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
   const [loading, setLoading] = useState(false)
@@ -294,7 +437,7 @@ export function Colaboradores() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
       
-      {/* 1. KPI CARDS - ATUALIZADO */}
+      {/* 1. KPI CARDS */}
       {viewMode === 'list' && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between">
@@ -536,53 +679,25 @@ export function Colaboradores() {
                 </h3>
             </div>
 
-            {/* EQUIPE - MELHORADO */}
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1 flex justify-between items-center">
-                Equipe
-                <button 
-                  type="button"
-                  onClick={() => setIsConfigModalOpen('equipes')} 
-                  className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[10px] font-semibold" 
-                  title="Gerenciar Equipes"
-                >
-                  <SettingsIcon className="h-3 w-3" />
-                  Gerenciar
-                </button>
-              </label>
-              <select 
-                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white transition-all hover:border-blue-400" 
-                value={formData.equipe || ''} 
-                onChange={e => setFormData({...formData, equipe: e.target.value})}
-              >
-                <option value="">Selecione uma equipe</option>
-                {equipes.map(e => <option key={e.id} value={e.nome}>{toTitleCase(e.nome)}</option>)}
-              </select>
-            </div>
+            {/* EQUIPE - COM DROPDOWN CUSTOMIZADO */}
+            <SearchableSelect
+              label="Equipe"
+              value={formData.equipe || ''}
+              onChange={(value) => setFormData({...formData, equipe: value})}
+              options={equipes}
+              onManage={() => setIsConfigModalOpen('equipes')}
+              placeholder="Selecione uma equipe"
+            />
 
-            {/* LOCAL - MELHORADO */}
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1 flex justify-between items-center">
-                Local
-                <button 
-                  type="button"
-                  onClick={() => setIsConfigModalOpen('locais')} 
-                  className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[10px] font-semibold" 
-                  title="Gerenciar Locais"
-                >
-                  <SettingsIcon className="h-3 w-3" />
-                  Gerenciar
-                </button>
-              </label>
-              <select 
-                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white transition-all hover:border-blue-400" 
-                value={formData.local || ''} 
-                onChange={e => setFormData({...formData, local: e.target.value})}
-              >
-                <option value="">Selecione um local</option>
-                {locais.map(l => <option key={l.id} value={l.nome}>{toTitleCase(l.nome)}</option>)}
-              </select>
-            </div>
+            {/* LOCAL - COM DROPDOWN CUSTOMIZADO */}
+            <SearchableSelect
+              label="Local"
+              value={formData.local || ''}
+              onChange={(value) => setFormData({...formData, local: value})}
+              options={locais}
+              onManage={() => setIsConfigModalOpen('locais')}
+              placeholder="Selecione um local"
+            />
 
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Cargo</label>
@@ -621,23 +736,22 @@ export function Colaboradores() {
         </div>
       )}
 
-      {/* MODAL DE CONFIGURAÇÃO (EQUIPES/LOCAIS) - MELHORADO */}
+      {/* MODAL DE CONFIGURAÇÃO (EQUIPES/LOCAIS) - ESTILO DAS IMAGENS */}
       {isConfigModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-lg text-white">Gerenciar {isConfigModalOpen === 'equipes' ? 'Equipes' : 'Locais'}</h3>
-                <p className="text-blue-100 text-xs mt-0.5">Adicione, edite ou remova itens</p>
-              </div>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
+            {/* Header Simples */}
+            <div className="px-6 py-4 flex justify-between items-center border-b border-gray-200">
+              <h3 className="font-semibold text-lg text-gray-900">
+                Gerenciar {isConfigModalOpen === 'equipes' ? 'Equipes' : 'Locais'}
+              </h3>
               <button 
                 onClick={() => {
                   setIsConfigModalOpen(null)
                   setEditingOption(null)
                   setNewOptionValue('')
                 }} 
-                className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-lg transition-all"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="h-5 w-5"/>
               </button>
@@ -645,112 +759,85 @@ export function Colaboradores() {
             
             <div className="p-6">
               {/* Input para adicionar */}
-              <div className="mb-6">
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Adicionar Novo</label>
-                <div className="flex gap-2">
-                  <input 
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
-                    placeholder={`Nome ${isConfigModalOpen === 'equipes' ? 'da equipe' : 'do local'}...`}
-                    value={newOptionValue}
-                    onChange={e => setNewOptionValue(e.target.value)}
-                    onKeyPress={e => e.key === 'Enter' && handleAddOption()}
-                  />
-                  <button 
-                    onClick={handleAddOption} 
-                    className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2 font-medium text-sm"
-                    disabled={!newOptionValue.trim()}
-                  >
-                    <Plus className="h-4 w-4"/>
-                    Adicionar
-                  </button>
-                </div>
+              <div className="flex gap-2 mb-4">
+                <input 
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                  placeholder="Digite o nome"
+                  value={newOptionValue}
+                  onChange={e => setNewOptionValue(e.target.value)}
+                  onKeyPress={e => e.key === 'Enter' && handleAddOption()}
+                />
+                <button 
+                  onClick={handleAddOption} 
+                  className="bg-gray-800 text-white p-2 rounded-lg hover:bg-gray-900 transition-colors"
+                  disabled={!newOptionValue.trim()}
+                >
+                  <Plus className="h-5 w-5"/>
+                </button>
               </div>
 
               {/* Lista de itens */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
-                  Itens Cadastrados ({(isConfigModalOpen === 'equipes' ? equipes : locais).length})
-                </label>
-                <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
-                  {(isConfigModalOpen === 'equipes' ? equipes : locais).map(opt => (
-                    <div 
-                      key={opt.id} 
-                      className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
-                    >
-                      {editingOption?.id === opt.id ? (
-                        <>
-                          <input 
-                            className="flex-1 border border-blue-300 rounded-lg px-2 py-1.5 text-sm mr-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={editingOption.nome}
-                            onChange={e => setEditingOption({...editingOption, nome: e.target.value})}
-                            onKeyPress={e => e.key === 'Enter' && handleUpdateOption()}
-                            autoFocus
-                          />
-                          <div className="flex gap-1">
-                            <button 
-                              onClick={handleUpdateOption}
-                              className="text-green-600 hover:bg-green-100 p-1.5 rounded transition-colors"
-                              title="Salvar"
-                            >
-                              <Save className="h-4 w-4"/>
-                            </button>
-                            <button 
-                              onClick={() => setEditingOption(null)}
-                              className="text-gray-500 hover:bg-gray-200 p-1.5 rounded transition-colors"
-                              title="Cancelar"
-                            >
-                              <X className="h-4 w-4"/>
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-sm font-medium text-gray-700 flex-1">{toTitleCase(opt.nome)}</span>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button 
-                              onClick={() => setEditingOption(opt)}
-                              className="text-blue-600 hover:bg-blue-100 p-1.5 rounded transition-colors"
-                              title="Editar"
-                            >
-                              <Pencil className="h-4 w-4"/>
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteOption(opt.id, isConfigModalOpen as any)}
-                              className="text-red-600 hover:bg-red-100 p-1.5 rounded transition-colors"
-                              title="Excluir"
-                            >
-                              <Trash2 className="h-4 w-4"/>
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                  {(isConfigModalOpen === 'equipes' ? equipes : locais).length === 0 && (
-                    <div className="text-center py-12">
-                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-3">
-                        <SettingsIcon className="h-8 w-8 text-gray-400" />
-                      </div>
-                      <p className="text-sm text-gray-500 font-medium">Nenhum item cadastrado</p>
-                      <p className="text-xs text-gray-400 mt-1">Adicione o primeiro item acima</p>
-                    </div>
-                  )}
-                </div>
+              <div className="max-h-72 overflow-y-auto space-y-1">
+                {(isConfigModalOpen === 'equipes' ? equipes : locais).map(opt => (
+                  <div 
+                    key={opt.id} 
+                    className="flex items-center justify-between p-3 rounded hover:bg-gray-50 transition-colors group"
+                  >
+                    {editingOption?.id === opt.id ? (
+                      <>
+                        <input 
+                          className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm mr-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                          value={editingOption.nome}
+                          onChange={e => setEditingOption({...editingOption, nome: e.target.value})}
+                          onKeyPress={e => e.key === 'Enter' && handleUpdateOption()}
+                          autoFocus
+                        />
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={handleUpdateOption}
+                            className="text-green-600 hover:bg-green-50 p-1 rounded"
+                            title="Salvar"
+                          >
+                            <Save className="h-4 w-4"/>
+                          </button>
+                          <button 
+                            onClick={() => setEditingOption(null)}
+                            className="text-gray-500 hover:bg-gray-100 p-1 rounded"
+                            title="Cancelar"
+                          >
+                            <X className="h-4 w-4"/>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm text-gray-700 flex-1">{toTitleCase(opt.nome)}</span>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => setEditingOption(opt)}
+                            className="text-blue-600 hover:bg-blue-50 p-1.5 rounded"
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4"/>
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteOption(opt.id, isConfigModalOpen as any)}
+                            className="text-red-600 hover:bg-red-50 p-1.5 rounded"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4"/>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+                {(isConfigModalOpen === 'equipes' ? equipes : locais).length === 0 && (
+                  <div className="text-center py-8 text-sm text-gray-500">
+                    Nenhum item cadastrado
+                  </div>
+                )}
               </div>
-            </div>
-
-            {/* Footer */}
-            <div className="bg-gray-50 px-6 py-4 flex justify-end border-t border-gray-200">
-              <button 
-                onClick={() => {
-                  setIsConfigModalOpen(null)
-                  setEditingOption(null)
-                  setNewOptionValue('')
-                }}
-                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium text-sm transition-colors"
-              >
-                Concluir
-              </button>
             </div>
           </div>
         </div>
