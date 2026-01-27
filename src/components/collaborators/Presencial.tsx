@@ -186,10 +186,17 @@ export function Presencial() {
       return map
   }, [socioRules])
 
-  const uniqueSocios = useMemo(() => {
-      const socios = new Set(socioRules.map(r => toTitleCase(r.socio_responsavel)).filter(s => s !== 'Não Definido' && s !== ''))
-      return Array.from(socios).sort().map(s => ({ nome: s }))
-  }, [socioRules])
+  // Lista de sócios agora vem do Supabase
+  const [sociosList, setSociosList] = useState<{id: string, nome: string}[]>([])
+  
+  useEffect(() => {
+    fetchSociosList()
+  }, [])
+
+  const fetchSociosList = async () => {
+    const { data } = await supabase.from('socios_lista').select('*').order('nome')
+    if (data) setSociosList(data)
+  }
 
   const uniqueColaboradores = useMemo(() => {
       let rules = socioRules;
@@ -793,17 +800,19 @@ export function Presencial() {
                 {/* FILTROS COM SEARCHABLE SELECT */}
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     
-                    {/* Filtro Sócio */}
+                    {/* Filtro Sócio - COM GERENCIAMENTO */}
                     <SearchableSelect
                         label=""
                         value={filterSocio}
                         onChange={setFilterSocio}
-                        options={uniqueSocios}
+                        table="socios_lista"
+                        nameField="nome"
                         placeholder="Todos Sócios"
                         className="w-full sm:w-48"
+                        onRefresh={fetchSociosList}
                     />
 
-                    {/* Filtro Colaborador */}
+                    {/* Filtro Colaborador - SEM GERENCIAMENTO (lista dinâmica) */}
                     <SearchableSelect
                         label=""
                         value={filterColaborador}
