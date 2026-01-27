@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { 
   Search, Upload, Download, Plus, X, 
   MapPin, User, Briefcase, Trash2, Pencil, Save, 
-  Settings as SettingsIcon, Users, UserMinus, CheckCircle
+  Settings as SettingsIcon, Users, UserMinus, CheckCircle, UserX
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -62,6 +62,7 @@ export function Colaboradores() {
   const [locais, setLocais] = useState<GenericOption[]>([])
   const [isConfigModalOpen, setIsConfigModalOpen] = useState<'equipes' | 'locais' | null>(null)
   const [newOptionValue, setNewOptionValue] = useState('')
+  const [editingOption, setEditingOption] = useState<{ id: number; nome: string } | null>(null)
 
   // Estado do Formulário
   const [formData, setFormData] = useState<Partial<Colaborador>>({
@@ -111,7 +112,6 @@ export function Colaboradores() {
         const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
         const data = await response.json()
         if (!data.erro) {
-          // Busca o nome por extenso baseado na sigla (UF)
           const estadoEncontrado = ESTADOS_BRASIL.find(e => e.sigla === data.uf)
           
           setFormData(prev => ({
@@ -119,7 +119,7 @@ export function Colaboradores() {
             endereco: toTitleCase(data.logradouro),
             bairro: toTitleCase(data.bairro),
             cidade: toTitleCase(data.localidade),
-            estado: estadoEncontrado ? estadoEncontrado.nome : data.uf // Garante nome por extenso
+            estado: estadoEncontrado ? estadoEncontrado.nome : data.uf
           })) 
         }
       } catch (error) {
@@ -159,7 +159,7 @@ export function Colaboradores() {
     else {
       setViewMode('list')
       fetchColaboradores()
-      setFormData({})
+      setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' })
     }
   }
 
@@ -187,15 +187,24 @@ export function Colaboradores() {
 
   // --- GESTÃO DE OPÇÕES (EQUIPES/LOCAIS) ---
   const handleAddOption = async () => {
-    if (!newOptionValue) return
+    if (!newOptionValue.trim()) return
     const table = isConfigModalOpen === 'equipes' ? 'opcoes_equipes' : 'opcoes_locais'
-    const val = toTitleCase(newOptionValue)
+    const val = toTitleCase(newOptionValue.trim())
     await supabase.from(table).insert({ nome: val })
     setNewOptionValue('')
     fetchOptions()
   }
 
+  const handleUpdateOption = async () => {
+    if (!editingOption || !editingOption.nome.trim()) return
+    const table = isConfigModalOpen === 'equipes' ? 'opcoes_equipes' : 'opcoes_locais'
+    await supabase.from(table).update({ nome: toTitleCase(editingOption.nome.trim()) }).eq('id', editingOption.id)
+    setEditingOption(null)
+    fetchOptions()
+  }
+
   const handleDeleteOption = async (id: number, type: 'equipes' | 'locais') => {
+    if (!confirm('Deseja excluir este item?')) return
     const table = type === 'equipes' ? 'opcoes_equipes' : 'opcoes_locais'
     await supabase.from(table).delete().eq('id', id)
     fetchOptions()
@@ -277,16 +286,17 @@ export function Colaboradores() {
   const unicosLideres = Array.from(new Set(colaboradores.map(c => c.lider_equipe).filter(Boolean))).sort()
   const unicosLocais = Array.from(new Set(colaboradores.map(c => c.local).filter(Boolean))).sort()
 
-  // KPIs
-  const totalAtivos = colaboradores.filter(c => c.status === 'Ativo').length
-  const totalDesligados = colaboradores.filter(c => c.status === 'Desligado').length
+  // KPIs - CORRIGIDO para case-insensitive
+  const totalAtivos = colaboradores.filter(c => c.status?.toLowerCase() === 'ativo').length
+  const totalDesligados = colaboradores.filter(c => c.status?.toLowerCase() === 'desligado').length
+  const totalInativos = colaboradores.filter(c => c.status?.toLowerCase() === 'inativo').length
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
       
-      {/* 1. KPI CARDS */}
+      {/* 1. KPI CARDS - ATUALIZADO */}
       {viewMode === 'list' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Total Colaboradores</p>
@@ -296,7 +306,7 @@ export function Colaboradores() {
               <Users className="h-6 w-6 text-blue-600" />
             </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-green-200 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Ativos</p>
               <p className="text-3xl font-bold text-green-600 mt-1">{totalAtivos}</p>
@@ -305,13 +315,22 @@ export function Colaboradores() {
               <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-200 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Desligados</p>
-              <p className="text-3xl font-bold text-gray-400 mt-1">{totalDesligados}</p>
+              <p className="text-3xl font-bold text-red-600 mt-1">{totalDesligados}</p>
+            </div>
+            <div className="p-3 bg-red-50 rounded-xl">
+              <UserMinus className="h-6 w-6 text-red-600" />
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-300 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Inativos</p>
+              <p className="text-3xl font-bold text-gray-600 mt-1">{totalInativos}</p>
             </div>
             <div className="p-3 bg-gray-100 rounded-xl">
-              <UserMinus className="h-6 w-6 text-gray-500" />
+              <UserX className="h-6 w-6 text-gray-500" />
             </div>
           </div>
         </div>
@@ -362,7 +381,7 @@ export function Colaboradores() {
             <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-bold text-sm transition-colors border border-blue-200">
               <Download className="h-4 w-4" /> Exportar
             </button>
-            <button onClick={() => { setFormData({}); setViewMode('form') }} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold text-sm transition-colors shadow-sm">
+            <button onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setViewMode('form') }} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold text-sm transition-colors shadow-sm">
               <Plus className="h-4 w-4" /> Novo Colaborador
             </button>
           </div>
@@ -384,49 +403,53 @@ export function Colaboradores() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredData.map(colab => (
-                  <tr key={colab.id} className="hover:bg-blue-50/50 group transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center text-gray-600 font-bold shadow-sm">
-                          {colab.nome?.charAt(0).toUpperCase()}
+                {filteredData.map(colab => {
+                  const statusLower = colab.status?.toLowerCase() || '';
+                  return (
+                    <tr key={colab.id} className="hover:bg-blue-50/50 group transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center text-gray-600 font-bold shadow-sm">
+                            {colab.nome?.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900 text-sm">{toTitleCase(colab.nome)}</p>
+                            <p className="text-xs text-gray-500">{colab.cpf}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-gray-900 text-sm">{toTitleCase(colab.nome)}</p>
-                          <p className="text-xs text-gray-500">{colab.email || colab.cpf}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-medium text-gray-900">{toTitleCase(colab.cargo)}</p>
+                        <p className="text-xs text-gray-500">{toTitleCase(colab.equipe)}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                          <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                          {toTitleCase(colab.local)}
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-medium text-gray-900">{toTitleCase(colab.cargo)}</p>
-                      <p className="text-xs text-gray-500">{toTitleCase(colab.equipe)}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                        <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                        {toTitleCase(colab.local)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                        colab.status === 'Ativo' ? 'bg-green-50 text-green-700 border-green-200' : 
-                        colab.status === 'Desligado' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-gray-100 text-gray-600 border-gray-200'
-                      }`}>
-                        {colab.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-2">
-                        <button onClick={() => handleEdit(colab)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="Editar">
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => handleDelete(colab.id)} className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors" title="Excluir">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                          statusLower === 'ativo' ? 'bg-green-50 text-green-700 border-green-200' : 
+                          statusLower === 'desligado' ? 'bg-red-50 text-red-700 border-red-200' : 
+                          'bg-gray-100 text-gray-600 border-gray-300'
+                        }`}>
+                          {colab.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-2">
+                          <button onClick={() => handleEdit(colab)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" title="Editar">
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => handleDelete(colab.id)} className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors" title="Excluir">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -513,40 +536,54 @@ export function Colaboradores() {
                 </h3>
             </div>
 
+            {/* EQUIPE - MELHORADO */}
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1 flex justify-between items-center">
                 Equipe
-                <button onClick={() => setIsConfigModalOpen('equipes')} className="text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors" title="Gerenciar Equipes">
-                    <SettingsIcon className="h-3 w-3" />
+                <button 
+                  type="button"
+                  onClick={() => setIsConfigModalOpen('equipes')} 
+                  className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[10px] font-semibold" 
+                  title="Gerenciar Equipes"
+                >
+                  <SettingsIcon className="h-3 w-3" />
+                  Gerenciar
                 </button>
               </label>
-              <div className="relative">
-                  <select className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white appearance-none" value={formData.equipe || ''} onChange={e => setFormData({...formData, equipe: e.target.value})}>
-                    <option value="">Selecione</option>
-                    {equipes.map(e => <option key={e.id} value={e.nome}>{toTitleCase(e.nome)}</option>)}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                  </div>
-              </div>
+              <select 
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white transition-all hover:border-blue-400" 
+                value={formData.equipe || ''} 
+                onChange={e => setFormData({...formData, equipe: e.target.value})}
+              >
+                <option value="">Selecione uma equipe</option>
+                {equipes.map(e => <option key={e.id} value={e.nome}>{toTitleCase(e.nome)}</option>)}
+              </select>
             </div>
+
+            {/* LOCAL - MELHORADO */}
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1 flex justify-between items-center">
                 Local
-                <button onClick={() => setIsConfigModalOpen('locais')} className="text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors" title="Gerenciar Locais">
-                    <SettingsIcon className="h-3 w-3" />
+                <button 
+                  type="button"
+                  onClick={() => setIsConfigModalOpen('locais')} 
+                  className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[10px] font-semibold" 
+                  title="Gerenciar Locais"
+                >
+                  <SettingsIcon className="h-3 w-3" />
+                  Gerenciar
                 </button>
               </label>
-              <div className="relative">
-                  <select className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white appearance-none" value={formData.local || ''} onChange={e => setFormData({...formData, local: e.target.value})}>
-                    <option value="">Selecione</option>
-                    {locais.map(l => <option key={l.id} value={l.nome}>{toTitleCase(l.nome)}</option>)}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                  </div>
-              </div>
+              <select 
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white transition-all hover:border-blue-400" 
+                value={formData.local || ''} 
+                onChange={e => setFormData({...formData, local: e.target.value})}
+              >
+                <option value="">Selecione um local</option>
+                {locais.map(l => <option key={l.id} value={l.nome}>{toTitleCase(l.nome)}</option>)}
+              </select>
             </div>
+
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Cargo</label>
               <input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.cargo || ''} onChange={e => setFormData({...formData, cargo: e.target.value})} />
@@ -561,16 +598,11 @@ export function Colaboradores() {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status</label>
-              <div className="relative">
-                  <select className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white appearance-none" value={formData.status || 'Ativo'} onChange={e => setFormData({...formData, status: e.target.value})}>
-                    <option value="Ativo">Ativo</option>
-                    <option value="Desligado">Desligado</option>
-                    <option value="Inativo">Inativo</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                  </div>
-              </div>
+              <select className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white" value={formData.status || 'Ativo'} onChange={e => setFormData({...formData, status: e.target.value})}>
+                <option value="Ativo">Ativo</option>
+                <option value="Desligado">Desligado</option>
+                <option value="Inativo">Inativo</option>
+              </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Data Admissão</label>
@@ -589,37 +621,136 @@ export function Colaboradores() {
         </div>
       )}
 
-      {/* MODAL DE CONFIGURAÇÃO (EQUIPES/LOCAIS) */}
+      {/* MODAL DE CONFIGURAÇÃO (EQUIPES/LOCAIS) - MELHORADO */}
       {isConfigModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95">
-            <div className="bg-gray-900 px-6 py-4 flex justify-between items-center">
-              <h3 className="font-bold text-lg text-white">Gerenciar {isConfigModalOpen === 'equipes' ? 'Equipes' : 'Locais'}</h3>
-              <button onClick={() => setIsConfigModalOpen(null)} className="text-gray-400 hover:text-white"><X className="h-5 w-5"/></button>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-lg text-white">Gerenciar {isConfigModalOpen === 'equipes' ? 'Equipes' : 'Locais'}</h3>
+                <p className="text-blue-100 text-xs mt-0.5">Adicione, edite ou remova itens</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsConfigModalOpen(null)
+                  setEditingOption(null)
+                  setNewOptionValue('')
+                }} 
+                className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-lg transition-all"
+              >
+                <X className="h-5 w-5"/>
+              </button>
             </div>
             
             <div className="p-6">
-              <div className="flex gap-2 mb-4">
-                <input 
-                  className="flex-1 border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-blue-500" 
-                  placeholder="Novo item..."
-                  value={newOptionValue}
-                  onChange={e => setNewOptionValue(e.target.value)}
-                />
-                <button onClick={handleAddOption} className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"><Plus className="h-5 w-5"/></button>
+              {/* Input para adicionar */}
+              <div className="mb-6">
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Adicionar Novo</label>
+                <div className="flex gap-2">
+                  <input 
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                    placeholder={`Nome ${isConfigModalOpen === 'equipes' ? 'da equipe' : 'do local'}...`}
+                    value={newOptionValue}
+                    onChange={e => setNewOptionValue(e.target.value)}
+                    onKeyPress={e => e.key === 'Enter' && handleAddOption()}
+                  />
+                  <button 
+                    onClick={handleAddOption} 
+                    className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2 font-medium text-sm"
+                    disabled={!newOptionValue.trim()}
+                  >
+                    <Plus className="h-4 w-4"/>
+                    Adicionar
+                  </button>
+                </div>
               </div>
 
-              <div className="max-h-60 overflow-y-auto space-y-2 custom-scrollbar">
-                {(isConfigModalOpen === 'equipes' ? equipes : locais).map(opt => (
-                  <div key={opt.id} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors group">
-                    <span className="text-sm font-medium text-gray-700">{toTitleCase(opt.nome)}</span>
-                    <button onClick={() => handleDeleteOption(opt.id, isConfigModalOpen as any)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors"><Trash2 className="h-4 w-4"/></button>
-                  </div>
-                ))}
-                {(isConfigModalOpen === 'equipes' ? equipes : locais).length === 0 && (
-                    <p className="text-center text-xs text-gray-400 py-4">Nenhum item cadastrado.</p>
-                )}
+              {/* Lista de itens */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                  Itens Cadastrados ({(isConfigModalOpen === 'equipes' ? equipes : locais).length})
+                </label>
+                <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+                  {(isConfigModalOpen === 'equipes' ? equipes : locais).map(opt => (
+                    <div 
+                      key={opt.id} 
+                      className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
+                    >
+                      {editingOption?.id === opt.id ? (
+                        <>
+                          <input 
+                            className="flex-1 border border-blue-300 rounded-lg px-2 py-1.5 text-sm mr-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={editingOption.nome}
+                            onChange={e => setEditingOption({...editingOption, nome: e.target.value})}
+                            onKeyPress={e => e.key === 'Enter' && handleUpdateOption()}
+                            autoFocus
+                          />
+                          <div className="flex gap-1">
+                            <button 
+                              onClick={handleUpdateOption}
+                              className="text-green-600 hover:bg-green-100 p-1.5 rounded transition-colors"
+                              title="Salvar"
+                            >
+                              <Save className="h-4 w-4"/>
+                            </button>
+                            <button 
+                              onClick={() => setEditingOption(null)}
+                              className="text-gray-500 hover:bg-gray-200 p-1.5 rounded transition-colors"
+                              title="Cancelar"
+                            >
+                              <X className="h-4 w-4"/>
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-sm font-medium text-gray-700 flex-1">{toTitleCase(opt.nome)}</span>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => setEditingOption(opt)}
+                              className="text-blue-600 hover:bg-blue-100 p-1.5 rounded transition-colors"
+                              title="Editar"
+                            >
+                              <Pencil className="h-4 w-4"/>
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteOption(opt.id, isConfigModalOpen as any)}
+                              className="text-red-600 hover:bg-red-100 p-1.5 rounded transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-4 w-4"/>
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  {(isConfigModalOpen === 'equipes' ? equipes : locais).length === 0 && (
+                    <div className="text-center py-12">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-3">
+                        <SettingsIcon className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <p className="text-sm text-gray-500 font-medium">Nenhum item cadastrado</p>
+                      <p className="text-xs text-gray-400 mt-1">Adicione o primeiro item acima</p>
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 flex justify-end border-t border-gray-200">
+              <button 
+                onClick={() => {
+                  setIsConfigModalOpen(null)
+                  setEditingOption(null)
+                  setNewOptionValue('')
+                }}
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium text-sm transition-colors"
+              >
+                Concluir
+              </button>
             </div>
           </div>
         </div>
