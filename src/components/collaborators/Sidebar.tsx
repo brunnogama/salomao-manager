@@ -14,7 +14,7 @@ import {
   Briefcase,
   Banknote,
   Megaphone,
-  FolderSearch // Alterado para ícone de pasta/busca (GED)
+  FolderSearch 
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -34,30 +34,26 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
       const { data: { user } } = await supabase.auth.getUser()
       
       if (user) {
-        // Busca dados na tabela user_profiles
+        // Busca dados na tabela usuarios_permitidos (ajustado para a tabela correta usada no Settings.tsx)
         const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('role, allowed_modules')
-          .eq('user_id', user.id)
+          .from('usuarios_permitidos')
+          .select('cargo')
+          .eq('email', user.email)
           .single()
 
-        if (profile) {
-          // Define o nome formatado do email
-          if (user.email) {
-            const emailName = user.email.split('@')[0]
-            const formattedName = emailName
-              .split('.')
-              .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-              .join(' ')
-            setUserName(formattedName)
-          }
+        if (user.email) {
+          const emailName = user.email.split('@')[0]
+          const formattedName = emailName
+            .split('.')
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ')
+          setUserName(formattedName)
+        }
 
-          // Define o cargo traduzido
-          const roleLabels: Record<string, string> = {
-            admin: 'Administrador',
-            user: 'Usuário'
-          }
-          setUserRole(roleLabels[profile.role] || 'Usuário')
+        if (profile) {
+          setUserRole(profile.cargo || 'Colaborador')
+        } else {
+          setUserRole('Colaborador')
         }
       }
     } catch (error) {
@@ -71,17 +67,12 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
   }, [])
 
   const handleLogout = async () => {
-    // Salvar o flag do modal de boas-vindas
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
-    
     localStorage.clear()
     sessionStorage.clear()
-    
-    // Restaurar o flag
     if (hasSeenWelcome) {
       localStorage.setItem('hasSeenWelcomeModal', hasSeenWelcome)
     }
-    
     await supabase.auth.signOut()
     window.location.reload()
   }
@@ -90,8 +81,9 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'presencial', label: 'Presencial', icon: MapPin },
     
-    // Novos itens adicionados
+    // Novo item Colaboradores
     { id: 'colaboradores', label: 'Colaboradores', icon: Users },
+    
     { id: 'evolucao', label: 'Evolução de Pessoal', icon: TrendingUp },
     { id: 'tempo-casa', label: 'Tempo de casa', icon: Clock },
     { id: 'headcount', label: 'Headcount', icon: BarChart3 },
@@ -99,9 +91,8 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
     { id: 'vagas', label: 'Vagas', icon: Briefcase },
     { id: 'remuneracao', label: 'Remuneração', icon: Banknote },
     { id: 'acoes', label: 'Ações', icon: Megaphone },
-    
     { id: 'kanban', label: 'Kanban', icon: KanbanSquare },
-    { id: 'ged', label: 'GED', icon: FolderSearch }, // Corrigido para GED
+    { id: 'ged', label: 'GED', icon: FolderSearch },
   ]
 
   return (

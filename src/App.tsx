@@ -21,6 +21,8 @@ import { UnderConstruction } from './components/UnderConstruction'
 
 // Componentes do RH
 import { Presencial } from './components/collaborators/Presencial' 
+// NOVA IMPORTAÇÃO
+import { Colaboradores } from './pages/Colaboradores'
 
 import { 
   Menu, 
@@ -342,7 +344,9 @@ export default function App() {
                       {activePage === 'dashboard' && <UnderConstruction moduleName="Dashboard RH" onBack={() => {}} showBackButton={false} />}
                       {activePage === 'presencial' && <Presencial />}
                       
-                      {activePage === 'colaboradores' && <UnderConstruction moduleName="Colaboradores" onBack={() => setActivePage('dashboard')} />}
+                      {/* ROTA ATUALIZADA */}
+                      {activePage === 'colaboradores' && <Colaboradores />}
+                      
                       {activePage === 'evolucao' && <UnderConstruction moduleName="Evolução de Pessoal" onBack={() => setActivePage('dashboard')} />}
                       {activePage === 'tempo-casa' && <UnderConstruction moduleName="Tempo de Casa" onBack={() => setActivePage('dashboard')} />}
                       {activePage === 'headcount' && <UnderConstruction moduleName="Headcount" onBack={() => setActivePage('dashboard')} />}
