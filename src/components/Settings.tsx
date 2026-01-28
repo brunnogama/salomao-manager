@@ -578,7 +578,7 @@ export function Settings() {
       const modules = [
           { id: 'geral', label: 'Geral', icon: Shield, desc: 'Gestão de Usuários', color: 'bg-gray-900', perm: currentUserPermissions.geral },
           { id: 'crm', label: 'CRM', icon: Briefcase, desc: 'Clientes e Brindes', color: 'bg-blue-600', perm: currentUserPermissions.crm },
-          { id: 'juridico', label: 'Brindes', icon: Lock, desc: 'Área de Magistrados', color: 'bg-[#112240]', perm: true },
+          { id: 'juridico', label: 'Brindes', icon: Lock, desc: 'Área de Autoridades', color: 'bg-[#112240]', perm: true },
           { id: 'rh', label: 'RH', icon: Users, desc: 'Controle de Pessoal', color: 'bg-green-600', perm: currentUserPermissions.collaborators },
           { id: 'historico', label: 'Histórico', icon: HistoryIcon, desc: 'Log de Atividades', color: 'bg-purple-600', perm: true },
           { id: 'sistema', label: 'Sistema', icon: Code, desc: 'Configurações Globais', color: 'bg-red-600', perm: currentUserPermissions.geral },
