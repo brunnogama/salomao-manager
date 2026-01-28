@@ -137,26 +137,44 @@ export function SearchableSelect({
     if (onRefresh) onRefresh();
   };
 
+  // Handler para limpar seleção
+  const handleClearSelection = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange('');
+    setIsOpen(false);
+  };
+
   return (
     <div ref={dropdownRef} className={`relative ${className}`}>
       {label && <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{label}</label>}
       
       {/* TRIGGER DO DROPDOWN */}
-      <button
-        type="button"
+      <div 
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={`w-full border border-gray-300 rounded-lg p-2.5 text-left focus:ring-2 focus:ring-[#112240] outline-none bg-white transition-all hover:border-blue-400 flex items-center justify-between ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-full border border-gray-300 rounded-lg p-2.5 text-left focus-within:ring-2 focus-within:ring-[#112240] bg-white transition-all hover:border-blue-400 flex items-center justify-between cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        <span className={value ? "text-gray-900 text-sm" : "text-gray-400 text-sm"}>
+        <span className={`text-sm ${value ? "text-gray-900" : "text-gray-400"}`}>
           {selectedOption ? toTitleCase(getName(selectedOption)) : (value || placeholder)}
         </span>
-        <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+        
+        <div className="flex items-center gap-2">
+            {/* Botão limpar (X) - aparece apenas se houver valor e não estiver disabled */}
+            {value && !disabled && (
+                <button 
+                    onClick={handleClearSelection}
+                    className="p-0.5 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-full transition-colors"
+                    title="Limpar seleção"
+                >
+                    <X className="h-3.5 w-3.5" />
+                </button>
+            )}
+            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </div>
+      </div>
 
       {/* DROPDOWN MENU */}
       {isOpen && !isManaging && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 flex flex-col animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+        <div className="absolute z-[1000] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 flex flex-col animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
           
           {/* Header de Busca */}
           <div className="p-2 border-b border-gray-100 bg-gray-50 shrink-0">
@@ -182,17 +200,7 @@ export function SearchableSelect({
                 </div>
             ) : (
                 <>
-                    <button
-                    type="button"
-                    onClick={() => {
-                        onChange('');
-                        setIsOpen(false);
-                        setSearchTerm('');
-                    }}
-                    className="w-full px-4 py-2 text-left text-xs text-gray-400 hover:bg-gray-50 transition-colors border-b border-gray-100 italic"
-                    >
-                    Limpar seleção
-                    </button>
+                    {/* Item "Limpar seleção" removido da lista conforme solicitado */}
 
                     {filteredOptions.map((opt, idx) => (
                     <button
@@ -245,7 +253,7 @@ export function SearchableSelect({
       {/* MODAL DE GERENCIAMENTO (Add/Edit/Delete) */}
       {isManaging && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setIsManaging(false)}
         >
           <div 

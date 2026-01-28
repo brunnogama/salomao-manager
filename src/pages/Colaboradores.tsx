@@ -239,11 +239,19 @@ export function Colaboradores() {
     reader.readAsBinaryString(file)
   }
 
-  // --- FILTRAGEM ---
+  // --- FILTRAGEM CORRIGIDA (Case Insensitive) ---
   const filteredData = colaboradores.filter(c => {
     const matchSearch = c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || c.cpf?.includes(searchTerm)
-    const matchLider = filterLider ? c.lider_equipe === filterLider : true
-    const matchLocal = filterLocal ? c.local === filterLocal : true
+    
+    // Compara ignorando maiúsculas/minúsculas
+    const matchLider = filterLider 
+        ? c.lider_equipe?.toLowerCase() === filterLider.toLowerCase() 
+        : true;
+        
+    const matchLocal = filterLocal 
+        ? c.local?.toLowerCase() === filterLocal.toLowerCase() 
+        : true;
+        
     return matchSearch && matchLider && matchLocal
   })
 
