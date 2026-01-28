@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Settings, ChevronDown, Plus, X, Pencil, Trash2, Save } from 'lucide-react';
+import { Search, Settings, ChevronDown, Plus, X, Pencil, Trash2, Save, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Option {
@@ -39,8 +39,12 @@ export function SearchableSelect({
   const [isManaging, setIsManaging] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [options, setOptions] = useState<Option[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Estados para gerenciamento (Add/Edit)
   const [newOptionValue, setNewOptionValue] = useState('');
   const [editingOption, setEditingOption] = useState<{ id: number; name: string } | null>(null);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const toTitleCase = (str: string) => {
@@ -61,8 +65,10 @@ export function SearchableSelect({
 
   const fetchOptions = async () => {
     if (!table) return;
+    setLoading(true);
     const { data } = await supabase.from(table).select('*').order(nameField);
     if (data) setOptions(data);
+    setLoading(false);
   };
 
   // Fecha dropdown ao clicar fora
@@ -71,7 +77,7 @@ export function SearchableSelect({
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setSearchTerm('');
-        setIsManaging(false); // Fecha modo de gerenciamento também
+        setIsManaging(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -87,10 +93,17 @@ export function SearchableSelect({
 
   const selectedOption = options.find(opt => getName(opt) === value);
 
+  // --- CRUD OPÇÕES ---
   const handleAddOption = async () => {
     if (!newOptionValue.trim() || !table) return;
     const val = toTitleCase(newOptionValue.trim());
-    await supabase.from(table).insert({ [nameField]: val });
+    
+    const { error } = await supabase.from(table).insert({ [nameField]: val });
+    if (error) {
+        alert('Erro ao adicionar: ' + error.message);
+        return;
+    }
+
     setNewOptionValue('');
     await fetchOptions();
     if (onRefresh) onRefresh();
@@ -98,16 +111,28 @@ export function SearchableSelect({
 
   const handleUpdateOption = async () => {
     if (!editingOption || !editingOption.name.trim() || !table) return;
-    await supabase.from(table).update({ [nameField]: toTitleCase(editingOption.name.trim()) }).eq('id', editingOption.id);
+    
+    const { error } = await supabase.from(table).update({ [nameField]: toTitleCase(editingOption.name.trim()) }).eq('id', editingOption.id);
+    if (error) {
+        alert('Erro ao atualizar: ' + error.message);
+        return;
+    }
+
     setEditingOption(null);
     await fetchOptions();
     if (onRefresh) onRefresh();
   };
 
   const handleDeleteOption = async (id: number) => {
-    if (!confirm('Deseja excluir este item?')) return;
+    if (!confirm('Deseja realmente excluir esta opção?')) return;
     if (!table) return;
-    await supabase.from(table).delete().eq('id', id);
+    
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (error) {
+        alert('Erro ao excluir: ' + error.message);
+        return;
+    }
+
     await fetchOptions();
     if (onRefresh) onRefresh();
   };
@@ -116,12 +141,12 @@ export function SearchableSelect({
     <div ref={dropdownRef} className={`relative ${className}`}>
       {label && <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{label}</label>}
       
-      {/* Campo principal */}
+      {/* TRIGGER DO DROPDOWN */}
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full border border-gray-300 rounded-lg p-2.5 text-left focus:ring-2 focus:ring-blue-500 outline-none bg-white transition-all hover:border-blue-400 flex items-center justify-between ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-full border border-gray-300 rounded-lg p-2.5 text-left focus:ring-2 focus:ring-[#112240] outline-none bg-white transition-all hover:border-blue-400 flex items-center justify-between ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <span className={value ? "text-gray-900 text-sm" : "text-gray-400 text-sm"}>
           {selectedOption ? toTitleCase(getName(selectedOption)) : (value || placeholder)}
@@ -129,17 +154,18 @@ export function SearchableSelect({
         <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown com busca */}
+      {/* DROPDOWN MENU */}
       {isOpen && !isManaging && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-          {/* Campo de busca */}
-          <div className="p-3 border-b border-gray-100 bg-gray-50">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 flex flex-col animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+          
+          {/* Header de Busca */}
+          <div className="p-2 border-b border-gray-100 bg-gray-50 shrink-0">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Buscar..."
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-[#112240] focus:border-[#112240] outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
@@ -148,76 +174,89 @@ export function SearchableSelect({
             </div>
           </div>
 
-          {/* Lista de opções */}
-          <div className="max-h-48 overflow-y-auto custom-scrollbar">
-            <button
-              type="button"
-              onClick={() => {
-                onChange('');
-                setIsOpen(false);
-                setSearchTerm('');
-              }}
-              className="w-full px-4 py-2.5 text-left text-sm text-gray-400 hover:bg-gray-50 transition-colors border-b border-gray-100 italic"
-            >
-              Limpar seleção
-            </button>
-            {filteredOptions.map((opt, idx) => (
-              <button
-                key={getId(opt) || idx}
-                type="button"
-                onClick={() => {
-                  onChange(getName(opt));
-                  setIsOpen(false);
-                  setSearchTerm('');
-                }}
-                className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-                  value === getName(opt) 
-                    ? 'bg-blue-50 text-blue-700 font-medium' 
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {toTitleCase(getName(opt))}
-              </button>
-            ))}
-            {filteredOptions.length === 0 && (
-              <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                Nenhum resultado encontrado
-              </div>
+          {/* Lista de Opções (Scrollável) */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {loading ? (
+                <div className="flex items-center justify-center py-4 text-gray-400">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+            ) : (
+                <>
+                    <button
+                    type="button"
+                    onClick={() => {
+                        onChange('');
+                        setIsOpen(false);
+                        setSearchTerm('');
+                    }}
+                    className="w-full px-4 py-2 text-left text-xs text-gray-400 hover:bg-gray-50 transition-colors border-b border-gray-100 italic"
+                    >
+                    Limpar seleção
+                    </button>
+
+                    {filteredOptions.map((opt, idx) => (
+                    <button
+                        key={getId(opt) || idx}
+                        type="button"
+                        onClick={() => {
+                        onChange(getName(opt));
+                        setIsOpen(false);
+                        setSearchTerm('');
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm transition-colors border-b border-gray-50 last:border-0 ${
+                        value === getName(opt) 
+                            ? 'bg-blue-50 text-blue-900 font-bold' 
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                    >
+                        {toTitleCase(getName(opt))}
+                    </button>
+                    ))}
+
+                    {filteredOptions.length === 0 && (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Nenhum resultado
+                    </div>
+                    )}
+                </>
             )}
           </div>
 
-          {/* Botão Gerenciar no rodapé */}
+          {/* Footer Gerenciar (Fixo no fundo) */}
           {table && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsManaging(true);
-                setSearchTerm('');
-              }}
-              className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 border-t border-gray-200 flex items-center gap-2 transition-colors bg-white"
-            >
-              <Settings className="h-4 w-4 text-gray-600" />
-              <span>Gerenciar {label || 'Opções'}</span>
-            </button>
+            <div className="border-t border-gray-200 bg-gray-50 p-1 shrink-0">
+                <button
+                type="button"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setIsManaging(true);
+                    setSearchTerm('');
+                }}
+                className="w-full px-3 py-2 text-center text-xs font-bold text-[#112240] hover:bg-white hover:shadow-sm rounded-md border border-transparent hover:border-gray-200 flex items-center justify-center gap-2 transition-all"
+                >
+                <Settings className="h-3.5 w-3.5" />
+                GERENCIAR OPÇÕES
+                </button>
+            </div>
           )}
         </div>
       )}
 
-      {/* Modal de Gerenciamento */}
+      {/* MODAL DE GERENCIAMENTO (Add/Edit/Delete) */}
       {isManaging && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setIsManaging(false)}
         >
           <div 
-            className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="px-6 py-4 flex justify-between items-center border-b border-gray-200">
-              <h3 className="font-semibold text-lg text-gray-900">
-                Gerenciar {label}
+            {/* Header Modal */}
+            <div className="px-5 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50">
+              <h3 className="font-bold text-base text-gray-800 flex items-center gap-2">
+                <Settings className="h-4 w-4 text-gray-500"/>
+                Gerenciar: {label}
               </h3>
               <button 
                 onClick={() => {
@@ -225,42 +264,45 @@ export function SearchableSelect({
                   setEditingOption(null);
                   setNewOptionValue('');
                 }} 
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-white"
               >
                 <X className="h-5 w-5"/>
               </button>
             </div>
             
-            <div className="p-6">
-              {/* Input para adicionar */}
+            <div className="p-5">
+              {/* Input Adicionar */}
               <div className="flex gap-2 mb-4">
                 <input 
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                  placeholder="Digite o nome"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#112240] focus:border-transparent placeholder:text-gray-400" 
+                  placeholder="Nova opção..."
                   value={newOptionValue}
                   onChange={e => setNewOptionValue(e.target.value)}
                   onKeyPress={e => e.key === 'Enter' && handleAddOption()}
+                  autoFocus
                 />
                 <button 
                   onClick={handleAddOption} 
-                  className="bg-gray-800 text-white p-2 rounded-lg hover:bg-gray-900 transition-colors disabled:opacity-50"
+                  className="bg-[#112240] text-white p-2.5 rounded-lg hover:bg-[#1a3a6c] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   disabled={!newOptionValue.trim()}
+                  title="Adicionar"
                 >
                   <Plus className="h-5 w-5"/>
                 </button>
               </div>
 
-              {/* Lista de itens */}
-              <div className="max-h-72 overflow-y-auto space-y-1 custom-scrollbar">
+              {/* Lista de Edição */}
+              <div className="max-h-64 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                 {options.map(opt => (
                   <div 
                     key={getId(opt)} 
-                    className="flex items-center justify-between p-3 rounded hover:bg-gray-50 transition-colors group"
+                    className="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 bg-gray-50 hover:bg-white hover:border-blue-200 hover:shadow-sm transition-all group"
                   >
                     {editingOption?.id === getId(opt) ? (
+                      // Modo Edição
                       <>
                         <input 
-                          className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm mr-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="flex-1 border border-blue-300 rounded px-2 py-1 text-sm mr-2 focus:ring-2 focus:ring-blue-100 outline-none bg-white"
                           value={editingOption.name}
                           onChange={e => setEditingOption({...editingOption, name: e.target.value})}
                           onKeyPress={e => e.key === 'Enter' && handleUpdateOption()}
@@ -269,14 +311,14 @@ export function SearchableSelect({
                         <div className="flex gap-1">
                           <button 
                             onClick={handleUpdateOption}
-                            className="text-green-600 hover:bg-green-50 p-1 rounded"
+                            className="bg-green-100 text-green-700 hover:bg-green-200 p-1.5 rounded-md transition-colors"
                             title="Salvar"
                           >
                             <Save className="h-4 w-4"/>
                           </button>
                           <button 
                             onClick={() => setEditingOption(null)}
-                            className="text-gray-500 hover:bg-gray-100 p-1 rounded"
+                            className="bg-gray-200 text-gray-600 hover:bg-gray-300 p-1.5 rounded-md transition-colors"
                             title="Cancelar"
                           >
                             <X className="h-4 w-4"/>
@@ -284,19 +326,20 @@ export function SearchableSelect({
                         </div>
                       </>
                     ) : (
+                      // Modo Visualização
                       <>
-                        <span className="text-sm text-gray-700 flex-1">{toTitleCase(getName(opt))}</span>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-sm text-gray-700 flex-1 font-medium">{toTitleCase(getName(opt))}</span>
+                        <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <button 
                             onClick={() => setEditingOption({ id: getId(opt), name: getName(opt) })}
-                            className="text-blue-600 hover:bg-blue-50 p-1.5 rounded transition-colors"
+                            className="text-blue-600 hover:bg-blue-100 p-1.5 rounded-md transition-colors"
                             title="Editar"
                           >
                             <Pencil className="h-4 w-4"/>
                           </button>
                           <button 
                             onClick={() => handleDeleteOption(getId(opt))}
-                            className="text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
+                            className="text-red-600 hover:bg-red-100 p-1.5 rounded-md transition-colors"
                             title="Excluir"
                           >
                             <Trash2 className="h-4 w-4"/>
@@ -306,9 +349,10 @@ export function SearchableSelect({
                     )}
                   </div>
                 ))}
+                
                 {options.length === 0 && (
-                  <div className="text-center py-8 text-sm text-gray-500">
-                    Nenhum item cadastrado
+                  <div className="text-center py-6 text-sm text-gray-400 italic">
+                    Nenhum item cadastrado ainda.
                   </div>
                 )}
               </div>

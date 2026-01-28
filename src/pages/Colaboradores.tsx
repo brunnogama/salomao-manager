@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { 
   Search, Upload, Download, Plus, X, 
   MapPin, User, Briefcase, Trash2, Pencil, Save, 
-  Users, UserMinus, CheckCircle, UserX
+  Users, UserMinus, CheckCircle, UserX, Filter
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -247,6 +247,15 @@ export function Colaboradores() {
     return matchSearch && matchLider && matchLocal
   })
 
+  // Funções de Limpeza de Filtro
+  const hasActiveFilters = searchTerm !== '' || filterLider !== '' || filterLocal !== ''
+  
+  const clearFilters = () => {
+    setSearchTerm('')
+    setFilterLider('')
+    setFilterLocal('')
+  }
+
   const unicosLideres = Array.from(new Set(colaboradores.map(c => c.lider_equipe).filter(Boolean))).sort()
   const unicosLocais = Array.from(new Set(colaboradores.map(c => c.local).filter(Boolean))).sort()
 
@@ -335,6 +344,17 @@ export function Colaboradores() {
                    options={unicosLocais.map(l => ({ name: toTitleCase(l) }))}
                 />
               </div>
+
+              {/* Botão Limpar Filtros */}
+              {hasActiveFilters && (
+                <button 
+                  onClick={clearFilters}
+                  className="px-3 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 border border-red-200 whitespace-nowrap animate-in fade-in zoom-in-95"
+                  title="Limpar todos os filtros"
+                >
+                  <X className="h-4 w-4" /> Limpar
+                </button>
+              )}
             </div>
           )}
 
@@ -457,7 +477,7 @@ export function Colaboradores() {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">CPF</label>
-              <input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.cpf || ''} onChange={e => setFormData({...formData, cpf: maskCPF(e.target.value)})} maxLength={14} />
+              <input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.cpf || ''} onChange={e => setFormData({...formData,cpf: maskCPF(e.target.value)})} maxLength={14} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Data Nascimento</label>
