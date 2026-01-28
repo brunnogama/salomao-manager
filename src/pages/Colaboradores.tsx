@@ -243,7 +243,7 @@ export function Colaboradores() {
   const filteredData = colaboradores.filter(c => {
     const matchSearch = c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || c.cpf?.includes(searchTerm)
     
-    // Compara ignorando maiúsculas/minúsculas
+    // Compara ignorando maiúsculas/minúsculas para evitar erros de filtro vazio
     const matchLider = filterLider 
         ? c.lider_equipe?.toLowerCase() === filterLider.toLowerCase() 
         : true;

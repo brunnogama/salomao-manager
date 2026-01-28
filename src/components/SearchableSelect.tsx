@@ -61,7 +61,7 @@ export function SearchableSelect({
     } else {
       setOptions(externalOptions);
     }
-  }, [table, externalOptions, isOpen]); // Recarrega ao abrir para garantir dados frescos
+  }, [table, externalOptions, isOpen]); 
 
   const fetchOptions = async () => {
     if (!table) return;
@@ -137,7 +137,7 @@ export function SearchableSelect({
     if (onRefresh) onRefresh();
   };
 
-  // Handler para limpar seleção
+  // Handler para limpar seleção no botão X
   const handleClearSelection = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange('');
@@ -151,30 +151,34 @@ export function SearchableSelect({
       {/* TRIGGER DO DROPDOWN */}
       <div 
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`w-full border border-gray-300 rounded-lg p-2.5 text-left focus-within:ring-2 focus-within:ring-[#112240] bg-white transition-all hover:border-blue-400 flex items-center justify-between cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`
+          w-full border border-gray-300 rounded-lg p-2.5 text-left bg-white 
+          flex items-center justify-between cursor-pointer transition-all
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-400 focus-within:ring-2 focus-within:ring-[#112240]'}
+        `}
       >
-        <span className={`text-sm ${value ? "text-gray-900" : "text-gray-400"}`}>
+        <span className={`text-sm truncate ${value ? "text-gray-900" : "text-gray-400"}`}>
           {selectedOption ? toTitleCase(getName(selectedOption)) : (value || placeholder)}
         </span>
         
-        <div className="flex items-center gap-2">
-            {/* Botão limpar (X) - aparece apenas se houver valor e não estiver disabled */}
+        <div className="flex items-center gap-1">
+            {/* Botão limpar (X) - aparece apenas se houver valor */}
             {value && !disabled && (
                 <button 
                     onClick={handleClearSelection}
-                    className="p-0.5 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-full transition-colors"
+                    className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors mr-1"
                     title="Limpar seleção"
                 >
                     <X className="h-3.5 w-3.5" />
                 </button>
             )}
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </div>
 
       {/* DROPDOWN MENU */}
       {isOpen && !isManaging && (
-        <div className="absolute z-[1000] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 flex flex-col animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+        <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100 z-[9999]">
           
           {/* Header de Busca */}
           <div className="p-2 border-b border-gray-100 bg-gray-50 shrink-0">
@@ -193,15 +197,13 @@ export function SearchableSelect({
           </div>
 
           {/* Lista de Opções (Scrollável) */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 overflow-y-auto custom-scrollbar max-h-60">
             {loading ? (
                 <div className="flex items-center justify-center py-4 text-gray-400">
                     <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
             ) : (
                 <>
-                    {/* Item "Limpar seleção" removido da lista conforme solicitado */}
-
                     {filteredOptions.map((opt, idx) => (
                     <button
                         key={getId(opt) || idx}
@@ -211,10 +213,10 @@ export function SearchableSelect({
                         setIsOpen(false);
                         setSearchTerm('');
                         }}
-                        className={`w-full px-4 py-2.5 text-left text-sm transition-colors border-b border-gray-50 last:border-0 ${
+                        className={`w-full px-4 py-2.5 text-left text-sm transition-colors border-b border-gray-50 last:border-0 hover:bg-gray-50 ${
                         value === getName(opt) 
                             ? 'bg-blue-50 text-blue-900 font-bold' 
-                            : 'text-gray-700 hover:bg-gray-50'
+                            : 'text-gray-700'
                         }`}
                     >
                         {toTitleCase(getName(opt))}
@@ -222,7 +224,7 @@ export function SearchableSelect({
                     ))}
 
                     {filteredOptions.length === 0 && (
-                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center italic">
                         Nenhum resultado
                     </div>
                     )}
@@ -232,7 +234,7 @@ export function SearchableSelect({
 
           {/* Footer Gerenciar (Fixo no fundo) */}
           {table && (
-            <div className="border-t border-gray-200 bg-gray-50 p-1 shrink-0">
+            <div className="border-t border-gray-200 bg-gray-50 p-1.5 shrink-0 z-10">
                 <button
                 type="button"
                 onClick={(e) => {
@@ -240,10 +242,10 @@ export function SearchableSelect({
                     setIsManaging(true);
                     setSearchTerm('');
                 }}
-                className="w-full px-3 py-2 text-center text-xs font-bold text-[#112240] hover:bg-white hover:shadow-sm rounded-md border border-transparent hover:border-gray-200 flex items-center justify-center gap-2 transition-all"
+                className="w-full px-3 py-2 text-center text-xs font-bold text-[#112240] bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-md shadow-sm flex items-center justify-center gap-2 transition-all uppercase tracking-wide"
                 >
                 <Settings className="h-3.5 w-3.5" />
-                GERENCIAR OPÇÕES
+                Gerenciar Opções
                 </button>
             </div>
           )}
@@ -253,7 +255,7 @@ export function SearchableSelect({
       {/* MODAL DE GERENCIAMENTO (Add/Edit/Delete) */}
       {isManaging && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setIsManaging(false)}
         >
           <div 
