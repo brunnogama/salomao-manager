@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { 
   Search, Upload, Download, Plus, X, 
   MapPin, User, Briefcase, Trash2, Pencil, Save, 
-  Users, UserMinus, CheckCircle, UserX, Filter, Calendar, Building2
+  Users, UserMinus, CheckCircle, UserX, Filter, Calendar, Building2, Camera, Image
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -29,6 +29,7 @@ interface Colaborador {
   data_admissao: string;
   data_desligamento: string;
   status: string;
+  foto_url?: string;
 }
 
 const ESTADOS_BRASIL = [
@@ -60,10 +61,15 @@ export function Colaboradores() {
     estado: 'Rio de Janeiro'
   })
 
+  // Estado para upload de foto
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+
   // Estado para refresh do SearchableSelect
   const [refreshKey, setRefreshKey] = useState(0)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchColaboradores()
@@ -94,6 +100,84 @@ export function Colaboradores() {
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1)
     fetchColaboradores()
+  }
+
+  // --- UPLOAD DE FOTO ---
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validação do tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione apenas arquivos de imagem')
+      return
+    }
+
+    // Validação do tamanho (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 5MB')
+      return
+    }
+
+    // Criar preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setPhotoPreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const uploadPhoto = async (file: File, colaboradorId: number): Promise<string | null> => {
+    try {
+      setUploadingPhoto(true)
+
+      // Gerar nome único para o arquivo
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${colaboradorId}_${Date.now()}.${fileExt}`
+      const filePath = `colaboradores/${fileName}`
+
+      // Upload para o Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('fotos-colaboradores')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        })
+
+      if (uploadError) throw uploadError
+
+      // Obter URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('fotos-colaboradores')
+        .getPublicUrl(filePath)
+
+      return publicUrl
+    } catch (error) {
+      console.error('Erro ao fazer upload da foto:', error)
+      alert('Erro ao fazer upload da foto')
+      return null
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
+  const deleteFoto = async (fotoUrl: string) => {
+    try {
+      // Extrair o caminho do arquivo da URL
+      const urlParts = fotoUrl.split('/fotos-colaboradores/')
+      if (urlParts.length < 2) return
+
+      const filePath = urlParts[1]
+
+      // Deletar do storage
+      const { error } = await supabase.storage
+        .from('fotos-colaboradores')
+        .remove([`colaboradores/${filePath}`])
+
+      if (error) throw error
+    } catch (error) {
+      console.error('Erro ao deletar foto:', error)
+    }
   }
 
   // --- MÁSCARAS E VIACEP ---
@@ -134,6 +218,22 @@ export function Colaboradores() {
       return `${y}-${m}-${d}`
     }
 
+    let fotoUrl = formData.foto_url
+
+    // Se houver uma nova foto selecionada, fazer upload
+    if (photoPreview && photoInputRef.current?.files?.[0]) {
+      const file = photoInputRef.current.files[0]
+      
+      // Se está editando e já tem foto, deletar a antiga
+      if (formData.id && formData.foto_url) {
+        await deleteFoto(formData.foto_url)
+      }
+
+      // Upload da nova foto
+      const tempId = formData.id || Date.now()
+      fotoUrl = await uploadPhoto(file, tempId)
+    }
+
     const payload = {
       ...formData,
       nome: toTitleCase(formData.nome || ''),
@@ -145,6 +245,7 @@ export function Colaboradores() {
       data_nascimento: toISODate(formData.data_nascimento),
       data_admissao: toISODate(formData.data_admissao),
       data_desligamento: toISODate(formData.data_desligamento),
+      foto_url: fotoUrl
     }
 
     const { error } = formData.id 
@@ -156,6 +257,8 @@ export function Colaboradores() {
       setViewMode('list')
       fetchColaboradores()
       setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' })
+      setPhotoPreview(null)
+      if (photoInputRef.current) photoInputRef.current.value = ''
     }
   }
 
@@ -172,15 +275,28 @@ export function Colaboradores() {
       data_admissao: toFormDate(colab.data_admissao),
       data_desligamento: toFormDate(colab.data_desligamento),
     })
+    setPhotoPreview(colab.foto_url || null)
     setViewMode('form')
     setSelectedColaborador(null) 
   }
 
   const handleDelete = async (id: number) => {
     if(!confirm('Excluir colaborador?')) return
+    
+    // Buscar colaborador para deletar foto se existir
+    const colab = colaboradores.find(c => c.id === id)
+    if (colab?.foto_url) {
+      await deleteFoto(colab.foto_url)
+    }
+    
     await supabase.from('colaboradores').delete().eq('id', id)
     fetchColaboradores()
     setSelectedColaborador(null)
+  }
+
+  const handleRemovePhoto = () => {
+    setPhotoPreview(null)
+    if (photoInputRef.current) photoInputRef.current.value = ''
   }
 
   // --- IMPORTAÇÃO / EXPORTAÇÃO ---
@@ -291,6 +407,31 @@ export function Colaboradores() {
     </div>
   )
 
+  // Componente Avatar com Foto
+  const Avatar = ({ colab, size = 'md' }: { colab: Colaborador, size?: 'sm' | 'md' | 'lg' }) => {
+    const sizes = {
+      sm: 'w-10 h-10 text-base',
+      md: 'w-14 h-14 text-2xl',
+      lg: 'w-20 h-20 text-3xl'
+    }
+
+    if (colab.foto_url) {
+      return (
+        <img 
+          src={colab.foto_url} 
+          alt={colab.nome}
+          className={`${sizes[size]} rounded-full object-cover border-2 border-gray-200 shadow-sm`}
+        />
+      )
+    }
+
+    return (
+      <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center text-gray-600 font-bold shadow-sm`}>
+        {colab.nome?.charAt(0).toUpperCase()}
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
       
@@ -394,7 +535,7 @@ export function Colaboradores() {
             <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-bold text-sm transition-colors border border-blue-200">
               <Download className="h-4 w-4" /> Exportar
             </button>
-            <button onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setViewMode('form') }} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold text-sm transition-colors shadow-sm">
+            <button onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setPhotoPreview(null); setViewMode('form') }} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold text-sm transition-colors shadow-sm">
               <Plus className="h-4 w-4" /> Novo Colaborador
             </button>
           </div>
@@ -426,9 +567,7 @@ export function Colaboradores() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center text-gray-600 font-bold shadow-sm">
-                            {colab.nome?.charAt(0).toUpperCase()}
-                          </div>
+                          <Avatar colab={colab} size="sm" />
                           <div>
                             <p className="font-bold text-gray-900 text-sm">{toTitleCase(colab.nome)}</p>
                             <p className="text-xs text-gray-500">{colab.cpf}</p>
@@ -487,10 +626,68 @@ export function Colaboradores() {
               {formData.id ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
               {formData.id ? 'Editar Colaborador' : 'Novo Colaborador'}
             </h2>
-            <button onClick={() => setViewMode('list')} className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full transition-colors"><X className="h-6 w-6" /></button>
+            <button onClick={() => { setViewMode('list'); setPhotoPreview(null); }} className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full transition-colors"><X className="h-6 w-6" /></button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* SEÇÃO DE FOTO */}
+            <div className="md:col-span-3 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
+              <h3 className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2 mb-4">
+                <Camera className="h-4 w-4"/> Foto do Colaborador
+              </h3>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  {photoPreview ? (
+                    <div className="relative">
+                      <img 
+                        src={photoPreview} 
+                        alt="Preview" 
+                        className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                      />
+                      <button
+                        onClick={handleRemovePhoto}
+                        className="absolute -top-2 -right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-colors"
+                        type="button"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border-4 border-white shadow-lg flex items-center justify-center">
+                      <Image className="h-12 w-12 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    ref={photoInputRef}
+                    accept="image/*"
+                    onChange={handlePhotoSelect}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    type="button"
+                  >
+                    {uploadingPhoto ? (
+                      <>Fazendo upload...</>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4" />
+                        {photoPreview ? 'Alterar Foto' : 'Adicionar Foto'}
+                      </>
+                    )}
+                  </button>
+                  <p className="text-xs text-gray-600 mt-2">
+                    Formatos aceitos: JPG, PNG, GIF (máx. 5MB)
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* DADOS PESSOAIS */}
             <div className="md:col-span-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
@@ -649,8 +846,8 @@ export function Colaboradores() {
           </div>
 
           <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-100">
-            <button onClick={() => setViewMode('list')} className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
-            <button onClick={handleSave} className="px-6 py-2.5 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 shadow-md transition-colors flex items-center gap-2"><Save className="h-4 w-4"/> Salvar</button>
+            <button onClick={() => { setViewMode('list'); setPhotoPreview(null); }} className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-colors shadow-sm">Cancelar</button>
+            <button onClick={handleSave} disabled={uploadingPhoto} className="px-6 py-2.5 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 shadow-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"><Save className="h-4 w-4"/> Salvar</button>
           </div>
         </div>
       )}
@@ -663,9 +860,7 @@ export function Colaboradores() {
             {/* Header */}
             <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-gray-50/50 sticky top-0 z-10 backdrop-blur-md">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-[#112240] text-white flex items-center justify-center text-2xl font-bold shadow-md">
-                  {selectedColaborador.nome?.charAt(0).toUpperCase()}
-                </div>
+                <Avatar colab={selectedColaborador} size="lg" />
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">{toTitleCase(selectedColaborador.nome)}</h2>
                   <div className="flex items-center gap-2 mt-1">
