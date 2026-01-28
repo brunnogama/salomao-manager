@@ -50,6 +50,17 @@ const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
 const CHANGELOG = [
   {
+    version: '2.7.0',
+    date: '28/01/2026',
+    type: 'minor',
+    title: '⚙️ Manutenção RH',
+    changes: [
+      'Novo reset para Colaboradores',
+      'Distinção clara entre reset de Presença e Colaboradores',
+      'Unificação de UI nas zonas de perigo'
+    ]
+  },
+  {
     version: '2.6.0',
     date: '26/01/2026',
     type: 'major',
@@ -59,17 +70,6 @@ const CHANGELOG = [
       'Migração para user_profiles com allowed_modules',
       'Mapeamento correto de módulos do ecossistema',
       'Pré-cadastro de usuários com ativação automática no login'
-    ]
-  },
-  {
-    version: '1.8.0',
-    date: '26/01/2026',
-    type: 'major',
-    title: 'Super Admin & UX Flow',
-    changes: [
-      'Fluxo obrigatório de seleção de módulos no login',
-      'Feedback visual de permissão negada',
-      'Hardcode de Super Administrador implementado'
     ]
   }
 ]
@@ -97,7 +97,7 @@ export function Settings() {
   const [magistradosConfig, setMagistradosConfig] = useState({ pin: '', emails: '' })
   const [loadingConfig, setLoadingConfig] = useState(false)
   const [showAllVersions, setShowAllVersions] = useState(false)
-   
+    
   // Permissões do Usuário LOGADO
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('')
   const [currentUserRole, setCurrentUserRole] = useState<string>('')
@@ -460,16 +460,34 @@ export function Settings() {
 
   const handleResetPresence = async () => {
     if (!isAdmin) return alert("Ação restrita a administradores.");
-    if (!confirm('ATENÇÃO: Apagar todo o histórico de Presença?')) return;
+    if (!confirm('ATENÇÃO: Apagar todo o histórico de PRESENÇA?')) return;
     const confirmText = prompt('Digite APAGAR para confirmar:')
     if (confirmText !== 'APAGAR') return;
     setLoading(true)
-    setStatus({ type: null, message: 'Limpando registros...' })
+    setStatus({ type: null, message: 'Limpando registros de presença...' })
     try {
         const { error } = await supabase.from('presenca_portaria').delete().neq('id', '00000000-0000-0000-0000-000000000000')
         if (error) throw error
         setStatus({ type: 'success', message: 'Base de Presença resetada!' })
         await logAction('RESET', 'RH', 'Resetou base de presença')
+    } catch (error: any) {
+        setStatus({ type: 'error', message: 'Erro: ' + error.message })
+    } finally { setLoading(false) }
+  }
+
+  const handleResetCollaborators = async () => {
+    if (!isAdmin) return alert("Ação restrita a administradores.");
+    if (!confirm('ATENÇÃO: Apagar todo o cadastro de COLABORADORES?')) return;
+    const confirmText = prompt('Digite APAGAR para confirmar:')
+    if (confirmText !== 'APAGAR') return;
+    setLoading(true)
+    setStatus({ type: null, message: 'Limpando base de colaboradores...' })
+    try {
+        // Assume que a tabela se chama 'colaboradores'
+        const { error } = await supabase.from('colaboradores').delete().neq('id', 0)
+        if (error) throw error
+        setStatus({ type: 'success', message: 'Base de Colaboradores resetada!' })
+        await logAction('RESET', 'RH', 'Resetou base de colaboradores')
     } catch (error: any) {
         setStatus({ type: 'error', message: 'Erro: ' + error.message })
     } finally { setLoading(false) }
@@ -844,7 +862,34 @@ export function Settings() {
           <div className="animate-in fade-in">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                   <div className="flex items-center gap-3 mb-6"><div className="p-2 bg-green-50 rounded-lg"><Users className="h-5 w-5 text-green-700" /></div><div><h3 className="font-bold text-gray-900 text-base">Manutenção do RH</h3><p className="text-xs text-gray-500">Gestão avançada de dados de pessoal</p></div></div>
-                  <div className="border border-red-200 rounded-xl overflow-hidden"><div className="bg-red-50 p-4 border-b border-red-200 flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-red-600" /><h4 className="font-bold text-red-800 text-sm">Zona de Perigo - Presença</h4></div><div className="p-6"><p className="text-sm text-gray-600 mb-4">Esta ação irá apagar <strong>todos</strong> os registros de entrada e saída do banco de dados (tabela <code>presenca_portaria</code>). As regras de sócios e colaboradores cadastrados serão mantidas.</p><button onClick={handleResetPresence} disabled={!isAdmin} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white transition-colors ${isAdmin ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-300 cursor-not-allowed'}`}><Trash2 className="h-4 w-4" /> Resetar Base de Presença</button></div></div>
+                  
+                  {/* ZONA DE PERIGO PRESENÇA */}
+                  <div className="border border-red-200 rounded-xl overflow-hidden mb-6">
+                      <div className="bg-red-50 p-4 border-b border-red-200 flex items-center gap-2">
+                          <AlertTriangle className="h-5 w-5 text-red-600" />
+                          <h4 className="font-bold text-red-800 text-sm">Zona de Perigo - Presença (Portaria)</h4>
+                      </div>
+                      <div className="p-6">
+                          <p className="text-sm text-gray-600 mb-4">Esta ação irá apagar <strong>todos</strong> os registros de entrada e saída do banco de dados (Menu Presencial).</p>
+                          <button onClick={handleResetPresence} disabled={!isAdmin} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white transition-colors ${isAdmin ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-300 cursor-not-allowed'}`}>
+                              <Trash2 className="h-4 w-4" /> Resetar Base de Presença (Menu Presencial)
+                          </button>
+                      </div>
+                  </div>
+
+                  {/* ZONA DE PERIGO COLABORADORES */}
+                  <div className="border border-red-200 rounded-xl overflow-hidden">
+                      <div className="bg-red-50 p-4 border-b border-red-200 flex items-center gap-2">
+                          <AlertTriangle className="h-5 w-5 text-red-600" />
+                          <h4 className="font-bold text-red-800 text-sm">Zona de Perigo - Colaboradores (RH)</h4>
+                      </div>
+                      <div className="p-6">
+                          <p className="text-sm text-gray-600 mb-4">Esta ação irá apagar <strong>todos</strong> os registros de Colaboradores cadastrados no sistema.</p>
+                          <button onClick={handleResetCollaborators} disabled={!isAdmin} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white transition-colors ${isAdmin ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-300 cursor-not-allowed'}`}>
+                              <Trash2 className="h-4 w-4" /> Resetar Colaboradores
+                          </button>
+                      </div>
+                  </div>
               </div>
           </div>
       )}
@@ -857,7 +902,7 @@ export function Settings() {
               </div>
               <div className="space-y-6">
                 <div className="bg-white rounded-xl shadow-sm border-2 border-red-200 p-6"><div className="flex items-center gap-3 mb-6"><div className="p-2 bg-red-50 rounded-lg"><AlertTriangle className="h-5 w-5 text-red-600" /></div><div><h3 className="font-bold text-gray-900 text-base">Reset Geral do Sistema</h3><p className="text-xs text-gray-500">Ações irreversíveis</p></div></div><div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4"><p className="text-xs font-bold text-red-900 mb-2">⚠️ Atenção</p><ul className="text-xs text-red-700 space-y-1"><li>• Apagará TODOS os dados do sistema</li><li>• Clientes, magistrados e tarefas serão removidos</li></ul></div><button onClick={handleSystemReset} disabled={!isAdmin} className={`w-full flex items-center justify-center gap-3 py-4 font-bold rounded-lg ${isAdmin ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}><Trash2 className="h-5 w-5" /><div className="text-left"><p>Resetar Sistema Completo</p><p className="text-xs font-normal text-red-100">{isAdmin ? 'Apagar todos os dados' : 'Apenas Administradores'}</p></div></button></div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"><div className="flex items-center gap-3 mb-6"><Code className="h-5 w-5 text-gray-700" /><h3 className="font-bold text-gray-900 text-base">Créditos</h3></div><div className="p-4 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2 mb-2"><Building className="h-4 w-4 text-gray-600" /><p className="font-bold text-gray-900 text-xs">Empresa</p></div><p className="font-bold text-gray-900">Flow Metrics</p><p className="text-xs text-gray-600 mt-1">Análise de Dados e Desenvolvimento</p></div><div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2"><Shield className="h-4 w-4 text-gray-600" /><span className="text-xs font-medium text-gray-600">Versão</span></div><span className="px-3 py-1 bg-gray-900 text-white rounded-full text-xs font-bold">v2.6.0</span></div></div>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"><div className="flex items-center gap-3 mb-6"><Code className="h-5 w-5 text-gray-700" /><h3 className="font-bold text-gray-900 text-base">Créditos</h3></div><div className="p-4 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2 mb-2"><Building className="h-4 w-4 text-gray-600" /><p className="font-bold text-gray-900 text-xs">Empresa</p></div><p className="font-bold text-gray-900">Flow Metrics</p><p className="text-xs text-gray-600 mt-1">Análise de Dados e Desenvolvimento</p></div><div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div className="flex items-center gap-2"><Shield className="h-4 w-4 text-gray-600" /><span className="text-xs font-medium text-gray-600">Versão</span></div><span className="px-3 py-1 bg-gray-900 text-white rounded-full text-xs font-bold">v2.7.0</span></div></div>
               </div>
           </div>
       )}
