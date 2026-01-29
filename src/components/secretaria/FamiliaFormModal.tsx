@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Save, Settings2, Plus, Trash2, Edit2, Percent, Calculator, FileText, ChevronDown, Check } from 'lucide-react'
+import { X, Save, Settings2, Plus, Trash2, Edit2, Percent, Calculator, FileText, ChevronDown, Check, Upload } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
 interface FamiliaFormModalProps {
@@ -15,7 +15,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
     vencimento: '', titular: '', fornecedor: '', descricao_servico: '',
     tipo: '', categoria: '', valor: '', nota_fiscal: '', fatura: '', recibo: '',
     boleto: '', os: '', rateio: '', rateio_porcentagem: 0,
-    fator_gerador: '', data_envio: '', status: 'Pendente', comprovante: ''
+    fator_gerador: '', data_envio: '', status: 'Pendente', comprovante: null
   })
 
   const [options, setOptions] = useState<{ [key: string]: string[] }>({
@@ -56,7 +56,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
         vencimento: '', titular: '', fornecedor: '', descricao_servico: '',
         tipo: '', categoria: '', valor: '', nota_fiscal: '', fatura: '', recibo: '',
         boleto: '', os: '', rateio: '', rateio_porcentagem: 0,
-        fator_gerador: '', data_envio: '', status: 'Pendente', comprovante: ''
+        fator_gerador: '', data_envio: '', status: 'Pendente', comprovante: null
       })
     }
   }, [initialData, isOpen])
@@ -93,12 +93,21 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
   const handleUpdateItem = () => {
     if (!editingItem || !editingItem.current.trim()) return
     const field = isManageModalOpen.field
+    const oldValue = editingItem.original
+    const newValue = editingItem.current.trim()
+
     setOptions(prev => ({
       ...prev,
       [field]: prev[field].map(item => 
-        item === editingItem.original ? editingItem.current.trim() : item
+        item === oldValue ? newValue : item
       ).sort()
     }))
+
+    // Atualiza o formulário se o item editado estiver selecionado
+    if (formData[field] === oldValue) {
+      setFormData((prev: any) => ({ ...prev, [field]: newValue }))
+    }
+
     setEditingItem(null)
   }
 
@@ -212,7 +221,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Nota Fiscal</label><input name="nota_fiscal" value={formData.nota_fiscal} onChange={(e) => setFormData({...formData, nota_fiscal: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
               <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Fatura</label><input name="fatura" value={formData.fatura} onChange={(e) => setFormData({...formData, fatura: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
-              <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Comprovante (GED)</label><input name="comprovante" value={formData.comprovante} onChange={(e) => setFormData({...formData, comprovante: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
+              <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Recibo</label><input name="recibo" value={formData.recibo} onChange={(e) => setFormData({...formData, recibo: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
               <div className="space-y-1.5 flex flex-col h-full">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Rateio</label>
                 <button type="button" onClick={() => setIsRateioModalOpen(true)} className="w-full h-[46px] flex items-center justify-between px-4 bg-white border-2 border-dashed border-gray-200 text-gray-600 rounded-2xl text-sm font-semibold hover:border-blue-400 hover:text-blue-600 transition-all">
@@ -224,7 +233,6 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Recibo</label><input name="recibo" value={formData.recibo} onChange={(e) => setFormData({...formData, recibo: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
               <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Boleto</label><input name="boleto" value={formData.boleto} onChange={(e) => setFormData({...formData, boleto: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
               <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">O.S.</label><input name="os" value={formData.os} onChange={(e) => setFormData({...formData, os: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
           </div>
@@ -232,6 +240,25 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
           <div className="space-y-1.5 pt-4">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Descrição do Serviço</label>
             <textarea name="descricao_servico" value={formData.descricao_servico} onChange={(e) => setFormData({...formData, descricao_servico: e.target.value})} rows={3} className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-[2rem] text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-medium" placeholder="Detalhes do serviço..." />
+          </div>
+
+          <div className="space-y-1.5 pt-4">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Comprovante (GED)</label>
+            <div className="flex items-center justify-center w-full">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-[2rem] cursor-pointer bg-gray-50/50 hover:bg-gray-100 transition-all">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-8 h-8 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500"><span className="font-bold">Clique para anexar</span> ou arraste o arquivo</p>
+                        <p className="text-xs text-gray-400">PDF (MAX. 10MB)</p>
+                    </div>
+                    <input type="file" accept="application/pdf" className="hidden" onChange={(e) => setFormData({...formData, comprovante: e.target.files ? e.target.files[0] : null})} />
+                </label>
+            </div>
+            {formData.comprovante && (
+              <p className="text-[10px] font-bold text-blue-600 mt-2 flex items-center gap-1 uppercase">
+                <FileText className="w-3 h-3" /> Arquivo selecionado: {typeof formData.comprovante === 'string' ? 'PDF Vinculado' : formData.comprovante.name}
+              </p>
+            )}
           </div>
 
           <div className="flex justify-end items-center gap-8 pt-6 mt-4 border-t border-gray-50 flex-shrink-0">
