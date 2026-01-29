@@ -4,12 +4,15 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { FamiliaTable } from './FamiliaTable'
 import { FamiliaFormModal } from './FamiliaFormModal'
+import { FamiliaViewModal } from './FamiliaViewModal'
 
 export function GestaoFamilia() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dashboard')
   const [dadosFamilia, setDadosFamilia] = useState<any[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<any | null>(null)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
 
   // Busca dados iniciais
   const fetchDados = async () => {
@@ -23,6 +26,18 @@ export function GestaoFamilia() {
 
   useEffect(() => {
     fetchDados()
+  }, [])
+
+  // Listener para o botão ESC
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsViewModalOpen(false)
+        setSelectedItem(null)
+      }
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
   }, [])
 
   // Função para salvar novo lançamento manual
@@ -40,6 +55,33 @@ export function GestaoFamilia() {
       console.error('Erro ao salvar:', error)
       alert('Erro ao salvar o lançamento.')
     }
+  }
+
+  // Função para deletar registro
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este registro?')) return
+
+    try {
+      const { error } = await supabase
+        .from('familia_salomao_dados')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      
+      await fetchDados()
+      setIsViewModalOpen(false)
+      setSelectedItem(null)
+    } catch (error) {
+      console.error('Erro ao excluir:', error)
+      alert('Erro ao excluir o registro.')
+    }
+  }
+
+  // Função para abrir visualização
+  const handleViewItem = (item: any) => {
+    setSelectedItem(item)
+    setIsViewModalOpen(true)
   }
 
   // Função para Importar XLSX e salvar AUTOMATICAMENTE
@@ -167,7 +209,7 @@ export function GestaoFamilia() {
             </div>
 
             <div className="flex-1 overflow-auto">
-              <FamiliaTable data={dadosFamilia} />
+              <FamiliaTable data={dadosFamilia} onItemClick={handleViewItem} />
             </div>
           </div>
         )}
@@ -178,6 +220,18 @@ export function GestaoFamilia() {
         onClose={() => setIsModalOpen(false)} 
         onSave={handleSaveData}
       />
+
+      {selectedItem && (
+        <FamiliaViewModal
+          item={selectedItem}
+          isOpen={isViewModalOpen}
+          onClose={() => {
+            setIsViewModalOpen(false)
+            setSelectedItem(null)
+          }}
+          onDelete={handleDelete}
+        />
+      )}
     </div>
   )
 }
