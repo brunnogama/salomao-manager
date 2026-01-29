@@ -7,7 +7,9 @@ import {
   TrendingUp, 
   Calendar as CalendarIcon,
   MapPin,
-  Briefcase
+  Briefcase,
+  Plus,
+  Download
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Colaborador } from '../types/colaborador';
