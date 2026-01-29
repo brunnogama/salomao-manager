@@ -140,6 +140,7 @@ export function GestaoFamilia() {
           categoria: row['Categoria']?.toString() || '',
           valor: typeof row['Valor'] === 'number' ? row['Valor'] : parseFloat(row['Valor']?.toString().replace('R$', '').replace('.', '').replace(',', '.')) || 0,
           nota_fiscal: row['Nota Fiscal']?.toString() || '',
+          fatura: row['Fatura']?.toString() || '',
           recibo: row['Recibo']?.toString() || '',
           boleto: row['Boleto']?.toString() || '',
           os: row['O.S.']?.toString() || '',
