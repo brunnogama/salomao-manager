@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from 'react'
 import { supabase } from '../lib/supabase'
 import { Menu, Transition } from '@headlessui/react'
-import { ChevronDown, Plus, Pencil, Trash2, Check, Gift, Sparkles } from 'lucide-react'
+import { ChevronDown, Plus, Pencil, Trash2, Check, Gift } from 'lucide-react'
 
 interface BrindeSelectorProps {
   value: string
@@ -115,11 +115,9 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
   return (
     <>
       <Menu as="div" className="relative">
-        <Menu.Button className="w-full border-2 border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none text-left flex items-center justify-between bg-white hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm">
+        <Menu.Button className="w-full border border-gray-300 rounded p-2.5 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none text-left flex items-center justify-between bg-white hover:border-gray-400 transition-all">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-purple-50 rounded-lg">
-              <Gift className="h-4 w-4 text-purple-600" />
-            </div>
+            <Gift className="h-4 w-4 text-gray-400" />
             <span className={value ? 'text-gray-900 font-medium' : 'text-gray-400'}>{value || 'Selecione o tipo de brinde'}</span>
           </div>
           <ChevronDown className="h-4 w-4 text-gray-400" />
@@ -134,19 +132,17 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
           leaveFrom="transform opacity-100 scale-100"
           leaveTo="transform opacity-0 scale-95"
         >
-          <Menu.Items className="absolute z-10 mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-xl max-h-60 overflow-auto">
+          <Menu.Items className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-auto">
             <Menu.Item>
               {({ active }) => (
                 <button
                   onClick={handleAdd}
-                  className={`w-full px-4 py-3 text-left flex items-center gap-2 border-b-2 border-gray-100 text-sm font-bold transition-all ${
-                    active ? 'bg-purple-50 text-purple-700' : 'text-gray-700'
+                  className={`w-full px-3 py-2.5 text-left flex items-center gap-2 border-b border-gray-200 text-sm font-semibold transition-colors ${
+                    active ? 'bg-gray-50' : 'bg-white'
                   }`}
                 >
-                  <div className="p-1 bg-purple-100 rounded-lg">
-                    <Plus className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <span>Adicionar Novo Tipo</span>
+                  <Plus className="h-4 w-4 text-gray-600" />
+                  <span className="text-gray-700">Adicionar Novo Tipo</span>
                 </button>
               )}
             </Menu.Item>
@@ -155,37 +151,37 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
               <Menu.Item key={brinde.id}>
                 {({ active }) => (
                   <div
-                    className={`px-4 py-3 flex items-center justify-between group text-sm transition-all cursor-pointer ${
+                    className={`px-3 py-2.5 flex items-center justify-between group text-sm transition-colors cursor-pointer ${
                       active ? 'bg-gray-50' : ''
-                    } ${value === brinde.nome ? 'bg-purple-50/50' : ''}`}
+                    }`}
                   >
                     <button
                       onClick={() => onChange(brinde.nome)}
                       className="flex-1 text-left flex items-center gap-2"
                     >
-                      <div className={`h-2 w-2 rounded-full ${value === brinde.nome ? 'bg-purple-600' : 'bg-gray-300'}`}></div>
-                      <span className={`${value === brinde.nome ? 'font-bold text-purple-700' : 'text-gray-700'}`}>
+                      <div className={`h-1.5 w-1.5 rounded-full ${value === brinde.nome ? 'bg-gray-900' : 'bg-gray-300'}`}></div>
+                      <span className={`${value === brinde.nome ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
                         {brinde.nome}
                       </span>
                       {value === brinde.nome && (
-                        <Check className="h-4 w-4 ml-auto text-purple-600" />
+                        <Check className="h-3.5 w-3.5 ml-auto text-gray-600" />
                       )}
                     </button>
 
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleEdit(brinde); }}
-                        className="p-1.5 hover:bg-blue-100 rounded-lg text-blue-600 transition-colors"
+                        className="p-1 hover:bg-gray-100 rounded text-gray-600 transition-colors"
                         title="Editar"
                       >
-                        <Pencil className="h-3.5 w-3.5" />
+                        <Pencil className="h-3 w-3" />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDelete(brinde); }}
-                        className="p-1.5 hover:bg-red-100 rounded-lg text-red-600 transition-colors"
+                        className="p-1 hover:bg-gray-100 rounded text-gray-600 transition-colors"
                         title="Excluir"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
@@ -195,7 +191,7 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
 
             {brindes.length === 0 && (
               <div className="px-4 py-8 text-sm text-gray-400 text-center">
-                <Gift className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <Gift className="h-8 w-8 mx-auto mb-2 text-gray-300" />
                 <p className="font-medium">Nenhum tipo de brinde cadastrado</p>
               </div>
             )}
@@ -204,24 +200,19 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
       </Menu>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-purple-50 rounded-xl">
-                <Sparkles className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-[#112240]">
-                  {modalMode === 'add' ? 'Adicionar Tipo de Brinde' : 'Editar Tipo de Brinde'}
-                </h3>
-                <p className="text-xs text-gray-500">
-                  {modalMode === 'add' ? 'Crie um novo tipo de brinde' : 'Atualize o nome do tipo'}
-                </p>
-              </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 border border-gray-200">
+            <div className="mb-5">
+              <h3 className="text-base font-semibold text-gray-900 mb-1">
+                {modalMode === 'add' ? 'Adicionar Tipo de Brinde' : 'Editar Tipo de Brinde'}
+              </h3>
+              <p className="text-xs text-gray-500">
+                {modalMode === 'add' ? 'Crie um novo tipo de brinde' : 'Atualize o nome do tipo'}
+              </p>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-xs font-bold text-gray-600 uppercase mb-2">
+            <div className="mb-5">
+              <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-wide mb-2">
                 Nome do Tipo
               </label>
               <input
@@ -230,27 +221,27 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                 placeholder="Ex: Brinde VIP, Brinde Premium..."
-                className="w-full border-2 border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all"
+                className="w-full border border-gray-300 rounded p-2.5 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all"
                 autoFocus
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={() => {
                   setIsModalOpen(false)
                   setInputValue('')
                   setEditingBrinde(null)
                 }}
-                className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                className="px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSave}
-                className="flex-1 px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-xl transition-all shadow-lg hover:shadow-xl"
+                className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-[#112240] hover:bg-[#1a3a6c] rounded transition-colors"
               >
-                {modalMode === 'add' ? 'Adicionar' : 'Salvar Alterações'}
+                {modalMode === 'add' ? 'Adicionar' : 'Salvar'}
               </button>
             </div>
           </div>

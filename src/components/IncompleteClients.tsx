@@ -168,16 +168,16 @@ export function IncompleteClients() {
       
       <div className="flex-shrink-0 flex flex-col gap-4">
         
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200">
             
             <div className="flex items-center gap-3">
-                <div className="p-3 bg-red-50 rounded-xl">
-                  <AlertCircle className="h-6 w-6 text-red-600" />
+                <div className="p-2 bg-gray-100 rounded border border-gray-200">
+                  <AlertCircle className="h-5 w-5 text-gray-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900">Cadastros Incompletos</p>
+                  <p className="text-sm font-semibold text-gray-900">Cadastros Incompletos</p>
                   <p className="text-xs text-gray-500">
-                    <span className="font-bold text-red-600">{processedClients.length}</span> {processedClients.length === 1 ? 'cliente' : 'clientes'} com pendências
+                    <span className="font-semibold text-gray-900">{processedClients.length}</span> {processedClients.length === 1 ? 'pendência' : 'pendências'}
                   </p>
                 </div>
             </div>
@@ -185,29 +185,29 @@ export function IncompleteClients() {
             <div className="flex flex-wrap items-center gap-2">
                 
                 <Menu as="div" className="relative">
-                    <Menu.Button className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-xs font-bold transition-all ${filterSocio ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}>
+                    <Menu.Button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded text-xs font-semibold bg-white text-gray-600 hover:bg-gray-50 transition-all">
                         <Users className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline">
-                            {filterSocio ? filterSocio : 'Sócios'}
+                            {filterSocio ? filterSocio : 'Sócio'}
                         </span>
                     </Menu.Button>
                     <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100">
-                        <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl border border-gray-200 focus:outline-none z-20 max-h-60 overflow-y-auto">
+                        <Menu.Items className="absolute right-0 mt-1 w-48 origin-top-right rounded bg-white shadow-lg border border-gray-200 focus:outline-none z-20 max-h-60 overflow-y-auto">
                             <div className="p-1">
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <button onClick={() => setFilterSocio('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded-lg font-medium`}>
+                                        <button onClick={() => setFilterSocio('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded font-medium`}>
                                             <span>Todos os Sócios</span>
-                                            {filterSocio === '' && <Check className="h-3 w-3 text-blue-600" />}
+                                            {filterSocio === '' && <Check className="h-3 w-3 text-gray-600" />}
                                         </button>
                                     )}
                                 </Menu.Item>
                                 {availableSocios.map((s) => (
                                     <Menu.Item key={s}>
                                         {({ active }) => (
-                                            <button onClick={() => setFilterSocio(s)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded-lg`}>
+                                            <button onClick={() => setFilterSocio(s)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded`}>
                                                 <span className="truncate">{s}</span>
-                                                {filterSocio === s && <Check className="h-3 w-3 text-blue-600" />}
+                                                {filterSocio === s && <Check className="h-3 w-3 text-gray-600" />}
                                             </button>
                                         )}
                                     </Menu.Item>
@@ -218,29 +218,29 @@ export function IncompleteClients() {
                 </Menu>
 
                 <Menu as="div" className="relative">
-                    <Menu.Button className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-xs font-bold transition-all ${filterBrinde ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}>
+                    <Menu.Button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded text-xs font-semibold bg-white text-gray-600 hover:bg-gray-50 transition-all">
                         <Gift className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline">
-                            {filterBrinde ? filterBrinde : 'Brindes'}
+                            {filterBrinde ? filterBrinde : 'Brinde'}
                         </span>
                     </Menu.Button>
                     <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100">
-                        <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl border border-gray-200 focus:outline-none z-20 max-h-60 overflow-y-auto">
+                        <Menu.Items className="absolute right-0 mt-1 w-48 origin-top-right rounded bg-white shadow-lg border border-gray-200 focus:outline-none z-20 max-h-60 overflow-y-auto">
                             <div className="p-1">
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <button onClick={() => setFilterBrinde('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded-lg font-medium`}>
+                                        <button onClick={() => setFilterBrinde('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded font-medium`}>
                                             <span>Todos os Brindes</span>
-                                            {filterBrinde === '' && <Check className="h-3 w-3 text-blue-600" />}
+                                            {filterBrinde === '' && <Check className="h-3 w-3 text-gray-600" />}
                                         </button>
                                     )}
                                 </Menu.Item>
                                 {availableBrindes.map((b) => (
                                     <Menu.Item key={b}>
                                         {({ active }) => (
-                                            <button onClick={() => setFilterBrinde(b)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded-lg`}>
+                                            <button onClick={() => setFilterBrinde(b)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded`}>
                                                 <span className="truncate">{b}</span>
-                                                {filterBrinde === b && <Check className="h-3 w-3 text-blue-600" />}
+                                                {filterBrinde === b && <Check className="h-3 w-3 text-gray-600" />}
                                             </button>
                                         )}
                                     </Menu.Item>
@@ -253,25 +253,22 @@ export function IncompleteClients() {
                 {hasActiveFilters && (
                     <button 
                         onClick={clearFilters}
-                        className="p-2 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-all flex items-center gap-1 shadow-sm"
+                        className="px-3 py-2 text-xs font-semibold text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1 transition-colors"
                         title="Limpar todos os filtros"
                     >
-                        <X className="h-4 w-4" />
-                        <span className="text-xs font-bold hidden sm:inline">Limpar</span>
+                        <X className="h-3 w-3" />
+                        <span className="hidden sm:inline">Limpar</span>
                     </button>
                 )}
 
-                <div className="h-6 w-px bg-gray-200 mx-1"></div>
+                <div className="h-5 w-px bg-gray-200"></div>
 
                 <Menu as="div" className="relative">
-                    <Menu.Button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:border-gray-300 transition-all">
-                        <ArrowUpDown className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">
-                            {sortOrder === 'newest' ? 'Recentes' : sortOrder === 'oldest' ? 'Antigos' : 'Nome'}
-                        </span>
+                    <Menu.Button className="p-2 bg-white border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition-colors">
+                        <ArrowUpDown className="h-4 w-4" />
                     </Menu.Button>
                     <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100">
-                        <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right rounded-xl bg-white shadow-xl border border-gray-200 focus:outline-none z-20">
+                        <Menu.Items className="absolute right-0 mt-1 w-40 origin-top-right rounded bg-white shadow-lg border border-gray-200 focus:outline-none z-20">
                             <div className="p-1">
                                 {[
                                     { id: 'newest', label: 'Mais Recentes' },
@@ -283,10 +280,10 @@ export function IncompleteClients() {
                                         {({ active }) => (
                                             <button 
                                                 onClick={() => setSortOrder(opt.id as any)}
-                                                className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded-lg`}
+                                                className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2 text-xs text-gray-700 rounded`}
                                             >
                                                 {opt.label}
-                                                {sortOrder === opt.id && <Check className="h-3 w-3 text-blue-600" />}
+                                                {sortOrder === opt.id && <Check className="h-3 w-3 text-gray-600" />}
                                             </button>
                                         )}
                                     </Menu.Item>
@@ -296,14 +293,12 @@ export function IncompleteClients() {
                     </Transition>
                 </Menu>
 
-                <div className="h-6 w-px bg-gray-200 mx-1"></div>
-
                 <button 
                     onClick={handleExport}
-                    className="p-2 bg-white text-gray-400 border border-gray-200 rounded-lg hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-all shadow-sm"
+                    className="p-2 bg-white border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition-colors"
                     title="Exportar para XLSX"
                 >
-                    <FileSpreadsheet className="h-5 w-5" />
+                    <FileSpreadsheet className="h-4 w-4" />
                 </button>
 
                 <button 
@@ -311,10 +306,10 @@ export function IncompleteClients() {
                         setIsSearchOpen(!isSearchOpen);
                         if(isSearchOpen && !filterSocio && !filterBrinde) setSearchTerm(''); 
                     }}
-                    className={`p-2 rounded-lg transition-all shadow-sm ${isSearchOpen ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-white text-gray-400 hover:text-gray-600 border border-gray-200'}`}
+                    className={`p-2 rounded transition-colors ${isSearchOpen ? 'bg-gray-900 text-white' : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'}`}
                     title="Buscar na lista"
                 >
-                    {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+                    {isSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
                 </button>
             </div>
         </div>
@@ -327,7 +322,7 @@ export function IncompleteClients() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Filtrar pendências por nome, empresa..."
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-gray-900 placeholder:text-gray-400 shadow-sm"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-gray-900 placeholder:text-gray-400"
                     autoFocus={isSearchOpen}
                 />
             </div>
@@ -336,72 +331,70 @@ export function IncompleteClients() {
 
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
         {processedClients.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400 bg-white rounded-xl border-2 border-dashed border-gray-200">
-              <CheckCircle className="h-16 w-16 mb-4 text-green-500" />
-              <p className="font-bold text-lg text-gray-900 mb-2">
+          <div className="flex flex-col items-center justify-center py-16 bg-white rounded-lg border border-gray-200">
+              <CheckCircle className="h-12 w-12 mb-3 text-gray-300" />
+              <p className="font-semibold text-base text-gray-900 mb-1">
                   {hasActiveFilters ? 'Nenhuma pendência encontrada' : 'Tudo certo!'}
               </p>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-gray-500 mb-3">
                   {hasActiveFilters ? 'Nenhum resultado com estes filtros.' : 'Não há cadastros pendentes.'}
               </p>
               {hasActiveFilters && (
                   <button 
                       onClick={clearFilters}
-                      className="text-blue-600 text-sm font-bold hover:underline"
+                      className="text-sm font-semibold text-gray-600 hover:text-gray-900 underline"
                   >
                       Limpar filtros
                   </button>
               )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-3">
               {processedClients.map((client: any) => {
                   const missing = REQUIRED_FIELDS
                       .filter(f => (!client[f.key] && !(client.ignored_fields || []).includes(f.label)))
                       .map(f => f.label)
 
                   return (
-                      <div key={client.id} className="relative bg-white p-6 rounded-xl border-2 border-l-4 border-red-400 shadow-sm hover:shadow-lg transition-all duration-200 group">
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-red-400 opacity-5 rounded-full -mr-16 -mt-16"></div>
-                          
-                          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div key={client.id} className="bg-white p-4 rounded-lg border border-gray-200 hover:border-gray-400 hover:shadow-sm transition-all">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                               <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-3">
-                                      <div className="h-12 w-12 rounded-xl bg-red-100 flex items-center justify-center text-red-600 font-black text-lg shadow-sm">
+                                      <div className="h-10 w-10 rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm">
                                         {client.nome ? client.nome[0].toUpperCase() : '?'}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                          <h3 className="font-bold text-[#112240] text-lg truncate">{client.nome || 'Sem Nome'}</h3>
+                                          <h3 className="font-semibold text-gray-900 text-sm truncate">{client.nome || 'Sem Nome'}</h3>
                                           <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                              {client.empresa && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium">{client.empresa}</span>}
-                                              {client.socio && <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full border border-blue-200 font-medium">{client.socio}</span>}
+                                              {client.empresa && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium">{client.empresa}</span>}
+                                              {client.socio && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium">{client.socio}</span>}
                                           </div>
                                       </div>
                                   </div>
-                                  <div className="flex flex-wrap gap-2">
+                                  <div className="flex flex-wrap gap-1.5">
                                       {missing.map(field => (
-                                          <span key={field} className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200">
-                                              <AlertCircle className="h-3 w-3" />
+                                          <span key={field} className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600 bg-gray-100 px-2 py-1 rounded border border-gray-200">
+                                              <AlertCircle className="h-2.5 w-2.5" />
                                               {field}
                                           </span>
                                       ))}
                                   </div>
                               </div>
 
-                              <div className="flex items-center gap-3 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
+                              <div className="flex items-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100">
                                   <button 
                                       onClick={() => handleIgnore(client)}
-                                      className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-2 transition-all"
-                                      title="Ignorar pendências deste cliente"
+                                      className="px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50 border border-gray-300 rounded flex items-center gap-1.5 transition-colors"
+                                      title="Ignorar pendências"
                                   >
-                                      <XCircle className="h-4 w-4" />
+                                      <XCircle className="h-3.5 w-3.5" />
                                       <span className="hidden md:inline">Ignorar</span>
                                   </button>
                                   <button 
                                       onClick={() => handleEdit(client)}
-                                      className="px-5 py-2.5 bg-gradient-to-r from-[#112240] to-[#1a3a6c] text-white text-sm font-bold rounded-lg hover:shadow-lg flex items-center gap-2 transition-all"
+                                      className="px-4 py-2 bg-[#112240] text-white text-xs font-semibold rounded hover:bg-[#1a3a6c] flex items-center gap-1.5 transition-colors"
                                   >
-                                      <Pencil className="h-4 w-4" />
+                                      <Pencil className="h-3.5 w-3.5" />
                                       Resolver
                                   </button>
                               </div>
