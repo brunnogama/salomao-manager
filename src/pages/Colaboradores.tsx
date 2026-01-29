@@ -538,11 +538,11 @@ export function Colaboradores() {
 
       {/* 2. BARRA DE FERRAMENTAS E FILTROS */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-end gap-3">
             
-          {/* Lado Esquerdo: Busca e Filtros */}
+          {/* Tudo alinhado à direita */}
           {viewMode === 'list' && (
-            <div className="flex items-center gap-3 flex-1">
+            <>
               {/* Busca Expansível */}
               <div className="flex items-center">
                 {!searchExpanded ? (
@@ -617,39 +617,37 @@ export function Colaboradores() {
                   <X className="h-4 w-4" /> Limpar
                 </button>
               )}
-            </div>
+            </>
           )}
 
-          {/* Lado Direito: Botões de Ação */}
-          <div className="flex gap-2 items-center">
-            <input type="file" hidden ref={fileInputRef} accept=".xlsx" onChange={handleImport} />
-            
-            {/* Botão Importar - Apenas Ícone */}
-            <button 
-              onClick={() => fileInputRef.current?.click()} 
-              className="p-2.5 text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors border border-green-200"
-              title="Importar"
-            >
-              <Upload className="h-5 w-5" />
-            </button>
-            
-            {/* Botão Exportar - Apenas Ícone */}
-            <button 
-              onClick={handleExport} 
-              className="p-2.5 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
-              title="Exportar"
-            >
-              <Download className="h-5 w-5" />
-            </button>
-            
-            {/* Botão Novo - Texto Reduzido */}
-            <button 
-              onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setPhotoPreview(null); setViewMode('form') }} 
-              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold text-sm transition-colors shadow-sm"
-            >
-              <Plus className="h-4 w-4" /> Novo
-            </button>
-          </div>
+          {/* Botões de Ação */}
+          <input type="file" hidden ref={fileInputRef} accept=".xlsx" onChange={handleImport} />
+          
+          {/* Botão Importar - Apenas Ícone */}
+          <button 
+            onClick={() => fileInputRef.current?.click()} 
+            className="p-2.5 text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors border border-green-200"
+            title="Importar"
+          >
+            <Upload className="h-5 w-5" />
+          </button>
+          
+          {/* Botão Exportar - Apenas Ícone */}
+          <button 
+            onClick={handleExport} 
+            className="p-2.5 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+            title="Exportar"
+          >
+            <Download className="h-5 w-5" />
+          </button>
+          
+          {/* Botão Novo - Texto Reduzido */}
+          <button 
+            onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setPhotoPreview(null); setViewMode('form') }} 
+            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold text-sm transition-colors shadow-sm"
+          >
+            <Plus className="h-4 w-4" /> Novo
+          </button>
         </div>
       </div>
 
