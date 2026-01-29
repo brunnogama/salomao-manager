@@ -1,90 +1,78 @@
-import { FileText, MoreHorizontal, Paperclip, Receipt, FileSpreadsheet, ClipboardList } from 'lucide-react'
+import { Eye } from 'lucide-react'
 
-export function FamiliaTable({ data }: { data: any[] }) {
-  // Formata valor para Real R$
-  const formatBRL = (val: any) => {
-    const num = parseFloat(val) || 0
-    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+interface FamiliaTableProps {
+  data: any[]
+  onItemClick?: (item: any) => void
+}
+
+export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0)
   }
 
-  // Formata data ISO (AAAA-MM-DD) para Brasileiro (DD/MM/AAAA)
-  const formatDateBR = (dateStr: string) => {
-    if (!dateStr) return '-'
-    try {
-      const [year, month, day] = dateStr.split('-')
-      if (!year || !month || !day) return dateStr // Retorna original se não estiver no formato ISO
-      return `${day}/${month}/${year}`
-    } catch {
-      return dateStr
-    }
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '---'
+    const [year, month, day] = dateStr.split('-')
+    return `${day}/${month}/${year}`
   }
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left">
-        <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b sticky top-0 z-10">
-          <tr>
-            <th className="px-4 py-3 whitespace-nowrap">Vencimento</th>
-            <th className="px-4 py-3">Titular</th>
-            <th className="px-4 py-3">Fornecedor</th>
-            <th className="px-4 py-3">Descrição do Serviço</th>
-            <th className="px-4 py-3">Tipo</th>
-            <th className="px-4 py-3">Categoria</th>
-            <th className="px-4 py-3">Valor</th>
-            <th className="px-4 py-3">NF</th>
-            <th className="px-4 py-3 whitespace-nowrap">Data Envio</th>
-            <th className="px-4 py-3">Status</th>
-            <th className="px-4 py-3 text-center">Docs</th>
-            <th className="px-4 py-3">Ações</th>
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="bg-gray-50 border-b border-gray-100">
+            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Vencimento</th>
+            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Titular</th>
+            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fornecedor</th>
+            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Categoria</th>
+            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Valor</th>
+            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Ações</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-gray-50">
           {data.length === 0 ? (
             <tr>
-              <td colSpan={12} className="px-4 py-10 text-center text-gray-400">
-                Aguardando importação de dados...
+              <td colSpan={7} className="px-6 py-10 text-center text-gray-500 text-sm">
+                Nenhum registro encontrado.
               </td>
             </tr>
           ) : (
-            data.map((item, i) => (
-              <tr key={i} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-600">
-                  {formatDateBR(item.vencimento)}
+            data.map((item) => (
+              <tr 
+                key={item.id} 
+                onClick={() => onItemClick?.(item)}
+                className="hover:bg-blue-50/50 transition-colors cursor-pointer group"
+              >
+                <td className="px-6 py-4 text-sm font-medium text-[#112240]">
+                  {formatDate(item.vencimento)}
                 </td>
-                <td className="px-4 py-3 font-semibold text-gray-900">{item.titular}</td>
-                <td className="px-4 py-3">{item.fornecedor}</td>
-                <td className="px-4 py-3 max-w-xs truncate" title={item.descricao_servico}>
-                  {item.descricao_servico}
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {item.titular}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">{item.tipo}</td>
-                <td className="px-4 py-3 whitespace-nowrap">{item.categoria}</td>
-                <td className="px-4 py-3 font-bold text-[#1e3a8a] whitespace-nowrap">
-                  {formatBRL(item.valor)}
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {item.fornecedor}
                 </td>
-                <td className="px-4 py-3 font-mono text-xs">{item.nota_fiscal || '-'}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-500">
-                  {formatDateBR(item.data_envio)}
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${
-                    item.status === 'Pago' 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {item.status || 'Pendente'}
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  <span className="px-2 py-1 bg-gray-100 rounded-md text-[11px] font-medium text-gray-600">
+                    {item.categoria}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-center gap-1.5 text-gray-400">
-                    {item.recibo && <Receipt className="w-4 h-4 hover:text-blue-600 cursor-pointer" title="Recibo" />}
-                    {item.boleto && <FileText className="w-4 h-4 hover:text-blue-600 cursor-pointer" title="Boleto" />}
-                    {item.os && <ClipboardList className="w-4 h-4 hover:text-blue-600 cursor-pointer" title="O.S." />}
-                    {item.comprovante && <Paperclip className="w-4 h-4 hover:text-blue-600 cursor-pointer" title="Comprovante" />}
-                  </div>
+                <td className="px-6 py-4 text-sm font-bold text-[#112240]">
+                  {formatCurrency(item.valor)}
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <button className="p-1 hover:bg-gray-100 rounded text-gray-400 transition-colors">
-                    <MoreHorizontal className="w-4 h-4" />
+                <td className="px-6 py-4">
+                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter ${
+                    item.status === 'Pago' 
+                      ? 'bg-green-100 text-green-700' 
+                      : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    {item.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <button className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-white rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                    <Eye className="w-4 h-4" />
                   </button>
                 </td>
               </tr>
