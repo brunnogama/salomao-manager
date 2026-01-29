@@ -43,7 +43,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [clientToEdit, setClientToEdit] = useState<ClientData | null>(null)
   const [viewType, setViewType] = useState<'cards' | 'list'>(() => 
-    (localStorage.getItem('clientsViewType') as 'cards' | 'list') || 'cards'
+    (localStorage.getItem('clientsViewType') as 'cards' | 'list') || 'list'
   )
   
   const fileInputRef = useRef<HTMLInputElement>(null)
