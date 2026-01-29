@@ -152,24 +152,29 @@ export function Colaboradores() {
     try {
       setUploadingGed(true)
       
-      // Limpar nome do arquivo para evitar erro de caracteres especiais
       const fileExt = file.name.split('.').pop()
-      const cleanFileName = `${Date.now()}.${fileExt}` // Nome simplificado baseado em timestamp
-      const filePath = `ged/${selectedColaborador.id}/${cleanFileName}`
+      // Novo formato de nome: Nome Completo_Tipo de Documento
+      const newFileName = `${toTitleCase(selectedColaborador.nome)}_${toTitleCase(selectedGedCategory)}.${fileExt}`
+      // Caminho no storage mantendo organização por ID
+      const filePath = `ged/${selectedColaborador.id}/${Date.now()}_${newFileName}`
 
       const { error: uploadError } = await supabase.storage.from('ged-colaboradores').upload(filePath, file)
       
       if (uploadError) throw uploadError
       const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath)
+      
       await supabase.from('ged_colaboradores').insert({
         colaborador_id: selectedColaborador.id,
-        nome_arquivo: file.name,
+        nome_arquivo: newFileName,
         url: publicUrl,
         categoria: selectedGedCategory,
         tamanho: file.size,
         tipo_arquivo: file.type
       })
-      fetchGedDocs(selectedColaborador.id); setSelectedGedCategory(''); if (gedInputRef.current) gedInputRef.current.value = ''
+      
+      fetchGedDocs(selectedColaborador.id); 
+      setSelectedGedCategory(''); 
+      if (gedInputRef.current) gedInputRef.current.value = ''
     } catch (error: any) { alert('Erro no upload do GED: ' + error.message) } finally { setUploadingGed(false) }
   }
 
