@@ -24,6 +24,7 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
             <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Vencimento</th>
             <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Titular</th>
             <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fornecedor</th>
+            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fatura</th>
             <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Categoria</th>
             <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Valor</th>
             <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
@@ -33,7 +34,7 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
         <tbody className="divide-y divide-gray-50">
           {data.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-6 py-10 text-center text-gray-500 text-sm">
+              <td colSpan={8} className="px-6 py-10 text-center text-gray-500 text-sm">
                 Nenhum registro encontrado.
               </td>
             </tr>
@@ -52,6 +53,9 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600">
                   {item.fornecedor}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {item.fatura || '---'}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600">
                   <span className="px-2 py-1 bg-gray-100 rounded-md text-[11px] font-medium text-gray-600">

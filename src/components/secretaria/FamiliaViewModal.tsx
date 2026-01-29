@@ -11,13 +11,13 @@ interface FamiliaViewModalProps {
 export function FamiliaViewModal({ item, isOpen, onClose, onDelete, onEdit }: FamiliaViewModalProps) {
   if (!isOpen || !item) return null
 
-  const InfoField = ({ icon: Icon, label, value, color }: any) => (
-    <div className="flex flex-col p-3 rounded-lg border border-gray-100 bg-gray-50/50">
+  const InfoField = ({ icon: Icon, label, value, color, fullWidth }: any) => (
+    <div className={`flex flex-col p-3 rounded-lg border border-gray-100 bg-gray-50/50 ${fullWidth ? 'md:col-span-4' : ''}`}>
       <div className="flex items-center gap-2 mb-1">
         <Icon className={`w-4 h-4 ${color || 'text-gray-400'}`} />
         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
       </div>
-      <p className="text-sm font-semibold text-[#112240] truncate">
+      <p className={`text-sm font-semibold text-[#112240] ${fullWidth ? 'whitespace-pre-wrap' : 'truncate'}`}>
         {value || '---'}
       </p>
     </div>
@@ -35,9 +35,9 @@ export function FamiliaViewModal({ item, isOpen, onClose, onDelete, onEdit }: Fa
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[95vh] flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
           <div>
             <h3 className="text-lg font-bold text-[#112240]">Detalhes do Lançamento</h3>
             <p className="text-xs text-gray-500">ID: {item.id?.substring(0, 8)}...</p>
@@ -48,32 +48,38 @@ export function FamiliaViewModal({ item, isOpen, onClose, onDelete, onEdit }: Fa
         </div>
 
         {/* Content */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4 overflow-y-auto">
           <InfoField icon={Calendar} label="Vencimento" value={formatDate(item.vencimento)} color="text-blue-500" />
           <InfoField icon={User} label="Titular" value={item.titular} color="text-purple-500" />
           <InfoField icon={Truck} label="Fornecedor" value={item.fornecedor} color="text-orange-500" />
           <InfoField icon={DollarSign} label="Valor" value={formatCurrency(item.valor)} color="text-green-600" />
           
-          <div className="md:col-span-2">
-            <InfoField icon={FileText} label="Descrição do Serviço" value={item.descricao_servico} />
-          </div>
           <InfoField icon={Tag} label="Tipo" value={item.tipo} />
           <InfoField icon={Layers} label="Categoria" value={item.categoria} />
+          <InfoField icon={ArrowRight} label="Fator Gerador" value={item.fator_gerador} />
+          <InfoField icon={CheckCircle} label="Status" value={item.status} color={item.status === 'Pago' ? 'text-green-500' : 'text-amber-500'} />
 
           <InfoField icon={Hash} label="Nota Fiscal" value={item.nota_fiscal} />
-          <InfoField icon={FileText} label="Documentos" value={`${item.recibo ? 'Recibo' : ''} ${item.boleto ? 'Boleto' : ''} ${item.os ? 'O.S.' : ''}`.trim() || 'Nenhum'} />
+          <InfoField icon={FileText} label="Fatura" value={item.fatura} />
+          <InfoField icon={Paperclip} label="Recibo" value={item.recibo} />
+          <InfoField icon={Paperclip} label="Boleto" value={item.boleto} />
+          
+          <InfoField icon={Paperclip} label="O.S." value={item.os} />
           <InfoField icon={Percent} label="Rateio" value={item.rateio ? `${item.rateio} (${item.rateio_porcentagem}%)` : 'Não se aplica'} />
-          <InfoField icon={ArrowRight} label="Fator Gerador" value={item.fator_gerador} />
-
           <InfoField icon={Calendar} label="Data de Envio" value={formatDate(item.data_envio)} />
-          <InfoField icon={CheckCircle} label="Status" value={item.status} color={item.status === 'Pago' ? 'text-green-500' : 'text-amber-500'} />
-          <div className="md:col-span-2">
-            <InfoField icon={Paperclip} label="Comprovante" value={item.comprovante || 'Nenhum anexo'} />
-          </div>
+          <InfoField icon={Paperclip} label="Comprovante" value={item.comprovante || 'Nenhum anexo'} />
+
+          {/* Campo Descrição movido para o final e ocupando largura total */}
+          <InfoField 
+            icon={FileText} 
+            label="Descrição do Serviço" 
+            value={item.descricao_servico} 
+            fullWidth={true}
+          />
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center flex-shrink-0">
           <button
             onClick={() => onDelete(item.id)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
