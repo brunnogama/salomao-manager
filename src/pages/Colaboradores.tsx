@@ -404,7 +404,8 @@ export function Colaboradores() {
               <button onClick={() => setActiveDetailTab('ged')} className={`py-4 px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeDetailTab === 'ged' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}><FileText className="h-4 w-4" /> Documentos (GED)</button>
             </div>
 
-            <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
+            {/* ATENÇÃO: Mudança de overflow-hidden para overflow-visible na aba GED permite que o dropdown apareça por cima */}
+            <div className={`p-8 flex-1 custom-scrollbar ${activeDetailTab === 'ged' ? 'overflow-visible' : 'overflow-y-auto'}`}>
               {activeDetailTab === 'dados' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-6">
@@ -460,7 +461,7 @@ export function Colaboradores() {
                           </div>
                           <div className="flex items-center gap-1">
                             <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><ExternalLink className="h-4 w-4" /></a>
-                            <button onClick={() => handleDeleteGed(doc)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="h-4 w-4" /></button>
+                            <button onClick={() => handleDeleteGed(doc)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="h-4 w-4" /></button>
                           </div>
                         </div>
                       ))}
