@@ -4,7 +4,6 @@ import {
   MapPin, 
   KanbanSquare, 
   X,
-  LogOut,
   Users,
   TrendingUp,
   Clock,
@@ -14,7 +13,8 @@ import {
   Banknote,
   Megaphone,
   FolderSearch,
-  Calendar
+  Calendar,
+  ShieldCheck
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -34,7 +34,6 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
       const { data: { user } } = await supabase.auth.getUser()
       
       if (user) {
-        // Busca dados na tabela usuarios_permitidos (ajustado para a tabela correta usada no Settings.tsx)
         const { data: profile } = await supabase
           .from('usuarios_permitidos')
           .select('cargo')
@@ -65,26 +64,12 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
   useEffect(() => {
     fetchUserProfile()
   }, [])
-
-  const handleLogout = async () => {
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
-    localStorage.clear()
-    sessionStorage.clear()
-    if (hasSeenWelcome) {
-      localStorage.setItem('hasSeenWelcomeModal', hasSeenWelcome)
-    }
-    await supabase.auth.signOut()
-    window.location.reload()
-  }
   
   const mainItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'calendario', label: 'Calendário', icon: Calendar },
     { id: 'presencial', label: 'Presencial', icon: MapPin },
-    
-    // Item Colaboradores
     { id: 'colaboradores', label: 'Colaboradores', icon: Users },
-    
     { id: 'evolucao', label: 'Evolução de Pessoal', icon: TrendingUp },
     { id: 'tempo-casa', label: 'Tempo de casa', icon: Clock },
     { id: 'headcount', label: 'Headcount', icon: BarChart3 },
@@ -123,23 +108,18 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
         </button>
 
         {/* 1. HEADER LOGO */}
-        <div className="flex flex-col flex-shrink-0 relative bg-[#112240] pt-6 pb-4 px-6">
-          <div className="flex flex-col items-center w-full gap-4">
+        <div className="flex flex-col flex-shrink-0 relative bg-[#112240] pt-8 pb-4 px-6">
+          <div className="flex flex-col items-center w-full">
             <img 
               src="/logo-branca.png" 
               alt="Salomão Advogados" 
-              className="h-11 w-auto object-contain block"
+              className="h-12 w-auto object-contain block"
             />
-            <div className="bg-green-950/30 border border-green-800/30 rounded-lg px-4 py-2 w-full">
-              <span className="text-[10px] text-green-300 font-bold tracking-[0.25em] uppercase leading-none whitespace-nowrap block text-center">
-                Módulo RH
-              </span>
-            </div>
           </div>
         </div>
 
         {/* 2. MENU PRINCIPAL */}
-        <nav className="flex-1 overflow-y-auto py-2 px-3 space-y-1 custom-scrollbar pt-6">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
           {mainItems.map((item) => (
             <button
               key={item.id}
@@ -162,39 +142,18 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
           ))}
         </nav>
 
-        {/* 3. MENU BASE COM USER PROFILE (SEM HISTÓRICO) */}
-        <div className="pt-4 pb-6 px-3 bg-[#112240] flex-shrink-0 mt-auto">
-          <div className="border-t border-gray-700/50 mb-4 mx-2"></div>
-
-          {/* User Profile */}
-          <div className="flex items-center justify-between group cursor-pointer px-2">
-            <div className="flex items-center">
-              <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-salomao-gold to-yellow-600 p-[1px]">
-                  <div className="w-full h-full rounded-full bg-[#112240] flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">
-                      {userName.charAt(0)}
-                    </span>
-                  </div>
-                </div>
-                <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-[#112240] rounded-full"></div>
+        {/* 3. CARD DO MÓDULO (RECURSOS HUMANOS) */}
+        <div className="p-4 bg-[#112240] flex-shrink-0 mt-auto">
+          <div className="bg-gradient-to-br from-[#1a2c4e] to-[#0a192f] border border-gray-700/50 rounded-xl p-4 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-900/40 flex items-center justify-center border border-blue-500/30">
+                <ShieldCheck className="w-6 h-6 text-blue-400" />
               </div>
-              
-              <div className="ml-3 overflow-hidden">
-                <p className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors truncate max-w-[100px]" title={userName}>
-                  {userName}
-                </p>
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest">{userRole}</p>
+              <div>
+                <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-0.5">Módulo Atual</p>
+                <p className="text-sm font-semibold text-white">Recursos Humanos</p>
               </div>
             </div>
-            
-            <button 
-              onClick={handleLogout}
-              className="p-2 text-gray-500 hover:text-red-400 hover:bg-white/5 rounded-lg transition-all"
-              title="Sair do Sistema"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </aside>
