@@ -3,7 +3,7 @@ import { Gift, UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Set
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
-  onSelect: (module: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'settings') => void;
+  onSelect: (module: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'settings' | 'executive') => void;
   userName: string;
 }
 
@@ -12,7 +12,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  // 1. Busca permissões do usuário ao carregar
   useEffect(() => {
     async function fetchPermissions() {
       try {
@@ -31,15 +30,12 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             
             setIsAdmin(isUserAdmin)
             
-            // Se for admin, libera TODOS os módulos
             if (isUserAdmin) {
-              setAllowedModules(['crm', 'family', 'collaborators', 'operational', 'financial'])
+              setAllowedModules(['crm', 'family', 'collaborators', 'operational', 'financial', 'executive'])
             } else {
-              // Se não for admin, usa os módulos definidos na gestão de usuários
               setAllowedModules(data.allowed_modules || [])
             }
           } else {
-            // Fallback se não tiver perfil criado ainda
             console.warn('Perfil de usuário não encontrado.')
             setAllowedModules([])
             setIsAdmin(false)
@@ -47,7 +43,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         }
       } catch (error) {
         console.error('Erro ao buscar permissões:', error)
-        // Em caso de erro, não libera nenhum módulo
         setAllowedModules([])
         setIsAdmin(false)
       } finally {
@@ -58,38 +53,24 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
     fetchPermissions()
   }, [])
   
-  // 2. Função de Logout aprimorada
   const handleLogout = async () => {
-    // ✅ SALVAR o flag do modal de boas-vindas antes de limpar
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
-    
-    // Limpa storage local para esquecer estados anteriores
     localStorage.clear()
     sessionStorage.clear()
-    
-    // ✅ RESTAURAR o flag do modal depois de limpar
     if (hasSeenWelcome) {
       localStorage.setItem('hasSeenWelcomeModal', hasSeenWelcome)
     }
-    
-    // Desloga do Supabase
     await supabase.auth.signOut()
-    
-    // Recarrega a página para limpar estados de memória do React
     window.location.reload()
   }
 
-  // 3. Verifica se o módulo está liberado
   const isModuleAllowed = (moduleKey: string) => {
-    // Admin sempre tem acesso a tudo
     if (isAdmin) return true
-    
-    // Usuários normais seguem as permissões definidas na gestão
     return allowedModules.includes(moduleKey)
   }
 
   const renderCard = (
-    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial',
+    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'executive',
     title: string,
     description: string,
     Icon: any,
@@ -118,7 +99,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           <Icon className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-[#112240] mb-2">{title}</h2>
-        <p className="text-sm text-gray-500">{description}</p>
+        <p className="text-sm text-gray-500 line-clamp-2">{description}</p>
         
         {!allowed && (
           <span className="mt-2 text-xs font-bold text-red-400 uppercase tracking-widest">Bloqueado</span>
@@ -137,7 +118,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header com botão de Configurações */}
       <header className="bg-[#112240] h-20 flex items-center justify-between px-8 shadow-md">
         <img src="/logo-branca.png" alt="Salomão" className="h-10 w-auto object-contain" />
         <div className="flex items-center gap-4">
@@ -145,7 +125,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
               Olá, {userName} {isAdmin && <span className="text-yellow-400 ml-1">(Admin)</span>}
             </span>
             
-            {/* Botão de Configurações (apenas para admins) */}
             {isAdmin && (
               <button 
                 onClick={() => onSelect('settings')}
@@ -166,16 +145,13 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         </div>
       </header>
 
-      {/* Conteúdo Central */}
       <main className="flex-1 flex flex-col items-center justify-center p-8 animate-fadeIn">
         <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-bold text-[#112240] mb-3">Bem-vindo ao Ecossistema Salomão</h1>
             <p className="text-gray-500">Selecione o módulo que deseja acessar hoje.</p>
         </div>
 
-        {/* Grid de Módulos (SEM Configurações) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 max-w-7xl w-full">
-            
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl w-full">
             {renderCard(
               'crm', 
               'Brindes de Clientes', 
@@ -186,7 +162,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             )}
 
             {renderCard(
-              'family', 
+              'executive', 
               'Secretaria Executiva', 
               'Suporte e gestão de agendas, viagens e demandas dos sócios.', 
               Briefcase, 
@@ -220,7 +196,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
               'text-emerald-700', 
               'bg-emerald-50'
             )}
-
         </div>
       </main>
 

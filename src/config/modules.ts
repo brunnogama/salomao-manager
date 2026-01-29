@@ -1,7 +1,7 @@
 import { 
   LayoutDashboard, Users, Gavel, FileWarning, Truck, KanbanSquare, History, BookOpen,
   Calendar, MapPin, TrendingUp, Clock, BarChart3, RefreshCw, Briefcase, Banknote, Megaphone,
-  FolderSearch, ArrowUpCircle, ArrowDownCircle, Plane
+  FolderSearch, ArrowUpCircle, ArrowDownCircle, Plane, Receipt, HeartHandshake
 } from 'lucide-react';
 
 export const MODULE_CONFIG = {
@@ -108,6 +108,29 @@ export const MODULE_CONFIG = {
       'gestao-aeronave': 'Controle de custos e manutenção da aeronave.',
       ged: 'Arquivo digital e organização de documentos.',
       historico: 'Log de transações e atividades financeiras.'
+    }
+  },
+  executive: {
+    icons: {
+      dashboard: LayoutDashboard,
+      calendario: Calendar,
+      despesas: Receipt,
+      'gestao-familia': HeartHandshake,
+      ged: FolderSearch
+    },
+    titles: {
+      dashboard: 'Dashboard Secretaria',
+      calendario: 'Calendário Executivo',
+      despesas: 'Controle de Despesas',
+      'gestao-familia': 'Gestão Família Salomão',
+      ged: 'GED Secretaria'
+    },
+    descriptions: {
+      dashboard: 'Visão geral das atividades da secretaria.',
+      calendario: 'Agendamentos e compromissos da diretoria.',
+      despesas: 'Gestão e prestação de contas de despesas.',
+      'gestao-familia': 'Controle e suporte à Família Salomão.',
+      ged: 'Documentos e arquivos da secretaria.'
     }
   }
 };

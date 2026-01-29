@@ -3,6 +3,7 @@ import { supabase } from './lib/supabase'
 import Login from './Login'
 import { Sidebar as CrmSidebar } from './components/Sidebar'
 import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
+import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
 import { SidebarFinanceiro } from './components/SidebarFinanceiro'
 
 // Componentes
@@ -28,7 +29,7 @@ export default function App() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
-  const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators' | 'financial' | 'operational' | 'settings'>('home')
+  const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators' | 'financial' | 'operational' | 'settings' | 'executive'>('home')
   const [activePage, setActivePage] = useState('dashboard')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({})
@@ -98,6 +99,8 @@ export default function App() {
           <RhSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         ) : currentModule === 'financial' ? (
           <SidebarFinanceiro activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        ) : currentModule === 'executive' ? (
+          <ExecutiveSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         ) : (
           <CrmSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         )}
@@ -121,7 +124,6 @@ export default function App() {
           </header>
 
           <div className="p-4 md:p-8 flex-1 overflow-y-auto custom-scrollbar">
-            {/* RENDERIZAÇÃO DE PÁGINAS */}
             {currentModule === 'crm' && (
               <>
                 {activePage === 'dashboard' && <Dashboard onNavigateWithFilter={(p:any, f:any) => { setClientFilters(f); setActivePage(p); }} />}
@@ -150,6 +152,14 @@ export default function App() {
                 {activePage === 'dashboard' && <UnderConstruction moduleName="Dash Financeiro" onBack={() => {}} showBackButton={false} />}
                 {activePage === 'historico' && <History />}
                 {['contas-pagar', 'contas-receber', 'gestao-aeronave', 'ged'].includes(activePage) && <UnderConstruction moduleName={activePage} onBack={() => setActivePage('dashboard')} />}
+              </>
+            )}
+
+            {currentModule === 'executive' && (
+              <>
+                {['dashboard', 'calendario', 'despesas', 'gestao-familia', 'ged'].includes(activePage) && (
+                  <UnderConstruction moduleName={`Secretaria: ${activePage}`} onBack={() => setActivePage('dashboard')} />
+                )}
               </>
             )}
           </div>
