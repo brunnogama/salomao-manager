@@ -84,6 +84,13 @@ export function GestaoFamilia() {
     setIsViewModalOpen(true)
   }
 
+  // Função para disparar a edição a partir do modal de visualização
+  const handleEditFromView = (item: any) => {
+    setIsViewModalOpen(false)
+    setSelectedItem(item)
+    setIsModalOpen(true)
+  }
+
   // Função para Importar XLSX e salvar AUTOMATICAMENTE
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -99,7 +106,6 @@ export function GestaoFamilia() {
         const ws = wb.Sheets[wb.SheetNames[0]]
         const data = XLSX.utils.sheet_to_json(ws)
         
-        // Converte data do Excel para formato ISO (AAAA-MM-DD) para o Banco de Dados
         const formatExcelDateToISO = (excelDate: any) => {
           if (!excelDate) return null;
           if (typeof excelDate === 'number') {
@@ -113,7 +119,6 @@ export function GestaoFamilia() {
           return excelDate;
         };
 
-        // Mapeamento usando EXATAMENTE os nomes das colunas da planilha
         const mapped = data.map((row: any) => ({
           vencimento: formatExcelDateToISO(row['Vencimento']),
           titular: row['Titular']?.toString() || '',
@@ -200,7 +205,10 @@ export function GestaoFamilia() {
                   <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
                 </label>
                 <button 
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => {
+                    setSelectedItem(null)
+                    setIsModalOpen(true)
+                  }}
                   className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1e3a8a]/90 shadow-md transition-all active:scale-95"
                 >
                   <PlusCircle className="w-4 h-4" /> Novo Registro
@@ -219,6 +227,7 @@ export function GestaoFamilia() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onSave={handleSaveData}
+        initialData={selectedItem}
       />
 
       {selectedItem && (
@@ -230,6 +239,7 @@ export function GestaoFamilia() {
             setSelectedItem(null)
           }}
           onDelete={handleDelete}
+          onEdit={handleEditFromView}
         />
       )}
     </div>
