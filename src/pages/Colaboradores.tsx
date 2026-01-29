@@ -153,19 +153,29 @@ export function Colaboradores() {
       setUploadingGed(true)
       
       const fileExt = file.name.split('.').pop()
-      // Novo formato de nome: Nome Completo_Tipo de Documento
-      const newFileName = `${toTitleCase(selectedColaborador.nome)}_${toTitleCase(selectedGedCategory)}.${fileExt}`
-      // Caminho no storage mantendo organização por ID
-      const filePath = `ged/${selectedColaborador.id}/${Date.now()}_${newFileName}`
+      
+      // Nome formatado conforme solicitado
+      const rawFileName = `${selectedColaborador.nome}_${selectedGedCategory}`
+      
+      // Função interna para remover acentos e caracteres especiais do PATH do storage
+      const cleanPathName = rawFileName
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+        .replace(/[^\w\s-]/g, '')        // Remove caracteres especiais exceto espaço e hífen
+        .replace(/\s+/g, '_');           // Substitui espaços por underline
+
+      const finalFileName = `${cleanPathName}.${fileExt}`
+      const filePath = `ged/${selectedColaborador.id}/${Date.now()}_${finalFileName}`
 
       const { error: uploadError } = await supabase.storage.from('ged-colaboradores').upload(filePath, file)
       
       if (uploadError) throw uploadError
+
       const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath)
       
       await supabase.from('ged_colaboradores').insert({
         colaborador_id: selectedColaborador.id,
-        nome_arquivo: newFileName,
+        nome_arquivo: `${toTitleCase(selectedColaborador.nome)}_${toTitleCase(selectedGedCategory)}.${fileExt}`, // No banco mantemos o nome bonito
         url: publicUrl,
         categoria: selectedGedCategory,
         tamanho: file.size,
