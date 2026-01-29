@@ -13,8 +13,7 @@ import {
   Banknote,
   Megaphone,
   FolderSearch,
-  Calendar,
-  ShieldCheck
+  Calendar
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -147,11 +146,11 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
           <div className="bg-gradient-to-br from-[#1a2c4e] to-[#0a192f] border border-gray-700/50 rounded-xl p-4 shadow-lg">
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-900/40 flex items-center justify-center border border-blue-500/30">
-                <ShieldCheck className="w-6 h-6 text-blue-400" />
+                <Users className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-0.5">Módulo Atual</p>
-                <p className="text-sm font-semibold text-white">Recursos Humanos</p>
+                <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-0.5 leading-none">Módulo</p>
+                <p className="text-sm font-semibold text-white leading-tight">Recursos Humanos</p>
               </div>
             </div>
           </div>
