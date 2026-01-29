@@ -2,17 +2,8 @@ import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Plus, Clock, CheckCircle2, Circle, X, Pencil, Trash2, Calendar, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { logAction } from '../lib/logger'; // Importe
-
-// ... (Interface Task e COLUMNS permanecem iguais)
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  priority: string;
-  status: 'todo' | 'in_progress' | 'done';
-  created_at: string;
-}
+import { logAction } from '../lib/logger';
+import { Task } from '../types/kanban';
 
 const COLUMNS = [
   { id: 'todo', title: 'A Fazer', color: 'orange', icon: <Clock className="h-5 w-5" /> },
@@ -21,7 +12,6 @@ const COLUMNS = [
 ];
 
 export function Kanban() {
-  // ... (States permanecem iguais)
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -42,8 +32,7 @@ export function Kanban() {
 
   const onDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
-    if (!destination) return;
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) return;
 
     const newStatus = destination.droppableId as Task['status'];
     const updatedTasks = tasks.map(t => t.id === draggableId ? { ...t, status: newStatus } : t);
@@ -67,9 +56,7 @@ export function Kanban() {
   const handleUpdateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask) return;
-
     const { error } = await supabase.from('tasks').update(editFormData).eq('id', selectedTask.id);
-
     if (!error) {
       setTasks(tasks.map(t => t.id === selectedTask.id ? { ...t, ...editFormData } : t));
       await logAction('EDITAR', 'KANBAN', `Editou tarefa: ${editFormData.title}`);
@@ -97,19 +84,16 @@ export function Kanban() {
     setIsDetailsModalOpen(true);
   };
 
-  // ... (JSX permanece igual)
   return (
-    // ... todo o JSX do Kanban.tsx anterior, sem mudanças visuais ...
     <div className="h-full flex flex-col overflow-hidden">
       <DragDropContext onDragEnd={onDragEnd}>
-        {/* ... (Conteúdo do Kanban) ... */}
         <div className="flex-1 flex gap-4 overflow-x-auto pb-2 h-full custom-scrollbar">
           {COLUMNS.map((column) => (
             <div key={column.id} className={`flex-shrink-0 w-80 lg:w-96 flex flex-col rounded-xl border h-full ${
               column.color === 'orange' ? 'bg-orange-50/30 border-orange-100' : 
               column.color === 'blue' ? 'bg-blue-50/30 border-blue-100' : 'bg-green-50/30 border-green-100'
             }`}>
-              {/* ... Resto do código igual ao original ... */}
+              
               <div className="p-4 flex items-center justify-between">
                 <div className={`flex items-center gap-2 font-bold text-sm ${
                   column.color === 'orange' ? 'text-orange-700' : 
@@ -124,7 +108,7 @@ export function Kanban() {
 
               <div className="px-4 mb-3">
                 <button 
-                  onClick={() => { setNewTask({ ...newTask, status: column.id as 'todo' | 'in_progress' | 'done' }); setIsAddModalOpen(true); }}
+                  onClick={() => { setNewTask({ ...newTask, status: column.id as any }); setIsAddModalOpen(true); }}
                   className={`w-full py-2 rounded-lg text-white text-sm font-bold flex items-center justify-center gap-2 shadow-sm ${
                     column.color === 'orange' ? 'bg-orange-600 hover:bg-orange-700' : 
                     column.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
@@ -176,30 +160,26 @@ export function Kanban() {
 
       {/* Modal Adicionar */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-scaleIn">
-            <div className="bg-[#112240] p-6 text-white flex items-center justify-between">
-              <h2 className="text-xl font-bold">Nova Tarefa</h2>
-              <button onClick={() => setIsAddModalOpen(false)}><X className="h-5 w-5" /></button>
-            </div>
-            <form onSubmit={handleAddTask} className="p-6 space-y-4">
-              <input required placeholder="Título" className="w-full border border-gray-200 rounded-lg px-4 py-2 outline-none text-sm" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} />
-              <textarea rows={3} placeholder="Descrição" className="w-full border border-gray-200 rounded-lg px-4 py-2 outline-none resize-none text-sm" value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})} />
-              <select className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm" value={newTask.priority} onChange={e => setNewTask({...newTask, priority: e.target.value})}>
-                <option value="BAIXA">Baixa</option>
-                <option value="MEDIA">Média</option>
-                <option value="ALTA">Alta</option>
-              </select>
-              <button type="submit" className="w-full bg-[#112240] text-white py-3 rounded-xl font-bold">Criar Tarefa</button>
-            </form>
-          </div>
-        </div>
+        <TaskModal 
+          title="Nova Tarefa" 
+          onClose={() => setIsAddModalOpen(false)}
+          onSubmit={handleAddTask}
+        >
+          <input required placeholder="Título" className="w-full border border-gray-200 rounded-lg px-4 py-2 outline-none text-sm" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} />
+          <textarea rows={3} placeholder="Descrição" className="w-full border border-gray-200 rounded-lg px-4 py-2 outline-none resize-none text-sm" value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})} />
+          <select className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm" value={newTask.priority} onChange={e => setNewTask({...newTask, priority: e.target.value})}>
+            <option value="BAIXA">Baixa</option>
+            <option value="MEDIA">Média</option>
+            <option value="ALTA">Alta</option>
+          </select>
+          <button type="submit" className="w-full bg-[#112240] text-white py-3 rounded-xl font-bold">Criar Tarefa</button>
+        </TaskModal>
       )}
 
       {/* Modal Detalhes / Edição */}
       {isDetailsModalOpen && selectedTask && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-scaleIn">
+          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div className="bg-[#112240] p-6 text-white flex items-center justify-between">
               <h2 className="text-xl font-bold">{isEditMode ? 'Editar Tarefa' : 'Detalhes da Tarefa'}</h2>
               <div className="flex items-center gap-2">
@@ -235,6 +215,23 @@ export function Kanban() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Sub-componente de Modal para reuso interno
+function TaskModal({ title, onClose, onSubmit, children }: any) {
+  return (
+    <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+        <div className="bg-[#112240] p-6 text-white flex items-center justify-between">
+          <h2 className="text-xl font-bold">{title}</h2>
+          <button onClick={onClose}><X className="h-5 w-5" /></button>
+        </div>
+        <form onSubmit={onSubmit} className="p-6 space-y-4">
+          {children}
+        </form>
+      </div>
     </div>
   );
 }

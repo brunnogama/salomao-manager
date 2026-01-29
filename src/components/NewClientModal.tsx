@@ -1,42 +1,10 @@
-import { Fragment, useState, useEffect, useRef } from 'react'
+import { Fragment, useState, useEffect, useRef, useMemo } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { X, Save, Gift, Calendar, Clock, UserCircle, ChevronDown, Plus, Trash2, Loader2 } from 'lucide-react'
+import { X, Save, Gift, Calendar, Clock, UserCircle, ChevronDown, Plus, Trash2, Loader2, MapPin, Info } from 'lucide-react'
 import { IMaskInput } from 'react-imask'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
-
-export interface GiftHistoryItem {
-  ano: string;
-  tipo: string;
-  obs: string;
-}
-
-export interface ClientData {
-  id?: number;
-  nome: string;
-  empresa: string;
-  cargo: string;
-  telefone: string;
-  tipo_brinde: string;
-  outro_brinde: string;
-  quantidade: number;
-  cep: string;
-  endereco: string;
-  numero: string;
-  complemento: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
-  email: string;
-  socio: string;
-  observacoes: string;
-  ignored_fields?: string[] | null;
-  historico_brindes?: GiftHistoryItem[] | null;
-  created_at?: string;
-  updated_at?: string;
-  created_by?: string;
-  updated_by?: string;
-}
+import { ClientData, GiftHistoryItem } from '../types/client'
 
 interface NewClientModalProps {
   isOpen: boolean;
@@ -50,7 +18,6 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
   const [activeTab, setActiveTab] = useState<'geral' | 'endereco' | 'historico'>('geral')
   const [brindeOptions, setBrindeOptions] = useState<string[]>(['Brinde VIP', 'Brinde Médio', 'Não Recebe', 'Outro'])
   
-  // Estados para o Seletor de Sócios
   const [sociosList, setSociosList] = useState<{ id: number, nome: string }[]>([])
   const [isSocioMenuOpen, setIsSocioMenuOpen] = useState(false)
   const [newSocioName, setNewSocioName] = useState('')
@@ -61,90 +28,16 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
     nome: '', empresa: '', cargo: '', telefone: '',
     tipo_brinde: 'Brinde Médio', outro_brinde: '', quantidade: 1,
     cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
-    email: '', socio: '', observacoes: '', ignored_fields: [],
-    historico_brindes: []
+    email: '', socio: '', observacoes: '', historico_brindes: []
   })
 
-  // Fecha o menu de sócios se clicar fora
+  // --- EFEITOS E BUSCA DE DADOS ---
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (socioMenuRef.current && !socioMenuRef.current.contains(event.target as Node)) {
-        setIsSocioMenuOpen(false)
-      }
+    if (isOpen) {
+      fetchBrindes()
+      fetchSocios()
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Busca Tipos de Brinde e Sócios
-  useEffect(() => {
-    const fetchData = async () => {
-        // Brindes
-        const { data: brindesData } = await supabase.from('tipos_brinde').select('nome').eq('ativo', true).order('nome')
-        if (brindesData && brindesData.length > 0) {
-            const dbOptions = brindesData.map(d => d.nome)
-            const finalOptions = [...new Set([...dbOptions, 'Não Recebe', 'Outro'])]
-            setBrindeOptions(finalOptions)
-        }
-
-        // Sócios
-        fetchSocios()
-    }
-    fetchData()
-  }, [])
-
-  const fetchSocios = async () => {
-      setLoadingSocios(true)
-      const { data } = await supabase.from('socios').select('*').order('nome')
-      if (data) {
-          setSociosList(data)
-      }
-      setLoadingSocios(false)
-  }
-
-  // Adicionar novo sócio direto do menu
-  const handleAddSocio = async (e: React.MouseEvent) => {
-      e.stopPropagation() // Evita fechar o menu
-      if (!newSocioName.trim()) return
-
-      const { error } = await supabase.from('socios').insert({ nome: newSocioName, ativo: true })
-      if (!error) {
-          await logAction('CREATE', 'SOCIOS', `Criou ${newSocioName} via Modal`)
-          setNewSocioName('')
-          fetchSocios()
-      } else {
-          alert('Erro ao adicionar sócio: ' + error.message)
-      }
-  }
-
-  // Excluir sócio direto do menu
-  const handleDeleteSocio = async (id: number, nome: string, e: React.MouseEvent) => {
-      e.stopPropagation()
-      if (!confirm(`Tem certeza que deseja remover "${nome}" da lista de opções?`)) return
-
-      const { error } = await supabase.from('socios').delete().eq('id', id)
-      if (!error) {
-          await logAction('DELETE', 'SOCIOS', `Removeu ${nome} via Modal`)
-          // Se o sócio deletado estava selecionado, limpa o campo
-          if (formData.socio === nome) {
-              setFormData({ ...formData, socio: '' })
-          }
-          fetchSocios()
-      }
-  }
-
-  const initializeHistory = (currentHistory?: GiftHistoryItem[] | null) => {
-    const defaultYears = ['2025', '2024'];
-    let newHistory = currentHistory ? [...currentHistory] : [];
-
-    defaultYears.forEach(year => {
-      if (!newHistory.find(h => h.ano === year)) {
-        newHistory.push({ ano: year, tipo: '', obs: '' });
-      }
-    });
-
-    return newHistory.sort((a, b) => Number(b.ano) - Number(a.ano));
-  };
+  }, [isOpen])
 
   useEffect(() => {
     if (clientToEdit) {
@@ -157,368 +50,198 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
         nome: '', empresa: '', cargo: '', telefone: '',
         tipo_brinde: 'Brinde Médio', outro_brinde: '', quantidade: 1,
         cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
-        email: '', socio: '', observacoes: '', ignored_fields: [],
-        historico_brindes: initializeHistory([])
+        email: '', socio: '', observacoes: '', historico_brindes: initializeHistory([])
       })
     }
     setActiveTab('geral')
     setIsSocioMenuOpen(false)
   }, [clientToEdit, isOpen])
 
-  const handleSave = async () => {
-    if (!formData.nome) {
-      alert('Nome é obrigatório')
-      return
-    }
-
-    try {
-      if (clientToEdit?.id) {
-        const { error } = await supabase
-          .from(tableName)
-          .update(formData)
-          .eq('id', clientToEdit.id)
-        
-        if (error) throw error
-        await logAction('UPDATE', tableName.toUpperCase(), `Editou ${formData.nome}`)
-      } else {
-        const { error } = await supabase
-          .from(tableName)
-          .insert([formData])
-        
-        if (error) throw error
-        await logAction('CREATE', tableName.toUpperCase(), `Criou ${formData.nome}`)
-      }
-      
-      onSave(formData) 
-      onClose()
-    } catch (error: any) {
-      console.error('Erro ao salvar:', error)
-      alert('Erro ao salvar: ' + error.message)
+  const fetchBrindes = async () => {
+    const { data } = await supabase.from('tipos_brinde').select('nome').eq('ativo', true).order('nome')
+    if (data && data.length > 0) {
+      setBrindeOptions([...new Set([...data.map(d => d.nome), 'Não Recebe', 'Outro'])])
     }
   }
 
-  const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+  const fetchSocios = async () => {
+    setLoadingSocios(true)
+    const { data } = await supabase.from('socios').select('*').order('nome')
+    if (data) setSociosList(data)
+    setLoadingSocios(false)
+  }
+
+  // --- HANDLERS ---
+  const handleSave = async () => {
+    if (!formData.nome) return alert('Nome é obrigatório')
+    try {
+      const { error } = clientToEdit?.id 
+        ? await supabase.from(tableName).update(formData).eq('id', clientToEdit.id)
+        : await supabase.from(tableName).insert([formData])
+      
+      if (error) throw error
+      await logAction(clientToEdit ? 'UPDATE' : 'CREATE', tableName.toUpperCase(), `${clientToEdit ? 'Editou' : 'Criou'} ${formData.nome}`)
+      onSave(formData); onClose()
+    } catch (error: any) { alert('Erro ao salvar: ' + error.message) }
+  }
+
+  const handleCepBlur = async (e: any) => {
     const cep = e.target.value.replace(/\D/g, '')
     if (cep.length === 8) {
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
-        const data = await response.json()
-        if (!data.erro) {
-          setFormData(prev => ({
-            ...prev,
-            endereco: data.logradouro,
-            bairro: data.bairro,
-            cidade: data.localidade,
-            estado: data.uf
-          }))
-        }
-      } catch (error) {
-        console.error('Erro ao buscar CEP')
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      const data = await res.json()
+      if (!data.erro) {
+        setFormData(prev => ({ ...prev, endereco: data.logradouro, bairro: data.bairro, cidade: data.localidade, estado: data.uf }))
       }
     }
   }
 
-  const updateHistoryItem = (index: number, field: keyof GiftHistoryItem, value: string) => {
-    const currentHistory = formData.historico_brindes ? [...formData.historico_brindes] : [];
-    if (currentHistory[index]) {
-        currentHistory[index] = { ...currentHistory[index], [field]: value };
-        setFormData({ ...formData, historico_brindes: currentHistory });
-    }
-  }
-
-  const addHistoryYear = () => {
-    const yearInput = window.prompt("Digite o ano que deseja adicionar (ex: 2026):");
-    if (!yearInput) return;
-    if (!/^\d{4}$/.test(yearInput)) {
-        alert("Por favor, digite um ano válido (4 dígitos).");
-        return;
-    }
-    const exists = formData.historico_brindes?.some(h => h.ano === yearInput);
-    if (exists) {
-        alert("Este ano já existe no histórico.");
-        return;
-    }
-    setFormData(prev => ({
-        ...prev,
-        historico_brindes: [
-            { ano: yearInput, tipo: '', obs: '' }, 
-            ...(prev.historico_brindes || [])
-        ].sort((a, b) => Number(b.ano) - Number(a.ano))
-    }));
-  }
-
-  const formatAuditDate = (dateString?: string) => {
-    if (!dateString) return '-';
-    try {
-        return new Date(dateString).toLocaleString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: '2-digit',
-            hour: '2-digit', minute: '2-digit'
-        });
-    } catch { return '-'; }
+  const initializeHistory = (current?: GiftHistoryItem[] | null) => {
+    const years = ['2025', '2024'];
+    let history = current ? [...current] : [];
+    years.forEach(y => { if (!history.find(h => h.ano === y)) history.push({ ano: y, tipo: '', obs: '' }) });
+    return history.sort((a, b) => Number(b.ano) - Number(a.ano));
   }
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-[100]" onClose={onClose}>
-        <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-        </Transition.Child>
-
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col max-h-[90vh]">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100">
+              <Dialog.Panel className="w-full max-w-2xl bg-white rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden">
                 
-                <div className="bg-[#112240] px-6 py-4 flex justify-between items-center shrink-0">
-                  <Dialog.Title as="h3" className="text-lg font-bold leading-6 text-white">
-                    {clientToEdit ? 'Editar Cliente' : 'Novo Cliente'}
-                  </Dialog.Title>
-                  <button onClick={onClose} className="text-gray-300 hover:text-white transition-colors"><X className="h-5 w-5" /></button>
-                </div>
+                <header className="bg-[#112240] px-6 py-4 flex justify-between items-center text-white">
+                  <Dialog.Title className="text-lg font-bold">{clientToEdit ? 'Editar Cliente' : 'Novo Cliente'}</Dialog.Title>
+                  <button onClick={onClose}><X className="h-5 w-5" /></button>
+                </header>
 
-                <div className="flex border-b border-gray-200 px-6 pt-4 gap-6 shrink-0 bg-gray-50">
-                    <button onClick={() => setActiveTab('geral')} className={`pb-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'geral' ? 'border-[#112240] text-[#112240]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>Dados Gerais</button>
-                    <button onClick={() => setActiveTab('endereco')} className={`pb-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'endereco' ? 'border-[#112240] text-[#112240]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>Endereço</button>
-                    <button onClick={() => setActiveTab('historico')} className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'historico' ? 'border-[#112240] text-[#112240]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
-                        <Gift className="h-4 w-4" /> Histórico Brindes
+                <nav className="flex border-b px-6 pt-4 gap-6 bg-gray-50">
+                  {['geral', 'endereco', 'historico'].map((tab: any) => (
+                    <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-3 text-sm font-bold border-b-2 capitalize ${activeTab === tab ? 'border-[#112240] text-[#112240]' : 'border-transparent text-gray-400'}`}>
+                      {tab === 'historico' && <Gift className="h-4 w-4 inline mr-1" />} {tab === 'endereco' ? 'Endereço' : tab}
                     </button>
-                </div>
+                  ))}
+                </nav>
 
-                <div className="px-6 py-6 overflow-y-auto custom-scrollbar flex-1" onClick={() => setIsSocioMenuOpen(false)}>
-                    {activeTab === 'geral' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label>
-                                <input type="text" value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" placeholder="Nome do cliente" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Empresa</label>
-                                <input type="text" value={formData.empresa} onChange={e => setFormData({...formData, empresa: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cargo</label>
-                                <input type="text" value={formData.cargo} onChange={e => setFormData({...formData, cargo: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Telefone</label>
-                                <IMaskInput mask="(00) 00000-0000" value={formData.telefone} onAccept={(value: any) => setFormData({...formData, telefone: value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" placeholder="(99) 99999-9999" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">E-mail</label>
-                                <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                            </div>
-                            
-                            {/* --- SELETOR DE SÓCIO INTELIGENTE --- */}
-                            <div className="relative" ref={socioMenuRef}>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Sócio Responsável</label>
-                                <button 
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); setIsSocioMenuOpen(!isSocioMenuOpen); }}
-                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none bg-white flex items-center justify-between text-left"
-                                >
-                                    <span className={formData.socio ? "text-gray-900" : "text-gray-400"}>
-                                        {formData.socio || "Selecione o sócio..."}
-                                    </span>
-                                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isSocioMenuOpen ? 'rotate-180' : ''}`} />
-                                </button>
-
-                                {/* Dropdown Menu */}
-                                {isSocioMenuOpen && (
-                                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
-                                        {/* Header: Adicionar Novo */}
-                                        <div className="p-2 bg-gray-50 border-b border-gray-100 flex gap-2" onClick={(e) => e.stopPropagation()}>
-                                            <input 
-                                                type="text" 
-                                                value={newSocioName}
-                                                onChange={(e) => setNewSocioName(e.target.value)}
-                                                placeholder="Novo sócio..."
-                                                className="flex-1 text-xs border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:border-blue-500"
-                                                onKeyDown={(e) => e.key === 'Enter' && handleAddSocio(e as any)}
-                                            />
-                                            <button 
-                                                onClick={handleAddSocio}
-                                                className="bg-[#112240] text-white p-1.5 rounded-md hover:bg-[#1a3a6c] transition-colors"
-                                                title="Adicionar"
-                                            >
-                                                <Plus className="h-4 w-4" />
-                                            </button>
-                                        </div>
-
-                                        {/* Lista de Sócios */}
-                                        <div className="max-h-48 overflow-y-auto custom-scrollbar">
-                                            {loadingSocios ? (
-                                                <div className="p-4 text-center text-gray-400"><Loader2 className="h-5 w-5 animate-spin mx-auto"/></div>
-                                            ) : sociosList.length === 0 ? (
-                                                <div className="p-3 text-center text-xs text-gray-400">Nenhum sócio cadastrado</div>
-                                            ) : (
-                                                sociosList.map((socio) => (
-                                                    <div 
-                                                        key={socio.id} 
-                                                        onClick={(e) => { e.stopPropagation(); setFormData({...formData, socio: socio.nome}); setIsSocioMenuOpen(false); }}
-                                                        className={`px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer flex justify-between items-center group ${formData.socio === socio.nome ? 'bg-blue-50 font-bold text-[#112240]' : ''}`}
-                                                    >
-                                                        <span>{socio.nome}</span>
-                                                        <button 
-                                                            onClick={(e) => handleDeleteSocio(socio.id, socio.nome, e)}
-                                                            className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"
-                                                            title="Excluir opção"
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </button>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            {/* ---------------------------------- */}
-
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo de Brinde (Atual)</label>
-                                <select value={formData.tipo_brinde} onChange={e => setFormData({...formData, tipo_brinde: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none">
-                                    {brindeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                            </div>
-                            {formData.tipo_brinde === 'Outro' && (
-                                <div className="md:col-span-2">
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Especifique o Brinde</label>
-                                    <input type="text" value={formData.outro_brinde} onChange={e => setFormData({...formData, outro_brinde: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                                </div>
-                            )}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Quantidade</label>
-                                <input type="number" min="1" value={formData.quantidade} onChange={e => setFormData({...formData, quantidade: parseInt(e.target.value)})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Observações Gerais</label>
-                                <textarea rows={3} value={formData.observacoes} onChange={e => setFormData({...formData, observacoes: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none resize-none"></textarea>
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'endereco' && (
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="md:col-span-1">
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">CEP</label>
-                                <IMaskInput mask="00000-000" value={formData.cep} onAccept={(value: any) => setFormData({...formData, cep: value})} onBlur={handleCepBlur} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" placeholder="00000-000" />
-                            </div>
-                            <div className="md:col-span-3">
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Endereço</label>
-                                <input type="text" value={formData.endereco} onChange={e => setFormData({...formData, endereco: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Número</label>
-                                <input type="text" value={formData.numero} onChange={e => setFormData({...formData, numero: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Complemento</label>
-                                <input type="text" value={formData.complemento} onChange={e => setFormData({...formData, complemento: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Bairro</label>
-                                <input type="text" value={formData.bairro} onChange={e => setFormData({...formData, bairro: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cidade</label>
-                                <input type="text" value={formData.cidade} onChange={e => setFormData({...formData, cidade: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">UF</label>
-                                <input type="text" maxLength={2} value={formData.estado} onChange={e => setFormData({...formData, estado: e.target.value.toUpperCase()})} className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#112240] outline-none" />
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'historico' && (
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <p className="text-sm text-gray-500">Registro anual de presentes enviados.</p>
-                                <button onClick={addHistoryYear} className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">+ Adicionar Ano</button>
-                            </div>
-                            <div className="space-y-3">
-                                {(formData.historico_brindes || []).map((item, idx) => (
-                                    <div key={item.ano} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Calendar className="h-4 w-4 text-blue-600" />
-                                            <span className="font-bold text-[#112240] text-sm">Ano: {item.ano}</span>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tipo de Brinde</label>
-                                                <select 
-                                                    value={item.tipo} 
-                                                    onChange={(e) => updateHistoryItem(idx, 'tipo', e.target.value)}
-                                                    className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-[#112240] outline-none bg-white"
-                                                >
-                                                    <option value="">Selecione...</option>
-                                                    {brindeOptions.map(opt => (
-                                                        <option key={opt} value={opt}>{opt}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Observações</label>
-                                                <input type="text" value={item.obs} onChange={(e) => updateHistoryItem(idx, 'obs', e.target.value)} className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-[#112240] outline-none bg-white" placeholder="Obs sobre o envio..." />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 shrink-0">
-                  {clientToEdit && (
-                    <div className="px-6 py-3 bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-100/50">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 bg-white/70 rounded-lg px-3 py-2 border border-blue-100 shadow-sm">
-                          <div className="flex items-center justify-center h-7 w-7 rounded-full bg-blue-100">
-                            <Clock className="h-3.5 w-3.5 text-blue-600" />
+                <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                  {activeTab === 'geral' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Nome Completo</label>
+                        <input type="text" value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} className="w-full border rounded-lg p-2.5 text-sm" />
+                      </div>
+                      <FormInput label="Empresa" value={formData.empresa} onChange={v => setFormData({...formData, empresa: v})} />
+                      <FormInput label="Cargo" value={formData.cargo} onChange={v => setFormData({...formData, cargo: v})} />
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Telefone</label>
+                        <IMaskInput mask="(00) 00000-0000" value={formData.telefone} onAccept={(v: any) => setFormData({...formData, telefone: v})} className="w-full border rounded-lg p-2.5 text-sm" />
+                      </div>
+                      <FormInput label="E-mail" value={formData.email} onChange={v => setFormData({...formData, email: v})} type="email" />
+                      
+                      {/* Seletor de Sócio */}
+                      <div className="relative" ref={socioMenuRef}>
+                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Sócio Responsável</label>
+                        <button onClick={() => setIsSocioMenuOpen(!isSocioMenuOpen)} className="w-full border rounded-lg p-2.5 text-sm bg-white flex justify-between items-center">
+                          <span className={formData.socio ? "text-gray-900" : "text-gray-400"}>{formData.socio || "Selecione..."}</span>
+                          <ChevronDown className="h-4 w-4 text-gray-400" />
+                        </button>
+                        {isSocioMenuOpen && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                            {sociosList.map(s => (
+                              <button key={s.id} onClick={() => { setFormData({...formData, socio: s.nome}); setIsSocioMenuOpen(false) }} className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50">
+                                {s.nome}
+                              </button>
+                            ))}
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-wide">Criado</span>
-                            <span className="text-xs font-bold text-gray-900">{formatAuditDate(formData.created_at)}</span>
-                            {formData.created_by && (
-                              <span className="flex items-center gap-1 text-[10px] text-gray-600 mt-0.5">
-                                <UserCircle className="h-3 w-3" /> {formData.created_by}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 bg-white/70 rounded-lg px-3 py-2 border border-purple-100 shadow-sm">
-                          <div className="flex items-center justify-center h-7 w-7 rounded-full bg-purple-100">
-                            <Save className="h-3.5 w-3.5 text-purple-600" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-wide">Última Edição</span>
-                            <span className="text-xs font-bold text-gray-900">{formatAuditDate(formData.updated_at)}</span>
-                            {formData.updated_by && (
-                              <span className="flex items-center gap-1 text-[10px] text-gray-600 mt-0.5">
-                                <UserCircle className="h-3 w-3" /> {formData.updated_by}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Tipo Brinde</label>
+                        <select value={formData.tipo_brinde} onChange={e => setFormData({...formData, tipo_brinde: e.target.value})} className="w-full border rounded-lg p-2.5 text-sm">
+                          {brindeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
                       </div>
                     </div>
                   )}
 
-                  <div className="px-6 py-4 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-4 py-2 text-gray-700 font-bold hover:bg-gray-200 rounded-lg transition-colors">Cancelar</button>
-                    <button onClick={handleSave} className="px-6 py-2 bg-[#112240] text-white font-bold rounded-lg hover:bg-[#1a3a6c] transition-colors flex items-center gap-2 shadow-lg shadow-blue-900/20">
-                      <Save className="h-4 w-4" /> Salvar Cliente
-                    </button>
-                  </div>
+                  {activeTab === 'endereco' && (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="md:col-span-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">CEP</label>
+                        <IMaskInput mask="00000-000" value={formData.cep} onAccept={(v: any) => setFormData({...formData, cep: v})} onBlur={handleCepBlur} className="w-full border rounded-lg p-2.5 text-sm" />
+                      </div>
+                      <div className="md:col-span-3"><FormInput label="Endereço" value={formData.endereco} onChange={v => setFormData({...formData, endereco: v})} /></div>
+                      <FormInput label="Número" value={formData.numero} onChange={v => setFormData({...formData, numero: v})} />
+                      <div className="md:col-span-2"><FormInput label="Bairro" value={formData.bairro} onChange={v => setFormData({...formData, bairro: v})} /></div>
+                      <FormInput label="Cidade" value={formData.cidade} onChange={v => setFormData({...formData, cidade: v})} />
+                    </div>
+                  )}
+
+                  {activeTab === 'historico' && (
+                    <div className="space-y-3">
+                      {formData.historico_brindes?.map((item, idx) => (
+                        <div key={item.ano} className="bg-gray-50 p-4 rounded-lg border flex flex-col gap-3">
+                          <div className="flex items-center gap-2 font-bold text-[#112240] text-sm"><Calendar className="h-4 w-4 text-blue-600" /> {item.ano}</div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <select value={item.tipo} onChange={e => {
+                              const h = [...formData.historico_brindes!]; h[idx].tipo = e.target.value; setFormData({...formData, historico_brindes: h})
+                            }} className="border rounded p-2 text-sm">
+                              <option value="">Selecione...</option>
+                              {brindeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                            <input type="text" value={item.obs} placeholder="Observações..." onChange={e => {
+                              const h = [...formData.historico_brindes!]; h[idx].obs = e.target.value; setFormData({...formData, historico_brindes: h})
+                            }} className="border rounded p-2 text-sm" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
+                <footer className="bg-gray-50 p-4 border-t flex flex-col gap-3">
+                   {clientToEdit && (
+                     <div className="flex gap-4 justify-center">
+                        <AuditBadge label="Criado" date={clientToEdit.created_at} user={clientToEdit.created_by} />
+                        <AuditBadge label="Editado" date={clientToEdit.updated_at} user={clientToEdit.updated_by} />
+                     </div>
+                   )}
+                   <div className="flex justify-end gap-3">
+                    <button onClick={onClose} className="px-4 py-2 text-sm font-bold text-gray-500">Cancelar</button>
+                    <button onClick={handleSave} className="bg-[#112240] text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg"><Save className="h-4 w-4" /> Salvar Cliente</button>
+                   </div>
+                </footer>
               </Dialog.Panel>
             </Transition.Child>
           </div>
         </div>
       </Dialog>
     </Transition>
+  )
+}
+
+// --- HELPER COMPONENTS ---
+function FormInput({ label, value, onChange, type = "text" }: any) {
+  return (
+    <div>
+      <label className="text-xs font-bold text-gray-500 uppercase block mb-1">{label}</label>
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} className="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-[#112240]/20" />
+    </div>
+  )
+}
+
+function AuditBadge({ label, date, user }: any) {
+  if (!date) return null
+  return (
+    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border text-[10px]">
+      <div className="flex flex-col">
+        <span className="text-gray-400 font-bold uppercase">{label}</span>
+        <span className="font-bold text-gray-700">{new Date(date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+        {user && <span className="text-blue-500">{user}</span>}
+      </div>
+    </div>
   )
 }

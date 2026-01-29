@@ -1,332 +1,214 @@
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { 
+  Users, 
+  UserCheck, 
+  UserMinus, 
+  Clock, 
+  TrendingUp, 
+  Calendar as CalendarIcon,
+  MapPin,
+  Briefcase
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { Users, Gift, LayoutGrid, Award, Map, Gavel } from 'lucide-react';
+import { Colaborador } from '../types/colaborador';
 
-interface SocioData {
-  name: string;
-  total: number;
-  brindes: { tipo: string; qtd: number }[];
-}
-
-interface StateData {
-  name: string;
-  value: number;
-}
-
-interface DashboardStats {
-  totalClients: number;
-  totalMagistrados: number;
-  brindeCounts: Record<string, number>;
-  lastClients: any[];
-  socioData: SocioData[];
-  stateData: StateData[];
-}
-
-interface DashboardProps {
-  onNavigateWithFilter: (page: string, filters: { socio?: string; brinde?: string }) => void;
-}
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0];
-    const color = data.payload.fill || data.color || '#3b82f6';
-    
-    return (
-      <div className="bg-white p-3 rounded-xl shadow-xl border border-gray-100 min-w-[140px] animate-fadeIn">
-        <p className="text-xs font-bold text-gray-800 border-b border-gray-100 pb-1 mb-2 capitalize">
-          {label}
-        </p>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: color }} />
-            <span className="text-xs text-gray-500 font-medium capitalize">
-              {data.name || 'Quantidade'}:
-            </span>
-          </div>
-          <span className="text-sm font-bold text-[#112240]">
-            {data.value}
-          </span>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
-export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
-  const [stats, setStats] = useState<DashboardStats>({ 
-    totalClients: 0,
-    totalMagistrados: 0,
-    brindeCounts: {}, 
-    lastClients: [], 
-    socioData: [],
-    stateData: []
+export function Dashboard() {
+  const [stats, setStats] = useState({
+    total: 0,
+    ativos: 0,
+    desligados: 0,
+    novosMes: 0
   });
+  const [recentColabs, setRecentColabs] = useState<Colaborador[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const getBrindeColor = (tipo: string) => {
-    if (tipo === 'Brinde VIP') return '#a855f7'; 
-    if (tipo === 'Brinde Médio') return '#22c55e'; 
-    return '#94a3b8'; 
-  };
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      const { data: lastClients } = await supabase
-        .from('clientes')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      const { data: allData } = await supabase
-        .from('clientes')
-        .select('tipo_brinde, socio, estado');
-
-      // Buscar total de magistrados
-      const { data: magistradosData } = await supabase
-        .from('magistrados')
-        .select('id');
-
-      const brindeCounts: Record<string, number> = {};
-      const socioMap: Record<string, any> = {};
-      const stateMap: Record<string, number> = {};
-
-      allData?.forEach(item => {
-        if (item.tipo_brinde) {
-          brindeCounts[item.tipo_brinde] = (brindeCounts[item.tipo_brinde] || 0) + 1;
-        }
-
-        if (item.socio) {
-          if (!socioMap[item.socio]) {
-            socioMap[item.socio] = { name: item.socio, total: 0, brindes: {} };
-          }
-          socioMap[item.socio].total += 1;
-          const tBrinde = item.tipo_brinde || 'Outro';
-          socioMap[item.socio].brindes[tBrinde] = (socioMap[item.socio].brindes[tBrinde] || 0) + 1;
-        }
-
-        const estado = item.estado ? item.estado.toUpperCase().trim() : 'ND';
-        stateMap[estado] = (stateMap[estado] || 0) + 1;
-      });
-
-      const formattedSocioData = Object.values(socioMap).map((s: any) => ({
-        name: s.name,
-        total: s.total,
-        brindes: Object.entries(s.brindes).map(([tipo, qtd]) => ({
-          tipo,
-          qtd: qtd as number
-        }))
-      })).sort((a: any, b: any) => b.total - a.total); // Ordenação aplicada aqui
-
-      const formattedStateData = Object.entries(stateMap)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value);
-
-      setStats({
-        totalClients: allData?.length || 0,
-        totalMagistrados: magistradosData?.length || 0,
-        brindeCounts,
-        lastClients: lastClients || [],
-        socioData: formattedSocioData,
-        stateData: formattedStateData
-      });
-    } catch (err) {
-      console.error("Erro ao carregar dashboard:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
+  async function fetchDashboardData() {
+    try {
+      setLoading(true);
+      
+      // Busca colaboradores para estatísticas
+      const { data: colabs } = await supabase
+        .from('colaboradores')
+        .select('*');
+
+      if (colabs) {
+        const agora = new Date();
+        const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+
+        setStats({
+          total: colabs.length,
+          ativos: colabs.filter(c => c.status === 'Ativo').length,
+          desligados: colabs.filter(c => c.status === 'Desligado').length,
+          novosMes: colabs.filter(c => new Date(c.data_admissao) >= inicioMes).length
+        });
+
+        // Pega os 5 mais recentes
+        const sorted = [...colabs].sort((a, b) => 
+          new Date(b.data_admissao).getTime() - new Date(a.data_admissao).getTime()
+        ).slice(0, 5);
+        
+        setRecentColabs(sorted);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#112240]"></div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-8 pb-10">
-      
-      {/* CARDS DE MÉTRICAS - LINHA ÚNICA */}
-      <div className="flex flex-wrap gap-4">
-        
-        {/* Card Total Geral (Clientes) */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3 relative overflow-hidden group flex-1 min-w-[180px]">
-            <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-blue-50 rounded-xl text-blue-700">
-                <Award className="h-6 w-6" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Clientes</p>
-                <p className="text-3xl font-black text-[#112240] leading-none mt-1">{stats.totalClients}</p>
-              </div>
-            </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Visão Geral</h1>
+        <div className="flex items-center gap-2 text-sm text-gray-500 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
+          <CalendarIcon className="h-4 w-4" />
+          {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
         </div>
-
-        {/* Cards de Brindes - Filtrar apenas os tipos corretos */}
-        {Object.entries(stats.brindeCounts)
-          .filter(([tipo]) => tipo !== 'Brinde Pequeno') // Remover tipo antigo
-          .map(([tipo, qtd]) => (
-          <div 
-            key={tipo} 
-            onClick={() => onNavigateWithFilter('clientes', { brinde: tipo })}
-            className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all flex-1 min-w-[180px]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl" style={{ backgroundColor: `${getBrindeColor(tipo)}15`, color: getBrindeColor(tipo) }}>
-                <Gift className="h-6 w-6" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide line-clamp-1">{tipo}</p>
-                <p className="text-3xl font-black text-[#112240] leading-none mt-1">{qtd}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {/* Separador Visual */}
-        <div className="hidden lg:flex items-center justify-center mx-2">
-          <div className="h-20 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
-        </div>
-
-        {/* Card Magistrados (Separado) */}
-        <div 
-          className="bg-gradient-to-br from-amber-50 to-white p-5 rounded-xl shadow-sm border-2 border-amber-200 flex flex-col gap-3 cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group relative overflow-hidden flex-1 min-w-[200px]"
-          onClick={() => onNavigateWithFilter('magistrados', {})}
-        >
-            <div className="absolute right-0 top-0 h-full w-1 bg-amber-600"></div>
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-amber-100 rounded-xl text-amber-700 group-hover:scale-110 transition-transform">
-                <Gavel className="h-6 w-6" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide">Magistrados</p>
-                <p className="text-3xl font-black text-amber-900 leading-none mt-1">{stats.totalMagistrados}</p>
-              </div>
-            </div>
-            <div className="absolute bottom-2 right-3 text-[9px] text-amber-600/60 font-bold">
-              ÁREA RESTRITA
-            </div>
-        </div>
-
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        
-        {/* Bloco Clientes por Sócio */}
-        <div className="xl:col-span-2 bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><LayoutGrid className="h-6 w-6" /></div>
-            <h3 className="font-bold text-[#112240] text-xl">Clientes por Sócio</h3>
+      {/* Grid de KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <DashboardCard 
+          title="Total de Colaboradores" 
+          value={stats.total} 
+          icon={Users} 
+          trend="+2% vs mês anterior"
+          color="blue" 
+        />
+        <DashboardCard 
+          title="Colaboradores Ativos" 
+          value={stats.ativos} 
+          icon={UserCheck} 
+          color="green" 
+        />
+        <DashboardCard 
+          title="Novos este Mês" 
+          value={stats.novosMes} 
+          icon={TrendingUp} 
+          color="purple" 
+        />
+        <DashboardCard 
+          title="Desligamentos" 
+          value={stats.desligados} 
+          icon={UserMinus} 
+          color="red" 
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Lista de Admissões Recentes */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-500" />
+              Admissões Recentes
+            </h3>
+            <button className="text-sm text-blue-600 font-medium hover:underline">Ver todos</button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {stats.socioData.map((socio) => (
-              <div 
-                key={socio.name} 
-                className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 hover:border-blue-300 transition-colors flex flex-col h-full cursor-pointer group"
-                onClick={() => onNavigateWithFilter('clientes', { socio: socio.name })}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h4 className="font-bold text-[#112240] text-base leading-tight pr-2 group-hover:text-blue-700">{socio.name}</h4>
-                  <div className="text-right flex flex-col items-end">
-                    <span className="text-2xl font-black text-blue-600 leading-none">{socio.total}</span>
-                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">Total</span>
+          <div className="divide-y divide-gray-50">
+            {recentColabs.map((colab) => (
+              <div key={colab.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-full bg-gray-100 border flex items-center justify-center overflow-hidden shadow-sm">
+                    {colab.foto_url ? (
+                      <img src={colab.foto_url} alt={colab.nome} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-bold text-gray-400">{colab.nome.charAt(0)}</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{colab.nome}</p>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <Briefcase className="h-3 w-3" /> {colab.cargo}
+                      </span>
+                      <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" /> {colab.local}
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                <div className="h-32 w-full mt-auto">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart layout="vertical" data={socio.brindes} margin={{ left: -20, right: 30, top: 5, bottom: 5 }}>
-                      <XAxis type="number" hide />
-                      <YAxis 
-                        dataKey="tipo" 
-                        type="category" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        fontSize={10} 
-                        width={70}
-                        tick={{fill: '#64748b', fontWeight: 600}}
-                        interval={0} 
-                      />
-                      <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
-                      <Bar dataKey="qtd" radius={[0, 4, 4, 0]} barSize={16} name="Quantidade">
-                        {socio.brindes.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={getBrindeColor(entry.tipo)} />
-                        ))}
-                        <LabelList dataKey="qtd" position="right" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#112240' }} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-gray-400 uppercase">Admitido em</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    {new Date(colab.data_admissao).toLocaleDateString('pt-BR')}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="space-y-8">
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><Map className="h-6 w-6" /></div>
-                    <h3 className="font-bold text-[#112240] text-xl">Por Estado</h3>
-                </div>
-                <div className="h-64 w-full"> 
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={stats.stateData} layout="vertical" margin={{ left: 0, right: 30, top: 5, bottom: 5 }}>
-                            <XAxis type="number" hide />
-                            <YAxis 
-                                dataKey="name" 
-                                type="category" 
-                                axisLine={false} 
-                                tickLine={false} 
-                                fontSize={12} 
-                                width={35}   
-                                tick={{fill: '#64748b', fontWeight: 700}}
-                                interval={0} 
-                            />
-                            <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
-                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24} fill="#6366f1" name="Clientes">
-                                <LabelList dataKey="value" position="right" style={{ fontSize: '12px', fontWeight: 'bold', fill: '#112240' }} />
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
+        {/* Card Auxiliar / Atalhos */}
+        <div className="bg-[#112240] rounded-2xl p-6 text-white shadow-lg flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-bold mb-2">Ações Rápidas</h3>
+            <p className="text-blue-200 text-sm mb-6">Gerencie sua equipe com eficiência.</p>
+            
+            <div className="space-y-3">
+              <QuickAction label="Cadastrar Colaborador" icon={Plus} />
+              <QuickAction label="Gerar Relatório Mensal" icon={Download} />
+              <QuickAction label="Gerenciar Cargos" icon={Briefcase} />
             </div>
-
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col h-fit">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Users className="h-6 w-6" /></div>
-                    <h3 className="font-bold text-[#112240] text-xl">Últimos</h3>
-                </div>
-                <div className="space-y-4 overflow-y-auto custom-scrollbar pr-2 max-h-[400px]">
-                    {stats.lastClients.map((client) => (
-                    <div key={client.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-transparent hover:border-gray-200 transition-all group">
-                        <div className="min-w-0">
-                        <p className="text-sm font-bold text-gray-800 truncate mb-1">{client.nome}</p>
-                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide group-hover:text-blue-600 transition-colors">
-                            {client.socio || 'Sem Sócio'}
-                        </p>
-                        </div>
-                        <span 
-                        className="text-[10px] px-3 py-1 rounded-full font-bold bg-white border border-gray-200 shadow-sm shrink-0 uppercase tracking-wider" 
-                        style={{ color: getBrindeColor(client.tipo_brinde), borderColor: `${getBrindeColor(client.tipo_brinde)}30` }}
-                        >
-                        {client.tipo_brinde?.replace('Brinde ', '') || 'BRINDE'}
-                        </span>
-                    </div>
-                    ))}
-                </div>
+          </div>
+          
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <Users className="h-5 w-5 text-blue-400" />
+              </div>
+              <div>
+                <p className="text-xs text-blue-200">Total Equipe</p>
+                <p className="text-xl font-bold">{stats.ativos} Ativos</p>
+              </div>
             </div>
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// Sub-componentes internos para manter o Dashboard conciso
+function DashboardCard({ title, value, icon: Icon, trend, color }: any) {
+  const colors: any = {
+    blue: 'text-blue-600 bg-blue-50',
+    green: 'text-green-600 bg-green-50',
+    purple: 'text-purple-600 bg-purple-50',
+    red: 'text-red-600 bg-red-50'
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between mb-4">
+        <div className={`p-2.5 rounded-xl ${colors[color]}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+        {trend && <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">{trend}</span>}
+      </div>
+      <p className="text-sm font-medium text-gray-500">{title}</p>
+      <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+    </div>
+  );
+}
+
+function QuickAction({ label, icon: Icon }: any) {
+  return (
+    <button className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/10 group">
+      <span className="text-sm font-medium">{label}</span>
+      <Icon className="h-4 w-4 text-blue-400 group-hover:scale-110 transition-transform" />
+    </button>
   );
 }
