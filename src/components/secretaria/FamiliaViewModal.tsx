@@ -5,9 +5,10 @@ interface FamiliaViewModalProps {
   isOpen: boolean
   onClose: () => void
   onDelete: (id: string) => void
+  onEdit: (item: any) => void
 }
 
-export function FamiliaViewModal({ item, isOpen, onClose, onDelete }: FamiliaViewModalProps) {
+export function FamiliaViewModal({ item, isOpen, onClose, onDelete, onEdit }: FamiliaViewModalProps) {
   if (!isOpen || !item) return null
 
   const InfoField = ({ icon: Icon, label, value, color }: any) => (
@@ -46,7 +47,7 @@ export function FamiliaViewModal({ item, isOpen, onClose, onDelete }: FamiliaVie
           </button>
         </div>
 
-        {/* Content - Sem barra de rolagem */}
+        {/* Content */}
         <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           <InfoField icon={Calendar} label="Vencimento" value={formatDate(item.vencimento)} color="text-blue-500" />
           <InfoField icon={User} label="Titular" value={item.titular} color="text-purple-500" />
@@ -88,6 +89,7 @@ export function FamiliaViewModal({ item, isOpen, onClose, onDelete }: FamiliaVie
               Fechar
             </button>
             <button
+              onClick={() => onEdit(item)}
               className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white text-sm font-medium rounded-lg hover:bg-[#1e3a8a]/90 shadow-md transition-all active:scale-95"
             >
               <Edit className="w-4 h-4" /> Editar
