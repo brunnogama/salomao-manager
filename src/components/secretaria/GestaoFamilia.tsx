@@ -40,17 +40,29 @@ export function GestaoFamilia() {
     return () => window.removeEventListener('keydown', handleEsc)
   }, [])
 
-  // Função para salvar novo lançamento manual
+  // Função para salvar ou atualizar lançamento
   const handleSaveData = async (formData: any) => {
     try {
-      const { error } = await supabase
-        .from('familia_salomao_dados')
-        .insert([formData])
+      if (formData.id) {
+        // Lógica de Edição (Update)
+        const { error } = await supabase
+          .from('familia_salomao_dados')
+          .update(formData)
+          .eq('id', formData.id)
 
-      if (error) throw error
+        if (error) throw error
+      } else {
+        // Lógica de Novo Registro (Insert)
+        const { error } = await supabase
+          .from('familia_salomao_dados')
+          .insert([formData])
+
+        if (error) throw error
+      }
       
       await fetchDados()
       setIsModalOpen(false)
+      setSelectedItem(null)
     } catch (error) {
       console.error('Erro ao salvar:', error)
       alert('Erro ao salvar o lançamento.')
@@ -225,7 +237,10 @@ export function GestaoFamilia() {
 
       <FamiliaFormModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedItem(null)
+        }} 
         onSave={handleSaveData}
         initialData={selectedItem}
       />
