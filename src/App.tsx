@@ -21,6 +21,7 @@ import { UnderConstruction } from './components/UnderConstruction'
 import { Presencial } from './components/collaborators/Presencial' 
 import { Colaboradores } from './pages/Colaboradores'
 import { Calendario } from './components/collaborators/Calendario'
+import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 
 import { Menu, LogOut, Grid, UserCircle } from 'lucide-react'
 import { MODULE_CONFIG } from './config/modules'
@@ -157,7 +158,8 @@ export default function App() {
 
             {currentModule === 'executive' && (
               <>
-                {['dashboard', 'calendario', 'despesas', 'gestao-familia', 'ged'].includes(activePage) && (
+                {activePage === 'gestao-familia' && <GestaoFamilia />}
+                {['dashboard', 'calendario', 'despesas', 'ged'].includes(activePage) && (
                   <UnderConstruction moduleName={`Secretaria: ${activePage}`} onBack={() => setActivePage('dashboard')} />
                 )}
               </>
