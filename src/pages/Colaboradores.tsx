@@ -19,7 +19,7 @@ interface Colaborador {
   cep: string;
   endereco: string;
   numero: string;
-  complemento: string; // Novo campo
+  complemento: string;
   bairro: string;
   cidade: string;
   estado: string;
@@ -72,12 +72,31 @@ export function Colaboradores() {
   // Estado para refresh do SearchableSelect
   const [refreshKey, setRefreshKey] = useState(0)
 
+  // Estado para visualização da foto em tamanho real
+  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchColaboradores()
   }, [])
+
+  // Efeito para fechar modais com ESC
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (viewingPhoto) {
+          setViewingPhoto(null)
+        } else if (selectedColaborador) {
+          setSelectedColaborador(null)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [viewingPhoto, selectedColaborador])
 
   // --- HELPER: CAMEL CASE ---
   const toTitleCase = (str: string) => {
@@ -243,7 +262,7 @@ export function Colaboradores() {
       nome: toTitleCase(formData.nome || ''),
       email: formData.email?.toLowerCase() || '',
       endereco: toTitleCase(formData.endereco || ''),
-      complemento: toTitleCase(formData.complemento || ''), // Adicionado
+      complemento: toTitleCase(formData.complemento || ''),
       bairro: toTitleCase(formData.bairro || ''),
       cidade: toTitleCase(formData.cidade || ''),
       lider_equipe: toTitleCase(formData.lider_equipe || ''),
@@ -344,7 +363,7 @@ export function Colaboradores() {
           cep: normalize('CEP'),
           endereco: toTitleCase(normalize('ENDEREÇO')),
           numero: normalize('NÚMERO'),
-          complemento: normalize('COMPLEMENTO'), // Importação
+          complemento: normalize('COMPLEMENTO'),
           bairro: toTitleCase(normalize('BAIRRO')),
           cidade: toTitleCase(normalize('CIDADE')),
           estado: toTitleCase(normalize('ESTADO')),
@@ -415,8 +434,8 @@ export function Colaboradores() {
     </div>
   )
 
-  // Componente Avatar com Foto
-  const Avatar = ({ colab, size = 'md' }: { colab: Colaborador, size?: 'sm' | 'md' | 'lg' }) => {
+  // Componente Avatar com Foto - ATUALIZADO COM CLIQUE
+  const Avatar = ({ colab, size = 'md', clickable = false }: { colab: Colaborador, size?: 'sm' | 'md' | 'lg', clickable?: boolean }) => {
     const sizes = {
       sm: 'w-10 h-10 text-base',
       md: 'w-14 h-14 text-2xl',
@@ -428,7 +447,13 @@ export function Colaboradores() {
         <img 
           src={colab.foto_url} 
           alt={colab.nome}
-          className={`${sizes[size]} rounded-full object-cover border-2 border-gray-200 shadow-sm`}
+          onClick={(e) => {
+            if (clickable) {
+              e.stopPropagation()
+              setViewingPhoto(colab.foto_url!)
+            }
+          }}
+          className={`${sizes[size]} rounded-full object-cover border-2 border-gray-200 shadow-sm ${clickable ? 'cursor-pointer hover:ring-4 hover:ring-blue-200 transition-all' : ''}`}
         />
       )
     }
@@ -883,7 +908,7 @@ export function Colaboradores() {
               {/* Header */}
               <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-gray-50/50 rounded-t-2xl shrink-0">
                 <div className="flex items-center gap-4">
-                  <Avatar colab={selectedColaborador} size="lg" />
+                  <Avatar colab={selectedColaborador} size="lg" clickable={true} />
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">{toTitleCase(selectedColaborador.nome)}</h2>
                     <div className="flex items-center gap-2 mt-1">
@@ -986,6 +1011,29 @@ export function Colaboradores() {
               </div>
 
             </div>
+        </div>
+      )}
+
+      {/* MODAL DE VISUALIZAÇÃO DA FOTO EM TAMANHO REAL */}
+      {viewingPhoto && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setViewingPhoto(null)}
+        >
+          <div className="relative max-w-5xl max-h-[90vh] animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setViewingPhoto(null)}
+              className="absolute -top-12 right-0 p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+            >
+              <X className="h-8 w-8" />
+            </button>
+            <img 
+              src={viewingPhoto} 
+              alt="Foto em tamanho real"
+              className="max-w-full max-h-[90vh] rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
         </div>
       )}
     </div>
