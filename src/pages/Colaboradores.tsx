@@ -58,6 +58,8 @@ export function Colaboradores() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLider, setFilterLider] = useState('')
   const [filterLocal, setFilterLocal] = useState('')
+  const [filterCargo, setFilterCargo] = useState('')
+  const [searchExpanded, setSearchExpanded] = useState(false)
 
   // Estado do Formulário
   const [formData, setFormData] = useState<Partial<Colaborador>>({
@@ -402,21 +404,28 @@ export function Colaboradores() {
     const matchLocal = filterLocal 
         ? c.local?.toLowerCase() === filterLocal.toLowerCase() 
         : true;
+    
+    const matchCargo = filterCargo 
+        ? c.cargo?.toLowerCase() === filterCargo.toLowerCase() 
+        : true;
         
-    return matchSearch && matchLider && matchLocal
+    return matchSearch && matchLider && matchLocal && matchCargo
   })
 
   // Funções de Limpeza de Filtro
-  const hasActiveFilters = searchTerm !== '' || filterLider !== '' || filterLocal !== ''
+  const hasActiveFilters = searchTerm !== '' || filterLider !== '' || filterLocal !== '' || filterCargo !== ''
     
   const clearFilters = () => {
     setSearchTerm('')
     setFilterLider('')
     setFilterLocal('')
+    setFilterCargo('')
+    setSearchExpanded(false)
   }
 
   const unicosLideres = Array.from(new Set(colaboradores.map(c => c.lider_equipe).filter(Boolean))).sort()
   const unicosLocais = Array.from(new Set(colaboradores.map(c => c.local).filter(Boolean))).sort()
+  const unicosCargos = Array.from(new Set(colaboradores.map(c => c.cargo).filter(Boolean))).sort()
 
   // KPIs
   const totalAtivos = colaboradores.filter(c => c.status?.toLowerCase() === 'ativo').length
@@ -517,15 +526,40 @@ export function Colaboradores() {
           {/* Busca e Filtros */}
           {viewMode === 'list' && (
             <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto flex-1 items-center">
-              <div className="relative flex-1 min-w-[280px] w-full">
-                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar nome ou CPF..." 
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
+              {/* Busca Expansível */}
+              <div className="flex items-center gap-2">
+                {!searchExpanded ? (
+                  <button
+                    onClick={() => setSearchExpanded(true)}
+                    className="p-2.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    title="Buscar"
+                  >
+                    <Search className="h-5 w-5" />
+                  </button>
+                ) : (
+                  <div className="relative animate-in slide-in-from-right-4 fade-in duration-200">
+                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    <input 
+                      type="text" 
+                      placeholder="Buscar nome ou CPF..." 
+                      className="w-[280px] pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      autoFocus
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => {
+                          setSearchTerm('')
+                          setSearchExpanded(false)
+                        }}
+                        className="absolute right-2 top-2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               
               <div className="w-full sm:w-48">
@@ -546,6 +580,15 @@ export function Colaboradores() {
                 />
               </div>
 
+              <div className="w-full sm:w-48">
+                <SearchableSelect 
+                   placeholder="Cargos"
+                   value={filterCargo}
+                   onChange={setFilterCargo}
+                   options={unicosCargos.map(c => ({ name: toTitleCase(c) }))}
+                />
+              </div>
+
               {/* Botão Limpar Filtros */}
               {hasActiveFilters && (
                 <button 
@@ -562,14 +605,31 @@ export function Colaboradores() {
           {/* Botões de Ação */}
           <div className="flex gap-2 w-full lg:w-auto justify-end">
             <input type="file" hidden ref={fileInputRef} accept=".xlsx" onChange={handleImport} />
-            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 font-bold text-sm transition-colors border border-green-200">
-              <Upload className="h-4 w-4" /> Importar
+            
+            {/* Botão Importar - Apenas Ícone */}
+            <button 
+              onClick={() => fileInputRef.current?.click()} 
+              className="p-2.5 text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors border border-green-200"
+              title="Importar"
+            >
+              <Upload className="h-5 w-5" />
             </button>
-            <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-bold text-sm transition-colors border border-blue-200">
-              <Download className="h-4 w-4" /> Exportar
+            
+            {/* Botão Exportar - Apenas Ícone */}
+            <button 
+              onClick={handleExport} 
+              className="p-2.5 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+              title="Exportar"
+            >
+              <Download className="h-5 w-5" />
             </button>
-            <button onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setPhotoPreview(null); setViewMode('form') }} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold text-sm transition-colors shadow-sm">
-              <Plus className="h-4 w-4" /> Novo Colaborador
+            
+            {/* Botão Novo - Texto Reduzido */}
+            <button 
+              onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setPhotoPreview(null); setViewMode('form') }} 
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold text-sm transition-colors shadow-sm"
+            >
+              <Plus className="h-4 w-4" /> Novo
             </button>
           </div>
         </div>
@@ -627,7 +687,7 @@ export function Colaboradores() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-2">
+                        <div className="flex justify-end gap-2">
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleEdit(colab); }} 
                             className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" 
