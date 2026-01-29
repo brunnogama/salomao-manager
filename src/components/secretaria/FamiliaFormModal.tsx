@@ -169,7 +169,6 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md transition-all">
       <div className="bg-white w-full max-w-5xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-white/20">
         
-        {/* Header com botão de fechar corrigido */}
         <div className="px-10 py-7 border-b border-gray-100 flex justify-between items-center bg-white flex-shrink-0">
           <div>
             <h3 className="text-2xl font-black text-[#112240] tracking-tight">{initialData ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
@@ -184,50 +183,50 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
           
           <div className="space-y-4">
             <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] border-b border-blue-50 pb-2">Identificação Básica</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="space-y-1.5 flex flex-col h-full">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Vencimento</label>
                 <input type="date" name="vencimento" value={formData.vencimento} onChange={(e) => setFormData({...formData, vencimento: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium" required />
               </div>
               <ManagedSelect label="Titular" name="titular" value={formData.titular} optionsList={options.titular} />
               <ManagedSelect label="Fornecedor" name="fornecedor" value={formData.fornecedor} optionsList={options.fornecedor} />
+              <ManagedSelect label="Status" name="status" value={formData.status} optionsList={options.status} />
             </div>
           </div>
 
           <div className="space-y-4">
             <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] border-b border-blue-50 pb-2">Financeiro e Classificação</h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 flex flex-col h-full">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Valor (R$)</label>
                 <input type="number" step="0.01" name="valor" value={formData.valor} onChange={(e) => setFormData({...formData, valor: e.target.value})} className="w-full h-[46px] px-4 bg-blue-50/30 border border-blue-100 rounded-2xl text-sm font-bold text-blue-700 outline-none focus:ring-2 focus:ring-blue-500/20" required />
               </div>
-              <ManagedSelect label="Status" name="status" value={formData.status} optionsList={options.status} />
               <ManagedSelect label="Tipo" name="tipo" value={formData.tipo} optionsList={options.tipo} />
               <ManagedSelect label="Categoria" name="categoria" value={formData.categoria} optionsList={options.categoria} />
+              <ManagedSelect label="Fator Gerador" name="fator_gerador" value={formData.fator_gerador} optionsList={options.fator_gerador} />
             </div>
           </div>
 
           <div className="space-y-4">
             <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] border-b border-blue-50 pb-2">Documentação e Extras</h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="space-y-1.5"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Nota Fiscal</label><input name="nota_fiscal" value={formData.nota_fiscal} onChange={(e) => setFormData({...formData, nota_fiscal: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
-              <div className="space-y-1.5"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Fatura</label><input name="fatura" value={formData.fatura} onChange={(e) => setFormData({...formData, fatura: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
-              <ManagedSelect label="Fator Gerador" name="fator_gerador" value={formData.fator_gerador} optionsList={options.fator_gerador} />
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Nota Fiscal</label><input name="nota_fiscal" value={formData.nota_fiscal} onChange={(e) => setFormData({...formData, nota_fiscal: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
+              <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Fatura</label><input name="fatura" value={formData.fatura} onChange={(e) => setFormData({...formData, fatura: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
+              <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Comprovante (GED)</label><input name="comprovante" value={formData.comprovante} onChange={(e) => setFormData({...formData, comprovante: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
+              <div className="space-y-1.5 flex flex-col h-full">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Rateio</label>
                 <button type="button" onClick={() => setIsRateioModalOpen(true)} className="w-full h-[46px] flex items-center justify-between px-4 bg-white border-2 border-dashed border-gray-200 text-gray-600 rounded-2xl text-sm font-semibold hover:border-blue-400 hover:text-blue-600 transition-all">
                   <span className="truncate">{formData.rateio ? `${formData.rateio} (${formData.rateio_porcentagem}%)` : 'Configurar'}</span>
-                  <Calculator className="w-4 h-4 opacity-40" />
+                  <Calculator className="w-4 h-4 opacity-40 flex-shrink-0" />
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="space-y-1.5"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Recibo</label><input name="recibo" value={formData.recibo} onChange={(e) => setFormData({...formData, recibo: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
-              <div className="space-y-1.5"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Boleto</label><input name="boleto" value={formData.boleto} onChange={(e) => setFormData({...formData, boleto: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
-              <div className="space-y-1.5"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">O.S.</label><input name="os" value={formData.os} onChange={(e) => setFormData({...formData, os: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
-              <div className="space-y-1.5"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Comprovante (GED)</label><input name="comprovante" value={formData.comprovante} onChange={(e) => setFormData({...formData, comprovante: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Recibo</label><input name="recibo" value={formData.recibo} onChange={(e) => setFormData({...formData, recibo: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
+              <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Boleto</label><input name="boleto" value={formData.boleto} onChange={(e) => setFormData({...formData, boleto: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
+              <div className="space-y-1.5 flex flex-col h-full"><label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">O.S.</label><input name="os" value={formData.os} onChange={(e) => setFormData({...formData, os: e.target.value})} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none" /></div>
           </div>
 
           <div className="space-y-1.5 pt-4">
@@ -244,7 +243,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
         </form>
       </div>
 
-      {/* Modal de Gerenciamento de Opções com Função de Editar */}
+      {/* Modal de Gerenciamento de Opções */}
       {isManageModalOpen.open && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-[#0a192f]/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in duration-200">
@@ -263,10 +262,10 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
                     onChange={(e) => setEditingItem({...editingItem, current: e.target.value})}
                     className="flex-1 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-bold text-blue-700"
                   />
-                  <button onClick={handleUpdateItem} className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                  <button type="button" onClick={handleUpdateItem} className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
                     <Save className="w-5 h-5" />
                   </button>
-                  <button onClick={() => setEditingItem(null)} className="p-3 bg-gray-100 text-gray-400 rounded-xl hover:bg-gray-200 transition-all">
+                  <button type="button" onClick={() => setEditingItem(null)} className="p-3 bg-gray-100 text-gray-400 rounded-xl hover:bg-gray-200 transition-all">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -312,7 +311,6 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
         </div>
       )}
 
-      {/* Sub-modal de Rateio */}
       {isRateioModalOpen && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-[#0a192f]/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl p-8 border border-gray-100 animate-in zoom-in duration-200">
