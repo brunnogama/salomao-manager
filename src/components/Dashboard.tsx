@@ -30,21 +30,21 @@ interface DashboardProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
-    const color = data.payload.fill || data.color || '#3b82f6';
+    const color = data.payload.fill || data.color || '#64748b';
     
     return (
-      <div className="bg-white p-3 rounded-xl shadow-xl border border-gray-100 min-w-[140px] animate-fadeIn">
-        <p className="text-xs font-bold text-gray-800 border-b border-gray-100 pb-1 mb-2 capitalize">
+      <div className="bg-white p-3 rounded border border-gray-200 shadow-lg min-w-[120px]">
+        <p className="text-xs font-semibold text-gray-900 border-b border-gray-100 pb-1 mb-2 capitalize">
           {label}
         </p>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: color }} />
-            <span className="text-xs text-gray-500 font-medium capitalize">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+            <span className="text-xs text-gray-600 font-medium capitalize">
               {data.name || 'Quantidade'}:
             </span>
           </div>
-          <span className="text-sm font-bold text-[#112240]">
+          <span className="text-sm font-semibold text-gray-900">
             {data.value}
           </span>
         </div>
@@ -66,8 +66,8 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
   const [loading, setLoading] = useState(true);
 
   const getBrindeColor = (tipo: string) => {
-    if (tipo === 'Brinde VIP') return '#a855f7'; 
-    if (tipo === 'Brinde Médio') return '#22c55e'; 
+    if (tipo === 'Brinde VIP') return '#475569'; 
+    if (tipo === 'Brinde Médio') return '#64748b'; 
     return '#94a3b8'; 
   };
 
@@ -84,7 +84,6 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
         .from('clientes')
         .select('tipo_brinde, socio, estado');
 
-      // Buscar total de magistrados
       const { data: magistradosData } = await supabase
         .from('magistrados')
         .select('id');
@@ -118,7 +117,7 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
           tipo,
           qtd: qtd as number
         }))
-      })).sort((a: any, b: any) => b.total - a.total); // Ordenação aplicada aqui
+      })).sort((a: any, b: any) => b.total - a.total);
 
       const formattedStateData = Object.entries(stateMap)
         .map(([name, value]) => ({ name, value }))
@@ -152,41 +151,40 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
   }
 
   return (
-    <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-8 pb-10">
+    <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-10">
       
-      {/* CARDS DE MÉTRICAS - LINHA ÚNICA */}
+      {/* CARDS DE MÉTRICAS */}
       <div className="flex flex-wrap gap-4">
         
         {/* Card Total Geral (Clientes) */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3 relative overflow-hidden group flex-1 min-w-[180px]">
-            <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
+        <div className="bg-white p-5 rounded-lg border border-gray-200 flex flex-col gap-3 flex-1 min-w-[180px]">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-blue-50 rounded-xl text-blue-700">
-                <Award className="h-6 w-6" />
+              <div className="p-2 bg-gray-100 rounded border border-gray-200">
+                <Award className="h-5 w-5 text-gray-700" />
               </div>
               <div className="flex-1">
-                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Clientes</p>
-                <p className="text-3xl font-black text-[#112240] leading-none mt-1">{stats.totalClients}</p>
+                <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide">Clientes</p>
+                <p className="text-2xl font-bold text-gray-900 leading-none mt-1">{stats.totalClients}</p>
               </div>
             </div>
         </div>
 
-        {/* Cards de Brindes - Filtrar apenas os tipos corretos */}
+        {/* Cards de Brindes */}
         {Object.entries(stats.brindeCounts)
-          .filter(([tipo]) => tipo !== 'Brinde Pequeno') // Remover tipo antigo
+          .filter(([tipo]) => tipo !== 'Brinde Pequeno')
           .map(([tipo, qtd]) => (
           <div 
             key={tipo} 
             onClick={() => onNavigateWithFilter('clientes', { brinde: tipo })}
-            className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all flex-1 min-w-[180px]"
+            className="bg-white p-5 rounded-lg border border-gray-200 flex flex-col gap-3 cursor-pointer hover:border-gray-400 hover:shadow-sm transition-all flex-1 min-w-[180px]"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl" style={{ backgroundColor: `${getBrindeColor(tipo)}15`, color: getBrindeColor(tipo) }}>
-                <Gift className="h-6 w-6" />
+              <div className="p-2 bg-gray-100 rounded border border-gray-200">
+                <Gift className="h-5 w-5 text-gray-700" />
               </div>
               <div className="flex-1">
-                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide line-clamp-1">{tipo}</p>
-                <p className="text-3xl font-black text-[#112240] leading-none mt-1">{qtd}</p>
+                <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide line-clamp-1">{tipo}</p>
+                <p className="text-2xl font-bold text-gray-900 leading-none mt-1">{qtd}</p>
               </div>
             </div>
           </div>
@@ -194,52 +192,53 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
 
         {/* Separador Visual */}
         <div className="hidden lg:flex items-center justify-center mx-2">
-          <div className="h-20 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+          <div className="h-20 w-px bg-gray-200"></div>
         </div>
 
-        {/* Card Magistrados (Separado) */}
+        {/* Card Magistrados */}
         <div 
-          className="bg-gradient-to-br from-amber-50 to-white p-5 rounded-xl shadow-sm border-2 border-amber-200 flex flex-col gap-3 cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group relative overflow-hidden flex-1 min-w-[200px]"
+          className="bg-gray-50 p-5 rounded-lg border border-gray-300 flex flex-col gap-3 cursor-pointer hover:border-gray-400 hover:shadow-sm transition-all flex-1 min-w-[200px]"
           onClick={() => onNavigateWithFilter('magistrados', {})}
         >
-            <div className="absolute right-0 top-0 h-full w-1 bg-amber-600"></div>
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-amber-100 rounded-xl text-amber-700 group-hover:scale-110 transition-transform">
-                <Gavel className="h-6 w-6" />
+              <div className="p-2 bg-gray-100 rounded border border-gray-200">
+                <Gavel className="h-5 w-5 text-gray-700" />
               </div>
               <div className="flex-1">
-                <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide">Magistrados</p>
-                <p className="text-3xl font-black text-amber-900 leading-none mt-1">{stats.totalMagistrados}</p>
+                <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide">Magistrados</p>
+                <p className="text-2xl font-bold text-gray-900 leading-none mt-1">{stats.totalMagistrados}</p>
               </div>
             </div>
-            <div className="absolute bottom-2 right-3 text-[9px] text-amber-600/60 font-bold">
+            <div className="text-[8px] text-gray-500 font-semibold uppercase tracking-wide">
               ÁREA RESTRITA
             </div>
         </div>
 
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         
         {/* Bloco Clientes por Sócio */}
-        <div className="xl:col-span-2 bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><LayoutGrid className="h-6 w-6" /></div>
-            <h3 className="font-bold text-[#112240] text-xl">Clientes por Sócio</h3>
+        <div className="xl:col-span-2 bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-gray-100 rounded border border-gray-200">
+              <LayoutGrid className="h-5 w-5 text-gray-700" />
+            </div>
+            <h3 className="font-semibold text-gray-900 text-lg">Clientes por Sócio</h3>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {stats.socioData.map((socio) => (
               <div 
                 key={socio.name} 
-                className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 hover:border-blue-300 transition-colors flex flex-col h-full cursor-pointer group"
+                className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-gray-400 transition-colors flex flex-col h-full cursor-pointer group"
                 onClick={() => onNavigateWithFilter('clientes', { socio: socio.name })}
               >
                 <div className="flex justify-between items-start mb-4">
-                  <h4 className="font-bold text-[#112240] text-base leading-tight pr-2 group-hover:text-blue-700">{socio.name}</h4>
+                  <h4 className="font-semibold text-gray-900 text-sm leading-tight pr-2 group-hover:text-gray-700">{socio.name}</h4>
                   <div className="text-right flex flex-col items-end">
-                    <span className="text-2xl font-black text-blue-600 leading-none">{socio.total}</span>
-                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">Total</span>
+                    <span className="text-xl font-bold text-gray-900 leading-none">{socio.total}</span>
+                    <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide">Total</span>
                   </div>
                 </div>
 
@@ -262,7 +261,7 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
                         {socio.brindes.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={getBrindeColor(entry.tipo)} />
                         ))}
-                        <LabelList dataKey="qtd" position="right" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#112240' }} />
+                        <LabelList dataKey="qtd" position="right" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1f2937' }} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -272,11 +271,13 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
           </div>
         </div>
 
-        <div className="space-y-8">
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col">
+        <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 flex flex-col">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><Map className="h-6 w-6" /></div>
-                    <h3 className="font-bold text-[#112240] text-xl">Por Estado</h3>
+                    <div className="p-2 bg-gray-100 rounded border border-gray-200">
+                      <Map className="h-5 w-5 text-gray-700" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 text-lg">Por Estado</h3>
                 </div>
                 <div className="h-64 w-full"> 
                     <ResponsiveContainer width="100%" height="100%">
@@ -293,31 +294,32 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
                                 interval={0} 
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
-                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24} fill="#6366f1" name="Clientes">
-                                <LabelList dataKey="value" position="right" style={{ fontSize: '12px', fontWeight: 'bold', fill: '#112240' }} />
+                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24} fill="#64748b" name="Clientes">
+                                <LabelList dataKey="value" position="right" style={{ fontSize: '12px', fontWeight: 'bold', fill: '#1f2937' }} />
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col h-fit">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Users className="h-6 w-6" /></div>
-                    <h3 className="font-bold text-[#112240] text-xl">Últimos</h3>
+            <div className="bg-white p-6 rounded-lg border border-gray-200 flex flex-col h-fit">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-gray-100 rounded border border-gray-200">
+                      <Users className="h-5 w-5 text-gray-700" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 text-lg">Últimos</h3>
                 </div>
-                <div className="space-y-4 overflow-y-auto custom-scrollbar pr-2 max-h-[400px]">
+                <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 max-h-[400px]">
                     {stats.lastClients.map((client) => (
-                    <div key={client.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-transparent hover:border-gray-200 transition-all group">
+                    <div key={client.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-400 transition-all group">
                         <div className="min-w-0">
-                        <p className="text-sm font-bold text-gray-800 truncate mb-1">{client.nome}</p>
-                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide group-hover:text-blue-600 transition-colors">
+                        <p className="text-sm font-semibold text-gray-900 truncate mb-1">{client.nome}</p>
+                        <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
                             {client.socio || 'Sem Sócio'}
                         </p>
                         </div>
                         <span 
-                        className="text-[10px] px-3 py-1 rounded-full font-bold bg-white border border-gray-200 shadow-sm shrink-0 uppercase tracking-wider" 
-                        style={{ color: getBrindeColor(client.tipo_brinde), borderColor: `${getBrindeColor(client.tipo_brinde)}30` }}
+                        className="text-[10px] px-2.5 py-1 rounded font-semibold bg-white border border-gray-200 shrink-0 uppercase tracking-wider text-gray-700"
                         >
                         {client.tipo_brinde?.replace('Brinde ', '') || 'BRINDE'}
                         </span>
