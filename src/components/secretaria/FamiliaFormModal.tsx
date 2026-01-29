@@ -27,6 +27,9 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
   const [isRateioModalOpen, setIsRateioModalOpen] = useState(false)
   const [newItemValue, setNewItemValue] = useState('')
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+  
+  // Novos estados para edição de itens no gerenciamento
+  const [editingItem, setEditingItem] = useState<{ original: string, current: string } | null>(null)
 
   // Busca dados para os menus suspensos
   const fetchUniqueOptions = async () => {
@@ -84,6 +87,19 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
       ...prev,
       [field]: prev[field].filter(item => item !== itemToDelete)
     }))
+  }
+
+  // Função para salvar edição de um item existente
+  const handleUpdateItem = () => {
+    if (!editingItem || !editingItem.current.trim()) return
+    const field = isManageModalOpen.field
+    setOptions(prev => ({
+      ...prev,
+      [field]: prev[field].map(item => 
+        item === editingItem.original ? editingItem.current.trim() : item
+      ).sort()
+    }))
+    setEditingItem(null)
   }
 
   const ManagedSelect = ({ label, name, value, optionsList }: any) => {
@@ -219,7 +235,6 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
             <textarea name="descricao_servico" value={formData.descricao_servico} onChange={(e) => setFormData({...formData, descricao_servico: e.target.value})} rows={3} className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-[2rem] text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-medium" placeholder="Detalhes do serviço..." />
           </div>
 
-          {/* Botão de Cancelar corrigido chamando onClose */}
           <div className="flex justify-end items-center gap-8 pt-6 mt-4 border-t border-gray-50 flex-shrink-0">
             <button type="button" onClick={onClose} className="text-xs font-black text-gray-400 hover:text-gray-600 transition-all uppercase tracking-[0.2em]">Cancelar</button>
             <button type="submit" className="flex items-center gap-3 px-12 py-4 bg-[#1e3a8a] text-white text-xs font-black rounded-2xl hover:bg-[#112240] shadow-xl transition-all active:scale-95 uppercase tracking-[0.2em]">
@@ -229,7 +244,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
         </form>
       </div>
 
-      {/* Modal de Gerenciamento de Opções */}
+      {/* Modal de Gerenciamento de Opções com Função de Editar */}
       {isManageModalOpen.open && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-[#0a192f]/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in duration-200">
@@ -237,22 +252,61 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
               <h4 className="font-black text-[#112240] uppercase text-xs tracking-widest flex items-center gap-2">
                 <Settings2 className="w-4 h-4 text-blue-600" /> Gerenciar {isManageModalOpen.field}
               </h4>
-              <button onClick={() => setIsManageModalOpen({ open: false, field: '' })}><X className="w-5 h-5 text-gray-400" /></button>
+              <button onClick={() => { setIsManageModalOpen({ open: false, field: '' }); setEditingItem(null); }}><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="p-8 space-y-6">
-              <div className="flex gap-2">
-                <input type="text" value={newItemValue} onChange={(e) => setNewItemValue(e.target.value)} placeholder="Novo item..." className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
-                <button type="button" onClick={handleAddItem} className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"><Plus className="w-5 h-5" /></button>
-              </div>
+              {editingItem ? (
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={editingItem.current}
+                    onChange={(e) => setEditingItem({...editingItem, current: e.target.value})}
+                    className="flex-1 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-bold text-blue-700"
+                  />
+                  <button onClick={handleUpdateItem} className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                    <Save className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => setEditingItem(null)} className="p-3 bg-gray-100 text-gray-400 rounded-xl hover:bg-gray-200 transition-all">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={newItemValue}
+                    onChange={(e) => setNewItemValue(e.target.value)}
+                    placeholder="Novo item..."
+                    className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
+                  />
+                  <button type="button" onClick={handleAddItem} className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"><Plus className="w-5 h-5" /></button>
+                </div>
+              )}
+
               <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                 {options[isManageModalOpen.field]?.map((item) => (
                   <div key={item} className="flex justify-between items-center p-3 bg-gray-50/50 rounded-xl border border-gray-100 group hover:border-blue-200 transition-all">
                     <span className="text-sm font-semibold text-[#112240]">{item}</span>
-                    <button type="button" onClick={() => handleDeleteItem(item)} className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 className="w-4 h-4" /></button>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        type="button" 
+                        onClick={() => setEditingItem({ original: item, current: item })}
+                        className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => handleDeleteItem(item)} 
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={() => setIsManageModalOpen({ open: false, field: '' })} className="w-full py-4 bg-[#1e3a8a] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#112240] transition-all">Concluir</button>
+              <button type="button" onClick={() => { setIsManageModalOpen({ open: false, field: '' }); setEditingItem(null); }} className="w-full py-4 bg-[#1e3a8a] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#112240] transition-all">Concluir</button>
             </div>
           </div>
         </div>
