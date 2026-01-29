@@ -308,7 +308,8 @@ export function Presencial() {
       }
     })
     
-    return result.sort((a, b) => b.diasPresentes - a.diasPresentes)
+    // TAREFA: Ordenar por nome de colaborador em ordem alfabética
+    return result.sort((a, b) => a.nome.localeCompare(b.nome))
 
   }, [filteredData.filteredRecords, socioMap])
 
