@@ -1,14 +1,17 @@
+// src/pages/Colaboradores.tsx
+
 import { useState, useEffect, useRef } from 'react'
 import { 
   Search, Upload, Download, Plus, X, MapPin, User, Briefcase, 
   Trash2, Pencil, Save, Users, UserMinus, CheckCircle, UserX, 
-  Calendar, Building2, Camera, Image, Mail 
+  Calendar, Building2, Camera, Image, Mail, FileText, File, ExternalLink, Loader2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { SearchableSelect } from '../components/SearchableSelect'
 import { Colaborador } from '../types/colaborador'
 
+// --- ESTADOS ---
 const ESTADOS_BRASIL = [
   { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },
   { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' },
@@ -21,11 +24,20 @@ const ESTADOS_BRASIL = [
   { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }
 ];
 
+interface GEDDocument {
+  id: string;
+  nome_arquivo: string;
+  url: string;
+  categoria: string;
+  created_at: string;
+}
+
 export function Colaboradores() {
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
   const [loading, setLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'form'>('list')
   const [selectedColaborador, setSelectedColaborador] = useState<Colaborador | null>(null)
+  const [activeDetailTab, setActiveDetailTab] = useState<'dados' | 'ged'>('dados')
   
   // Estados de Filtro
   const [searchTerm, setSearchTerm] = useState('')
@@ -39,6 +51,12 @@ export function Colaboradores() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null)
+
+  // Estados do GED
+  const [gedDocs, setGedDocs] = useState<GEDDocument[]>([])
+  const [uploadingGed, setUploadingGed] = useState(false)
+  const [selectedGedCategory, setSelectedGedCategory] = useState('')
+  const gedInputRef = useRef<HTMLInputElement>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -56,6 +74,13 @@ export function Colaboradores() {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [viewingPhoto, selectedColaborador])
 
+  // Busca documentos quando o colaborador é selecionado ou muda para aba GED
+  useEffect(() => {
+    if (selectedColaborador && activeDetailTab === 'ged') {
+      fetchGedDocs(selectedColaborador.id)
+    }
+  }, [selectedColaborador, activeDetailTab])
+
   // --- HELPERS ---
   const toTitleCase = (str: string) => {
     if (!str) return ''
@@ -68,9 +93,7 @@ export function Colaboradores() {
     return new Date(date.valueOf() + date.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR')
   }
 
-  const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
   const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14)
-  const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
 
   // --- DATA FETCHING ---
   const fetchColaboradores = async () => {
@@ -78,6 +101,11 @@ export function Colaboradores() {
     const { data } = await supabase.from('colaboradores').select('*').order('nome')
     if (data) setColaboradores(data)
     setLoading(false)
+  }
+
+  const fetchGedDocs = async (colabId: number) => {
+    const { data } = await supabase.from('ged_colaboradores').select('*').eq('colaborador_id', colabId).order('created_at', { ascending: false })
+    if (data) setGedDocs(data)
   }
 
   const handleRefresh = () => {
@@ -102,6 +130,62 @@ export function Colaboradores() {
   const deleteFoto = async (url: string) => {
     const path = url.split('/fotos-colaboradores/')[1]
     if (path) await supabase.storage.from('fotos-colaboradores').remove([path])
+  }
+
+  // --- GED LOGIC ---
+  const handleGedUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !selectedColaborador || !selectedGedCategory) {
+      if (!selectedGedCategory) alert('Selecione uma categoria primeiro.')
+      return
+    }
+
+    try {
+      setUploadingGed(true)
+      const fileName = `${Date.now()}_${file.name}`
+      const filePath = `ged/${selectedColaborador.id}/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('ged-colaboradores')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('ged-colaboradores')
+        .getPublicUrl(filePath)
+
+      const { error: dbError } = await supabase.from('ged_colaboradores').insert({
+        colaborador_id: selectedColaborador.id,
+        nome_arquivo: file.name,
+        url: publicUrl,
+        categoria: selectedGedCategory,
+        tamanho: file.size,
+        tipo_arquivo: file.type
+      })
+
+      if (dbError) throw dbError
+
+      fetchGedDocs(selectedColaborador.id)
+      setSelectedGedCategory('')
+      if (gedInputRef.current) gedInputRef.current.value = ''
+    } catch (error: any) {
+      alert('Erro no upload do GED: ' + error.message)
+    } finally {
+      setUploadingGed(false)
+    }
+  }
+
+  const handleDeleteGed = async (doc: GEDDocument) => {
+    if (!confirm('Excluir este documento permanentemente?')) return
+    try {
+      const path = doc.url.split('/ged-colaboradores/')[1]
+      await supabase.storage.from('ged-colaboradores').remove([path])
+      await supabase.from('ged_colaboradores').delete().eq('id', doc.id)
+      fetchGedDocs(selectedColaborador!.id)
+    } catch (error) {
+      alert('Erro ao excluir documento.')
+    }
   }
 
   // --- CRUD ACTIONS ---
@@ -195,7 +279,7 @@ export function Colaboradores() {
             </thead>
             <tbody className="divide-y">
               {filtered.map(c => (
-                <tr key={c.id} onClick={() => setSelectedColaborador(c)} className="hover:bg-blue-50/50 cursor-pointer transition-colors">
+                <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab('dados'); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors">
                   <td className="px-6 py-4 flex items-center gap-3">
                     <Avatar src={c.foto_url} name={c.nome} />
                     <div><p className="font-bold text-sm">{toTitleCase(c.nome)}</p><p className="text-xs text-gray-500">{c.cpf}</p></div>
@@ -249,30 +333,132 @@ export function Colaboradores() {
 
       {/* Detail Modal */}
       {selectedColaborador && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-5xl overflow-hidden flex flex-col shadow-2xl">
-            <div className="p-6 border-b flex justify-between bg-gray-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-gray-200">
+            {/* Header Modal */}
+            <div className="p-6 border-b flex justify-between bg-gray-50 shrink-0">
               <div className="flex items-center gap-4">
                 <Avatar src={selectedColaborador.foto_url} name={selectedColaborador.nome} size="lg" />
-                <div><h2 className="text-xl font-bold">{toTitleCase(selectedColaborador.nome)}</h2><p className="text-sm text-gray-500">{selectedColaborador.cargo}</p></div>
+                <div>
+                  <h2 className="text-xl font-bold">{toTitleCase(selectedColaborador.nome)}</h2>
+                  <p className="text-sm text-gray-500">{selectedColaborador.cargo} • {selectedColaborador.equipe}</p>
+                </div>
               </div>
-              <button onClick={() => setSelectedColaborador(null)}><X className="h-6 w-6" /></button>
+              <button onClick={() => setSelectedColaborador(null)} className="p-2 hover:bg-gray-200 rounded-full"><X className="h-6 w-6" /></button>
             </div>
-            <div className="p-8 grid grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold text-gray-400 uppercase border-b pb-1">Pessoal</h3>
-                <DetailRow label="CPF" value={selectedColaborador.cpf} />
-                <DetailRow label="Nascimento" value={formatDateDisplay(selectedColaborador.data_nascimento)} />
-              </div>
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold text-gray-400 uppercase border-b pb-1">Empresa</h3>
-                <DetailRow label="Email" value={selectedColaborador.email} icon={Mail} />
-                <DetailRow label="Equipe" value={selectedColaborador.equipe} />
-              </div>
+
+            {/* Tabs Modal */}
+            <div className="flex border-b px-6 bg-white shrink-0">
+              <button 
+                onClick={() => setActiveDetailTab('dados')}
+                className={`py-4 px-6 text-sm font-bold border-b-2 transition-colors ${activeDetailTab === 'dados' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              >
+                Dados Pessoais
+              </button>
+              <button 
+                onClick={() => setActiveDetailTab('ged')}
+                className={`py-4 px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeDetailTab === 'ged' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              >
+                <FileText className="h-4 w-4" /> Documentos (GED)
+              </button>
             </div>
-            <div className="p-6 border-t flex justify-end gap-3 bg-gray-50">
-              <button onClick={() => handleDelete(selectedColaborador.id)} className="px-4 py-2 text-red-600 font-bold border rounded-lg">Excluir</button>
-              <button onClick={() => handleEdit(selectedColaborador)} className="px-6 py-2 bg-gray-900 text-white font-bold rounded-lg">Editar</button>
+
+            {/* Content Modal */}
+            <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
+              {activeDetailTab === 'dados' ? (
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase border-b pb-1">Pessoal</h3>
+                    <DetailRow label="CPF" value={selectedColaborador.cpf} />
+                    <DetailRow label="Nascimento" value={formatDateDisplay(selectedColaborador.data_nascimento)} />
+                    <DetailRow label="Gênero" value={selectedColaborador.genero} />
+                  </div>
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase border-b pb-1">Empresa</h3>
+                    <DetailRow label="Email" value={selectedColaborador.email} icon={Mail} />
+                    <DetailRow label="Equipe" value={selectedColaborador.equipe} />
+                    <DetailRow label="Local" value={selectedColaborador.local} icon={Building2} />
+                    <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.data_admissao)} />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Upload Area */}
+                  <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200">
+                    <div className="flex flex-col md:flex-row items-end gap-4">
+                      <div className="flex-1 w-full">
+                        <SearchableSelect 
+                          label="Tipo de Documento"
+                          placeholder="Selecione ou gerencie..."
+                          value={selectedGedCategory}
+                          onChange={setSelectedGedCategory}
+                          table="opcoes_ged_colaboradores"
+                          onRefresh={handleRefresh}
+                        />
+                      </div>
+                      <div className="shrink-0 w-full md:w-auto">
+                        <input 
+                          type="file" 
+                          hidden 
+                          ref={gedInputRef} 
+                          accept=".pdf,image/*" 
+                          onChange={handleGedUpload} 
+                        />
+                        <button 
+                          disabled={uploadingGed || !selectedGedCategory}
+                          onClick={() => gedInputRef.current?.click()}
+                          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-bold transition-colors shadow-sm"
+                        >
+                          {uploadingGed ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                          Vincular Arquivo
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-blue-600 mt-2 font-medium italic">* Formatos aceitos: PDF e Imagens.</p>
+                  </div>
+
+                  {/* Listagem de Arquivos */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-gray-700">Arquivos Vinculados ({gedDocs.length})</h3>
+                    {gedDocs.length === 0 ? (
+                      <div className="text-center py-10 bg-gray-50 rounded-xl border border-gray-100">
+                        <File className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                        <p className="text-sm text-gray-400">Nenhum documento anexado ainda.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {gedDocs.map(doc => (
+                          <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-all shadow-sm group">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div className="p-2 bg-red-50 text-red-600 rounded-lg shrink-0">
+                                <FileText className="h-5 w-5" />
+                              </div>
+                              <div className="overflow-hidden">
+                                <p className="text-sm font-bold text-gray-900 truncate">{doc.nome_arquivo}</p>
+                                <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">{doc.categoria}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Visualizar">
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                              <button onClick={() => handleDeleteGed(doc)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Remover">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Modal */}
+            <div className="p-6 border-t flex justify-end gap-3 bg-gray-50 shrink-0">
+              <button onClick={() => handleDelete(selectedColaborador.id)} className="px-4 py-2 text-red-600 font-bold border border-red-200 rounded-lg hover:bg-red-50">Excluir Colaborador</button>
+              <button onClick={() => handleEdit(selectedColaborador)} className="px-6 py-2 bg-[#112240] text-white font-bold rounded-lg hover:bg-[#1a3a6c]">Editar Cadastro</button>
             </div>
           </div>
         </div>
