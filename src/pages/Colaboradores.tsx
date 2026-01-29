@@ -39,20 +39,17 @@ export function Colaboradores() {
   const [selectedColaborador, setSelectedColaborador] = useState<Colaborador | null>(null)
   const [activeDetailTab, setActiveDetailTab] = useState<'dados' | 'ged'>('dados')
   
-  // Estados de Filtro
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLider, setFilterLider] = useState('')
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
 
-  // Estado do Formulário
   const [formData, setFormData] = useState<Partial<Colaborador>>({ status: 'Ativo', estado: 'Rio de Janeiro' })
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null)
 
-  // Estados do GED
   const [gedDocs, setGedDocs] = useState<GEDDocument[]>([])
   const [uploadingGed, setUploadingGed] = useState(false)
   const [selectedGedCategory, setSelectedGedCategory] = useState('')
@@ -80,7 +77,6 @@ export function Colaboradores() {
     }
   }, [selectedColaborador, activeDetailTab])
 
-  // --- HELPERS ---
   const toTitleCase = (str: string) => {
     if (!str) return ''
     return str.toLowerCase().split(' ').map(word => (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word).join(' ');
@@ -116,7 +112,6 @@ export function Colaboradores() {
     }
   }
 
-  // --- DATA FETCHING ---
   const fetchColaboradores = async () => {
     setLoading(true)
     const { data } = await supabase.from('colaboradores').select('*').order('nome')
@@ -134,7 +129,6 @@ export function Colaboradores() {
     fetchColaboradores()
   }
 
-  // --- STORAGE LOGIC ---
   const uploadPhoto = async (file: File, id: number) => {
     try {
       setUploadingPhoto(true)
@@ -151,7 +145,6 @@ export function Colaboradores() {
     if (path) await supabase.storage.from('fotos-colaboradores').remove([`colaboradores/${path}`])
   }
 
-  // --- GED LOGIC ---
   const handleGedUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !selectedColaborador || !selectedGedCategory) {
@@ -186,7 +179,6 @@ export function Colaboradores() {
     } catch (error) { alert('Erro ao excluir documento.') }
   }
 
-  // --- CRUD ACTIONS ---
   const handleSave = async () => {
     if (!formData.nome) return alert('Nome obrigatório')
     const toISO = (s?: string) => {
@@ -243,7 +235,6 @@ export function Colaboradores() {
     setPhotoPreview(colab.foto_url || null); setViewMode('form'); setSelectedColaborador(null)
   }
 
-  // --- RENDER HELPERS ---
   const filtered = colaboradores.filter(c => 
     (c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || c.cpf?.includes(searchTerm)) &&
     (!filterLider || c.lider_equipe === filterLider) &&
@@ -262,7 +253,6 @@ export function Colaboradores() {
         </div>
       )}
 
-      {/* Toolbar */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3">
         {viewMode === 'list' && (
           <div className="flex flex-1 gap-3">
@@ -277,7 +267,6 @@ export function Colaboradores() {
         <button onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setPhotoPreview(null); setViewMode('form') }} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-gray-800 transition-all"><Plus className="h-4 w-4" /> Novo</button>
       </div>
 
-      {/* Tabela / Formulário */}
       {viewMode === 'list' ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-left">
@@ -322,7 +311,6 @@ export function Colaboradores() {
           </div>
 
           <div className="space-y-8">
-            {/* Foto */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100 flex items-center gap-6">
               <div className="w-32 h-32 rounded-full bg-white border-4 border-white shadow-lg overflow-hidden flex items-center justify-center relative group">
                 {photoPreview ? <img src={photoPreview} className="w-full h-full object-cover" /> : <Image className="text-gray-300 h-12 w-12" />}
@@ -337,7 +325,6 @@ export function Colaboradores() {
               }} />
             </div>
 
-            {/* Dados Pessoais */}
             <section className="space-y-4">
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2"><User className="h-4 w-4" /> Dados Pessoais</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -348,7 +335,6 @@ export function Colaboradores() {
               </div>
             </section>
 
-            {/* Endereço */}
             <section className="space-y-4">
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2"><MapPin className="h-4 w-4" /> Endereço</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -361,7 +347,6 @@ export function Colaboradores() {
               </div>
             </section>
 
-            {/* Corporativo */}
             <section className="space-y-4">
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2"><Briefcase className="h-4 w-4" /> Dados Corporativos</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -384,11 +369,11 @@ export function Colaboradores() {
         </div>
       )}
 
-      {/* Modal Detalhes com Tabs */}
       {selectedColaborador && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-gray-200">
-            <div className="p-6 border-b flex justify-between bg-gray-50 shrink-0">
+          {/* Removido overflow-hidden da div principal do modal e movido para os containers internos onde necessário */}
+          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200 overflow-visible">
+            <div className="p-6 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-2xl">
               <div className="flex items-center gap-4">
                 <Avatar src={selectedColaborador.foto_url} name={selectedColaborador.nome} size="lg" />
                 <div>
@@ -404,7 +389,7 @@ export function Colaboradores() {
               <button onClick={() => setActiveDetailTab('ged')} className={`py-4 px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeDetailTab === 'ged' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}><FileText className="h-4 w-4" /> Documentos (GED)</button>
             </div>
 
-            {/* ATENÇÃO: Mudança de overflow-hidden para overflow-visible na aba GED permite que o dropdown apareça por cima */}
+            {/* Mudança técnica: overflow-visible quando GED está ativo para permitir que o dropdown flutue livremente */}
             <div className={`p-8 flex-1 custom-scrollbar ${activeDetailTab === 'ged' ? 'overflow-visible' : 'overflow-y-auto'}`}>
               {activeDetailTab === 'dados' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -437,9 +422,10 @@ export function Colaboradores() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200">
+                  {/* Container de Upload com overflow-visible para o Dropdown */}
+                  <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 overflow-visible relative">
                     <div className="flex flex-col md:flex-row items-end gap-4">
-                      <div className="flex-1 w-full">
+                      <div className="flex-1 w-full relative z-[100]">
                         <SearchableSelect label="Tipo de Documento" placeholder="Selecione ou gerencie..." value={selectedGedCategory} onChange={setSelectedGedCategory} table="opcoes_ged_colaboradores" onRefresh={handleRefresh} />
                       </div>
                       <div className="shrink-0 w-full md:w-auto">
@@ -461,7 +447,7 @@ export function Colaboradores() {
                           </div>
                           <div className="flex items-center gap-1">
                             <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><ExternalLink className="h-4 w-4" /></a>
-                            <button onClick={() => handleDeleteGed(doc)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="h-4 w-4" /></button>
+                            <button onClick={() => handleDeleteGed(doc)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="h-4 w-4" /></button>
                           </div>
                         </div>
                       ))}
@@ -471,7 +457,7 @@ export function Colaboradores() {
               )}
             </div>
 
-            <div className="p-6 border-t flex justify-end gap-3 bg-gray-50 shrink-0">
+            <div className="p-6 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-2xl">
               <button onClick={() => handleDelete(selectedColaborador.id)} className="px-4 py-2 text-red-600 font-bold border border-red-200 rounded-lg hover:bg-red-50 transition-all">Excluir Colaborador</button>
               <button onClick={() => handleEdit(selectedColaborador)} className="px-6 py-2 bg-[#112240] text-white font-bold rounded-lg hover:bg-[#1a3a6c] transition-all shadow-lg shadow-blue-900/10">Editar Cadastro</button>
             </div>
