@@ -43,7 +43,7 @@ export function GestaoFamilia() {
   }
 
   // Função para Importar XLSX e salvar AUTOMATICAMENTE
- const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -57,14 +57,13 @@ export function GestaoFamilia() {
         const ws = wb.Sheets[wb.SheetNames[0]]
         const data = XLSX.utils.sheet_to_json(ws)
         
-        // Função auxiliar para converter data do Excel (número) para ISO (AAAA-MM-DD)
-        const formatExcelDate = (excelDate: any) => {
+        // Converte data do Excel para formato ISO (AAAA-MM-DD) para o Banco de Dados
+        const formatExcelDateToISO = (excelDate: any) => {
           if (!excelDate) return null;
           if (typeof excelDate === 'number') {
             const date = new Date(Math.round((excelDate - 25569) * 86400 * 1000));
             return date.toISOString().split('T')[0];
           }
-          // Se já for string, tenta validar ou converter se estiver em PT-BR (DD/MM/AAAA)
           if (typeof excelDate === 'string' && excelDate.includes('/')) {
             const [d, m, a] = excelDate.split('/');
             return `${a}-${m}-${d}`;
@@ -72,18 +71,25 @@ export function GestaoFamilia() {
           return excelDate;
         };
 
+        // Mapeamento usando EXATAMENTE os nomes das colunas da planilha
         const mapped = data.map((row: any) => ({
-          vencimento: formatExcelDate(row['Vencimento']),
+          vencimento: formatExcelDateToISO(row['Vencimento']),
           titular: row['Titular']?.toString() || '',
           fornecedor: row['Fornecedor']?.toString() || '',
           descricao_servico: row['Descrição do Serviço']?.toString() || '',
           tipo: row['Tipo']?.toString() || '',
           categoria: row['Categoria']?.toString() || '',
-          valor: typeof row['Valor'] === 'number' ? row['Valor'] : parseFloat(row['Valor']?.toString().replace(',', '.')) || 0,
+          valor: typeof row['Valor'] === 'number' ? row['Valor'] : parseFloat(row['Valor']?.toString().replace('R$', '').replace('.', '').replace(',', '.')) || 0,
           nota_fiscal: row['Nota Fiscal']?.toString() || '',
+          recibo: row['Recibo']?.toString() || '',
+          boleto: row['Boleto']?.toString() || '',
+          os: row['O.S.']?.toString() || '',
+          rateio: row['Rateio']?.toString() || '',
+          rateio_porcentagem: parseFloat(row['Porcentagem']) || 0,
           fator_gerador: row['Fator Gerador']?.toString() || '',
-          data_envio: formatExcelDate(row['Data de envio']),
-          status: row['Status']?.toString() || 'Pendente'
+          data_envio: formatExcelDateToISO(row['Data de envio']),
+          status: row['Status']?.toString() || 'Pendente',
+          comprovante: row['Comprovante']?.toString() || ''
         }))
 
         const { error } = await supabase
@@ -95,8 +101,8 @@ export function GestaoFamilia() {
         alert(`${mapped.length} registros importados com sucesso!`)
         await fetchDados()
       } catch (error: any) {
-        console.error('Erro detalhado:', error)
-        alert(`Erro na importação: ${error.message || 'Verifique o formato das datas.'}`)
+        console.error('Erro na importação:', error)
+        alert(`Erro na importação: ${error.message || 'Verifique o arquivo.'}`)
       } finally {
         setIsImporting(false)
         e.target.value = ''

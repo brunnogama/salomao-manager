@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Save, Paperclip,Percent } from 'lucide-react'
+import { X, Save, Paperclip, Percent, FileText, ClipboardList, Receipt } from 'lucide-react'
 import { FamiliaMenuSelector } from './FamiliaMenuSelector'
 
 interface FamiliaFormModalProps {
@@ -18,11 +18,15 @@ export function FamiliaFormModal({ isOpen, onClose, onSave }: FamiliaFormModalPr
     categoria: '',
     valor: '',
     nota_fiscal: '',
-    rateio_item: '',
+    recibo: '',
+    boleto: '',
+    os: '',
+    rateio: '',
     rateio_porcentagem: '',
     fator_gerador: '',
     data_envio: '',
-    status: 'Pendente'
+    status: 'Pendente',
+    comprovante: ''
   })
 
   const [showRateio, setShowRateio] = useState(false)
@@ -31,7 +35,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave }: FamiliaFormModalPr
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
@@ -44,9 +48,9 @@ export function FamiliaFormModal({ isOpen, onClose, onSave }: FamiliaFormModalPr
           </button>
         </div>
 
-        {/* Formuário (Scrollable) */}
+        {/* Formulário */}
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
             {/* Datas e Valores */}
             <div className="flex flex-col gap-1.5">
@@ -60,11 +64,21 @@ export function FamiliaFormModal({ isOpen, onClose, onSave }: FamiliaFormModalPr
             </div>
 
             <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-gray-600 uppercase">Data de Envio</label>
+              <input 
+                type="date" 
+                className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                value={formData.data_envio}
+                onChange={e => setFormData({...formData, data_envio: e.target.value})}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-gray-600 uppercase">Valor (R$)</label>
               <input 
                 type="text" 
                 placeholder="R$ 0,00"
-                className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm font-semibold text-blue-700 outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm font-bold text-[#1e3a8a] outline-none focus:ring-2 focus:ring-blue-500"
                 value={formData.valor}
                 onChange={e => setFormData({...formData, valor: e.target.value})}
               />
@@ -89,63 +103,72 @@ export function FamiliaFormModal({ isOpen, onClose, onSave }: FamiliaFormModalPr
             <FamiliaMenuSelector label="Fator Gerador" tipoMenu="fator_gerador" value={formData.fator_gerador} onChange={v => setFormData({...formData, fator_gerador: v})} />
             <FamiliaMenuSelector label="Status" tipoMenu="status" value={formData.status} onChange={v => setFormData({...formData, status: v})} />
 
-            {/* Descrição - Ocupa 2 colunas */}
-            <div className="flex flex-col gap-1.5 md:col-span-2">
+            {/* Documentos Rápidos */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-gray-600 uppercase">Recibo / Boleto / O.S.</label>
+              <div className="flex gap-2">
+                <input type="text" placeholder="Recibo" className="flex-1 bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-blue-500" value={formData.recibo} onChange={e => setFormData({...formData, recibo: e.target.value})} />
+                <input type="text" placeholder="Boleto" className="flex-1 bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-blue-500" value={formData.boleto} onChange={e => setFormData({...formData, boleto: e.target.value})} />
+              </div>
+            </div>
+
+            <div className="flex items-end pb-1">
+              <button 
+                onClick={() => setShowRateio(!showRateio)}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all ${showRateio ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-gray-100 text-gray-600 border-gray-200'} border`}
+              >
+                <Percent className="w-4 h-4" />
+                {showRateio ? 'Remover Rateio' : 'Configurar Rateio'}
+              </button>
+            </div>
+
+            {/* Campos de Rateio */}
+            {showRateio && (
+              <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-purple-50/30 rounded-xl border border-purple-100 animate-in slide-in-from-top-2">
+                <FamiliaMenuSelector label="Rateio (Item)" tipoMenu="rateio" value={formData.rateio} onChange={v => setFormData({...formData, rateio: v})} />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-purple-600 uppercase tracking-tighter">Porcentagem (%)</label>
+                  <input 
+                    type="number" 
+                    placeholder="0"
+                    className="bg-white border border-purple-200 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                    value={formData.rateio_porcentagem}
+                    onChange={e => setFormData({...formData, rateio_porcentagem: e.target.value})}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Descrição */}
+            <div className="flex flex-col gap-1.5 lg:col-span-4">
               <label className="text-xs font-bold text-gray-600 uppercase">Descrição do Serviço</label>
               <textarea 
-                rows={1}
+                rows={2}
                 className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 value={formData.descricao_servico}
                 onChange={e => setFormData({...formData, descricao_servico: e.target.value})}
               />
             </div>
-
-            {/* Toggle Rateio */}
-            <div className="flex items-end pb-1">
-              <button 
-                onClick={() => setShowRateio(!showRateio)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${showRateio ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-gray-100 text-gray-600 border-gray-200'} border`}
-              >
-                <Percent className="w-4 h-4" />
-                {showRateio ? 'Remover Rateio' : 'Adicionar Rateio'}
-              </button>
-            </div>
-
-            {/* Campos de Rateio Condicionais */}
-            {showRateio && (
-              <>
-                <FamiliaMenuSelector label="Item de Rateio" tipoMenu="rateio" value={formData.rateio_item} onChange={v => setFormData({...formData, rateio_item: v})} />
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-gray-600 uppercase">Porcentagem (%)</label>
-                  <input 
-                    type="number" 
-                    className="bg-purple-50/50 border border-purple-200 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-500"
-                    value={formData.rateio_porcentagem}
-                    onChange={e => setFormData({...formData, rateio_porcentagem: e.target.value})}
-                  />
-                </div>
-              </>
-            )}
           </div>
 
           {/* Área de Comprovante (GED) */}
-          <div className="mt-8 p-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 flex flex-col items-center justify-center gap-2 hover:border-blue-400 transition-colors cursor-pointer group">
-            <div className="p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform">
-              <Paperclip className="w-6 h-6 text-blue-600" />
+          <div className="mt-8 p-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 flex flex-col items-center justify-center gap-2 hover:border-[#1e3a8a] transition-all cursor-pointer group">
+            <div className="p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform text-[#1e3a8a]">
+              <Paperclip className="w-6 h-6" />
             </div>
-            <p className="text-sm font-bold text-[#112240]">Anexar Comprovante (GED)</p>
-            <p className="text-xs text-gray-500">Arraste ou clique para fazer o upload</p>
+            <p className="text-sm font-bold text-[#112240]">Comprovante (GED)</p>
+            <p className="text-xs text-gray-500 uppercase tracking-widest">Arraste ou clique para anexar</p>
           </div>
         </div>
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-          <button onClick={onClose} className="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
+          <button onClick={onClose} className="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors uppercase tracking-widest">
             Cancelar
           </button>
           <button 
             onClick={() => onSave(formData)}
-            className="flex items-center gap-2 bg-[#1e3a8a] text-white px-8 py-2.5 rounded-lg text-sm font-bold hover:bg-[#1e3a8a]/90 shadow-lg shadow-blue-900/20 transition-all active:scale-95"
+            className="flex items-center gap-2 bg-[#1e3a8a] text-white px-10 py-2.5 rounded-lg text-sm font-bold hover:bg-[#1e3a8a]/90 shadow-lg shadow-blue-900/20 transition-all active:scale-95 uppercase tracking-widest"
           >
             <Save className="w-4 h-4" />
             Salvar Lançamento
