@@ -22,7 +22,8 @@ import {
   LayoutGrid, 
   List,
   Plus,
-  X
+  X,
+  Users
 } from 'lucide-react'
 import { NewClientModal } from './NewClientModal'
 import { ClientData, getBrindeColors } from '../types/client'
@@ -101,6 +102,8 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
     writeFile(wb, `${tableName}_export.xlsx`)
   }
 
+  const hasActiveFilters = searchTerm || filterSocio || filterBrinde
+
   return (
     <div className="p-4 sm:p-6 space-y-6">
       <input ref={fileInputRef} type="file" accept=".xlsx, .xls" onChange={async (e) => {
@@ -125,14 +128,36 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Header de Ações */}
         <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 flex flex-col sm:flex-row justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsSearchOpen(!isSearchOpen)} className={`p-2 rounded-lg transition-all ${isSearchOpen ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-600 border'}`}><Search className="h-5 w-5" /></button>
-            
+          <div className="flex items-center gap-3 flex-1">
+            {/* Card de Total */}
+            <div className="bg-white rounded-lg border border-gray-200 px-4 py-2 flex items-center gap-3 shadow-sm">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase">Total</p>
+                <p className="text-lg font-bold text-gray-900">{clients.length}</p>
+              </div>
+            </div>
+
+            {/* Barra de Busca */}
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)} 
+                placeholder="Busque por nome, empresa ou email..." 
+                className="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none bg-white" 
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
             {/* Filtros Dropdown */}
             <Menu as="div" className="relative">
               <Menu.Button className="p-2 rounded-lg bg-white border text-gray-600"><Filter className="h-5 w-5" /></Menu.Button>
               <Transition as={Fragment} enter="transition duration-100" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100">
-                <Menu.Items className="absolute left-0 mt-2 w-72 bg-white shadow-xl border rounded-xl p-4 z-50">
+                <Menu.Items className="absolute right-0 mt-2 w-72 bg-white shadow-xl border rounded-xl p-4 z-50">
                   <div className="space-y-4">
                     <div><label className="text-[10px] font-bold text-gray-400 uppercase">Sócio</label>
                       <select value={filterSocio} onChange={e => setFilterSocio(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
@@ -149,12 +174,10 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
               </Transition>
             </Menu>
 
-            {searchTerm || filterSocio || filterBrinde ? (
+            {hasActiveFilters && (
               <button onClick={() => {setSearchTerm(''); setFilterSocio(''); setFilterBrinde('')}} className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-2 rounded-lg flex items-center gap-2"><X className="h-3 w-3"/> Limpar</button>
-            ) : null}
-          </div>
+            )}
 
-          <div className="flex items-center gap-2">
             <div className="flex bg-gray-100 rounded-lg p-1">
               <button onClick={() => {setViewType('cards'); localStorage.setItem('clientsViewType', 'cards')}} className={`p-1.5 rounded ${viewType === 'cards' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400'}`}><LayoutGrid className="h-4 w-4"/></button>
               <button onClick={() => {setViewType('list'); localStorage.setItem('clientsViewType', 'list')}} className={`p-1.5 rounded ${viewType === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400'}`}><List className="h-4 w-4"/></button>
@@ -164,13 +187,6 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
             <button onClick={() => {setClientToEdit(null); setIsModalOpen(true)}} className="bg-[#112240] text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm"><Plus className="h-4 w-4"/> Novo</button>
           </div>
         </div>
-
-        {/* Busca Expandível */}
-        {isSearchOpen && (
-          <div className="p-4 border-b">
-            <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Busque por nome ou empresa..." className="w-full border rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none" autoFocus />
-          </div>
-        )}
 
         {/* Listagem */}
         <div className="p-4 sm:p-6">
