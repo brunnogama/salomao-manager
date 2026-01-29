@@ -1,4 +1,4 @@
-import { Eye } from 'lucide-react'
+import { Eye, FileText, Calendar, User, Tag } from 'lucide-react'
 
 interface FamiliaTableProps {
   data: any[]
@@ -17,25 +17,27 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse">
+    <div className="overflow-x-auto custom-scrollbar">
+      <table className="w-full text-left border-separate border-spacing-y-2 px-4">
         <thead>
-          <tr className="bg-gray-50 border-b border-gray-100">
-            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Vencimento</th>
-            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Titular</th>
-            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fornecedor</th>
-            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fatura</th>
-            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Categoria</th>
-            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Valor</th>
-            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Ações</th>
+          <tr className="text-[#112240]/40">
+            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Vencimento</th>
+            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Identificação</th>
+            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Fatura / Doc</th>
+            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Categoria</th>
+            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Valor</th>
+            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Status</th>
+            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-right">Ações</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-50">
+        <tbody className="space-y-2">
           {data.length === 0 ? (
             <tr>
-              <td colSpan={8} className="px-6 py-10 text-center text-gray-500 text-sm">
-                Nenhum registro encontrado.
+              <td colSpan={7} className="px-6 py-12 text-center bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
+                <div className="flex flex-col items-center gap-2">
+                  <FileText className="w-8 h-8 text-gray-300" />
+                  <p className="text-sm font-bold text-gray-400">Nenhum registro encontrado na base.</p>
+                </div>
               </td>
             </tr>
           ) : (
@@ -43,39 +45,63 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
               <tr 
                 key={item.id} 
                 onClick={() => onItemClick?.(item)}
-                className="hover:bg-blue-50/50 transition-colors cursor-pointer group"
+                className="group bg-white hover:bg-blue-50/30 border border-gray-100 rounded-[1.5rem] transition-all cursor-pointer shadow-sm hover:shadow-md"
               >
-                <td className="px-6 py-4 text-sm font-medium text-[#112240]">
-                  {formatDate(item.vencimento)}
+                {/* Vencimento */}
+                <td className="px-6 py-5 first:rounded-l-[1.5rem]">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-50 rounded-xl text-blue-600 group-hover:bg-white transition-colors">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-black text-[#112240]">
+                      {formatDate(item.vencimento)}
+                    </span>
+                  </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
-                  {item.titular}
+
+                {/* Titular e Fornecedor */}
+                <td className="px-6 py-5">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-[#112240]">{item.titular}</span>
+                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{item.fornecedor}</span>
+                  </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
-                  {item.fornecedor}
+
+                {/* Fatura / NF */}
+                <td className="px-6 py-5">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-[#112240]">{item.fatura || '---'}</span>
+                    <span className="text-[10px] font-medium text-gray-400">NF: {item.nota_fiscal || 'N/A'}</span>
+                  </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
-                  {item.fatura || '---'}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
-                  <span className="px-2 py-1 bg-gray-100 rounded-md text-[11px] font-medium text-gray-600">
+
+                {/* Categoria */}
+                <td className="px-6 py-5">
+                  <span className="inline-flex items-center px-3 py-1 bg-gray-100/80 rounded-lg text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:bg-white transition-colors">
                     {item.categoria}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm font-bold text-[#112240]">
+
+                {/* Valor */}
+                <td className="px-6 py-5 text-sm font-black text-[#1e3a8a]">
                   {formatCurrency(item.valor)}
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter ${
+
+                {/* Status */}
+                <td className="px-6 py-5">
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${
                     item.status === 'Pago' 
                       ? 'bg-green-100 text-green-700' 
                       : 'bg-amber-100 text-amber-700'
                   }`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'Pago' ? 'bg-green-500' : 'bg-amber-500'}`} />
                     {item.status}
-                  </span>
+                  </div>
                 </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-white rounded-lg transition-all opacity-0 group-hover:opacity-100">
+
+                {/* Ações */}
+                <td className="px-6 py-5 text-right last:rounded-r-[1.5rem]">
+                  <button className="p-2.5 bg-gray-50 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all shadow-sm opacity-0 group-hover:opacity-100">
                     <Eye className="w-4 h-4" />
                   </button>
                 </td>
