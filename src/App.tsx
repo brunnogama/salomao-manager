@@ -30,7 +30,7 @@ export default function App() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
-  const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators' | 'financial' | 'operational' | 'settings' | 'executive'>('home')
+  const [currentModule, setCurrentModule] = useState<'home' | 'crm' | 'family' | 'collaborators' | 'financial' | 'operational' | 'settings' | 'executive' | 'legal-control'>('home')
   const [activePage, setActivePage] = useState('dashboard')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({})
@@ -88,7 +88,7 @@ export default function App() {
     )
   }
 
-  if (['family', 'operational'].includes(currentModule)) {
+  if (['family', 'operational', 'legal-control'].includes(currentModule)) {
     return <UnderConstruction moduleName={currentModule} onBack={() => setCurrentModule('home')} />
   }
 
@@ -131,7 +131,8 @@ export default function App() {
                 {activePage === 'clientes' && <Clients initialFilters={clientFilters} />}
                 {activePage === 'magistrados' && <Magistrados />}
                 {activePage === 'incompletos' && <IncompleteClients />}
-                {['logistica', 'manual'].includes(activePage) && <UnderConstruction moduleName={activePage} onBack={() => setActivePage('dashboard')} />}
+                {activePage === 'logistica' && <UnderConstruction moduleName={activePage} onBack={() => setActivePage('dashboard')} />}
+                {activePage === 'manual' && <Manual />}
                 {activePage === 'kanban' && <Kanban />}
                 {activePage === 'historico' && <History />}
               </>

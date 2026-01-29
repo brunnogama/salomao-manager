@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Gift, UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings } from 'lucide-react'
+import { Gift, UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
-  onSelect: (module: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'settings' | 'executive') => void;
+  onSelect: (module: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'settings' | 'executive' | 'legal-control') => void;
   userName: string;
 }
 
@@ -31,7 +31,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             setIsAdmin(isUserAdmin)
             
             if (isUserAdmin) {
-              setAllowedModules(['crm', 'family', 'collaborators', 'operational', 'financial', 'executive'])
+              setAllowedModules(['crm', 'family', 'collaborators', 'operational', 'financial', 'executive', 'legal-control'])
             } else {
               setAllowedModules(data.allowed_modules || [])
             }
@@ -70,7 +70,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   }
 
   const renderCard = (
-    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'executive',
+    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'executive' | 'legal-control',
     title: string,
     description: string,
     Icon: any,
@@ -195,6 +195,15 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
               Banknote, 
               'text-emerald-700', 
               'bg-emerald-50'
+            )}
+
+            {renderCard(
+              'legal-control', 
+              'Controladoria Jurídica', 
+              'Análise e controle estratégico de processos e métricas jurídicas.', 
+              Scale, 
+              'text-indigo-700', 
+              'bg-indigo-50'
             )}
         </div>
       </main>
