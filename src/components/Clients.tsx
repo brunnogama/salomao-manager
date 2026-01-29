@@ -1,15 +1,31 @@
 import { useEffect, useState, useMemo, useRef, Fragment } from 'react'
 import { supabase } from '../lib/supabase'
-import { 
-  Plus, Search, X, Filter, ArrowUpDown, Check, 
-  MessageCircle, Trash2, Pencil, Mail, Phone, 
-  Briefcase, Info, Printer, FileSpreadsheet,
-  Upload, Loader2, AlertTriangle, LayoutGrid, List
-} from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
+import { utils, writeFile, read } from 'xlsx'
+import { 
+  Search, 
+  Filter, 
+  ArrowUpDown, 
+  Check, 
+  MessageCircle, 
+  Trash2, 
+  Pencil, 
+  Mail, 
+  Phone, 
+  Briefcase, 
+  Info, 
+  Printer, 
+  FileSpreadsheet,
+  Upload, 
+  Loader2, 
+  AlertTriangle, 
+  LayoutGrid, 
+  List,
+  Plus,
+  X
+} from 'lucide-react'
 import { NewClientModal } from './NewClientModal'
 import { ClientData, getBrindeColors } from '../types/client'
-import { utils, writeFile, read } from 'xlsx'
 import { logAction } from '../lib/logger'
 
 interface ClientsProps {
