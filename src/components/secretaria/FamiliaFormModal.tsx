@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Save, Settings2, Plus, Trash2, Edit2, Percent, Calculator, FileText, ChevronDown, Check } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -10,6 +10,7 @@ interface FamiliaFormModalProps {
 }
 
 export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: FamiliaFormModalProps) {
+  // Estado inicial do formulário
   const [formData, setFormData] = useState<any>({
     vencimento: '', titular: '', fornecedor: '', descricao_servico: '',
     tipo: '', categoria: '', valor: '', nota_fiscal: '', fatura: '', recibo: '',
@@ -27,6 +28,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
   const [newItemValue, setNewItemValue] = useState('')
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
 
+  // Busca dados para os menus suspensos
   const fetchUniqueOptions = async () => {
     const fields = ['titular', 'fornecedor', 'tipo', 'categoria', 'fator_gerador', 'rateio']
     const newOptions: any = { ...options }
@@ -56,12 +58,15 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
     }
   }, [initialData, isOpen])
 
-  // Fecha dropdown ao clicar fora
+  // Fecha dropdown ao clicar fora do componente
   useEffect(() => {
     const handleClickOutside = () => setActiveDropdown(null)
     window.addEventListener('click', handleClickOutside)
     return () => window.removeEventListener('click', handleClickOutside)
   }, [])
+
+  // Guarda de renderização: Se não estiver aberto, não renderiza nada
+  if (!isOpen) return null
 
   const handleAddItem = () => {
     if (!newItemValue.trim()) return
@@ -82,16 +87,16 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
   }
 
   const ManagedSelect = ({ label, name, value, optionsList }: any) => {
-    const isOpen = activeDropdown === name
+    const isDropdownOpen = activeDropdown === name
 
     return (
       <div className="space-y-1.5 flex flex-col h-full relative" onClick={(e) => e.stopPropagation()}>
         <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">{label}</label>
         
         <div 
-          onClick={() => setActiveDropdown(isOpen ? null : name)}
+          onClick={() => setActiveDropdown(isDropdownOpen ? null : name)}
           className={`w-full h-[46px] px-4 flex items-center justify-between bg-gray-50/50 border rounded-2xl text-sm transition-all cursor-pointer group ${
-            isOpen ? 'border-blue-500 ring-2 ring-blue-500/10 bg-white' : 'border-gray-200'
+            isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/10 bg-white' : 'border-gray-200'
           }`}
         >
           <span className={`truncate font-medium ${!value ? 'text-gray-400' : 'text-[#112240]'}`}>
@@ -109,12 +114,11 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
             >
               <Settings2 className="w-3.5 h-3.5" />
             </button>
-            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
           </div>
         </div>
 
-        {/* Dropdown Customizado */}
-        {isOpen && (
+        {isDropdownOpen && (
           <div className="absolute top-[72px] left-0 w-full bg-white border border-gray-100 shadow-2xl rounded-[1.5rem] z-[100] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="max-h-[240px] overflow-y-auto py-2 custom-scrollbar">
               <div 
@@ -148,7 +152,8 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md transition-all">
       <div className="bg-white w-full max-w-5xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-white/20">
-        {/* Header */}
+        
+        {/* Header com botão de fechar corrigido */}
         <div className="px-10 py-7 border-b border-gray-100 flex justify-between items-center bg-white flex-shrink-0">
           <div>
             <h3 className="text-2xl font-black text-[#112240] tracking-tight">{initialData ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
@@ -214,6 +219,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
             <textarea name="descricao_servico" value={formData.descricao_servico} onChange={(e) => setFormData({...formData, descricao_servico: e.target.value})} rows={3} className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-[2rem] text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-medium" placeholder="Detalhes do serviço..." />
           </div>
 
+          {/* Botão de Cancelar corrigido chamando onClose */}
           <div className="flex justify-end items-center gap-8 pt-6 mt-4 border-t border-gray-50 flex-shrink-0">
             <button type="button" onClick={onClose} className="text-xs font-black text-gray-400 hover:text-gray-600 transition-all uppercase tracking-[0.2em]">Cancelar</button>
             <button type="submit" className="flex items-center gap-3 px-12 py-4 bg-[#1e3a8a] text-white text-xs font-black rounded-2xl hover:bg-[#112240] shadow-xl transition-all active:scale-95 uppercase tracking-[0.2em]">
