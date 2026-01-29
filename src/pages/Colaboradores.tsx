@@ -1,5 +1,3 @@
-// src/pages/Colaboradores.tsx
-
 import { useState, useEffect, useRef } from 'react'
 import { 
   Search, Upload, Download, Plus, X, MapPin, User, Briefcase, 
@@ -153,8 +151,14 @@ export function Colaboradores() {
     }
     try {
       setUploadingGed(true)
-      const filePath = `ged/${selectedColaborador.id}/${Date.now()}_${file.name}`
+      
+      // Limpar nome do arquivo para evitar erro de caracteres especiais
+      const fileExt = file.name.split('.').pop()
+      const cleanFileName = `${Date.now()}.${fileExt}` // Nome simplificado baseado em timestamp
+      const filePath = `ged/${selectedColaborador.id}/${cleanFileName}`
+
       const { error: uploadError } = await supabase.storage.from('ged-colaboradores').upload(filePath, file)
+      
       if (uploadError) throw uploadError
       const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath)
       await supabase.from('ged_colaboradores').insert({
@@ -371,7 +375,6 @@ export function Colaboradores() {
 
       {selectedColaborador && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          {/* Removido overflow-hidden da div principal do modal e movido para os containers internos onde necessário */}
           <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200 overflow-visible">
             <div className="p-6 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-2xl">
               <div className="flex items-center gap-4">
@@ -389,7 +392,6 @@ export function Colaboradores() {
               <button onClick={() => setActiveDetailTab('ged')} className={`py-4 px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeDetailTab === 'ged' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}><FileText className="h-4 w-4" /> Documentos (GED)</button>
             </div>
 
-            {/* Mudança técnica: overflow-visible quando GED está ativo para permitir que o dropdown flutue livremente */}
             <div className={`p-8 flex-1 custom-scrollbar ${activeDetailTab === 'ged' ? 'overflow-visible' : 'overflow-y-auto'}`}>
               {activeDetailTab === 'dados' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -422,7 +424,6 @@ export function Colaboradores() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Container de Upload com overflow-visible para o Dropdown */}
                   <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 overflow-visible relative">
                     <div className="flex flex-col md:flex-row items-end gap-4">
                       <div className="flex-1 w-full relative z-[100]">
