@@ -24,6 +24,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
 
   const [isManageModalOpen, setIsManageModalOpen] = useState<{ open: boolean, field: string }>({ open: false, field: '' })
   const [isRateioModalOpen, setIsRateioModalOpen] = useState(false)
+  const [newItemValue, setNewItemValue] = useState('')
 
   const fetchUniqueOptions = async () => {
     const fields = ['titular', 'fornecedor', 'tipo', 'categoria', 'fator_gerador', 'rateio']
@@ -59,6 +60,24 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
     setFormData((prev: any) => ({ ...prev, [name]: value }))
   }
 
+  const handleAddItem = () => {
+    if (!newItemValue.trim()) return
+    const field = isManageModalOpen.field
+    setOptions(prev => ({
+      ...prev,
+      [field]: [...prev[field], newItemValue.trim()].sort()
+    }))
+    setNewItemValue('')
+  }
+
+  const handleDeleteItem = (itemToDelete: string) => {
+    const field = isManageModalOpen.field
+    setOptions(prev => ({
+      ...prev,
+      [field]: prev[field].filter(item => item !== itemToDelete)
+    }))
+  }
+
   const ManagedSelect = ({ label, name, value, optionsList }: any) => (
     <div className="space-y-1.5 flex flex-col h-full">
       <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">{label}</label>
@@ -67,34 +86,34 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
           name={name} 
           value={value} 
           onChange={handleChange} 
-          className="w-full h-[46px] pl-4 pr-10 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none" 
+          className="w-full h-[46px] pl-4 pr-12 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none text-[#112240] font-medium" 
           required
         >
-          <option value="">Selecione...</option>
+          <option value="" className="text-gray-400">Selecione...</option>
           {optionsList.map((opt: string) => (
-            <option key={opt} value={opt}>{opt}</option>
+            <option key={opt} value={opt} className="py-2">{opt}</option>
           ))}
         </select>
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-400 group-hover:text-blue-500 transition-colors">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none text-gray-400">
           <button 
             type="button" 
             onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsManageModalOpen({ open: true, field: name });
+              e.preventDefault()
+              e.stopPropagation()
+              setIsManageModalOpen({ open: true, field: name })
             }} 
-            className="pointer-events-auto p-1 hover:bg-blue-50 rounded-lg transition-colors"
-            title="Gerenciar Opções"
+            className="pointer-events-auto p-1.5 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all"
+            title="Gerenciar"
           >
-            <Settings2 className="w-3.5 h-3.5" />
+            <Settings2 className="w-4 h-4" />
           </button>
-          <ChevronDown className="w-4 h-4" />
+          <ChevronDown className="w-4 h-4 opacity-50" />
         </div>
       </div>
     </div>
   )
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md transition-all">
@@ -114,7 +133,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
         <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="p-10 overflow-y-auto grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-6 text-[#112240] items-end">
           <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Vencimento</label>
-            <input type="date" name="vencimento" value={formData.vencimento} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" required />
+            <input type="date" name="vencimento" value={formData.vencimento} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium" required />
           </div>
 
           <ManagedSelect label="Titular" name="titular" value={formData.titular} optionsList={options.titular} />
@@ -123,7 +142,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
 
           <div className="md:col-span-2 space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Descrição do Serviço</label>
-            <input name="descricao_servico" value={formData.descricao_servico} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Ex: Manutenção Preventiva..." />
+            <input name="descricao_servico" value={formData.descricao_servico} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium" placeholder="Ex: Manutenção Preventiva..." />
           </div>
 
           <ManagedSelect label="Tipo" name="tipo" value={formData.tipo} optionsList={options.tipo} />
@@ -155,27 +174,27 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
 
           <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Nota Fiscal</label>
-            <input name="nota_fiscal" value={formData.nota_fiscal} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <input name="nota_fiscal" value={formData.nota_fiscal} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
           </div>
 
           <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Fatura</label>
-            <input name="fatura" value={formData.fatura} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <input name="fatura" value={formData.fatura} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
           </div>
 
           <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Recibo</label>
-            <input name="recibo" value={formData.recibo} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <input name="recibo" value={formData.recibo} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
           </div>
 
           <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Boleto</label>
-            <input name="boleto" value={formData.boleto} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <input name="boleto" value={formData.boleto} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
           </div>
 
           <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">O.S.</label>
-            <input name="os" value={formData.os} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <input name="os" value={formData.os} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
           </div>
 
           <div className="md:col-span-4 flex justify-end items-center gap-8 pt-10 mt-4 border-t border-gray-50">
@@ -186,6 +205,50 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
           </div>
         </form>
       </div>
+
+      {/* Modal de Gerenciamento de Opções */}
+      {isManageModalOpen.open && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-[#0a192f]/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-200 border border-gray-100">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center">
+              <h4 className="font-black text-[#112240] uppercase text-xs tracking-widest flex items-center gap-2">
+                <Settings2 className="w-4 h-4 text-blue-600" /> Gerenciar {isManageModalOpen.field}
+              </h4>
+              <button onClick={() => setIsManageModalOpen({ open: false, field: '' })}><X className="w-5 h-5 text-gray-400" /></button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={newItemValue}
+                  onChange={(e) => setNewItemValue(e.target.value)}
+                  placeholder="Novo item..."
+                  className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
+                />
+                <button onClick={handleAddItem} className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                {options[isManageModalOpen.field]?.map((item) => (
+                  <div key={item} className="flex justify-between items-center p-3 bg-gray-50/50 rounded-xl border border-gray-100 group hover:border-blue-200 transition-all">
+                    <span className="text-sm font-semibold text-[#112240]">{item}</span>
+                    <button onClick={() => handleDeleteItem(item)} className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button 
+                onClick={() => setIsManageModalOpen({ open: false, field: '' })}
+                className="w-full py-4 bg-[#1e3a8a] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#112240] transition-all"
+              >
+                Concluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sub-modal de Rateio */}
       {isRateioModalOpen && (
@@ -203,14 +266,17 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
             <div className="space-y-5">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Destino</label>
-                <select 
-                  value={formData.rateio} 
-                  onChange={(e) => setFormData({...formData, rateio: e.target.value})}
-                  className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-                >
-                  <option value="">Selecione...</option>
-                  {options.titular.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <div className="relative">
+                  <select 
+                    value={formData.rateio} 
+                    onChange={(e) => setFormData({...formData, rateio: e.target.value})}
+                    className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none font-medium"
+                  >
+                    <option value="">Selecione...</option>
+                    {options.titular.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <ChevronDown className="w-4 h-4 absolute right-4 top-4 text-gray-400 pointer-events-none" />
+                </div>
               </div>
 
               <div className="space-y-1.5">
