@@ -328,9 +328,9 @@ function ClientCard({ client, onEdit, onOpenModal, onDelete }: any) {
         </Menu>
       </div>
 
-      {/* Badge Tipo Brinde */}
+      {/* Badge Tipo Brinde - COM COR */}
       <div className="mb-3 pb-3 border-b border-gray-100">
-        <span className="inline-block px-2 py-1 rounded text-[10px] font-semibold bg-gray-100 text-gray-700 uppercase tracking-wide">
+        <span className={`inline-block px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wide border ${colors.badge}`}>
           {client.tipo_brinde}
         </span>
       </div>
@@ -346,26 +346,26 @@ function ClientCard({ client, onEdit, onOpenModal, onDelete }: any) {
         </div>
       </div>
 
-      {/* Ações de Contato */}
+      {/* Ações de Contato - COM CORES NOS ÍCONES */}
       <div className="flex gap-2">
         {client.telefone && (
           <button 
             onClick={(e) => {e.stopPropagation(); window.open(`https://wa.me/55${client.telefone.replace(/\D/g,'')}`)}} 
-            className="flex-1 flex items-center justify-center gap-1 p-2 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1 p-2 rounded border border-gray-300 hover:bg-gray-50 transition-colors group/btn"
             title="WhatsApp"
           >
-            <MessageCircle className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">WhatsApp</span>
+            <MessageCircle className="h-3.5 w-3.5 text-green-600" />
+            <span className="text-xs font-medium text-gray-700">WhatsApp</span>
           </button>
         )}
         {client.email && (
           <button 
             onClick={(e) => {e.stopPropagation(); window.open(`mailto:${client.email}`)}} 
-            className="flex-1 flex items-center justify-center gap-1 p-2 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1 p-2 rounded border border-gray-300 hover:bg-gray-50 transition-colors group/btn"
             title="E-mail"
           >
-            <Mail className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">E-mail</span>
+            <Mail className="h-3.5 w-3.5 text-blue-600" />
+            <span className="text-xs font-medium text-gray-700">E-mail</span>
           </button>
         )}
       </div>
@@ -404,7 +404,7 @@ function ClientRow({ client, onEdit, onOpenModal, onDelete }: any) {
         </div>
       </td>
       <td className="px-4 py-3">
-        <span className="inline-block px-2 py-1 rounded text-[10px] font-semibold bg-gray-100 text-gray-700 uppercase tracking-wide">
+        <span className={`inline-block px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wide border ${colors.badge}`}>
           {client.tipo_brinde}
         </span>
       </td>
@@ -413,19 +413,19 @@ function ClientRow({ client, onEdit, onOpenModal, onDelete }: any) {
           {client.telefone && (
             <button 
               onClick={(e) => {e.stopPropagation(); window.open(`https://wa.me/55${client.telefone.replace(/\D/g,'')}`)}} 
-              className="p-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+              className="p-1.5 rounded border border-gray-300 hover:bg-gray-50 transition-colors"
               title="WhatsApp"
             >
-              <MessageCircle className="h-3.5 w-3.5" />
+              <MessageCircle className="h-3.5 w-3.5 text-green-600" />
             </button>
           )}
           {client.email && (
             <button 
               onClick={(e) => {e.stopPropagation(); window.open(`mailto:${client.email}`)}} 
-              className="p-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+              className="p-1.5 rounded border border-gray-300 hover:bg-gray-50 transition-colors"
               title="E-mail"
             >
-              <Mail className="h-3.5 w-3.5" />
+              <Mail className="h-3.5 w-3.5 text-blue-600" />
             </button>
           )}
         </div>
