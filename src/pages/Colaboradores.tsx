@@ -151,31 +151,25 @@ export function Colaboradores() {
     }
     try {
       setUploadingGed(true)
-      
       const fileExt = file.name.split('.').pop()
-      
-      // Nome formatado conforme solicitado
       const rawFileName = `${selectedColaborador.nome}_${selectedGedCategory}`
-      
-      // Função interna para remover acentos e caracteres especiais do PATH do storage
       const cleanPathName = rawFileName
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-        .replace(/[^\w\s-]/g, '')        // Remove caracteres especiais exceto espaço e hífen
-        .replace(/\s+/g, '_');           // Substitui espaços por underline
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '_');
 
       const finalFileName = `${cleanPathName}.${fileExt}`
       const filePath = `ged/${selectedColaborador.id}/${Date.now()}_${finalFileName}`
 
       const { error: uploadError } = await supabase.storage.from('ged-colaboradores').upload(filePath, file)
-      
       if (uploadError) throw uploadError
 
       const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath)
       
       await supabase.from('ged_colaboradores').insert({
         colaborador_id: selectedColaborador.id,
-        nome_arquivo: `${toTitleCase(selectedColaborador.nome)}_${toTitleCase(selectedGedCategory)}.${fileExt}`, // No banco mantemos o nome bonito
+        nome_arquivo: `${toTitleCase(selectedColaborador.nome)}_${toTitleCase(selectedGedCategory)}.${fileExt}`,
         url: publicUrl,
         categoria: selectedGedCategory,
         tamanho: file.size,
@@ -280,6 +274,7 @@ export function Colaboradores() {
               <input type="text" placeholder="Buscar..." className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
             <div className="w-44"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={Array.from(new Set(colaboradores.map(c => c.lider_equipe).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
+            <div className="w-44"><SearchableSelect placeholder="Cargos" value={filterCargo} onChange={setFilterCargo} options={Array.from(new Set(colaboradores.map(c => c.cargo).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
             <div className="w-44"><SearchableSelect placeholder="Locais" value={filterLocal} onChange={setFilterLocal} options={Array.from(new Set(colaboradores.map(c => c.local).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
           </div>
         )}
