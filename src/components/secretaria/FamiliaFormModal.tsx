@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Save, Settings2, Plus, Trash2, Edit2, Percent, Calculator, FileText } from 'lucide-react'
+import { X, Save, Settings2, Plus, Trash2, Edit2, Percent, Calculator, FileText, ChevronDown } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
 interface FamiliaFormModalProps {
@@ -60,19 +60,37 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
   }
 
   const ManagedSelect = ({ label, name, value, optionsList }: any) => (
-    <div className="space-y-1.5">
-      <div className="flex justify-between items-center px-1">
-        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{label}</label>
-        <button type="button" onClick={() => setIsManageModalOpen({ open: true, field: name })} className="text-[9px] flex items-center gap-1 text-blue-500 hover:text-blue-700 font-bold transition-colors">
-          <Settings2 className="w-3 h-3" /> GERENCIAR
-        </button>
+    <div className="space-y-1.5 flex flex-col h-full">
+      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">{label}</label>
+      <div className="relative group flex-1">
+        <select 
+          name={name} 
+          value={value} 
+          onChange={handleChange} 
+          className="w-full h-[46px] pl-4 pr-10 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer appearance-none" 
+          required
+        >
+          <option value="">Selecione...</option>
+          {optionsList.map((opt: string) => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-gray-400 group-hover:text-blue-500 transition-colors">
+          <button 
+            type="button" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsManageModalOpen({ open: true, field: name });
+            }} 
+            className="pointer-events-auto p-1 hover:bg-blue-50 rounded-lg transition-colors"
+            title="Gerenciar Opções"
+          >
+            <Settings2 className="w-3.5 h-3.5" />
+          </button>
+          <ChevronDown className="w-4 h-4" />
+        </div>
       </div>
-      <select name={name} value={value} onChange={handleChange} className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer" required>
-        <option value="">Selecione...</option>
-        {optionsList.map((opt: string) => (
-          <option key={opt} value={opt}>{opt}</option>
-        ))}
-      </select>
     </div>
   )
 
@@ -93,19 +111,19 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
         </div>
 
         {/* Form */}
-        <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="p-10 overflow-y-auto grid grid-cols-1 md:grid-cols-4 gap-6 text-[#112240]">
-          <div className="space-y-1.5">
+        <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="p-10 overflow-y-auto grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-6 text-[#112240] items-end">
+          <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Vencimento</label>
-            <input type="date" name="vencimento" value={formData.vencimento} onChange={handleChange} className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" required />
+            <input type="date" name="vencimento" value={formData.vencimento} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" required />
           </div>
 
           <ManagedSelect label="Titular" name="titular" value={formData.titular} optionsList={options.titular} />
           <ManagedSelect label="Fornecedor" name="fornecedor" value={formData.fornecedor} optionsList={options.fornecedor} />
           <ManagedSelect label="Status" name="status" value={formData.status} optionsList={options.status} />
 
-          <div className="md:col-span-2 space-y-1.5">
+          <div className="md:col-span-2 space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Descrição do Serviço</label>
-            <input name="descricao_servico" value={formData.descricao_servico} onChange={handleChange} className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Ex: Manutenção Preventiva..." />
+            <input name="descricao_servico" value={formData.descricao_servico} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Ex: Manutenção Preventiva..." />
           </div>
 
           <ManagedSelect label="Tipo" name="tipo" value={formData.tipo} optionsList={options.tipo} />
@@ -113,57 +131,56 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
           
           <ManagedSelect label="Fator Gerador" name="fator_gerador" value={formData.fator_gerador} optionsList={options.fator_gerador} />
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Valor (R$)</label>
-            <div className="relative">
-              <input type="number" step="0.01" name="valor" value={formData.valor} onChange={handleChange} className="w-full p-3 bg-blue-50/30 border border-blue-100 rounded-2xl text-sm font-bold text-blue-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" required />
+            <div className="relative flex-1">
+              <input type="number" step="0.01" name="valor" value={formData.valor} onChange={handleChange} className="w-full h-[46px] px-4 bg-blue-50/30 border border-blue-100 rounded-2xl text-sm font-bold text-blue-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" required />
             </div>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Rateio</label>
             <button 
               type="button" 
               onClick={() => setIsRateioModalOpen(true)}
-              className="w-full flex items-center justify-between p-3 bg-white border-2 border-dashed border-gray-200 text-gray-600 rounded-2xl text-sm font-semibold hover:border-blue-400 hover:text-blue-600 transition-all"
+              className="w-full h-[46px] flex items-center justify-between px-4 bg-white border-2 border-dashed border-gray-200 text-gray-600 rounded-2xl text-sm font-semibold hover:border-blue-400 hover:text-blue-600 transition-all"
             >
-              <div className="flex items-center gap-2">
-                <Calculator className="w-4 h-4" />
+              <div className="flex items-center gap-2 overflow-hidden">
+                <Calculator className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate">{formData.rateio ? `${formData.rateio} (${formData.rateio_porcentagem}%)` : 'Configurar'}</span>
               </div>
-              <Settings2 className="w-4 h-4 opacity-40" />
+              <Settings2 className="w-4 h-4 opacity-40 flex-shrink-0" />
             </button>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Nota Fiscal</label>
-            <input name="nota_fiscal" value={formData.nota_fiscal} onChange={handleChange} className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <input name="nota_fiscal" value={formData.nota_fiscal} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
           </div>
 
-          {/* Novos campos de Texto em vez de Checkbox */}
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Fatura</label>
-            <input name="fatura" value={formData.fatura} onChange={handleChange} className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <input name="fatura" value={formData.fatura} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Recibo</label>
-            <input name="recibo" value={formData.recibo} onChange={handleChange} className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <input name="recibo" value={formData.recibo} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Boleto</label>
-            <input name="boleto" value={formData.boleto} onChange={handleChange} className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <input name="boleto" value={formData.boleto} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 flex flex-col h-full">
             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">O.S.</label>
-            <input name="os" value={formData.os} onChange={handleChange} className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+            <input name="os" value={formData.os} onChange={handleChange} className="w-full h-[46px] px-4 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
           </div>
 
-          <div className="md:col-span-4 flex justify-end gap-4 pt-10 mt-4 border-t border-gray-50">
-            <button type="button" onClick={onClose} className="px-8 py-3.5 text-xs font-black text-gray-400 hover:text-gray-600 transition-all uppercase tracking-[0.2em]">Cancelar</button>
-            <button type="submit" className="flex items-center gap-3 px-12 py-3.5 bg-[#1e3a8a] text-white text-xs font-black rounded-2xl hover:bg-[#112240] shadow-xl shadow-blue-900/10 transition-all active:scale-95 uppercase tracking-[0.2em]">
+          <div className="md:col-span-4 flex justify-end items-center gap-8 pt-10 mt-4 border-t border-gray-50">
+            <button type="button" onClick={onClose} className="text-xs font-black text-gray-400 hover:text-gray-600 transition-all uppercase tracking-[0.2em]">Cancelar</button>
+            <button type="submit" className="flex items-center gap-3 px-12 py-4 bg-[#1e3a8a] text-white text-xs font-black rounded-2xl hover:bg-[#112240] shadow-xl shadow-blue-900/10 transition-all active:scale-95 uppercase tracking-[0.2em]">
               <Save className="w-4 h-4" /> {initialData ? 'Atualizar Dados' : 'Confirmar Lançamento'}
             </button>
           </div>
@@ -189,7 +206,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
                 <select 
                   value={formData.rateio} 
                   onChange={(e) => setFormData({...formData, rateio: e.target.value})}
-                  className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
                 >
                   <option value="">Selecione...</option>
                   {options.titular.map(t => <option key={t} value={t}>{t}</option>)}
