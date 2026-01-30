@@ -1,3 +1,4 @@
+// src/components/Settings.tsx
 import { useState, useRef, useEffect } from 'react'
 import { 
   Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, 
@@ -8,7 +9,7 @@ import {
 import { utils, read, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
-import { History } from './History'
+import { History } from './crm/History'
 
 // --- INTERFACES ---
 interface UserPermissions {
