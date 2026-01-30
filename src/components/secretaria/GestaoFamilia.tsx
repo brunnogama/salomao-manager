@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { LayoutDashboard, Database, Users, Home, FileSpreadsheet, PlusCircle, Loader2, Search, Plus, Filter, X, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, Database, Users, Home, FileSpreadsheet, PlusCircle, Loader2, Search, Plus, Filter, X, ChevronDown, Trash2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { FamiliaTable } from './FamiliaTable'
@@ -15,6 +15,7 @@ export function GestaoFamilia() {
   const [isImporting, setIsImporting] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<any | null>(null)
 
   // Estados de Filtro
   const [searchTerm, setSearchTerm] = useState('')
@@ -58,6 +59,7 @@ export function GestaoFamilia() {
       if (event.key === 'Escape') {
         setIsViewModalOpen(false)
         setSelectedItem(null)
+        setItemToDelete(null)
       }
     }
     window.addEventListener('keydown', handleEsc)
@@ -95,8 +97,6 @@ export function GestaoFamilia() {
 
   // Função para deletar registro
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este registro?')) return
-
     try {
       const { error } = await supabase
         .from('familia_salomao_dados')
@@ -108,6 +108,7 @@ export function GestaoFamilia() {
       await fetchDados()
       setIsViewModalOpen(false)
       setSelectedItem(null)
+      setItemToDelete(null)
     } catch (error) {
       console.error('Erro ao excluir:', error)
       alert('Erro ao excluir o registro.')
@@ -118,6 +119,12 @@ export function GestaoFamilia() {
   const handleViewItem = (item: any) => {
     setSelectedItem(item)
     setIsViewModalOpen(true)
+  }
+
+  // Função para disparar a edição
+  const handleEditItem = (item: any) => {
+    setSelectedItem(item)
+    setIsModalOpen(true)
   }
 
   // Função para disparar a edição a partir do modal de visualização
@@ -221,7 +228,7 @@ export function GestaoFamilia() {
 
       {/* Barra de Baixo: Busca, Filtros e Novo */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between gap-3">
-        <div className="relative flex-1 max-md:max-w-md">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           <input 
             type="text" 
@@ -276,7 +283,11 @@ export function GestaoFamilia() {
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-            <FamiliaTable data={filteredData} onItemClick={handleViewItem} />
+            <FamiliaTable 
+              data={filteredData} 
+              onEditClick={handleEditItem}
+              onDeleteClick={(item) => setItemToDelete(item)}
+            />
           </div>
         )}
       </div>
@@ -299,9 +310,40 @@ export function GestaoFamilia() {
             setIsViewModalOpen(false)
             setSelectedItem(null)
           }}
-          onDelete={handleDelete}
+          onDelete={(id) => setItemToDelete(selectedItem)}
           onEdit={handleEditFromView}
         />
+      )}
+
+      {/* Modal de Confirmação Elegante */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in duration-200">
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-black text-[#112240] mb-2">Confirmar Exclusão</h3>
+              <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                Tem certeza que deseja remover o lançamento de <span className="font-bold text-[#112240]">{itemToDelete.fornecedor}</span>? Esta ação não pode ser desfeita.
+              </p>
+            </div>
+            <div className="flex border-t border-gray-50">
+              <button 
+                onClick={() => setItemToDelete(null)}
+                className="flex-1 px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => handleDelete(itemToDelete.id)}
+                className="flex-1 px-6 py-4 text-[10px] font-black text-red-500 uppercase tracking-widest hover:bg-red-50 transition-colors border-l border-gray-50"
+              >
+                Confirmar Exclusão
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

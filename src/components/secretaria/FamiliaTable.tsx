@@ -1,11 +1,12 @@
-import { Eye, FileText, Calendar, User, Tag } from 'lucide-react'
+import { Edit2, Trash2, FileText, Calendar } from 'lucide-react'
 
 interface FamiliaTableProps {
   data: any[]
-  onItemClick?: (item: any) => void
+  onEditClick: (item: any) => void
+  onDeleteClick: (item: any) => void
 }
 
-export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
+export function FamiliaTable({ data, onEditClick, onDeleteClick }: FamiliaTableProps) {
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0)
   }
@@ -45,13 +46,12 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
             data.map((item) => (
               <tr 
                 key={item.id} 
-                onClick={() => onItemClick?.(item)}
-                className="group bg-white hover:bg-blue-50/40 border border-gray-100 rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-md"
+                className="group bg-white hover:bg-blue-50/40 border border-gray-100 rounded-xl transition-all shadow-sm hover:shadow-md"
               >
                 {/* Vencimento */}
                 <td className="px-4 py-4 first:rounded-l-xl whitespace-nowrap">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-white transition-colors">
+                    <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600 transition-colors">
                       <Calendar className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-sm font-semibold text-[#112240]">
@@ -81,7 +81,7 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
 
                 {/* Categoria */}
                 <td className="px-4 py-4 whitespace-nowrap">
-                  <span className="inline-flex items-center px-2.5 py-0.5 bg-gray-100/80 rounded-lg text-[9px] font-black text-gray-600 uppercase tracking-wider group-hover:bg-white transition-colors border border-gray-200/50">
+                  <span className="inline-flex items-center px-2.5 py-0.5 bg-gray-100/80 rounded-lg text-[9px] font-black text-gray-600 uppercase tracking-wider transition-colors border border-gray-200/50">
                     {item.categoria}
                   </span>
                 </td>
@@ -105,9 +105,20 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
 
                 {/* Ações */}
                 <td className="px-4 py-4 text-right last:rounded-r-xl whitespace-nowrap">
-                  <button className="p-2 bg-gray-100/50 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all shadow-sm border border-gray-100 opacity-0 group-hover:opacity-100">
-                    <Eye className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center justify-end gap-2">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onEditClick(item); }}
+                      className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all shadow-sm border border-blue-100"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onDeleteClick(item); }}
+                      className="p-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-all shadow-sm border border-red-100"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))
