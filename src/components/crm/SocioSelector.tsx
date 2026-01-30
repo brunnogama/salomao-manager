@@ -281,7 +281,8 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
 
                   <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
                     <button
-                      onClick={() => setIsModalOpen(false)}
+                      onClick={() => setIsModalOpen(fals
+                        e)}
                       className="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
                     >
                       Cancelar
