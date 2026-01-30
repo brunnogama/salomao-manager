@@ -1,3 +1,4 @@
+// src/components/collaborators/pages/Colaboradores.tsx
 import { useState, useEffect, useRef } from 'react'
 import { 
   Search, Upload, Download, Plus, X, MapPin, User, Briefcase, 
@@ -5,9 +6,9 @@ import {
   Calendar, Building2, Camera, Image, Mail, FileText, File, ExternalLink, Loader2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { supabase } from '../lib/supabase'
-import { SearchableSelect } from '../components/SearchableSelect'
-import { Colaborador } from '../types/colaborador'
+import { supabase } from '../../../lib/supabase'
+import { SearchableSelect } from '../../crm/SearchableSelect'
+import { Colaborador } from '../../../types/colaborador'
 
 // --- ESTADOS ---
 const ESTADOS_BRASIL = [

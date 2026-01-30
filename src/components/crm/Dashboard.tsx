@@ -1,5 +1,6 @@
+// src/components/crm/Dashboard.tsx
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { Users, Gift, LayoutGrid, Award, Map, Gavel } from 'lucide-react';
 

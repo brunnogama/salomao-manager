@@ -1,12 +1,14 @@
+// src/components/crm/IncompleteClients.tsx
 import { useEffect, useState, useMemo, Fragment } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { 
   CheckCircle, Pencil, XCircle, Search, X, 
   Filter, ArrowUpDown, Check, FileSpreadsheet,
   Users, Gift, AlertCircle
 } from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
-import { NewClientModal, ClientData } from './NewClientModal'
+import { NewClientModal } from './NewClientModal'
+import { ClientData } from '../../types/client'
 import * as XLSX from 'xlsx'
 
 export function IncompleteClients() {

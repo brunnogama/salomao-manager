@@ -1,9 +1,10 @@
+// src/components/crm/Kanban.tsx
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Plus, Clock, CheckCircle2, Circle, X, Pencil, Trash2, Calendar, Save } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { logAction } from '../lib/logger';
-import { Task } from '../types/kanban';
+import { supabase } from '../../lib/supabase';
+import { logAction } from '../../lib/logger';
+import { Task } from '../../types/kanban';
 
 const COLUMNS = [
   { id: 'todo', title: 'A Fazer', color: 'orange', icon: <Clock className="h-5 w-5" /> },

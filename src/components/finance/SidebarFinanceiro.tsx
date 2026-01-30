@@ -1,3 +1,4 @@
+// src/components/finance/SidebarFinanceiro.tsx
 import { useState, useEffect } from 'react'
 import { 
   LayoutDashboard, 
@@ -9,7 +10,7 @@ import {
   X,
   LogOut
 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 
 interface SidebarProps {
   activePage: string;

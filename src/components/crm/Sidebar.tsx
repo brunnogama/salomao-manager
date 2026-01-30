@@ -1,3 +1,4 @@
+// src/components/crm/Sidebar.tsx
 import { useState, useEffect } from 'react'
 import { 
   LayoutDashboard, 
@@ -11,7 +12,7 @@ import {
   Truck,
   LogOut
 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 
 interface SidebarProps {
   activePage: string;

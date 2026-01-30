@@ -1,3 +1,4 @@
+// src/components/ModuleSelector.tsx
 import { useEffect, useState } from 'react'
 import { Gift, UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale } from 'lucide-react'
 import { supabase } from '../lib/supabase'

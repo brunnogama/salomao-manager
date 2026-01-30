@@ -1,5 +1,6 @@
+// src/components/crm/BrindeSelector.tsx
 import { useState, useEffect, Fragment } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { Menu, Transition } from '@headlessui/react'
 import { ChevronDown, Plus, Pencil, Trash2, Check, Gift } from 'lucide-react'
 

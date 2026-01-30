@@ -1,7 +1,8 @@
+// src/components/crm/SocioSelector.tsx
 import { useState, useEffect, Fragment } from 'react'
 import { ChevronDown, Plus, Pencil, Trash2, Check } from 'lucide-react'
 import { Menu, Transition, Dialog } from '@headlessui/react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 
 interface SocioSelectorProps {
   value: string

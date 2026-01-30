@@ -1,5 +1,6 @@
+// src/components/crm/Clients.tsx
 import { useEffect, useState, useMemo, useRef, Fragment } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { Menu, Transition } from '@headlessui/react'
 import { utils, writeFile, read } from 'xlsx'
 import { 
@@ -28,8 +29,8 @@ import {
   MoreVertical
 } from 'lucide-react'
 import { NewClientModal } from './NewClientModal'
-import { ClientData, getBrindeColors } from '../types/client'
-import { logAction } from '../lib/logger'
+import { ClientData, getBrindeColors } from '../../types/client'
+import { logAction } from '../../lib/logger'
 
 interface ClientsProps {
   initialFilters?: { socio?: string; brinde?: string };

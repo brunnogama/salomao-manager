@@ -1,5 +1,6 @@
+// src/components/crm/History.tsx
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { Search, RefreshCw, Calendar, XCircle } from 'lucide-react'
 import { utils, writeFile } from 'xlsx'
 
@@ -179,7 +180,7 @@ export function History() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
               {loading && logs.length === 0 ? (
-                 <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Carregando histórico...</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Carregando histórico...</td></tr>
               ) : filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
