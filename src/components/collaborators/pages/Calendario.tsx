@@ -58,7 +58,7 @@ export function Calendario() {
   const [savingEvento, setSavingEvento] = useState(false)
   const [novoEvento, setNovoEvento] = useState({
     titulo: '',
-    tipo: 'Reunião', // Default
+    tipo: 'Reunião',
     data: new Date().toISOString().split('T')[0],
     descricao: ''
   })
@@ -86,7 +86,7 @@ export function Calendario() {
     setSavingEvento(true)
     try {
       const { error } = await supabase
-        .from('eventos') // Certifique-se de criar esta tabela
+        .from('eventos')
         .insert({
           titulo: novoEvento.titulo,
           tipo: novoEvento.tipo,
@@ -104,7 +104,6 @@ export function Calendario() {
         descricao: ''
       })
       alert('Evento criado com sucesso!')
-      // Aqui você poderia recarregar os eventos se estivesse exibindo eventos mistos
     } catch (error) {
       console.error('Erro ao salvar evento:', error)
       alert('Erro ao salvar evento. Verifique se a tabela "eventos" existe.')
@@ -129,7 +128,6 @@ export function Calendario() {
       return toTitleCase(parts[0])
     }
     
-    // Pega o primeiro e o último nome
     return toTitleCase(`${parts[0]} ${parts[parts.length - 1]}`)
   }
 
@@ -204,12 +202,10 @@ export function Calendario() {
     const days = []
     const anivMes = aniversariosDoMes(selectedMonth, selectedYear)
 
-    // Dias vazios antes do primeiro dia
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="aspect-square" />)
     }
 
-    // Dias do mês
     for (let day = 1; day <= daysInMonth; day++) {
       const anivDoDia = anivMes.filter(a => a.dia === day)
       const isToday = 
@@ -222,13 +218,13 @@ export function Calendario() {
           key={day}
           className={`aspect-square p-2 rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden ${
             isToday 
-              ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400 shadow-lg' 
+              ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a] shadow-xl' 
               : anivDoDia.length > 0
-              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-md hover:scale-105 cursor-pointer'
-              : 'bg-white border-gray-100 hover:border-blue-100 hover:bg-blue-50/30'
+              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg hover:scale-105 cursor-pointer hover:border-[#1e3a8a]/50'
+              : 'bg-white border-gray-100 hover:border-[#1e3a8a]/30 hover:bg-blue-50/30'
           }`}
         >
-          <div className={`text-sm font-bold ${isToday ? 'text-white' : 'text-gray-700'}`}>
+          <div className={`text-sm font-black ${isToday ? 'text-white' : 'text-[#0a192f]'}`}>
             {day}
           </div>
           {anivDoDia.length > 0 && (
@@ -236,17 +232,17 @@ export function Calendario() {
               {anivDoDia.slice(0, 2).map((aniv, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-1.5 py-1 rounded-md shadow-sm border border-blue-100"
+                  className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-1.5 py-1 rounded-lg shadow-sm border border-blue-100"
                   title={formatName(aniv.colaborador.nome)}
                 >
-                  <Cake className="h-3 w-3 text-blue-600 flex-shrink-0" />
-                  <span className="text-[9px] font-medium text-gray-700 truncate w-full leading-tight">
+                  <Cake className="h-3 w-3 text-[#1e3a8a] flex-shrink-0" />
+                  <span className="text-[9px] font-bold text-gray-700 truncate w-full leading-tight">
                     {formatName(aniv.colaborador.nome)}
                   </span>
                 </div>
               ))}
               {anivDoDia.length > 2 && (
-                <div className="text-[8px] font-bold text-blue-600 text-center bg-white/80 rounded px-1">
+                <div className="text-[8px] font-black text-[#1e3a8a] text-center bg-white/80 rounded px-1">
                   +{anivDoDia.length - 2}
                 </div>
               )}
@@ -282,11 +278,9 @@ export function Calendario() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">Carregando calendário...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center h-96 gap-4">
+        <div className="w-12 h-12 border-4 border-[#1e3a8a]/20 border-t-[#1e3a8a] rounded-full animate-spin"></div>
+        <p className="text-sm font-semibold text-gray-500">Carregando calendário...</p>
       </div>
     )
   }
@@ -297,39 +291,45 @@ export function Calendario() {
       {/* TOOLBAR & STATS */}
       <div className="flex flex-col xl:flex-row gap-4 items-center justify-between">
         <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-100 min-w-max">
-            <div className="p-1.5 bg-yellow-100 rounded-md">
-              <Sparkles className="h-4 w-4 text-yellow-600" />
+          {/* Stat Card - Hoje */}
+          <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 shadow-lg">
+              <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Hoje</p>
-              <p className="text-lg font-bold text-gray-900 leading-none">{aniversariosHoje.length}</p>
+              <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Hoje</p>
+              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{aniversariosHoje.length}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-100 min-w-max">
-            <div className="p-1.5 bg-pink-100 rounded-md">
-              <PartyPopper className="h-4 w-4 text-pink-600" />
+          
+          {/* Stat Card - Esta Semana */}
+          <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 shadow-lg">
+              <PartyPopper className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Esta Semana</p>
-              <p className="text-lg font-bold text-gray-900 leading-none">{aniversariosEstaSemana.length}</p>
+              <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Semana</p>
+              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{aniversariosEstaSemana.length}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-100 min-w-max">
-            <div className="p-1.5 bg-blue-100 rounded-md">
-              <Users className="h-4 w-4 text-blue-600" />
+          
+          {/* Stat Card - Total */}
+          <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+              <Users className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Total</p>
-              <p className="text-lg font-bold text-gray-900 leading-none">{colaboradores.length}</p>
+              <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Total</p>
+              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{colaboradores.length}</p>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 w-full xl:w-auto justify-end">
+        {/* Buttons */}
+        <div className="flex flex-wrap gap-3 w-full xl:w-auto justify-end">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium shadow-md hover:bg-green-700 transition-colors"
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#15803d] to-green-700 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 hover:from-green-700 hover:to-[#15803d]"
           >
             <Plus className="h-4 w-4" />
             Novo Evento
@@ -338,20 +338,20 @@ export function Calendario() {
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode('calendario')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
+              className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm ${
                 viewMode === 'calendario'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
               }`}
             >
               Calendário
             </button>
             <button
               onClick={() => setViewMode('proximos')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
+              className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm ${
                 viewMode === 'proximos'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
               }`}
             >
               Próximos
@@ -362,39 +362,39 @@ export function Calendario() {
 
       {/* ANIVERSÁRIOS DE HOJE */}
       {aniversariosHoje.length > 0 && (
-        <div className="bg-gradient-to-r from-yellow-50 via-amber-50 to-orange-50 rounded-2xl shadow-lg border-2 border-yellow-200 p-6 animate-in fade-in slide-in-from-top-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-yellow-400 rounded-xl shadow-lg">
+        <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 rounded-2xl shadow-xl border-2 border-[#d4af37]/30 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#d4af37]/20">
+            <div className="p-3 bg-gradient-to-br from-[#d4af37] to-amber-600 rounded-xl shadow-lg">
               <Cake className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2">
                 🎉 Aniversariantes de Hoje!
               </h2>
-              <p className="text-sm text-gray-600">Não esqueça de parabenizar</p>
+              <p className="text-xs font-semibold text-gray-600">Não esqueça de parabenizar</p>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {aniversariosHoje.map((aniv) => (
               <div
                 key={aniv.colaborador.id}
-                className="bg-white rounded-xl p-4 shadow-md border-2 border-yellow-300 hover:shadow-xl transition-all duration-300 hover:scale-105"
+                className="bg-white rounded-xl p-5 shadow-lg border-2 border-[#d4af37]/50 hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-[#d4af37]"
               >
                 <div className="flex items-center gap-3">
                   {aniv.colaborador.foto_url ? (
                     <img
                       src={aniv.colaborador.foto_url}
                       alt={aniv.colaborador.nome}
-                      className="w-16 h-16 rounded-full object-cover border-4 border-yellow-400 shadow-lg"
+                      className="w-16 h-16 rounded-xl object-cover border-4 border-[#d4af37] shadow-lg"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white text-2xl font-bold border-4 border-yellow-300 shadow-lg">
+                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-2xl font-black border-4 border-[#d4af37]/30 shadow-lg">
                       {aniv.colaborador.nome.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="font-bold text-gray-900">{formatName(aniv.colaborador.nome)}</p>
-                    <p className="text-sm text-gray-600">{toTitleCase(aniv.colaborador.cargo)}</p>
+                    <p className="font-black text-[#0a192f]">{formatName(aniv.colaborador.nome)}</p>
+                    <p className="text-xs font-semibold text-gray-600">{toTitleCase(aniv.colaborador.cargo)}</p>
                   </div>
                 </div>
               </div>
@@ -405,30 +405,30 @@ export function Calendario() {
 
       {/* CONTEÚDO PRINCIPAL */}
       {viewMode === 'calendario' ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
           {/* Navegação do Calendário */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
             <button
               onClick={handlePrevMonth}
-              className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
             >
-              <ChevronLeft className="h-6 w-6 text-blue-600" />
+              <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
             </button>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
               {MESES[selectedMonth]} {selectedYear}
             </h2>
             <button
               onClick={handleNextMonth}
-              className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
             >
-              <ChevronRight className="h-6 w-6 text-blue-600" />
+              <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
             </button>
           </div>
 
           {/* Dias da Semana */}
-          <div className="grid grid-cols-7 gap-2 mb-2">
+          <div className="grid grid-cols-7 gap-2 mb-3">
             {DIAS_SEMANA.map(dia => (
-              <div key={dia} className="text-center text-sm font-bold text-gray-500 uppercase">
+              <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">
                 {dia}
               </div>
             ))}
@@ -440,20 +440,20 @@ export function Calendario() {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <Clock className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
+                <Clock className="h-5 w-5 text-[#1e3a8a]" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Próximos Aniversários</h2>
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Aniversários</h2>
             </div>
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
+              <Filter className="h-4 w-4 text-gray-400" />
               <select
                 value={filterMes ?? ''}
                 onChange={(e) => setFilterMes(e.target.value ? parseInt(e.target.value) : null)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="border border-gray-200 rounded-xl px-4 py-2 text-sm font-semibold focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all"
               >
                 <option value="">Todos os meses</option>
                 {MESES.map((mes, idx) => (
@@ -463,7 +463,7 @@ export function Calendario() {
               {filterMes !== null && (
                 <button
                   onClick={() => setFilterMes(null)}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -475,12 +475,12 @@ export function Calendario() {
             {getProximosAniversarios().map((aniv) => (
               <div
                 key={aniv.colaborador.id}
-                className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-md ${
+                className={`flex items-center justify-between p-5 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
                   aniv.isHoje
-                    ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300'
+                    ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-[#d4af37]/50'
                     : aniv.isEstaSemana
-                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
-                    : 'bg-gray-50 border-gray-200 hover:border-blue-200'
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
+                    : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
                 }`}
               >
                 <div className="flex items-center gap-4">
@@ -488,30 +488,30 @@ export function Calendario() {
                     <img
                       src={aniv.colaborador.foto_url}
                       alt={aniv.colaborador.nome}
-                      className="w-14 h-14 rounded-full object-cover border-2 border-blue-300 shadow"
+                      className="w-14 h-14 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md"
                     />
                   ) : (
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xl font-bold border-2 border-blue-300 shadow">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white text-xl font-black border-2 border-[#1e3a8a]/30 shadow-md">
                       {aniv.colaborador.nome.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div>
-                    <p className="font-bold text-gray-900 text-lg">{formatName(aniv.colaborador.nome)}</p>
-                    <p className="text-sm text-gray-600">{toTitleCase(aniv.colaborador.cargo)}</p>
+                    <p className="font-black text-[#0a192f] text-base">{formatName(aniv.colaborador.nome)}</p>
+                    <p className="text-xs font-semibold text-gray-600">{toTitleCase(aniv.colaborador.cargo)}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <p className="text-sm text-gray-500">Data</p>
-                    <p className="font-bold text-gray-900">
+                    <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Data</p>
+                    <p className="font-bold text-[#0a192f]">
                       {aniv.dia} de {MESES[aniv.mes]}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-500">Faltam</p>
-                    <p className={`font-bold text-lg ${
-                      aniv.isHoje ? 'text-yellow-600' : aniv.isEstaSemana ? 'text-blue-600' : 'text-gray-900'
+                    <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Faltam</p>
+                    <p className={`font-black text-lg ${
+                      aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
                     }`}>
                       {aniv.diasRestantes === 0 ? 'Hoje!' : `${aniv.diasRestantes} dias`}
                     </p>
@@ -525,16 +525,16 @@ export function Calendario() {
 
       {/* MODAL NOVO EVENTO */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-gray-800">
-                <CalendarDays className="h-5 w-5 text-blue-600" />
-                <h3 className="font-bold text-lg">Novo Evento</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between">
+              <div className="flex items-center gap-2 text-white">
+                <CalendarDays className="h-5 w-5" />
+                <h3 className="font-black text-base tracking-tight">Novo Evento</h3>
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 hover:bg-gray-200/50 p-1 rounded-full transition-colors"
+                className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -542,23 +542,23 @@ export function Calendario() {
             
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Título</label>
                 <input
                   type="text"
                   value={novoEvento.titulo}
                   onChange={(e) => setNovoEvento({...novoEvento, titulo: e.target.value})}
                   placeholder="Ex: Reunião Geral"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Tipo</label>
                   <select
                     value={novoEvento.tipo}
                     onChange={(e) => setNovoEvento({...novoEvento, tipo: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all bg-white font-medium"
                   >
                     <option value="Reunião">Reunião</option>
                     <option value="Aniversário">Aniversário</option>
@@ -566,47 +566,47 @@ export function Calendario() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Data</label>
                   <input
                     type="date"
                     value={novoEvento.data}
                     onChange={(e) => setNovoEvento({...novoEvento, data: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <AlignLeft className="h-3 w-3" /> Descrição <span className="text-gray-400 font-normal">(Opcional)</span>
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                  <AlignLeft className="h-3 w-3" /> Descrição <span className="font-normal">(Opcional)</span>
                 </label>
                 <textarea
                   value={novoEvento.descricao}
                   onChange={(e) => setNovoEvento({...novoEvento, descricao: e.target.value})}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all resize-none font-medium"
                 />
               </div>
             </div>
 
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-gray-700 font-medium hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-xl transition-all uppercase tracking-[0.2em]"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveEvento}
                 disabled={savingEvento || !novoEvento.titulo}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md uppercase tracking-[0.2em] active:scale-95"
               >
                 {savingEvento ? (
                   <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
-                Salvar Evento
+                Salvar
               </button>
             </div>
           </div>
