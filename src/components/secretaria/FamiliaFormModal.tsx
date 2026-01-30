@@ -67,10 +67,13 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
     e.preventDefault();
     
     // Limpeza dos dados para evitar erro 400 (Bad Request)
+    // No Postgres, campos de data e número não aceitam string vazia ('')
     const cleanedData = {
       ...formData,
-      valor: formData.valor ? parseFloat(formData.valor) : 0,
-      rateio_porcentagem: formData.rateio_porcentagem ? parseFloat(formData.rateio_porcentagem) : 0,
+      vencimento: formData.vencimento || null,
+      data_envio: formData.data_envio || null,
+      valor: formData.valor && formData.valor !== '' ? parseFloat(formData.valor) : 0,
+      rateio_porcentagem: formData.rateio_porcentagem && formData.rateio_porcentagem !== '' ? parseFloat(formData.rateio_porcentagem) : 0,
       // Se 'comprovante' for um objeto File, enviamos null aqui. 
       // O upload deve ser feito no componente pai via onSave se necessário.
       comprovante: typeof formData.comprovante === 'string' ? formData.comprovante : null
@@ -78,6 +81,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
 
     // Remove campos de sistema que o Supabase não aceita em INSERT/UPDATE
     delete cleanedData.created_at;
+    delete cleanedData.criado_em;
     
     onSave(cleanedData);
   };
