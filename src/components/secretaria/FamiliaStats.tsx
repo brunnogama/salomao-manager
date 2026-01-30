@@ -39,7 +39,7 @@ export function FamiliaStats({ data }: FamiliaStatsProps) {
   }
 
   return (
-    <div className="flex items-center gap-4 bg-gradient-to-br from-[#112240] to-[#1e3a8a] px-5 py-3 rounded-2xl shadow-lg border border-white/10 group transition-all hover:shadow-blue-900/20">
+    <div className="flex items-center gap-4 bg-gradient-to-br from-[#112240] to-[#1e3a8a] px-5 py-3 rounded-xl shadow-lg border border-white/10 group transition-all hover:shadow-blue-900/20">
       <div className="p-2.5 bg-white/10 rounded-xl text-blue-200 group-hover:scale-110 transition-transform">
         <Wallet className="w-5 h-5" />
       </div>

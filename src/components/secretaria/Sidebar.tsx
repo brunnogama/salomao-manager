@@ -3,9 +3,10 @@ import {
   LayoutDashboard, 
   Calendar,
   Receipt,
-  HeartHandshake,
+  Heart,
   FolderSearch,
-  X
+  X,
+  Briefcase
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -56,7 +57,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'calendario', label: 'Calendário', icon: Calendar },
     { id: 'despesas', label: 'Despesas', icon: Receipt },
-    { id: 'gestao-familia', label: 'Gestão Família Salomão', icon: HeartHandshake },
+    { id: 'gestao-familia', label: 'Gestão Família Salomão', icon: Heart },
     { id: 'ged', label: 'GED', icon: FolderSearch },
   ]
 
@@ -126,7 +127,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
           <div className="bg-gradient-to-br from-[#1a2c4e] to-[#0a192f] border border-gray-700/50 rounded-xl p-4 shadow-lg">
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-900/40 flex items-center justify-center border border-blue-500/30">
-                <Receipt className="w-5 h-5 text-blue-400" />
+                <Briefcase className="w-5 h-5 text-blue-400" />
               </div>
               <div>
                 <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-0.5 leading-none">Módulo</p>
