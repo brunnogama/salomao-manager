@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { LayoutDashboard, Database, Users, Heart, FileSpreadsheet, PlusCircle, Loader2, Search, Plus, Filter, X, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, Database, Users, Home, FileSpreadsheet, PlusCircle, Loader2, Search, Plus, Filter, X, ChevronDown } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { FamiliaTable } from './FamiliaTable'
@@ -221,12 +221,12 @@ export function GestaoFamilia() {
 
       {/* Barra de Baixo: Busca, Filtros e Novo */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
+        <div className="relative flex-1 max-md:max-w-md">
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           <input 
             type="text" 
             placeholder="Buscar registros..." 
-            className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
             value={searchTerm} 
             onChange={e => setSearchTerm(e.target.value)} 
           />
@@ -267,9 +267,9 @@ export function GestaoFamilia() {
       <div className="flex-1">
         {activeTab === 'dashboard' ? (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
-            <StatCard title="Total Registros" value={dadosFamilia.length} icon={Heart} color="red" />
+            <StatCard title="Total Registros" value={dadosFamilia.length} icon={Home} color="blue" />
             <div className="md:col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-              <Heart className="h-12 w-12 text-red-100 mx-auto mb-4" />
+              <Home className="h-12 w-12 text-blue-100 mx-auto mb-4" />
               <h3 className="text-lg font-bold text-gray-900">Dashboard de Gestão Familiar</h3>
               <p className="text-gray-500 text-sm">Selecione a aba Dados para gerenciar os lançamentos.</p>
             </div>

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, 
   Calendar,
   Receipt,
-  Heart,
+  Home,
   FolderSearch,
   X,
   Briefcase
@@ -57,7 +57,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'calendario', label: 'Calendário', icon: Calendar },
     { id: 'despesas', label: 'Despesas', icon: Receipt },
-    { id: 'gestao-familia', label: 'Gestão Família Salomão', icon: Heart },
+    { id: 'gestao-familia', label: 'Gestão Família Salomão', icon: Home },
     { id: 'ged', label: 'GED', icon: FolderSearch },
   ]
 
