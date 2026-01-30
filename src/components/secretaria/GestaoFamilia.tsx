@@ -256,7 +256,7 @@ export function GestaoFamilia() {
                 setSelectedItem(null)
                 setIsModalOpen(true)
               }} 
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-700 text-white rounded-lg font-bold text-sm shadow-md hover:from-indigo-700 hover:to-violet-800 transition-all transform hover:scale-[1.02] active:scale-95"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#0f172a] text-white rounded-lg font-bold text-sm shadow-md hover:from-[#112240] hover:to-[#020617] transition-all transform hover:scale-[1.02] active:scale-95"
             >
               <Plus className="h-4 w-4" /> Novo
             </button>
@@ -307,7 +307,6 @@ export function GestaoFamilia() {
   )
 }
 
-// --- SUB-COMPONENTS (Matching Colaboradores style) ---
 function StatCard({ title, value, icon: Icon, color }: any) {
   const themes: any = { 
     blue: 'text-blue-600 bg-blue-50 border-blue-100', 
@@ -326,4 +325,4 @@ function StatCard({ title, value, icon: Icon, color }: any) {
       </div>
     </div>
   )
-}
+}ss
