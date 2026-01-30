@@ -67,7 +67,9 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
 
                 {/* Descrição */}
                 <td className="px-6 py-5">
-                  <span className="text-sm text-gray-500 line-clamp-1">{item.descricao_detalhada}</span>
+                  <span className="text-sm text-gray-500 line-clamp-1">
+                    {item.descricao_detalhada || item.descricao || "---"}
+                  </span>
                 </td>
 
                 {/* Titular */}
