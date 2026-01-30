@@ -164,22 +164,22 @@ export function GestaoFamilia() {
 
   return (
     <div className="flex flex-col h-full gap-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-br from-white via-purple-50/30 to-blue-50/20 p-6 rounded-2xl border border-purple-100/50 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-br from-blue-900 to-blue-800 p-6 rounded-2xl border border-blue-700/50 shadow-lg">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl shadow-lg shadow-purple-500/20">
+          <div className="p-3 bg-blue-700 rounded-xl shadow-lg shadow-blue-900/30">
             <Heart className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-black text-[#112240] tracking-tight">Família Salomão</h2>
-            <p className="text-[10px] font-bold text-purple-600/60 uppercase tracking-wider">Gestão Financeira Familiar</p>
+            <h2 className="text-xl font-black text-white tracking-tight">Família Salomão</h2>
+            <p className="text-[10px] font-bold text-blue-200/80 uppercase tracking-wider">Gestão Financeira Familiar</p>
           </div>
         </div>
 
-        <div className="flex bg-white/80 backdrop-blur-sm p-1.5 rounded-xl border border-purple-100/50 shadow-sm">
-          <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-500 hover:text-[#112240] hover:bg-gray-50'}`}>
+        <div className="flex bg-blue-800/50 backdrop-blur-sm p-1.5 rounded-xl border border-blue-700/50 shadow-sm">
+          <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-blue-200 hover:text-white hover:bg-blue-700/50'}`}>
             <LayoutDashboard className="h-4 w-4" /> Dashboard
           </button>
-          <button onClick={() => setActiveTab('dados')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'dados' ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-500 hover:text-[#112240] hover:bg-gray-50'}`}>
+          <button onClick={() => setActiveTab('dados')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'dados' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' : 'text-blue-200 hover:text-white hover:bg-blue-700/50'}`}>
             <Database className="h-4 w-4" /> Dados
           </button>
         </div>
@@ -188,12 +188,12 @@ export function GestaoFamilia() {
       <div className="flex-1 min-h-0">
         {activeTab === 'dashboard' ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
-            <div className="bg-gradient-to-br from-white to-purple-50/30 p-8 rounded-2xl border border-purple-100/50 shadow-sm hover:shadow-lg transition-all">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-8 rounded-2xl border border-blue-200/50 shadow-sm hover:shadow-lg transition-all">
               <div className="flex items-center justify-between mb-6">
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl shadow-lg shadow-purple-500/20">
+                <div className="p-3 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20">
                   <Heart className="h-7 w-7 text-white" />
                 </div>
-                <span className="text-[9px] font-black text-purple-600/50 uppercase tracking-wider">Total Registros</span>
+                <span className="text-[9px] font-black text-blue-600/50 uppercase tracking-wider">Total Registros</span>
               </div>
               <p className="text-4xl font-black text-[#112240] mb-2">{dadosFamilia.length}</p>
               <p className="text-sm font-semibold text-gray-500">Lançamentos cadastrados</p>
