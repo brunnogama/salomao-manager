@@ -154,17 +154,20 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
       
       {/* Header - Design System Navy */}
       <header className="bg-gradient-to-r from-[#0a192f] to-[#112240] border-b border-white/10 shadow-xl">
-        <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
+        <div className="max-w-[1920px] mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
+          
+          {/* Logo - Esquerda */}
           <img 
             src="/logo-branca.png" 
             alt="Salomão Advogados" 
             className="h-11 w-auto object-contain" 
           />
           
-          <div className="flex items-center gap-4">
+          {/* Controles - Direita */}
+          <div className="flex items-center gap-3">
             {/* User Info */}
             <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center shadow-lg">
                 <span className="text-xs font-black text-white">
                   {userName.charAt(0).toUpperCase()}
                 </span>
