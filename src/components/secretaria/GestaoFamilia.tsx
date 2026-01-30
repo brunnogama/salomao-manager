@@ -1,24 +1,3 @@
-CONTEXTO: Estou enviando o código oficial e atualizado do arquivo: GestaoFamilia.tsx
-
-
-Atualize esse e me peça o restante que eu vou enviando, vamos atualizar um arquivo por vez.
-Veja se precisamos criar tabelas no Supabase e quais arquivos precisamos criar.
-Segue GitHub do projeto, analise profundamente.
-
-SUA TAREFA: 
-1. Quero que aumente o tamanho horizontal dos dados e das barras para caber mais informações, evitando quebras de linhas, mas sem usar barra de rolagem horizontal.
-2. Vamos começar com esse arquivo e depois me peça o restante para manter o padrao
-
-DIRETRIZES DE SEGURANÇA (LEIA COM ATENÇÃO):
-
-PROIBIDO REFATORAR: Não altere absolutamente nada além do que foi pedido. Mantenha nomes de variáveis, estrutura de funções, comentários e indentação idênticos, a menos que a mudança exija alterá-los.
-PRESERVE A UI/UX: Não toque em classes CSS, Tailwind ou estrutura HTML que não façam parte da tarefa.
-ZERO CRIATIVIDADE: Não tente "melhorar" ou "otimizar" o código. Apenas execute a tarefa.
-SAÍDA: Retorne o arquivo INTEIRO (sem abreviações // ...)
-
-
-
-CÓDIGO FONTE:
 import { useState, useEffect, useMemo } from 'react'
 import { LayoutDashboard, Database, Users, Home, FileSpreadsheet, PlusCircle, Loader2, Search, Plus, Filter, X, ChevronDown } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -217,7 +196,7 @@ export function GestaoFamilia() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-12">
+    <div className="max-w-[95%] mx-auto space-y-6 pb-12">
       {/* Linha Superior: Card de Total (Esquerda) e Abas (Direita) */}
       <div className="flex items-center justify-between">
         <div>
