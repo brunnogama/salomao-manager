@@ -206,13 +206,13 @@ export function GestaoFamilia() {
         <div className="flex bg-gray-100/80 p-1.5 rounded-xl border border-gray-200 shadow-sm w-fit">
           <button 
             onClick={() => setActiveTab('dashboard')} 
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === 'dashboard' ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${activeTab === 'dashboard' ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200/50'}`}
           >
             <LayoutDashboard className={`h-4 w-4 ${activeTab === 'dashboard' ? 'text-blue-600' : ''}`} /> Dashboard
           </button>
           <button 
             onClick={() => setActiveTab('dados')} 
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === 'dados' ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${activeTab === 'dados' ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200/50'}`}
           >
             <Database className={`h-4 w-4 ${activeTab === 'dados' ? 'text-blue-600' : ''}`} /> Dados
           </button>
@@ -220,13 +220,13 @@ export function GestaoFamilia() {
       </div>
 
       {/* Barra de Baixo: Busca, Filtros e Novo */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           <input 
             type="text" 
             placeholder="Buscar registros..." 
-            className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+            className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" 
             value={searchTerm} 
             onChange={e => setSearchTerm(e.target.value)} 
           />
@@ -245,7 +245,7 @@ export function GestaoFamilia() {
 
           <div className="flex gap-2">
             {activeTab === 'dados' && (
-              <label className={`flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-50 cursor-pointer transition-all ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
+              <label className={`flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 cursor-pointer transition-all ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
                 {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 text-green-600" />}
                 {isImporting ? 'Salvando...' : 'Importar'}
                 <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
@@ -256,7 +256,7 @@ export function GestaoFamilia() {
                 setSelectedItem(null)
                 setIsModalOpen(true)
               }} 
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#0f172a] text-white rounded-lg font-bold text-sm shadow-md hover:from-[#112240] hover:to-[#020617] transition-all transform hover:scale-[1.02] active:scale-95"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#0f172a] text-white rounded-xl font-bold text-sm shadow-md hover:from-[#112240] hover:to-[#020617] transition-all transform hover:scale-[1.02] active:scale-95"
             >
               <Plus className="h-4 w-4" /> Novo
             </button>
@@ -315,7 +315,7 @@ function StatCard({ title, value, icon: Icon, color }: any) {
     gray: 'text-gray-600 bg-gray-50 border-gray-100' 
   }
   return (
-    <div className={`bg-white p-6 rounded-2xl shadow-sm border flex items-center justify-between ${themes[color].split(' ')[2]}`}>
+    <div className={`bg-white p-6 rounded-xl shadow-sm border flex items-center justify-between ${themes[color].split(' ')[2]}`}>
       <div>
         <p className="text-sm font-medium text-gray-500">{title}</p>
         <p className="text-3xl font-bold mt-1 text-gray-900">{value}</p>
