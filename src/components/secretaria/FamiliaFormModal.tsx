@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Save, Settings2, Plus, Trash2, Edit2, Percent, Calculator, FileText, ChevronDown, Check, Upload } from 'lucide-react'
+import { X, Save, Settings2, Plus, Trash2, Edit2, Percent, Calculator, ChevronDown, Check, Upload } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
 interface FamiliaFormModalProps {
@@ -63,7 +63,24 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
     return () => window.removeEventListener('click', handleClickOutside)
   }, [])
 
-  if (!isOpen) return null
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Limpeza dos dados para evitar erro 400 (Bad Request)
+    const cleanedData = {
+      ...formData,
+      valor: formData.valor ? parseFloat(formData.valor) : 0,
+      rateio_porcentagem: formData.rateio_porcentagem ? parseFloat(formData.rateio_porcentagem) : 0,
+      // Se 'comprovante' for um objeto File, enviamos null aqui. 
+      // O upload deve ser feito no componente pai via onSave se necessário.
+      comprovante: typeof formData.comprovante === 'string' ? formData.comprovante : null
+    };
+
+    // Remove campos de sistema que o Supabase não aceita em INSERT/UPDATE
+    delete cleanedData.created_at;
+    
+    onSave(cleanedData);
+  };
 
   const handleAddItem = () => {
     if (!newItemValue.trim()) return
@@ -155,6 +172,8 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
     )
   }
 
+  if (!isOpen) return null
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 bg-[#0a192f]/60 backdrop-blur-md transition-all">
       <div className="bg-white w-full max-w-5xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-white/20">
@@ -169,8 +188,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
           </button>
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="px-8 py-6 overflow-hidden flex flex-col gap-4 text-[#112240]">
-          
+        <form onSubmit={handleSubmit} className="px-8 py-6 overflow-hidden flex flex-col gap-4 text-[#112240]">
           <div className="space-y-3">
             <h4 className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] border-b border-blue-50 pb-1">Identificação e Classificação</h4>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
