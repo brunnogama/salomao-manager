@@ -23,6 +23,7 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
           <tr className="text-[#112240]/40">
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Vencimento</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Fornecedor</th>
+            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Descrição</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Titular</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Categoria</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Valor</th>
@@ -33,7 +34,7 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
         <tbody className="space-y-2">
           {data.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-6 py-12 text-center bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
+              <td colSpan={8} className="px-6 py-12 text-center bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
                 <div className="flex flex-col items-center gap-2">
                   <FileText className="w-8 h-8 text-gray-300" />
                   <p className="text-sm font-bold text-gray-400">Nenhum registro encontrado na base.</p>
@@ -62,6 +63,11 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
                 {/* Fornecedor */}
                 <td className="px-6 py-5">
                   <span className="text-sm font-bold text-[#112240] uppercase tracking-wider">{item.fornecedor}</span>
+                </td>
+
+                {/* Descrição */}
+                <td className="px-6 py-5">
+                  <span className="text-sm text-gray-500 line-clamp-1">{item.descricao_detalhada}</span>
                 </td>
 
                 {/* Titular */}
