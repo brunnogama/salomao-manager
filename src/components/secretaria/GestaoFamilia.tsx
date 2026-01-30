@@ -204,13 +204,13 @@ export function GestaoFamilia() {
 
   return (
     <div className="max-w-[95%] mx-auto space-y-6 pb-12">
-      {/* Linha Superior: Card de Total (Esquerda) e Abas (Direita) */}
-      <div className="flex items-center justify-between">
-        <div>
+      {/* Linha Superior: Cards de Stats e Abas */}
+      <div className="flex items-center justify-between gap-6">
+        <div className="flex-1">
           <FamiliaStats data={dadosFamilia} />
         </div>
 
-        <div className="flex bg-gray-100/80 p-1.5 rounded-xl border border-gray-200 shadow-sm w-fit">
+        <div className="flex bg-gray-100/80 p-1.5 rounded-xl border border-gray-200 shadow-sm w-fit flex-shrink-0">
           <button 
             onClick={() => setActiveTab('dashboard')} 
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${activeTab === 'dashboard' ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200/50'}`}
@@ -226,7 +226,7 @@ export function GestaoFamilia() {
         </div>
       </div>
 
-      {/* Barra de Baixo: Busca, Filtros e Novo */}
+      {/* Barra de Baixo: Busca preenchendo o espaço, Filtros e Novo */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -359,7 +359,7 @@ function StatCard({ title, value, icon: Icon, color }: any) {
   return (
     <div className={`bg-white p-6 rounded-xl shadow-sm border flex items-center justify-between ${themes[color].split(' ')[2]}`}>
       <div>
-        <p className="text-sm font-medium text-gray-500">{title}</p>
+        <p className="text-sm font-medium text-white">{title}</p>
         <p className="text-3xl font-bold mt-1 text-gray-900">{value}</p>
       </div>
       <div className={`p-3 rounded-xl ${themes[color].split(' ')[0]} ${themes[color].split(' ')[1]}`}>

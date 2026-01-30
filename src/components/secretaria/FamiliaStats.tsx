@@ -1,6 +1,6 @@
 // src/components/secretaria/FamiliaStats.tsx
 import { useMemo } from 'react'
-import { Wallet } from 'lucide-react'
+import { Wallet, User } from 'lucide-react'
 
 interface FamiliaStatsProps {
   data: any[]
@@ -12,21 +12,33 @@ export function FamiliaStats({ data }: FamiliaStatsProps) {
     const mesAtual = agora.getMonth()
     const anoAtual = agora.getFullYear()
 
-    const totalMes = data.reduce((acc, item) => {
-      if (!item.vencimento) return acc
-      
+    const filterByMonth = (item: any) => {
+      if (!item.vencimento) return false
       const dataVenc = new Date(item.vencimento)
-      // Ajuste para evitar problemas de fuso horário na comparação de data ISO
       const dataVencAjustada = new Date(dataVenc.getTime() + dataVenc.getTimezoneOffset() * 60000)
-      
-      if (dataVencAjustada.getMonth() === mesAtual && dataVencAjustada.getFullYear() === anoAtual) {
-        return acc + (Number(item.valor) || 0)
-      }
-      return acc
+      return dataVencAjustada.getMonth() === mesAtual && dataVencAjustada.getFullYear() === anoAtual
+    }
+
+    const totalMes = data.reduce((acc, item) => {
+      return filterByMonth(item) ? acc + (Number(item.valor) || 0) : acc
+    }, 0)
+
+    const totalRodrigo = data.reduce((acc, item) => {
+      return filterByMonth(item) && item.titular?.toUpperCase() === 'RODRIGO' 
+        ? acc + (Number(item.valor) || 0) 
+        : acc
+    }, 0)
+
+    const totalLuisFelipe = data.reduce((acc, item) => {
+      return filterByMonth(item) && item.titular?.toUpperCase() === 'LUÍS FELIPE'
+        ? acc + (Number(item.valor) || 0) 
+        : acc
     }, 0)
 
     return {
       totalMes,
+      totalRodrigo,
+      totalLuisFelipe,
       mesNome: agora.toLocaleString('pt-BR', { month: 'long' })
     }
   }, [data])
@@ -38,21 +50,42 @@ export function FamiliaStats({ data }: FamiliaStatsProps) {
     }).format(val)
   }
 
-  return (
-    <div className="flex items-center gap-6 bg-gradient-to-br from-[#112240] to-[#1e3a8a] px-6 py-4 rounded-xl shadow-lg border border-white/10 group transition-all hover:shadow-blue-900/20">
-      <div className="p-3 bg-white/10 rounded-xl text-blue-200 group-hover:scale-110 transition-transform">
-        <Wallet className="w-6 h-6" />
+  const StatBox = ({ label, value, icon: Icon, gradient }: any) => (
+    <div className={`flex items-center gap-4 bg-gradient-to-br ${gradient} px-5 py-3 rounded-xl shadow-lg border border-white/10 group transition-all hover:shadow-blue-900/20 flex-1`}>
+      <div className="p-2.5 bg-white/10 rounded-xl text-blue-100 group-hover:scale-110 transition-transform">
+        <Icon className="w-5 h-5" />
       </div>
       <div className="flex flex-col">
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200/60 leading-none mb-1.5">
-          Total Gasto em {stats.mesNome}
+        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white leading-none mb-1">
+          {label}
         </span>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-black text-white tracking-tight whitespace-nowrap">
-            {formatCurrency(stats.totalMes)}
-          </span>
-        </div>
+        <span className="text-lg font-black text-white tracking-tight whitespace-nowrap">
+          {formatCurrency(value)}
+        </span>
       </div>
+    </div>
+  )
+
+  return (
+    <div className="flex items-center gap-4 w-full">
+      <StatBox 
+        label={`Total Gasto em ${stats.mesNome}`} 
+        value={stats.totalMes} 
+        icon={Wallet} 
+        gradient="from-[#112240] to-[#1e3a8a]" 
+      />
+      <StatBox 
+        label="Rodrigo" 
+        value={stats.totalRodrigo} 
+        icon={User} 
+        gradient="from-[#1e40af] to-[#3b82f6]" 
+      />
+      <StatBox 
+        label="Luís Felipe" 
+        value={stats.totalLuisFelipe} 
+        icon={User} 
+        gradient="from-[#1e40af] to-[#3b82f6]" 
+      />
     </div>
   )
 }
