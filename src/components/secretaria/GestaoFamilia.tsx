@@ -197,25 +197,25 @@ export function GestaoFamilia() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
-      {/* Linha Superior: Abas e Card de Total */}
+      {/* Linha Superior: Card de Total (Esquerda) e Abas (Direita) */}
       <div className="flex items-center justify-between">
-        <div className="flex bg-gray-100 p-1 rounded-lg w-fit">
+        <div>
+          <FamiliaStats data={dadosFamilia} />
+        </div>
+
+        <div className="flex bg-gray-100/80 p-1.5 rounded-xl border border-gray-200 shadow-sm w-fit">
           <button 
             onClick={() => setActiveTab('dashboard')} 
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === 'dashboard' ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
           >
-            <LayoutDashboard className="h-4 w-4" /> Dashboard
+            <LayoutDashboard className={`h-4 w-4 ${activeTab === 'dashboard' ? 'text-blue-600' : ''}`} /> Dashboard
           </button>
           <button 
             onClick={() => setActiveTab('dados')} 
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'dados' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === 'dados' ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
           >
-            <Database className="h-4 w-4" /> Dados
+            <Database className={`h-4 w-4 ${activeTab === 'dados' ? 'text-blue-600' : ''}`} /> Dados
           </button>
-        </div>
-
-        <div>
-          <FamiliaStats data={dadosFamilia} />
         </div>
       </div>
 
