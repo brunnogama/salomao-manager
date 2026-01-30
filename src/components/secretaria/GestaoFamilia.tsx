@@ -164,9 +164,9 @@ export function GestaoFamilia() {
 
   return (
     <div className="flex flex-col h-full gap-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-br from-white via-purple-50/30 to-pink-50/20 p-6 rounded-2xl border border-purple-100/50 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-br from-white via-purple-50/30 to-blue-50/20 p-6 rounded-2xl border border-purple-100/50 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg shadow-purple-500/20">
+          <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl shadow-lg shadow-purple-500/20">
             <Heart className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -176,10 +176,10 @@ export function GestaoFamilia() {
         </div>
 
         <div className="flex bg-white/80 backdrop-blur-sm p-1.5 rounded-xl border border-purple-100/50 shadow-sm">
-          <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-500 hover:text-[#112240] hover:bg-gray-50'}`}>
+          <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-500 hover:text-[#112240] hover:bg-gray-50'}`}>
             <LayoutDashboard className="h-4 w-4" /> Dashboard
           </button>
-          <button onClick={() => setActiveTab('dados')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'dados' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-500 hover:text-[#112240] hover:bg-gray-50'}`}>
+          <button onClick={() => setActiveTab('dados')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'dados' ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/30' : 'text-gray-500 hover:text-[#112240] hover:bg-gray-50'}`}>
             <Database className="h-4 w-4" /> Dados
           </button>
         </div>
@@ -190,7 +190,7 @@ export function GestaoFamilia() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
             <div className="bg-gradient-to-br from-white to-purple-50/30 p-8 rounded-2xl border border-purple-100/50 shadow-sm hover:shadow-lg transition-all">
               <div className="flex items-center justify-between mb-6">
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg shadow-purple-500/20">
+                <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl shadow-lg shadow-purple-500/20">
                   <Heart className="h-7 w-7 text-white" />
                 </div>
                 <span className="text-[9px] font-black text-purple-600/50 uppercase tracking-wider">Total Registros</span>
@@ -218,7 +218,7 @@ export function GestaoFamilia() {
                     setSelectedItem(null)
                     setIsModalOpen(true)
                   }}
-                  className="flex items-center gap-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/30 transition-all active:scale-95"
+                  className="flex items-center gap-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:from-purple-700 hover:to-blue-700 shadow-lg shadow-purple-500/30 transition-all active:scale-95"
                 >
                   <PlusCircle className="w-4 h-4" /> Novo Registro
                 </button>
