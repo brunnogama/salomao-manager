@@ -256,7 +256,7 @@ export function GestaoFamilia() {
                 setSelectedItem(null)
                 setIsModalOpen(true)
               }} 
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-700 transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-700 text-white rounded-lg font-bold text-sm shadow-md hover:from-indigo-700 hover:to-violet-800 transition-all transform hover:scale-[1.02] active:scale-95"
             >
               <Plus className="h-4 w-4" /> Novo
             </button>
