@@ -157,7 +157,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 bg-[#0a192f]/60 backdrop-blur-md transition-all">
-      <div className="bg-white w-full max-w-6xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[98vh] border border-white/20">
+      <div className="bg-white w-full max-w-[95%] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[98vh] border border-white/20">
         
         <div className="px-8 py-4 border-b border-gray-100 flex justify-between items-center bg-white flex-shrink-0">
           <div>
