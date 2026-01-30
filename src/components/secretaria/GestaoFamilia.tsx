@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { LayoutDashboard, Database, Users, Heart, FileSpreadsheet, PlusCircle, Loader2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { FamiliaTable } from './FamiliaTable'
 import { FamiliaFormModal } from './FamiliaFormModal'
 import { FamiliaViewModal } from './FamiliaViewModal'
+import { FamiliaStats } from './FamiliaStats'
+import { FamiliaFilters } from './FamiliaFilters'
 
 export function GestaoFamilia() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dashboard')
@@ -13,6 +15,12 @@ export function GestaoFamilia() {
   const [isImporting, setIsImporting] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+
+  // Estados de Filtro
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterTitular, setFilterTitular] = useState('')
+  const [filterCategoria, setFilterCategoria] = useState('')
+  const [filterFornecedor, setFilterFornecedor] = useState('')
 
   // Busca dados iniciais
   const fetchDados = async () => {
@@ -27,6 +35,22 @@ export function GestaoFamilia() {
   useEffect(() => {
     fetchDados()
   }, [])
+
+  // Lógica de Filtragem
+  const filteredData = useMemo(() => {
+    return dadosFamilia.filter(item => {
+      const matchSearch = searchTerm === '' || 
+        item.fornecedor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.descricao_servico?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.titular?.toLowerCase().includes(searchTerm.toLowerCase())
+
+      const matchTitular = filterTitular === '' || item.titular === filterTitular
+      const matchCategoria = filterCategoria === '' || item.categoria === filterCategoria
+      const matchFornecedor = filterFornecedor === '' || item.fornecedor === filterFornecedor
+
+      return matchSearch && matchTitular && matchCategoria && matchFornecedor
+    })
+  }, [dadosFamilia, searchTerm, filterTitular, filterCategoria, filterFornecedor])
 
   // Listener para o botão ESC
   useEffect(() => {
@@ -44,7 +68,6 @@ export function GestaoFamilia() {
   const handleSaveData = async (formData: any) => {
     try {
       if (formData.id) {
-        // Lógica de Edição (Update)
         const { error } = await supabase
           .from('familia_salomao_dados')
           .update(formData)
@@ -52,7 +75,6 @@ export function GestaoFamilia() {
 
         if (error) throw error
       } else {
-        // Lógica de Novo Registro (Insert)
         const { error } = await supabase
           .from('familia_salomao_dados')
           .insert([formData])
@@ -90,20 +112,17 @@ export function GestaoFamilia() {
     }
   }
 
-  // Função para abrir visualização
   const handleViewItem = (item: any) => {
     setSelectedItem(item)
     setIsViewModalOpen(true)
   }
 
-  // Função para disparar a edição a partir do modal de visualização
   const handleEditFromView = (item: any) => {
     setIsViewModalOpen(false)
     setSelectedItem(item)
     setIsModalOpen(true)
   }
 
-  // Função para Importar XLSX e salvar AUTOMATICAMENTE
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -174,11 +193,8 @@ export function GestaoFamilia() {
   return (
     <div className="flex flex-col h-full space-y-6">
       <div className="flex flex-col sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm sm:flex-row">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-purple-50 rounded-lg">
-            <Users className="h-5 w-5 text-purple-600" />
-          </div>
-          <h2 className="text-lg font-bold text-[#112240]">Família Salomão</h2>
+        <div className="flex items-center gap-6">
+          <FamiliaStats data={dadosFamilia} />
         </div>
 
         <div className="flex bg-gray-100 p-1 rounded-lg w-fit">
@@ -205,32 +221,46 @@ export function GestaoFamilia() {
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-              <div>
-                <h3 className="font-bold text-[#112240]">Base de Dados Familiar</h3>
-                <p className="text-xs text-gray-500">Importe planilhas ou adicione manualmente</p>
+            <div className="p-6 border-b border-gray-100 flex flex-col space-y-6">
+              <div className="flex flex-wrap justify-between items-center gap-4">
+                <div>
+                  <h3 className="font-bold text-[#112240]">Base de Dados Familiar</h3>
+                  <p className="text-xs text-gray-500">Importe planilhas ou adicione manualmente</p>
+                </div>
+                
+                <div className="flex gap-3">
+                  <label className={`flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 cursor-pointer transition-colors shadow-sm ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 text-green-600" />}
+                    {isImporting ? 'Salvando...' : 'Importar XLSX'}
+                    <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
+                  </label>
+                  <button 
+                    onClick={() => {
+                      setSelectedItem(null)
+                      setIsModalOpen(true)
+                    }}
+                    className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1e3a8a]/90 shadow-md transition-all active:scale-95"
+                  >
+                    <PlusCircle className="w-4 h-4" /> Novo Registro
+                  </button>
+                </div>
               </div>
-              
-              <div className="flex gap-3">
-                <label className={`flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 cursor-pointer transition-colors shadow-sm ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
-                  {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 text-green-600" />}
-                  {isImporting ? 'Salvando...' : 'Importar XLSX'}
-                  <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
-                </label>
-                <button 
-                  onClick={() => {
-                    setSelectedItem(null)
-                    setIsModalOpen(true)
-                  }}
-                  className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1e3a8a]/90 shadow-md transition-all active:scale-95"
-                >
-                  <PlusCircle className="w-4 h-4" /> Novo Registro
-                </button>
-              </div>
+
+              <FamiliaFilters 
+                data={dadosFamilia}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                filterTitular={filterTitular}
+                setFilterTitular={setFilterTitular}
+                filterCategoria={filterCategoria}
+                setFilterCategoria={setFilterCategoria}
+                filterFornecedor={filterFornecedor}
+                setFilterFornecedor={setFilterFornecedor}
+              />
             </div>
 
             <div className="flex-1 overflow-auto">
-              <FamiliaTable data={dadosFamilia} onItemClick={handleViewItem} />
+              <FamiliaTable data={filteredData} onItemClick={handleViewItem} />
             </div>
           </div>
         )}

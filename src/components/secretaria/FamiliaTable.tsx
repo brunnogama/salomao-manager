@@ -20,15 +20,15 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
     <div className="overflow-x-auto custom-scrollbar">
       <table className="w-full text-left border-separate border-spacing-y-2 px-4">
         <thead>
-          <tr className="text-[#112240]/40">
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Vencimento</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Fornecedor</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Descrição</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Titular</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Categoria</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Valor</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Status</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-right">Ações</th>
+          <tr className="text-[#112240]">
+            <th className="px-6 py-4 text-[12px] font-black uppercase tracking-[0.2em]">Vencimento</th>
+            <th className="px-6 py-4 text-[12px] font-black uppercase tracking-[0.2em]">Fornecedor</th>
+            <th className="px-6 py-4 text-[12px] font-black uppercase tracking-[0.2em]">Descrição</th>
+            <th className="px-6 py-4 text-[12px] font-black uppercase tracking-[0.2em]">Titular</th>
+            <th className="px-6 py-4 text-[12px] font-black uppercase tracking-[0.2em]">Categoria</th>
+            <th className="px-6 py-4 text-[12px] font-black uppercase tracking-[0.2em]">Valor</th>
+            <th className="px-6 py-4 text-[12px] font-black uppercase tracking-[0.2em]">Status</th>
+            <th className="px-6 py-4 text-[12px] font-black uppercase tracking-[0.2em] text-right">Ações</th>
           </tr>
         </thead>
         <tbody className="space-y-2">
@@ -54,7 +54,7 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
                     <div className="p-2 bg-blue-50 rounded-xl text-blue-600 group-hover:bg-white transition-colors">
                       <Calendar className="w-4 h-4" />
                     </div>
-                    <span className="text-sm font-black text-[#112240]">
+                    <span className="text-sm font-medium text-[#112240]">
                       {formatDate(item.vencimento)}
                     </span>
                   </div>
@@ -62,12 +62,12 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
 
                 {/* Fornecedor */}
                 <td className="px-6 py-5">
-                  <span className="text-sm font-bold text-[#112240] uppercase tracking-wider">{item.fornecedor}</span>
+                  <span className="text-sm font-medium text-[#112240] uppercase tracking-wider">{item.fornecedor}</span>
                 </td>
 
                 {/* Descrição */}
                 <td className="px-6 py-5">
-                  <span className="text-sm text-gray-500 line-clamp-1">
+                  <span className="text-sm text-gray-500 line-clamp-1 font-normal">
                     {item.descricao_servico || "---"}
                   </span>
                 </td>
@@ -75,19 +75,19 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
                 {/* Titular */}
                 <td className="px-6 py-5">
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-[#112240]">{item.titular}</span>
+                    <span className="text-sm font-medium text-[#112240]">{item.titular}</span>
                   </div>
                 </td>
 
                 {/* Categoria */}
                 <td className="px-6 py-5">
-                  <span className="inline-flex items-center px-3 py-1 bg-gray-100/80 rounded-lg text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:bg-white transition-colors">
+                  <span className="inline-flex items-center px-3 py-1 bg-gray-100/80 rounded-lg text-[10px] font-medium text-gray-500 uppercase tracking-widest group-hover:bg-white transition-colors">
                     {item.categoria}
                   </span>
                 </td>
 
                 {/* Valor */}
-                <td className="px-6 py-5 text-sm font-black text-[#1e3a8a]">
+                <td className="px-6 py-5 text-sm font-medium text-[#1e3a8a]">
                   {formatCurrency(item.valor)}
                 </td>
 

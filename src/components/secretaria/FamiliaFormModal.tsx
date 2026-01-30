@@ -245,7 +245,6 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
         </form>
       </div>
 
-      {/* Modal Gerenciar e Rateio (permanecem iguais ao original) */}
       {isManageModalOpen.open && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-[#0a192f]/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl border border-gray-100 animate-in zoom-in duration-200">
