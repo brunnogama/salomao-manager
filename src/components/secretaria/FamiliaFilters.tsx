@@ -39,16 +39,16 @@ export function FamiliaFilters({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
       {/* Filtro Titular */}
       <div className="relative">
         <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
         <select
           value={filterTitular}
           onChange={(e) => setFilterTitular(e.target.value)}
-          className="pl-9 pr-10 py-2 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[140px] text-gray-700"
+          className="pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[180px] text-gray-700 shadow-sm"
         >
-          <option value="">Titular</option>
+          <option value="">Todos Titulares</option>
           {options.titulares.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
@@ -60,9 +60,9 @@ export function FamiliaFilters({
         <select
           value={filterCategoria}
           onChange={(e) => setFilterCategoria(e.target.value)}
-          className="pl-9 pr-10 py-2 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[140px] text-gray-700"
+          className="pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[180px] text-gray-700 shadow-sm"
         >
-          <option value="">Categoria</option>
+          <option value="">Categorias</option>
           {options.categorias.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
@@ -74,9 +74,9 @@ export function FamiliaFilters({
         <select
           value={filterFornecedor}
           onChange={(e) => setFilterFornecedor(e.target.value)}
-          className="pl-9 pr-10 py-2 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[140px] text-gray-700"
+          className="pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[200px] text-gray-700 shadow-sm"
         >
-          <option value="">Fornecedor</option>
+          <option value="">Todos Fornecedores</option>
           {options.fornecedores.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
@@ -86,10 +86,11 @@ export function FamiliaFilters({
       {hasActiveFilters && (
         <button
           onClick={clearAll}
-          className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors border border-red-100 shadow-sm"
+          className="flex items-center gap-2 px-3 py-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all border border-red-100 shadow-sm group"
           title="Limpar filtros"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+          <span className="text-xs font-bold uppercase tracking-wider">Limpar</span>
         </button>
       )}
     </div>

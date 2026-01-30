@@ -37,7 +37,7 @@ export function FamiliaViewModal({ item, isOpen, onClose, onDelete, onEdit }: Fa
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md transition-all">
-      <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh] flex flex-col border border-white/20">
+      <div className="bg-white w-full max-w-[95%] rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh] flex flex-col border border-white/20">
         
         {/* Header Elegante */}
         <div className="px-10 py-8 border-b border-gray-50 flex justify-between items-start bg-white flex-shrink-0">

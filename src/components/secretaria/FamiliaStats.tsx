@@ -39,16 +39,16 @@ export function FamiliaStats({ data }: FamiliaStatsProps) {
   }
 
   return (
-    <div className="flex items-center gap-4 bg-gradient-to-br from-[#112240] to-[#1e3a8a] px-5 py-3 rounded-xl shadow-lg border border-white/10 group transition-all hover:shadow-blue-900/20">
-      <div className="p-2.5 bg-white/10 rounded-xl text-blue-200 group-hover:scale-110 transition-transform">
-        <Wallet className="w-5 h-5" />
+    <div className="flex items-center gap-6 bg-gradient-to-br from-[#112240] to-[#1e3a8a] px-6 py-4 rounded-xl shadow-lg border border-white/10 group transition-all hover:shadow-blue-900/20">
+      <div className="p-3 bg-white/10 rounded-xl text-blue-200 group-hover:scale-110 transition-transform">
+        <Wallet className="w-6 h-6" />
       </div>
       <div className="flex flex-col">
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200/60 leading-none mb-1">
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-200/60 leading-none mb-1.5">
           Total Gasto em {stats.mesNome}
         </span>
         <div className="flex items-baseline gap-1">
-          <span className="text-xl font-black text-white tracking-tight">
+          <span className="text-2xl font-black text-white tracking-tight whitespace-nowrap">
             {formatCurrency(stats.totalMes)}
           </span>
         </div>
