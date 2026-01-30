@@ -22,8 +22,8 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
         <thead>
           <tr className="text-[#112240]/40">
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Vencimento</th>
+            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Fornecedor</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Identificação</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Fatura / Doc</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Categoria</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Valor</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Status</th>
@@ -59,19 +59,15 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
                   </div>
                 </td>
 
-                {/* Titular e Fornecedor */}
+                {/* Fornecedor */}
+                <td className="px-6 py-5">
+                  <span className="text-sm font-bold text-[#112240] uppercase tracking-wider">{item.fornecedor}</span>
+                </td>
+
+                {/* Titular */}
                 <td className="px-6 py-5">
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-[#112240]">{item.titular}</span>
-                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{item.fornecedor}</span>
-                  </div>
-                </td>
-
-                {/* Fatura / NF */}
-                <td className="px-6 py-5">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-[#112240]">{item.fatura || '---'}</span>
-                    <span className="text-[10px] font-medium text-gray-400">NF: {item.nota_fiscal || 'N/A'}</span>
                   </div>
                 </td>
 
