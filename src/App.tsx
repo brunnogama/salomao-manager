@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Login from './Login'
@@ -24,7 +23,7 @@ import { Colaboradores } from './components/collaborators/pages/Colaboradores'
 import { Calendario } from './components/collaborators/pages/Calendario'
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 
-import { Menu, LogOut, Grid, UserCircle } from 'lucide-react'
+import { Menu, LogOut, Grid, UserCircle, Home as HomeIcon } from 'lucide-react'
 import { MODULE_CONFIG } from './config/modules'
 
 export default function App() {
@@ -61,7 +60,11 @@ export default function App() {
 
   // Lógica de metadados dinâmica
   const config = (MODULE_CONFIG as any)[currentModule] || MODULE_CONFIG.crm
-  const CurrentIcon = config.icons[activePage]
+  
+  // Alteração solicitada: Ícone de casa para Gestão Família
+  const isGestaoFamilia = currentModule === 'executive' && activePage === 'gestao-familia'
+  const CurrentIcon = isGestaoFamilia ? HomeIcon : config.icons[activePage]
+  
   const currentTitle = config.titles[activePage] || activePage
   const currentDesc = config.descriptions[activePage]
 

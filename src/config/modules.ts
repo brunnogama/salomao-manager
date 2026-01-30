@@ -1,7 +1,7 @@
 import { 
   LayoutDashboard, Users, Gavel, FileWarning, Truck, KanbanSquare, History, BookOpen,
   Calendar, MapPin, TrendingUp, Clock, BarChart3, RefreshCw, Briefcase, Banknote, Megaphone,
-  FolderSearch, ArrowUpCircle, ArrowDownCircle, Plane, Receipt, HeartHandshake
+  FolderSearch, ArrowUpCircle, ArrowDownCircle, Plane, Receipt, Home
 } from 'lucide-react';
 
 export const MODULE_CONFIG = {
@@ -115,7 +115,7 @@ export const MODULE_CONFIG = {
       dashboard: LayoutDashboard,
       calendario: Calendar,
       despesas: Receipt,
-      'gestao-familia': HeartHandshake,
+      'gestao-familia': Home,
       ged: FolderSearch
     },
     titles: {
