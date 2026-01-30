@@ -24,13 +24,16 @@ export function FamiliaStats({ data }: FamiliaStatsProps) {
     }, 0)
 
     const totalRodrigo = data.reduce((acc, item) => {
-      return filterByMonth(item) && item.titular?.toUpperCase() === 'RODRIGO' 
+      const titular = item.titular?.toUpperCase().trim() || ''
+      return filterByMonth(item) && titular === 'RODRIGO' 
         ? acc + (Number(item.valor) || 0) 
         : acc
     }, 0)
 
     const totalLuisFelipe = data.reduce((acc, item) => {
-      return filterByMonth(item) && item.titular?.toUpperCase() === 'LUÍS FELIPE'
+      const titular = item.titular?.toUpperCase().trim() || ''
+      // Verifica com e sem acento para garantir o match independente do input no banco
+      return filterByMonth(item) && (titular === 'LUÍS FELIPE' || titular === 'LUIS FELIPE')
         ? acc + (Number(item.valor) || 0) 
         : acc
     }, 0)
