@@ -26,167 +26,94 @@ import { DescriptiveTable } from '../components/DescriptiveTable'
 import { SocioRulesTable } from '../components/SocioRulesTable'
 
 export function Presencial() {
-  // --- ESTADOS GERAIS ---
+  // === ESTADOS ===
   const [records, setRecords] = useState<PresenceRecord[]>([])
   const [socioRules, setSocioRules] = useState<SocioRule[]>([]) 
-   
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
-   
-  // --- ESTADOS DE FILTRO ---
   const [filterSocio, setFilterSocio] = useState('')
   const [filterColaborador, setFilterColaborador] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [searchText, setSearchText] = useState('')
-
-  // Estado para Edição/Criação de Regra
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingRule, setEditingRule] = useState<Partial<SocioRule> | null>(null)
+  const [viewMode, setViewMode] = useState<'report' | 'descriptive' | 'socios'>('report')
+  const [startDate, setStartDate] = useState(getFirstDayOfMonth())
+  const [endDate, setEndDate] = useState(getLastDayOfMonth())
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const [sociosList, setSociosList] = useState<{id: string, nome: string}[]>([])
 
-  // Refs
+  // === REFS ===
   const presenceInputRef = useRef<HTMLInputElement>(null)
   const socioInputRef = useRef<HTMLInputElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const reportRef = useRef<HTMLDivElement>(null)
 
-  // --- NAVEGAÇÃO ---
-  const [viewMode, setViewMode] = useState<'report' | 'descriptive' | 'socios'>('report')
-   
-  const [startDate, setStartDate] = useState(getFirstDayOfMonth())
-  const [endDate, setEndDate] = useState(getLastDayOfMonth())
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
-
-  // --- BUSCAR ÚLTIMA DATA PARA DEFINIR PERÍODO INICIAL ---
+  // === TODA A LÓGICA DO COMPONENTE PERMANECE IGUAL ===
   const fetchInitialPeriod = async () => {
-      const { data } = await supabase
-          .from('presenca_portaria')
-          .select('data_hora')
-          .order('data_hora', { ascending: false })
-          .limit(1)
-       
+      const { data } = await supabase.from('presenca_portaria').select('data_hora').order('data_hora', { ascending: false }).limit(1)
       if (data && data.length > 0) {
           const lastDate = new Date(data[0].data_hora)
-          const lastDateStr = lastDate.toISOString().split('T')[0]
-          setEndDate(lastDateStr)
-          
+          setEndDate(lastDate.toISOString().split('T')[0])
           const firstDate = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1)
-          const firstDateStr = firstDate.toISOString().split('T')[0]
-          setStartDate(firstDateStr)
+          setStartDate(firstDate.toISOString().split('T')[0])
       }
       setIsInitialLoad(false)
   }
 
-  // --- BUSCAR DADOS ---
   const fetchRecords = async () => {
-    if (isInitialLoad) return; 
-
+    if (isInitialLoad) return
     setLoading(true)
-    
     let allPresenceData: any[] = [];
     let from = 0;
     const pageSize = 1000;
     let hasMore = true;
-
     while (hasMore) {
-      const { data: presenceData, error } = await supabase
-        .from('presenca_portaria')
-        .select('*', { count: 'exact' })
-        .gte('data_hora', startDate + 'T00:00:00')
-        .lte('data_hora', endDate + 'T23:59:59')
-        .order('data_hora', { ascending: true })
-        .range(from, from + pageSize - 1);
-
-      if (error) {
-        console.error('Erro ao buscar presença:', error);
-        break;
-      }
-
-      if (presenceData && presenceData.length > 0) {
-        allPresenceData = [...allPresenceData, ...presenceData];
-        
-        if (presenceData.length < pageSize) {
-          hasMore = false;
-        } else {
-          from += pageSize;
-        }
-      } else {
-        hasMore = false;
-      }
+      const { data: presenceData, error } = await supabase.from('presenca_portaria').select('*', { count: 'exact' }).gte('data_hora', startDate + 'T00:00:00').lte('data_hora', endDate + 'T23:59:59').order('data_hora', { ascending: true }).range(from, from + pageSize - 1);
+      if (error) { console.error(error); break; }
+      if (presenceData && presenceData.length > 0) { allPresenceData = [...allPresenceData, ...presenceData]; if (presenceData.length < pageSize) { hasMore = false; } else { from += pageSize; } } else { hasMore = false; }
     }
-
-    const { data: rulesData } = await supabase
-      .from('socios_regras')
-      .select('*')
-      .order('nome_colaborador', { ascending: true })
-      .limit(3000)
-
+    const { data: rulesData } = await supabase.from('socios_regras').select('*').order('nome_colaborador', { ascending: true }).limit(3000)
     if (rulesData) setSocioRules(rulesData)
-
     setRecords(allPresenceData)
     setLoading(false)
   }
-
-  useEffect(() => {
-      fetchInitialPeriod()
-  }, [])
-
-  useEffect(() => {
-    if (!isInitialLoad) {
-        fetchRecords()
-    }
-  }, [startDate, endDate, isInitialLoad])
-
-  useEffect(() => {
-      if (showSearch && searchInputRef.current) {
-          searchInputRef.current.focus()
-      }
-  }, [showSearch])
-
-  // --- MAPA E LISTAS PARA FILTROS ---
-  const socioMap = useMemo(() => {
-      const map = new Map<string, string>()
-      socioRules.forEach(rule => {
-          map.set(normalizeKey(rule.nome_colaborador), rule.socio_responsavel)
-      })
-      return map
-  }, [socioRules])
-
-  const [sociosList, setSociosList] = useState<{id: string, nome: string}[]>([])
-  
-  useEffect(() => {
-    fetchSociosList()
-  }, [])
 
   const fetchSociosList = async () => {
     const { data } = await supabase.from('socios_lista').select('*').order('nome')
     if (data) setSociosList(data)
   }
 
+  useEffect(() => { fetchInitialPeriod() }, [])
+  useEffect(() => { if (!isInitialLoad) { fetchRecords() } }, [startDate, endDate, isInitialLoad])
+  useEffect(() => { if (showSearch && searchInputRef.current) { searchInputRef.current.focus() } }, [showSearch])
+  useEffect(() => { fetchSociosList() }, [])
+
+  const socioMap = useMemo(() => {
+      const map = new Map<string, string>()
+      socioRules.forEach(rule => { map.set(normalizeKey(rule.nome_colaborador), rule.socio_responsavel) })
+      return map
+  }, [socioRules])
+
   const uniqueColaboradores = useMemo(() => {
       let rules = socioRules;
-      if (filterSocio) {
-          rules = rules.filter(r => toTitleCase(r.socio_responsavel) === filterSocio)
-      }
+      if (filterSocio) { rules = rules.filter(r => toTitleCase(r.socio_responsavel) === filterSocio) }
       return Array.from(new Set(rules.map(r => toTitleCase(r.nome_colaborador)))).sort().map(c => ({ nome: c }))
   }, [socioRules, filterSocio])
 
-  // --- FILTRAGEM CENTRALIZADA ---
   const filteredData = useMemo(() => {
       const filteredRecords = records.filter(record => {
           const dateObj = new Date(record.data_hora)
           const start = new Date(startDate + 'T00:00:00');
           const end = new Date(endDate + 'T23:59:59');
           if (dateObj < start || dateObj > end) return false
-
           const normName = normalizeKey(record.nome_colaborador)
           const socioRaw = socioMap.get(normName) || '-'
           const socioFormatted = toTitleCase(socioRaw)
           const nameFormatted = toTitleCase(record.nome_colaborador)
-
           if (filterSocio && socioFormatted !== filterSocio) return false
           if (filterColaborador && nameFormatted !== filterColaborador) return false
-
           if (searchText) {
               const lowerSearch = searchText.toLowerCase()
               const matchesName = record.nome_colaborador.toLowerCase().includes(lowerSearch)
@@ -195,7 +122,6 @@ export function Presencial() {
           }
           return true
       })
-
       const filteredRules = socioRules.filter(rule => {
           const socioFormatted = toTitleCase(rule.socio_responsavel)
           const nameFormatted = toTitleCase(rule.nome_colaborador)
@@ -203,18 +129,15 @@ export function Presencial() {
           if (filterColaborador && nameFormatted !== filterColaborador) return false
           if (searchText) {
               const lowerSearch = searchText.toLowerCase()
-              return rule.nome_colaborador.toLowerCase().includes(lowerSearch) || 
-                     rule.socio_responsavel.toLowerCase().includes(lowerSearch)
+              return rule.nome_colaborador.toLowerCase().includes(lowerSearch) || rule.socio_responsavel.toLowerCase().includes(lowerSearch)
           }
           return true
       })
       return { filteredRecords, filteredRules }
   }, [records, socioRules, startDate, endDate, filterSocio, filterColaborador, searchText, socioMap])
 
-  // --- LÓGICA DO RELATÓRIO ---
   const reportData = useMemo(() => {
     const grouped: { [key: string]: { originalName: string, uniqueDays: Set<string>, weekDays: { [key: number]: number }, datesSet: Set<string> } } = {}
-
     filteredData.filteredRecords.forEach(record => {
       const dateObj = new Date(record.data_hora)
       const normalizedName = normalizeKey(record.nome_colaborador)
@@ -225,22 +148,13 @@ export function Presencial() {
       const dayKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const dayNumber = String(day).padStart(2, '0')
       const weekDay = dateObj.getUTCDay()
-
-      if (!grouped[normalizedName]) {
-          grouped[normalizedName] = { 
-              originalName: displayName, 
-              uniqueDays: new Set(), 
-              weekDays: {},
-              datesSet: new Set()
-          }
-      }
+      if (!grouped[normalizedName]) { grouped[normalizedName] = { originalName: displayName, uniqueDays: new Set(), weekDays: {}, datesSet: new Set() } }
       if (!grouped[normalizedName].uniqueDays.has(dayKey)) {
         grouped[normalizedName].uniqueDays.add(dayKey)
         grouped[normalizedName].datesSet.add(dayNumber)
         grouped[normalizedName].weekDays[weekDay] = (grouped[normalizedName].weekDays[weekDay] || 0) + 1
       }
     })
-
     const result: ReportItem[] = Object.keys(grouped).map(key => {
       const item = grouped[key]
       const weekDaysMap: { [key: string]: number } = {}
@@ -249,19 +163,11 @@ export function Presencial() {
       const socioRaw = socioMap.get(key) || '-'
       const socioFormatted = toTitleCase(socioRaw)
       const sortedDates = Array.from(item.datesSet).map(d => parseInt(d)).sort((a, b) => a - b).map(d => String(d).padStart(2, '0'))
-
-      return { 
-          nome: item.originalName, 
-          socio: socioFormatted, 
-          diasPresentes: item.uniqueDays.size, 
-          diasSemana: weekDaysMap,
-          datas: sortedDates
-      }
+      return { nome: item.originalName, socio: socioFormatted, diasPresentes: item.uniqueDays.size, diasSemana: weekDaysMap, datas: sortedDates }
     })
     return result.sort((a, b) => a.nome.localeCompare(b.nome))
   }, [filteredData.filteredRecords, socioMap])
 
-  // --- LÓGICA DO DESCRITIVO ---
   const descriptiveData = useMemo(() => {
     return [...filteredData.filteredRecords].sort((a, b) => {
         const nameA = toTitleCase(a.nome_colaborador);
@@ -272,10 +178,8 @@ export function Presencial() {
     });
   }, [filteredData.filteredRecords]);
 
-  // --- UPLOAD DE PRESENÇA ---
   const handlePresenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; 
-    if (!file) return;
+    const file = e.target.files?.[0]; if (!file) return;
     setUploading(true); setProgress(0);
     const reader = new FileReader();
     reader.onload = async (evt) => {
@@ -322,7 +226,6 @@ export function Presencial() {
             if (!dataFinal || isNaN(dataFinal.getTime())) return null;
             return { nome_colaborador: nome, data_hora: dataFinal, arquivo_origem: file.name };
           }).filter((r: any) => r !== null);
-        
         const allDates = rawRecords.map((r: any) => r.data_hora);
         const minDate = new Date(Math.min(...allDates.map((d: Date) => d.getTime())));
         const maxDate = new Date(Math.max(...allDates.map((d: Date) => d.getTime())));
@@ -340,16 +243,10 @@ export function Presencial() {
           if (existingSignatures.has(key) || uniqueSet.has(key)) return false;
           uniqueSet.add(key); return true;
         });
-
-        if (recordsToInsert.length === 0) {
-          alert('Nenhum registro novo.'); setUploading(false); return;
-        }
-
+        if (recordsToInsert.length === 0) { alert('Nenhum registro novo.'); setUploading(false); return; }
         const BATCH_SIZE = 1000;
         for (let i = 0; i < recordsToInsert.length; i += BATCH_SIZE) {
-          const batch = recordsToInsert.slice(i, i + BATCH_SIZE).map((r: any) => ({
-            nome_colaborador: r.nome_colaborador, data_hora: r.data_hora.toISOString(), arquivo_origem: r.arquivo_origem
-          }));
+          const batch = recordsToInsert.slice(i, i + BATCH_SIZE).map((r: any) => ({ nome_colaborador: r.nome_colaborador, data_hora: r.data_hora.toISOString(), arquivo_origem: r.arquivo_origem }));
           const { error } = await supabase.from('presenca_portaria').insert(batch);
           if (error) throw error;
           setProgress(Math.round(((i / BATCH_SIZE) + 1) / Math.ceil(recordsToInsert.length / BATCH_SIZE) * 100));
@@ -388,7 +285,6 @@ export function Presencial() {
     reader.readAsBinaryString(file)
   }
 
-  // --- CRUD ---
   const handleOpenModal = (rule?: SocioRule) => { setEditingRule(rule || { socio_responsavel: '', nome_colaborador: '', meta_semanal: 3 }); setIsModalOpen(true); }
   const handleSaveRule = async () => {
       if (!editingRule?.socio_responsavel || !editingRule?.nome_colaborador) return alert("Preencha campos.")
@@ -402,11 +298,9 @@ export function Presencial() {
   }
   const handleDeleteRule = async (id: string) => { if (!confirm("Excluir?")) return; setLoading(true); await supabase.from('socios_regras').delete().eq('id', id); fetchRecords() }
 
-  // --- LIMPAR FILTROS ---
   const clearFilters = () => { setFilterSocio(''); setFilterColaborador(''); setSearchText(''); }
   const hasActiveFilters = filterSocio !== '' || filterColaborador !== '' || searchText !== '';
 
-  // --- ENVIAR EMAIL ---
   const handleSendEmail = async () => {
     if (!reportRef.current || viewMode !== 'report') return alert("Vá para a aba 'Relatório'.");
     setLoading(true);
@@ -425,7 +319,6 @@ export function Presencial() {
     } catch (error) { alert("Erro ao gerar imagem."); } finally { setLoading(false); }
   }
 
-  // --- EXPORTAR XLSX ---
   const handleExportXLSX = () => {
     let dataToExport: any[] = []; let sheetName = 'Dados'; let fileName = 'Presencial';
     if (viewMode === 'report') {
@@ -450,65 +343,63 @@ export function Presencial() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-100 space-y-6 relative">
-      <SocioRuleModal 
-        isOpen={isModalOpen} 
-        editingRule={editingRule} 
-        onClose={() => setIsModalOpen(false)} 
-        onSave={handleSaveRule} 
-        setEditingRule={setEditingRule} 
-      />
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
+      <SocioRuleModal isOpen={isModalOpen} editingRule={editingRule} onClose={() => setIsModalOpen(false)} onSave={handleSaveRule} setEditingRule={setEditingRule} />
 
-      {/* HEADER PRINCIPAL */}
-      <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+      {/* HEADER - DESIGN SYSTEM */}
+      <div className="flex flex-col gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex bg-gray-100 p-1 rounded-lg w-full md:w-auto overflow-x-auto">
-                <button onClick={() => setViewMode('report')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'report' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><BarChart3 className="h-4 w-4" /> Relatório</button>
-                <button onClick={() => setViewMode('descriptive')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'descriptive' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><FileText className="h-4 w-4" /> Descritivo</button>
-                <button onClick={() => setViewMode('socios')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'socios' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><Briefcase className="h-4 w-4" /> Regras</button>
+            
+            {/* VIEW MODE - Navy Gradient quando ativo */}
+            <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
+                <button onClick={() => setViewMode('report')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'report' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><BarChart3 className="h-4 w-4" /> Relatório</button>
+                <button onClick={() => setViewMode('descriptive')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'descriptive' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><FileText className="h-4 w-4" /> Descritivo</button>
+                <button onClick={() => setViewMode('socios')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'socios' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><Briefcase className="h-4 w-4" /> Regras</button>
             </div>
             
+            {/* ACTIONS - Navy colors */}
             <div className="flex items-center gap-2">
                 <input type="file" accept=".xlsx" ref={presenceInputRef} onChange={handlePresenceUpload} className="hidden" />
                 <input type="file" accept=".xlsx" ref={socioInputRef} onChange={handleSocioUpload} className="hidden" />
-                
-                <button onClick={() => fetchRecords()} className="p-2.5 text-gray-500 hover:text-blue-600 rounded-lg"><RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} /></button>
-
+                <button onClick={() => fetchRecords()} className="p-2.5 text-gray-400 hover:text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all" title="Atualizar"><RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} /></button>
                 {(viewMode === 'report' || viewMode === 'descriptive') && (reportData.length > 0 || descriptiveData.length > 0) && (
                   <div className="flex gap-2">
-                    {viewMode === 'report' && <button onClick={handleSendEmail} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium"><Mail className="h-4 w-4" /> Email</button>}
-                    <button onClick={handleExportXLSX} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium"><Download className="h-4 w-4" /> Exportar</button>
+                    {viewMode === 'report' && <button onClick={handleSendEmail} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Mail className="h-4 w-4" /> Email</button>}
+                    <button onClick={handleExportXLSX} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Download className="h-4 w-4" /> Exportar</button>
                   </div>
                 )}
-                
                 {viewMode === 'socios' ? (
                     <div className="flex gap-2">
-                          <button onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2"><Plus className="h-4 w-4" /> Novo</button>
-                          <button onClick={() => socioInputRef.current?.click()} className="bg-[#112240] text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2"><Users className="h-4 w-4" /> Importar</button>
+                      <button onClick={() => handleOpenModal()} className="bg-[#1e3a8a] hover:bg-[#112240] text-white px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg transition-all active:scale-95"><Plus className="h-4 w-4" /> Novo</button>
+                      <button onClick={() => socioInputRef.current?.click()} className="bg-[#112240] hover:bg-[#0a192f] text-white px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg transition-all active:scale-95"><Users className="h-4 w-4" /> Importar</button>
                     </div>
                 ) : (
-                    <button onClick={() => presenceInputRef.current?.click()} className="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2"><FileSpreadsheet className="h-4 w-4" /> Importar</button>
+                    <button onClick={() => presenceInputRef.current?.click()} className="bg-[#1e3a8a] hover:bg-[#112240] text-white px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg transition-all active:scale-95"><FileSpreadsheet className="h-4 w-4" /> Importar</button>
                 )}
             </div>
         </div>
 
-        {/* FILTROS */}
+        {/* FILTERS - Design System */}
         <div className="flex flex-col lg:flex-row items-center justify-between border-t border-gray-100 pt-4 gap-4">
-            <div className="hidden lg:block">{hasActiveFilters && <button onClick={clearFilters} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-600 bg-red-50 rounded-md"><Eraser className="h-3.5 w-3.5" /> Limpar Filtros</button>}</div>
-
+            <div className="hidden lg:block">{hasActiveFilters && <button onClick={clearFilters} className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all"><Eraser className="h-3.5 w-3.5" /> Limpar</button>}</div>
             <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
-                <div className={`flex items-center bg-gray-50 border rounded-lg transition-all ${showSearch ? 'w-full sm:w-64 px-2' : 'w-10 justify-center'}`}>
-                    <button onClick={() => setShowSearch(!showSearch)} className="p-2 text-gray-400">{showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}</button>
-                    {showSearch && <input ref={searchInputRef} type="text" placeholder="Buscar..." className="bg-transparent border-none text-sm w-full outline-none" value={searchText} onChange={(e) => setSearchText(e.target.value)} />}
+                <div className={`flex items-center bg-gray-50 border border-gray-200 rounded-xl transition-all duration-300 ${showSearch ? 'w-full sm:w-64 px-2' : 'w-10 justify-center'}`}>
+                    <button onClick={() => setShowSearch(!showSearch)} className="p-2 text-gray-400 hover:text-[#1e3a8a] transition-colors">{showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}</button>
+                    {showSearch && <input ref={searchInputRef} type="text" placeholder="Buscar..." className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium" value={searchText} onChange={(e) => setSearchText(e.target.value)} />}
                 </div>
-
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     <SearchableSelect value={filterSocio} onChange={setFilterSocio} table="socios_lista" nameField="nome" placeholder="Todos Sócios" className="w-full sm:w-48" onRefresh={fetchSociosList} />
                     <SearchableSelect value={filterColaborador} onChange={setFilterColaborador} options={uniqueColaboradores} placeholder="Todos Colab." className="w-full sm:w-48" />
                     {(viewMode === 'report' || viewMode === 'descriptive') && (
-                        <div className="flex items-center gap-2 border-l pl-2">
-                            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-sm p-1 outline-none" />
-                            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-sm p-1 outline-none" />
+                        <div className="flex items-center gap-2 border-l border-gray-200 pl-2">
+                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 hover:border-[#1e3a8a] transition-all">
+                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
+                                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent border-none text-sm p-1 outline-none text-gray-700 font-medium cursor-pointer" />
+                            </div>
+                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 hover:border-[#1e3a8a] transition-all">
+                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
+                                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent border-none text-sm p-1 outline-none text-gray-700 font-medium cursor-pointer" />
+                            </div>
                         </div>
                     )}
                 </div>
@@ -516,8 +407,8 @@ export function Presencial() {
         </div>
       </div>
 
-      {/* CONTEÚDO */}
-      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+      {/* CONTENT */}
+      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         {viewMode === 'report' && <ReportTable reportData={reportData} reportRef={reportRef} startDate={startDate} endDate={endDate} />}
         {viewMode === 'descriptive' && <DescriptiveTable descriptiveData={descriptiveData} socioMap={socioMap} />}
         {viewMode === 'socios' && <SocioRulesTable filteredRules={filteredData.filteredRules} onEdit={handleOpenModal} onDelete={handleDeleteRule} />}
