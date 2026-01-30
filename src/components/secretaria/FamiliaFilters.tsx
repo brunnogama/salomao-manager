@@ -46,9 +46,9 @@ export function FamiliaFilters({
         <select
           value={filterTitular}
           onChange={(e) => setFilterTitular(e.target.value)}
-          className="pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[180px] text-gray-700 shadow-sm"
+          className="pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[150px] text-gray-700 shadow-sm"
         >
-          <option value="">Todos Titulares</option>
+          <option value="">Titulares</option>
           {options.titulares.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
@@ -60,7 +60,7 @@ export function FamiliaFilters({
         <select
           value={filterCategoria}
           onChange={(e) => setFilterCategoria(e.target.value)}
-          className="pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[180px] text-gray-700 shadow-sm"
+          className="pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[150px] text-gray-700 shadow-sm"
         >
           <option value="">Categorias</option>
           {options.categorias.map(opt => <option key={opt} value={opt}>{opt}</option>)}
@@ -74,9 +74,9 @@ export function FamiliaFilters({
         <select
           value={filterFornecedor}
           onChange={(e) => setFilterFornecedor(e.target.value)}
-          className="pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[200px] text-gray-700 shadow-sm"
+          className="pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[150px] text-gray-700 shadow-sm"
         >
-          <option value="">Todos Fornecedores</option>
+          <option value="">Fornecedores</option>
           {options.fornecedores.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
