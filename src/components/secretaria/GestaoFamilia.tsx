@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { LayoutDashboard, Database, Users, Heart, FileSpreadsheet, PlusCircle, Loader2 } from 'lucide-react'
+import { LayoutDashboard, Database, Users, Heart, FileSpreadsheet, PlusCircle, Loader2, Search, Plus, Filter, X } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { FamiliaTable } from './FamiliaTable'
@@ -68,6 +68,7 @@ export function GestaoFamilia() {
   const handleSaveData = async (formData: any) => {
     try {
       if (formData.id) {
+        // Lógica de Edição (Update)
         const { error } = await supabase
           .from('familia_salomao_dados')
           .update(formData)
@@ -75,6 +76,7 @@ export function GestaoFamilia() {
 
         if (error) throw error
       } else {
+        // Lógica de Novo Registro (Insert)
         const { error } = await supabase
           .from('familia_salomao_dados')
           .insert([formData])
@@ -112,17 +114,20 @@ export function GestaoFamilia() {
     }
   }
 
+  // Função para abrir visualização
   const handleViewItem = (item: any) => {
     setSelectedItem(item)
     setIsViewModalOpen(true)
   }
 
+  // Função para disparar a edição a partir do modal de visualização
   const handleEditFromView = (item: any) => {
     setIsViewModalOpen(false)
     setSelectedItem(item)
     setIsModalOpen(true)
   }
 
+  // Função para Importar XLSX e salvar AUTOMATICAMENTE
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -191,77 +196,84 @@ export function GestaoFamilia() {
   }
 
   return (
-    <div className="flex flex-col h-full space-y-6">
-      <div className="flex flex-col sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm sm:flex-row">
-        <div className="flex items-center gap-6">
+    <div className="max-w-7xl mx-auto space-y-6 pb-12">
+      {activeTab === 'dashboard' && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
+          <StatCard title="Total Registros" value={dadosFamilia.length} icon={Heart} color="red" />
           <FamiliaStats data={dadosFamilia} />
         </div>
+      )}
 
-        <div className="flex bg-gray-100 p-1 rounded-lg w-fit">
-          <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-[#112240]'}`}>
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3">
+        <div className="flex bg-gray-100 p-1 rounded-lg w-fit mr-2">
+          <button 
+            onClick={() => setActiveTab('dashboard')} 
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
             <LayoutDashboard className="h-4 w-4" /> Dashboard
           </button>
-          <button onClick={() => setActiveTab('dados')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'dados' ? 'bg-white text-[#112240] shadow-sm' : 'text-gray-500 hover:text-[#112240]'}`}>
+          <button 
+            onClick={() => setActiveTab('dados')} 
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'dados' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
             <Database className="h-4 w-4" /> Dados
+          </button>
+        </div>
+
+        {activeTab === 'dados' && (
+          <div className="flex flex-1 gap-3 animate-in fade-in slide-in-from-left-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Buscar registros..." 
+                className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)} 
+              />
+            </div>
+            <FamiliaFilters 
+              data={dadosFamilia}
+              filterTitular={filterTitular}
+              setFilterTitular={setFilterTitular}
+              filterCategoria={filterCategoria}
+              setFilterCategoria={setFilterCategoria}
+              filterFornecedor={filterFornecedor}
+              setFilterFornecedor={setFilterFornecedor}
+            />
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          {activeTab === 'dados' && (
+            <label className={`flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-50 cursor-pointer transition-all ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
+              {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 text-green-600" />}
+              {isImporting ? 'Salvando...' : 'Importar'}
+              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
+            </label>
+          )}
+          <button 
+            onClick={() => {
+              setSelectedItem(null)
+              setIsModalOpen(true)
+            }} 
+            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-gray-800 transition-all"
+          >
+            <Plus className="h-4 w-4" /> Novo
           </button>
         </div>
       </div>
 
       <div className="flex-1">
         {activeTab === 'dashboard' ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-2 bg-red-50 rounded-lg text-red-600"><Heart className="h-6 w-6" /></div>
-                <span className="text-xs font-bold text-gray-400 uppercase">Total Registros</span>
-              </div>
-              <p className="text-3xl font-bold text-[#112240]">{dadosFamilia.length}</p>
-              <p className="text-sm text-gray-500 mt-1">Lançamentos na base de dados</p>
-            </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 animate-in fade-in slide-in-from-bottom-4 text-center">
+            <Heart className="h-12 w-12 text-red-100 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-gray-900">Dashboard de Gestão Familiar</h3>
+            <p className="text-gray-500 text-sm">Selecione a aba Dados para gerenciar os lançamentos.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-6 border-b border-gray-100 flex flex-col space-y-6">
-              <div className="flex flex-wrap justify-between items-center gap-4">
-                <div>
-                  <h3 className="font-bold text-[#112240]">Base de Dados Familiar</h3>
-                  <p className="text-xs text-gray-500">Importe planilhas ou adicione manualmente</p>
-                </div>
-                
-                <div className="flex gap-3">
-                  <label className={`flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 cursor-pointer transition-colors shadow-sm ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
-                    {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 text-green-600" />}
-                    {isImporting ? 'Salvando...' : 'Importar XLSX'}
-                    <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
-                  </label>
-                  <button 
-                    onClick={() => {
-                      setSelectedItem(null)
-                      setIsModalOpen(true)
-                    }}
-                    className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1e3a8a]/90 shadow-md transition-all active:scale-95"
-                  >
-                    <PlusCircle className="w-4 h-4" /> Novo Registro
-                  </button>
-                </div>
-              </div>
-
-              <FamiliaFilters 
-                data={dadosFamilia}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                filterTitular={filterTitular}
-                setFilterTitular={setFilterTitular}
-                filterCategoria={filterCategoria}
-                setFilterCategoria={setFilterCategoria}
-                filterFornecedor={filterFornecedor}
-                setFilterFornecedor={setFilterFornecedor}
-              />
-            </div>
-
-            <div className="flex-1 overflow-auto">
-              <FamiliaTable data={filteredData} onItemClick={handleViewItem} />
-            </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
+            <FamiliaTable data={filteredData} onItemClick={handleViewItem} />
           </div>
         )}
       </div>
@@ -288,6 +300,27 @@ export function GestaoFamilia() {
           onEdit={handleEditFromView}
         />
       )}
+    </div>
+  )
+}
+
+// --- SUB-COMPONENTS (Matching Colaboradores style) ---
+function StatCard({ title, value, icon: Icon, color }: any) {
+  const themes: any = { 
+    blue: 'text-blue-600 bg-blue-50 border-blue-100', 
+    green: 'text-green-600 bg-green-50 border-green-100', 
+    red: 'text-red-600 bg-red-50 border-red-100', 
+    gray: 'text-gray-600 bg-gray-50 border-gray-100' 
+  }
+  return (
+    <div className={`bg-white p-6 rounded-2xl shadow-sm border flex items-center justify-between ${themes[color].split(' ')[2]}`}>
+      <div>
+        <p className="text-sm font-medium text-gray-500">{title}</p>
+        <p className="text-3xl font-bold mt-1 text-gray-900">{value}</p>
+      </div>
+      <div className={`p-3 rounded-xl ${themes[color].split(' ')[0]} ${themes[color].split(' ')[1]}`}>
+        <Icon className="h-6 w-6" />
+      </div>
     </div>
   )
 }
