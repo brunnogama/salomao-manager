@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { LayoutDashboard, Database, Users, Heart, FileSpreadsheet, PlusCircle, Loader2, Search, Plus, Filter, X } from 'lucide-react'
+import { LayoutDashboard, Database, Users, Heart, FileSpreadsheet, PlusCircle, Loader2, Search, Plus, Filter, X, ChevronDown } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { FamiliaTable } from './FamiliaTable'
@@ -197,15 +197,9 @@ export function GestaoFamilia() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
-      {activeTab === 'dashboard' && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
-          <StatCard title="Total Registros" value={dadosFamilia.length} icon={Heart} color="red" />
-          <FamiliaStats data={dadosFamilia} />
-        </div>
-      )}
-
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3">
-        <div className="flex bg-gray-100 p-1 rounded-lg w-fit mr-2">
+      {/* Linha Superior: Abas e Card de Total */}
+      <div className="flex items-center justify-between">
+        <div className="flex bg-gray-100 p-1 rounded-lg w-fit">
           <button 
             onClick={() => setActiveTab('dashboard')} 
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -220,56 +214,65 @@ export function GestaoFamilia() {
           </button>
         </div>
 
-        {activeTab === 'dados' && (
-          <div className="flex flex-1 gap-3 animate-in fade-in slide-in-from-left-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Buscar registros..." 
-                className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" 
-                value={searchTerm} 
-                onChange={e => setSearchTerm(e.target.value)} 
-              />
-            </div>
-            <FamiliaFilters 
-              data={dadosFamilia}
-              filterTitular={filterTitular}
-              setFilterTitular={setFilterTitular}
-              filterCategoria={filterCategoria}
-              setFilterCategoria={setFilterCategoria}
-              filterFornecedor={filterFornecedor}
-              setFilterFornecedor={setFilterFornecedor}
-            />
-          </div>
-        )}
+        <div>
+          <FamiliaStats data={dadosFamilia} />
+        </div>
+      </div>
 
-        <div className="flex gap-2">
-          {activeTab === 'dados' && (
-            <label className={`flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-50 cursor-pointer transition-all ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
-              {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 text-green-600" />}
-              {isImporting ? 'Salvando...' : 'Importar'}
-              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
-            </label>
-          )}
-          <button 
-            onClick={() => {
-              setSelectedItem(null)
-              setIsModalOpen(true)
-            }} 
-            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-gray-800 transition-all"
-          >
-            <Plus className="h-4 w-4" /> Novo
-          </button>
+      {/* Barra de Baixo: Busca, Filtros e Novo */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="Buscar registros..." 
+            className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+            value={searchTerm} 
+            onChange={e => setSearchTerm(e.target.value)} 
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <FamiliaFilters 
+            data={dadosFamilia}
+            filterTitular={filterTitular}
+            setFilterTitular={setFilterTitular}
+            filterCategoria={filterCategoria}
+            setFilterCategoria={setFilterCategoria}
+            filterFornecedor={filterFornecedor}
+            setFilterFornecedor={setFilterFornecedor}
+          />
+
+          <div className="flex gap-2">
+            {activeTab === 'dados' && (
+              <label className={`flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-50 cursor-pointer transition-all ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
+                {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 text-green-600" />}
+                {isImporting ? 'Salvando...' : 'Importar'}
+                <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
+              </label>
+            )}
+            <button 
+              onClick={() => {
+                setSelectedItem(null)
+                setIsModalOpen(true)
+              }} 
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-700 transition-all"
+            >
+              <Plus className="h-4 w-4" /> Novo
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="flex-1">
         {activeTab === 'dashboard' ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 animate-in fade-in slide-in-from-bottom-4 text-center">
-            <Heart className="h-12 w-12 text-red-100 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-gray-900">Dashboard de Gestão Familiar</h3>
-            <p className="text-gray-500 text-sm">Selecione a aba Dados para gerenciar os lançamentos.</p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
+            <StatCard title="Total Registros" value={dadosFamilia.length} icon={Heart} color="red" />
+            <div className="md:col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+              <Heart className="h-12 w-12 text-red-100 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-gray-900">Dashboard de Gestão Familiar</h3>
+              <p className="text-gray-500 text-sm">Selecione a aba Dados para gerenciar os lançamentos.</p>
+            </div>
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
