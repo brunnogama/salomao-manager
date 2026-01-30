@@ -23,7 +23,7 @@ export function FamiliaTable({ data, onItemClick }: FamiliaTableProps) {
           <tr className="text-[#112240]/40">
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Vencimento</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Fornecedor</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Identificação</th>
+            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Titular</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Categoria</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Valor</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Status</th>
