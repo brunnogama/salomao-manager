@@ -37,16 +37,16 @@ export function ReportTable({ reportData, reportRef, startDate, endDate }: Repor
           {/* Header */}
           <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10">
             <tr className="border-b-2 border-gray-200">
-              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">
+              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
                 Colaborador
               </th>
-              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">
+              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
                 Sócio
               </th> 
-              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] text-center">
+              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">
                 Frequência
               </th>
-              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">
+              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
                 Distribuição Semanal
               </th>
             </tr>
@@ -61,7 +61,7 @@ export function ReportTable({ reportData, reportRef, startDate, endDate }: Repor
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white font-black text-sm shadow-md">
-                      {item.nome.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                      {item.nome.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <p className="font-black text-[#0a192f] text-base tracking-tight">{item.nome}</p>
@@ -117,7 +117,7 @@ export function ReportTable({ reportData, reportRef, startDate, endDate }: Repor
                             : 'bg-gray-50 border-gray-200'
                         }`}
                       >
-                        <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${
+                        <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${
                           item.diasSemana[day] ? 'text-green-700' : 'text-gray-400'
                         }`}>
                           {day}
