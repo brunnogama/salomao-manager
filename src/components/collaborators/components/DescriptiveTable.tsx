@@ -60,7 +60,7 @@ export function DescriptiveTable({ descriptiveData, socioMap }: DescriptiveTable
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white font-black text-sm shadow-md">
-                      {displayName.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                      {displayName.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <p className="font-bold text-[#0a192f] text-base tracking-tight">{displayName}</p>
