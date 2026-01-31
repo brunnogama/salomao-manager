@@ -131,7 +131,13 @@ export default function App() {
             {currentModule === 'collaborators' && (
               <>
                 {activePage === 'dashboard' && <UnderConstruction moduleName="Dash RH" onBack={() => {}} showBackButton={false} />}
-                {activePage === 'calendario' && <Calendario />}
+                {activePage === 'calendario' && (
+                  <Calendario 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
                 {activePage === 'presencial' && (
                   <Presencial 
                     userName={getUserDisplayName()} 
