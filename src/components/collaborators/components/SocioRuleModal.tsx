@@ -1,6 +1,6 @@
 // src/components/collaborators/components/SocioRuleModal.tsx
 
-import { X } from 'lucide-react'
+import { X, Save } from 'lucide-react'
 import { SocioRule } from '../types/presencial'
 
 interface SocioRuleModalProps {
@@ -21,58 +21,84 @@ export function SocioRuleModal({
   if (!isOpen || !editingRule) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-fadeIn">
-        <div className="bg-[#112240] px-6 py-4 flex justify-between items-center">
-          <h3 className="text-white font-bold">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+        
+        {/* Header - Navy Gradient */}
+        <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between">
+          <h3 className="text-white font-black text-base tracking-tight">
             {editingRule.id ? 'Editar Regra' : 'Nova Regra'}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
-            <X className="h-5 w-5"/>
+          <button 
+            onClick={onClose} 
+            className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
+        
+        {/* Body */}
         <div className="p-6 space-y-4">
+          
+          {/* Colaborador */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Colaborador</label>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+              Colaborador
+            </label>
             <input 
               type="text" 
-              className="w-full border p-2 rounded" 
+              className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-gray-700 placeholder:text-gray-400" 
+              placeholder="Nome do colaborador"
               value={editingRule.nome_colaborador || ''} 
               onChange={e => setEditingRule({...editingRule, nome_colaborador: e.target.value})} 
             />
           </div>
+          
+          {/* Sócio Responsável */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Sócio Responsável</label>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+              Sócio Responsável
+            </label>
             <input 
               type="text" 
-              className="w-full border p-2 rounded" 
+              className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-gray-700 placeholder:text-gray-400" 
+              placeholder="Nome do sócio"
               value={editingRule.socio_responsavel || ''} 
               onChange={e => setEditingRule({...editingRule, socio_responsavel: e.target.value})} 
             />
           </div>
+          
+          {/* Meta Semanal */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Meta Semanal</label>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+              Meta Semanal (dias)
+            </label>
             <input 
               type="number" 
-              className="w-full border p-2 rounded" 
+              min="0"
+              max="7"
+              className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-gray-700" 
               value={editingRule.meta_semanal || 0} 
               onChange={e => setEditingRule({...editingRule, meta_semanal: Number(e.target.value)})} 
             />
           </div>
-          <div className="flex gap-3 pt-4">
-            <button 
-              onClick={onClose} 
-              className="flex-1 py-2 border rounded hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-            <button 
-              onClick={onSave} 
-              className="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Salvar
-            </button>
-          </div>
+        </div>
+
+        {/* Footer - Actions */}
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+          <button 
+            onClick={onClose} 
+            className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-xl transition-all uppercase tracking-[0.2em]"
+          >
+            Cancelar
+          </button>
+          <button 
+            onClick={onSave} 
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl hover:shadow-lg transition-all shadow-md uppercase tracking-[0.2em] active:scale-95"
+          >
+            <Save className="h-4 w-4" />
+            Salvar
+          </button>
         </div>
       </div>
     </div>
