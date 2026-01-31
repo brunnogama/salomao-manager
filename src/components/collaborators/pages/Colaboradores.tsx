@@ -339,7 +339,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           {/* DESIGN SYSTEM: Botão Navy com tracking-[0.2em] */}
           <button 
             onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setPhotoPreview(null); setViewMode('form') }} 
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
           >
             <Plus className="h-4 w-4" /> Novo
           </button>
@@ -567,7 +567,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                           <button 
                             disabled={uploadingGed || !selectedGedCategory} 
                             onClick={() => gedInputRef.current?.click()} 
-                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] hover:shadow-xl disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95"
+                            className="w-full flex items-center justify-center gap-2 bg-[#1e3a8a] hover:bg-[#112240] hover:shadow-xl disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95"
                           >
                             {uploadingGed ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} 
                             Vincular
@@ -600,7 +600,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               </div>
 
               {/* Footer */}
-              <div className="px-4 py-5 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-[2rem]">
+              <div className="px-8 py-5 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-[2rem]">
                 <button 
                   onClick={() => handleDelete(selectedColaborador.id)} 
                   className="px-4 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all"
