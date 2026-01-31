@@ -1,4 +1,3 @@
-// src/components/ModuleSelector.tsx
 import { useEffect, useState } from 'react'
 import { Gift, UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -22,7 +21,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           const { data, error } = await supabase
             .from('user_profiles')
             .select('allowed_modules, role')
-            .eq('user_id', user.id)
+            .eq('id', user.id)
             .single()
 
           if (data && !error) {
