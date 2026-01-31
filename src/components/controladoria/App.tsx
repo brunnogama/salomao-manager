@@ -5,7 +5,9 @@ import { Sidebar as CrmSidebar } from './components/crm/Sidebar'
 import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
 import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
 import { SidebarFinanceiro } from './components/finance/SidebarFinanceiro'
-import { Sidebar as ControladoriaSidebar } from './components/controladoria/components/Sidebar' // Importada da nova pasta
+
+// CORREÇÃO: Caminho da Sidebar da Controladoria incluindo a subpasta /src
+import { Sidebar as ControladoriaSidebar } from './components/controladoria/src/components/Sidebar'
 
 // Componentes CRM/Base
 import { Clients } from './components/crm/Clients'
@@ -28,20 +30,20 @@ import { Calendario } from './components/collaborators/pages/Calendario'
 // Componentes Secretaria
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 
-// Componentes Controladoria (Migrados)
-import { Dashboard as ControlDashboard } from './components/controladoria/pages/Dashboard'
-import { Contracts as ControlContracts } from './components/controladoria/pages/Contracts'
-import { Clients as ControlClients } from './components/controladoria/pages/Clients'
-import { Kanban as ControlKanban } from './components/controladoria/pages/Kanban'
-import { Finance as ControlFinance } from './components/controladoria/pages/Finance'
-import { GED as ControlGED } from './components/controladoria/pages/GED'
-import { Proposals as ControlProposals } from './components/controladoria/pages/Proposals'
-import { Jurimetria as ControlJurimetria } from './components/controladoria/pages/Jurimetria'
-import { Volumetry as ControlVolumetry } from './components/controladoria/pages/Volumetry'
-import { History as ControlHistory } from './components/controladoria/pages/History'
+// CORREÇÃO: Componentes Controladoria (Caminhos atualizados para incluir /src)
+import { Dashboard as ControlDashboard } from './components/controladoria/src/pages/Dashboard'
+import { Contracts as ControlContracts } from './components/controladoria/src/pages/Contracts'
+import { Clients as ControlClients } from './components/controladoria/src/pages/Clients'
+import { Kanban as ControlKanban } from './components/controladoria/src/pages/Kanban'
+import { Finance as ControlFinance } from './components/controladoria/src/pages/Finance'
+import { GED as ControlGED } from './components/controladoria/src/pages/GED'
+import { Proposals as ControlProposals } from './components/controladoria/src/pages/Proposals'
+import { Jurimetria as ControlJurimetria } from './components/controladoria/src/pages/Jurimetria'
+import { Volumetry as ControlVolumetry } from './components/controladoria/src/pages/Volumetry'
+import { History as ControlHistory } from './components/controladoria/src/pages/History'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
-import { Toaster } from 'sonner' // Adicionado conforme solicitado
+import { Toaster } from 'sonner'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
