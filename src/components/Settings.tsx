@@ -1,4 +1,3 @@
-// src/components/Settings.tsx
 import { useState, useRef, useEffect } from 'react'
 import { 
   Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, 
@@ -207,7 +206,7 @@ export function Settings() {
         const { data } = await supabase
           .from('user_profiles')
           .select('role, allowed_modules')
-          .eq('user_id', user.id)
+          .eq('id', user.id) // CORREÇÃO: Alterado de user_id para id
           .single()
           
         if (data) {
@@ -243,20 +242,20 @@ export function Settings() {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('user_id, email, role, allowed_modules, created_at')
+        .select('id, email, role, allowed_modules, created_at') // CORREÇÃO: Alterado de user_id para id
         .order('created_at', { ascending: false })
       
       if (error) throw error
       
       if (data) {
         setUsers(data.map((u: any) => ({
-          id: u.user_id || `pending-${u.email}`,
-          user_id: u.user_id,
+          id: u.id || `pending-${u.email}`, // CORREÇÃO: Alterado de user_id para id
+          user_id: u.id, // CORREÇÃO: Alterado de user_id para id
           nome: u.email.split('@')[0],
           email: u.email,
           cargo: u.role === 'admin' ? 'Administrador' : 'Colaborador',
           role: u.role || 'user',
-          ativo: !!u.user_id,
+          ativo: !!u.id, // CORREÇÃO: Alterado de user_id para id
           allowed_modules: u.allowed_modules || []
         })))
       }
@@ -342,7 +341,7 @@ export function Settings() {
       } else {
         const { data: existingProfile } = await supabase
           .from('user_profiles')
-          .select('user_id, email')
+          .select('id, email') // CORREÇÃO: Alterado de user_id para id
           .eq('email', userForm.email)
           .maybeSingle()
         if (existingProfile) {
@@ -359,7 +358,7 @@ export function Settings() {
           const { error } = await supabase
             .from('user_profiles')
             .insert({
-              user_id: null,
+              id: null, // CORREÇÃO: Alterado de user_id para id
               email: userForm.email,
               role: role,
               allowed_modules: userForm.allowed_modules
@@ -560,12 +559,12 @@ export function Settings() {
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
-             <div className="bg-gray-900 p-4 flex justify-between items-center">
+              <div className="bg-gray-900 p-4 flex justify-between items-center">
                 <h3 className="text-lg font-bold text-white">{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</h3>
                 <button onClick={() => setIsUserModalOpen(false)} className="text-gray-400 hover:text-white"><X className="h-5 w-5"/></button>
-             </div>
-             <div className="p-6 space-y-6">
-                 <div className="grid grid-cols-2 gap-4">
+              </div>
+              <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="text-xs font-bold text-gray-600 uppercase">Nome</label>
                         <input type="text" className="w-full border border-gray-300 rounded-lg p-2.5 mt-1" value={userForm.nome} onChange={e => setUserForm({...userForm, nome: e.target.value})} />
@@ -578,12 +577,12 @@ export function Settings() {
                             <option>Colaborador</option>
                         </select>
                     </div>
-                 </div>
-                 <div>
-                     <label className="text-xs font-bold text-gray-600 uppercase">E-mail (Login)</label>
-                     <input type="email" className="w-full border border-gray-300 rounded-lg p-2.5 mt-1" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} disabled={!!editingUser} />
-                 </div>
-                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  </div>
+                  <div>
+                      <label className="text-xs font-bold text-gray-600 uppercase">E-mail (Login)</label>
+                      <input type="email" className="w-full border border-gray-300 rounded-lg p-2.5 mt-1" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} disabled={!!editingUser} />
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <label className="text-xs font-bold text-gray-900 uppercase flex items-center gap-2 mb-3"><Lock className="h-3 w-3" /> Módulos Permitidos</label>
                     <div className="grid grid-cols-2 gap-3">
                         {['crm', 'collaborators', 'family', 'operational', 'financial'].map(m => (
@@ -593,12 +592,12 @@ export function Settings() {
                             </label>
                         ))}
                     </div>
-                 </div>
-             </div>
-             <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200">
-                 <button onClick={() => setIsUserModalOpen(false)} className="px-4 py-2 text-gray-700 font-medium">Cancelar</button>
-                 <button onClick={handleSaveUser} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold">Salvar Alterações</button>
-             </div>
+                  </div>
+              </div>
+              <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200">
+                  <button onClick={() => setIsUserModalOpen(false)} className="px-4 py-2 text-gray-700 font-medium">Cancelar</button>
+                  <button onClick={handleSaveUser} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold">Salvar Alterações</button>
+              </div>
           </div>
         </div>
       )}
