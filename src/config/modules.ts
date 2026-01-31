@@ -1,13 +1,11 @@
 import { 
   LayoutDashboard, Users, Gavel, FileWarning, Truck, KanbanSquare, History, BookOpen,
   Calendar, MapPin, TrendingUp, Clock, BarChart3, RefreshCw, Briefcase, Banknote, Megaphone,
-  FolderSearch, ArrowUpCircle, ArrowDownCircle, Plane, Receipt, Home,
-  FileText, FileSignature, DollarSign, ShieldCheck, Share2, FolderOpen, Settings
+  FolderSearch, ArrowUpCircle, ArrowDownCircle, Plane, Receipt, Home
 } from 'lucide-react';
 
 export const MODULE_CONFIG = {
   crm: {
-    // ... configurações mantidas do CRM
     icons: {
       dashboard: LayoutDashboard,
       clientes: Users,
@@ -40,7 +38,6 @@ export const MODULE_CONFIG = {
     }
   },
   collaborators: {
-    // ... configurações mantidas do RH
     icons: {
       dashboard: LayoutDashboard,
       calendario: Calendar,
@@ -88,7 +85,6 @@ export const MODULE_CONFIG = {
     }
   },
   financial: {
-    // ... configurações mantidas do Financeiro
     icons: {
       dashboard: LayoutDashboard,
       'contas-pagar': ArrowUpCircle,
@@ -115,7 +111,6 @@ export const MODULE_CONFIG = {
     }
   },
   executive: {
-    // ... configurações mantidas da Secretaria
     icons: {
       dashboard: LayoutDashboard,
       calendario: Calendar,
@@ -136,50 +131,6 @@ export const MODULE_CONFIG = {
       despesas: 'Gestão e prestação de contas de despesas.',
       'gestao-familia': 'Controle e suporte à Família Salomão.',
       ged: 'Documentos e arquivos da secretaria.'
-    }
-  },
-  'legal-control': {
-    icons: {
-      dashboard: LayoutDashboard,
-      contratos: FileSignature,
-      propostas: FileText,
-      financeiro: DollarSign,
-      jurimetria: Share2,
-      volumetria: BarChart3,
-      compliance: ShieldCheck,
-      clientes: Users,
-      kanban: KanbanSquare,
-      ged: FolderOpen,
-      historico: History,
-      configuracoes: Settings
-    },
-    titles: {
-      dashboard: 'Dashboard Controladoria',
-      contratos: 'Gestão de Casos',
-      propostas: 'Propostas Comerciais',
-      financeiro: 'Controle Financeiro',
-      jurimetria: 'Jurimetria Estratégica',
-      volumetria: 'Análise de Volumetria',
-      compliance: 'Compliance & Riscos',
-      clientes: 'Base de Clientes',
-      kanban: 'Fluxo de Trabalho',
-      ged: 'Arquivo Digital (GED)',
-      historico: 'Logs do Sistema',
-      configuracoes: 'Ajustes do Módulo'
-    },
-    descriptions: {
-      dashboard: 'Indicadores estratégicos e volumetria geral.',
-      contratos: 'Administração de contratos e casos jurídicos.',
-      propostas: 'Elaboração e acompanhamento de propostas.',
-      financeiro: 'Gestão de faturamento e custos processuais.',
-      jurimetria: 'Dados estatísticos e análise de decisões.',
-      volumetria: 'Métricas quantitativas de processos.',
-      compliance: 'Auditoria interna e mitigação de riscos.',
-      clientes: 'Cadastro unificado de clientes e contatos.',
-      kanban: 'Organização visual de demandas da controladoria.',
-      ged: 'Repositório centralizado de documentos jurídicos.',
-      historico: 'Rastreabilidade total das ações do módulo.',
-      configuracoes: 'Gerenciamento de tipos, status e parceiros.'
     }
   }
 };
