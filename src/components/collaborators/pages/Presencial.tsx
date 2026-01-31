@@ -346,6 +346,21 @@ export function Presencial() {
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
       <SocioRuleModal isOpen={isModalOpen} editingRule={editingRule} onClose={() => setIsModalOpen(false)} onSave={handleSaveRule} setEditingRule={setEditingRule} />
 
+      {/* PAGE TITLE - Design System */}
+      <div className="flex items-center gap-4">
+        <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+          <Users className="h-7 w-7 text-white" />
+        </div>
+        <div>
+          <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+            Controle Presencial
+          </h1>
+          <p className="text-sm font-semibold text-gray-500 mt-0.5">
+            Gestão de presença e frequência dos colaboradores
+          </p>
+        </div>
+      </div>
+
       {/* HEADER - DESIGN SYSTEM */}
       <div className="flex flex-col gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
