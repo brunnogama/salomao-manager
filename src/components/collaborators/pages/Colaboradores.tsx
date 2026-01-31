@@ -346,7 +346,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         </div>
 
         {viewMode === 'list' ? (
-          {/* DESIGN SYSTEM: Tabela com headers padronizados */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <table className="w-full text-left">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
