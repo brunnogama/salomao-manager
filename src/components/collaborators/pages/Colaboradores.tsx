@@ -339,7 +339,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           {/* DESIGN SYSTEM: Botão Navy com tracking-[0.2em] */}
           <button 
             onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setPhotoPreview(null); setViewMode('form') }} 
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
           >
             <Plus className="h-4 w-4" /> Novo
           </button>
@@ -404,7 +404,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   {uploadingPhoto && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>}
                 </div>
                 <div>
-                  <button onClick={() => photoInputRef.current?.click()} className="px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl flex items-center gap-2 transition-all active:scale-95">
+                  <button onClick={() => photoInputRef.current?.click()} className="px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl flex items-center gap-2 transition-all active:scale-95">
                     <Camera className="h-4 w-4" /> {photoPreview ? 'Alterar' : 'Adicionar'}
                   </button>
                   <p className="text-xs text-gray-500 mt-2 font-medium">JPG, PNG ou GIF. Máximo 5MB.</p>
@@ -487,8 +487,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
             {/* DESIGN SYSTEM: Botões com Navy/Green */}
             <div className="flex justify-end gap-4 mt-12 pt-6 border-t border-gray-100">
-              <button onClick={() => setViewMode('list')} className="px-8 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]">Cancelar</button>
-              <button onClick={handleSave} className="flex items-center gap-2 px-8 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95">
+              <button onClick={() => setViewMode('list')} className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]">Cancelar</button>
+              <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95">
                 <Save className="h-4 w-4" /> Salvar
               </button>
             </div>
@@ -567,7 +567,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                           <button 
                             disabled={uploadingGed || !selectedGedCategory} 
                             onClick={() => gedInputRef.current?.click()} 
-                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] hover:shadow-xl disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95"
+                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] hover:shadow-xl disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95"
                           >
                             {uploadingGed ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} 
                             Vincular
@@ -600,16 +600,16 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-5 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-[2rem]">
+              <div className="px-4 py-5 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-[2rem]">
                 <button 
                   onClick={() => handleDelete(selectedColaborador.id)} 
-                  className="px-6 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all"
+                  className="px-4 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all"
                 >
                   Excluir
                 </button>
                 <button 
                   onClick={() => handleEdit(selectedColaborador)} 
-                  className="px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95"
+                  className="px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95"
                 >
                   Editar
                 </button>
