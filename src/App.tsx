@@ -103,42 +103,15 @@ export default function App() {
         {/* MAIN CONTENT */}
         <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
           
-          {/* HEADER SIMPLIFICADO - Cada página gerencia seu próprio título */}
-          <header className="bg-white border-b h-20 flex items-center px-4 md:px-8 justify-between flex-shrink-0 z-10 shadow-sm">
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setIsSidebarOpen(true)} 
-                className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Menu className="h-5 w-5 text-gray-600" />
-              </button>
-            </div>
-            
-            {/* USER INFO & ACTIONS */}
-            <div className="flex items-center gap-4 shrink-0">
-              <div className="hidden md:flex flex-col items-end">
-                <span className="text-sm font-bold text-[#0a192f]">{getUserDisplayName()}</span>
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
-              </div>
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-                <UserCircle className="h-5 w-5" />
-              </div>
-              <button 
-                onClick={() => setCurrentModule('home')} 
-                className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
-                title="Voltar aos módulos"
-              >
-                <Grid className="h-5 w-5" />
-              </button>
-              <button 
-                onClick={handleLogout} 
-                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                title="Sair"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
-            </div>
-          </header>
+          {/* MOBILE MENU BUTTON */}
+          <div className="md:hidden bg-white border-b px-4 py-3 flex items-center">
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Menu className="h-5 w-5 text-gray-600" />
+            </button>
+          </div>
 
           {/* PAGE CONTENT - Cada página renderiza seu próprio conteúdo */}
           <div className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
@@ -159,7 +132,13 @@ export default function App() {
               <>
                 {activePage === 'dashboard' && <UnderConstruction moduleName="Dash RH" onBack={() => {}} showBackButton={false} />}
                 {activePage === 'calendario' && <Calendario />}
-                {activePage === 'presencial' && <Presencial />}
+                {activePage === 'presencial' && (
+                  <Presencial 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
                 {activePage === 'colaboradores' && <Colaboradores />}
                 {activePage === 'kanban' && <Kanban />}
                 {['evolucao', 'tempo-casa', 'headcount', 'turnover', 'vagas', 'remuneracao', 'acoes', 'ged'].includes(activePage) && <UnderConstruction moduleName={activePage} onBack={() => setActivePage('dashboard')} />}

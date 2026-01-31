@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Upload, FileSpreadsheet, RefreshCw, Download,
   BarChart3, Users, Briefcase, FileText,
-  Plus, Search, Eraser, Mail, X
+  Plus, Search, Eraser, Mail, X, Grid, LogOut, UserCircle
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -25,7 +25,13 @@ import { ReportTable } from '../components/ReportTable'
 import { DescriptiveTable } from '../components/DescriptiveTable'
 import { SocioRulesTable } from '../components/SocioRulesTable'
 
-export function Presencial() {
+interface PresencialProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: PresencialProps) {
   // === ESTADOS ===
   const [records, setRecords] = useState<PresenceRecord[]>([])
   const [socioRules, setSocioRules] = useState<SocioRule[]>([]) 
@@ -50,7 +56,7 @@ export function Presencial() {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const reportRef = useRef<HTMLDivElement>(null)
 
-  // === TODA A LÓGICA DO COMPONENTE PERMANECE IGUAL ===
+  // === TODA A LÓGICA DO COMPONENTE ===
   const fetchInitialPeriod = async () => {
       const { data } = await supabase.from('presenca_portaria').select('data_hora').order('data_hora', { ascending: false }).limit(1)
       if (data && data.length > 0) {
@@ -346,22 +352,54 @@ export function Presencial() {
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
       <SocioRuleModal isOpen={isModalOpen} editingRule={editingRule} onClose={() => setIsModalOpen(false)} onSave={handleSaveRule} setEditingRule={setEditingRule} />
 
-      {/* PAGE TITLE - Design System */}
-      <div className="flex items-center gap-4">
-        <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-          <Users className="h-7 w-7 text-white" />
+      {/* PAGE HEADER COMPLETO - Título + User Info */}
+      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        {/* Left: Título e Ícone */}
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+            <Users className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+              Controle Presencial
+            </h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+              Gestão de presença e frequência dos colaboradores
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-            Controle Presencial
-          </h1>
-          <p className="text-sm font-semibold text-gray-500 mt-0.5">
-            Gestão de presença e frequência dos colaboradores
-          </p>
+
+        {/* Right: User Info & Actions */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
+          </div>
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
+            <UserCircle className="h-5 w-5" />
+          </div>
+          {onModuleHome && (
+            <button 
+              onClick={onModuleHome} 
+              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
+              title="Voltar aos módulos"
+            >
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          {onLogout && (
+            <button 
+              onClick={onLogout} 
+              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+              title="Sair"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* HEADER - DESIGN SYSTEM */}
+      {/* CONTROLS CARD */}
       <div className="flex flex-col gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             
