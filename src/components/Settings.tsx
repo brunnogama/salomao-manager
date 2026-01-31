@@ -206,7 +206,7 @@ export function Settings() {
         const { data } = await supabase
           .from('user_profiles')
           .select('role, allowed_modules')
-          .eq('id', user.id) // CORREÇÃO: Alterado de user_id para id
+          .eq('id', user.id) // Alterado de user_id para id
           .single()
           
         if (data) {
@@ -242,20 +242,20 @@ export function Settings() {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('id, email, role, allowed_modules, created_at') // CORREÇÃO: Alterado de user_id para id
+        .select('id, email, role, allowed_modules, created_at') // Alterado de user_id para id
         .order('created_at', { ascending: false })
       
       if (error) throw error
       
       if (data) {
         setUsers(data.map((u: any) => ({
-          id: u.id || `pending-${u.email}`, // CORREÇÃO: Alterado de user_id para id
-          user_id: u.id, // CORREÇÃO: Alterado de user_id para id
+          id: u.id || `pending-${u.email}`, // Alterado de user_id para id
+          user_id: u.id, // Alterado de user_id para id
           nome: u.email.split('@')[0],
           email: u.email,
           cargo: u.role === 'admin' ? 'Administrador' : 'Colaborador',
           role: u.role || 'user',
-          ativo: !!u.id, // CORREÇÃO: Alterado de user_id para id
+          ativo: !!u.id, // Alterado de user_id para id
           allowed_modules: u.allowed_modules || []
         })))
       }
@@ -341,7 +341,7 @@ export function Settings() {
       } else {
         const { data: existingProfile } = await supabase
           .from('user_profiles')
-          .select('id, email') // CORREÇÃO: Alterado de user_id para id
+          .select('id, email') // Alterado de user_id para id
           .eq('email', userForm.email)
           .maybeSingle()
         if (existingProfile) {
@@ -358,7 +358,7 @@ export function Settings() {
           const { error } = await supabase
             .from('user_profiles')
             .insert({
-              id: null, // CORREÇÃO: Alterado de user_id para id
+              id: null, // Alterado de user_id para id
               email: userForm.email,
               role: role,
               allowed_modules: userForm.allowed_modules
