@@ -306,10 +306,10 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Calendário de Aniversários
+              Calendário
             </h1>
             <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              Acompanhe os aniversários dos colaboradores
+              Acompanhe os aniversários, eventos e reuniões do escritório
             </p>
           </div>
         </div>
