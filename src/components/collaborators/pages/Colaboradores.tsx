@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from 'react'
 import { 
   Search, Upload, Download, Plus, X, MapPin, User, Briefcase, 
   Trash2, Pencil, Save, Users, UserMinus, CheckCircle, UserX, 
-  Calendar, Building2, Camera, Image, Mail, FileText, File, ExternalLink, Loader2
+  Calendar, Building2, Camera, Image, Mail, FileText, File, ExternalLink, Loader2,
+  Grid, LogOut, UserCircle
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -31,7 +32,13 @@ interface GEDDocument {
   created_at: string;
 }
 
-export function Colaboradores() {
+interface ColaboradoresProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }: ColaboradoresProps) {
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
   const [loading, setLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'form'>('list')
@@ -257,225 +264,275 @@ export function Colaboradores() {
   )
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-12">
-      {viewMode === 'list' && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
-          <StatCard title="Total" value={colaboradores.length} icon={Users} color="blue" />
-          <StatCard title="Ativos" value={colaboradores.filter(c => c.status === 'Ativo').length} icon={CheckCircle} color="green" />
-          <StatCard title="Desligados" value={colaboradores.filter(c => c.status === 'Desligado').length} icon={UserMinus} color="red" />
-          <StatCard title="Inativos" value={colaboradores.filter(c => c.status === 'Inativo').length} icon={UserX} color="gray" />
-        </div>
-      )}
-
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3">
-        {viewMode === 'list' && (
-          <div className="flex flex-1 gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              <input type="text" placeholder="Buscar..." className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-            </div>
-            <div className="w-44"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={Array.from(new Set(colaboradores.map(c => c.lider_equipe).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
-            <div className="w-44"><SearchableSelect placeholder="Cargos" value={filterCargo} onChange={setFilterCargo} options={Array.from(new Set(colaboradores.map(c => c.cargo).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
-            <div className="w-44"><SearchableSelect placeholder="Locais" value={filterLocal} onChange={setFilterLocal} options={Array.from(new Set(colaboradores.map(c => c.local).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
+      
+      {/* PAGE HEADER COMPLETO - Título + User Info */}
+      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        {/* Left: Título e Ícone */}
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+            <Users className="h-7 w-7 text-white" />
           </div>
-        )}
-        <button onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setPhotoPreview(null); setViewMode('form') }} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-gray-800 transition-all"><Plus className="h-4 w-4" /> Novo</button>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+              Colaboradores
+            </h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+              Gerencie o cadastro completo dos colaboradores
+            </p>
+          </div>
+        </div>
+
+        {/* Right: User Info & Actions */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
+          </div>
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
+            <UserCircle className="h-5 w-5" />
+          </div>
+          {onModuleHome && (
+            <button 
+              onClick={onModuleHome} 
+              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
+              title="Voltar aos módulos"
+            >
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          {onLogout && (
+            <button 
+              onClick={onLogout} 
+              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+              title="Sair"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       </div>
 
-      {viewMode === 'list' ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Colaborador</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Equipe / Cargo</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map(c => (
-                <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab('dados'); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
-                  <td className="px-6 py-4 flex items-center gap-3">
-                    <Avatar src={c.foto_url} name={c.nome} />
-                    <div><p className="font-bold text-sm text-gray-900">{toTitleCase(c.nome)}</p><p className="text-xs text-gray-500">{c.email || c.cpf}</p></div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-gray-900">{toTitleCase(c.cargo)}</p>
-                    <p className="text-xs text-gray-500">{toTitleCase(c.equipe)}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${c.status === 'Ativo' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>{c.status}</span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id) }} className="p-2 text-red-600 hover:bg-red-100 rounded-lg"><Trash2 className="h-4 w-4" /></button>
-                    </div>
-                  </td>
+      <div className="max-w-7xl mx-auto space-y-6 pb-12 w-full">
+        {viewMode === 'list' && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
+            <StatCard title="Total" value={colaboradores.length} icon={Users} color="blue" />
+            <StatCard title="Ativos" value={colaboradores.filter(c => c.status === 'Ativo').length} icon={CheckCircle} color="green" />
+            <StatCard title="Desligados" value={colaboradores.filter(c => c.status === 'Desligado').length} icon={UserMinus} color="red" />
+            <StatCard title="Inativos" value={colaboradores.filter(c => c.status === 'Inativo').length} icon={UserX} color="gray" />
+          </div>
+        )}
+
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3">
+          {viewMode === 'list' && (
+            <div className="flex flex-1 gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                <input type="text" placeholder="Buscar..." className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+              </div>
+              <div className="w-44"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={Array.from(new Set(colaboradores.map(c => c.lider_equipe).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
+              <div className="w-44"><SearchableSelect placeholder="Cargos" value={filterCargo} onChange={setFilterCargo} options={Array.from(new Set(colaboradores.map(c => c.cargo).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
+              <div className="w-44"><SearchableSelect placeholder="Locais" value={filterLocal} onChange={setFilterLocal} options={Array.from(new Set(colaboradores.map(c => c.local).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
+            </div>
+          )}
+          <button onClick={() => { setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' }); setPhotoPreview(null); setViewMode('form') }} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-gray-800 transition-all"><Plus className="h-4 w-4" /> Novo</button>
+        </div>
+
+        {viewMode === 'list' ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Colaborador</th>
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Equipe / Cargo</th>
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 animate-in fade-in slide-in-from-bottom-4">
-          <div className="flex justify-between items-center mb-8 border-b pb-4">
-            <h2 className="text-xl font-bold flex items-center gap-2">{formData.id ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />} {formData.id ? 'Editar Colaborador' : 'Novo Colaborador'}</h2>
-            <button onClick={() => setViewMode('list')} className="text-gray-500 hover:bg-gray-100 p-2 rounded-full"><X className="h-6 w-6" /></button>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filtered.map(c => (
+                  <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab('dados'); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
+                    <td className="px-6 py-4 flex items-center gap-3">
+                      <Avatar src={c.foto_url} name={c.nome} />
+                      <div><p className="font-bold text-sm text-gray-900">{toTitleCase(c.nome)}</p><p className="text-xs text-gray-500">{c.email || c.cpf}</p></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-medium text-gray-900">{toTitleCase(c.cargo)}</p>
+                      <p className="text-xs text-gray-500">{toTitleCase(c.equipe)}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${c.status === 'Ativo' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>{c.status}</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id) }} className="p-2 text-red-600 hover:bg-red-100 rounded-lg"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-
-          <div className="space-y-8">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100 flex items-center gap-6">
-              <div className="w-32 h-32 rounded-full bg-white border-4 border-white shadow-lg overflow-hidden flex items-center justify-center relative group">
-                {photoPreview ? <img src={photoPreview} className="w-full h-full object-cover" /> : <Image className="text-gray-300 h-12 w-12" />}
-                {uploadingPhoto && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>}
-              </div>
-              <div>
-                <button onClick={() => photoInputRef.current?.click()} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm shadow-md hover:bg-blue-700 flex items-center gap-2 transition-all"><Camera className="h-4 w-4" /> {photoPreview ? 'Alterar Foto' : 'Adicionar Foto'}</button>
-                <p className="text-xs text-gray-500 mt-2">JPG, PNG ou GIF. Máximo 5MB.</p>
-              </div>
-              <input type="file" hidden ref={photoInputRef} accept="image/*" onChange={e => {
-                const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onload = (ev) => setPhotoPreview(ev.target?.result as string); r.readAsDataURL(f) }
-              }} />
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex justify-between items-center mb-8 border-b pb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">{formData.id ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />} {formData.id ? 'Editar Colaborador' : 'Novo Colaborador'}</h2>
+              <button onClick={() => setViewMode('list')} className="text-gray-500 hover:bg-gray-100 p-2 rounded-full"><X className="h-6 w-6" /></button>
             </div>
 
-            <section className="space-y-4">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2"><User className="h-4 w-4" /> Dados Pessoais</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2"><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nome Completo</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.nome || ''} onChange={e => setFormData({ ...formData, nome: e.target.value })} /></div>
-                <SearchableSelect label="Gênero" value={formData.genero || ''} onChange={v => setFormData({ ...formData, genero: v })} options={[{ name: 'Masculino' }, { name: 'Feminino' }, { name: 'Outro' }]} />
-                <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">CPF</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.cpf || ''} onChange={e => setFormData({ ...formData, cpf: maskCPF(e.target.value) })} maxLength={14} /></div>
-                <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Data Nascimento</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.data_nascimento || ''} onChange={e => setFormData({ ...formData, data_nascimento: maskDate(e.target.value) })} maxLength={10} placeholder="DD/MM/AAAA" /></div>
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2"><MapPin className="h-4 w-4" /> Endereço</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">CEP</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.cep || ''} onChange={e => setFormData({ ...formData, cep: maskCEP(e.target.value) })} onBlur={handleCepBlur} maxLength={9} /></div>
-                <div className="md:col-span-3"><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Logradouro</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.endereco || ''} onChange={e => setFormData({ ...formData, endereco: e.target.value })} /></div>
-                <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Número</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.numero || ''} onChange={e => setFormData({ ...formData, numero: e.target.value })} /></div>
-                <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Complemento</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.complemento || ''} onChange={e => setFormData({ ...formData, complemento: e.target.value })} /></div>
-                <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Bairro</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.bairro || ''} onChange={e => setFormData({ ...formData, bairro: e.target.value })} /></div>
-                <SearchableSelect label="Estado" value={formData.estado || ''} onChange={v => setFormData({ ...formData, estado: v })} options={ESTADOS_BRASIL.map(e => ({ name: e.nome }))} />
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2"><Briefcase className="h-4 w-4" /> Dados Corporativos</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2"><label className="block text-xs font-bold text-gray-700 uppercase mb-1">E-mail Corporativo</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.email || ''} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div>
-                <SearchableSelect label="Status" value={formData.status || ''} onChange={v => setFormData({ ...formData, status: v })} options={[{ name: 'Ativo' }, { name: 'Desligado' }, { name: 'Inativo' }]} />
-                <SearchableSelect label="Equipe" value={formData.equipe || ''} onChange={v => setFormData({ ...formData, equipe: v })} table="opcoes_equipes" onRefresh={handleRefresh} />
-                <SearchableSelect label="Cargo" value={formData.cargo || ''} onChange={v => setFormData({ ...formData, cargo: v })} table="opcoes_cargos" onRefresh={handleRefresh} />
-                <SearchableSelect label="Local" value={formData.local || ''} onChange={v => setFormData({ ...formData, local: v })} table="opcoes_locais" onRefresh={handleRefresh} />
-                <SearchableSelect label="Líder" value={formData.lider_equipe || ''} onChange={v => setFormData({ ...formData, lider_equipe: v })} table="opcoes_lideres" onRefresh={handleRefresh} />
-                <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Admissão</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.data_admissao || ''} onChange={e => setFormData({ ...formData, data_admissao: maskDate(e.target.value) })} maxLength={10} placeholder="DD/MM/AAAA" /></div>
-                <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Desligamento</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.data_desligamento || ''} onChange={e => setFormData({ ...formData, data_desligamento: maskDate(e.target.value) })} maxLength={10} placeholder="DD/MM/AAAA" /></div>
-              </div>
-            </section>
-          </div>
-
-          <div className="flex justify-end gap-4 mt-12 pt-6 border-t border-gray-100">
-            <button onClick={() => setViewMode('list')} className="px-8 py-2.5 border border-gray-300 rounded-lg font-bold text-gray-700 hover:bg-gray-50 transition-all">Cancelar</button>
-            <button onClick={handleSave} className="px-8 py-2.5 bg-green-600 text-white rounded-lg font-bold flex items-center gap-2 shadow-md hover:bg-green-700 transition-all"><Save className="h-4 w-4" /> Salvar Cadastro</button>
-          </div>
-        </div>
-      )}
-
-      {selectedColaborador && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200 overflow-visible">
-            <div className="p-6 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-2xl">
-              <div className="flex items-center gap-4">
-                <Avatar src={selectedColaborador.foto_url} name={selectedColaborador.nome} size="lg" />
+            <div className="space-y-8">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100 flex items-center gap-6">
+                <div className="w-32 h-32 rounded-full bg-white border-4 border-white shadow-lg overflow-hidden flex items-center justify-center relative group">
+                  {photoPreview ? <img src={photoPreview} className="w-full h-full object-cover" /> : <Image className="text-gray-300 h-12 w-12" />}
+                  {uploadingPhoto && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>}
+                </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">{toTitleCase(selectedColaborador.nome)}</h2>
-                  <p className="text-sm text-gray-500 font-medium">{toTitleCase(selectedColaborador.cargo)} • {toTitleCase(selectedColaborador.equipe)}</p>
+                  <button onClick={() => photoInputRef.current?.click()} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm shadow-md hover:bg-blue-700 flex items-center gap-2 transition-all"><Camera className="h-4 w-4" /> {photoPreview ? 'Alterar Foto' : 'Adicionar Foto'}</button>
+                  <p className="text-xs text-gray-500 mt-2">JPG, PNG ou GIF. Máximo 5MB.</p>
                 </div>
+                <input type="file" hidden ref={photoInputRef} accept="image/*" onChange={e => {
+                  const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onload = (ev) => setPhotoPreview(ev.target?.result as string); r.readAsDataURL(f) }
+                }} />
               </div>
-              <button onClick={() => setSelectedColaborador(null)} className="p-2 hover:bg-gray-200 rounded-full transition-all"><X className="h-6 w-6 text-gray-400" /></button>
-            </div>
 
-            <div className="flex border-b px-6 bg-white shrink-0">
-              <button onClick={() => setActiveDetailTab('dados')} className={`py-4 px-6 text-sm font-bold border-b-2 transition-colors ${activeDetailTab === 'dados' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>Dados Pessoais</button>
-              <button onClick={() => setActiveDetailTab('ged')} className={`py-4 px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeDetailTab === 'ged' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}><FileText className="h-4 w-4" /> Documentos (GED)</button>
-            </div>
-
-            <div className={`p-8 flex-1 custom-scrollbar ${activeDetailTab === 'ged' ? 'overflow-visible' : 'overflow-y-auto'}`}>
-              {activeDetailTab === 'dados' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="space-y-6">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Pessoal</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <DetailRow label="CPF" value={selectedColaborador.cpf} />
-                      <DetailRow label="Nascimento" value={formatDateDisplay(selectedColaborador.data_nascimento)} icon={Calendar} />
-                      <DetailRow label="Gênero" value={selectedColaborador.genero} />
-                      <DetailRow label="CEP" value={selectedColaborador.cep} />
-                    </div>
-                    <DetailRow label="Endereço" value={`${selectedColaborador.endereco || ''}, ${selectedColaborador.numero || ''} ${selectedColaborador.complemento ? '- ' + selectedColaborador.complemento : ''}`} />
-                    <div className="grid grid-cols-2 gap-4">
-                      <DetailRow label="Bairro" value={selectedColaborador.bairro} />
-                      <DetailRow label="Cidade/UF" value={`${selectedColaborador.cidade} - ${selectedColaborador.estado}`} />
-                    </div>
-                  </div>
-                  <div className="space-y-6">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Corporativo</h3>
-                    <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
-                    <div className="grid grid-cols-2 gap-4">
-                      <DetailRow label="Equipe" value={selectedColaborador.equipe} />
-                      <DetailRow label="Cargo" value={selectedColaborador.cargo} />
-                      <DetailRow label="Local" value={selectedColaborador.local} icon={Building2} />
-                      <DetailRow label="Líder" value={selectedColaborador.lider_equipe} />
-                      <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.data_admissao)} icon={Calendar} />
-                      <DetailRow label="Desligamento" value={formatDateDisplay(selectedColaborador.data_desligamento)} icon={Calendar} />
-                    </div>
-                  </div>
+              <section className="space-y-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2"><User className="h-4 w-4" /> Dados Pessoais</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2"><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nome Completo</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.nome || ''} onChange={e => setFormData({ ...formData, nome: e.target.value })} /></div>
+                  <SearchableSelect label="Gênero" value={formData.genero || ''} onChange={v => setFormData({ ...formData, genero: v })} options={[{ name: 'Masculino' }, { name: 'Feminino' }, { name: 'Outro' }]} />
+                  <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">CPF</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.cpf || ''} onChange={e => setFormData({ ...formData, cpf: maskCPF(e.target.value) })} maxLength={14} /></div>
+                  <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Data Nascimento</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.data_nascimento || ''} onChange={e => setFormData({ ...formData, data_nascimento: maskDate(e.target.value) })} maxLength={10} placeholder="DD/MM/AAAA" /></div>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 overflow-visible relative">
-                    <div className="flex flex-col md:flex-row items-end gap-4">
-                      <div className="flex-1 w-full relative z-[100]">
-                        <SearchableSelect label="Tipo de Documento" placeholder="Selecione ou gerencie..." value={selectedGedCategory} onChange={setSelectedGedCategory} table="opcoes_ged_colaboradores" onRefresh={handleRefresh} />
-                      </div>
-                      <div className="shrink-0 w-full md:w-auto">
-                        <input type="file" hidden ref={gedInputRef} accept=".pdf,image/*" onChange={handleGedUpload} />
-                        <button disabled={uploadingGed || !selectedGedCategory} onClick={() => gedInputRef.current?.click()} className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-sm">
-                          {uploadingGed ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Vincular Arquivo
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-gray-700">Arquivos Vinculados ({gedDocs.length})</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {gedDocs.map(doc => (
-                        <div key={doc.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 transition-all shadow-sm">
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="p-2 bg-red-50 text-red-600 rounded-lg"><FileText className="h-5 w-5" /></div>
-                            <div className="overflow-hidden"><p className="text-sm font-bold text-gray-900 truncate">{doc.nome_arquivo}</p><span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">{doc.categoria}</span></div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><ExternalLink className="h-4 w-4" /></a>
-                            <button onClick={() => handleDeleteGed(doc)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="h-4 w-4" /></button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2"><MapPin className="h-4 w-4" /> Endereço</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">CEP</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.cep || ''} onChange={e => setFormData({ ...formData, cep: maskCEP(e.target.value) })} onBlur={handleCepBlur} maxLength={9} /></div>
+                  <div className="md:col-span-3"><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Logradouro</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.endereco || ''} onChange={e => setFormData({ ...formData, endereco: e.target.value })} /></div>
+                  <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Número</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.numero || ''} onChange={e => setFormData({ ...formData, numero: e.target.value })} /></div>
+                  <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Complemento</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.complemento || ''} onChange={e => setFormData({ ...formData, complemento: e.target.value })} /></div>
+                  <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Bairro</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.bairro || ''} onChange={e => setFormData({ ...formData, bairro: e.target.value })} /></div>
+                  <SearchableSelect label="Estado" value={formData.estado || ''} onChange={v => setFormData({ ...formData, estado: v })} options={ESTADOS_BRASIL.map(e => ({ name: e.nome }))} />
                 </div>
-              )}
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2"><Briefcase className="h-4 w-4" /> Dados Corporativos</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2"><label className="block text-xs font-bold text-gray-700 uppercase mb-1">E-mail Corporativo</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.email || ''} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div>
+                  <SearchableSelect label="Status" value={formData.status || ''} onChange={v => setFormData({ ...formData, status: v })} options={[{ name: 'Ativo' }, { name: 'Desligado' }, { name: 'Inativo' }]} />
+                  <SearchableSelect label="Equipe" value={formData.equipe || ''} onChange={v => setFormData({ ...formData, equipe: v })} table="opcoes_equipes" onRefresh={handleRefresh} />
+                  <SearchableSelect label="Cargo" value={formData.cargo || ''} onChange={v => setFormData({ ...formData, cargo: v })} table="opcoes_cargos" onRefresh={handleRefresh} />
+                  <SearchableSelect label="Local" value={formData.local || ''} onChange={v => setFormData({ ...formData, local: v })} table="opcoes_locais" onRefresh={handleRefresh} />
+                  <SearchableSelect label="Líder" value={formData.lider_equipe || ''} onChange={v => setFormData({ ...formData, lider_equipe: v })} table="opcoes_lideres" onRefresh={handleRefresh} />
+                  <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Admissão</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.data_admissao || ''} onChange={e => setFormData({ ...formData, data_admissao: maskDate(e.target.value) })} maxLength={10} placeholder="DD/MM/AAAA" /></div>
+                  <div><label className="block text-xs font-bold text-gray-700 uppercase mb-1">Desligamento</label><input className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" value={formData.data_desligamento || ''} onChange={e => setFormData({ ...formData, data_desligamento: maskDate(e.target.value) })} maxLength={10} placeholder="DD/MM/AAAA" /></div>
+                </div>
+              </section>
             </div>
 
-            <div className="p-6 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-2xl">
-              <button onClick={() => handleDelete(selectedColaborador.id)} className="px-4 py-2 text-red-600 font-bold border border-red-200 rounded-lg hover:bg-red-50 transition-all">Excluir Colaborador</button>
-              <button onClick={() => handleEdit(selectedColaborador)} className="px-6 py-2 bg-[#112240] text-white font-bold rounded-lg hover:bg-[#1a3a6c] transition-all shadow-lg shadow-blue-900/10">Editar Cadastro</button>
+            <div className="flex justify-end gap-4 mt-12 pt-6 border-t border-gray-100">
+              <button onClick={() => setViewMode('list')} className="px-8 py-2.5 border border-gray-300 rounded-lg font-bold text-gray-700 hover:bg-gray-50 transition-all">Cancelar</button>
+              <button onClick={handleSave} className="px-8 py-2.5 bg-green-600 text-white rounded-lg font-bold flex items-center gap-2 shadow-md hover:bg-green-700 transition-all"><Save className="h-4 w-4" /> Salvar Cadastro</button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {selectedColaborador && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200 overflow-visible">
+              <div className="p-6 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-2xl">
+                <div className="flex items-center gap-4">
+                  <Avatar src={selectedColaborador.foto_url} name={selectedColaborador.nome} size="lg" />
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">{toTitleCase(selectedColaborador.nome)}</h2>
+                    <p className="text-sm text-gray-500 font-medium">{toTitleCase(selectedColaborador.cargo)} • {toTitleCase(selectedColaborador.equipe)}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedColaborador(null)} className="p-2 hover:bg-gray-200 rounded-full transition-all"><X className="h-6 w-6 text-gray-400" /></button>
+              </div>
+
+              <div className="flex border-b px-6 bg-white shrink-0">
+                <button onClick={() => setActiveDetailTab('dados')} className={`py-4 px-6 text-sm font-bold border-b-2 transition-colors ${activeDetailTab === 'dados' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>Dados Pessoais</button>
+                <button onClick={() => setActiveDetailTab('ged')} className={`py-4 px-6 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeDetailTab === 'ged' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}><FileText className="h-4 w-4" /> Documentos (GED)</button>
+              </div>
+
+              <div className={`p-8 flex-1 custom-scrollbar ${activeDetailTab === 'ged' ? 'overflow-visible' : 'overflow-y-auto'}`}>
+                {activeDetailTab === 'dados' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-6">
+                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Pessoal</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <DetailRow label="CPF" value={selectedColaborador.cpf} />
+                        <DetailRow label="Nascimento" value={formatDateDisplay(selectedColaborador.data_nascimento)} icon={Calendar} />
+                        <DetailRow label="Gênero" value={selectedColaborador.genero} />
+                        <DetailRow label="CEP" value={selectedColaborador.cep} />
+                      </div>
+                      <DetailRow label="Endereço" value={`${selectedColaborador.endereco || ''}, ${selectedColaborador.numero || ''} ${selectedColaborador.complemento ? '- ' + selectedColaborador.complemento : ''}`} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <DetailRow label="Bairro" value={selectedColaborador.bairro} />
+                        <DetailRow label="Cidade/UF" value={`${selectedColaborador.cidade} - ${selectedColaborador.estado}`} />
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Corporativo</h3>
+                      <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <DetailRow label="Equipe" value={selectedColaborador.equipe} />
+                        <DetailRow label="Cargo" value={selectedColaborador.cargo} />
+                        <DetailRow label="Local" value={selectedColaborador.local} icon={Building2} />
+                        <DetailRow label="Líder" value={selectedColaborador.lider_equipe} />
+                        <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.data_admissao)} icon={Calendar} />
+                        <DetailRow label="Desligamento" value={formatDateDisplay(selectedColaborador.data_desligamento)} icon={Calendar} />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 overflow-visible relative">
+                      <div className="flex flex-col md:flex-row items-end gap-4">
+                        <div className="flex-1 w-full relative z-[100]">
+                          <SearchableSelect label="Tipo de Documento" placeholder="Selecione ou gerencie..." value={selectedGedCategory} onChange={setSelectedGedCategory} table="opcoes_ged_colaboradores" onRefresh={handleRefresh} />
+                        </div>
+                        <div className="shrink-0 w-full md:w-auto">
+                          <input type="file" hidden ref={gedInputRef} accept=".pdf,image/*" onChange={handleGedUpload} />
+                          <button disabled={uploadingGed || !selectedGedCategory} onClick={() => gedInputRef.current?.click()} className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-sm">
+                            {uploadingGed ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Vincular Arquivo
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-bold text-gray-700">Arquivos Vinculados ({gedDocs.length})</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {gedDocs.map(doc => (
+                          <div key={doc.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 transition-all shadow-sm">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div className="p-2 bg-red-50 text-red-600 rounded-lg"><FileText className="h-5 w-5" /></div>
+                              <div className="overflow-hidden"><p className="text-sm font-bold text-gray-900 truncate">{doc.nome_arquivo}</p><span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">{doc.categoria}</span></div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><ExternalLink className="h-4 w-4" /></a>
+                              <button onClick={() => handleDeleteGed(doc)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Trash2 className="h-4 w-4" /></button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-2xl">
+                <button onClick={() => handleDelete(selectedColaborador.id)} className="px-4 py-2 text-red-600 font-bold border border-red-200 rounded-lg hover:bg-red-50 transition-all">Excluir Colaborador</button>
+                <button onClick={() => handleEdit(selectedColaborador)} className="px-6 py-2 bg-[#112240] text-white font-bold rounded-lg hover:bg-[#1a3a6c] transition-all shadow-lg shadow-blue-900/10">Editar Cadastro</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
