@@ -159,10 +159,13 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
     colaboradores.forEach(colab => {
       if (colab.data_nascimento) {
+        // CORREÇÃO: Compensar o fuso horário ao extrair a data
         const nascimento = new Date(colab.data_nascimento)
-        const dia = nascimento.getDate()
-        const mes = nascimento.getMonth()
-        const ano = nascimento.getFullYear()
+        const nascimentoCorrigido = new Date(nascimento.valueOf() + nascimento.getTimezoneOffset() * 60000)
+        
+        const dia = nascimentoCorrigido.getDate()
+        const mes = nascimentoCorrigido.getMonth()
+        const ano = nascimentoCorrigido.getFullYear()
         
         const diasRestantes = calcularDiasRestantes(dia, mes)
         
@@ -306,10 +309,10 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Calendário
+              Calendário de Aniversários
             </h1>
             <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              Acompanhe os aniversários, eventos e reuniões do escritório
+              Acompanhe os aniversários dos colaboradores
             </p>
           </div>
         </div>
