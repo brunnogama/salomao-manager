@@ -145,7 +145,13 @@ export default function App() {
                     onLogout={handleLogout} 
                   />
                 )}
-                {activePage === 'colaboradores' && <Colaboradores />}
+                {activePage === 'colaboradores' && (
+                  <Colaboradores 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
                 {activePage === 'kanban' && <Kanban />}
                 {['evolucao', 'tempo-casa', 'headcount', 'turnover', 'vagas', 'remuneracao', 'acoes', 'ged'].includes(activePage) && <UnderConstruction moduleName={activePage} onBack={() => setActivePage('dashboard')} />}
               </>
