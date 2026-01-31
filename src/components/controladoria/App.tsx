@@ -7,8 +7,7 @@ import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
 import { SidebarFinanceiro } from './components/finance/SidebarFinanceiro'
 
 // CORREÇÃO: Caminho da Sidebar da Controladoria incluindo a subpasta /src
-import { Sidebar as ControladoriaSidebar } from './components/controladoria/src/components/Sidebar'
-
+import { Sidebar as ControladoriaSidebar } from './components/controladoria/components/Sidebar'
 // Componentes CRM/Base
 import { Clients } from './components/crm/Clients'
 import { Magistrados } from './components/crm/Magistrados'
