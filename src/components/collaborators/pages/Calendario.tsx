@@ -670,6 +670,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           </div>
         </div>
       )}
+      
       </div> {/* End of max-w-7xl container */}
     </div> {/* End of main wrapper */}
   )
