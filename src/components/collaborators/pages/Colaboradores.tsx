@@ -264,7 +264,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   )
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-4">
       
       {/* PAGE HEADER COMPLETO - Título + User Info */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -313,7 +313,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-6 pb-12 w-full">
+      <div className="space-y-6 pb-12 w-full">
         {viewMode === 'list' && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
             <StatCard title="Total" value={colaboradores.length} icon={Users} color="blue" />
