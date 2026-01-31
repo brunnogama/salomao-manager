@@ -1,3 +1,5 @@
+// src/components/controladoria/pages/Contracts.tsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus, Search, Filter, Calendar, DollarSign, User, Briefcase,
@@ -5,9 +7,8 @@ import {
   LayoutGrid, List, Download, ArrowUpDown, Edit, Trash2, Bell, ArrowDownAZ, ArrowUpAZ,
   FileSignature, ChevronDown, X, FileSearch, Paperclip
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../../lib/supabase'; // Ajustado para a raiz do Manager
 import * as XLSX from 'xlsx';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner'; 
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../types';
 import { ContractFormModal } from '../components/contracts/ContractFormModal';
@@ -17,6 +18,15 @@ import { AnalystManagerModal } from '../components/analysts/AnalystManagerModal'
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { EmptyState } from '../components/ui/EmptyState';
 import { parseCurrency } from '../utils/masks';
+
+// Interfaces estendidas para suportar propriedades de exibição/relacionamento
+interface ContractExtended extends Contract {
+  partner_name?: string;
+  analyzed_by_name?: string;
+  process_count?: number;
+  display_id?: string;
+  documents?: { id: string }[];
+}
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -107,10 +117,12 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   );
 };
 
-export function Contracts() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [contracts, setContracts] = useState<Contract[]>([]);
+interface ContractsProps {
+  onNavigate?: (page: string, params?: any) => void;
+}
+
+export function Contracts({ onNavigate }: ContractsProps) {
+  const [contracts, setContracts] = useState<ContractExtended[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [analysts, setAnalysts] = useState<Analyst[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,12 +161,6 @@ export function Contracts() {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (location.state && location.state.status) {
-      setStatusFilter(location.state.status);
-    }
-  }, [location.state]);
-
-  useEffect(() => {
     fetchData();
     fetchNotifications();
 
@@ -179,7 +185,7 @@ export function Contracts() {
     ]);
 
     if (contractsRes.data) {
-      const formatted: Contract[] = contractsRes.data.map((c: any) => ({
+      const formatted: ContractExtended[] = contractsRes.data.map((c: any) => ({
         ...c,
         partner_name: c.partner?.name,
         analyzed_by_name: c.analyst?.name,
@@ -217,7 +223,9 @@ export function Contracts() {
   };
 
   const handleNotificationClick = (taskId: string) => {
-    navigate('/kanban', { state: { openTaskId: taskId } });
+    if (onNavigate) {
+      onNavigate('kanban', { openTaskId: taskId });
+    }
   };
 
   const handleNew = () => {
@@ -263,11 +271,8 @@ export function Contracts() {
 
   const confirmDelete = async () => {
     if (!deleteTargetId) return;
-      
     const toastId = toast.loading('Excluindo contrato...');
-
     const { error } = await supabase.from('contracts').delete().eq('id', deleteTargetId);
-      
     if (!error) {
       toast.success('Contrato excluído com sucesso!', { id: toastId });
       setIsDetailsModalOpen(false);
@@ -275,7 +280,6 @@ export function Contracts() {
       fetchData();
     } else {
       toast.error('Erro ao excluir contrato.', { id: toastId });
-      console.error(error);
     }
   };
 
@@ -334,11 +338,11 @@ export function Contracts() {
     }
   };
 
-  const filteredContracts = contracts.filter((c: Contract) => {
+  const filteredContracts = contracts.filter((c: ContractExtended) => {
     const matchesSearch = c.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.hon_number?.includes(searchTerm) ||
       c.cnpj?.includes(searchTerm) ||
-      c.display_id?.includes(searchTerm); // Removido 'as any'
+      c.display_id?.includes(searchTerm);
     const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
     const matchesPartner = partnerFilter === '' || c.partner_id === partnerFilter;
 
@@ -348,13 +352,11 @@ export function Contracts() {
       if (relevantDateStr) {
         const relevantDate = new Date(relevantDateStr);
         relevantDate.setHours(0, 0, 0, 0); 
-
         if (startDate) {
           const start = new Date(startDate);
           start.setHours(0, 0, 0, 0);
           if (relevantDate < start) matchesDate = false;
         }
-
         if (endDate) {
           const end = new Date(endDate);
           end.setHours(23, 59, 59, 999); 
@@ -364,9 +366,8 @@ export function Contracts() {
         matchesDate = false; 
       }
     }
-      
     return matchesSearch && matchesStatus && matchesPartner && matchesDate;
-  }).sort((a: Contract, b: Contract) => {
+  }).sort((a: ContractExtended, b: ContractExtended) => {
     if (sortBy === 'name') {
       const nameA = a.client_name || '';
       const nameB = b.client_name || '';
@@ -380,11 +381,11 @@ export function Contracts() {
 
   const exportToExcel = () => {
     const data = filteredContracts.map(c => ({
-      'ID': c.display_id, // Removido 'as any'
+      'ID': c.display_id,
       'Status': getStatusLabel(c.status),
       'Cliente': c.client_name,
       'CNPJ/CPF': c.cnpj || '-',
-      'Processos': c.processes?.map((p) => p.process_number).join(', ') || '-', // Removido 'as any'
+      'Processos': c.processes?.map((p: any) => p.process_number).join(', ') || '-',
       'Sócio': c.partner_name,
       'Área': c.area,
       'UF': c.uf,
@@ -431,7 +432,7 @@ export function Contracts() {
     <div className="p-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-[#112240] flex items-center gap-2">
             <FileSignature className="w-8 h-8" /> Casos
           </h1>
           <div className="flex items-center mt-1">
@@ -486,14 +487,13 @@ export function Contracts() {
             )}
           </div>
 
-          <button onClick={handleNew} className="bg-salomao-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold">
+          <button onClick={handleNew} className="bg-[#D4AF37] hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold">
             <Plus className="w-5 h-5 mr-2" /> Novo Caso
           </button>
         </div>
       </div>
 
       <div className="flex flex-col gap-4 mb-6 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-        {/* Linha Superior: Busca e Datas */}
         <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1 flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
             <Search className="w-5 h-5 text-gray-400 mr-2" />
@@ -528,7 +528,6 @@ export function Contracts() {
           </div>
         </div>
 
-        {/* Linha Inferior: Filtros de Select e Botões */}
         <div className="flex flex-wrap gap-2 items-center justify-between">
             <div className="flex gap-2 flex-wrap">
               <FilterSelect
@@ -562,7 +561,7 @@ export function Contracts() {
               <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200">
                 <button
                   onClick={() => { if(sortBy !== 'name') { setSortBy('name'); setSortOrder('asc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-                  className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${sortBy === 'name' ? 'bg-white shadow text-salomao-blue' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${sortBy === 'name' ? 'bg-white shadow text-[#112240]' : 'text-gray-500 hover:text-gray-700'}`}
                   title="Ordenar por Nome"
                 >
                   Nome
@@ -570,7 +569,7 @@ export function Contracts() {
                 </button>
                 <button
                   onClick={() => { if(sortBy !== 'date') { setSortBy('date'); setSortOrder('desc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-                  className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${sortBy === 'date' ? 'bg-white shadow text-salomao-blue' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all ${sortBy === 'date' ? 'bg-white shadow text-[#112240]' : 'text-gray-500 hover:text-gray-700'}`}
                   title="Ordenar por Data do Status Atual"
                 >
                   Data
@@ -579,8 +578,8 @@ export function Contracts() {
               </div>
 
               <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200">
-                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
-                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
+                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm text-[#112240]' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
+                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white shadow-sm text-[#112240]' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
               </div>
 
               <button onClick={exportToExcel} className="flex items-center px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium whitespace-nowrap">
@@ -591,19 +590,19 @@ export function Contracts() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-salomao-gold animate-spin" /></div>
+        <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-[#D4AF37] animate-spin" /></div>
       ) : filteredContracts.length === 0 ? (
          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <EmptyState
                 icon={FileSearch}
                 title="Nenhum caso encontrado"
                 description={
-                    searchTerm || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '' 
+                    hasActiveFilters 
                     ? "Não encontramos nenhum contrato com os filtros atuais. Tente limpar a busca."
                     : "Você ainda não possui casos cadastrados. Comece criando um novo."
                 }
-                actionLabel={searchTerm || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '' ? "Limpar Filtros" : "Novo Caso"}
-                onAction={searchTerm || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '' ? clearFilters : handleNew}
+                actionLabel={hasActiveFilters ? "Limpar Filtros" : "Novo Caso"}
+                onAction={hasActiveFilters ? clearFilters : handleNew}
               />
          </div>
       ) : (
@@ -628,13 +627,13 @@ export function Contracts() {
                       <div className="flex items-center">
                         <Scale className="w-3.5 h-3.5 mr-2 text-gray-400" />
                         <span className="truncate">
-                          {contract.processes && contract.processes.length > 0
-                            ? contract.processes.map((p) => p.process_number).join(', ')
+                          {(contract as any).processes && (contract as any).processes.length > 0
+                            ? (contract as any).processes.map((p: any) => p.process_number).join(', ')
                             : 'Sem processos'}
                         </span>
                       </div>
                       <div className="flex items-center">
-                        <User className="w-3.5 h-3.5 mr-2 text-salomao-gold" />
+                        <User className="w-3.5 h-3.5 mr-2 text-[#D4AF37]" />
                         <span className="truncate">{contract.partner_name || 'Sem sócio'}</span>
                       </div>
                       {contract.status === 'active' && contract.hon_number && (
@@ -689,9 +688,9 @@ export function Contracts() {
                       <td className="p-3 font-mono text-gray-500">{contract.display_id}</td>
                       <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(contract.status)}`}>{getStatusLabel(contract.status)}</span></td>
                       <td className="p-3 font-medium text-gray-800">{contract.client_name}</td>
-                      <td className="p-3 text-gray-600 max-w-[200px] truncate" title={contract.processes?.map(p => p.process_number).join(', ')}>
-                        {contract.processes && contract.processes.length > 0
-                          ? contract.processes.map(p => p.process_number).join(', ')
+                      <td className="p-3 text-gray-600 max-w-[200px] truncate" title={(contract as any).processes?.map((p: any) => p.process_number).join(', ')}>
+                        {(contract as any).processes && (contract as any).processes.length > 0
+                          ? (contract as any).processes.map((p: any) => p.process_number).join(', ')
                           : '-'}
                       </td>
                       <td className="p-3 text-gray-600">{contract.partner_name}</td>
