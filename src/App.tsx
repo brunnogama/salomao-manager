@@ -23,8 +23,7 @@ import { Colaboradores } from './components/collaborators/pages/Colaboradores'
 import { Calendario } from './components/collaborators/pages/Calendario'
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 
-import { Menu, LogOut, Grid, UserCircle, Home as HomeIcon } from 'lucide-react'
-import { MODULE_CONFIG } from './config/modules'
+import { Menu, LogOut, Grid, UserCircle } from 'lucide-react'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
@@ -58,16 +57,6 @@ export default function App() {
     return session.user.email.split('@')[0].split('.').map((p: any) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
   }
 
-  // Lógica de metadados dinâmica
-  const config = (MODULE_CONFIG as any)[currentModule] || MODULE_CONFIG.crm
-  
-  // Alteração solicitada: Ícone de casa para Gestão Família
-  const isGestaoFamilia = currentModule === 'executive' && activePage === 'gestao-familia'
-  const CurrentIcon = isGestaoFamilia ? HomeIcon : config.icons[activePage]
-  
-  const currentTitle = config.titles[activePage] || activePage
-  const currentDesc = config.descriptions[activePage]
-
   if (loading) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
   if (loggingOut) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
   if (!session) return <Login />
@@ -100,6 +89,7 @@ export default function App() {
     <>
       <WelcomeModal />
       <div className="flex h-screen bg-gray-100 overflow-hidden w-full">
+        {/* SIDEBARS */}
         {currentModule === 'collaborators' ? (
           <RhSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         ) : currentModule === 'financial' ? (
@@ -110,25 +100,48 @@ export default function App() {
           <CrmSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         )}
 
+        {/* MAIN CONTENT */}
         <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
-          <header className="bg-white border-b h-20 flex items-center px-4 md:px-8 justify-between flex-shrink-0 z-10">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2"><Menu /></button>
-              {CurrentIcon && <div className="hidden md:flex h-10 w-10 rounded-lg bg-[#112240]/5 items-center justify-center text-[#112240]"><CurrentIcon /></div>}
-              <div className="flex flex-col min-w-0">
-                <h1 className="text-xl md:text-2xl font-bold text-[#112240] truncate">{currentTitle}</h1>
-                <span className="text-xs text-gray-500 truncate hidden sm:block">{currentDesc}</span>
-              </div>
+          
+          {/* HEADER SIMPLIFICADO - Cada página gerencia seu próprio título */}
+          <header className="bg-white border-b h-20 flex items-center px-4 md:px-8 justify-between flex-shrink-0 z-10 shadow-sm">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setIsSidebarOpen(true)} 
+                className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Menu className="h-5 w-5 text-gray-600" />
+              </button>
             </div>
+            
+            {/* USER INFO & ACTIONS */}
             <div className="flex items-center gap-4 shrink-0">
-              <div className="hidden md:flex flex-col items-end text-[#112240]"><span className="text-sm font-bold">{getUserDisplayName()}</span><span className="text-[10px] text-gray-500">Conectado</span></div>
-              <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center border"><UserCircle /></div>
-              <button onClick={() => setCurrentModule('home')} className="p-2 hover:bg-gray-100 rounded-lg"><Grid /></button>
-              <button onClick={handleLogout} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><LogOut /></button>
+              <div className="hidden md:flex flex-col items-end">
+                <span className="text-sm font-bold text-[#0a192f]">{getUserDisplayName()}</span>
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
+              </div>
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
+                <UserCircle className="h-5 w-5" />
+              </div>
+              <button 
+                onClick={() => setCurrentModule('home')} 
+                className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
+                title="Voltar aos módulos"
+              >
+                <Grid className="h-5 w-5" />
+              </button>
+              <button 
+                onClick={handleLogout} 
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                title="Sair"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
             </div>
           </header>
 
-          <div className="p-4 md:p-8 flex-1 overflow-y-auto custom-scrollbar">
+          {/* PAGE CONTENT - Cada página renderiza seu próprio conteúdo */}
+          <div className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
             {currentModule === 'crm' && (
               <>
                 {activePage === 'dashboard' && <Dashboard onNavigateWithFilter={(p:any, f:any) => { setClientFilters(f); setActivePage(p); }} />}
