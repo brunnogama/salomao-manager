@@ -21,7 +21,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           const { data, error } = await supabase
             .from('user_profiles')
             .select('allowed_modules, role')
-            .eq('id', user.id)
+            .eq('id', user.id) // Alterado de 'user_id' para 'id' para coincidir com o banco de dados
             .single()
 
           if (data && !error) {
