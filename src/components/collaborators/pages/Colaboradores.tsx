@@ -351,7 +351,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                 <tr>
                   <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Colaborador</th>
-                  <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Equipe / Cargo</th>
+                  <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cargo</th>
+                  <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Equipe</th>
+                  <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Líder</th>
                   <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
                   <th className="px-6 py-4 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
                 </tr>
@@ -359,13 +361,20 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               <tbody className="divide-y divide-gray-100">
                 {filtered.map(c => (
                   <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab('dados'); }} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
-                    <td className="px-6 py-4 flex items-center gap-3">
-                      <Avatar src={c.foto_url} name={c.nome} />
-                      <div><p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.nome)}</p><p className="text-xs text-gray-500">{c.email || c.cpf}</p></div>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar src={c.foto_url} name={c.nome} />
+                        <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.nome)}</p>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase(c.cargo)}</p>
-                      <p className="text-xs text-gray-500 font-medium">{toTitleCase(c.equipe)}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-medium text-gray-700">{toTitleCase(c.equipe)}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-medium text-gray-700">{toTitleCase(c.lider_equipe)}</p>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'Ativo' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
