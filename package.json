@@ -1,5 +1,5 @@
 {
-  "name": "crm-salomao",
+  "name": "salomao-manager",
   "private": true,
   "version": "2.5.0",
   "type": "module",
@@ -13,12 +13,15 @@
     "@headlessui/react": "^2.2.0",
     "@hello-pangea/dnd": "^16.6.0",
     "@supabase/supabase-js": "^2.49.1",
+    "clsx": "^2.1.1",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-imask": "^7.6.1",
     "recharts": "^2.15.0",
+    "sonner": "^1.7.1",
+    "tailwind-merge": "^2.5.5",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

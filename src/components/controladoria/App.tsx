@@ -5,9 +5,9 @@ import { Sidebar as CrmSidebar } from './components/crm/Sidebar'
 import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
 import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
 import { SidebarFinanceiro } from './components/finance/SidebarFinanceiro'
-import { Sidebar as ControladoriaSidebar } from './components/controladoria/src/components/Sidebar'
+import { Sidebar as ControladoriaSidebar } from './components/controladoria/components/Sidebar' // Importada da nova pasta
 
-// Componentes
+// Componentes CRM/Base
 import { Clients } from './components/crm/Clients'
 import { Magistrados } from './components/crm/Magistrados'
 import { Settings } from './components/Settings'
@@ -19,26 +19,29 @@ import { Manual } from './components/crm/Manual'
 import { WelcomeModal } from './components/WelcomeModal'
 import { ModuleSelector } from './components/ModuleSelector'
 import { UnderConstruction } from './components/UnderConstruction'
+
+// Componentes RH
 import { Presencial } from './components/collaborators/pages/Presencial' 
 import { Colaboradores } from './components/collaborators/pages/Colaboradores'
 import { Calendario } from './components/collaborators/pages/Calendario'
+
+// Componentes Secretaria
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 
-// Componentes Controladoria Migrados
-import { Dashboard as ControlDashboard } from './components/controladoria/src/pages/Dashboard'
-import { Contracts as ControlContracts } from './components/controladoria/src/pages/Contracts'
-import { GED as ControlGED } from './components/controladoria/src/pages/GED'
-import { Kanban as ControlKanban } from './components/controladoria/src/pages/Kanban'
-import { Clients as ControlClients } from './components/controladoria/src/pages/Clients'
-import { Finance as ControlFinance } from './components/controladoria/src/pages/Finance'
-import { History as ControlHistory } from './components/controladoria/src/pages/History'
-import { Volumetry as ControlVolumetry } from './components/controladoria/src/pages/Volumetry'
-import { Proposals as ControlProposals } from './components/controladoria/src/pages/Proposals'
-import { Jurimetria as ControlJurimetria } from './components/controladoria/src/pages/Jurimetria'
-import { Settings as ControlSettings } from './components/controladoria/src/pages/Settings'
+// Componentes Controladoria (Migrados)
+import { Dashboard as ControlDashboard } from './components/controladoria/pages/Dashboard'
+import { Contracts as ControlContracts } from './components/controladoria/pages/Contracts'
+import { Clients as ControlClients } from './components/controladoria/pages/Clients'
+import { Kanban as ControlKanban } from './components/controladoria/pages/Kanban'
+import { Finance as ControlFinance } from './components/controladoria/pages/Finance'
+import { GED as ControlGED } from './components/controladoria/pages/GED'
+import { Proposals as ControlProposals } from './components/controladoria/pages/Proposals'
+import { Jurimetria as ControlJurimetria } from './components/controladoria/pages/Jurimetria'
+import { Volumetry as ControlVolumetry } from './components/controladoria/pages/Volumetry'
+import { History as ControlHistory } from './components/controladoria/pages/History'
 
-import { Menu, LogOut, Grid, UserCircle } from 'lucide-react'
-import { Toaster } from 'sonner'
+import { Menu, LogOut, Grid } from 'lucide-react'
+import { Toaster } from 'sonner' // Adicionado conforme solicitado
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
@@ -72,8 +75,7 @@ export default function App() {
     return session.user.email.split('@')[0].split('.').map((p: any) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
   }
 
-  if (loading) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
-  if (loggingOut) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
+  if (loading || loggingOut) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
   if (!session) return <Login />
   if (currentModule === 'home') return <ModuleSelector onSelect={(m:any) => { setCurrentModule(m); setActivePage('dashboard') }} userName={getUserDisplayName()} />
   
@@ -118,34 +120,28 @@ export default function App() {
           <CrmSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         )}
 
-        {/* MAIN CONTENT */}
         <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
-          
-          {/* MOBILE MENU BUTTON */}
           <div className="md:hidden bg-white border-b px-4 py-3 flex items-center">
-            <button 
-              onClick={() => setIsSidebarOpen(true)} 
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
+            <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <Menu className="h-5 w-5 text-gray-600" />
             </button>
           </div>
 
-          {/* PAGE CONTENT */}
           <div className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
+            {/* RENDERIZAÇÃO CRM */}
             {currentModule === 'crm' && (
               <>
                 {activePage === 'dashboard' && <Dashboard onNavigateWithFilter={(p:any, f:any) => { setClientFilters(f); setActivePage(p); }} />}
                 {activePage === 'clientes' && <Clients initialFilters={clientFilters} />}
                 {activePage === 'magistrados' && <Magistrados />}
                 {activePage === 'incompletos' && <IncompleteClients />}
-                {activePage === 'logistica' && <UnderConstruction moduleName={activePage} onBack={() => setActivePage('dashboard')} />}
                 {activePage === 'manual' && <Manual />}
                 {activePage === 'kanban' && <Kanban />}
                 {activePage === 'historico' && <History />}
               </>
             )}
 
+            {/* RENDERIZAÇÃO CONTROLADORIA */}
             {currentModule === 'legal-control' && (
               <>
                 {activePage === 'dashboard' && <ControlDashboard />}
@@ -158,11 +154,11 @@ export default function App() {
                 {activePage === 'jurimetria' && <ControlJurimetria />}
                 {activePage === 'volumetria' && <ControlVolumetry />}
                 {activePage === 'historico' && <ControlHistory />}
-                {activePage === 'configuracoes' && <ControlSettings />}
                 {activePage === 'compliance' && <UnderConstruction moduleName="Compliance & Riscos" onBack={() => setActivePage('dashboard')} />}
               </>
             )}
 
+            {/* MÓDULOS RH / FINANCEIRO / SECRETARIA (MANTIDOS) */}
             {currentModule === 'collaborators' && (
               <>
                 {activePage === 'dashboard' && <UnderConstruction moduleName="Dash RH" onBack={() => {}} showBackButton={false} />}
