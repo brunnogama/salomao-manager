@@ -11,7 +11,8 @@ import {
   LayoutDashboard,
   Database,
   Loader2,
-  Download
+  Download,
+  Calendar
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -31,6 +32,8 @@ export function GestaoAeronave({
 }: GestaoAeronaveProps) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'gerencial'>('gerencial')
   const [searchTerm, setSearchTerm] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -48,16 +51,31 @@ export function GestaoAeronave({
 
   useEffect(() => { fetchDados() }, [])
 
-  // Lógica de Filtros Avançados (SDS)
+  // Lógica de Filtros Avançados (SDS) + Filtro de Período
   const filteredData = useMemo(() => {
-    return data.filter(item => 
-      Object.values(item).some(val => 
+    return data.filter(item => {
+      // Filtro de Texto Global
+      const matchSearch = Object.values(item).some(val => 
         String(val || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
-    )
-  }, [data, searchTerm])
 
-  // Lógica de Exportação XLSX
+      // Filtro de Período
+      const itemDate = item.data ? new Date(item.data) : null
+      const start = startDate ? new Date(startDate) : null
+      const end = endDate ? new Date(endDate) : null
+
+      let matchDate = true
+      if (itemDate) {
+        if (start && itemDate < start) matchDate = false
+        if (end && itemDate > end) matchDate = false
+      } else if (start || end) {
+        matchDate = false
+      }
+
+      return matchSearch && matchDate
+    })
+  }, [data, searchTerm, startDate, endDate])
+
   const handleExportExcel = () => {
     if (filteredData.length === 0) return;
     const ws = XLSX.utils.json_to_sheet(filteredData)
@@ -66,7 +84,6 @@ export function GestaoAeronave({
     XLSX.writeFile(wb, `Aeronave_Relatorio_${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
-  // Lógica de Salvamento/Update
   const handleSave = async (formData: any) => {
     const { error } = await supabase.from('financeiro_aeronave').upsert(formData)
     if (!error) {
@@ -113,7 +130,7 @@ export function GestaoAeronave({
         }
 
         const mapped = rawData.map((row: any) => ({
-          tripulacao: row['Tripuração']?.toString() || '',
+          tripulacao: row['Tripulação']?.toString() || row['tripulacao']?.toString() || '',
           aeronave: row['Aeronave']?.toString() || '',
           data: formatExcelDate(row['Data']),
           localidade_destino: row['Localidade e destino']?.toString() || '',
@@ -191,20 +208,49 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* TOOLBAR */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Buscar lançamentos..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
-            value={searchTerm} 
-            onChange={e => setSearchTerm(e.target.value)} 
-          />
+      {/* TOOLBAR COM FILTRO DE DATA */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col space-y-4 md:space-y-0 md:flex-row items-center justify-between gap-3">
+        <div className="flex flex-col md:flex-row items-center gap-3 flex-1 w-full">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Buscar lançamentos..." 
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
+              value={searchTerm} 
+              onChange={e => setSearchTerm(e.target.value)} 
+            />
+          </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto">
+             <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-3 py-1.5">
+                <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                <input 
+                  type="date" 
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                />
+                <span className="mx-2 text-gray-400 text-xs">até</span>
+                <input 
+                  type="date" 
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                />
+             </div>
+             {(startDate || endDate) && (
+               <button 
+                onClick={() => { setStartDate(''); setEndDate(''); }}
+                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+               >
+                 <RefreshCw className="h-4 w-4" />
+               </button>
+             )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <button 
             onClick={handleExportExcel}
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all"
@@ -224,7 +270,7 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* CONTEÚDO - Removida limitação de altura */}
+      {/* CONTEÚDO */}
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible">
         {activeTab === 'gerencial' ? (
           <div className="w-full">
