@@ -159,7 +159,6 @@ export function GestaoAeronave({
         }
 
         const mapped = rawData.map((row: any) => {
-          // Normaliza as chaves removendo espaços e tratando caracteres especiais
           const cleanRow: any = {};
           Object.keys(row).forEach(key => {
             cleanRow[key.trim()] = row[key];
@@ -218,22 +217,7 @@ export function GestaoAeronave({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm shrink-0 mr-4">
-            <button 
-              onClick={() => setActiveTab('dashboard')} 
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
-            </button>
-            <button 
-              onClick={() => setActiveTab('gerencial')} 
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'gerencial' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <Database className="h-3.5 w-3.5" /> Gerencial
-            </button>
-          </div>
-
-          <div className="hidden md:flex flex-col items-end">
+          <div className="hidden md:flex flex-col items-end mr-2">
             <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
             <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
           </div>
@@ -245,9 +229,10 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* TOOLBAR COM FILTRO DE DATA */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col space-y-4 md:space-y-0 md:flex-row items-center justify-between gap-3">
-        <div className="flex flex-col md:flex-row items-center gap-3 flex-1 w-full">
+      {/* TOOLBAR */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+        {/* Linha Superior: Busca e Ações */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input 
@@ -260,15 +245,57 @@ export function GestaoAeronave({
           </div>
 
           <div className="flex items-center gap-2 w-full md:w-auto">
-             <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-3 py-1.5">
-                <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+            <button 
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all"
+            >
+              <Download className="h-3.5 w-3.5 text-[#1e3a8a]" /> Exportar
+            </button>
+
+            <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-gray-50 cursor-pointer transition-all">
+              {isImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />}
+              Importar XLSX
+              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
+            </label>
+
+            <button 
+              onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
+              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95"
+            >
+              <Plus className="h-3.5 w-3.5" /> Novo Registro
+            </button>
+          </div>
+        </div>
+
+        {/* Linha Inferior: Abas (Esquerda) e Filtro de Datas (Direita) */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
+          {/* Abas Lado Esquerdo */}
+          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full md:w-auto">
+            <button 
+              onClick={() => setActiveTab('dashboard')} 
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+            </button>
+            <button 
+              onClick={() => setActiveTab('gerencial')} 
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'gerencial' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Database className="h-3.5 w-3.5" /> Gerencial
+            </button>
+          </div>
+
+          {/* Filtro de Datas Lado Direito */}
+          <div className="flex items-center gap-2 w-full md:w-auto">
+             <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-4 py-2 w-full md:w-auto">
+                <Calendar className="h-4 w-4 text-gray-400 mr-3" />
                 <input 
                   type="date" 
                   className="bg-transparent text-xs font-bold text-gray-600 outline-none"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
                 />
-                <span className="mx-2 text-gray-400 text-xs">até</span>
+                <span className="mx-3 text-gray-400 text-[10px] font-black uppercase tracking-widest">até</span>
                 <input 
                   type="date" 
                   className="bg-transparent text-xs font-bold text-gray-600 outline-none"
@@ -280,33 +307,12 @@ export function GestaoAeronave({
                <button 
                 onClick={() => { setStartDate(''); setEndDate(''); }}
                 className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                title="Limpar filtros"
                >
                  <RefreshCw className="h-4 w-4" />
                </button>
              )}
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <button 
-            onClick={handleExportExcel}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all"
-          >
-            <Download className="h-3.5 w-3.5 text-[#1e3a8a]" /> Exportar
-          </button>
-
-          <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-gray-50 cursor-pointer transition-all">
-            {isImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />}
-            Importar XLSX
-            <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
-          </label>
-
-          <button 
-            onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
-            className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95"
-          >
-            <Plus className="h-3.5 w-3.5" /> Novo Registro
-          </button>
         </div>
       </div>
 
