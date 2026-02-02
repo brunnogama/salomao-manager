@@ -1,20 +1,26 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { DollarSign, Plane, Building2, Wallet, TrendingUp, BarChart3, PieChart } from 'lucide-react'
 
 interface DashboardProps {
   data: any[];
   onMissionClick?: (data: string, destino: string) => void;
+  onResetFilter?: () => void;
 }
 
-export function AeronaveDashboard({ data, onMissionClick }: DashboardProps) {
+export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: DashboardProps) {
+  // Resetar filtros ao montar o componente (voltar para a aba)
+  useEffect(() => {
+    if (onResetFilter) {
+      onResetFilter();
+    }
+  }, [onResetFilter]);
+
   const stats = useMemo(() => {
     const totalPaid = data.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
     const totalCnpj = data.reduce((acc, curr) => acc + (Number(curr.faturado_cnpj) || 0), 0)
     
-    // Contagem de Missões únicas baseada em Data + Destino
     const totalFlights = new Set(data.map(item => `${item.data}-${item.localidade_destino}`)).size
 
-    // Agrupamento por Missão (Para a Tabela de Resumo)
     const missionsMap: any = {}
     data.forEach(item => {
       const key = `${item.data} | ${item.localidade_destino}`
@@ -25,14 +31,12 @@ export function AeronaveDashboard({ data, onMissionClick }: DashboardProps) {
       missionsMap[key].cnpj += Number(item.faturado_cnpj) || 0
     })
 
-    // Agrupamento por Despesa
     const expenseMap: any = {}
     data.forEach(item => {
       const cat = item.despesa || 'Outros'
       expenseMap[cat] = (expenseMap[cat] || 0) + (Number(item.valor_pago) || 0)
     })
 
-    // Agrupamento por Fornecedor
     const supplierMap: any = {}
     data.forEach(item => {
       const sup = item.fornecedor || 'Não Informado'
@@ -80,7 +84,6 @@ export function AeronaveDashboard({ data, onMissionClick }: DashboardProps) {
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
       
-      {/* 1. Cards Principais */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard title="Total Pago (R$)" value={formatCurrency(stats.totalPaid)} icon={Wallet} color="emerald" />
         <StatCard title="Faturado CNPJ" value={formatCurrency(stats.totalCnpj)} icon={Building2} color="orange" />
@@ -89,7 +92,6 @@ export function AeronaveDashboard({ data, onMissionClick }: DashboardProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* 2. Tabela de Totais por Missão */}
         <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
           <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
             <h4 className="text-[11px] font-black text-[#112240] uppercase tracking-[0.2em] flex items-center gap-2">
@@ -130,10 +132,7 @@ export function AeronaveDashboard({ data, onMissionClick }: DashboardProps) {
           </div>
         </div>
 
-        {/* 3. Coluna Lateral: Despesas e Fornecedores */}
         <div className="lg:col-span-4 space-y-6">
-          
-          {/* Ranking Fornecedores */}
           <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
             <h4 className="text-[11px] font-black text-[#112240] uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-blue-600" /> Principais Fornecedores
@@ -156,7 +155,6 @@ export function AeronaveDashboard({ data, onMissionClick }: DashboardProps) {
             </div>
           </div>
 
-          {/* Ranking Despesas (Dark Mode SDS) */}
           <div className="bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white">
             <h4 className="text-[11px] font-black text-blue-300 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
               <PieChart className="h-4 w-4" /> Despesas por Tipo
@@ -173,7 +171,6 @@ export function AeronaveDashboard({ data, onMissionClick }: DashboardProps) {
               ))}
             </div>
           </div>
-
         </div>
       </div>
     </div>

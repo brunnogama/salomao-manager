@@ -12,7 +12,8 @@ import {
   Database,
   Loader2,
   Download,
-  Calendar
+  Calendar,
+  XCircle
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -41,7 +42,6 @@ export function GestaoAeronave({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   
-  // Estados para Visualização e Edição
   const [selectedItem, setSelectedItem] = useState<any | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
 
@@ -57,15 +57,18 @@ export function GestaoAeronave({
 
   useEffect(() => { fetchDados() }, [])
 
-  // Lógica de Filtros Avançados (SDS) + Filtro de Período
+  const resetFilters = () => {
+    setSearchTerm('')
+    setStartDate('')
+    setEndDate('')
+  }
+
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      // Filtro de Texto Global
       const matchSearch = Object.values(item).some(val => 
         String(val || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
 
-      // Filtro de Período
       const itemDate = item.data ? new Date(item.data) : null
       const start = startDate ? new Date(startDate) : null
       const end = endDate ? new Date(endDate) : null
@@ -99,7 +102,6 @@ export function GestaoAeronave({
     }
   }
 
-  // Funções de Gerenciamento de Modal
   const handleRowClick = (item: any) => {
     setSelectedItem(item)
     setIsViewModalOpen(true)
@@ -122,7 +124,6 @@ export function GestaoAeronave({
     }
   }
 
-  // Função para lidar com o clique na missão no Dashboard
   const handleMissionClick = (dataMissao: string, destinoMissao: string) => {
     setSearchTerm(destinoMissao)
     setStartDate(dataMissao)
@@ -168,7 +169,6 @@ export function GestaoAeronave({
         }
 
         const mapped = rawData.map((row: any) => {
-          // Normaliza as chaves removendo espaços e tratando caracteres especiais
           const cleanRow: any = {};
           Object.keys(row).forEach(key => {
             cleanRow[key.trim()] = row[key];
@@ -180,7 +180,7 @@ export function GestaoAeronave({
             data: formatExcelDate(cleanRow['Data']),
             localidade_destino: cleanRow['Localidade e destino']?.toString() || '',
             despesa: cleanRow['Despesa']?.toString() || '',
-            descricao: cleanRow['Descrição']?.toString() || '', // Mapeamento da nova coluna
+            descricao: cleanRow['Descrição']?.toString() || '',
             fornecedor: cleanRow['Fornecedor']?.toString() || '',
             faturado_cnpj: parseCurrency(cleanRow['Faturado CNPJ SALOMÃO']),
             valor_previsto: parseCurrency(cleanRow['R$ Previsto total']),
@@ -215,7 +215,6 @@ export function GestaoAeronave({
   return (
     <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
       
-      {/* HEADER PADRÃO SDS */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
@@ -240,11 +239,8 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* TOOLBAR */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-        {/* Linha Superior: Abas e Filtro de Data */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-          {/* Abas Lado Esquerdo */}
           <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full md:w-auto">
             <button 
               onClick={() => setActiveTab('dashboard')} 
@@ -260,7 +256,6 @@ export function GestaoAeronave({
             </button>
           </div>
 
-          {/* Filtro de Datas Lado Direito */}
           <div className="flex items-center gap-2 w-full md:w-auto">
              <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-4 py-2 w-full md:w-auto">
                 <Calendar className="h-4 w-4 text-gray-400 mr-3" />
@@ -278,15 +273,18 @@ export function GestaoAeronave({
                   onChange={e => setEndDate(e.target.value)}
                 />
              </div>
-             {(startDate || endDate) && (
-               <button onClick={() => { setStartDate(''); setEndDate(''); }} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                 <RefreshCw className="h-4 w-4" />
+             {(startDate || endDate || searchTerm) && (
+               <button 
+                onClick={resetFilters} 
+                className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border border-red-100 animate-in zoom-in duration-300"
+               >
+                 <XCircle className="h-4 w-4" />
+                 <span className="text-[10px] font-black uppercase tracking-widest">Limpar Filtros</span>
                </button>
              )}
           </div>
         </div>
 
-        {/* Linha Inferior: Busca e Ações (Ícones sem texto) */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -323,7 +321,6 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* CONTEÚDO */}
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible">
         {activeTab === 'gerencial' ? (
           <div className="w-full">
@@ -335,8 +332,9 @@ export function GestaoAeronave({
           </div>
         ) : (
           <AeronaveDashboard 
-            data={filteredData} 
+            data={data} 
             onMissionClick={handleMissionClick} 
+            onResetFilter={resetFilters}
           />
         )}
       </div>
