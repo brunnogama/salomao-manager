@@ -22,8 +22,6 @@ interface SidebarProps {
 
 export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProps) {
   const [incompleteCount, setIncompleteCount] = useState(0)
-  const [userName, setUserName] = useState('Carregando...')
-  const [userRole, setUserRole] = useState('')
 
   const fetchCount = async () => {
     const { data } = await supabase.from('clientes').select('*')
@@ -48,39 +46,8 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
     }
   }
 
-  const fetchUserProfile = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single()
-
-        if (user.email) {
-          const formattedName = user.email.split('@')[0]
-            .split('.')
-            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-            .join(' ')
-          setUserName(formattedName)
-        }
-
-        const roleLabels: Record<string, string> = {
-          admin: 'Administrador',
-          user: 'Usuário'
-        }
-        setUserRole(profile ? (roleLabels[profile.role] || 'Usuário') : 'Usuário')
-      }
-    } catch (error) {
-      console.error('Erro ao carregar dados do usuário:', error)
-      setUserName('Usuário')
-    }
-  }
-
   useEffect(() => {
     fetchCount()
-    fetchUserProfile()
     const interval = setInterval(fetchCount, 5000)
     return () => clearInterval(interval)
   }, [])
