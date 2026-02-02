@@ -146,8 +146,9 @@ export function Kanban() {
 
       {/* KANBAN BOARD */}
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex-1 flex gap-4 overflow-x-auto pb-2 h-full custom-scrollbar">
-          {COLUMNS.map((column) => (
+        <div className="flex-1 flex justify-center overflow-x-auto pb-2 h-full custom-scrollbar">
+          <div className="flex gap-4">
+            {COLUMNS.map((column) => (
             <div key={column.id} className={`flex-shrink-0 w-80 lg:w-96 flex flex-col rounded-2xl border-2 h-full shadow-sm transition-all ${
               column.color === 'orange' ? 'bg-gradient-to-b from-orange-50 to-white border-orange-200' : 
               column.color === 'blue' ? 'bg-gradient-to-b from-blue-50 to-white border-blue-200' : 
@@ -228,6 +229,7 @@ export function Kanban() {
               </Droppable>
             </div>
           ))}
+          </div>
         </div>
       </DragDropContext>
 
