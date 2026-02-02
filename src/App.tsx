@@ -23,6 +23,9 @@ import { Presencial } from './components/collaborators/pages/Presencial'
 import { Colaboradores } from './components/collaborators/pages/Colaboradores'
 import { Calendario } from './components/collaborators/pages/Calendario'
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
+
+// Ajuste do caminho conforme informado: /src/finance/pages/GestaoAeronave.tsx
+// Se o arquivo estiver em src/components/finance/pages, mude para: ./components/finance/pages/GestaoAeronave
 import { GestaoAeronave } from './finance/pages/GestaoAeronave'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
