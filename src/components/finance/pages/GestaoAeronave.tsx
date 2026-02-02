@@ -88,7 +88,6 @@ export function GestaoAeronave({
         const ws = wb.Sheets[wb.SheetNames[0]]
         const rawData = XLSX.utils.sheet_to_json(ws)
 
-        // Função para converter data do Excel (DD/MM/AAAA ou Serial) para ISO (YYYY-MM-DD)
         const formatExcelDate = (val: any) => {
           if (!val) return null
           if (typeof val === 'string' && val.includes('/')) {
@@ -102,7 +101,6 @@ export function GestaoAeronave({
           return val
         }
 
-        // Função para limpar moeda (R$ 1.200,50 -> 1200.50)
         const parseCurrency = (val: any) => {
           if (typeof val === 'number') return val
           if (!val) return 0
@@ -114,7 +112,6 @@ export function GestaoAeronave({
           return parseFloat(cleanValue) || 0
         }
 
-        // Mapeamento exato dos nomes das colunas da planilha
         const mapped = rawData.map((row: any) => ({
           tripulacao: row['Tripuração']?.toString() || '',
           aeronave: row['Aeronave']?.toString() || '',
@@ -152,7 +149,7 @@ export function GestaoAeronave({
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
+    <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
       
       {/* HEADER PADRÃO SDS */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -227,10 +224,12 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* CONTEÚDO */}
-      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden overflow-x-auto custom-scrollbar">
+      {/* CONTEÚDO - Removida limitação de altura */}
+      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible">
         {activeTab === 'gerencial' ? (
-          <AeronaveTable data={filteredData} loading={loading} />
+          <div className="w-full">
+            <AeronaveTable data={filteredData} loading={loading} />
+          </div>
         ) : (
           <div className="p-20 text-center text-gray-400 font-bold uppercase text-xs tracking-widest flex flex-col items-center">
             <RefreshCw className="h-8 w-8 mb-4 animate-spin opacity-20" />
