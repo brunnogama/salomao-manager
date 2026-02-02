@@ -84,31 +84,69 @@ export function GestaoAeronave({
     reader.onload = async (evt) => {
       try {
         const bstr = evt.target?.result
-        const wb = XLSX.read(bstr, { type: 'binary' })
+        const wb = XLSX.read(bstr, { type: 'binary', cellDates: false })
         const ws = wb.Sheets[wb.SheetNames[0]]
         const rawData = XLSX.utils.sheet_to_json(ws)
 
+        // Função para converter data do Excel (DD/MM/AAAA ou Serial) para ISO (YYYY-MM-DD)
+        const formatExcelDate = (val: any) => {
+          if (!val) return null
+          if (typeof val === 'string' && val.includes('/')) {
+            const [d, m, a] = val.split('/')
+            return `${a}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+          }
+          if (typeof val === 'number') {
+            const date = new Date(Math.round((val - 25569) * 86400 * 1000))
+            return date.toISOString().split('T')[0]
+          }
+          return val
+        }
+
+        // Função para limpar moeda (R$ 1.200,50 -> 1200.50)
+        const parseCurrency = (val: any) => {
+          if (typeof val === 'number') return val
+          if (!val) return 0
+          const cleanValue = String(val)
+            .replace('R$', '')
+            .replace(/\./g, '')
+            .replace(',', '.')
+            .trim()
+          return parseFloat(cleanValue) || 0
+        }
+
         // Mapeamento exato dos nomes das colunas da planilha
         const mapped = rawData.map((row: any) => ({
-          tripulacao: row['Tripuração'],
-          aeronave: row['Aeronave'],
-          data: row['Data'],
-          localidade_destino: row['Localidade e destino'],
-          despesa: row['Despesa'],
-          fornecedor: row['Fornecedor'],
-          faturado_cnpj: row['Faturado CNPJ SALOMÃO'],
-          valor_previsto: row['R$ Previsto total'],
-          valor_extra: row['R$ Extra'],
-          valor_pago: row['R$ pago'],
-          data_vencimento: row['Data Venc.'],
-          data_pagamento: row['Data Pgto'],
-          observacao: row['Observação']
+          tripulacao: row['Tripuração']?.toString() || '',
+          aeronave: row['Aeronave']?.toString() || '',
+          data: formatExcelDate(row['Data']),
+          localidade_destino: row['Localidade e destino']?.toString() || '',
+          despesa: row['Despesa']?.toString() || '',
+          fornecedor: row['Fornecedor']?.toString() || '',
+          faturado_cnpj: parseCurrency(row['Faturado CNPJ SALOMÃO']),
+          valor_previsto: parseCurrency(row['R$ Previsto total']),
+          valor_extra: parseCurrency(row['R$ Extra']),
+          valor_pago: parseCurrency(row['R$ pago']),
+          data_vencimento: formatExcelDate(row['Data Venc.']),
+          data_pagamento: formatExcelDate(row['Data Pgto']),
+          observacao: row['Observação']?.toString() || ''
         }))
 
-        await supabase.from('financeiro_aeronave').insert(mapped)
-        await fetchDados()
-      } catch (err) { console.error(err) }
-      finally { setIsImporting(false) }
+        const { error } = await supabase.from('financeiro_aeronave').insert(mapped)
+        
+        if (error) {
+          console.error('Erro detalhado do Supabase:', error)
+          alert(`Erro na importação: ${error.message}`)
+        } else {
+          alert(`${mapped.length} registros importados com sucesso!`)
+          await fetchDados()
+        }
+      } catch (err) { 
+        console.error(err) 
+        alert('Erro ao processar o arquivo Excel.')
+      } finally { 
+        setIsImporting(false) 
+        e.target.value = ''
+      }
     }
     reader.readAsBinaryString(file)
   }
