@@ -24,7 +24,7 @@ import { Colaboradores } from './components/collaborators/pages/Colaboradores'
 import { Calendario } from './components/collaborators/pages/Calendario'
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 
-// Caminho corrigido após análise do repositório
+// Rota corrigida para a Gestão da Aeronave
 import { GestaoAeronave } from './components/finance/pages/GestaoAeronave'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
