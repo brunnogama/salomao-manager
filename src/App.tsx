@@ -118,7 +118,14 @@ export default function App() {
           <div className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
             {currentModule === 'crm' && (
               <>
-                {activePage === 'dashboard' && <Dashboard onNavigateWithFilter={(p:any, f:any) => { setClientFilters(f); setActivePage(p); }} />}
+                {activePage === 'dashboard' && (
+                  <Dashboard 
+                    userName={getUserDisplayName()}
+                    onModuleHome={() => setCurrentModule('home')}
+                    onLogout={handleLogout}
+                    onNavigateWithFilter={(p:any, f:any) => { setClientFilters(f); setActivePage(p); }} 
+                  />
+                )}
                 {activePage === 'clientes' && (
                   <Clients 
                     initialFilters={clientFilters} 
@@ -127,7 +134,13 @@ export default function App() {
                     onLogout={handleLogout} 
                   />
                 )}
-                {activePage === 'magistrados' && <Magistrados />}
+                {activePage === 'magistrados' && (
+                  <Magistrados 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
                 {activePage === 'incompletos' && <IncompleteClients />}
                 {activePage === 'manual' && <Manual />}
                 {activePage === 'kanban' && <Kanban />}

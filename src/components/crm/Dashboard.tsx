@@ -1,8 +1,18 @@
-// src/components/crm/Dashboard.tsx
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { Users, Gift, LayoutGrid, Award, Map, Gavel, RefreshCw } from 'lucide-react';
+import { 
+  Users, 
+  Gift, 
+  LayoutGrid, 
+  Award, 
+  Map, 
+  Gavel, 
+  RefreshCw, 
+  UserCircle, 
+  Grid, 
+  LogOut 
+} from 'lucide-react';
 
 interface SocioData {
   name: string;
@@ -26,6 +36,9 @@ interface DashboardStats {
 
 interface DashboardProps {
   onNavigateWithFilter: (page: string, filters: { socio?: string; brinde?: string }) => void;
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -55,7 +68,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
+export function Dashboard({ 
+  onNavigateWithFilter, 
+  userName = 'Usuário',
+  onModuleHome,
+  onLogout
+}: DashboardProps) {
   const [stats, setStats] = useState<DashboardStats>({ 
     totalClients: 0,
     totalMagistrados: 0,
@@ -152,11 +170,10 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
   }
 
   return (
-    <div className="flex flex-col h-full space-y-6">
+    <div className="flex flex-col h-full space-y-6 p-6 bg-gradient-to-br from-gray-50 to-gray-100">
       
-      {/* PAGE HEADER COMPLETO - Título + User Info */}
+      {/* PAGE HEADER - Identêntico ao arquivo de Clientes */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        {/* Left: Título e Ícone */}
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
             <LayoutGrid className="h-7 w-7 text-white" />
@@ -171,25 +188,53 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
           </div>
         </div>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Right: User Info & Actions */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
+          </div>
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
+            <UserCircle className="h-5 w-5" />
+          </div>
+          
           <button 
             onClick={() => fetchDashboardData()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
+            title="Atualizar Dados"
           >
-            <RefreshCw className="h-4 w-4" />
-            Atualizar
+            <RefreshCw className="h-5 w-5" />
           </button>
+
+          {onModuleHome && (
+            <button 
+              onClick={onModuleHome} 
+              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
+              title="Voltar aos módulos"
+            >
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          
+          {onLogout && (
+            <button 
+              onClick={onLogout} 
+              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+              title="Sair"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* CONTENT */}
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-10">
-      
-        {/* CARDS DE MÉTRICAS - Design System */}
+        
+        {/* CARDS DE MÉTRICAS */}
         <div className="flex flex-wrap gap-4">
           
-          {/* Card Total Geral (Clientes) */}
+          {/* Card Total Geral */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col gap-3 flex-1 min-w-[180px] transition-all hover:shadow-md">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
@@ -223,11 +268,6 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
             </div>
           ))}
 
-          {/* Separador Visual */}
-          <div className="hidden lg:flex items-center justify-center mx-2">
-            <div className="h-20 w-px bg-gray-200"></div>
-          </div>
-
           {/* Card Magistrados */}
           <div 
             className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-2xl shadow-sm border border-gray-300 flex flex-col gap-3 cursor-pointer hover:border-[#1e3a8a]/30 hover:shadow-md transition-all flex-1 min-w-[200px] active:scale-95"
@@ -246,12 +286,9 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
                 ÁREA RESTRITA
               </div>
           </div>
-
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          
-          {/* Bloco Clientes por Sócio */}
           <div className="xl:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
