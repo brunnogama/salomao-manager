@@ -168,11 +168,11 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                 </label>
                 <label className="block">
                   <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Vencimento</span>
-                  <InputMask mask="99/99/9999" className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none" value={formData.data_vencimento} onChange={(e: any) => setFormData({...formData, data_vencimento: e.target.value})} />
+                  <InputMask mask="99/99/9999" className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none" value={formData.data_vencimento} onChange={(e: any) => setFormData({...formData, data_vencimento: e.target.value})} placeholder="DD/MM/AAAA" />
                 </label>
                 <label className="block">
                   <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Pagamento</span>
-                  <InputMask mask="99/99/9999" className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none" value={formData.data_pagamento} onChange={(e: any) => setFormData({...formData, data_pagamento: e.target.value})} />
+                  <InputMask mask="99/99/9999" className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none" value={formData.data_pagamento} onChange={(e: any) => setFormData({...formData, data_pagamento: e.target.value})} placeholder="DD/MM/AAAA" />
                 </label>
               </div>
             </div>
