@@ -18,6 +18,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
 import { AeronaveTable } from '../components/AeronaveTable'
 import { AeronaveFormModal } from '../components/AeronaveFormModal'
+import { AeronaveViewModal } from '../components/AeronaveViewModal'
 
 interface GestaoAeronaveProps {
   userName?: string;
@@ -38,6 +39,10 @@ export function GestaoAeronave({
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
+  
+  // Estados para Visualização e Edição
+  const [selectedItem, setSelectedItem] = useState<any | null>(null)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
 
   const fetchDados = async () => {
     setLoading(true)
@@ -88,7 +93,31 @@ export function GestaoAeronave({
     const { error } = await supabase.from('financeiro_aeronave').upsert(formData)
     if (!error) {
       setIsModalOpen(false)
+      setSelectedItem(null)
       fetchDados()
+    }
+  }
+
+  // Funções de Gerenciamento de Modal
+  const handleRowClick = (item: any) => {
+    setSelectedItem(item)
+    setIsViewModalOpen(true)
+  }
+
+  const handleEditFromView = (item: any) => {
+    setIsViewModalOpen(false)
+    setSelectedItem(item)
+    setIsModalOpen(true)
+  }
+
+  const handleDeleteItem = async (item: any) => {
+    if (confirm(`Tem certeza que deseja excluir o lançamento de ${item.fornecedor}?`)) {
+      const { error } = await supabase.from('financeiro_aeronave').delete().eq('id', item.id)
+      if (!error) {
+        setIsViewModalOpen(false)
+        setSelectedItem(null)
+        fetchDados()
+      }
     }
   }
 
@@ -130,7 +159,7 @@ export function GestaoAeronave({
         }
 
         const mapped = rawData.map((row: any) => ({
-          tripulacao: row['Tripulação']?.toString() || row['tripulacao']?.toString() || '',
+          tripulacao: row['Tripuração']?.toString() || row['tripulacao']?.toString() || '',
           aeronave: row['Aeronave']?.toString() || '',
           data: formatExcelDate(row['Data']),
           localidade_destino: row['Localidade e destino']?.toString() || '',
@@ -264,7 +293,10 @@ export function GestaoAeronave({
             <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
           </label>
 
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95">
+          <button 
+            onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
+            className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95"
+          >
             <Plus className="h-3.5 w-3.5" /> Novo Registro
           </button>
         </div>
@@ -274,7 +306,11 @@ export function GestaoAeronave({
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible">
         {activeTab === 'gerencial' ? (
           <div className="w-full">
-            <AeronaveTable data={filteredData} loading={loading} />
+            <AeronaveTable 
+              data={filteredData} 
+              loading={loading} 
+              onRowClick={handleRowClick}
+            />
           </div>
         ) : (
           <div className="p-20 text-center text-gray-400 font-bold uppercase text-xs tracking-widest flex flex-col items-center">
@@ -284,7 +320,21 @@ export function GestaoAeronave({
         )}
       </div>
 
-      <AeronaveFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} />
+      {/* Modais */}
+      <AeronaveFormModal 
+        isOpen={isModalOpen} 
+        onClose={() => { setIsModalOpen(false); setSelectedItem(null); }} 
+        onSave={handleSave}
+        initialData={selectedItem}
+      />
+
+      <AeronaveViewModal
+        item={selectedItem}
+        isOpen={isViewModalOpen}
+        onClose={() => { setIsViewModalOpen(false); setSelectedItem(null); }}
+        onEdit={handleEditFromView}
+        onDelete={handleDeleteItem}
+      />
     </div>
   )
 }

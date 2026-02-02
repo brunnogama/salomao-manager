@@ -1,4 +1,10 @@
-export function AeronaveTable({ data, loading }: any) {
+interface AeronaveTableProps {
+  data: any[];
+  loading: boolean;
+  onRowClick: (item: any) => void;
+}
+
+export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps) {
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0)
 
@@ -7,7 +13,9 @@ export function AeronaveTable({ data, loading }: any) {
     if (!dateString) return ''
     try {
       const date = new Date(dateString)
-      return new Intl.DateTimeFormat('pt-BR').format(date)
+      // Adiciona ajuste de fuso horário para evitar que a data mude para o dia anterior
+      const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+      return new Intl.DateTimeFormat('pt-BR').format(adjustedDate)
     } catch (e) {
       return dateString
     }
@@ -41,8 +49,12 @@ export function AeronaveTable({ data, loading }: any) {
         </thead>
         <tbody>
           {data.map((item: any) => (
-            <tr key={item.id} className="group bg-white hover:bg-blue-50/40 border border-gray-100 rounded-xl transition-all shadow-sm">
-              <td className="px-4 py-4 text-sm font-bold text-[#112240] first:rounded-l-xl">{item.tripulacao}</td>
+            <tr 
+              key={item.id} 
+              onClick={() => onRowClick(item)}
+              className="group bg-white hover:bg-blue-50/40 border border-gray-100 rounded-xl transition-all shadow-sm cursor-pointer"
+            >
+              <td className="px-4 py-4 text-sm font-bold text-[#112240] first:rounded-l-xl">{item.tripulacao || '---'}</td>
               <td className="px-4 py-4 text-sm font-semibold text-gray-600">{item.aeronave}</td>
               <td className="px-4 py-4 text-sm font-semibold text-gray-600">
                 {formatDate(item.data)}
