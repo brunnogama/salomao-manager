@@ -152,7 +152,41 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
   }
 
   return (
-    <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-10">
+    <div className="flex flex-col h-full space-y-6">
+      
+      {/* PAGE HEADER COMPLETO - Título + User Info */}
+      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        {/* Left: Título e Ícone */}
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+            <LayoutGrid className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+              Dashboard CRM
+            </h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+              Visão geral de clientes, brindes e magistrados
+            </p>
+          </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button 
+            onClick={() => fetchDashboardData()}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Atualizar
+          </button>
+        </div>
+      </div>
+
+      {/* CONTENT */}
+      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-10">
       
       {/* CARDS DE MÉTRICAS - Design System */}
       <div className="flex flex-wrap gap-4">
