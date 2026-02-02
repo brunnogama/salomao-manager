@@ -166,11 +166,12 @@ export function GestaoAeronave({
           });
 
           return {
-            tripulacao: cleanRow['Tripulação']?.toString() || cleanRow['tripulacao']?.toString() || '',
+            tripulacao: cleanRow['Tripulação']?.toString() || '',
             aeronave: cleanRow['Aeronave']?.toString() || '',
             data: formatExcelDate(cleanRow['Data']),
             localidade_destino: cleanRow['Localidade e destino']?.toString() || '',
             despesa: cleanRow['Despesa']?.toString() || '',
+            descricao: cleanRow['Descrição']?.toString() || '', // Mapeamento da nova coluna
             fornecedor: cleanRow['Fornecedor']?.toString() || '',
             faturado_cnpj: parseCurrency(cleanRow['Faturado CNPJ SALOMÃO']),
             valor_previsto: parseCurrency(cleanRow['R$ Previsto total']),
@@ -185,7 +186,7 @@ export function GestaoAeronave({
         const { error } = await supabase.from('financeiro_aeronave').insert(mapped)
         
         if (error) {
-          console.error('Erro detalhado do Supabase:', error)
+          console.error('Erro detalhado:', error)
           alert(`Erro na importação: ${error.message}`)
         } else {
           alert(`${mapped.length} registros importados com sucesso!`)
@@ -232,9 +233,8 @@ export function GestaoAeronave({
 
       {/* TOOLBAR */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-        {/* Linha Superior: Abas (Esquerda) e Filtro de Datas (Direita) */}
+        {/* Linha Superior: Abas e Filtro de Data */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-          {/* Abas Lado Esquerdo */}
           <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full md:w-auto">
             <button 
               onClick={() => setActiveTab('dashboard')} 
@@ -250,7 +250,6 @@ export function GestaoAeronave({
             </button>
           </div>
 
-          {/* Filtro de Datas Lado Direito */}
           <div className="flex items-center gap-2 w-full md:w-auto">
              <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-4 py-2 w-full md:w-auto">
                 <Calendar className="h-4 w-4 text-gray-400 mr-3" />
@@ -269,18 +268,14 @@ export function GestaoAeronave({
                 />
              </div>
              {(startDate || endDate) && (
-               <button 
-                onClick={() => { setStartDate(''); setEndDate(''); }}
-                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                title="Limpar filtros"
-               >
+               <button onClick={() => { setStartDate(''); setEndDate(''); }} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                  <RefreshCw className="h-4 w-4" />
                </button>
              )}
           </div>
         </div>
 
-        {/* Linha Inferior: Busca e Ações */}
+        {/* Linha Inferior: Busca e Ações (Ícones sem texto) */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -297,15 +292,12 @@ export function GestaoAeronave({
             <button 
               onClick={handleExportExcel}
               className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 transition-all"
-              title="Exportar XLSX"
+              title="Exportar"
             >
               <Download className="h-5 w-5 text-[#1e3a8a]" />
             </button>
 
-            <label 
-              className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 cursor-pointer transition-all"
-              title="Importar XLSX"
-            >
+            <label className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 cursor-pointer transition-all" title="Importar">
               {isImporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileSpreadsheet className="h-5 w-5 text-green-600" />}
               <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
             </label>
@@ -338,21 +330,8 @@ export function GestaoAeronave({
         )}
       </div>
 
-      {/* Modais */}
-      <AeronaveFormModal 
-        isOpen={isModalOpen} 
-        onClose={() => { setIsModalOpen(false); setSelectedItem(null); }} 
-        onSave={handleSave}
-        initialData={selectedItem}
-      />
-
-      <AeronaveViewModal
-        item={selectedItem}
-        isOpen={isViewModalOpen}
-        onClose={() => { setIsViewModalOpen(false); setSelectedItem(null); }}
-        onEdit={handleEditFromView}
-        onDelete={handleDeleteItem}
-      />
+      <AeronaveFormModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedItem(null); }} onSave={handleSave} initialData={selectedItem} />
+      <AeronaveViewModal item={selectedItem} isOpen={isViewModalOpen} onClose={() => { setIsViewModalOpen(false); setSelectedItem(null); }} onEdit={handleEditFromView} onDelete={handleDeleteItem} />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { X, Edit2, Trash2, Plane, Calendar, MapPin, DollarSign, Info, FolderSearch, Upload, MessageSquare } from 'lucide-react'
+import { X, Edit2, Trash2, Plane, Calendar, MapPin, DollarSign, Info, FolderSearch, Upload, MessageSquare, AlignLeft } from 'lucide-react'
 import { AeronaveMenuSelector } from './AeronaveMenuSelector'
 
 interface AeronaveViewModalProps {
@@ -34,13 +34,12 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
         <Icon className={`h-3 w-3 text-${color}-600`} />
         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{label}</span>
       </div>
-      <p className="text-xs font-bold text-[#112240] truncate" title={value}>{value || '---'}</p>
+      <p className="text-xs font-bold text-[#112240] break-words" title={value}>{value || '---'}</p>
     </div>
   )
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md animate-in fade-in duration-300">
-      {/* Aumentado para max-w-7xl para visão ultra-wide e evitar scroll */}
       <div className="bg-white w-full max-w-7xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 flex flex-col animate-in zoom-in duration-300">
         
         {/* Header */}
@@ -63,7 +62,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
         <div className="px-10 py-8 space-y-8 overflow-visible">
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Seção 1: Operacional (Compacta) */}
+            {/* Seção 1: Operacional */}
             <div className="lg:col-span-3 flex flex-col gap-4">
                <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <Info className="h-3.5 w-3.5" /> Operacional
@@ -75,7 +74,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
               </div>
             </div>
 
-            {/* Seção 2: Financeiro (Ampla) */}
+            {/* Seção 2: Financeiro */}
             <div className="lg:col-span-5 flex flex-col gap-4">
               <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <DollarSign className="h-3.5 w-3.5" /> Financeiro
@@ -90,7 +89,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
               </div>
             </div>
 
-            {/* Seção 3: GED (Otimizada) */}
+            {/* Seção 3: GED (Documentação) */}
             <div className="lg:col-span-4 flex flex-col gap-4">
               <h4 className="text-[10px] font-black text-orange-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <FolderSearch className="h-3.5 w-3.5" /> Documentação (GED)
@@ -104,10 +103,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
                       onChange={() => {}} 
                     />
                   </div>
-                  <button 
-                    className="p-2.5 bg-white border border-orange-200 text-orange-600 rounded-xl hover:bg-orange-600 hover:text-white transition-all shadow-sm"
-                    title="Anexar PDF"
-                  >
+                  <button className="p-2.5 bg-white border border-orange-200 text-orange-600 rounded-xl shadow-sm hover:bg-orange-50">
                     <Upload className="h-4 w-4" />
                   </button>
                 </div>
@@ -120,45 +116,39 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
             </div>
           </div>
 
-          {/* Rodapé Interno: Fornecedor, Tripulação e Observações */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+          {/* Seção Detalhada: Despesa, Descrição, Fornecedor e Tripulação */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <DataField icon={Info} label="Despesa" value={item.despesa} color="blue" />
+            <DataField icon={AlignLeft} label="Descrição" value={item.descricao} color="blue" />
             <DataField icon={Edit2} label="Fornecedor" value={item.fornecedor} color="indigo" />
             <DataField icon={Edit2} label="Tripulação / Responsável" value={item.tripulacao} color="indigo" />
-            
-            {item.observacao && (
-              <div className="bg-blue-50/30 p-4 rounded-xl border border-blue-100 flex flex-col">
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageSquare className="h-3 w-3 text-blue-600" />
-                  <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Observações</span>
-                </div>
-                <p className="text-xs font-semibold text-gray-600 leading-relaxed italic truncate" title={item.observacao}>
-                  "{item.observacao}"
-                </p>
-              </div>
-            )}
           </div>
+
+          {/* Observações */}
+          {item.observacao && (
+            <div className="bg-blue-50/30 p-5 rounded-xl border border-blue-100 flex flex-col">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare className="h-3 w-3 text-blue-600" />
+                <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Observações</span>
+              </div>
+              <p className="text-xs font-semibold text-gray-600 leading-relaxed italic break-words">
+                "{item.observacao}"
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div className="px-10 py-6 border-t border-gray-50 bg-gray-50/50 flex justify-between items-center flex-shrink-0">
-          <button 
-            onClick={() => onDelete(item)}
-            className="flex items-center gap-2 px-6 py-3 text-red-500 hover:bg-red-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
-          >
+          <button onClick={() => onDelete(item)} className="flex items-center gap-2 px-6 py-3 text-red-500 hover:bg-red-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
             <Trash2 className="h-4 w-4" /> Excluir Registro
           </button>
 
           <div className="flex gap-4">
-            <button 
-              onClick={onClose}
-              className="px-6 py-3 text-gray-400 hover:text-gray-600 text-[10px] font-black uppercase tracking-widest transition-all"
-            >
+            <button onClick={onClose} className="px-6 py-3 text-gray-400 hover:text-gray-600 text-[10px] font-black uppercase tracking-widest transition-all">
               Fechar
             </button>
-            <button 
-              onClick={() => onEdit(item)}
-              className="flex items-center gap-3 px-8 py-3 bg-[#1e3a8a] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all transform active:scale-95"
-            >
+            <button onClick={() => onEdit(item)} className="flex items-center gap-3 px-10 py-3 bg-[#1e3a8a] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all transform active:scale-95">
               <Edit2 className="h-4 w-4" /> Editar Lançamento
             </button>
           </div>

@@ -14,6 +14,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
     data: '',
     localidade_destino: '',
     despesa: '',
+    descricao: '', // Adicionado campo Descrição
     fornecedor: '',
     observacao: '',
     faturado_cnpj: 0,
@@ -37,6 +38,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
         data: '',
         localidade_destino: '',
         despesa: '',
+        descricao: '',
         fornecedor: '',
         observacao: '',
         faturado_cnpj: 0,
@@ -56,8 +58,6 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFileName(file.name);
-      // A lógica de upload real para o Supabase Storage deve ser chamada aqui
-      // ou no momento do handleSave passando o arquivo como parâmetro
     }
   }
 
@@ -65,7 +65,6 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md transition-all">
-      {/* Aumentado para max-w-7xl para evitar barra de rolagem e melhorar visualização horizontal */}
       <div className="bg-white w-full max-w-7xl rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] flex flex-col border border-white/20">
         
         {/* Header */}
@@ -146,33 +145,54 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                 </label>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <label className="block">
+                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Despesa</span>
+                  <input 
+                    className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
+                    value={formData.despesa}
+                    onChange={e => setFormData({...formData, despesa: e.target.value})}
+                    placeholder="Tipo de despesa"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Descrição</span>
+                  <input 
+                    className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
+                    value={formData.descricao}
+                    onChange={e => setFormData({...formData, descricao: e.target.value})}
+                    placeholder="Descrição detalhada"
+                  />
+                </label>
+              </div>
+
               <div className="grid grid-cols-3 gap-3">
                 <label className="block">
                   <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Faturado CNPJ</span>
-                  <NumericFormat thousandSeparator="." decimalSeparator="," prefix="R$ " className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none" onValueChange={(vals) => setFormData({...formData, faturado_cnpj: vals.floatValue || 0})} value={formData.faturado_cnpj} />
+                  <NumericFormat thousandSeparator="." decimalSeparator="," prefix="R$ " className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" onValueChange={(vals) => setFormData({...formData, faturado_cnpj: vals.floatValue || 0})} value={formData.faturado_cnpj} />
                 </label>
                 <label className="block">
                   <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">R$ Previsto</span>
-                  <NumericFormat thousandSeparator="." decimalSeparator="," prefix="R$ " className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none" onValueChange={(vals) => setFormData({...formData, valor_previsto: vals.floatValue || 0})} value={formData.valor_previsto} />
+                  <NumericFormat thousandSeparator="." decimalSeparator="," prefix="R$ " className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" onValueChange={(vals) => setFormData({...formData, valor_previsto: vals.floatValue || 0})} value={formData.valor_previsto} />
                 </label>
                 <label className="block">
                   <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">R$ Extra</span>
-                  <NumericFormat thousandSeparator="." decimalSeparator="," prefix="R$ " className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none" onValueChange={(vals) => setFormData({...formData, valor_extra: vals.floatValue || 0})} value={formData.valor_extra} />
+                  <NumericFormat thousandSeparator="." decimalSeparator="," prefix="R$ " className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" onValueChange={(vals) => setFormData({...formData, valor_extra: vals.floatValue || 0})} value={formData.valor_extra} />
                 </label>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <label className="block">
                   <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">R$ Pago</span>
-                  <NumericFormat thousandSeparator="." decimalSeparator="," prefix="R$ " className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none" onValueChange={(vals) => setFormData({...formData, valor_pago: vals.floatValue || 0})} value={formData.valor_pago} />
+                  <NumericFormat thousandSeparator="." decimalSeparator="," prefix="R$ " className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" onValueChange={(vals) => setFormData({...formData, valor_pago: vals.floatValue || 0})} value={formData.valor_pago} />
                 </label>
                 <label className="block">
                   <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Vencimento</span>
-                  <InputMask mask="99/99/9999" className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none" value={formData.data_vencimento} onChange={(e: any) => setFormData({...formData, data_vencimento: e.target.value})} placeholder="DD/MM/AAAA" />
+                  <InputMask mask="99/99/9999" className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" value={formData.data_vencimento} onChange={(e: any) => setFormData({...formData, data_vencimento: e.target.value})} placeholder="DD/MM/AAAA" />
                 </label>
                 <label className="block">
                   <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Pagamento</span>
-                  <InputMask mask="99/99/9999" className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none" value={formData.data_pagamento} onChange={(e: any) => setFormData({...formData, data_pagamento: e.target.value})} placeholder="DD/MM/AAAA" />
+                  <InputMask mask="99/99/9999" className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" value={formData.data_pagamento} onChange={(e: any) => setFormData({...formData, data_pagamento: e.target.value})} placeholder="DD/MM/AAAA" />
                 </label>
               </div>
             </div>

@@ -8,13 +8,21 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0)
 
-  // Formatação de data nativa para evitar dependência de 'date-fns'
+  // Formatação de data padronizada para DD/MM/AAAA
   const formatDate = (dateString: string) => {
     if (!dateString) return ''
     try {
+      // Caso a string já esteja no formato DD/MM/AAAA (comum em importações ou inputs mascarados)
+      if (dateString.includes('/') && dateString.split('/')[0].length <= 2) {
+        return dateString;
+      }
+      
       const date = new Date(dateString)
-      // Adiciona ajuste de fuso horário para evitar que a data mude para o dia anterior
-      const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+      if (isNaN(date.getTime())) return dateString;
+
+      // Adiciona ajuste de fuso horário para evitar retrocesso de dia
+      const adjustedDate = new Date(date.getTime() + Math.abs(date.getTimezoneOffset() * 60000));
+      
       return new Intl.DateTimeFormat('pt-BR').format(adjustedDate)
     } catch (e) {
       return dateString
@@ -41,6 +49,8 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Aeronave</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Data</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Destino</th>
+            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Despesa</th>
+            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Descrição</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Fornecedor</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Faturado CNPJ</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Previsto</th>
@@ -60,6 +70,8 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
                 {formatDate(item.data)}
               </td>
               <td className="px-4 py-4 text-sm font-medium text-gray-500">{item.localidade_destino}</td>
+              <td className="px-4 py-4 text-sm font-bold text-blue-600">{item.despesa}</td>
+              <td className="px-4 py-4 text-sm font-medium text-gray-500 italic max-w-xs truncate">{item.descricao}</td>
               <td className="px-4 py-4 text-sm font-bold text-[#1e3a8a]">{item.fornecedor}</td>
               <td className="px-4 py-4 text-sm font-bold text-orange-600">{formatCurrency(item.faturado_cnpj)}</td>
               <td className="px-4 py-4 text-sm font-bold text-gray-400">{formatCurrency(item.valor_previsto)}</td>
