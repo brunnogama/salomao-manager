@@ -31,21 +31,21 @@ interface DashboardProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
-    const color = data.payload.fill || data.color || '#64748b';
+    const color = data.payload.fill || data.color || '#1e3a8a';
     
     return (
-      <div className="bg-white p-3 rounded border border-gray-200 shadow-lg min-w-[120px]">
-        <p className="text-xs font-semibold text-gray-900 border-b border-gray-100 pb-1 mb-2 capitalize">
+      <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-lg min-w-[120px]">
+        <p className="text-[9px] font-black text-[#0a192f] uppercase tracking-[0.2em] border-b border-gray-100 pb-1 mb-2">
           {label}
         </p>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs text-gray-600 font-medium capitalize">
+            <span className="text-xs text-gray-600 font-semibold capitalize">
               {data.name || 'Quantidade'}:
             </span>
           </div>
-          <span className="text-sm font-semibold text-gray-900">
+          <span className="text-sm font-black text-[#0a192f]">
             {data.value}
           </span>
         </div>
@@ -67,9 +67,9 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
   const [loading, setLoading] = useState(true);
 
   const getBrindeColor = (tipo: string) => {
-    if (tipo === 'Brinde VIP') return '#475569'; 
-    if (tipo === 'Brinde Médio') return '#64748b'; 
-    return '#94a3b8'; 
+    if (tipo === 'Brinde VIP') return '#1e3a8a'; // Navy
+    if (tipo === 'Brinde Médio') return '#3b82f6'; // Blue
+    return '#60a5fa'; // Light blue
   };
 
   const fetchDashboardData = async () => {
@@ -146,7 +146,7 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#112240]"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1e3a8a]"></div>
       </div>
     );
   }
@@ -154,18 +154,18 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
   return (
     <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-10">
       
-      {/* CARDS DE MÉTRICAS */}
+      {/* CARDS DE MÉTRICAS - Design System */}
       <div className="flex flex-wrap gap-4">
         
         {/* Card Total Geral (Clientes) */}
-        <div className="bg-white p-5 rounded-lg border border-gray-200 flex flex-col gap-3 flex-1 min-w-[180px]">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col gap-3 flex-1 min-w-[180px] transition-all hover:shadow-md">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded border border-gray-200">
-                <Award className="h-5 w-5 text-gray-700" />
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+                <Award className="h-5 w-5 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide">Clientes</p>
-                <p className="text-2xl font-bold text-gray-900 leading-none mt-1">{stats.totalClients}</p>
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Clientes</p>
+                <p className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none mt-1">{stats.totalClients}</p>
               </div>
             </div>
         </div>
@@ -177,15 +177,15 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
           <div 
             key={tipo} 
             onClick={() => onNavigateWithFilter('clientes', { brinde: tipo })}
-            className="bg-white p-5 rounded-lg border border-gray-200 flex flex-col gap-3 cursor-pointer hover:border-gray-400 hover:shadow-sm transition-all flex-1 min-w-[180px]"
+            className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col gap-3 cursor-pointer hover:border-[#1e3a8a]/30 hover:shadow-md transition-all flex-1 min-w-[180px] active:scale-95"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded border border-gray-200">
-                <Gift className="h-5 w-5 text-gray-700" />
+              <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+                <Gift className="h-5 w-5 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide line-clamp-1">{tipo}</p>
-                <p className="text-2xl font-bold text-gray-900 leading-none mt-1">{qtd}</p>
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] line-clamp-1">{tipo}</p>
+                <p className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none mt-1">{qtd}</p>
               </div>
             </div>
           </div>
@@ -198,19 +198,19 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
 
         {/* Card Magistrados */}
         <div 
-          className="bg-gray-50 p-5 rounded-lg border border-gray-300 flex flex-col gap-3 cursor-pointer hover:border-gray-400 hover:shadow-sm transition-all flex-1 min-w-[200px]"
+          className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-2xl shadow-sm border border-gray-300 flex flex-col gap-3 cursor-pointer hover:border-[#1e3a8a]/30 hover:shadow-md transition-all flex-1 min-w-[200px] active:scale-95"
           onClick={() => onNavigateWithFilter('magistrados', {})}
         >
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded border border-gray-200">
-                <Gavel className="h-5 w-5 text-gray-700" />
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+                <Gavel className="h-5 w-5 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide">Magistrados</p>
-                <p className="text-2xl font-bold text-gray-900 leading-none mt-1">{stats.totalMagistrados}</p>
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Magistrados</p>
+                <p className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none mt-1">{stats.totalMagistrados}</p>
               </div>
             </div>
-            <div className="text-[8px] text-gray-500 font-semibold uppercase tracking-wide">
+            <div className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">
               ÁREA RESTRITA
             </div>
         </div>
@@ -220,26 +220,26 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         
         {/* Bloco Clientes por Sócio */}
-        <div className="xl:col-span-2 bg-white p-6 rounded-lg border border-gray-200">
+        <div className="xl:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-gray-100 rounded border border-gray-200">
-              <LayoutGrid className="h-5 w-5 text-gray-700" />
+            <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+              <LayoutGrid className="h-5 w-5 text-white" />
             </div>
-            <h3 className="font-semibold text-gray-900 text-lg">Clientes por Sócio</h3>
+            <h3 className="text-[20px] font-black text-[#0a192f] tracking-tight">Clientes por Sócio</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {stats.socioData.map((socio) => (
               <div 
                 key={socio.name} 
-                className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-gray-400 transition-colors flex flex-col h-full cursor-pointer group"
+                className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-xl border border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md transition-all flex flex-col h-full cursor-pointer group active:scale-95"
                 onClick={() => onNavigateWithFilter('clientes', { socio: socio.name })}
               >
                 <div className="flex justify-between items-start mb-4">
-                  <h4 className="font-semibold text-gray-900 text-sm leading-tight pr-2 group-hover:text-gray-700">{socio.name}</h4>
+                  <h4 className="font-black text-[#0a192f] text-sm leading-tight pr-2 group-hover:text-[#1e3a8a] transition-colors">{socio.name}</h4>
                   <div className="text-right flex flex-col items-end">
-                    <span className="text-xl font-bold text-gray-900 leading-none">{socio.total}</span>
-                    <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide">Total</span>
+                    <span className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">{socio.total}</span>
+                    <span className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">Total</span>
                   </div>
                 </div>
 
@@ -254,11 +254,11 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
                         tickLine={false} 
                         fontSize={10} 
                         width={70}
-                        tick={{fill: '#64748b', fontWeight: 600}}
+                        tick={{fill: '#64748b', fontWeight: 700}}
                         interval={0} 
                       />
                       <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
-                      <Bar dataKey="qtd" radius={[0, 4, 4, 0]} barSize={16} name="Quantidade">
+                      <Bar dataKey="qtd" radius={[0, 8, 8, 0]} barSize={16} name="Quantidade">
                         {socio.brindes.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={getBrindeColor(entry.tipo)} />
                         ))}
@@ -273,12 +273,12 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
         </div>
 
         <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg border border-gray-200 flex flex-col">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-gray-100 rounded border border-gray-200">
-                      <Map className="h-5 w-5 text-gray-700" />
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+                      <Map className="h-5 w-5 text-white" />
                     </div>
-                    <h3 className="font-semibold text-gray-900 text-lg">Por Estado</h3>
+                    <h3 className="text-[20px] font-black text-[#0a192f] tracking-tight">Por Estado</h3>
                 </div>
                 <div className="h-64 w-full"> 
                     <ResponsiveContainer width="100%" height="100%">
@@ -295,7 +295,7 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
                                 interval={0} 
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
-                            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24} fill="#64748b" name="Clientes">
+                            <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={24} fill="#1e3a8a" name="Clientes">
                                 <LabelList dataKey="value" position="right" style={{ fontSize: '12px', fontWeight: 'bold', fill: '#1f2937' }} />
                             </Bar>
                         </BarChart>
@@ -303,26 +303,24 @@ export function Dashboard({ onNavigateWithFilter }: DashboardProps) {
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 flex flex-col h-fit">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-fit">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-gray-100 rounded border border-gray-200">
-                      <Users className="h-5 w-5 text-gray-700" />
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+                      <Users className="h-5 w-5 text-white" />
                     </div>
-                    <h3 className="font-semibold text-gray-900 text-lg">Últimos</h3>
+                    <h3 className="text-[20px] font-black text-[#0a192f] tracking-tight">Últimos</h3>
                 </div>
                 <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 max-h-[400px]">
                     {stats.lastClients.map((client) => (
-                    <div key={client.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-400 transition-all group">
+                    <div key={client.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-sm transition-all group">
                         <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate mb-1">{client.nome}</p>
-                        <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
+                          <p className="text-sm font-black text-[#0a192f] truncate mb-1">{client.nome}</p>
+                          <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">
                             {client.socio || 'Sem Sócio'}
-                        </p>
+                          </p>
                         </div>
-                        <span 
-                        className="text-[10px] px-2.5 py-1 rounded font-semibold bg-white border border-gray-200 shrink-0 uppercase tracking-wider text-gray-700"
-                        >
-                        {client.tipo_brinde?.replace('Brinde ', '') || 'BRINDE'}
+                        <span className="text-[9px] px-2.5 py-1 rounded-lg font-black bg-white border border-gray-200 shrink-0 uppercase tracking-[0.2em] text-gray-700 group-hover:border-[#1e3a8a]/30 transition-colors">
+                          {client.tipo_brinde?.replace('Brinde ', '') || 'BRINDE'}
                         </span>
                     </div>
                     ))}
