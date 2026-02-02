@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Login from './Login'
 import ResetPassword from './ResetPassword'
-import { ModuleSelector } from './components/ModuleSelector' // Ajustado se também for nomeado
+import { ModuleSelector } from './components/ModuleSelector'
 import { Sidebar as CrmSidebar } from './components/crm/Sidebar'
 import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
 import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
@@ -11,7 +11,7 @@ import { SidebarFinanceiro } from './components/finance/SidebarFinanceiro'
 // Componentes
 import { Clients } from './components/crm/Clients'
 import { Magistrados } from './components/crm/Magistrados'
-import { Settings } from './components/Settings' // ALTERAÇÃO AQUI: Adicionado chaves { }
+import { Settings } from './components/Settings'
 import { IncompleteClients } from './components/crm/IncompleteClients'
 import { Kanban } from './components/crm/Kanban'
 import { Dashboard } from './components/crm/Dashboard'
@@ -119,7 +119,14 @@ export default function App() {
             {currentModule === 'crm' && (
               <>
                 {activePage === 'dashboard' && <Dashboard onNavigateWithFilter={(p:any, f:any) => { setClientFilters(f); setActivePage(p); }} />}
-                {activePage === 'clientes' && <Clients initialFilters={clientFilters} />}
+                {activePage === 'clientes' && (
+                  <Clients 
+                    initialFilters={clientFilters} 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
                 {activePage === 'magistrados' && <Magistrados />}
                 {activePage === 'incompletos' && <IncompleteClients />}
                 {activePage === 'manual' && <Manual />}
