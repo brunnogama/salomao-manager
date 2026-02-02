@@ -3,9 +3,10 @@ import { DollarSign, Plane, Building2, Wallet, TrendingUp, BarChart3, PieChart }
 
 interface DashboardProps {
   data: any[];
+  onMissionClick?: (data: string, destino: string) => void;
 }
 
-export function AeronaveDashboard({ data }: DashboardProps) {
+export function AeronaveDashboard({ data, onMissionClick }: DashboardProps) {
   const stats = useMemo(() => {
     const totalPaid = data.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
     const totalCnpj = data.reduce((acc, curr) => acc + (Number(curr.faturado_cnpj) || 0), 0)
@@ -107,7 +108,11 @@ export function AeronaveDashboard({ data }: DashboardProps) {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {stats.missions.map((m: any) => (
-                  <tr key={m.key} className="hover:bg-blue-50/30 transition-colors group">
+                  <tr 
+                    key={m.key} 
+                    onClick={() => onMissionClick?.(m.data, m.destino)}
+                    className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
+                  >
                     <td className="px-8 py-4">
                       <div className="flex flex-col">
                         <span className="text-xs font-black text-[#112240]">{formatDate(m.data)}</span>
