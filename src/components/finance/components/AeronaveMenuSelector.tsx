@@ -41,7 +41,7 @@ export function AeronaveMenuSelector({ label, value, onChange }: any) {
           value={value}
           onChange={e => onChange(e.target.value)}
         >
-          <option value="">Selecione o fornecedor...</option>
+          <option value="">Selecione o tipo...</option>
           {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
