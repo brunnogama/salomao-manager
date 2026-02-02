@@ -158,21 +158,29 @@ export function GestaoAeronave({
           return parseFloat(cleanValue) || 0
         }
 
-        const mapped = rawData.map((row: any) => ({
-          tripulacao: row['Tripuração']?.toString() || row['tripulacao']?.toString() || '',
-          aeronave: row['Aeronave']?.toString() || '',
-          data: formatExcelDate(row['Data']),
-          localidade_destino: row['Localidade e destino']?.toString() || '',
-          despesa: row['Despesa']?.toString() || '',
-          fornecedor: row['Fornecedor']?.toString() || '',
-          faturado_cnpj: parseCurrency(row['Faturado CNPJ SALOMÃO']),
-          valor_previsto: parseCurrency(row['R$ Previsto total']),
-          valor_extra: parseCurrency(row['R$ Extra']),
-          valor_pago: parseCurrency(row['R$ pago']),
-          data_vencimento: formatExcelDate(row['Data Venc.']),
-          data_pagamento: formatExcelDate(row['Data Pgto']),
-          observacao: row['Observação']?.toString() || ''
-        }))
+        const mapped = rawData.map((row: any) => {
+          // Normaliza as chaves removendo espaços e tratando caracteres especiais
+          const cleanRow: any = {};
+          Object.keys(row).forEach(key => {
+            cleanRow[key.trim()] = row[key];
+          });
+
+          return {
+            tripulacao: cleanRow['Tripulação']?.toString() || cleanRow['tripulacao']?.toString() || '',
+            aeronave: cleanRow['Aeronave']?.toString() || '',
+            data: formatExcelDate(cleanRow['Data']),
+            localidade_destino: cleanRow['Localidade e destino']?.toString() || '',
+            despesa: cleanRow['Despesa']?.toString() || '',
+            fornecedor: cleanRow['Fornecedor']?.toString() || '',
+            faturado_cnpj: parseCurrency(cleanRow['Faturado CNPJ SALOMÃO']),
+            valor_previsto: parseCurrency(cleanRow['R$ Previsto total']),
+            valor_extra: parseCurrency(cleanRow['R$ Extra']),
+            valor_pago: parseCurrency(cleanRow['R$ pago']),
+            data_vencimento: formatExcelDate(cleanRow['Data Venc.']),
+            data_pagamento: formatExcelDate(cleanRow['Data Pgto']),
+            observacao: cleanRow['Observação']?.toString() || ''
+          }
+        })
 
         const { error } = await supabase.from('financeiro_aeronave').insert(mapped)
         
@@ -188,7 +196,7 @@ export function GestaoAeronave({
         alert('Erro ao processar o arquivo Excel.')
       } finally { 
         setIsImporting(false) 
-        e.target.value = ''
+        if (e.target) e.target.value = ''
       }
     }
     reader.readAsBinaryString(file)
