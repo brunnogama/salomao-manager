@@ -122,6 +122,14 @@ export function GestaoAeronave({
     }
   }
 
+  // Função para lidar com o clique na missão no Dashboard
+  const handleMissionClick = (dataMissao: string, destinoMissao: string) => {
+    setSearchTerm(destinoMissao)
+    setStartDate(dataMissao)
+    setEndDate(dataMissao)
+    setActiveTab('gerencial')
+  }
+
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -326,7 +334,10 @@ export function GestaoAeronave({
             />
           </div>
         ) : (
-          <AeronaveDashboard data={filteredData} />
+          <AeronaveDashboard 
+            data={filteredData} 
+            onMissionClick={handleMissionClick} 
+          />
         )}
       </div>
 

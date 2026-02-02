@@ -110,7 +110,9 @@ export function AeronaveDashboard({ data, onMissionClick }: DashboardProps) {
                 {stats.missions.map((m: any) => (
                   <tr 
                     key={m.key} 
-                    onClick={() => onMissionClick?.(m.data, m.destino)}
+                    onClick={() => {
+                      if (onMissionClick) onMissionClick(m.data, m.destino);
+                    }}
                     className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
                   >
                     <td className="px-8 py-4">
