@@ -105,23 +105,27 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-[100]" onClose={onClose}>
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md" />
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
             <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100">
-              <Dialog.Panel className="w-full max-w-3xl bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-200">
+              <Dialog.Panel className="w-full max-w-3xl bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-200/50">
                 
-                <header className="bg-[#112240] px-6 py-4 flex justify-between items-center text-white">
+                {/* HEADER - Navy Gradient */}
+                <header className="bg-gradient-to-r from-[#0a192f] to-[#112240] px-8 py-5 flex justify-between items-center text-white rounded-t-[2rem]">
                   <div className="flex items-center gap-3">
-                    <User className="h-5 w-5" />
-                    <Dialog.Title className="text-base font-semibold">{clientToEdit ? 'Editar Cliente' : 'Novo Cliente'}</Dialog.Title>
+                    <div className="p-2 rounded-xl bg-white/10 backdrop-blur-sm">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <Dialog.Title className="text-[20px] font-black tracking-tight">{clientToEdit ? 'Editar Cliente' : 'Novo Cliente'}</Dialog.Title>
                   </div>
-                  <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded transition-colors">
-                    <X className="h-5 w-5" />
+                  <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all group">
+                    <X className="h-5 w-5 group-hover:rotate-90 transition-transform duration-200" />
                   </button>
                 </header>
 
-                <nav className="flex border-b border-gray-200 px-6 bg-gray-50">
+                {/* TABS - Design System */}
+                <nav className="flex border-b border-gray-200 px-8 bg-white">
                   {[
                     { id: 'geral', label: 'Geral', icon: User },
                     { id: 'endereco', label: 'Endereço', icon: MapPin },
@@ -130,21 +134,22 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                     <button 
                       key={tab.id} 
                       onClick={() => setActiveTab(tab.id)} 
-                      className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
+                      className={`flex items-center gap-2 px-6 py-4 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-all ${
                         activeTab === tab.id 
-                          ? 'border-[#112240] text-gray-900' 
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                          ? 'border-[#1e3a8a] text-[#1e3a8a]' 
+                          : 'border-transparent text-gray-400 hover:text-gray-600'
                       }`}
                     >
-                      <tab.icon className="h-4 w-4" />
+                      <tab.icon className="h-3.5 w-3.5" />
                       {tab.label}
                     </button>
                   ))}
                 </nav>
 
-                <div className="p-6 overflow-y-auto flex-1 custom-scrollbar bg-white">
+                {/* BODY */}
+                <div className="p-8 overflow-y-auto flex-1 custom-scrollbar bg-white">
                   {activeTab === 'geral' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="md:col-span-2">
                         <FormInput 
                           label="Nome Completo" 
@@ -172,15 +177,15 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                       />
                       
                       <div>
-                        <label className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide block mb-2 flex items-center gap-2">
-                          <Phone className="h-3.5 w-3.5 text-gray-400" />
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                          <Phone className="h-3.5 w-3.5" />
                           Telefone
                         </label>
                         <IMaskInput 
                           mask="(00) 00000-0000" 
                           value={formData.telefone} 
                           onAccept={(v: any) => setFormData({...formData, telefone: v})} 
-                          className="w-full border border-gray-300 rounded p-2.5 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all bg-white"
+                          className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
                           placeholder="(00) 00000-0000"
                         />
                       </div>
@@ -195,24 +200,24 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                       />
                       
                       <div className="relative" ref={socioMenuRef}>
-                        <label className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide block mb-2 flex items-center gap-2">
-                          <UserCircle className="h-3.5 w-3.5 text-gray-400" />
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                          <UserCircle className="h-3.5 w-3.5" />
                           Sócio Responsável
                         </label>
                         <button 
                           onClick={() => setIsSocioMenuOpen(!isSocioMenuOpen)} 
-                          className="w-full border border-gray-300 rounded p-2.5 text-sm bg-white flex justify-between items-center hover:border-gray-400 transition-all"
+                          className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-2.5 text-sm flex justify-between items-center hover:border-[#1e3a8a]/30 transition-all"
                         >
-                          <span className={formData.socio ? "text-gray-900 font-medium" : "text-gray-400"}>{formData.socio || "Selecione um sócio..."}</span>
+                          <span className={formData.socio ? "text-[#0a192f] font-bold" : "text-gray-400"}>{formData.socio || "Selecione um sócio..."}</span>
                           <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isSocioMenuOpen ? 'rotate-180' : ''}`} />
                         </button>
                         {isSocioMenuOpen && (
-                          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto">
+                          <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
                             {sociosList.map(s => (
                               <button 
                                 key={s.id} 
                                 onClick={() => { setFormData({...formData, socio: s.nome}); setIsSocioMenuOpen(false) }} 
-                                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors font-medium text-gray-700"
+                                className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors font-bold text-[#0a192f]"
                               >
                                 {s.nome}
                               </button>
@@ -222,14 +227,14 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide block mb-2 flex items-center gap-2">
-                          <Gift className="h-3.5 w-3.5 text-gray-400" />
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                          <Gift className="h-3.5 w-3.5" />
                           Tipo Brinde
                         </label>
                         <select 
                           value={formData.tipo_brinde} 
                           onChange={e => setFormData({...formData, tipo_brinde: e.target.value})} 
-                          className="w-full border border-gray-300 rounded p-2.5 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all bg-white font-medium"
+                          className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-bold"
                         >
                           {brindeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         </select>
@@ -238,10 +243,10 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                   )}
 
                   {activeTab === 'endereco' && (
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
                       <div className="md:col-span-2">
-                        <label className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide block mb-2 flex items-center gap-2">
-                          <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                          <MapPin className="h-3.5 w-3.5" />
                           CEP
                         </label>
                         <IMaskInput 
@@ -249,7 +254,7 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                           value={formData.cep} 
                           onAccept={(v: any) => setFormData({...formData, cep: v})} 
                           onBlur={handleCepBlur} 
-                          className="w-full border border-gray-300 rounded p-2.5 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none transition-all bg-white"
+                          className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
                           placeholder="00000-000"
                         />
                       </div>
@@ -302,29 +307,29 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                   )}
 
                   {activeTab === 'historico' && (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {formData.historico_brindes?.map((item, idx) => (
-                        <div key={item.ano} className="bg-gray-50 p-4 rounded border border-gray-200">
-                          <div className="flex items-center gap-2 font-semibold text-gray-900 text-sm mb-3">
-                            <Calendar className="h-4 w-4 text-gray-400" /> 
+                        <div key={item.ano} className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-xl border border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-sm transition-all">
+                          <div className="flex items-center gap-2 font-black text-[#0a192f] text-base mb-4 pb-3 border-b border-gray-100">
+                            <Calendar className="h-4 w-4 text-[#1e3a8a]" /> 
                             <span>{item.ano}</span>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <label className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide block mb-1">Tipo de Brinde</label>
+                              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Tipo de Brinde</label>
                               <select 
                                 value={item.tipo} 
                                 onChange={e => {
                                   const h = [...formData.historico_brindes!]; h[idx].tipo = e.target.value; setFormData({...formData, historico_brindes: h})
                                 }} 
-                                className="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none bg-white"
+                                className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-bold"
                               >
                                 <option value="">Selecione...</option>
                                 {brindeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                               </select>
                             </div>
                             <div>
-                              <label className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide block mb-1">Observações</label>
+                              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Observações</label>
                               <input 
                                 type="text" 
                                 value={item.obs} 
@@ -332,7 +337,7 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                                 onChange={e => {
                                   const h = [...formData.historico_brindes!]; h[idx].obs = e.target.value; setFormData({...formData, historico_brindes: h})
                                 }} 
-                                className="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-gray-400 focus:border-gray-400 outline-none"
+                                className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
                               />
                             </div>
                           </div>
@@ -342,25 +347,26 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                   )}
                 </div>
 
-                <footer className="bg-gray-50 p-4 border-t border-gray-200 flex flex-col gap-3">
+                {/* FOOTER */}
+                <footer className="bg-gray-50 px-8 py-5 border-t border-gray-200 flex flex-col gap-4 rounded-b-[2rem]">
                    {clientToEdit && (
-                     <div className="flex gap-3 justify-center pb-3 border-b border-gray-200">
+                     <div className="flex gap-3 justify-center pb-4 border-b border-gray-200">
                         <AuditBadge label="Criado" date={clientToEdit.created_at} user={clientToEdit.created_by} />
                         <AuditBadge label="Editado" date={clientToEdit.updated_at} user={clientToEdit.updated_by} />
                      </div>
                    )}
-                   <div className="flex justify-end gap-2">
+                   <div className="flex justify-end gap-3">
                     <button 
                       onClick={onClose} 
-                      className="px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                      className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
                     >
                       Cancelar
                     </button>
                     <button 
                       onClick={handleSave} 
-                      className="bg-[#112240] text-white px-5 py-2 rounded font-semibold flex items-center gap-2 hover:bg-[#1a3a6c] transition-colors"
+                      className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
                     >
-                      <Save className="h-4 w-4" /> Salvar Cliente
+                      <Save className="h-4 w-4" /> Salvar
                     </button>
                    </div>
                 </footer>
@@ -376,8 +382,8 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
 function FormInput({ label, value, onChange, type = "text", icon, placeholder }: any) {
   return (
     <div>
-      <label className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide block mb-2 flex items-center gap-2">
-        {icon && <icon className="h-3.5 w-3.5 text-gray-400" />}
+      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+        {icon && <icon className="h-3.5 w-3.5" />}
         {label}
       </label>
       <input 
@@ -385,7 +391,7 @@ function FormInput({ label, value, onChange, type = "text", icon, placeholder }:
         value={value} 
         onChange={e => onChange(e.target.value)} 
         placeholder={placeholder}
-        className="w-full border border-gray-300 rounded p-2.5 text-sm outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition-all bg-white"
+        className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
       />
     </div>
   )
@@ -394,12 +400,12 @@ function FormInput({ label, value, onChange, type = "text", icon, placeholder }:
 function AuditBadge({ label, date, user }: any) {
   if (!date) return null
   return (
-    <div className="flex items-center gap-2 bg-white px-3 py-2 rounded border border-gray-200">
+    <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm">
       <Clock className="h-3.5 w-3.5 text-gray-400" />
       <div className="flex flex-col">
-        <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wide">{label}</span>
-        <span className="text-xs font-medium text-gray-900">{new Date(date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
-        {user && <span className="text-xs text-gray-600">{user}</span>}
+        <span className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">{label}</span>
+        <span className="text-xs font-bold text-[#0a192f]">{new Date(date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+        {user && <span className="text-xs text-gray-600 font-medium">{user}</span>}
       </div>
     </div>
   )
