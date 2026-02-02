@@ -19,6 +19,7 @@ import { supabase } from '../../../lib/supabase'
 import { AeronaveTable } from '../components/AeronaveTable'
 import { AeronaveFormModal } from '../components/AeronaveFormModal'
 import { AeronaveViewModal } from '../components/AeronaveViewModal'
+import { AeronaveDashboard } from '../components/AeronaveDashboard'
 
 interface GestaoAeronaveProps {
   userName?: string;
@@ -235,6 +236,7 @@ export function GestaoAeronave({
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
         {/* Linha Superior: Abas e Filtro de Data */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+          {/* Abas Lado Esquerdo */}
           <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full md:w-auto">
             <button 
               onClick={() => setActiveTab('dashboard')} 
@@ -250,6 +252,7 @@ export function GestaoAeronave({
             </button>
           </div>
 
+          {/* Filtro de Datas Lado Direito */}
           <div className="flex items-center gap-2 w-full md:w-auto">
              <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-4 py-2 w-full md:w-auto">
                 <Calendar className="h-4 w-4 text-gray-400 mr-3" />
@@ -323,10 +326,7 @@ export function GestaoAeronave({
             />
           </div>
         ) : (
-          <div className="p-20 text-center text-gray-400 font-bold uppercase text-xs tracking-widest flex flex-col items-center">
-            <RefreshCw className="h-8 w-8 mb-4 animate-spin opacity-20" />
-            Dashboard em desenvolvimento
-          </div>
+          <AeronaveDashboard data={filteredData} />
         )}
       </div>
 
