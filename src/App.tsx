@@ -141,7 +141,13 @@ export default function App() {
                     onLogout={handleLogout} 
                   />
                 )}
-                {activePage === 'incompletos' && <IncompleteClients />}
+                {activePage === 'incompletos' && (
+                  <IncompleteClients 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
                 {activePage === 'manual' && <Manual />}
                 {activePage === 'kanban' && (
                   <Kanban 
