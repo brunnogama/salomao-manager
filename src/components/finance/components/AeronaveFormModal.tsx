@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Save, Plane, Users, Calendar, MapPin, Tag, DollarSign, FileText } from 'lucide-react'
+import { X, Save, Plane } from 'lucide-react'
 import { AeronaveMenuSelector } from './AeronaveMenuSelector'
 import { NumericFormat } from 'react-number-format'
 import InputMask from 'react-input-mask'
@@ -22,8 +22,26 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
   })
 
   useEffect(() => {
-    if (initialData) setFormData(initialData)
-  }, [initialData])
+    if (initialData) {
+      setFormData(initialData)
+    } else {
+      setFormData({
+        tripulacao: '',
+        aeronave: '',
+        data: '',
+        localidade_destino: '',
+        despesa: '',
+        fornecedor: '',
+        observacao: '',
+        faturado_cnpj: 0,
+        valor_previsto: 0,
+        valor_extra: 0,
+        valor_pago: 0,
+        data_vencimento: '',
+        data_pagamento: ''
+      })
+    }
+  }, [initialData, isOpen])
 
   if (!isOpen) return null
 
@@ -53,7 +71,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
         <div className="px-8 py-6 space-y-6 overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            {/* Informações Básicas */}
+            {/* Informações Operacionais */}
             <div className="space-y-4">
               <label className="block">
                 <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Tripulação</span>
@@ -61,6 +79,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
                   value={formData.tripulacao}
                   onChange={e => setFormData({...formData, tripulacao: e.target.value})}
+                  placeholder="Nome dos tripulantes"
                 />
               </label>
               
@@ -70,6 +89,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
                   value={formData.aeronave}
                   onChange={e => setFormData({...formData, aeronave: e.target.value})}
+                  placeholder="Prefixo da aeronave"
                 />
               </label>
 
@@ -80,11 +100,12 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
                   value={formData.data}
                   onChange={(e: any) => setFormData({...formData, data: e.target.value})}
+                  placeholder="DD/MM/AAAA"
                 />
               </label>
             </div>
 
-            {/* Logística */}
+            {/* Logística e Fornecedor */}
             <div className="space-y-4">
               <label className="block">
                 <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Localidade e Destino</span>
@@ -92,6 +113,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
                   value={formData.localidade_destino}
                   onChange={e => setFormData({...formData, localidade_destino: e.target.value})}
+                  placeholder="Ex: SDU -> CGH"
                 />
               </label>
 
@@ -101,6 +123,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
                   value={formData.despesa}
                   onChange={e => setFormData({...formData, despesa: e.target.value})}
+                  placeholder="Tipo de despesa"
                 />
               </label>
 
@@ -111,7 +134,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
               />
             </div>
 
-            {/* Financeiro 1 */}
+            {/* Financeiro - Valores */}
             <div className="space-y-4">
               <label className="block">
                 <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Faturado CNPJ SALOMÃO</span>
@@ -163,6 +186,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                 className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
                 value={formData.data_vencimento}
                 onChange={(e: any) => setFormData({...formData, data_vencimento: e.target.value})}
+                placeholder="DD/MM/AAAA"
               />
             </label>
 
@@ -173,6 +197,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                 className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
                 value={formData.data_pagamento}
                 onChange={(e: any) => setFormData({...formData, data_pagamento: e.target.value})}
+                placeholder="DD/MM/AAAA"
               />
             </label>
           </div>
@@ -184,6 +209,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
               className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium resize-none"
               value={formData.observacao}
               onChange={e => setFormData({...formData, observacao: e.target.value})}
+              placeholder="Notas adicionais..."
             />
           </label>
         </div>
@@ -198,7 +224,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
             className="flex items-center gap-2 px-8 py-2 bg-[#1e3a8a] text-white text-[9px] font-black rounded-xl hover:bg-[#112240] shadow-lg transition-all active:scale-95 uppercase tracking-widest"
           >
             <Save className="w-3.5 h-3.5" />
-            Salvar Lançamento
+            Salvar Registro
           </button>
         </div>
       </div>

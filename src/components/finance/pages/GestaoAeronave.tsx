@@ -10,7 +10,8 @@ import {
   RefreshCw,
   LayoutDashboard,
   Database,
-  Loader2
+  Loader2,
+  Download
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -47,13 +48,32 @@ export function GestaoAeronave({
 
   useEffect(() => { fetchDados() }, [])
 
+  // Lógica de Filtros Avançados (SDS)
   const filteredData = useMemo(() => {
     return data.filter(item => 
       Object.values(item).some(val => 
-        String(val).toLowerCase().includes(searchTerm.toLowerCase())
+        String(val || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
     )
   }, [data, searchTerm])
+
+  // Lógica de Exportação XLSX
+  const handleExportExcel = () => {
+    if (filteredData.length === 0) return;
+    const ws = XLSX.utils.json_to_sheet(filteredData)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Dados_Aeronave")
+    XLSX.writeFile(wb, `Aeronave_Relatorio_${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
+  // Lógica de Salvamento/Update
+  const handleSave = async (formData: any) => {
+    const { error } = await supabase.from('financeiro_aeronave').upsert(formData)
+    if (!error) {
+      setIsModalOpen(false)
+      fetchDados()
+    }
+  }
 
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -70,7 +90,7 @@ export function GestaoAeronave({
 
         // Mapeamento exato dos nomes das colunas da planilha
         const mapped = rawData.map((row: any) => ({
-          tripulacao: row['Tripulação'],
+          tripulacao: row['Tripuração'],
           aeronave: row['Aeronave'],
           data: row['Data'],
           localidade_destino: row['Localidade e destino'],
@@ -150,11 +170,19 @@ export function GestaoAeronave({
         </div>
 
         <div className="flex items-center gap-2">
+          <button 
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all"
+          >
+            <Download className="h-3.5 w-3.5 text-[#1e3a8a]" /> Exportar
+          </button>
+
           <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-gray-50 cursor-pointer transition-all">
             {isImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />}
             Importar XLSX
             <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
           </label>
+
           <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95">
             <Plus className="h-3.5 w-3.5" /> Novo Registro
           </button>
@@ -166,11 +194,14 @@ export function GestaoAeronave({
         {activeTab === 'gerencial' ? (
           <AeronaveTable data={filteredData} loading={loading} />
         ) : (
-          <div className="p-20 text-center text-gray-400 font-bold uppercase text-xs tracking-widest">Dashboard em desenvolvimento</div>
+          <div className="p-20 text-center text-gray-400 font-bold uppercase text-xs tracking-widest flex flex-col items-center">
+            <RefreshCw className="h-8 w-8 mb-4 animate-spin opacity-20" />
+            Dashboard em desenvolvimento
+          </div>
         )}
       </div>
 
-      <AeronaveFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={fetchDados} />
+      <AeronaveFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} />
     </div>
   )
 }
