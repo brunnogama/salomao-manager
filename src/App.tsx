@@ -23,6 +23,7 @@ import { Presencial } from './components/collaborators/pages/Presencial'
 import { Colaboradores } from './components/collaborators/pages/Colaboradores'
 import { Calendario } from './components/collaborators/pages/Calendario'
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
+import { GestaoAeronave } from './finance/pages/GestaoAeronave'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
 
@@ -177,6 +178,14 @@ export default function App() {
 
             {currentModule === 'financial' && (
               <>
+                {activePage === 'dashboard' && <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />}
+                {activePage === 'gestao-aeronave' && (
+                  <GestaoAeronave 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
                 {activePage === 'historico' && <History />}
               </>
             )}
