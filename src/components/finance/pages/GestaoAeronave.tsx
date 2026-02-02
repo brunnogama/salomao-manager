@@ -159,6 +159,7 @@ export function GestaoAeronave({
         }
 
         const mapped = rawData.map((row: any) => {
+          // Normaliza as chaves removendo espaços e tratando caracteres especiais
           const cleanRow: any = {};
           Object.keys(row).forEach(key => {
             cleanRow[key.trim()] = row[key];
@@ -231,44 +232,8 @@ export function GestaoAeronave({
 
       {/* TOOLBAR */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-        {/* Linha Superior: Busca e Ações */}
+        {/* Linha Superior: Abas (Esquerda) e Filtro de Datas (Direita) */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Buscar lançamentos..." 
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)} 
-            />
-          </div>
-
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <button 
-              onClick={handleExportExcel}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all"
-            >
-              <Download className="h-3.5 w-3.5 text-[#1e3a8a]" /> Exportar
-            </button>
-
-            <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-gray-50 cursor-pointer transition-all">
-              {isImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />}
-              Importar XLSX
-              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
-            </label>
-
-            <button 
-              onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
-              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95"
-            >
-              <Plus className="h-3.5 w-3.5" /> Novo Registro
-            </button>
-          </div>
-        </div>
-
-        {/* Linha Inferior: Abas (Esquerda) e Filtro de Datas (Direita) */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
           {/* Abas Lado Esquerdo */}
           <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full md:w-auto">
             <button 
@@ -312,6 +277,45 @@ export function GestaoAeronave({
                  <RefreshCw className="h-4 w-4" />
                </button>
              )}
+          </div>
+        </div>
+
+        {/* Linha Inferior: Busca e Ações */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Buscar lançamentos..." 
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
+              value={searchTerm} 
+              onChange={e => setSearchTerm(e.target.value)} 
+            />
+          </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <button 
+              onClick={handleExportExcel}
+              className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 transition-all"
+              title="Exportar XLSX"
+            >
+              <Download className="h-5 w-5 text-[#1e3a8a]" />
+            </button>
+
+            <label 
+              className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 cursor-pointer transition-all"
+              title="Importar XLSX"
+            >
+              {isImporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileSpreadsheet className="h-5 w-5 text-green-600" />}
+              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
+            </label>
+
+            <button 
+              onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
+              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95"
+            >
+              <Plus className="h-3.5 w-3.5" /> Novo Registro
+            </button>
           </div>
         </div>
       </div>
