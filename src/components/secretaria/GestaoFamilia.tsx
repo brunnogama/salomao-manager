@@ -1,5 +1,18 @@
 import { useState, useEffect, useMemo } from 'react'
-import { LayoutDashboard, Database, Users, Home, FileSpreadsheet, PlusCircle, Loader2, Search, Plus, Filter, X, ChevronDown, Trash2 } from 'lucide-react'
+import { 
+  LayoutDashboard, 
+  Database, 
+  Home, 
+  FileSpreadsheet, 
+  Loader2, 
+  Search, 
+  Plus, 
+  Trash2,
+  UserCircle,
+  LogOut,
+  Grid,
+  Briefcase
+} from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../lib/supabase'
 import { FamiliaTable } from './FamiliaTable'
@@ -8,7 +21,17 @@ import { FamiliaViewModal } from './FamiliaViewModal'
 import { FamiliaStats } from './FamiliaStats'
 import { FamiliaFilters } from './FamiliaFilters'
 
-export function GestaoFamilia() {
+interface GestaoFamiliaProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function GestaoFamilia({ 
+  userName = 'Usuário', 
+  onModuleHome, 
+  onLogout 
+}: GestaoFamiliaProps) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dashboard')
   const [dadosFamilia, setDadosFamilia] = useState<any[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -66,82 +89,65 @@ export function GestaoFamilia() {
     return () => window.removeEventListener('keydown', handleEsc)
   }, [])
 
-  // Função para salvar ou atualizar lançamento
   const handleSaveData = async (formData: any) => {
     try {
       if (formData.id) {
-        // Lógica de Edição (Update)
         const { error } = await supabase
           .from('familia_salomao_dados')
           .update(formData)
           .eq('id', formData.id)
-
         if (error) throw error
       } else {
-        // Lógica de Novo Registro (Insert)
         const { error } = await supabase
           .from('familia_salomao_dados')
           .insert([formData])
-
         if (error) throw error
       }
-      
       await fetchDados()
       setIsModalOpen(false)
       setSelectedItem(null)
     } catch (error) {
       console.error('Erro ao salvar:', error)
-      alert('Erro ao salvar o lançamento.')
     }
   }
 
-  // Função para deletar registro
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
         .from('familia_salomao_dados')
         .delete()
         .eq('id', id)
-
       if (error) throw error
-      
       await fetchDados()
       setIsViewModalOpen(false)
       setSelectedItem(null)
       setItemToDelete(null)
     } catch (error) {
       console.error('Erro ao excluir:', error)
-      alert('Erro ao excluir o registro.')
     }
   }
 
-  // Função para abrir visualização
   const handleViewItem = (item: any) => {
     setSelectedItem(item)
     setIsViewModalOpen(true)
   }
 
-  // Função para disparar a edição
   const handleEditItem = (item: any) => {
     setSelectedItem(item)
     setIsModalOpen(true)
   }
 
-  // Função para disparar a edição a partir do modal de visualização
   const handleEditFromView = (item: any) => {
     setIsViewModalOpen(false)
     setSelectedItem(item)
     setIsModalOpen(true)
   }
 
-  // Função para Importar XLSX e salvar AUTOMATICAMENTE
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     setIsImporting(true)
     const reader = new FileReader()
-    
     reader.onload = async (evt) => {
       try {
         const bstr = evt.target?.result
@@ -183,17 +189,11 @@ export function GestaoFamilia() {
           comprovante: row['Comprovante']?.toString() || ''
         }))
 
-        const { error } = await supabase
-          .from('familia_salomao_dados')
-          .insert(mapped)
-
+        const { error } = await supabase.from('familia_salomao_dados').insert(mapped)
         if (error) throw error
-
-        alert(`${mapped.length} registros importados com sucesso!`)
         await fetchDados()
       } catch (error: any) {
         console.error('Erro na importação:', error)
-        alert(`Erro na importação: ${error.message || 'Verifique o arquivo.'}`)
       } finally {
         setIsImporting(false)
         e.target.value = ''
@@ -203,43 +203,82 @@ export function GestaoFamilia() {
   }
 
   return (
-    <div className="max-w-[95%] mx-auto space-y-6 pb-12">
-      {/* Linha Superior: Cards de Stats e Abas */}
-      <div className="flex items-center justify-between gap-6">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
+      
+      {/* PAGE HEADER - Padrão Salomão */}
+      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+            <Briefcase className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+              Gestão Família
+            </h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+              Controle de lançamentos e serviços familiares
+            </p>
+          </div>
+        </div>
+
+        {/* User Info & Actions */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
+          </div>
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
+            <UserCircle className="h-5 w-5" />
+          </div>
+          {onModuleHome && (
+            <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          {onLogout && (
+            <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all">
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Linha Superior: Cards de Stats e Seletor de Abas */}
+      <div className="flex flex-col lg:flex-row items-stretch justify-between gap-6">
         <div className="flex-1">
           <FamiliaStats data={dadosFamilia} />
         </div>
 
-        <div className="flex bg-gray-100/80 p-1.5 rounded-xl border border-gray-200 shadow-sm w-fit flex-shrink-0">
+        <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-fit self-start lg:self-center shrink-0">
           <button 
             onClick={() => setActiveTab('dashboard')} 
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${activeTab === 'dashboard' ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200/50'}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            <LayoutDashboard className={`h-4 w-4 ${activeTab === 'dashboard' ? 'text-blue-600' : ''}`} /> Dashboard
+            <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
           </button>
           <button 
             onClick={() => setActiveTab('dados')} 
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${activeTab === 'dados' ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200/50'}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dados' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            <Database className={`h-4 w-4 ${activeTab === 'dados' ? 'text-blue-600' : ''}`} /> Dados
+            <Database className="h-3.5 w-3.5" /> Dados
           </button>
         </div>
       </div>
 
-      {/* Barra de Baixo: Busca preenchendo o espaço, Filtros e Novo */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+      {/* Barra de Filtros e Busca */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input 
             type="text" 
-            placeholder="Buscar registros..." 
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
+            placeholder="Buscar lançamentos..." 
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
             value={searchTerm} 
             onChange={e => setSearchTerm(e.target.value)} 
           />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <FamiliaFilters 
             data={dadosFamilia}
             filterTitular={filterTitular}
@@ -252,37 +291,37 @@ export function GestaoFamilia() {
 
           <div className="flex gap-2">
             {activeTab === 'dados' && (
-              <label className={`flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 cursor-pointer transition-all ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
-                {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 text-green-600" />}
+              <label className={`flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-gray-50 cursor-pointer transition-all active:scale-95 ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
+                {isImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />}
                 {isImporting ? 'Salvando...' : 'Importar'}
                 <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
               </label>
             )}
             <button 
-              onClick={() => {
-                setSelectedItem(null)
-                setIsModalOpen(true)
-              }} 
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#0f172a] text-white rounded-xl font-bold text-sm shadow-md hover:from-[#112240] hover:to-[#020617] transition-all transform hover:scale-[1.02] active:scale-95"
+              onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
+              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95 shrink-0"
             >
-              <Plus className="h-4 w-4" /> Novo
+              <Plus className="h-3.5 w-3.5" /> Novo
             </button>
           </div>
         </div>
       </div>
 
-      <div className="flex-1">
+      {/* Conteúdo Principal */}
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
         {activeTab === 'dashboard' ? (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
-            <StatCard title="Total Registros" value={dadosFamilia.length} icon={Home} color="blue" />
-            <div className="md:col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-              <Home className="h-12 w-12 text-blue-100 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-gray-900">Dashboard de Gestão Familiar</h3>
-              <p className="text-gray-500 text-sm">Selecione a aba Dados para gerenciar os lançamentos.</p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in zoom-in duration-300">
+            <StatCard title="Total Registros" value={dadosFamilia.length} icon={Home} />
+            <div className="md:col-span-3 bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center flex flex-col items-center justify-center">
+              <div className="p-4 bg-blue-50 rounded-full mb-4">
+                <Home className="h-12 w-12 text-blue-200" />
+              </div>
+              <h3 className="text-xl font-black text-[#112240] tracking-tight">Dashboard de Gestão Familiar</h3>
+              <p className="text-gray-400 text-sm font-semibold mt-1">Selecione a aba Dados para gerenciar os lançamentos em detalhe.</p>
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in zoom-in duration-300">
             <FamiliaTable 
               data={filteredData} 
               onEditClick={handleEditItem}
@@ -294,10 +333,7 @@ export function GestaoFamilia() {
 
       <FamiliaFormModal 
         isOpen={isModalOpen} 
-        onClose={() => {
-          setIsModalOpen(false)
-          setSelectedItem(null)
-        }} 
+        onClose={() => { setIsModalOpen(false); setSelectedItem(null); }} 
         onSave={handleSaveData}
         initialData={selectedItem}
       />
@@ -306,40 +342,37 @@ export function GestaoFamilia() {
         <FamiliaViewModal
           item={selectedItem}
           isOpen={isViewModalOpen}
-          onClose={() => {
-            setIsViewModalOpen(false)
-            setSelectedItem(null)
-          }}
-          onDelete={(id) => setItemToDelete(selectedItem)}
+          onClose={() => { setIsViewModalOpen(false); setSelectedItem(null); }}
+          onDelete={() => setItemToDelete(selectedItem)}
           onEdit={handleEditFromView}
         />
       )}
 
-      {/* Modal de Confirmação Elegante */}
+      {/* Modal de Confirmação - Padrão [2rem] radius */}
       {itemToDelete && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl border border-white/20 overflow-hidden animate-in zoom-in duration-200">
             <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-8 h-8" />
+              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-100">
+                <Trash2 className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-black text-[#112240] mb-2">Confirmar Exclusão</h3>
-              <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                Tem certeza que deseja remover o lançamento de <span className="font-bold text-[#112240]">{itemToDelete.fornecedor}</span>? Esta ação não pode ser desfeita.
+              <h3 className="text-xl font-black text-[#112240] tracking-tight mb-2">Confirmar Exclusão</h3>
+              <p className="text-sm text-gray-500 font-semibold leading-relaxed">
+                Tem certeza que deseja remover o lançamento de <span className="text-[#112240] font-black">{itemToDelete.fornecedor}</span>?
               </p>
             </div>
             <div className="flex border-t border-gray-50">
               <button 
                 onClick={() => setItemToDelete(null)}
-                className="flex-1 px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 transition-colors"
+                className="flex-1 px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 transition-all"
               >
                 Cancelar
               </button>
               <button 
                 onClick={() => handleDelete(itemToDelete.id)}
-                className="flex-1 px-6 py-4 text-[10px] font-black text-red-500 uppercase tracking-widest hover:bg-red-50 transition-colors border-l border-gray-50"
+                className="flex-1 px-6 py-4 text-[9px] font-black text-red-500 uppercase tracking-widest hover:bg-red-50 transition-all border-l border-gray-50"
               >
-                Confirmar Exclusão
+                Confirmar
               </button>
             </div>
           </div>
@@ -349,20 +382,14 @@ export function GestaoFamilia() {
   )
 }
 
-function StatCard({ title, value, icon: Icon, color }: any) {
-  const themes: any = { 
-    blue: 'text-blue-600 bg-blue-50 border-blue-100', 
-    green: 'text-green-600 bg-green-50 border-green-100', 
-    red: 'text-red-600 bg-red-50 border-red-100', 
-    gray: 'text-gray-600 bg-gray-50 border-gray-100' 
-  }
+function StatCard({ title, value, icon: Icon }: any) {
   return (
-    <div className={`bg-white p-6 rounded-xl shadow-sm border flex items-center justify-between ${themes[color].split(' ')[2]}`}>
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all">
       <div>
-        <p className="text-sm font-medium text-white">{title}</p>
-        <p className="text-3xl font-bold mt-1 text-gray-900">{value}</p>
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</p>
+        <p className="text-3xl font-black mt-1 text-[#112240] tracking-tighter">{value}</p>
       </div>
-      <div className={`p-3 rounded-xl ${themes[color].split(' ')[0]} ${themes[color].split(' ')[1]}`}>
+      <div className="p-3.5 rounded-xl bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform">
         <Icon className="h-6 w-6" />
       </div>
     </div>

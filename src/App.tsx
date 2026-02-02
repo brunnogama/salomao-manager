@@ -183,7 +183,13 @@ export default function App() {
 
             {currentModule === 'executive' && (
               <>
-                {activePage === 'gestao-familia' && <GestaoFamilia />}
+                {activePage === 'gestao-familia' && (
+                  <GestaoFamilia 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
               </>
             )}
           </div>
