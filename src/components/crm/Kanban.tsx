@@ -1,415 +1,406 @@
-// src/components/crm/IncompleteClients.tsx
-import { useEffect, useState, useMemo, Fragment } from 'react'
-import { supabase } from '../../lib/supabase'
-import { 
-  CheckCircle, Pencil, XCircle, Search, X, 
-  Filter, ArrowUpDown, Check, FileSpreadsheet,
-  Users, Gift, AlertCircle, AlertTriangle
-} from 'lucide-react'
-import { Menu, Transition } from '@headlessui/react'
-import { NewClientModal } from './NewClientModal'
-import { ClientData } from '../../types/client'
-import * as XLSX from 'xlsx'
+// src/components/crm/Kanban.tsx
+import { useState, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { Plus, Clock, CheckCircle2, Circle, X, Pencil, Trash2, Calendar, Save, KanbanSquare } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { logAction } from '../../lib/logger';
+import { Task } from '../../types/kanban';
 
-export function IncompleteClients() {
-  const [clients, setClients] = useState<ClientData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [clientToEdit, setClientToEdit] = useState<ClientData | null>(null)
+const COLUMNS = [
+  { id: 'todo', title: 'A Fazer', color: 'orange', icon: <Clock className="h-5 w-5" /> },
+  { id: 'in_progress', title: 'Em Progresso', color: 'blue', icon: <Circle className="h-5 w-5" /> },
+  { id: 'done', title: 'Concluídos', color: 'green', icon: <CheckCircle2 className="h-5 w-5" /> },
+];
+
+export function Kanban() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  
-  const [filterSocio, setFilterSocio] = useState<string>('')
-  const [filterBrinde, setFilterBrinde] = useState<string>('')
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest')
-
-  const [availableSocios, setAvailableSocios] = useState<string[]>([])
-  const [availableBrindes, setAvailableBrindes] = useState<string[]>([])
-
-  const REQUIRED_FIELDS = [
-    { key: 'nome', label: 'Nome' },
-    { key: 'empresa', label: 'Empresa' },
-    { key: 'cargo', label: 'Cargo' },
-    { key: 'tipo_brinde', label: 'Tipo Brinde' },
-    { key: 'cep', label: 'CEP' },
-    { key: 'endereco', label: 'Endereço' },
-    { key: 'numero', label: 'Número' },
-    { key: 'bairro', label: 'Bairro' },
-    { key: 'cidade', label: 'Cidade' },
-    { key: 'estado', label: 'UF' },
-    { key: 'email', label: 'Email' },
-    { key: 'socio', label: 'Sócio' }
-  ]
-
-  const fetchIncompleteClients = async () => {
-    setLoading(true)
-    const { data } = await supabase.from('clientes').select('*')
-    
-    if (data) {
-      const incomplete = data.filter((c: any) => {
-        const ignored = c.ignored_fields || []
-        
-        const hasMissing = REQUIRED_FIELDS.some(field => {
-           const value = c[field.key]
-           const isEmpty = !value || value.toString().trim() === ''
-           const isIgnored = ignored.includes(field.label)
-           return isEmpty && !isIgnored
-        })
-
-        return hasMissing
-      })
-      setClients(incomplete)
-
-      const socios = Array.from(new Set(incomplete.map((c: any) => c.socio).filter(Boolean))) as string[]
-      const brindes = Array.from(new Set(incomplete.map((c: any) => c.tipo_brinde).filter(Boolean))) as string[]
-      setAvailableSocios(socios.sort())
-      setAvailableBrindes(brindes.sort())
-    }
-    setLoading(false)
-  }
+  const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'MEDIA', status: 'todo' });
+  const [editFormData, setEditFormData] = useState({ title: '', description: '', priority: '' });
 
   useEffect(() => {
-    fetchIncompleteClients()
-  }, [])
+    fetchTasks();
+  }, []);
 
-  const processedClients = useMemo(() => {
-    let result = [...clients]
+  const fetchTasks = async () => {
+    const { data } = await supabase.from('tasks').select('*').order('created_at', { ascending: true });
+    if (data) setTasks(data as Task[]);
+  };
 
-    if (searchTerm) {
-        const lowerTerm = searchTerm.toLowerCase()
-        result = result.filter(c => 
-            (c.nome?.toLowerCase() || '').includes(lowerTerm) ||
-            (c.empresa?.toLowerCase() || '').includes(lowerTerm) ||
-            (c.email?.toLowerCase() || '').includes(lowerTerm) ||
-            (c.socio?.toLowerCase() || '').includes(lowerTerm)
-        )
+  const onDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) return;
+
+    const newStatus = destination.droppableId as Task['status'];
+    const updatedTasks = tasks.map(t => t.id === draggableId ? { ...t, status: newStatus } : t);
+    setTasks(updatedTasks);
+
+    await supabase.from('tasks').update({ status: newStatus }).eq('id', draggableId);
+    await logAction('EDITAR', 'KANBAN', `Moveu tarefa para ${newStatus}: ${updatedTasks.find(t => t.id === draggableId)?.title}`);
+  };
+
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { data, error } = await supabase.from('tasks').insert([newTask]).select();
+    if (!error && data) {
+      setTasks([...tasks, data[0] as Task]);
+      await logAction('CRIAR', 'KANBAN', `Nova tarefa: ${newTask.title}`);
+      setIsAddModalOpen(false);
+      setNewTask({ title: '', description: '', priority: 'MEDIA', status: 'todo' });
     }
+  };
 
-    if (filterSocio) {
-        result = result.filter(c => c.socio === filterSocio)
+  const handleUpdateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTask) return;
+    const { error } = await supabase.from('tasks').update(editFormData).eq('id', selectedTask.id);
+    if (!error) {
+      setTasks(tasks.map(t => t.id === selectedTask.id ? { ...t, ...editFormData } : t));
+      await logAction('EDITAR', 'KANBAN', `Editou tarefa: ${editFormData.title}`);
+      setIsEditMode(false);
+      setSelectedTask({ ...selectedTask, ...editFormData });
     }
-    if (filterBrinde) {
-        result = result.filter(c => c.tipo_brinde === filterBrinde)
+  };
+
+  const deleteTask = async (id: string) => {
+    if (confirm('Deseja realmente excluir esta tarefa?')) {
+      const taskToDelete = tasks.find(t => t.id === id);
+      const { error } = await supabase.from('tasks').delete().eq('id', id);
+      if (!error) {
+        setTasks(tasks.filter(t => t.id !== id));
+        await logAction('EXCLUIR', 'KANBAN', `Removeu tarefa: ${taskToDelete?.title}`);
+        setIsDetailsModalOpen(false);
+      }
     }
+  };
 
-    result.sort((a: any, b: any) => {
-        if (sortOrder === 'newest') return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-        if (sortOrder === 'oldest') return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
-        if (sortOrder === 'az') return (a.nome || '').localeCompare(b.nome || '')
-        if (sortOrder === 'za') return (b.nome || '').localeCompare(a.nome || '')
-        return 0
-    })
-
-    return result
-  }, [clients, searchTerm, filterSocio, filterBrinde, sortOrder])
-
-  const handleEdit = (client: ClientData) => {
-    setClientToEdit(client)
-    setIsModalOpen(true)
-  }
-
-  const handleSave = async (updatedClient: ClientData) => {
-    try {
-        const { error } = await supabase
-            .from('clientes')
-            .update(updatedClient)
-            .eq('email', clientToEdit?.email || updatedClient.email)
-        
-        if (error) throw error
-        
-        setIsModalOpen(false)
-        setClientToEdit(null)
-        fetchIncompleteClients()
-    } catch (err) {
-        console.error("Erro ao atualizar:", err)
-    }
-  }
-
-  const handleIgnore = async (client: any) => {
-    if(!confirm("Deseja marcar este cadastro como 'Completo' ignorando os campos vazios atuais?")) return;
-
-    const missingFields = REQUIRED_FIELDS
-        .filter(field => !client[field.key])
-        .map(field => field.label);
-    
-    const currentIgnored = client.ignored_fields || [];
-    const newIgnored = [...new Set([...currentIgnored, ...missingFields])];
-
-    const { error } = await supabase
-        .from('clientes')
-        .update({ ignored_fields: newIgnored })
-        .eq('id', client.id);
-
-    if (!error) fetchIncompleteClients();
-  }
-
-  const handleExport = () => {
-    const ws = XLSX.utils.json_to_sheet(processedClients);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Pendencias");
-    XLSX.writeFile(wb, "clientes_pendentes.xlsx");
-  }
-
-  const hasActiveFilters = searchTerm !== '' || filterSocio !== '' || filterBrinde !== '';
-  
-  const clearFilters = () => {
-    setSearchTerm('');
-    setFilterSocio('');
-    setFilterBrinde('');
-  }
-
-  if (loading) return (
-    <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1e3a8a]"></div>
-    </div>
-  )
+  const openDetails = (task: Task) => {
+    setSelectedTask(task);
+    setEditFormData({ title: task.title, description: task.description, priority: task.priority });
+    setIsEditMode(false);
+    setIsDetailsModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col h-full space-y-6">
       
-      {/* PAGE HEADER COMPLETO */}
+      {/* PAGE HEADER */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        {/* Left: Título e Ícone */}
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-red-500 to-red-600 shadow-lg">
-            <AlertTriangle className="h-7 w-7 text-white" />
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+            <KanbanSquare className="h-7 w-7 text-white" />
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Cadastros Incompletos
+              Kanban
             </h1>
             <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              <span className="text-red-600 font-black">{processedClients.length}</span> {processedClients.length === 1 ? 'pendência' : 'pendências'} para resolver
+              Organize suas tarefas visualmente
             </p>
           </div>
         </div>
 
-        {/* Right: Filters */}
+        {/* Stats Cards */}
         <div className="flex items-center gap-3 shrink-0">
-          <Menu as="div" className="relative">
-              <Menu.Button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold bg-white text-gray-700 hover:bg-gray-50 hover:border-[#1e3a8a]/30 transition-all">
-                  <Users className="h-4 w-4" />
-                  <span>{filterSocio || 'Sócios'}</span>
-              </Menu.Button>
-              <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100">
-                  <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl border border-gray-200 focus:outline-none z-20 max-h-60 overflow-y-auto">
-                      <div className="p-1.5">
-                          <Menu.Item>
-                              {({ active }) => (
-                                  <button onClick={() => setFilterSocio('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-sm text-gray-700 rounded-lg font-semibold`}>
-                                      <span>Todos os Sócios</span>
-                                      {filterSocio === '' && <Check className="h-4 w-4 text-[#1e3a8a]" />}
-                                  </button>
-                              )}
-                          </Menu.Item>
-                          {availableSocios.map((s) => (
-                              <Menu.Item key={s}>
-                                  {({ active }) => (
-                                      <button onClick={() => setFilterSocio(s)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-sm text-gray-700 rounded-lg`}>
-                                          <span className="truncate">{s}</span>
-                                          {filterSocio === s && <Check className="h-4 w-4 text-[#1e3a8a]" />}
-                                      </button>
-                                  )}
-                              </Menu.Item>
-                          ))}
-                      </div>
-                  </Menu.Items>
-              </Transition>
-          </Menu>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-2.5 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-orange-100 border border-orange-200">
+              <Clock className="h-4 w-4 text-orange-600" />
+            </div>
+            <div className="border-l border-gray-200 pl-3">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">A Fazer</p>
+              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">
+                {tasks.filter(t => t.status === 'todo').length}
+              </p>
+            </div>
+          </div>
 
-          <Menu as="div" className="relative">
-              <Menu.Button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold bg-white text-gray-700 hover:bg-gray-50 hover:border-[#1e3a8a]/30 transition-all">
-                  <Gift className="h-4 w-4" />
-                  <span>{filterBrinde || 'Brindes'}</span>
-              </Menu.Button>
-              <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100">
-                  <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl border border-gray-200 focus:outline-none z-20 max-h-60 overflow-y-auto">
-                      <div className="p-1.5">
-                          <Menu.Item>
-                              {({ active }) => (
-                                  <button onClick={() => setFilterBrinde('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-sm text-gray-700 rounded-lg font-semibold`}>
-                                      <span>Todos os Brindes</span>
-                                      {filterBrinde === '' && <Check className="h-4 w-4 text-[#1e3a8a]" />}
-                                  </button>
-                              )}
-                          </Menu.Item>
-                          {availableBrindes.map((b) => (
-                              <Menu.Item key={b}>
-                                  {({ active }) => (
-                                      <button onClick={() => setFilterBrinde(b)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-sm text-gray-700 rounded-lg`}>
-                                          <span className="truncate">{b}</span>
-                                          {filterBrinde === b && <Check className="h-4 w-4 text-[#1e3a8a]" />}
-                                      </button>
-                                  )}
-                              </Menu.Item>
-                          ))}
-                      </div>
-                  </Menu.Items>
-              </Transition>
-          </Menu>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-2.5 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-100 border border-blue-200">
+              <Circle className="h-4 w-4 text-blue-600" />
+            </div>
+            <div className="border-l border-gray-200 pl-3">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Em Progresso</p>
+              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">
+                {tasks.filter(t => t.status === 'in_progress').length}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-2.5 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-green-100 border border-green-200">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+            </div>
+            <div className="border-l border-gray-200 pl-3">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Concluídos</p>
+              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">
+                {tasks.filter(t => t.status === 'done').length}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* CONTENT */}
-      <div className="flex-1 overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-200">
-        
-        {/* Toolbar */}
-        <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1">
-            {/* Barra de Busca */}
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input 
-                  type="text" 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar pendências..."
-                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all"
-                />
+      {/* KANBAN BOARD */}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="flex-1 flex gap-4 overflow-x-auto pb-2 h-full custom-scrollbar">
+          {COLUMNS.map((column) => (
+            <div key={column.id} className={`flex-shrink-0 w-80 lg:w-96 flex flex-col rounded-2xl border-2 h-full shadow-sm transition-all ${
+              column.color === 'orange' ? 'bg-gradient-to-b from-orange-50 to-white border-orange-200' : 
+              column.color === 'blue' ? 'bg-gradient-to-b from-blue-50 to-white border-blue-200' : 
+              'bg-gradient-to-b from-green-50 to-white border-green-200'
+            }`}>
+              
+              <div className="p-5 flex items-center justify-between border-b border-gray-100">
+                <div className={`flex items-center gap-2.5 font-black text-sm uppercase tracking-wide ${
+                  column.color === 'orange' ? 'text-orange-700' : 
+                  column.color === 'blue' ? 'text-blue-700' : 'text-green-700'
+                }`}>
+                  {column.icon} {column.title}
+                </div>
+                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black border shadow-sm ${
+                  column.color === 'orange' ? 'bg-orange-100 text-orange-700 border-orange-200' :
+                  column.color === 'blue' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                  'bg-green-100 text-green-700 border-green-200'
+                }`}>
+                  {tasks.filter(t => t.status === column.id).length}
+                </span>
+              </div>
+
+              <div className="px-4 py-3">
+                <button 
+                  onClick={() => { setNewTask({ ...newTask, status: column.id as any }); setIsAddModalOpen(true); }}
+                  className={`w-full py-2.5 rounded-xl text-white text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-95 ${
+                    column.color === 'orange' ? 'bg-gradient-to-r from-orange-600 to-orange-700' : 
+                    column.color === 'blue' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 
+                    'bg-gradient-to-r from-green-600 to-green-700'
+                  }`}
+                >
+                  <Plus className="h-4 w-4" /> Nova Tarefa
+                </button>
+              </div>
+
+              <Droppable droppableId={column.id}>
+                {(provided, snapshot) => (
+                  <div 
+                    {...provided.droppableProps} 
+                    ref={provided.innerRef} 
+                    className={`flex-1 p-3 overflow-y-auto custom-scrollbar transition-colors ${
+                      snapshot.isDraggingOver ? 'bg-blue-50/50 rounded-b-2xl' : ''
+                    }`}
+                  >
+                    {tasks.filter(t => t.status === column.id).map((task, index) => (
+                      <Draggable key={task.id} draggableId={task.id} index={index}>
+                        {(provided, snap) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            onClick={() => openDetails(task)}
+                            className={`bg-white p-4 rounded-xl shadow-sm border-2 mb-3 hover:border-[#1e3a8a]/30 hover:shadow-md transition-all cursor-pointer ${
+                              snap.isDragging ? 'shadow-2xl rotate-2 border-[#1e3a8a] scale-105' : 'border-gray-200'
+                            }`}
+                          >
+                            <h4 className="font-black text-[#0a192f] text-sm mb-1 leading-tight">{task.title}</h4>
+                            <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed font-medium">{task.description}</p>
+                            <div className="flex items-center justify-between">
+                              <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${
+                                task.priority === 'ALTA' ? 'bg-red-50 text-red-700 border-red-200' :
+                                task.priority === 'MEDIA' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                'bg-gray-50 text-gray-700 border-gray-200'
+                              }`}>
+                                {task.priority}
+                              </span>
+                              <div className="flex items-center gap-1 text-[9px] text-gray-400 font-semibold">
+                                <Calendar className="h-3 w-3" /> {new Date(task.created_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </div>
+          ))}
+        </div>
+      </DragDropContext>
+
+      {/* Modal Adicionar */}
+      {isAddModalOpen && (
+        <TaskModal 
+          title="Nova Tarefa" 
+          onClose={() => setIsAddModalOpen(false)}
+          onSubmit={handleAddTask}
+        >
+          <div>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Título</label>
+            <input 
+              required 
+              placeholder="Digite o título da tarefa" 
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none text-sm font-medium focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all" 
+              value={newTask.title} 
+              onChange={e => setNewTask({...newTask, title: e.target.value})} 
+            />
+          </div>
+          <div>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Descrição</label>
+            <textarea 
+              rows={3} 
+              placeholder="Descreva a tarefa..." 
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none resize-none text-sm font-medium focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all" 
+              value={newTask.description} 
+              onChange={e => setNewTask({...newTask, description: e.target.value})} 
+            />
+          </div>
+          <div>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Prioridade</label>
+            <select 
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all" 
+              value={newTask.priority} 
+              onChange={e => setNewTask({...newTask, priority: e.target.value})}
+            >
+              <option value="BAIXA">Baixa</option>
+              <option value="MEDIA">Média</option>
+              <option value="ALTA">Alta</option>
+            </select>
+          </div>
+          <button 
+            type="submit" 
+            className="w-full bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+          >
+            Criar Tarefa
+          </button>
+        </TaskModal>
+      )}
+
+      {/* Modal Detalhes / Edição */}
+      {isDetailsModalOpen && selectedTask && (
+        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl border border-gray-200/50">
+            <div className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] px-8 py-5 text-white flex items-center justify-between">
+              <h2 className="text-[20px] font-black tracking-tight">{isEditMode ? 'Editar Tarefa' : 'Detalhes da Tarefa'}</h2>
+              <div className="flex items-center gap-2">
+                {!isEditMode && (
+                  <button 
+                    onClick={() => setIsEditMode(true)} 
+                    className="p-2 hover:bg-white/10 rounded-lg transition-all"
+                  >
+                    <Pencil className="h-5 w-5" />
+                  </button>
+                )}
+                <button 
+                  onClick={() => deleteTask(selectedTask.id)} 
+                  className="p-2 hover:bg-red-500/20 rounded-lg text-red-300 transition-all"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
+                <button 
+                  onClick={() => setIsDetailsModalOpen(false)} 
+                  className="p-2 hover:bg-white/10 rounded-lg transition-all"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
             </div>
-
-            {hasActiveFilters && (
-                <button 
-                    onClick={clearFilters}
-                    className="flex items-center gap-2 px-3 py-2.5 text-[9px] font-black text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all uppercase tracking-[0.2em]"
-                >
-                    <X className="h-3.5 w-3.5" />
-                    Limpar
-                </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Sort Menu */}
-            <Menu as="div" className="relative">
-                <Menu.Button className="p-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-[#1e3a8a]/30 transition-all">
-                    <ArrowUpDown className="h-4 w-4" />
-                </Menu.Button>
-                <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100">
-                    <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right rounded-xl bg-white shadow-xl border border-gray-200 focus:outline-none z-20">
-                        <div className="p-1.5">
-                            {[
-                                { id: 'newest', label: 'Mais Recentes' },
-                                { id: 'oldest', label: 'Mais Antigos' },
-                                { id: 'az', label: 'Nome (A-Z)' },
-                                { id: 'za', label: 'Nome (Z-A)' }
-                            ].map((opt) => (
-                                <Menu.Item key={opt.id}>
-                                    {({ active }) => (
-                                        <button 
-                                            onClick={() => setSortOrder(opt.id as any)}
-                                            className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-sm text-gray-700 rounded-lg`}
-                                        >
-                                            {opt.label}
-                                            {sortOrder === opt.id && <Check className="h-4 w-4 text-[#1e3a8a]" />}
-                                        </button>
-                                    )}
-                                </Menu.Item>
-                            ))}
-                        </div>
-                    </Menu.Items>
-                </Transition>
-            </Menu>
-
-            {/* Export Button */}
-            <button 
-                onClick={handleExport}
-                className="p-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-[#1e3a8a]/30 transition-all"
-                title="Exportar para XLSX"
-            >
-                <FileSpreadsheet className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Lista */}
-        <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
-          {processedClients.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200">
-                <CheckCircle className="h-16 w-16 mb-4 text-green-500" />
-                <p className="font-black text-xl text-[#0a192f] mb-2">
-                    {hasActiveFilters ? 'Nenhuma pendência encontrada' : 'Tudo certo!'}
-                </p>
-                <p className="text-sm text-gray-500 mb-4">
-                    {hasActiveFilters ? 'Nenhum resultado com estes filtros.' : 'Não há cadastros pendentes.'}
-                </p>
-                {hasActiveFilters && (
-                    <button 
-                        onClick={clearFilters}
-                        className="px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all active:scale-95"
+            
+            <div className="p-8">
+              {isEditMode ? (
+                <form onSubmit={handleUpdateTask} className="space-y-4">
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Título</label>
+                    <input 
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all" 
+                      value={editFormData.title} 
+                      onChange={e => setEditFormData({...editFormData, title: e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Descrição</label>
+                    <textarea 
+                      rows={4} 
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium resize-none focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all" 
+                      value={editFormData.description} 
+                      onChange={e => setEditFormData({...editFormData, description: e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Prioridade</label>
+                    <select 
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all" 
+                      value={editFormData.priority} 
+                      onChange={e => setEditFormData({...editFormData, priority: e.target.value})}
                     >
-                        Limpar filtros
-                    </button>
-                )}
+                      <option value="BAIXA">Baixa</option>
+                      <option value="MEDIA">Média</option>
+                      <option value="ALTA">Alta</option>
+                    </select>
+                  </div>
+                  <button 
+                    type="submit" 
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all active:scale-95"
+                  >
+                    <Save className="h-4 w-4" /> Salvar Alterações
+                  </button>
+                </form>
+              ) : (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Título</label>
+                    <h3 className="text-lg font-black text-[#0a192f]">{selectedTask.title}</h3>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Descrição</label>
+                    <p className="text-gray-600 leading-relaxed text-sm font-medium">{selectedTask.description || 'Sem descrição.'}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Prioridade</label>
+                      <span className={`inline-block px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${
+                        selectedTask.priority === 'ALTA' ? 'bg-red-50 text-red-700 border-red-200' :
+                        selectedTask.priority === 'MEDIA' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        'bg-gray-50 text-gray-700 border-gray-200'
+                      }`}>
+                        {selectedTask.priority}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Status</label>
+                      <span className="text-sm font-black text-[#0a192f]">
+                        {COLUMNS.find(c => c.id === selectedTask.status)?.title}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3">
-                {processedClients.map((client: any) => {
-                    const missing = REQUIRED_FIELDS
-                        .filter(f => (!client[f.key] && !(client.ignored_fields || []).includes(f.label)))
-                        .map(f => f.label)
-
-                    return (
-                        <div key={client.id} className="bg-white p-5 rounded-xl border border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md transition-all">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-black text-sm shadow-md">
-                                          {client.nome ? client.nome[0].toUpperCase() : '?'}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-black text-[#0a192f] text-base truncate">{client.nome || 'Sem Nome'}</h3>
-                                            <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                                {client.empresa && <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-bold">{client.empresa}</span>}
-                                                {client.socio && <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-bold">{client.socio}</span>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {missing.map(field => (
-                                            <span key={field} className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-red-600 bg-red-50 px-2.5 py-1.5 rounded-lg border border-red-200">
-                                                <AlertCircle className="h-3 w-3" />
-                                                {field}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100">
-                                    <button 
-                                        onClick={() => handleIgnore(client)}
-                                        className="px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-2 transition-all hover:border-[#1e3a8a]/30"
-                                        title="Ignorar pendências"
-                                    >
-                                        <XCircle className="h-4 w-4" />
-                                        <span className="hidden md:inline">Ignorar</span>
-                                    </button>
-                                    <button 
-                                        onClick={() => handleEdit(client)}
-                                        className="px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white text-sm font-black rounded-xl flex items-center gap-2 transition-all shadow-lg hover:shadow-xl active:scale-95"
-                                    >
-                                        <Pencil className="h-4 w-4" />
-                                        Resolver
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
-          )}
+          </div>
         </div>
-      </div>
-
-      <NewClientModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-        clientToEdit={clientToEdit}
-      />
+      )}
     </div>
-  )
+  );
+}
+
+// Sub-componente de Modal para reuso interno
+function TaskModal({ title, onClose, onSubmit, children }: any) {
+  return (
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-white rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl border border-gray-200/50">
+        <div className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] px-8 py-5 text-white flex items-center justify-between">
+          <h2 className="text-[20px] font-black tracking-tight">{title}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-all">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <form onSubmit={onSubmit} className="p-6 space-y-4">
+          {children}
+        </form>
+      </div>
+    </div>
+  );
 }
