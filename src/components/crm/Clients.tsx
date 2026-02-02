@@ -6,16 +6,11 @@ import { utils, writeFile, read } from 'xlsx'
 import { 
   Search, 
   Filter, 
-  ArrowUpDown, 
-  Check, 
   MessageCircle, 
   Trash2, 
   Pencil, 
   Mail, 
-  Phone, 
   Briefcase, 
-  Info, 
-  Printer, 
   FileSpreadsheet,
   Upload, 
   Loader2, 
@@ -28,7 +23,13 @@ import {
   Building2,
   MoreVertical,
   Gift,
-  UserCircle
+  UserCircle,
+  RefreshCw,
+  BarChart3,
+  FileText,
+  Settings,
+  LogOut,
+  Grid3x3
 } from 'lucide-react'
 import { NewClientModal } from './NewClientModal'
 import { ClientData, getBrindeColors } from '../../types/client'
@@ -48,9 +49,9 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
   const [viewType, setViewType] = useState<'cards' | 'list'>(() => 
     (localStorage.getItem('clientsViewType') as 'cards' | 'list') || 'list'
   )
+  const [activeTab, setActiveTab] = useState<'list' | 'stats' | 'rules'>('list')
   
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterSocio, setFilterSocio] = useState<string>('')
   const [filterBrinde, setFilterBrinde] = useState<string>('')
@@ -110,7 +111,7 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
   const hasActiveFilters = searchTerm || filterSocio || filterBrinde
 
   return (
-    <div className="flex flex-col h-full space-y-6">
+    <div className="flex flex-col h-full bg-gray-50">
       <input ref={fileInputRef} type="file" accept=".xlsx, .xls" onChange={async (e) => {
         const file = e.target.files?.[0]; if (!file) return;
         setImporting(true);
@@ -130,169 +131,246 @@ export function Clients({ initialFilters, tableName = 'clientes' }: ClientsProps
         tableName={tableName} 
       />
 
-      {/* PAGE HEADER COMPLETO */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        {/* Left: Título e Ícone */}
+      {/* TOP BAR - User, Módulos, Sair */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <Users className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Clientes CRM
-            </h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              Gerencie o cadastro completo de clientes
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center shadow-md">
+              <Users className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black text-[#0a192f] leading-none">Clientes CRM</h1>
+              <p className="text-xs text-gray-500 font-medium">Gestão completa de clientes e contatos</p>
+            </div>
           </div>
         </div>
 
-        {/* Right: Filters + Actions */}
-        <div className="flex items-center gap-3 shrink-0">
-          {/* Filtro Sócio */}
-          <div className="relative min-w-[140px]">
-            <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            <select 
-              value={filterSocio} 
-              onChange={e => setFilterSocio(e.target.value)} 
-              className="w-full pl-9 pr-3 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all appearance-none cursor-pointer hover:border-[#1e3a8a]/30"
-            >
-              <option value="">Todos Sócios</option>
-              {availableSocios.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-bold text-[#0a192f]">Bruno Gama</p>
+            <p className="text-[9px] text-green-600 font-black uppercase tracking-[0.2em]">Conectado</p>
           </div>
+          
+          <button className="w-11 h-11 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center shadow-md hover:shadow-lg transition-all">
+            <UserCircle className="h-6 w-6 text-white" />
+          </button>
 
-          {/* Filtro Brinde */}
-          <div className="relative min-w-[140px]">
-            <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            <select 
-              value={filterBrinde} 
-              onChange={e => setFilterBrinde(e.target.value)} 
-              className="w-full pl-9 pr-3 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all appearance-none cursor-pointer hover:border-[#1e3a8a]/30"
-            >
-              <option value="">Todos Brindes</option>
-              {availableBrindes.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
+          <button className="w-11 h-11 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center hover:border-[#1e3a8a] hover:bg-gray-50 transition-all">
+            <Grid3x3 className="h-5 w-5 text-gray-600" />
+          </button>
 
-          {/* Botão Novo */}
-          <button 
-            onClick={() => {setClientToEdit(null); setIsModalOpen(true)}} 
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-          >
-            <Plus className="h-4 w-4" /> Novo
+          <button className="w-11 h-11 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center hover:border-red-500 hover:bg-red-50 text-gray-600 hover:text-red-600 transition-all">
+            <LogOut className="h-5 w-5" />
           </button>
         </div>
       </div>
 
-      {/* CONTENT */}
-      <div className="flex-1 overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-200">
-        {/* Barra de Ferramentas */}
-        <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1">
-            {/* Card de Total */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-2.5 flex items-center gap-3 hover:shadow-md transition-all">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-md">
-                <Users className="h-4 w-4 text-white" />
-              </div>
-              <div className="border-l border-gray-200 pl-3">
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Total</p>
-                <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{clients.length}</p>
-              </div>
-            </div>
-
-            {/* Barra de Busca */}
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input 
-                  type="text" 
-                  value={searchTerm} 
-                  onChange={e => setSearchTerm(e.target.value)} 
-                  placeholder="Buscar cliente..." 
-                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all" 
-                />
-              </div>
-            </div>
-
-            {hasActiveFilters && (
-              <button 
-                onClick={() => {setSearchTerm(''); setFilterSocio(''); setFilterBrinde('')}} 
-                className="flex items-center gap-2 px-3 py-2.5 text-[9px] font-black text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all uppercase tracking-[0.2em]"
-              >
-                <X className="h-3.5 w-3.5"/> Limpar
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* View Toggle */}
-            <div className="flex border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
-              <button 
-                onClick={() => {setViewType('cards'); localStorage.setItem('clientsViewType', 'cards')}} 
-                className={`p-2.5 transition-all ${viewType === 'cards' ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] text-white shadow-inner' : 'bg-transparent text-gray-600 hover:bg-gray-50'}`}
-              >
-                <LayoutGrid className="h-4 w-4"/>
-              </button>
-              <button 
-                onClick={() => {setViewType('list'); localStorage.setItem('clientsViewType', 'list')}} 
-                className={`p-2.5 border-l border-gray-200 transition-all ${viewType === 'list' ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] text-white shadow-inner' : 'bg-transparent text-gray-600 hover:bg-gray-50'}`}
-              >
-                <List className="h-4 w-4"/>
-              </button>
-            </div>
-
-            {/* Botões de Ação */}
-            <button 
-              onClick={() => fileInputRef.current?.click()} 
-              className="p-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-[#1e3a8a]/30 transition-all"
-              title="Importar"
-            >
-              <Upload className="h-4 w-4"/>
-            </button>
-
-            <button 
-              onClick={handleExportExcel} 
-              className="p-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-[#1e3a8a]/30 transition-all"
-              title="Exportar"
-            >
-              <FileSpreadsheet className="h-4 w-4"/>
-            </button>
-          </div>
+      {/* TABS + ACTIONS BAR */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab('list')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
+              activeTab === 'list'
+                ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <BarChart3 className="h-4 w-4" />
+            RELATÓRIO
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('stats')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
+              activeTab === 'stats'
+                ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            DESCRITIVO
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('rules')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${
+              activeTab === 'rules'
+                ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <Settings className="h-4 w-4" />
+            REGRAS
+          </button>
         </div>
 
-        {/* Listagem */}
-        <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
-          {loading ? (
-            <div className="py-20 flex justify-center"><Loader2 className="animate-spin h-8 w-8 text-[#1e3a8a]" /></div>
-          ) : processedClients.length === 0 ? (
-            <div className="py-20 text-center text-gray-500">
-              <AlertTriangle className="mx-auto h-12 w-12 mb-2 text-gray-300" />
-              <p className="font-bold text-[#0a192f]">Nenhum registro encontrado</p>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={fetchClients}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border-2 border-gray-200 text-gray-700 hover:border-[#1e3a8a] hover:bg-gray-50 font-bold text-sm transition-all"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
+
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1e3a8a] text-white hover:bg-[#112240] font-bold text-sm shadow-md hover:shadow-lg transition-all uppercase tracking-wide"
+          >
+            <Upload className="h-4 w-4" />
+            IMPORTAR
+          </button>
+          
+          <button 
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 text-white hover:bg-green-700 font-bold text-sm shadow-md hover:shadow-lg transition-all uppercase tracking-wide"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            EXPORTAR
+          </button>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="flex-1 overflow-hidden p-6">
+        <div className="h-full bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col">
+          
+          {/* Barra de Filtros */}
+          <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              {/* Card Total */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-2.5 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
+                  <Users className="h-4 w-4 text-white" />
+                </div>
+                <div className="border-l border-gray-200 pl-3">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Total</p>
+                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{clients.length}</p>
+                </div>
+              </div>
+
+              {/* Busca */}
+              <div className="flex-1 max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input 
+                    type="text" 
+                    value={searchTerm} 
+                    onChange={e => setSearchTerm(e.target.value)} 
+                    placeholder="Buscar cliente..." 
+                    className="w-full pl-10 pr-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all" 
+                  />
+                </div>
+              </div>
+
+              {/* Filtro Sócio */}
+              <div className="relative min-w-[160px]">
+                <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+                <select 
+                  value={filterSocio} 
+                  onChange={e => setFilterSocio(e.target.value)} 
+                  className="w-full pl-9 pr-8 py-2.5 text-sm font-bold border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all appearance-none cursor-pointer hover:border-[#1e3a8a]/30"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.5em 1.5em'
+                  }}
+                >
+                  <option value="">Todos Sócios</option>
+                  {availableSocios.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              {/* Filtro Brinde */}
+              <div className="relative min-w-[160px]">
+                <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+                <select 
+                  value={filterBrinde} 
+                  onChange={e => setFilterBrinde(e.target.value)} 
+                  className="w-full pl-9 pr-8 py-2.5 text-sm font-bold border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all appearance-none cursor-pointer hover:border-[#1e3a8a]/30"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.5em 1.5em'
+                  }}
+                >
+                  <option value="">Todos Brindes</option>
+                  {availableBrindes.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              {hasActiveFilters && (
+                <button 
+                  onClick={() => {setSearchTerm(''); setFilterSocio(''); setFilterBrinde('')}} 
+                  className="flex items-center gap-2 px-3 py-2.5 text-[9px] font-black text-red-600 bg-red-50 border-2 border-red-200 rounded-xl hover:bg-red-100 transition-all uppercase tracking-[0.2em]"
+                >
+                  <X className="h-3.5 w-3.5"/> Limpar
+                </button>
+              )}
             </div>
-          ) : viewType === 'cards' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {processedClients.map(c => <ClientCard key={c.id} client={c} onEdit={setClientToEdit} onOpenModal={() => setIsModalOpen(true)} onDelete={handleDeleteClient} />)}
+
+            <div className="flex items-center gap-2">
+              {/* View Toggle */}
+              <div className="flex border-2 border-gray-200 rounded-xl overflow-hidden bg-white">
+                <button 
+                  onClick={() => {setViewType('cards'); localStorage.setItem('clientsViewType', 'cards')}} 
+                  className={`p-2.5 transition-all ${viewType === 'cards' ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <LayoutGrid className="h-4 w-4"/>
+                </button>
+                <button 
+                  onClick={() => {setViewType('list'); localStorage.setItem('clientsViewType', 'list')}} 
+                  className={`p-2.5 border-l-2 border-gray-200 transition-all ${viewType === 'list' ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <List className="h-4 w-4"/>
+                </button>
+              </div>
+
+              {/* Botão Novo */}
+              <button 
+                onClick={() => {setClientToEdit(null); setIsModalOpen(true)}} 
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+              >
+                <Plus className="h-4 w-4" /> Novo
+              </button>
             </div>
-          ) : (
-            <div className="overflow-x-auto rounded-xl border border-gray-200">
-              <table className="w-full text-left">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                  <tr>
-                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cliente</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Empresa</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Sócio</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Brinde</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Contato</th>
-                    <th className="px-6 py-4 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
-                  {processedClients.map(c => <ClientRow key={c.id} client={c} onEdit={setClientToEdit} onOpenModal={() => setIsModalOpen(true)} onDelete={handleDeleteClient} />)}
-                </tbody>
-              </table>
-            </div>
-          )}
+          </div>
+
+          {/* Listagem */}
+          <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
+            {loading ? (
+              <div className="py-20 flex justify-center"><Loader2 className="animate-spin h-8 w-8 text-[#1e3a8a]" /></div>
+            ) : processedClients.length === 0 ? (
+              <div className="py-20 text-center text-gray-500">
+                <AlertTriangle className="mx-auto h-12 w-12 mb-2 text-gray-300" />
+                <p className="font-bold text-[#0a192f]">Nenhum registro encontrado</p>
+              </div>
+            ) : viewType === 'cards' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {processedClients.map(c => <ClientCard key={c.id} client={c} onEdit={setClientToEdit} onOpenModal={() => setIsModalOpen(true)} onDelete={handleDeleteClient} />)}
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border-2 border-gray-200">
+                <table className="w-full text-left">
+                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cliente</th>
+                      <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Empresa</th>
+                      <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Sócio</th>
+                      <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Brinde</th>
+                      <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Contato</th>
+                      <th className="px-6 py-4 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {processedClients.map(c => <ClientRow key={c.id} client={c} onEdit={setClientToEdit} onOpenModal={() => setIsModalOpen(true)} onDelete={handleDeleteClient} />)}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -305,12 +383,10 @@ function ClientCard({ client, onEdit, onOpenModal, onDelete }: any) {
   return (
     <div 
       onClick={() => { onEdit(client); onOpenModal(); }} 
-      className="relative bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:scale-[1.02] hover:border-[#1e3a8a]/30 transition-all duration-300 cursor-pointer group overflow-hidden"
+      className="relative bg-white border-2 border-gray-200 rounded-xl p-5 hover:shadow-md hover:scale-[1.02] hover:border-[#1e3a8a]/30 transition-all duration-300 cursor-pointer group overflow-hidden"
     >
-      {/* Gradient decorativo */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       
-      {/* Header do Card */}
       <div className="relative flex items-start justify-between mb-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white font-black text-sm shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
@@ -327,7 +403,6 @@ function ClientCard({ client, onEdit, onOpenModal, onDelete }: any) {
           </div>
         </div>
         
-        {/* Menu de Ações */}
         <Menu as="div" className="relative z-10">
           <Menu.Button 
             onClick={(e) => e.stopPropagation()} 
@@ -336,12 +411,12 @@ function ClientCard({ client, onEdit, onOpenModal, onDelete }: any) {
             <MoreVertical className="h-4 w-4" />
           </Menu.Button>
           <Transition as={Fragment}>
-            <Menu.Items className="absolute right-0 mt-1 w-40 bg-white shadow-xl border border-gray-200 rounded-xl py-1.5 z-50">
+            <Menu.Items className="absolute right-0 mt-1 w-40 bg-white shadow-xl border-2 border-gray-200 rounded-xl py-1.5 z-50">
               <Menu.Item>
                 {({ active }) => (
                   <button
                     onClick={(e) => { e.stopPropagation(); onEdit(client); onOpenModal(); }}
-                    className={`${active ? 'bg-gray-50' : ''} w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 text-gray-700 font-semibold transition-colors`}
+                    className={`${active ? 'bg-gray-50' : ''} w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 text-gray-700 font-bold transition-colors`}
                   >
                     <Pencil className="h-3.5 w-3.5" /> Editar
                   </button>
@@ -351,7 +426,7 @@ function ClientCard({ client, onEdit, onOpenModal, onDelete }: any) {
                 {({ active }) => (
                   <button
                     onClick={(e) => onDelete(client, e)}
-                    className={`${active ? 'bg-gray-50' : ''} w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 text-red-600 font-semibold transition-colors`}
+                    className={`${active ? 'bg-gray-50' : ''} w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 text-red-600 font-bold transition-colors`}
                   >
                     <Trash2 className="h-3.5 w-3.5" /> Excluir
                   </button>
@@ -362,14 +437,12 @@ function ClientCard({ client, onEdit, onOpenModal, onDelete }: any) {
         </Menu>
       </div>
 
-      {/* Badge Tipo Brinde */}
       <div className="relative mb-4 pb-4 border-b border-gray-100">
-        <span className={`inline-block px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${colors.badge}`}>
+        <span className={`inline-block px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border-2 shadow-sm ${colors.badge}`}>
           {client.tipo_brinde}
         </span>
       </div>
 
-      {/* Info do Sócio */}
       <div className="relative mb-4 pb-4 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-gray-50 rounded-lg border border-gray-200">
@@ -382,12 +455,11 @@ function ClientCard({ client, onEdit, onOpenModal, onDelete }: any) {
         </div>
       </div>
 
-      {/* Ações de Contato */}
       <div className="relative flex gap-2">
         {client.telefone && (
           <button 
             onClick={(e) => {e.stopPropagation(); window.open(`https://wa.me/55${client.telefone.replace(/\D/g,'')}`)}} 
-            className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:shadow-sm transition-all group/btn"
+            className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border-2 border-gray-200 bg-white hover:bg-gray-50 hover:border-green-500 hover:shadow-sm transition-all group/btn"
             title="WhatsApp"
           >
             <MessageCircle className="h-4 w-4 text-green-600 group-hover/btn:scale-110 transition-transform" />
@@ -397,7 +469,7 @@ function ClientCard({ client, onEdit, onOpenModal, onDelete }: any) {
         {client.email && (
           <button 
             onClick={(e) => {e.stopPropagation(); window.open(`mailto:${client.email}`)}} 
-            className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:shadow-sm transition-all group/btn"
+            className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border-2 border-gray-200 bg-white hover:bg-gray-50 hover:border-blue-500 hover:shadow-sm transition-all group/btn"
             title="E-mail"
           >
             <Mail className="h-4 w-4 text-blue-600 group-hover/btn:scale-110 transition-transform" />
@@ -440,7 +512,7 @@ function ClientRow({ client, onEdit, onOpenModal, onDelete }: any) {
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className={`inline-block px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${colors.badge}`}>
+        <span className={`inline-block px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border-2 shadow-sm ${colors.badge}`}>
           {client.tipo_brinde}
         </span>
       </td>
@@ -449,7 +521,7 @@ function ClientRow({ client, onEdit, onOpenModal, onDelete }: any) {
           {client.telefone && (
             <button 
               onClick={(e) => {e.stopPropagation(); window.open(`https://wa.me/55${client.telefone.replace(/\D/g,'')}`)}} 
-              className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:shadow-sm transition-all"
+              className="p-2 rounded-lg border-2 border-gray-200 bg-white hover:bg-gray-50 hover:border-green-500 hover:shadow-sm transition-all"
               title="WhatsApp"
             >
               <MessageCircle className="h-4 w-4 text-green-600" />
@@ -458,7 +530,7 @@ function ClientRow({ client, onEdit, onOpenModal, onDelete }: any) {
           {client.email && (
             <button 
               onClick={(e) => {e.stopPropagation(); window.open(`mailto:${client.email}`)}} 
-              className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:shadow-sm transition-all"
+              className="p-2 rounded-lg border-2 border-gray-200 bg-white hover:bg-gray-50 hover:border-blue-500 hover:shadow-sm transition-all"
               title="E-mail"
             >
               <Mail className="h-4 w-4 text-blue-600" />
