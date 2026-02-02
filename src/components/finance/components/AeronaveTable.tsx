@@ -48,10 +48,10 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
           <tr className="text-[#112240]">
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Aeronave</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Data</th>
+            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Fornecedor</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Destino</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Despesa</th>
-            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Descrição</th>
-            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Fornecedor</th>
+            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Descrição</th>            
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Faturado CNPJ</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Previsto</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Pago</th>
