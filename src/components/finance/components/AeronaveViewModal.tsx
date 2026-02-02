@@ -1,4 +1,5 @@
-import { X, Edit2, Trash2, Plane, Calendar, MapPin, DollarSign, Info } from 'lucide-react'
+import { X, Edit2, Trash2, Plane, Calendar, MapPin, DollarSign, Info, FolderSearch } from 'lucide-react'
+import { AeronaveMenuSelector } from './AeronaveMenuSelector' // Reutilizando o componente de menu suspenso gerenciável
 
 interface AeronaveViewModalProps {
   item: any;
@@ -14,6 +15,21 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0)
 
+  // Função para formatar data para o padrão Brasil DD/MM/AAAA
+  const formatDateBR = (dateString: string) => {
+    if (!dateString) return '---'
+    try {
+      // Caso a data venha no formato YYYY-MM-DD do banco
+      if (dateString.includes('-')) {
+        const [year, month, day] = dateString.split('-')
+        return `${day}/${month}/${year}`
+      }
+      return dateString
+    } catch (e) {
+      return dateString
+    }
+  }
+
   const DataField = ({ icon: Icon, label, value, color = "blue" }: any) => (
     <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
       <div className="flex items-center gap-2 mb-1">
@@ -26,7 +42,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden border border-white/20 flex flex-col animate-in zoom-in duration-300">
+      <div className="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden border border-white/20 flex flex-col animate-in zoom-in duration-300 max-h-[90vh]">
         
         {/* Header */}
         <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-white">
@@ -54,7 +70,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <DataField icon={Plane} label="Aeronave" value={item.aeronave} />
-              <DataField icon={Calendar} label="Data do Voo" value={item.data} />
+              <DataField icon={Calendar} label="Data do Voo" value={formatDateBR(item.data)} />
               <DataField icon={MapPin} label="Localidade/Destino" value={item.localidade_destino} />
               <DataField icon={Edit2} label="Tripulação" value={item.tripulacao} />
               <DataField icon={Info} label="Despesa" value={item.despesa} />
@@ -74,8 +90,27 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
               <DataField icon={DollarSign} label="Faturado CNPJ" value={formatCurrency(item.faturado_cnpj)} color="emerald" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <DataField icon={Calendar} label="Vencimento" value={item.data_vencimento} color="orange" />
-              <DataField icon={Calendar} label="Data Pgto" value={item.data_pagamento} color="emerald" />
+              <DataField icon={Calendar} label="Vencimento" value={formatDateBR(item.data_vencimento)} color="orange" />
+              <DataField icon={Calendar} label="Data Pgto" value={formatDateBR(item.data_pagamento)} color="emerald" />
+            </div>
+          </div>
+
+          {/* Seção 3: GED (Gestão Eletrônica de Documentos) */}
+          <div className="pt-4 border-t border-gray-100">
+            <h4 className="text-[11px] font-black text-orange-600 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+              <FolderSearch className="h-4 w-4" /> Gestão de Documentos (GED)
+            </h4>
+            <div className="bg-gray-50/50 p-6 rounded-[1.5rem] border border-gray-100">
+              <div className="max-w-xs">
+                <AeronaveMenuSelector 
+                  label="Tipo de Documento Anexo"
+                  value={item.tipo_documento || ''}
+                  onChange={() => {}} // Apenas visualização neste modal, edição no modal de form
+                />
+              </div>
+              <p className="text-[9px] text-gray-400 font-bold uppercase mt-4 tracking-widest">
+                * Os documentos físicos e digitais estão vinculados via ID: {item.id?.split('-')[0]}
+              </p>
             </div>
           </div>
 
