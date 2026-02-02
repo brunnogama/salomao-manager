@@ -1,19 +1,15 @@
 import { useState, useEffect } from 'react'
 import { 
   LayoutDashboard, 
-  MapPin, 
+  Users, 
   KanbanSquare, 
+  BookOpen, 
+  History, 
+  FileWarning,
   X,
-  Users,
-  TrendingUp,
-  Clock,
-  BarChart3,
-  RefreshCw,
-  Briefcase,
-  Banknote,
-  Megaphone,
-  FolderSearch,
-  Calendar
+  Gavel,
+  Truck,
+  Briefcase
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -25,34 +21,56 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProps) {
+  const [incompleteCount, setIncompleteCount] = useState(0)
   const [userName, setUserName] = useState('Carregando...')
   const [userRole, setUserRole] = useState('')
+
+  const fetchCount = async () => {
+    const { data } = await supabase.from('clientes').select('*')
+    if (data) {
+      const count = data.filter((c: any) => {
+        const ignored = c.ignored_fields || []
+        const missing = []
+        if (!c.nome) missing.push('Nome')
+        if (!c.empresa) missing.push('Empresa')
+        if (!c.cargo) missing.push('Cargo')
+        if (!c.tipo_brinde) missing.push('Tipo Brinde')
+        if (!c.cep) missing.push('CEP')
+        if (!c.endereco) missing.push('Endereço')
+        if (!c.numero) missing.push('Número')
+        if (!c.bairro) missing.push('Bairro')
+        if (!c.cidade) missing.push('Cidade')
+        if (!c.estado) missing.push('UF')
+        if (!c.email) missing.push('Email')
+        return missing.filter(f => !ignored.includes(f)).length > 0
+      }).length
+      setIncompleteCount(count)
+    }
+  }
 
   const fetchUserProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
       if (user) {
         const { data: profile } = await supabase
-          .from('usuarios_permitidos')
-          .select('cargo')
-          .eq('email', user.email)
+          .from('user_profiles')
+          .select('role')
+          .eq('user_id', user.id)
           .single()
 
         if (user.email) {
-          const emailName = user.email.split('@')[0]
-          const formattedName = emailName
+          const formattedName = user.email.split('@')[0]
             .split('.')
             .map(part => part.charAt(0).toUpperCase() + part.slice(1))
             .join(' ')
           setUserName(formattedName)
         }
 
-        if (profile) {
-          setUserRole(profile.cargo || 'Colaborador')
-        } else {
-          setUserRole('Colaborador')
+        const roleLabels: Record<string, string> = {
+          admin: 'Administrador',
+          user: 'Usuário'
         }
+        setUserRole(profile ? (roleLabels[profile.role] || 'Usuário') : 'Usuário')
       }
     } catch (error) {
       console.error('Erro ao carregar dados do usuário:', error)
@@ -61,23 +79,21 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
   }
 
   useEffect(() => {
+    fetchCount()
     fetchUserProfile()
+    const interval = setInterval(fetchCount, 5000)
+    return () => clearInterval(interval)
   }, [])
-  
+
   const mainItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'calendario', label: 'Calendário', icon: Calendar },
-    { id: 'presencial', label: 'Presencial', icon: MapPin },
-    { id: 'colaboradores', label: 'Colaboradores', icon: Users },
-    { id: 'evolucao', label: 'Evolução de Pessoal', icon: TrendingUp },
-    { id: 'tempo-casa', label: 'Tempo de casa', icon: Clock },
-    { id: 'headcount', label: 'Headcount', icon: BarChart3 },
-    { id: 'turnover', label: 'Turnover', icon: RefreshCw },
-    { id: 'vagas', label: 'Vagas', icon: Briefcase },
-    { id: 'remuneracao', label: 'Remuneração', icon: Banknote },
-    { id: 'acoes', label: 'Ações', icon: Megaphone },
+    { id: 'clientes', label: 'Clientes', icon: Users },
+    { id: 'magistrados', label: 'Autoridades', icon: Gavel }, 
+    { id: 'incompletos', label: 'Incompletos', icon: FileWarning, badge: incompleteCount },
+    { id: 'logistica', label: 'Logística', icon: Truck },
     { id: 'kanban', label: 'Kanban', icon: KanbanSquare },
-    { id: 'ged', label: 'GED', icon: FolderSearch },
+    { id: 'manual', label: 'Manual', icon: BookOpen },
+    { id: 'historico', label: 'Histórico', icon: History },
   ]
 
   return (
@@ -137,20 +153,27 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
                 />
                 <span className="text-sm">{item.label}</span>
               </div>
+
+              {/* Badge para Incompletos */}
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">
+                  {item.badge}
+                </span>
+              )}
             </button>
           ))}
         </nav>
 
-        {/* 3. CARD DO MÓDULO (RECURSOS HUMANOS) */}
+        {/* 3. CARD DO MÓDULO (CRM) */}
         <div className="p-4 bg-[#112240] flex-shrink-0 mt-auto">
           <div className="bg-gradient-to-br from-[#1a2c4e] to-[#0a192f] border border-gray-700/50 rounded-xl p-4 shadow-lg">
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-900/40 flex items-center justify-center border border-blue-500/30">
-                <Users className="w-5 h-5 text-blue-400" />
+                <Briefcase className="w-5 h-5 text-blue-400" />
               </div>
               <div>
                 <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-0.5 leading-none">Módulo</p>
-                <p className="text-sm font-semibold text-white leading-tight">Recursos Humanos</p>
+                <p className="text-sm font-semibold text-white leading-tight">CRM Clientes</p>
               </div>
             </div>
           </div>
