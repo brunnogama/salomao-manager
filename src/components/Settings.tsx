@@ -3,7 +3,7 @@ import {
   Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, 
   Users, Pencil, Trash2, Save, RefreshCw, 
   AlertTriangle, History as HistoryIcon, Code, Shield, UserPlus, Ban, Check, Lock, Building,
-  Plus, X, Tag, Briefcase, EyeOff, LayoutGrid, ArrowRight, MessageSquare, Heart
+  Plus, X, Tag, Briefcase, EyeOff, LayoutGrid, ArrowRight, MessageSquare, Heart, Plane, DollarSign
 } from 'lucide-react'
 import { utils, read, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -50,6 +50,16 @@ const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
 const CHANGELOG = [
   {
+    version: '2.9.1',
+    date: '02/02/2026',
+    type: 'minor',
+    title: '✈️ Manutenção Financeiro',
+    changes: [
+      'Adicionado reset de dados da Gestão de Aeronave em Settings',
+      'Nova aba de manutenção para o módulo Financeiro'
+    ]
+  },
+  {
     version: '2.9.0',
     date: '29/01/2026',
     type: 'minor',
@@ -76,7 +86,7 @@ export function Settings() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
   
-  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'family' | 'historico' | 'sistema'>('menu')
+  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'family' | 'financial' | 'historico' | 'sistema'>('menu')
   
   const [users, setUsers] = useState<AppUser[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -206,7 +216,7 @@ export function Settings() {
         const { data } = await supabase
           .from('user_profiles')
           .select('role, allowed_modules')
-          .eq('id', user.id) // Alterado de user_id para id
+          .eq('id', user.id)
           .single()
           
         if (data) {
@@ -242,20 +252,20 @@ export function Settings() {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('id, email, role, allowed_modules, created_at') // Alterado de user_id para id
+        .select('id, email, role, allowed_modules, created_at')
         .order('created_at', { ascending: false })
       
       if (error) throw error
       
       if (data) {
         setUsers(data.map((u: any) => ({
-          id: u.id || `pending-${u.email}`, // Alterado de user_id para id
-          user_id: u.id, // Alterado de user_id para id
+          id: u.id || `pending-${u.email}`,
+          user_id: u.id,
           nome: u.email.split('@')[0],
           email: u.email,
           cargo: u.role === 'admin' ? 'Administrador' : 'Colaborador',
           role: u.role || 'user',
-          ativo: !!u.id, // Alterado de user_id para id
+          ativo: !!u.id,
           allowed_modules: u.allowed_modules || []
         })))
       }
@@ -341,7 +351,7 @@ export function Settings() {
       } else {
         const { data: existingProfile } = await supabase
           .from('user_profiles')
-          .select('id, email') // Alterado de user_id para id
+          .select('id, email')
           .eq('email', userForm.email)
           .maybeSingle()
         if (existingProfile) {
@@ -358,7 +368,7 @@ export function Settings() {
           const { error } = await supabase
             .from('user_profiles')
             .insert({
-              id: null, // Alterado de user_id para id
+              id: null,
               email: userForm.email,
               role: role,
               allowed_modules: userForm.allowed_modules
@@ -466,6 +476,23 @@ export function Settings() {
     } finally { setLoading(false) }
   }
 
+  const handleResetFinancial = async () => {
+    if (!isAdmin) return alert("Ação restrita a administradores.");
+    if (!confirm('ATENÇÃO: Isso apagará TODOS os dados da Gestão de Aeronave. Prosseguir?')) return;
+    const confirmText = prompt('Digite APAGAR para confirmar:')
+    if (confirmText !== 'APAGAR') return;
+    setLoading(true)
+    setStatus({ type: null, message: 'Limpando base do Financeiro...' })
+    try {
+        await supabase.from('financeiro_aeronave').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+        await supabase.from('aeronave_fornecedores').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+        setStatus({ type: 'success', message: 'Base do Financeiro resetada!' })
+        await logAction('RESET', 'FINANCIAL', 'Resetou base da aeronave e fornecedores')
+    } catch (error: any) {
+        setStatus({ type: 'error', message: 'Erro: ' + error.message })
+    } finally { setLoading(false) }
+  }
+
   const handleDownloadTemplate = () => {
     const ws = utils.json_to_sheet([{ nome: 'Cliente Exemplo', empresa: 'Empresa SA', cargo: 'Diretor', email: 'email@teste.com', telefone: '11999999999', socio: 'Dr. João', tipo_brinde: 'Brinde VIP', quantidade: 1, cep: '01001000', endereco: 'Praça da Sé', numero: '1', bairro: 'Centro', cidade: 'São Paulo', estado: 'SP' }])
     const wb = utils.book_new(); utils.book_append_sheet(wb, ws, "Template")
@@ -493,7 +520,7 @@ export function Settings() {
     setActiveModule(newModule)
   }
 
-  if (activeModule !== 'menu' && activeModule !== 'historico' && !currentUserPermissions[activeModule === 'rh' ? 'collaborators' : activeModule === 'family' ? 'family' : (activeModule as any)] && !isAdmin) {
+  if (activeModule !== 'menu' && activeModule !== 'historico' && !currentUserPermissions[activeModule === 'rh' ? 'collaborators' : activeModule === 'family' ? 'family' : activeModule === 'financial' ? 'financial' : (activeModule as any)] && !isAdmin) {
       return (
           <div className="max-w-7xl mx-auto space-y-6">
               <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
@@ -515,6 +542,7 @@ export function Settings() {
           { id: 'juridico', label: 'Brindes', icon: Lock, desc: 'Área de Autoridades', color: 'bg-[#112240]', perm: true },
           { id: 'rh', label: 'RH', icon: Users, desc: 'Controle de Pessoal', color: 'bg-green-600', perm: currentUserPermissions.collaborators },
           { id: 'family', label: 'Família', icon: Heart, desc: 'Gestão Secretaria', color: 'bg-purple-600', perm: currentUserPermissions.family },
+          { id: 'financial', label: 'Financeiro', icon: DollarSign, desc: 'Gestão de Aeronave', color: 'bg-blue-800', perm: currentUserPermissions.financial },
           { id: 'historico', label: 'Histórico', icon: HistoryIcon, desc: 'Log de Atividades', color: 'bg-purple-600', perm: true },
           { id: 'sistema', label: 'Sistema', icon: Code, desc: 'Configurações Globais', color: 'bg-red-600', perm: currentUserPermissions.geral },
       ]
@@ -551,6 +579,7 @@ export function Settings() {
             <button onClick={() => handleModuleChange('juridico')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'juridico' ? 'bg-[#112240] text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}><Lock className="h-4 w-4" /> Jurídico</button>
             <button onClick={() => handleModuleChange('rh')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'rh' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 hover:bg-green-50'}`}><Users className="h-4 w-4" /> RH</button>
             <button onClick={() => handleModuleChange('family')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'family' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-purple-50'}`}><Heart className="h-4 w-4" /> Família</button>
+            <button onClick={() => handleModuleChange('financial')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'financial' ? 'bg-blue-800 text-white' : 'bg-white text-gray-600 hover:bg-blue-50'}`}><DollarSign className="h-4 w-4" /> Financeiro</button>
             <button onClick={() => handleModuleChange('historico')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'historico' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-purple-50'}`}><HistoryIcon className="h-4 w-4" /> Histórico</button>
             <button onClick={() => handleModuleChange('sistema')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'sistema' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-red-50'}`}><Code className="h-4 w-4" /> Sistema</button>
           </div>
@@ -662,6 +691,23 @@ export function Settings() {
           </div>
       )}
 
+      {activeModule === 'financial' && (
+          <div className="animate-in fade-in">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center gap-3 mb-6"><div className="p-2 bg-blue-50 rounded-lg"><Plane className="h-5 w-5 text-blue-700" /></div><div><h3 className="font-bold text-gray-900 text-base">Manutenção Financeiro</h3><p className="text-xs text-gray-500">Controle de dados da Gestão de Aeronave</p></div></div>
+                  <div className="border border-red-200 rounded-xl overflow-hidden">
+                      <div className="bg-red-50 p-4 border-b border-red-200 flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-red-600" /><h4 className="font-bold text-red-800 text-sm">Zona de Perigo - Dados da Aeronave</h4></div>
+                      <div className="p-6">
+                          <p className="text-sm text-gray-600 mb-4">Esta ação irá apagar <strong>todos</strong> os registros de voos, despesas e fornecedores configurados na Gestão de Aeronave.</p>
+                          <button onClick={handleResetFinancial} disabled={!isAdmin} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white transition-colors ${isAdmin ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-300 cursor-not-allowed'}`}>
+                              <Trash2 className="h-4 w-4" /> Resetar Base da Aeronave
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+
       {activeModule === 'rh' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center gap-3 mb-6"><div className="p-2 bg-green-50 rounded-lg"><Users className="h-5 w-5 text-green-700" /></div><h3 className="font-bold text-gray-900 text-base">Manutenção RH</h3></div>
@@ -691,7 +737,7 @@ export function Settings() {
       )}
 
       {activeModule === 'historico' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <History />
           </div>
       )}
