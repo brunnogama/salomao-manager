@@ -230,10 +230,10 @@ export function Clients({
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         
         {/* Barra de Filtros Reorganizada */}
-        <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1">
+        <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+          <div className="flex items-center gap-3 overflow-x-auto">
             {/* Card Total */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-2.5 flex items-center gap-3 hover:shadow-md transition-all">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-2.5 flex items-center gap-3 hover:shadow-md transition-all flex-shrink-0">
               <div className="p-2 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
                 <Users className="h-4 w-4 text-white" />
               </div>
@@ -244,7 +244,7 @@ export function Clients({
             </div>
 
             {/* Busca Expandida */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-[300px]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input 
@@ -258,7 +258,7 @@ export function Clients({
             </div>
 
             {/* Filtro Sócio */}
-            <div className="relative min-w-[160px]">
+            <div className="relative min-w-[160px] flex-shrink-0">
               <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
               <select 
                 value={filterSocio} 
@@ -277,7 +277,7 @@ export function Clients({
             </div>
 
             {/* Filtro Brinde */}
-            <div className="relative min-w-[160px]">
+            <div className="relative min-w-[160px] flex-shrink-0">
               <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
               <select 
                 value={filterBrinde} 
@@ -298,37 +298,37 @@ export function Clients({
             {hasActiveFilters && (
               <button 
                 onClick={() => {setSearchTerm(''); setFilterSocio(''); setFilterBrinde('')}} 
-                className="flex items-center gap-2 px-3 py-2.5 text-[9px] font-black text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all uppercase tracking-[0.2em]"
+                className="flex items-center gap-2 px-3 py-2.5 text-[9px] font-black text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all uppercase tracking-[0.2em] flex-shrink-0"
               >
                 <X className="h-3.5 w-3.5"/> Limpar
               </button>
             )}
-          </div>
 
-          {/* Actions - Importar, Exportar, Novo */}
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="p-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95"
-              title="Importar"
-            >
-              <Upload className="h-5 w-5" />
-            </button>
-            
-            <button 
-              onClick={handleExportExcel}
-              className="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95"
-              title="Exportar"
-            >
-              <FileSpreadsheet className="h-5 w-5" />
-            </button>
+            {/* Actions - Importar, Exportar, Novo */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95"
+                title="Importar"
+              >
+                <Upload className="h-5 w-5" />
+              </button>
+              
+              <button 
+                onClick={handleExportExcel}
+                className="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95"
+                title="Exportar"
+              >
+                <FileSpreadsheet className="h-5 w-5" />
+              </button>
 
-            <button 
-              onClick={() => {setClientToEdit(null); setIsModalOpen(true)}} 
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-            >
-              <Plus className="h-4 w-4" /> Novo
-            </button>
+              <button 
+                onClick={() => {setClientToEdit(null); setIsModalOpen(true)}} 
+                className="flex items-center gap-2 px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+              >
+                <Plus className="h-4 w-4" /> Novo
+              </button>
+            </div>
           </div>
         </div>
 
