@@ -3,8 +3,6 @@ import {
   LayoutDashboard, 
   Users, 
   KanbanSquare, 
-  BookOpen, 
-  History, 
   FileWarning,
   X,
   Gavel,
@@ -59,8 +57,6 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
     { id: 'incompletos', label: 'Incompletos', icon: FileWarning, badge: incompleteCount },
     { id: 'logistica', label: 'Logística', icon: Truck },
     { id: 'kanban', label: 'Kanban', icon: KanbanSquare },
-    { id: 'manual', label: 'Manual', icon: BookOpen },
-    { id: 'historico', label: 'Histórico', icon: History },
   ]
 
   return (
