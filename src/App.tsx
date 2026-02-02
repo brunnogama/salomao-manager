@@ -143,7 +143,13 @@ export default function App() {
                 )}
                 {activePage === 'incompletos' && <IncompleteClients />}
                 {activePage === 'manual' && <Manual />}
-                {activePage === 'kanban' && <Kanban />}
+                {activePage === 'kanban' && (
+                  <Kanban 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
                 {activePage === 'historico' && <History />}
               </>
             )}
@@ -153,7 +159,13 @@ export default function App() {
                 {activePage === 'calendario' && <Calendario userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'presencial' && <Presencial userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'colaboradores' && <Colaboradores userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
-                {activePage === 'kanban' && <Kanban />}
+                {activePage === 'kanban' && (
+                  <Kanban 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
               </>
             )}
 
