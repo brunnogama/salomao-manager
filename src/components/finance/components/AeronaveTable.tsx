@@ -52,7 +52,6 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Destino</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Despesa</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Descrição</th>
-            
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Faturado CNPJ</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Previsto</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Pago</th>
@@ -70,10 +69,10 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
               <td className="px-4 py-4 text-sm font-semibold text-gray-600">
                 {formatDate(item.data)}
               </td>
+              <td className="px-4 py-4 text-sm font-bold text-[#1e3a8a]">{item.fornecedor}</td>
               <td className="px-4 py-4 text-sm font-medium text-gray-500">{item.localidade_destino}</td>
               <td className="px-4 py-4 text-sm font-bold text-blue-600">{item.despesa}</td>
               <td className="px-4 py-4 text-sm font-medium text-gray-500 italic max-w-xs truncate">{item.descricao}</td>
-              <td className="px-4 py-4 text-sm font-bold text-[#1e3a8a]">{item.fornecedor}</td>
               <td className="px-4 py-4 text-sm font-bold text-orange-600">{formatCurrency(item.faturado_cnpj)}</td>
               <td className="px-4 py-4 text-sm font-bold text-gray-400">{formatCurrency(item.valor_previsto)}</td>
               <td className="px-4 py-4 text-sm font-black text-emerald-600">
