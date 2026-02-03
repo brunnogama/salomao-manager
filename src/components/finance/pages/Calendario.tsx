@@ -1,3 +1,4 @@
+// src/components/finance/Calendario.tsx
 import { useState, useEffect } from 'react'
 import { 
   Calendar as CalendarIcon, 
@@ -16,9 +17,11 @@ import {
   CalendarDays,
   Grid,
   LogOut,
-  UserCircle
+  UserCircle,
+  GraduationCap
 } from 'lucide-react'
-import { supabase } from '../../../lib/supabase'
+import { supabase } from '../../lib/supabase'
+import { ListaVencimentosOAB } from './ListaVencimentosOAB'
 
 interface CalendarioProps {
   userName?: string;
@@ -37,7 +40,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
   const [loading, setLoading] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [viewMode, setViewMode] = useState<'calendario' | 'proximos'>('calendario')
+  const [viewMode, setViewMode] = useState<'calendario' | 'lista'>('calendario')
 
   // Estados para o Modal de Evento
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -62,6 +65,24 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
   const getDaysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate()
   const getFirstDayOfMonth = (month: number, year: number) => new Date(year, month, 1).getDay()
+
+  const handlePreviousMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11)
+      setSelectedYear(prev => prev - 1)
+    } else {
+      setSelectedMonth(prev => prev - 1)
+    }
+  }
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0)
+      setSelectedYear(prev => prev + 1)
+    } else {
+      setSelectedMonth(prev => prev + 1)
+    }
+  }
 
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(selectedMonth, selectedYear)
@@ -131,8 +152,24 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
             <UserCircle className="h-5 w-5" />
           </div>
-          <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"><Grid className="h-5 w-5" /></button>
-          <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><LogOut className="h-5 w-5" /></button>
+          {onModuleHome && (
+            <button 
+              onClick={onModuleHome} 
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+              title="Voltar aos módulos"
+            >
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          {onLogout && (
+            <button 
+              onClick={onLogout} 
+              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+              title="Sair"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -181,22 +218,47 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           </button>
 
           <div className="flex gap-2">
-            <button onClick={() => setViewMode('calendario')} className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm ${viewMode === 'calendario' ? 'bg-[#1e3a8a] text-white' : 'bg-white text-gray-600 border border-gray-200'}`}>Mês</button>
-            <button onClick={() => setViewMode('proximos')} className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm ${viewMode === 'proximos' ? 'bg-[#1e3a8a] text-white' : 'bg-white text-gray-600 border border-gray-200'}`}>Lista</button>
+            <button 
+              onClick={() => setViewMode('calendario')} 
+              className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm flex items-center gap-2 ${
+                viewMode === 'calendario' 
+                  ? 'bg-[#1e3a8a] text-white' 
+                  : 'bg-white text-gray-600 border border-gray-200'
+              }`}
+            >
+              <CalendarIcon className="h-4 w-4" /> Mês
+            </button>
+            <button 
+              onClick={() => setViewMode('lista')} 
+              className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm flex items-center gap-2 ${
+                viewMode === 'lista' 
+                  ? 'bg-[#1e3a8a] text-white' 
+                  : 'bg-white text-gray-600 border border-gray-200'
+              }`}
+            >
+              <GraduationCap className="h-4 w-4" /> OAB
+            </button>
           </div>
         </div>
       </div>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+      {viewMode === 'calendario' ? (
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
-            <button onClick={() => setSelectedMonth(prev => prev === 0 ? 11 : prev - 1)} className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all">
+            <button 
+              onClick={handlePreviousMonth} 
+              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
+            >
               <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
             </button>
             <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
               {MESES[selectedMonth]} {selectedYear}
             </h2>
-            <button onClick={() => setSelectedMonth(prev => prev === 11 ? 0 : prev + 1)} className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all">
+            <button 
+              onClick={handleNextMonth} 
+              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
+            >
               <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
             </button>
           </div>
@@ -210,40 +272,105 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           <div className="grid grid-cols-7 gap-2">
             {renderCalendar()}
           </div>
-      </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
+            <button 
+              onClick={handlePreviousMonth} 
+              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
+            >
+              <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
+            </button>
+            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
+              {MESES[selectedMonth]} {selectedYear}
+            </h2>
+            <button 
+              onClick={handleNextMonth} 
+              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
+            >
+              <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
+            </button>
+          </div>
+
+          {/* COMPONENTE DE LISTA DE VENCIMENTOS OAB */}
+          <ListaVencimentosOAB 
+            mesAtual={selectedMonth} 
+            anoAtual={selectedYear} 
+          />
+        </div>
+      )}
 
       {/* MODAL NOVO LANÇAMENTO */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between text-white">
-              <div className="flex items-center gap-2"><CalendarDays className="h-5 w-5" /><h3 className="font-black text-base tracking-tight">Novo Lançamento</h3></div>
-              <button onClick={() => setIsModalOpen(false)}><X className="h-5 w-5" /></button>
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5" />
+                <h3 className="font-black text-base tracking-tight">Novo Lançamento</h3>
+              </div>
+              <button onClick={() => setIsModalOpen(false)}>
+                <X className="h-5 w-5" />
+              </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Descrição da Conta</label>
-                <input type="text" value={novoEvento.titulo} onChange={(e) => setNovoEvento({...novoEvento, titulo: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium" />
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+                  Descrição da Conta
+                </label>
+                <input 
+                  type="text" 
+                  value={novoEvento.titulo} 
+                  onChange={(e) => setNovoEvento({...novoEvento, titulo: e.target.value})} 
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium" 
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Categoria</label>
-                  <select value={novoEvento.tipo} onChange={(e) => setNovoEvento({...novoEvento, tipo: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none bg-white font-medium">
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+                    Categoria
+                  </label>
+                  <select 
+                    value={novoEvento.tipo} 
+                    onChange={(e) => setNovoEvento({...novoEvento, tipo: e.target.value})} 
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none bg-white font-medium"
+                  >
                     <option value="Pagamento">Contas a Pagar</option>
                     <option value="Recebimento">Contas a Receber</option>
                     <option value="Aeronave">Custos Aeronave</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Vencimento</label>
-                  <input type="date" value={novoEvento.data} onChange={(e) => setNovoEvento({...novoEvento, data: e.target.value})} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium" />
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+                    Vencimento
+                  </label>
+                  <input 
+                    type="date" 
+                    value={novoEvento.data} 
+                    onChange={(e) => setNovoEvento({...novoEvento, data: e.target.value})} 
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium" 
+                  />
                 </div>
               </div>
             </div>
             <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 text-[9px] font-black text-gray-600 uppercase tracking-[0.2em]">Cancelar</button>
-              <button onClick={handleSaveEvento} disabled={savingEvento} className="flex items-center gap-2 px-6 py-2.5 bg-[#112240] text-white font-black text-[9px] rounded-xl uppercase tracking-[0.2em] shadow-md">
-                {savingEvento ? <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="h-4 w-4" />}
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="px-6 py-2.5 text-[9px] font-black text-gray-600 uppercase tracking-[0.2em]"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleSaveEvento} 
+                disabled={savingEvento} 
+                className="flex items-center gap-2 px-6 py-2.5 bg-[#112240] text-white font-black text-[9px] rounded-xl uppercase tracking-[0.2em] shadow-md"
+              >
+                {savingEvento ? (
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
                 Salvar Lançamento
               </button>
             </div>
