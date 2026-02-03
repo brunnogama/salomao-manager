@@ -275,6 +275,8 @@ export function GED({
                   <div className="flex gap-1">
                     <button onClick={(e) => { e.stopPropagation(); handleDownload(doc); }} className="p-1.5 hover:bg-blue-100 rounded-lg transition-all" title="Baixar"><Download className="h-3.5 w-3.5 text-blue-600" /></button>
                     <button onClick={(e) => { e.stopPropagation(); setSelectedDoc(doc); setIsViewModalOpen(true); }} className="p-1.5 hover:bg-emerald-100 rounded-lg transition-all" title="Visualizar"><Eye className="h-3.5 w-3.5 text-emerald-600" /></button>
+                    {/* Botão Deletar adicionado ao card */}
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(doc); }} className="p-1.5 hover:bg-red-100 rounded-lg transition-all text-red-500" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
               </div>

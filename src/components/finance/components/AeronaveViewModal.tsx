@@ -58,6 +58,41 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
     }
   }
 
+  const handleDeleteDocument = async () => {
+    if (!item.documento_url) return
+    if (!confirm('Tem certeza que deseja excluir o documento anexo?')) return
+
+    try {
+      // 1. Remover do Storage
+      const { error: storageError } = await supabase.storage
+        .from('aeronave-documentos')
+        .remove([item.documento_url])
+      
+      if (storageError) throw storageError
+
+      // 2. Atualizar o banco de dados
+      const { error: updateError } = await supabase
+        .from('financeiro_aeronave')
+        .update({ 
+          documento_url: null,
+          tipo_documento: null
+        })
+        .eq('id', item.id)
+
+      if (updateError) throw updateError
+
+      // 3. Atualizar estado local do item
+      item.documento_url = null
+      item.tipo_documento = null
+      setTipoDocumento('')
+      
+      alert('Documento excluído com sucesso!')
+    } catch (error) {
+      console.error('Erro ao excluir documento:', error)
+      alert('Erro ao excluir o documento')
+    }
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !tipoDocumento) {
@@ -208,20 +243,29 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
                   {item.documento_url && (
                     <div className="bg-white/80 p-3 rounded-xl border border-orange-200 mb-3 animate-in fade-in">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                           <FileText className="h-4 w-4 text-orange-600 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Documento Anexado</p>
                             <p className="text-xs font-bold text-gray-700 truncate">{item.documento_url.split('/').pop()}</p>
                           </div>
                         </div>
-                        <button
-                          onClick={handleDownloadDocument}
-                          className="p-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-all flex-shrink-0"
-                          title="Baixar documento"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={handleDownloadDocument}
+                            className="p-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-all"
+                            title="Baixar documento"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={handleDeleteDocument}
+                            className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-all"
+                            title="Excluir documento"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}

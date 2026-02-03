@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Save, Plane, Upload, FileText, Download } from 'lucide-react'
+import { X, Save, Plane, Upload, FileText, Download, Trash2 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { AeronaveMenuSelector } from './AeronaveMenuSelector'
 import { NumericFormat } from 'react-number-format'
@@ -88,6 +88,35 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
     } catch (error) {
       console.error('Erro ao baixar documento:', error)
       alert('Erro ao baixar o documento')
+    }
+  }
+
+  const handleDeleteDocument = async () => {
+    if (!formData.documento_url) return
+    if (!confirm('Tem certeza que deseja excluir permanentemente este documento?')) return
+
+    setUploading(true)
+    try {
+      // 1. Remover do Storage
+      const { error: storageError } = await supabase.storage
+        .from('aeronave-documentos')
+        .remove([formData.documento_url])
+      
+      if (storageError) throw storageError
+
+      // 2. Limpar localmente no estado do formulário
+      setFormData({
+        ...formData,
+        documento_url: '',
+        tipo_documento: ''
+      })
+      
+      alert('Documento excluído com sucesso. Salve o registro para confirmar.')
+    } catch (error) {
+      console.error('Erro ao excluir documento:', error)
+      alert('Erro ao excluir o documento')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -324,14 +353,25 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                           <p className="text-xs font-bold text-gray-700 truncate">{formData.documento_url.split('/').pop()}</p>
                         </div>
                       </div>
-                      <button
-                        onClick={handleDownloadDocument}
-                        type="button"
-                        className="p-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-all flex-shrink-0"
-                        title="Baixar documento"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={handleDownloadDocument}
+                          type="button"
+                          className="p-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-all flex-shrink-0"
+                          title="Baixar documento"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </button>
+                        {/* Botão de Excluir adicionado aqui */}
+                        <button
+                          onClick={handleDeleteDocument}
+                          type="button"
+                          className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-all flex-shrink-0"
+                          title="Excluir documento"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
