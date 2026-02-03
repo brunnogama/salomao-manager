@@ -157,6 +157,8 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-7xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 flex flex-col animate-in zoom-in duration-300">
+        
+        {/* Header */}
         <div className="px-10 py-6 border-b border-gray-50 flex justify-between items-center bg-white flex-shrink-0">
           <div className="flex items-center gap-5">
             <div className="p-3.5 bg-blue-50 rounded-2xl">
@@ -172,8 +174,11 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
           </button>
         </div>
 
+        {/* Content */}
         <div className="px-10 py-8 space-y-8 overflow-auto max-h-[calc(95vh-180px)]">
+          
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Seção 1: Operacional */}
             <div className="lg:col-span-3 flex flex-col gap-4">
                <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <Info className="h-3.5 w-3.5" /> Operacional
@@ -185,6 +190,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
               </div>
             </div>
 
+            {/* Seção 2: Financeiro */}
             <div className="lg:col-span-5 flex flex-col gap-4">
               <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <DollarSign className="h-3.5 w-3.5" /> Financeiro
@@ -199,6 +205,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
               </div>
             </div>
 
+            {/* Seção 3: GED (Documentação) */}
             <div className="lg:col-span-4 flex flex-col gap-4">
               <h4 className="text-[10px] font-black text-orange-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <FolderSearch className="h-3.5 w-3.5" /> Documentação (GED)
@@ -231,6 +238,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
                     </button>
                   </div>
 
+                  {/* Arquivo vinculado */}
                   {item.documento_url && (
                     <div className="bg-white/80 p-3 rounded-xl border border-orange-200 mb-3 animate-in fade-in">
                       <div className="flex items-center justify-between gap-2">

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { X, Save, Plane, Upload, FileText, Download, Trash2 } from 'lucide-react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { X, Save, Plane, Upload, FileText, Download, Trash2, Settings2, Plus, Edit2, Search, Loader2 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { AeronaveMenuSelector } from './AeronaveMenuSelector'
 import { NumericFormat } from 'react-number-format'
@@ -10,6 +10,9 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   
+  // Estado para gerenciar os modais de cadastro (UX de Gerenciar)
+  const [managerConfig, setManagerConfig] = useState<{ open: boolean; type: string; title: string } | null>(null);
+
   const [formData, setFormData] = useState({
     tripulacao: '',
     aeronave: '',
@@ -121,8 +124,8 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
   const sanitizeFileName = (name: string) => {
     return name
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-      .replace(/[^\w.-]/g, '_'); // Substitui espaços e símbolos por _
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w.-]/g, '_');
   }
 
   const handleSave = async () => {
@@ -168,6 +171,8 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md transition-all">
       <div className="bg-white w-full max-w-7xl rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] flex flex-col border border-white/20">
+        
+        {/* Header */}
         <div className="px-8 py-5 border-b border-gray-50 flex justify-between items-center bg-white flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-50 rounded-lg">
@@ -185,10 +190,15 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
           </button>
         </div>
 
+        {/* Body */}
         <div className="px-8 py-6 space-y-6 overflow-y-auto custom-scrollbar">
+          
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* Coluna 1: Operacional */}
             <div className="lg:col-span-3 space-y-4">
               <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest border-b border-blue-50 pb-2">Informações Operacionais</h4>
+              
               <label className="block">
                 <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Tripulação</span>
                 <input 
@@ -198,15 +208,16 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   placeholder="Nome dos tripulantes"
                 />
               </label>
-              <label className="block">
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Aeronave</span>
-                <input 
-                  className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
-                  value={formData.aeronave}
-                  onChange={e => setFormData({...formData, aeronave: e.target.value})}
-                  placeholder="Prefixo"
-                />
-              </label>
+
+              {/* Aeronave com Menu Suspenso e Gerenciar */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Aeronave</span>
+                  <button type="button" onClick={() => setManagerConfig({ open: true, type: 'aeronaves', title: 'Gerenciar Aeronaves' })} className="text-[8px] font-black text-blue-600 uppercase hover:underline">Gerenciar</button>
+                </div>
+                <AeronaveMenuSelector table="financeiro_aeronave" column="aeronave" value={formData.aeronave} onChange={(val: string) => setFormData({...formData, aeronave: val})} />
+              </div>
+
               <label className="block">
                 <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Data</span>
                 <InputMask
@@ -219,6 +230,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
               </label>
             </div>
 
+            {/* Coluna 2: Financeiro */}
             <div className="lg:col-span-5 space-y-4">
               <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-50 pb-2">Financeiro e Logística</h4>
               <div className="grid grid-cols-2 gap-4">
@@ -230,26 +242,27 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                     onChange={e => setFormData({...formData, localidade_destino: e.target.value})}
                   />
                 </label>
-                <label className="block">
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Fornecedor</span>
-                  <input 
-                    className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
-                    value={formData.fornecedor}
-                    onChange={e => setFormData({...formData, fornecedor: e.target.value})}
-                  />
-                </label>
+                
+                {/* Fornecedor com Menu Suspenso e Gerenciar */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Fornecedor</span>
+                    <button type="button" onClick={() => setManagerConfig({ open: true, type: 'fornecedores', title: 'Gerenciar Fornecedores' })} className="text-[8px] font-black text-blue-600 uppercase hover:underline">Gerenciar</button>
+                  </div>
+                  <AeronaveMenuSelector table="financeiro_aeronave" column="fornecedor" value={formData.fornecedor} onChange={(val: string) => setFormData({...formData, fornecedor: val})} />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Despesa</span>
-                  <input 
-                    className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
-                    value={formData.despesa}
-                    onChange={e => setFormData({...formData, despesa: e.target.value})}
-                    placeholder="Tipo de despesa"
-                  />
-                </label>
+                {/* Despesa com Menu Suspenso e Gerenciar */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Despesa</span>
+                    <button type="button" onClick={() => setManagerConfig({ open: true, type: 'despesas', title: 'Gerenciar Tipos de Despesa' })} className="text-[8px] font-black text-blue-600 uppercase hover:underline">Gerenciar</button>
+                  </div>
+                  <AeronaveMenuSelector table="financeiro_aeronave" column="despesa" value={formData.despesa} onChange={(val: string) => setFormData({...formData, despesa: val})} />
+                </div>
+
                 <label className="block">
                   <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Descrição</span>
                   <input 
@@ -292,6 +305,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
               </div>
             </div>
 
+            {/* Coluna 3: GED (Documentação) */}
             <div className="lg:col-span-4 space-y-4">
               <h4 className="text-[10px] font-black text-orange-600 uppercase tracking-widest border-b border-orange-50 pb-2">GED - Documentação</h4>
               
@@ -381,9 +395,11 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                 />
               </label>
             </div>
+
           </div>
         </div>
 
+        {/* Footer */}
         <div className="px-8 py-5 border-t border-gray-50 bg-white flex justify-end items-center gap-3 flex-shrink-0">
           <button 
             onClick={onClose} 
@@ -411,6 +427,133 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
           </button>
         </div>
       </div>
+
+      {/* Modal Interno de Gerenciamento Unificado (UX de Cadastro) */}
+      {managerConfig && (
+        <ItemManagerModal 
+          config={managerConfig} 
+          onClose={() => setManagerConfig(null)} 
+        />
+      )}
     </div>
   )
+}
+
+// Componente Interno para Gerenciar Listas (Aeronaves, Fornecedores, Despesas)
+function ItemManagerModal({ config, onClose }: any) {
+  const [items, setItems] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingItem, setEditingItem] = useState<{ old: string; new: string } | null>(null);
+  const [newItem, setNewItem] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const loadItems = async () => {
+    setLoading(true);
+    // Busca valores únicos da tabela principal para preencher o gerenciador
+    const colName = config.type === 'aeronaves' ? 'aeronave' : config.type === 'fornecedores' ? 'fornecedor' : 'despesa';
+    const { data } = await supabase.from('financeiro_aeronave').select(colName);
+    const unique = Array.from(new Set(data?.map(i => i[colName]).filter(Boolean) || [])) as string[];
+    setItems(unique.sort());
+    setLoading(false);
+  };
+
+  useEffect(() => { loadItems() }, [config.type]);
+
+  const handleAdd = () => {
+    if (!newItem) return;
+    setItems(prev => [...prev, newItem].sort());
+    setNewItem('');
+  };
+
+  const handleDelete = (val: string) => {
+    if (confirm(`Remover "${val}" da lista de sugestões?`)) {
+      setItems(prev => prev.filter(i => i !== val));
+    }
+  };
+
+  const filteredItems = items.filter(i => i.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+          <div className="flex items-center gap-2">
+            <Settings2 className="w-4 h-4 text-blue-600" />
+            <h4 className="text-sm font-black text-[#112240] uppercase tracking-widest">{config.title}</h4>
+          </div>
+          <button onClick={onClose} className="p-1.5 hover:bg-white rounded-lg transition-all"><X className="w-4 h-4 text-gray-400" /></button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="flex gap-2">
+            <input 
+              className="flex-1 bg-gray-50 border border-gray-200 text-xs rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-bold"
+              placeholder="Adicionar novo..."
+              value={newItem}
+              onChange={e => setNewItem(e.target.value)}
+            />
+            <button onClick={handleAdd} className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-sm transition-all active:scale-90">
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <input 
+              className="w-full bg-white border border-gray-100 text-[10px] rounded-xl pl-9 pr-3 py-2 outline-none"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="max-h-[300px] overflow-y-auto custom-scrollbar border border-gray-50 rounded-2xl divide-y divide-gray-50">
+            {loading ? (
+              <div className="p-10 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-blue-600" /></div>
+            ) : filteredItems.length === 0 ? (
+              <div className="p-10 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nenhum item encontrado</div>
+            ) : filteredItems.map(item => (
+              <div key={item} className="flex items-center justify-between p-3 hover:bg-gray-50 group">
+                <span className="text-xs font-bold text-gray-600">{item}</span>
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => setEditingItem({ old: item, new: item })} className="p-1 text-blue-600 hover:bg-blue-50 rounded-md"><Edit2 className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => handleDelete(item)} className="p-1 text-red-500 hover:bg-red-50 rounded-md"><Trash2 className="w-3.5 h-3.5" /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-6 py-4 bg-gray-50/50 flex justify-end">
+          <button onClick={onClose} className="px-6 py-2 bg-[#112240] text-white text-[10px] font-black rounded-xl uppercase tracking-widest shadow-lg">Concluir</button>
+        </div>
+      </div>
+
+      {/* Mini Modal para Editar Nome */}
+      {editingItem && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#0a192f]/20 backdrop-blur-[2px]">
+          <div className="bg-white p-6 rounded-[2rem] shadow-2xl w-full max-w-xs border border-gray-100 animate-in zoom-in duration-200">
+            <h5 className="text-[10px] font-black uppercase text-gray-400 mb-4 tracking-widest">Editar Nome</h5>
+            <input 
+              className="w-full bg-gray-50 border border-gray-200 text-xs rounded-xl px-3 py-2 mb-4 outline-none font-bold"
+              value={editingItem.new}
+              onChange={e => setEditingItem({...editingItem, new: e.target.value})}
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setEditingItem(null)} className="text-[10px] font-black text-gray-400 px-3 py-2 hover:bg-gray-100 rounded-lg">Cancelar</button>
+              <button 
+                onClick={() => {
+                  setItems(prev => prev.map(i => i === editingItem.old ? editingItem.new : i).sort());
+                  setEditingItem(null);
+                }} 
+                className="bg-blue-600 text-white text-[10px] font-black px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-md"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
