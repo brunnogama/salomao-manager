@@ -14,7 +14,7 @@ import {
   Download,
   Calendar,
   XCircle,
-  DollarSign,
+  Tag,
   Building2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -39,18 +39,13 @@ export function GestaoAeronave({
   const [searchTerm, setSearchTerm] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [selectedDespesa, setSelectedDespesa] = useState('')
-  const [selectedFornecedor, setSelectedFornecedor] = useState('')
+  const [selectedExpense, setSelectedExpense] = useState('')
+  const [selectedSupplier, setSelectedSupplier] = useState('')
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   
-  // Estados para listas de filtros
-  const [despesas, setDespesas] = useState<string[]>([])
-  const [fornecedores, setFornecedores] = useState<string[]>([])
-  
-  // Estados para Visualização e Edição
   const [selectedItem, setSelectedItem] = useState<any | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
 
@@ -60,38 +55,37 @@ export function GestaoAeronave({
       .from('financeiro_aeronave')
       .select('*')
       .order('data', { ascending: false })
-    if (result) {
-      setData(result)
-      
-      // Extrair valores únicos para os filtros
-      const uniqueDespesas = [...new Set(result.map(item => item.despesa).filter(Boolean))].sort()
-      const uniqueFornecedores = [...new Set(result.map(item => item.fornecedor).filter(Boolean))].sort()
-      
-      setDespesas(uniqueDespesas as string[])
-      setFornecedores(uniqueFornecedores as string[])
-    }
+    if (result) setData(result)
     setLoading(false)
   }
 
   useEffect(() => { fetchDados() }, [])
 
+  // Opções para os filtros baseadas nos dados carregados
+  const expenseOptions = useMemo(() => {
+    const expenses = data.map(item => item.despesa).filter(Boolean)
+    return Array.from(new Set(expenses)).sort()
+  }, [data])
+
+  const supplierOptions = useMemo(() => {
+    const suppliers = data.map(item => item.fornecedor).filter(Boolean)
+    return Array.from(new Set(suppliers)).sort()
+  }, [data])
+
   const resetFilters = () => {
     setSearchTerm('')
     setStartDate('')
     setEndDate('')
-    setSelectedDespesa('')
-    setSelectedFornecedor('')
+    setSelectedExpense('')
+    setSelectedSupplier('')
   }
 
-  // Lógica de Filtros Avançados (SDS) + Filtro de Período + Despesa + Fornecedor
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      // Filtro de Texto Global
       const matchSearch = Object.values(item).some(val => 
         String(val || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
 
-      // Filtro de Período
       const itemDate = item.data ? new Date(item.data) : null
       const start = startDate ? new Date(startDate) : null
       const end = endDate ? new Date(endDate) : null
@@ -104,15 +98,12 @@ export function GestaoAeronave({
         matchDate = false
       }
 
-      // Filtro de Despesa
-      const matchDespesa = !selectedDespesa || item.despesa === selectedDespesa
+      const matchExpense = !selectedExpense || item.despesa === selectedExpense
+      const matchSupplier = !selectedSupplier || item.fornecedor === selectedSupplier
 
-      // Filtro de Fornecedor
-      const matchFornecedor = !selectedFornecedor || item.fornecedor === selectedFornecedor
-
-      return matchSearch && matchDate && matchDespesa && matchFornecedor
+      return matchSearch && matchDate && matchExpense && matchSupplier
     })
-  }, [data, searchTerm, startDate, endDate, selectedDespesa, selectedFornecedor])
+  }, [data, searchTerm, startDate, endDate, selectedExpense, selectedSupplier])
 
   const handleExportExcel = () => {
     if (filteredData.length === 0) return;
@@ -131,7 +122,6 @@ export function GestaoAeronave({
     }
   }
 
-  // Funções de Gerenciamento de Modal
   const handleRowClick = (item: any) => {
     setSelectedItem(item)
     setIsViewModalOpen(true)
@@ -210,7 +200,7 @@ export function GestaoAeronave({
             data: formatExcelDate(cleanRow['Data']),
             localidade_destino: cleanRow['Localidade e destino']?.toString() || '',
             despesa: cleanRow['Despesa']?.toString() || '',
-            descricao: cleanRow['Descrição']?.toString() || '', // Mapeamento da nova coluna
+            descricao: cleanRow['Descrição']?.toString() || '',
             fornecedor: cleanRow['Fornecedor']?.toString() || '',
             faturado_cnpj: parseCurrency(cleanRow['Faturado CNPJ SALOMÃO']),
             valor_previsto: parseCurrency(cleanRow['R$ Previsto total']),
@@ -242,12 +232,9 @@ export function GestaoAeronave({
     reader.readAsBinaryString(file)
   }
 
-  const hasActiveFilters = searchTerm || startDate || endDate || selectedDespesa || selectedFornecedor
-
   return (
     <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
       
-      {/* HEADER PADRÃO SDS */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
@@ -272,12 +259,9 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* TOOLBAR */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-        {/* Linha Superior: Abas e Filtros */}
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
-          {/* Abas Lado Esquerdo */}
-          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full lg:w-auto">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full md:w-auto">
             <button 
               onClick={() => { setActiveTab('dashboard'); resetFilters(); }} 
               className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
@@ -292,70 +276,63 @@ export function GestaoAeronave({
             </button>
           </div>
 
-          {/* Container de Filtros Lado Direito */}
-          <div className="flex flex-col md:flex-row items-center gap-2 w-full lg:w-auto">
-            {/* Filtro de Datas */}
-            <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-4 py-2 w-full md:w-auto">
-              <Calendar className="h-4 w-4 text-gray-400 mr-3" />
-              <input 
-                type="date" 
-                className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-              />
-              <span className="mx-3 text-gray-400 text-[10px] font-black uppercase tracking-widest">até</span>
-              <input 
-                type="date" 
-                className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-              />
-            </div>
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+             {/* Filtro de Despesa */}
+             <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-3 py-2">
+                <Tag className="h-3.5 w-3.5 text-gray-400 mr-2" />
+                <select 
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none min-w-[120px]"
+                  value={selectedExpense}
+                  onChange={e => setSelectedExpense(e.target.value)}
+                >
+                  <option value="">Todas Despesas</option>
+                  {expenseOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+             </div>
 
-            {/* Filtro de Despesa */}
-            <div className="relative w-full md:w-auto">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              <select
-                value={selectedDespesa}
-                onChange={e => setSelectedDespesa(e.target.value)}
-                className="w-full md:w-[180px] pl-10 pr-4 py-2 bg-gray-100/50 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
-              >
-                <option value="">Todas Despesas</option>
-                {despesas.map(despesa => (
-                  <option key={despesa} value={despesa}>{despesa}</option>
-                ))}
-              </select>
-            </div>
+             {/* Filtro de Fornecedor */}
+             <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-3 py-2">
+                <Building2 className="h-3.5 w-3.5 text-gray-400 mr-2" />
+                <select 
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none min-w-[120px]"
+                  value={selectedSupplier}
+                  onChange={e => setSelectedSupplier(e.target.value)}
+                >
+                  <option value="">Todos Fornecedores</option>
+                  {supplierOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+             </div>
 
-            {/* Filtro de Fornecedor */}
-            <div className="relative w-full md:w-auto">
-              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              <select
-                value={selectedFornecedor}
-                onChange={e => setSelectedFornecedor(e.target.value)}
-                className="w-full md:w-[180px] pl-10 pr-4 py-2 bg-gray-100/50 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
-              >
-                <option value="">Todos Fornecedores</option>
-                {fornecedores.map(fornecedor => (
-                  <option key={fornecedor} value={fornecedor}>{fornecedor}</option>
-                ))}
-              </select>
-            </div>
+             {/* Filtro de Datas */}
+             <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-4 py-2 w-full md:w-auto">
+                <Calendar className="h-4 w-4 text-gray-400 mr-3" />
+                <input 
+                  type="date" 
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                />
+                <span className="mx-3 text-gray-400 text-[10px] font-black uppercase tracking-widest">até</span>
+                <input 
+                  type="date" 
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                />
+             </div>
 
-            {/* Botão Limpar Filtros */}
-            {hasActiveFilters && (
-              <button 
+             {(startDate || endDate || searchTerm || selectedExpense || selectedSupplier) && (
+               <button 
                 onClick={resetFilters} 
-                className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border border-red-100 animate-in zoom-in duration-300 whitespace-nowrap"
-              >
-                <XCircle className="h-4 w-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Limpar</span>
-              </button>
-            )}
+                className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border border-red-100 animate-in zoom-in duration-300"
+               >
+                 <XCircle className="h-4 w-4" />
+                 <span className="text-[10px] font-black uppercase tracking-widest">Limpar</span>
+               </button>
+             )}
           </div>
         </div>
 
-        {/* Linha Inferior: Busca e Ações */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -392,7 +369,6 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* CONTEÚDO */}
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible">
         {activeTab === 'gerencial' ? (
           <div className="w-full">
