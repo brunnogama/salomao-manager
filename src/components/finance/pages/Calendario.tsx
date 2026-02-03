@@ -1,4 +1,3 @@
-// src/components/finance/pages/Calendario.tsx
 import { useState, useEffect } from 'react'
 import { 
   Calendar as CalendarIcon, 
@@ -41,6 +40,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [viewMode, setViewMode] = useState<'calendario' | 'lista'>('calendario')
+  const [vencimentosOAB, setVencimentosOAB] = useState<any[]>([])
 
   // Estados para o Modal de Evento
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -51,6 +51,32 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     data: new Date().toISOString().split('T')[0],
     descricao: ''
   })
+
+  // Efeito para buscar colaboradores e calcular vencimentos para a visão de grade
+  useEffect(() => {
+    const fetchVencimentosCalendario = async () => {
+      const { data } = await supabase.from('colaboradores').select('nome, cargo, data_admissao')
+      if (data) {
+        const processados = data.filter((v: any) => {
+          if (!v.data_admissao) return false
+          const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ''
+          return cargoLimpo === 'advogado' || cargoLimpo === 'socio'
+        }).map((v: any) => {
+          let dia, mes, ano;
+          if (v.data_admissao.includes('/')) {
+            [dia, mes, ano] = v.data_admissao.split('/').map(Number);
+          } else {
+            [ano, mes, dia] = v.data_admissao.split('-').map(Number);
+          }
+          const dataVenc = new Date(ano, (mes - 1) + 6, dia)
+          dataVenc.setDate(dataVenc.getDate() - 1)
+          return { nome: v.nome, dataVenc }
+        })
+        setVencimentosOAB(processados)
+      }
+    }
+    fetchVencimentosCalendario()
+  }, [])
 
   const handleSaveEvento = async () => {
     if (!novoEvento.titulo || !novoEvento.data) return
@@ -100,6 +126,13 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
         selectedMonth === today.getMonth() && 
         selectedYear === today.getFullYear()
 
+      // Filtra vencimentos calculados para o dia específico na grade
+      const vencimentosDoDia = vencimentosOAB.filter(v => 
+        v.dataVenc.getDate() === day && 
+        v.dataVenc.getMonth() === selectedMonth && 
+        v.dataVenc.getFullYear() === selectedYear
+      )
+
       days.push(
         <div
           key={day}
@@ -112,13 +145,24 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           <div className={`text-sm font-black ${isToday ? 'text-white' : 'text-[#0a192f]'}`}>
             {day}
           </div>
-          {/* Mock de Evento Financeiro */}
-          {day === 15 && !isToday && (
-            <div className="flex items-center gap-1 bg-red-50 px-1 py-0.5 rounded border border-red-100">
-              <ArrowUpCircle className="h-2 w-2 text-red-600" />
-              <span className="text-[8px] font-bold text-red-700 truncate">Vencimento</span>
-            </div>
-          )}
+          
+          <div className="flex flex-col gap-1 overflow-y-auto">
+            {/* Vencimentos OAB Integrados */}
+            {vencimentosDoDia.map((v, idx) => (
+              <div key={`oab-${idx}`} className="flex items-center gap-1 bg-orange-50 px-1 py-0.5 rounded border border-orange-100">
+                <GraduationCap className="h-2 w-2 text-orange-600" />
+                <span className="text-[7px] font-bold text-orange-700 truncate">{v.nome}</span>
+              </div>
+            ))}
+
+            {/* Mock de Evento Financeiro Original mantido para compatibilidade visual */}
+            {day === 15 && !isToday && vencimentosDoDia.length === 0 && (
+              <div className="flex items-center gap-1 bg-red-50 px-1 py-0.5 rounded border border-red-100">
+                <ArrowUpCircle className="h-2 w-2 text-red-600" />
+                <span className="text-[8px] font-bold text-red-700 truncate">Vencimento</span>
+              </div>
+            )}
+          </div>
         </div>
       )
     }
