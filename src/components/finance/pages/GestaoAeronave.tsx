@@ -274,7 +274,7 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* CARDS DE TOTAIS DINÂMICOS */}
+      {/* CARDS DE TOTAIS DINÂMICOS (UNIFICADOS) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-orange-200 transition-all">
           <div>
@@ -426,7 +426,7 @@ export function GestaoAeronave({
           </div>
         ) : (
           <AeronaveDashboard 
-            data={data} 
+            data={filteredData} 
             onMissionClick={handleMissionClick} 
           />
         )}
