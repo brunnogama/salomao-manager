@@ -181,7 +181,10 @@ export default function App() {
 
             {currentModule === 'financial' && (
               <>
-                {activePage === 'dashboard' && <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />}
+                {/* Redireciona páginas não implementadas para UnderConstruction */}
+                {(activePage === 'dashboard' || activePage === 'contas-pagar' || activePage === 'contas-receber') && (
+                  <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />
+                )}
                 {activePage === 'gestao-aeronave' && (
                   <GestaoAeronave 
                     userName={getUserDisplayName()} 
