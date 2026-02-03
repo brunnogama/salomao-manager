@@ -67,9 +67,11 @@ export function GED({
     
     if (error) {
       console.error('Erro ao buscar documentos:', error)
+    } else {
+      console.log('Documentos carregados:', data)
+      setDocumentos(data || [])
     }
     
-    if (data) setDocumentos(data)
     setLoading(false)
   }
 
@@ -152,6 +154,7 @@ export function GED({
       alert('Documento excluído com sucesso!')
       fetchDocumentos()
       setIsViewModalOpen(false)
+      setSelectedDoc(null)
     } catch (error) {
       console.error('Erro ao excluir:', error)
       alert('Erro ao excluir o documento')
@@ -271,7 +274,7 @@ export function GED({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Categorias Ativas</p>
-              <p className="text-2xl font-black text-[#0a192f] mt-1">{new Set(documentos.map(d => d.categoria)).size}</p>
+              <p className="text-2xl font-black text-[#0a192f] mt-1">{new Set(documentos.map(d => d.categoria)).size || 0}</p>
             </div>
             <div className="p-3 bg-emerald-50 rounded-xl">
               <Tag className="h-5 w-5 text-emerald-600" />
@@ -407,7 +410,7 @@ export function GED({
   )
 }
 
-// Modal de Upload (CORRIGIDO)
+// Modal de Upload
 function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
   const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState({
@@ -427,55 +430,62 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
 
     setUploading(true)
     try {
-      // Mantém o nome original do arquivo
-      const fileName = selectedFile.name
-      const filePath = `${formData.categoria}/${fileName}`
+      const nomeOriginal = selectedFile.name
+      const timestamp = Date.now()
+      const filePath = `${formData.categoria}/${timestamp}_${nomeOriginal}`
 
-      console.log('Iniciando upload:', filePath)
+      console.log('📤 Iniciando upload...')
+      console.log('Nome original:', nomeOriginal)
+      console.log('Caminho storage:', filePath)
 
-      // Upload do arquivo
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      // Upload no storage
+      const { error: uploadError } = await supabase.storage
         .from('ged-documentos')
-        .upload(filePath, selectedFile, {
-          upsert: false
-        })
+        .upload(filePath, selectedFile)
 
       if (uploadError) {
-        console.error('Erro no upload:', uploadError)
+        console.error('❌ Erro upload storage:', uploadError)
         throw uploadError
       }
 
-      console.log('Upload concluído:', uploadData)
+      console.log('✅ Upload storage OK')
 
-      // Salva metadados no banco
-      const { data: dbData, error: dbError } = await supabase
+      // Inserir no banco
+      const { data: insertData, error: insertError } = await supabase
         .from('ged_documentos')
         .insert({
-          nome_arquivo: fileName,
+          nome_arquivo: nomeOriginal, // NOME ORIGINAL AQUI
           tipo_documento: formData.tipo_documento,
           categoria: formData.categoria,
-          entidade_vinculada: formData.entidade_vinculada || null,
-          data_upload: new Date().toISOString(),
+          entidade_vinculada: formData.entidade_vinculada || '',
+          id_vinculo: '',
           tamanho: selectedFile.size,
           url_documento: filePath,
-          observacoes: formData.observacoes || null,
+          observacoes: formData.observacoes || '',
           usuario_upload: userName
         })
         .select()
 
-      if (dbError) {
-        console.error('Erro ao salvar no banco:', dbError)
-        throw dbError
+      if (insertError) {
+        console.error('❌ Erro insert banco:', insertError)
+        // Limpa storage se falhou no banco
+        await supabase.storage.from('ged-documentos').remove([filePath])
+        throw insertError
       }
 
-      console.log('Documento salvo no banco:', dbData)
+      console.log('✅ Insert banco OK:', insertData)
 
-      alert('Documento enviado com sucesso!')
-      onSuccess()
+      alert('✅ Documento enviado com sucesso!')
+      
+      // Limpa form
+      setFormData({ categoria: '', tipo_documento: '', entidade_vinculada: '', observacoes: '' })
+      setSelectedFile(null)
+      
+      await onSuccess()
       onClose()
     } catch (error: any) {
-      console.error('Erro completo:', error)
-      alert(`Erro ao enviar documento: ${error.message}`)
+      console.error('❌ Erro geral:', error)
+      alert(`Erro: ${error.message}`)
     } finally {
       setUploading(false)
     }
