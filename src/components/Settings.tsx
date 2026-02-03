@@ -50,6 +50,16 @@ const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
 const CHANGELOG = [
   {
+    version: '2.9.2',
+    date: '03/02/2026',
+    type: 'fix',
+    title: '🔐 Sincronização de Usuários',
+    changes: [
+      'Correção na lógica de vinculação de perfis via e-mail',
+      'Sincronização automática com Supabase Auth Trigger'
+    ]
+  },
+  {
     version: '2.9.1',
     date: '02/02/2026',
     type: 'minor',
@@ -57,27 +67,6 @@ const CHANGELOG = [
     changes: [
       'Adicionado reset de dados da Gestão de Aeronave em Settings',
       'Nova aba de manutenção para o módulo Financeiro'
-    ]
-  },
-  {
-    version: '2.9.0',
-    date: '29/01/2026',
-    type: 'minor',
-    title: '🏠 Manutenção Secretaria',
-    changes: [
-      'Adicionado reset de dados da Gestão de Família em Settings',
-      'Nova aba de manutenção para o módulo Secretaria Executiva'
-    ]
-  },
-  {
-    version: '2.8.0',
-    date: '29/01/2026',
-    type: 'minor',
-    title: '📅 Calendário e Histórico',
-    changes: [
-      'Adicionado menu Calendário no módulo RH',
-      'Histórico movido para Settings (todas as áreas)',
-      'Melhorias na organização dos menus'
     ]
   }
 ]
@@ -216,8 +205,8 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
         const { data } = await supabase
           .from('user_profiles')
           .select('role, allowed_modules')
-          .eq('id', user.id)
-          .single()
+          .eq('email', user.email)
+          .maybeSingle()
           
         if (data) {
           setCurrentUserRole(data.role || 'user')
@@ -259,7 +248,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       
       if (data) {
         setUsers(data.map((u: any) => ({
-          id: u.id || `pending-${u.email}`,
+          id: u.id || `pre-${u.email}`,
           user_id: u.id,
           nome: u.email.split('@')[0],
           email: u.email,
@@ -311,26 +300,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     })
   }
 
-  const handleSaveConfigMagistrados = async () => {
-    if (!isAdmin) return alert("Acesso negado.");
-    setLoadingConfig(true)
-    const emailsArray = magistradosConfig.emails.split(',').map(e => e.trim()).filter(e => e)
-    const { data: current } = await supabase.from('config_magistrados').select('id').single()
-    if (current) {
-        await supabase.from('config_magistrados').update({
-            pin_acesso: magistradosConfig.pin,
-            emails_permitidos: emailsArray
-        }).eq('id', current.id)
-    } else {
-        await supabase.from('config_magistrados').insert({
-            pin_acesso: magistradosConfig.pin,
-            emails_permitidos: emailsArray
-        })
-    }
-    alert('Configurações salvas!')
-    setLoadingConfig(false)
-  }
-
   const handleSaveUser = async () => {
     if (!isAdmin) return;
     if (!userForm.email) return alert("E-mail obrigatório");
@@ -338,29 +307,29 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     setLoading(true);
     const emailNormalizado = userForm.email.toLowerCase().trim();
     const role = userForm.cargo === 'Administrador' ? 'admin' : 'user';
+    
     try {
-      // Buscar perfil existente por email
-      const { data: existingProfile } = await supabase
+      // 1. Verificar se o perfil já existe (por email)
+      const { data: existing } = await supabase
         .from('user_profiles')
-        .select('id, email')
+        .select('email')
         .eq('email', emailNormalizado)
         .maybeSingle();
-  
-      if (existingProfile) {
-        // Perfil existe - fazer UPDATE usando o ID
+
+      if (existing) {
+        // Atualiza perfil (identificado pelo e-mail para garantir sincronia)
         const { error } = await supabase
           .from('user_profiles')
           .update({
             role: role,
             allowed_modules: userForm.allowed_modules
           })
-          .eq('id', existingProfile.id);
-  
+          .eq('email', emailNormalizado);
+
         if (error) throw error;
         await logAction('UPDATE', 'USER_PROFILES', `Atualizou permissões de ${emailNormalizado}`);
-        setStatus({ type: 'success', message: 'Permissões atualizadas com sucesso!' });
       } else {
-        // Perfil não existe - criar novo
+        // Cria novo perfil para pré-cadastro
         const { error } = await supabase
           .from('user_profiles')
           .insert({
@@ -368,11 +337,12 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
             role: role,
             allowed_modules: userForm.allowed_modules
           });
+        
         if (error) throw error;
         await logAction('CREATE', 'USER_PROFILES', `Pré-cadastrou ${emailNormalizado}`);
-        setStatus({ type: 'success', message: `Usuário pré-cadastrado!` });
       }
           
+      setStatus({ type: 'success', message: 'Usuário configurado com sucesso!' });
       setIsUserModalOpen(false);
       fetchUsers();
     } catch (e: any) {
@@ -487,7 +457,23 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     setActiveModule(newModule)
   }
 
-  if (activeModule !== 'menu' && activeModule !== 'historico' && !currentUserPermissions[activeModule === 'rh' ? 'collaborators' : activeModule === 'family' ? 'family' : activeModule === 'financial' ? 'financial' : (activeModule as any)] && !isAdmin) {
+  // Helper para verificar permissão específica
+  const userHasAccess = (modId: string) => {
+    if (isAdmin) return true;
+    if (modId === 'menu' || modId === 'historico' || modId === 'geral' || modId === 'juridico') return true;
+    
+    const keyMap: Record<string, keyof UserPermissions> = {
+      crm: 'crm',
+      rh: 'collaborators',
+      family: 'family',
+      financial: 'financial'
+    };
+
+    const permKey = keyMap[modId];
+    return permKey ? currentUserPermissions[permKey] : false;
+  }
+
+  if (activeModule !== 'menu' && !userHasAccess(activeModule)) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
