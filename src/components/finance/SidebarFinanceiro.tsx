@@ -23,7 +23,7 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
     { id: 'contas-pagar', label: 'Contas a Pagar', icon: ArrowUpCircle, underConstruction: true },
     { id: 'contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle, underConstruction: true },
     { id: 'gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane },
-    { id: 'ged', label: 'GED', icon: FolderSearch, underConstruction: true },
+    { id: 'ged', label: 'GED', icon: FolderSearch },
   ]
 
   return (

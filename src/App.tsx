@@ -24,8 +24,9 @@ import { Colaboradores } from './components/collaborators/pages/Colaboradores'
 import { Calendario } from './components/collaborators/pages/Calendario'
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 
-// Rota corrigida para a Gestão da Aeronave
+// Módulo Financeiro
 import { GestaoAeronave } from './components/finance/pages/GestaoAeronave'
+import { GED } from './components/finance/pages/GED'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
 
@@ -183,6 +184,13 @@ export default function App() {
                 {activePage === 'dashboard' && <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />}
                 {activePage === 'gestao-aeronave' && (
                   <GestaoAeronave 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
+                {activePage === 'ged' && (
+                  <GED 
                     userName={getUserDisplayName()} 
                     onModuleHome={() => setCurrentModule('home')} 
                     onLogout={handleLogout} 
