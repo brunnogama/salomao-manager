@@ -66,8 +66,8 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
               onClick={() => onRowClick(item)}
               className="group bg-white hover:bg-blue-50/40 border border-gray-100 rounded-xl transition-all shadow-sm cursor-pointer"
             >
-              <td className="px-4 py-4 text-[10px] font-bold text-blue-600/60 first:rounded-l-xl uppercase">
-                #{item.id?.split('-')[0] || '---'}
+              <td className="px-4 py-4 text-[10px] font-black text-blue-600/60 first:rounded-l-xl uppercase tracking-widest">
+                #{String(item.index_id || 0).padStart(6, '0')}
               </td>
               <td className="px-4 py-4 text-sm font-semibold text-gray-600">{item.aeronave}</td>
               <td className="px-4 py-4 text-sm font-semibold text-gray-600">

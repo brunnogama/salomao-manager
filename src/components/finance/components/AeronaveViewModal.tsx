@@ -273,7 +273,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
 
                 <div className="pt-3 border-t border-orange-100">
                   <p className="text-[8px] text-orange-700/60 font-black uppercase tracking-widest leading-none">
-                    ID Vínculo: <span className="text-[#112240]">{item.id?.split('-')[0]}</span>
+                    REGISTRO Nº: <span className="text-[#112240]">{String(item.index_id || 0).padStart(6, '0')}</span>
                   </p>
                 </div>
               </div>
