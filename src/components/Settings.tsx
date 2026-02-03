@@ -50,13 +50,14 @@ const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
 const CHANGELOG = [
   {
-    version: '2.9.5',
+    version: '2.9.6',
     date: '03/02/2026',
     type: 'fix',
-    title: '🛡️ Estabilização de Acesso Admin',
+    title: '🛡️ Bypass de Segurança Mestre',
     changes: [
-      'Vinculação forçada de UUID para o gestor principal',
-      'Lógica de redundância de permissão via E-mail/ID'
+      'Implementado bypass rígido para o e-mail do gestor principal',
+      'Correção na normalização de e-mails para verificação de permissão',
+      'Sincronização automática via UUID 84d97d43-2127-428f-9747-311026b595b2'
     ]
   },
   {
@@ -98,7 +99,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
   const [currentUserPermissions, setCurrentUserPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS)
   const [sessionUserId, setSessionUserId] = useState<string>('')
   
-  // LOGICA DE PERMISSÃO REFORÇADA: Verifica por e-mail se o ID for nulo no banco
+  // LOGICA DE PERMISSÃO MESTRE: Bypass total para o seu e-mail
   const isSuperAdmin = currentUserEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
   const isAdmin = currentUserRole.toLowerCase() === 'admin' || isSuperAdmin;
 
@@ -129,6 +130,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       } else if (event === 'SIGNED_OUT') {
         setActiveModule('menu')
         setSessionUserId('')
+        setCurrentUserEmail('')
       }
     })
 
@@ -187,13 +189,14 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user?.email) {
-        setCurrentUserEmail(user.email);
+        const emailLower = user.email.toLowerCase();
+        setCurrentUserEmail(emailLower);
         setSessionUserId(user.id);
         
         const { data } = await supabase
           .from('user_profiles')
           .select('role, allowed_modules')
-          .eq('email', user.email.toLowerCase())
+          .eq('email', emailLower)
           .maybeSingle()
           
         if (data) {
@@ -207,8 +210,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
             operational: modules.includes('operational'),
             financial: modules.includes('financial')
           })
-        } else if (user.email === SUPER_ADMIN_EMAIL) {
-          setCurrentUserRole('admin');
         }
       }
     } catch (error) {
@@ -238,7 +239,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       
       if (data) {
         setUsers(data.map((u: any) => ({
-          id: u.id || `pending-${u.email}`,
+          id: u.id,
           user_id: u.user_id || u.id,
           nome: u.email.split('@')[0],
           email: u.email,
@@ -319,6 +320,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     const role = userForm.cargo === 'Administrador' ? 'admin' : 'user';
     
     try {
+      // Usa UPSERT baseado no e-mail para garantir sincronia e evitar duplicidade
       const { error } = await supabase
         .from('user_profiles')
         .upsert({
@@ -446,7 +448,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     setActiveModule(newModule)
   }
 
-  // Lógica de proteção de acesso reforçada
+  // Lógica de proteção de acesso reforçada com Redundância via Email
   const hasAccessToModule = (modId: string) => {
     if (isSuperAdmin || isAdmin) return true;
     if (['menu', 'historico', 'juridico', 'geral'].includes(modId)) return true;
@@ -498,7 +500,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
                   {modules.map((m) => {
                       const access = m.perm;
                       return (
-                          <button key={m.id} onClick={() => access && handleModuleChange(m.id)} className={`relative flex flex-col items-start p-6 rounded-2xl border transition-all duration-300 text-left ${access ? 'bg-white border-gray-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'bg-gray-50 border-gray-200 opacity-80'}`}>
+                          <button key={m.id} onClick={() => access && handleModuleChange(m.id)} className={`relative flex flex-col items-start p-6 rounded-2xl border transition-all duration-300 text-left ${access ? 'bg-white border-gray-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'bg-gray-50 border-gray-200 opacity-80 cursor-pointer'}`}>
                               <div className={`p-3 rounded-xl mb-4 text-white shadow-md ${access ? m.color : 'bg-gray-400 grayscale'}`}><m.icon className="h-6 w-6" /></div>
                               <h3 className="text-lg font-bold text-gray-900 mb-1">{m.label}</h3>
                               <p className="text-sm text-gray-500">{m.desc}</p>
@@ -536,9 +538,9 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
-              <div className="bg-gray-900 p-4 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-white">{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</h3>
-                <button onClick={() => setIsUserModalOpen(false)} className="text-gray-400 hover:text-white"><X className="h-5 w-5"/></button>
+              <div className="bg-gray-900 p-4 flex justify-between items-center text-white">
+                <h3 className="text-lg font-bold">Configurar Usuário</h3>
+                <button onClick={() => setIsUserModalOpen(false)}><X className="h-5 w-5"/></button>
               </div>
               <div className="p-6 space-y-6">
                   <div className="grid grid-cols-2 gap-4">
