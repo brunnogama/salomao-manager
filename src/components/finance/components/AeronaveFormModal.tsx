@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Save, Plane, Upload, FileText, Download, Trash2 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
-import { AeronaveMenuSelector } from './AeronaveMenuSelector'
+import { ManagedDropdown } from './ManagedDropdown'
 import { NumericFormat } from 'react-number-format'
 import InputMask from 'react-input-mask'
 
@@ -198,15 +198,17 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   placeholder="Nome dos tripulantes"
                 />
               </label>
-              <label className="block">
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Aeronave</span>
-                <input 
-                  className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
-                  value={formData.aeronave}
-                  onChange={e => setFormData({...formData, aeronave: e.target.value})}
-                  placeholder="Prefixo"
-                />
-              </label>
+              
+              <ManagedDropdown
+                label="Aeronave"
+                value={formData.aeronave}
+                onChange={(val) => setFormData({...formData, aeronave: val})}
+                tableName="aeronave_lista"
+                columnName="prefixo"
+                placeholder="Selecione a aeronave"
+                icon={<Plane className="w-4 h-4" />}
+              />
+
               <label className="block">
                 <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Data</span>
                 <InputMask
@@ -230,26 +232,27 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                     onChange={e => setFormData({...formData, localidade_destino: e.target.value})}
                   />
                 </label>
-                <label className="block">
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Fornecedor</span>
-                  <input 
-                    className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
-                    value={formData.fornecedor}
-                    onChange={e => setFormData({...formData, fornecedor: e.target.value})}
-                  />
-                </label>
+                
+                <ManagedDropdown
+                  label="Fornecedor"
+                  value={formData.fornecedor}
+                  onChange={(val) => setFormData({...formData, fornecedor: val})}
+                  tableName="aeronave_fornecedores"
+                  columnName="nome"
+                  placeholder="Selecione o fornecedor"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Despesa</span>
-                  <input 
-                    className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
-                    value={formData.despesa}
-                    onChange={e => setFormData({...formData, despesa: e.target.value})}
-                    placeholder="Tipo de despesa"
-                  />
-                </label>
+                <ManagedDropdown
+                  label="Despesa"
+                  value={formData.despesa}
+                  onChange={(val) => setFormData({...formData, despesa: val})}
+                  tableName="aeronave_despesas"
+                  columnName="tipo"
+                  placeholder="Tipo de despesa"
+                />
+                
                 <label className="block">
                   <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Descrição</span>
                   <input 
@@ -298,10 +301,14 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
               <div className="bg-orange-50/30 p-5 rounded-[1.5rem] border border-orange-100/50 space-y-4">
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
-                    <AeronaveMenuSelector 
-                      label="Selecione o Tipo"
+                    <ManagedDropdown
+                      label="Tipo de Documento"
                       value={formData.tipo_documento}
-                      onChange={(val: string) => setFormData({...formData, tipo_documento: val})}
+                      onChange={(val) => setFormData({...formData, tipo_documento: val})}
+                      tableName="aeronave_tipos_documento"
+                      columnName="tipo"
+                      placeholder="Selecione o tipo"
+                      icon={<FileText className="w-4 h-4" />}
                     />
                   </div>
                   <div className="relative">
