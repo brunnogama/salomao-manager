@@ -188,7 +188,7 @@ export default function App() {
 
             {currentModule === 'financial' && (
               <>
-                {/* Redireciona páginas não implementadas para UnderConstruction */}
+                {activePage === 'calendario' && <Calendario userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {(activePage === 'dashboard' || activePage === 'contas-pagar' || activePage === 'contas-receber') && (
                   <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />
                 )}

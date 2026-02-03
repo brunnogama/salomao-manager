@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { 
   LayoutDashboard, 
+  Calendar,
   ArrowUpCircle, 
   ArrowDownCircle, 
   Plane, 
@@ -19,6 +20,7 @@ interface SidebarProps {
 export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: SidebarProps) {
   const mainItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'calendario', label: 'Calendário', icon: Calendar },
     { id: 'contas-pagar', label: 'Contas a Pagar', icon: ArrowUpCircle },
     { id: 'contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle },
     { id: 'gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane },
@@ -68,8 +70,6 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
             <button
               key={item.id}
               onClick={() => { 
-                // Se o ID for de uma página não implementada, 
-                // garantimos que o componente pai trate como 'underconstruction'
                 onNavigate(item.id); 
                 onClose(); 
               }}
