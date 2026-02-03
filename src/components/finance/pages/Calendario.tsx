@@ -1,4 +1,4 @@
-// src/components/finance/Calendario.tsx
+// src/components/finance/pages/Calendario.tsx
 import { useState, useEffect } from 'react'
 import { 
   Calendar as CalendarIcon, 
@@ -20,8 +20,8 @@ import {
   UserCircle,
   GraduationCap
 } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
-import { ListaVencimentosOAB } from './components/ListaVencimentosOAB'
+import { supabase } from '../../../lib/supabase'
+import { ListaVencimentosOAB } from '../components/ListaVencimentosOAB'
 
 interface CalendarioProps {
   userName?: string;
