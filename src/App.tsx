@@ -21,12 +21,13 @@ import { WelcomeModal } from './components/WelcomeModal'
 import { UnderConstruction } from './components/UnderConstruction'
 import { Presencial } from './components/collaborators/pages/Presencial' 
 import { Colaboradores } from './components/collaborators/pages/Colaboradores'
-import { Calendario } from './components/collaborators/pages/Calendario'
+import { Calendario as CalendarioRH } from './components/collaborators/pages/Calendario'
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 
 // Módulo Financeiro
 import { GestaoAeronave } from './components/finance/pages/GestaoAeronave'
 import { GED } from './components/finance/pages/GED'
+import { Calendario as CalendarioFinanceiro } from './components/finance/pages/Calendario'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
 
@@ -173,7 +174,7 @@ export default function App() {
 
             {currentModule === 'collaborators' && (
               <>
-                {activePage === 'calendario' && <Calendario userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'calendario' && <CalendarioRH userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'presencial' && <Presencial userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'colaboradores' && <Colaboradores userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'kanban' && (
@@ -188,7 +189,7 @@ export default function App() {
 
             {currentModule === 'financial' && (
               <>
-                {activePage === 'calendario' && <Calendario userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'calendario' && <CalendarioFinanceiro userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {(activePage === 'dashboard' || activePage === 'contas-pagar' || activePage === 'contas-receber') && (
                   <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />
                 )}
