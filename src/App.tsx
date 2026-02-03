@@ -82,16 +82,23 @@ export default function App() {
       <div className="min-h-screen bg-gray-50">
         <header className="bg-[#112240] h-20 flex items-center justify-between px-8 shadow-md text-white">
           <div className="flex items-center gap-4">
-            <button onClick={() => setCurrentModule('home')} className="p-2 hover:bg-white/10 rounded-lg"><Grid className="h-5 w-5" /></button>
             <img src="/logo-branca.png" alt="Salomão" className="h-10" />
             <span className="text-[10px] font-bold uppercase border border-yellow-700/30 px-3 py-1 rounded-lg">Configurações</span>
           </div>
           <div className="flex items-center gap-4">
-            <span>{getUserDisplayName()}</span>
-            <button onClick={handleLogout}><LogOut className="h-5 w-5" /></button>
+            <span className="font-medium">{getUserDisplayName()}</span>
+            <div className="h-8 w-[1px] bg-white/20 mx-2" />
+            <button onClick={() => setCurrentModule('home')} className="p-2 hover:bg-white/10 rounded-lg transition-colors" title="Mudar Módulo">
+              <Grid className="h-5 w-5" />
+            </button>
+            <button onClick={handleLogout} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors" title="Sair">
+              <LogOut className="h-5 w-5" />
+            </button>
           </div>
         </header>
-        <div className="p-8"><Settings /></div>
+        <div className="p-8">
+          <Settings onModuleHome={() => setCurrentModule('home')} />
+        </div>
       </div>
     )
   }
