@@ -132,11 +132,11 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <DollarSign className="h-7 w-7 text-white" />
+            <CalendarIcon className="h-7 w-7 text-white" />
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Fluxo de Caixa & Vencimentos
+              Calendário Financeiro
             </h1>
             <p className="text-sm font-semibold text-gray-500 mt-0.5">
               Gestão temporal de obrigações e recebimentos
