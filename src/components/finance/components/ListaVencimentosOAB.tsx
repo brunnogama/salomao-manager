@@ -34,12 +34,12 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   const fetchVencimentos = async () => {
     setLoading(true)
     try {
-      // Tenta buscar geral para processar localmente passado e futuro
-      const { data, error: viewError } = await supabase
-        .from('vw_vencimentos_oab_6meses')
+      // BUSCA DIRETA NA TABELA (Garante que puxe tudo sem depender de View)
+      const { data, error } = await supabase
+        .from('colaboradores')
         .select('*')
       
-      if (viewError) throw viewError
+      if (error) throw error
 
       if (data) {
         const hoje = new Date()
@@ -48,7 +48,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         const processados = data.filter((v: any) => {
           if (!v.data_admissao) return false
           
-          // Lógica Exata: 6 meses após admissão - 1 dia 
           // Suporta formato DD/MM/AAAA (da máscara) e YYYY-MM-DD
           let dia, mes, ano;
           if (v.data_admissao.includes('/')) {
@@ -57,10 +56,11 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
             [ano, mes, dia] = v.data_admissao.split('-').map(Number);
           }
 
+          // Lógica: Admissão + 6 meses - 1 dia 
           const dataVenc = new Date(ano, (mes - 1) + 6, dia)
           dataVenc.setDate(dataVenc.getDate() - 1)
 
-          // Filtra pelo mês e ano que o usuário está navegando no calendário
+          // Só entra na lista se o vencimento calculado for no mês/ano visualizado
           return dataVenc.getMonth() === mesAtual && dataVenc.getFullYear() === anoAtual
         }).map((v: any) => {
           let dia, mes, ano;
@@ -149,7 +149,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
   return (
     <div className="space-y-6">
-      {/* Header com Filtros */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-[#1e3a8a] shadow-lg">
@@ -163,7 +162,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
           </div>
         </div>
 
-        {/* Filtros */}
         <div className="flex gap-2">
           <button
             onClick={() => setFiltro('todos')}
@@ -198,7 +196,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         </div>
       </div>
 
-      {/* Lista de Vencimentos */}
       {vencimentosFiltrados.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <div className="flex flex-col items-center gap-3">
@@ -225,7 +222,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                 className={`bg-white rounded-xl border p-5 transition-all ${vencimento.dias_ate_pagamento === 0 ? 'ring-2 ring-orange-500 border-orange-200 shadow-lg' : 'border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md'}`}
               >
                 <div className="flex items-start justify-between gap-4">
-                  {/* Info Principal */}
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
@@ -237,7 +233,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                       </div>
                     </div>
 
-                    {/* Detalhes OAB */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">OAB</p>
@@ -258,17 +253,8 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                         <p className={`text-xs font-bold ${vencimento.dias_ate_pagamento === 0 ? 'text-orange-900' : 'text-blue-900'}`}>{formatDate(vencimento.data_pagamento_oab)}</p>
                       </div>
                     </div>
-
-                    {/* Vencimento Anuidade (se tiver) */}
-                    {vencimento.oab_vencimento && (
-                      <div className="bg-purple-50 p-2.5 rounded-lg border border-purple-100 inline-block">
-                        <p className="text-[8px] font-black text-purple-600 uppercase tracking-wider mb-0.5">Vencimento Anuidade</p>
-                        <p className="text-xs font-bold text-purple-900">{formatDate(vencimento.oab_vencimento)}</p>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Status Badge */}
                   <div className="shrink-0">
                     <div className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border ${status.class}`}>
                       <StatusIcon className="h-4 w-4" />
@@ -282,42 +268,24 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         </div>
       )}
 
-      {/* Legenda */}
       <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
         <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Legenda de Status</p>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span className="text-xs font-semibold text-gray-600">Vencido</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-500" />
-            <span className="text-xs font-semibold text-gray-600">Hoje</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <span className="text-xs font-semibold text-gray-600">Até 7 dias</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-xs font-semibold text-gray-600">8-15 dias</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-xs font-semibold text-gray-600">+15 dias</span>
-          </div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-500" /><span className="text-xs font-semibold text-gray-600">Vencido</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-orange-500" /><span className="text-xs font-semibold text-gray-600">Hoje</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-yellow-500" /><span className="text-xs font-semibold text-gray-600">Até 7 dias</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500" /><span className="text-xs font-semibold text-gray-600">8-15 dias</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500" /><span className="text-xs font-semibold text-gray-600">+15 dias</span></div>
         </div>
       </div>
 
-      {/* Info Footer */}
       <div className="bg-blue-50 rounded-xl border border-blue-100 p-4">
         <div className="flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-bold text-blue-900 mb-1">Sobre o Pagamento OAB</p>
             <p className="text-xs text-blue-700">
-              Os pagamentos da OAB devem ser realizados <strong>6 meses após a admissão do colaborador</strong>. 
-              A data de pagamento calculada considera <strong>1 dia antes</strong> dos 6 meses completos para garantir processamento a tempo.
+              Os pagamentos da OAB devem ser realizados 6 meses após a admissão. A data calculada considera 1 dia antes dos 6 meses completos.
             </p>
           </div>
         </div>
