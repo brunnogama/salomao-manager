@@ -63,14 +63,12 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
     if (!confirm('Tem certeza que deseja excluir o documento anexo?')) return
 
     try {
-      // 1. Remover do Storage
       const { error: storageError } = await supabase.storage
         .from('aeronave-documentos')
         .remove([item.documento_url])
       
       if (storageError) throw storageError
 
-      // 2. Atualizar o banco de dados
       const { error: updateError } = await supabase
         .from('financeiro_aeronave')
         .update({ 
@@ -81,7 +79,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
 
       if (updateError) throw updateError
 
-      // 3. Atualizar estado local do item
       item.documento_url = null
       item.tipo_documento = null
       setTipoDocumento('')
@@ -93,6 +90,13 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
     }
   }
 
+  const sanitizeFileName = (name: string) => {
+    return name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w.-]/g, '_');
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !tipoDocumento) {
@@ -102,15 +106,13 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
 
     setUploading(true)
     try {
-      // Remove arquivo antigo se existir
       if (item.documento_url) {
         await supabase.storage
           .from('aeronave-documentos')
           .remove([item.documento_url])
       }
 
-      // Upload novo arquivo preservando o nome original
-      const fileName = file.name
+      const fileName = sanitizeFileName(file.name);
       const filePath = `${fileName}`
 
       const { error: uploadError } = await supabase.storage
@@ -119,7 +121,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
 
       if (uploadError) throw uploadError
 
-      // Atualiza registro no banco
       const { error: updateError } = await supabase
         .from('financeiro_aeronave')
         .update({ 
@@ -131,7 +132,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
       if (updateError) throw updateError
 
       alert('Documento enviado com sucesso!')
-      // Atualiza o item local
       item.documento_url = filePath
       item.tipo_documento = tipoDocumento
       
@@ -157,8 +157,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-7xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 flex flex-col animate-in zoom-in duration-300">
-        
-        {/* Header */}
         <div className="px-10 py-6 border-b border-gray-50 flex justify-between items-center bg-white flex-shrink-0">
           <div className="flex items-center gap-5">
             <div className="p-3.5 bg-blue-50 rounded-2xl">
@@ -174,11 +172,8 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
           </button>
         </div>
 
-        {/* Content */}
         <div className="px-10 py-8 space-y-8 overflow-auto max-h-[calc(95vh-180px)]">
-          
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Seção 1: Operacional */}
             <div className="lg:col-span-3 flex flex-col gap-4">
                <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <Info className="h-3.5 w-3.5" /> Operacional
@@ -190,7 +185,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
               </div>
             </div>
 
-            {/* Seção 2: Financeiro */}
             <div className="lg:col-span-5 flex flex-col gap-4">
               <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <DollarSign className="h-3.5 w-3.5" /> Financeiro
@@ -205,7 +199,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
               </div>
             </div>
 
-            {/* Seção 3: GED (Documentação) */}
             <div className="lg:col-span-4 flex flex-col gap-4">
               <h4 className="text-[10px] font-black text-orange-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <FolderSearch className="h-3.5 w-3.5" /> Documentação (GED)
@@ -238,7 +231,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
                     </button>
                   </div>
 
-                  {/* Arquivo vinculado */}
                   {item.documento_url && (
                     <div className="bg-white/80 p-3 rounded-xl border border-orange-200 mb-3 animate-in fade-in">
                       <div className="flex items-center justify-between gap-2">
@@ -279,7 +271,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
             </div>
           </div>
 
-          {/* Seção Detalhada: Despesa, Descrição, Fornecedor e Tripulação */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <DataField icon={Info} label="Despesa" value={item.despesa} color="blue" />
             <DataField icon={AlignLeft} label="Descrição" value={item.descricao} color="blue" />
@@ -287,7 +278,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
             <DataField icon={Edit2} label="Tripulação / Responsável" value={item.tripulacao} color="indigo" />
           </div>
 
-          {/* Observações */}
           {item.observacao && (
             <div className="bg-blue-50/30 p-5 rounded-xl border border-blue-100 flex flex-col">
               <div className="flex items-center gap-2 mb-2">
@@ -301,7 +291,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-10 py-6 border-t border-gray-50 bg-gray-50/50 flex justify-between items-center flex-shrink-0">
           <button onClick={() => onDelete(item)} className="flex items-center gap-2 px-6 py-3 text-red-500 hover:bg-red-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
             <Trash2 className="h-4 w-4" /> Excluir Registro

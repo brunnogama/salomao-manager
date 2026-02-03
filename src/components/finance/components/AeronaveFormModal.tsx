@@ -97,14 +97,12 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
 
     setUploading(true)
     try {
-      // 1. Remover do Storage
       const { error: storageError } = await supabase.storage
         .from('aeronave-documentos')
         .remove([formData.documento_url])
       
       if (storageError) throw storageError
 
-      // 2. Limpar localmente no estado do formulário
       setFormData({
         ...formData,
         documento_url: '',
@@ -120,22 +118,26 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
     }
   }
 
+  const sanitizeFileName = (name: string) => {
+    return name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^\w.-]/g, '_'); // Substitui espaços e símbolos por _
+  }
+
   const handleSave = async () => {
     setUploading(true)
     try {
       let documentUrl = formData.documento_url
 
-      // Se há novo arquivo para upload
       if (selectedFile) {
-        // Remove arquivo antigo se existir
         if (initialData?.documento_url) {
           await supabase.storage
             .from('aeronave-documentos')
             .remove([initialData.documento_url])
         }
 
-        // Upload novo arquivo preservando o nome original
-        const fileName = selectedFile.name
+        const fileName = sanitizeFileName(selectedFile.name);
         const filePath = `${fileName}`
 
         const { error: uploadError } = await supabase.storage
@@ -147,7 +149,6 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
         documentUrl = filePath
       }
 
-      // Salva dados no banco
       await onSave({
         ...formData,
         documento_url: documentUrl
@@ -167,8 +168,6 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md transition-all">
       <div className="bg-white w-full max-w-7xl rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] flex flex-col border border-white/20">
-        
-        {/* Header */}
         <div className="px-8 py-5 border-b border-gray-50 flex justify-between items-center bg-white flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-50 rounded-lg">
@@ -186,12 +185,8 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
           </button>
         </div>
 
-        {/* Body */}
         <div className="px-8 py-6 space-y-6 overflow-y-auto custom-scrollbar">
-          
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            {/* Coluna 1: Operacional */}
             <div className="lg:col-span-3 space-y-4">
               <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest border-b border-blue-50 pb-2">Informações Operacionais</h4>
               <label className="block">
@@ -224,7 +219,6 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
               </label>
             </div>
 
-            {/* Coluna 2: Financeiro */}
             <div className="lg:col-span-5 space-y-4">
               <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-50 pb-2">Financeiro e Logística</h4>
               <div className="grid grid-cols-2 gap-4">
@@ -298,7 +292,6 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
               </div>
             </div>
 
-            {/* Coluna 3: GED (Documentação) */}
             <div className="lg:col-span-4 space-y-4">
               <h4 className="text-[10px] font-black text-orange-600 uppercase tracking-widest border-b border-orange-50 pb-2">GED - Documentação</h4>
               
@@ -330,7 +323,6 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   </div>
                 </div>
 
-                {/* Arquivo selecionado (novo) */}
                 {selectedFile && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-white/80 rounded-lg border border-orange-100 animate-in fade-in slide-in-from-left-2">
                     <FileText className="h-3.5 w-3.5 text-orange-500" />
@@ -341,7 +333,6 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   </div>
                 )}
 
-                {/* Arquivo vinculado (existente) */}
                 {!selectedFile && formData.documento_url && (
                   <div className="bg-white/80 p-3 rounded-xl border border-orange-200 animate-in fade-in">
                     <div className="flex items-center justify-between gap-2">
@@ -390,11 +381,9 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                 />
               </label>
             </div>
-
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-8 py-5 border-t border-gray-50 bg-white flex justify-end items-center gap-3 flex-shrink-0">
           <button 
             onClick={onClose} 
