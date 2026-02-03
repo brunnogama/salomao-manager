@@ -104,7 +104,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     const { data } = await supabase.from('user_profiles').select('*').order('created_at', { ascending: false })
     if (data) {
       setUsers(data.map((u: any) => ({
-        id: u.id || `pending-${u.email}`, user_id: u.user_id || u.id, nome: u.email.split('@')[0],
+        id: u.id, user_id: u.user_id, nome: u.email.split('@')[0],
         email: u.email, cargo: u.role === 'admin' ? 'Administrador' : 'Colaborador',
         role: u.role || 'user', ativo: !!u.user_id, allowed_modules: u.allowed_modules || []
       })))
@@ -129,32 +129,56 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
 
     try {
       const emailNormalizado = userForm.email.toLowerCase().trim();
-      const payload = {
-        email: emailNormalizado, 
-        role: userForm.cargo === 'Administrador' ? 'admin' : 'user',
-        allowed_modules: userForm.allowed_modules
-      };
-
-      // O erro 400 ocorria pelo 'onConflict' manual. 
-      // Como a constraint ja existe no banco, o upsert simples resolve.
-      const { error } = await supabase
+      const roleFinal = userForm.cargo === 'Administrador' ? 'admin' : 'user';
+      
+      // Verificamos se o usuário já existe na tabela profiles
+      const { data: existingProfile } = await supabase
         .from('user_profiles')
-        .upsert(payload);
+        .select('id')
+        .eq('email', emailNormalizado)
+        .maybeSingle();
+
+      let error;
+
+      if (existingProfile) {
+        // Se existe, fazemos um UPDATE
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update({
+            role: roleFinal,
+            allowed_modules: userForm.allowed_modules
+          })
+          .eq('email', emailNormalizado);
+        error = updateError;
+      } else {
+        // Se NÃO existe (caso da Bruna), fazemos um INSERT
+        // Como você me passou o UUID, vamos garantir que ele seja usado se for o caso dela
+        const isBruna = emailNormalizado === 'bruna.cardoso@salomaoadv.com.br';
+        const { error: insertError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: isBruna ? '6c9be206-8a36-4f18-8557-5d28d80929a4' : undefined,
+            user_id: isBruna ? '6c9be206-8a36-4f18-8557-5d28d80929a4' : undefined,
+            email: emailNormalizado,
+            role: roleFinal,
+            allowed_modules: userForm.allowed_modules
+          });
+        error = insertError;
+      }
 
       if (error) throw error;
       
-      await logAction('UPDATE', 'USER_PROFILES', `Sincronizou perfil de ${emailNormalizado}`);
-      setStatus({ type: 'success', message: 'Usuário configurado com sucesso!' });
+      await logAction('UPDATE', 'USER_PROFILES', `Configurou perfil de ${emailNormalizado}`);
+      setStatus({ type: 'success', message: 'Usuário salvo com sucesso!' });
       
-      // Pequeno delay para o usuário ver o sucesso antes de fechar
       setTimeout(() => {
         setIsUserModalOpen(false);
         fetchUsers();
-      }, 500);
+      }, 800);
 
     } catch (e: any) { 
       console.error('Erro ao salvar usuário:', e);
-      setStatus({ type: 'error', message: 'Erro ao salvar: ' + (e.message || 'Erro desconhecido') }); 
+      setStatus({ type: 'error', message: 'Erro: ' + (e.message || 'Falha ao processar no banco') }); 
     } finally { 
       setLoading(false); 
     }
@@ -189,7 +213,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     return currentUserPermissions[keyMap[modId] as keyof UserPermissions] || false;
   }
 
-  // --- RENDER HELPERS ---
   if (activeModule !== 'menu' && !hasAccessToModule(activeModule)) {
     return (
       <div className="max-w-7xl mx-auto flex flex-col items-center justify-center h-[500px] bg-white rounded-2xl border text-center">
@@ -243,7 +266,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
 
       {activeModule === 'menu' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-12">
-            <p className="col-span-full text-center text-gray-400 italic">Selecione um módulo no menu superior para gerenciar as configurações.</p>
+            <p className="col-span-full text-center text-gray-400 italic">Módulo de configurações. Selecione uma opção acima.</p>
         </div>
       )}
 
