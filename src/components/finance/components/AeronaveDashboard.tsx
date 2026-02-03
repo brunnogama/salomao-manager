@@ -67,33 +67,17 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
       
-      {/* MANTÉM APENAS O CARD DE MISSÕES (Os outros totais já estão no topo global) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col gap-4">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50">
-            <Plane className="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Missões</p>
-            <h3 className="text-xl font-black text-[#112240] tracking-tight mt-1">{stats.totalFlights}</h3>
-          </div>
-        </div>
-        {/* Espaçadores vazios para manter o grid alinhado caso queira adicionar novos cards no futuro */}
-        <div className="hidden md:block" />
-        <div className="hidden md:block" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Totais por Missão */}
-        <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+        {/* LADO ESQUERDO: Totais por Missão (Subiu para o topo e aumentou altura) */}
+        <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[740px]">
           <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
             <h4 className="text-[11px] font-black text-[#112240] uppercase tracking-[0.2em] flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-blue-600" /> Totais por Missão
             </h4>
             <span className="text-[9px] font-bold text-gray-400 uppercase">{data.length} Lançamentos</span>
           </div>
-          <div className="overflow-x-auto max-h-[500px] custom-scrollbar">
+          <div className="overflow-x-auto flex-1 custom-scrollbar">
             <table className="w-full text-left">
               <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
                 <tr>
@@ -126,9 +110,20 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
           </div>
         </div>
 
-        {/* Lado Direito: Gráficos e Listas */}
+        {/* LADO DIREITO: Card Missões + Gráficos */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
+          {/* Card Total de Missões (Movido para cá) */}
+          <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col gap-4">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50">
+              <Plane className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Missões</p>
+              <h3 className="text-xl font-black text-[#112240] tracking-tight mt-1">{stats.totalFlights}</h3>
+            </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-[260px]">
             <h4 className="text-[11px] font-black text-[#112240] uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-blue-600" /> Principais Fornecedores
             </h4>
@@ -150,7 +145,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
             </div>
           </div>
 
-          <div className="bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white">
+          <div className="bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white h-[260px]">
             <h4 className="text-[11px] font-black text-blue-300 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
               <PieChart className="h-4 w-4" /> Despesas por Tipo
             </h4>
@@ -167,6 +162,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
             </div>
           </div>
         </div>
+
       </div>
     </div>
   )
