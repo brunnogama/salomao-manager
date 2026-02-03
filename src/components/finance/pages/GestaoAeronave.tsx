@@ -13,7 +13,9 @@ import {
   Loader2,
   Download,
   Calendar,
-  XCircle
+  XCircle,
+  DollarSign,
+  Building2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -37,10 +39,16 @@ export function GestaoAeronave({
   const [searchTerm, setSearchTerm] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [selectedDespesa, setSelectedDespesa] = useState('')
+  const [selectedFornecedor, setSelectedFornecedor] = useState('')
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
+  
+  // Estados para listas de filtros
+  const [despesas, setDespesas] = useState<string[]>([])
+  const [fornecedores, setFornecedores] = useState<string[]>([])
   
   // Estados para Visualização e Edição
   const [selectedItem, setSelectedItem] = useState<any | null>(null)
@@ -52,7 +60,16 @@ export function GestaoAeronave({
       .from('financeiro_aeronave')
       .select('*')
       .order('data', { ascending: false })
-    if (result) setData(result)
+    if (result) {
+      setData(result)
+      
+      // Extrair valores únicos para os filtros
+      const uniqueDespesas = [...new Set(result.map(item => item.despesa).filter(Boolean))].sort()
+      const uniqueFornecedores = [...new Set(result.map(item => item.fornecedor).filter(Boolean))].sort()
+      
+      setDespesas(uniqueDespesas as string[])
+      setFornecedores(uniqueFornecedores as string[])
+    }
     setLoading(false)
   }
 
@@ -62,9 +79,11 @@ export function GestaoAeronave({
     setSearchTerm('')
     setStartDate('')
     setEndDate('')
+    setSelectedDespesa('')
+    setSelectedFornecedor('')
   }
 
-  // Lógica de Filtros Avançados (SDS) + Filtro de Período
+  // Lógica de Filtros Avançados (SDS) + Filtro de Período + Despesa + Fornecedor
   const filteredData = useMemo(() => {
     return data.filter(item => {
       // Filtro de Texto Global
@@ -85,9 +104,15 @@ export function GestaoAeronave({
         matchDate = false
       }
 
-      return matchSearch && matchDate
+      // Filtro de Despesa
+      const matchDespesa = !selectedDespesa || item.despesa === selectedDespesa
+
+      // Filtro de Fornecedor
+      const matchFornecedor = !selectedFornecedor || item.fornecedor === selectedFornecedor
+
+      return matchSearch && matchDate && matchDespesa && matchFornecedor
     })
-  }, [data, searchTerm, startDate, endDate])
+  }, [data, searchTerm, startDate, endDate, selectedDespesa, selectedFornecedor])
 
   const handleExportExcel = () => {
     if (filteredData.length === 0) return;
@@ -217,6 +242,8 @@ export function GestaoAeronave({
     reader.readAsBinaryString(file)
   }
 
+  const hasActiveFilters = searchTerm || startDate || endDate || selectedDespesa || selectedFornecedor
+
   return (
     <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
       
@@ -247,10 +274,10 @@ export function GestaoAeronave({
 
       {/* TOOLBAR */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-        {/* Linha Superior: Abas e Filtro de Data */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+        {/* Linha Superior: Abas e Filtros */}
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
           {/* Abas Lado Esquerdo */}
-          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full md:w-auto">
+          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full lg:w-auto">
             <button 
               onClick={() => { setActiveTab('dashboard'); resetFilters(); }} 
               className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
@@ -265,37 +292,70 @@ export function GestaoAeronave({
             </button>
           </div>
 
-          {/* Filtro de Datas Lado Direito */}
-          <div className="flex items-center gap-2 w-full md:w-auto">
-             <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-4 py-2 w-full md:w-auto">
-                <Calendar className="h-4 w-4 text-gray-400 mr-3" />
-                <input 
-                  type="date" 
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                />
-                <span className="mx-3 text-gray-400 text-[10px] font-black uppercase tracking-widest">até</span>
-                <input 
-                  type="date" 
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none"
-                  value={endDate}
-                  onChange={e => setEndDate(e.target.value)}
-                />
-             </div>
-             {(startDate || endDate || searchTerm) && (
-               <button 
+          {/* Container de Filtros Lado Direito */}
+          <div className="flex flex-col md:flex-row items-center gap-2 w-full lg:w-auto">
+            {/* Filtro de Datas */}
+            <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-4 py-2 w-full md:w-auto">
+              <Calendar className="h-4 w-4 text-gray-400 mr-3" />
+              <input 
+                type="date" 
+                className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+              />
+              <span className="mx-3 text-gray-400 text-[10px] font-black uppercase tracking-widest">até</span>
+              <input 
+                type="date" 
+                className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+              />
+            </div>
+
+            {/* Filtro de Despesa */}
+            <div className="relative w-full md:w-auto">
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <select
+                value={selectedDespesa}
+                onChange={e => setSelectedDespesa(e.target.value)}
+                className="w-full md:w-[180px] pl-10 pr-4 py-2 bg-gray-100/50 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+              >
+                <option value="">Todas Despesas</option>
+                {despesas.map(despesa => (
+                  <option key={despesa} value={despesa}>{despesa}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro de Fornecedor */}
+            <div className="relative w-full md:w-auto">
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <select
+                value={selectedFornecedor}
+                onChange={e => setSelectedFornecedor(e.target.value)}
+                className="w-full md:w-[180px] pl-10 pr-4 py-2 bg-gray-100/50 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+              >
+                <option value="">Todos Fornecedores</option>
+                {fornecedores.map(fornecedor => (
+                  <option key={fornecedor} value={fornecedor}>{fornecedor}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Botão Limpar Filtros */}
+            {hasActiveFilters && (
+              <button 
                 onClick={resetFilters} 
-                className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border border-red-100 animate-in zoom-in duration-300"
-               >
-                 <XCircle className="h-4 w-4" />
-                 <span className="text-[10px] font-black uppercase tracking-widest">Limpar Filtros</span>
-               </button>
-             )}
+                className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border border-red-100 animate-in zoom-in duration-300 whitespace-nowrap"
+              >
+                <XCircle className="h-4 w-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Limpar</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Linha Inferior: Busca e Ações (Ícones sem texto) */}
+        {/* Linha Inferior: Busca e Ações */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
