@@ -1,4 +1,3 @@
-// src/components/finance/components/ListaVencimentosOAB.tsx
 import { useState, useEffect } from 'react'
 import { Calendar, GraduationCap, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
@@ -46,17 +45,17 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
       setVencimentos(data || [])
     } catch (error) {
       console.error('Erro ao buscar vencimentos OAB:', error)
-      // Fallback: buscar da view
+      // Fallback: buscar da view e filtrar manualmente de forma robusta
       try {
         const { data, error: viewError } = await supabase
           .from('vw_vencimentos_oab_6meses')
           .select('*')
         
         if (!viewError && data) {
-          // Filtrar manualmente por mês/ano
+          // Filtragem manual corrigida para ignorar fuso horário e aceitar qualquer período
           const filtrados = data.filter((v: any) => {
-            const dataPgto = new Date(v.data_pagamento_oab)
-            return dataPgto.getMonth() === mesAtual && dataPgto.getFullYear() === anoAtual
+            const [ano, mes] = v.data_pagamento_oab.split('-').map(Number)
+            return mes === (mesAtual + 1) && ano === anoAtual
           })
           setVencimentos(filtrados)
         }
@@ -70,8 +69,10 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
-    const date = new Date(dateString)
-    return new Date(date.valueOf() + date.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR')
+    // Divide a string para evitar distorção de fuso horário
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    return date.toLocaleDateString('pt-BR')
   }
 
   const getStatusBadge = (dias: number) => {
@@ -136,7 +137,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
           <div>
             <h3 className="text-sm font-black text-[#0a192f]">Vencimentos OAB - 6 Meses Admissão</h3>
             <p className="text-xs text-gray-600 font-medium">
-              {vencimentosFiltrados.length} {vencimentosFiltrados.length === 1 ? 'pagamento' : 'pagamentos'} este mês
+              {vencimentosFiltrados.length} {vencimentosFiltrados.length === 1 ? 'pagamento' : 'pagamentos'} para este período
             </p>
           </div>
         </div>
@@ -184,10 +185,10 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
               <GraduationCap className="h-8 w-8 text-gray-400" />
             </div>
             <p className="text-sm font-bold text-gray-500">
-              Nenhum vencimento de OAB neste período
+              Nenhum vencimento de OAB encontrado
             </p>
             <p className="text-xs text-gray-400">
-              Não há advogados/sócios completando 6 meses de admissão neste mês
+              Verificando período: {mesAtual + 1}/{anoAtual}
             </p>
           </div>
         </div>
