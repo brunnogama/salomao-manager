@@ -46,6 +46,7 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
       <table className="w-full text-left border-separate border-spacing-y-2 px-4">
         <thead>
           <tr className="text-[#112240]">
+            <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">ID</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Aeronave</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Data</th>
             <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Fornecedor</th>
@@ -65,7 +66,10 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
               onClick={() => onRowClick(item)}
               className="group bg-white hover:bg-blue-50/40 border border-gray-100 rounded-xl transition-all shadow-sm cursor-pointer"
             >
-              <td className="px-4 py-4 text-sm font-semibold text-gray-600 first:rounded-l-xl">{item.aeronave}</td>
+              <td className="px-4 py-4 text-[10px] font-bold text-blue-600/60 first:rounded-l-xl uppercase">
+                #{item.id?.split('-')[0] || '---'}
+              </td>
+              <td className="px-4 py-4 text-sm font-semibold text-gray-600">{item.aeronave}</td>
               <td className="px-4 py-4 text-sm font-semibold text-gray-600">
                 {formatDate(item.data)}
               </td>
