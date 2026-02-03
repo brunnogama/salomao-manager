@@ -34,7 +34,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   const fetchVencimentos = async () => {
     setLoading(true)
     try {
-      // Busca usando a função do Supabase
+      // Tenta buscar usando a função RPC (para o mês específico)
       const { data, error } = await supabase
         .rpc('fn_vencimentos_oab_por_mes', {
           mes_alvo: mesAtual + 1, // JavaScript usa 0-11, SQL usa 1-12
@@ -42,20 +42,33 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         })
 
       if (error) throw error
-      setVencimentos(data || [])
+      
+      // Se a RPC não retornar nada, forçamos o fallback para buscar "geral"
+      if (!data || data.length === 0) throw new Error('Sem dados na RPC')
+      
+      setVencimentos(data)
     } catch (error) {
-      console.error('Erro ao buscar vencimentos OAB:', error)
-      // Fallback: buscar da view e filtrar manualmente de forma robusta
+      console.error('Buscando dados via View (Geral):', error)
+      // Fallback: buscar da view e calcular com base na Admissão para mostrar passado/futuro
       try {
         const { data, error: viewError } = await supabase
           .from('vw_vencimentos_oab_6meses')
           .select('*')
         
         if (!viewError && data) {
-          // Filtragem manual corrigida para ignorar fuso horário e aceitar qualquer período
           const filtrados = data.filter((v: any) => {
-            const [ano, mes] = v.data_pagamento_oab.split('-').map(Number)
-            return mes === (mesAtual + 1) && ano === anoAtual
+            if (!v.data_admissao) return false
+            
+            // Lógica Solicitada: 6 meses após admissão - 1 dia
+            const [anoAdm, mesAdm, diaAdm] = v.data_admissao.split('-').map(Number)
+            const dataPagamentoCalculada = new Date(anoAdm, (mesAdm - 1) + 6, diaAdm)
+            dataPagamentoCalculada.setDate(dataPagamentoCalculada.getDate() - 1)
+
+            // Verifica se a data calculada pertence ao mês/ano que o usuário está vendo
+            return (
+              dataPagamentoCalculada.getMonth() === mesAtual && 
+              dataPagamentoCalculada.getFullYear() === anoAtual
+            )
           })
           setVencimentos(filtrados)
         }
