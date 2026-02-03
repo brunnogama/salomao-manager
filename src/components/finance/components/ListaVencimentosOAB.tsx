@@ -34,47 +34,43 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   const fetchVencimentos = async () => {
     setLoading(true)
     try {
-      // Tenta buscar usando a função RPC (para o mês específico)
-      const { data, error } = await supabase
-        .rpc('fn_vencimentos_oab_por_mes', {
-          mes_alvo: mesAtual + 1, // JavaScript usa 0-11, SQL usa 1-12
-          ano_alvo: anoAtual
+      // Busca geral da view para permitir navegação total no tempo
+      const { data, error: viewError } = await supabase
+        .from('vw_vencimentos_oab_6meses')
+        .select('*')
+      
+      if (viewError) throw viewError
+
+      if (data) {
+        const hoje = new Date()
+        hoje.setHours(0, 0, 0, 0)
+
+        const processados = data.filter((v: any) => {
+          if (!v.data_admissao) return false
+          
+          // Cálculo: Admissão + 6 meses - 1 dia
+          const [ano, mes, dia] = v.data_admissao.split('-').map(Number)
+          const dataVenc = new Date(ano, (mes - 1) + 6, dia)
+          dataVenc.setDate(dataVenc.getDate() - 1)
+
+          // Filtra para mostrar apenas quem vence no mês/ano visualizado
+          return dataVenc.getMonth() === mesAtual && dataVenc.getFullYear() === anoAtual
+        }).map((v: any) => {
+          const [ano, mes, dia] = v.data_admissao.split('-').map(Number)
+          const dataVenc = new Date(ano, (mes - 1) + 6, dia)
+          dataVenc.setDate(dataVenc.getDate() - 1)
+          
+          const diff = Math.ceil((dataVenc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+          return { 
+            ...v, 
+            data_pagamento_oab: dataVenc.toISOString().split('T')[0],
+            dias_ate_pagamento: diff 
+          }
         })
-
-      if (error) throw error
-      
-      // Se a RPC não retornar nada, forçamos o fallback para buscar "geral"
-      if (!data || data.length === 0) throw new Error('Sem dados na RPC')
-      
-      setVencimentos(data)
-    } catch (error) {
-      console.error('Buscando dados via View (Geral):', error)
-      // Fallback: buscar da view e calcular com base na Admissão para mostrar passado/futuro
-      try {
-        const { data, error: viewError } = await supabase
-          .from('vw_vencimentos_oab_6meses')
-          .select('*')
-        
-        if (!viewError && data) {
-          const filtrados = data.filter((v: any) => {
-            if (!v.data_admissao) return false
-            
-            // Lógica Solicitada: 6 meses após admissão - 1 dia
-            const [anoAdm, mesAdm, diaAdm] = v.data_admissao.split('-').map(Number)
-            const dataPagamentoCalculada = new Date(anoAdm, (mesAdm - 1) + 6, diaAdm)
-            dataPagamentoCalculada.setDate(dataPagamentoCalculada.getDate() - 1)
-
-            // Verifica se a data calculada pertence ao mês/ano que o usuário está vendo
-            return (
-              dataPagamentoCalculada.getMonth() === mesAtual && 
-              dataPagamentoCalculada.getFullYear() === anoAtual
-            )
-          })
-          setVencimentos(filtrados)
-        }
-      } catch (fallbackError) {
-        console.error('Erro no fallback:', fallbackError)
+        setVencimentos(processados)
       }
+    } catch (error) {
+      console.error('Erro ao buscar vencimentos OAB:', error)
     } finally {
       setLoading(false)
     }
@@ -82,7 +78,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
-    // Divide a string para evitar distorção de fuso horário
     const [year, month, day] = dateString.split('-').map(Number)
     const date = new Date(year, month - 1, day)
     return date.toLocaleDateString('pt-BR')
@@ -99,7 +94,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
       return {
         icon: AlertCircle,
         text: 'HOJE',
-        class: 'bg-orange-50 text-orange-700 border-orange-200'
+        class: 'bg-orange-600 text-white border-orange-700 font-black animate-pulse'
       }
     } else if (dias <= 7) {
       return {
@@ -214,7 +209,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
             return (
               <div
                 key={vencimento.id}
-                className="bg-white rounded-xl border border-gray-200 p-5 hover:border-[#1e3a8a]/30 hover:shadow-md transition-all"
+                className={`bg-white rounded-xl border p-5 transition-all ${vencimento.dias_ate_pagamento === 0 ? 'ring-2 ring-orange-500 border-orange-200 shadow-lg' : 'border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md'}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* Info Principal */}
@@ -243,11 +238,11 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Admissão</p>
                         <p className="text-xs font-bold text-[#0a192f]">{formatDate(vencimento.data_admissao)}</p>
                       </div>
-                      <div className="bg-blue-50 p-2.5 rounded-lg border border-blue-100">
-                        <p className="text-[8px] font-black text-blue-600 uppercase tracking-wider mb-0.5 flex items-center gap-1">
+                      <div className={`${vencimento.dias_ate_pagamento === 0 ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-100'} p-2.5 rounded-lg border`}>
+                        <p className={`text-[8px] font-black ${vencimento.dias_ate_pagamento === 0 ? 'text-orange-600' : 'text-blue-600'} uppercase tracking-wider mb-0.5 flex items-center gap-1`}>
                           <Calendar className="h-2.5 w-2.5" /> Pagamento
                         </p>
-                        <p className="text-xs font-bold text-blue-900">{formatDate(vencimento.data_pagamento_oab)}</p>
+                        <p className={`text-xs font-bold ${vencimento.dias_ate_pagamento === 0 ? 'text-orange-900' : 'text-blue-900'}`}>{formatDate(vencimento.data_pagamento_oab)}</p>
                       </div>
                     </div>
 
