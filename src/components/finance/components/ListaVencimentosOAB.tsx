@@ -48,10 +48,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         const processados = data.filter((v: any) => {
           if (!v.data_admissao) return false
           
-          // FILTRO DE CARGO: Apenas Advogado ou Sócio (ignora case e acentos)
-          const cargoNormalizado = v.cargo?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
-          if (cargoNormalizado !== 'advogado' && cargoNormalizado !== 'socio') return false;
-          
           // Suporta formato DD/MM/AAAA (da máscara) e YYYY-MM-DD
           let dia, mes, ano;
           if (v.data_admissao.includes('/')) {
@@ -99,10 +95,10 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
-    // Converte YYYY-MM-DD ou strings ISO para DD/MM/AAAA
+    // Formatação visual para o padrão brasileiro DD/MM/AAAA
     if (dateString.includes('-')) {
-      const [year, month, day] = dateString.split('T')[0].split('-');
-      return `${day}/${month}/${year}`;
+      const [year, month, day] = dateString.split('T')[0].split('-')
+      return `${day}/${month}/${year}`
     }
     return dateString
   }
