@@ -6,8 +6,7 @@ import {
   Plane, 
   FolderSearch, 
   X,
-  Briefcase,
-  Construction
+  Briefcase
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -19,9 +18,9 @@ interface SidebarProps {
 
 export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: SidebarProps) {
   const mainItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, underConstruction: true },
-    { id: 'contas-pagar', label: 'Contas a Pagar', icon: ArrowUpCircle, underConstruction: true },
-    { id: 'contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle, underConstruction: true },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'contas-pagar', label: 'Contas a Pagar', icon: ArrowUpCircle },
+    { id: 'contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle },
     { id: 'gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane },
     { id: 'ged', label: 'GED', icon: FolderSearch },
   ]
@@ -83,13 +82,6 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
                 />
                 <span className="text-sm">{item.label}</span>
               </div>
-
-              {item.underConstruction && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
-                  <Construction className="h-2.5 w-2.5 text-amber-500" />
-                  <span className="text-[8px] font-black uppercase tracking-tighter text-amber-500">Breve</span>
-                </div>
-              )}
             </button>
           ))}
         </nav>
