@@ -134,9 +134,8 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
             .remove([initialData.documento_url])
         }
 
-        // Upload novo arquivo
-        const fileExt = selectedFile.name.split('.').pop()
-        const fileName = `${initialData?.id || Date.now()}_${Date.now()}.${fileExt}`
+        // Upload novo arquivo preservando o nome original
+        const fileName = selectedFile.name
         const filePath = `${fileName}`
 
         const { error: uploadError } = await supabase.storage
@@ -362,7 +361,6 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                         >
                           <Download className="h-3.5 w-3.5" />
                         </button>
-                        {/* Botão de Excluir adicionado aqui */}
                         <button
                           onClick={handleDeleteDocument}
                           type="button"

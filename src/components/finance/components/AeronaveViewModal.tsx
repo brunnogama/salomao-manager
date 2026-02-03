@@ -109,9 +109,8 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
           .remove([item.documento_url])
       }
 
-      // Upload novo arquivo
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${item.id}_${Date.now()}.${fileExt}`
+      // Upload novo arquivo preservando o nome original
+      const fileName = file.name
       const filePath = `${fileName}`
 
       const { error: uploadError } = await supabase.storage
