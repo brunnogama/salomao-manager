@@ -411,85 +411,92 @@ export function GED({
 }
 
 // Modal de Upload
-function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
-  const [uploading, setUploading] = useState(false)
-  const [formData, setFormData] = useState({
-    categoria: '',
-    tipo_documento: '',
-    entidade_vinculada: '',
-    observacoes: ''
-  })
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleUpload = async () => {
-    if (!selectedFile || !formData.categoria || !formData.tipo_documento) {
-      alert('Preencha categoria, tipo de documento e selecione um arquivo')
-      return
-    }
-
-    setUploading(true)
-    try {
-      const nomeOriginal = selectedFile.name
-      const timestamp = Date.now()
-      const filePath = `${formData.categoria}/${timestamp}_${nomeOriginal}`
-
-      console.log('📤 Iniciando upload...')
-      console.log('Nome original:', nomeOriginal)
-      console.log('Caminho storage:', filePath)
-
-      // Upload no storage
-      const { error: uploadError } = await supabase.storage
-        .from('ged-documentos')
-        .upload(filePath, selectedFile)
-
-      if (uploadError) {
-        console.error('❌ Erro upload storage:', uploadError)
-        throw uploadError
-      }
-
-      console.log('✅ Upload storage OK')
-
-      // Inserir no banco
-      const { data: insertData, error: insertError } = await supabase
-        .from('ged_documentos')
-        .insert({
-          nome_arquivo: nomeOriginal, // NOME ORIGINAL AQUI
-          tipo_documento: formData.tipo_documento,
-          categoria: formData.categoria,
-          entidade_vinculada: formData.entidade_vinculada || '',
-          id_vinculo: '',
-          tamanho: selectedFile.size,
-          url_documento: filePath,
-          observacoes: formData.observacoes || '',
-          usuario_upload: userName
-        })
-        .select()
-
-      if (insertError) {
-        console.error('❌ Erro insert banco:', insertError)
-        // Limpa storage se falhou no banco
-        await supabase.storage.from('ged-documentos').remove([filePath])
-        throw insertError
-      }
-
-      console.log('✅ Insert banco OK:', insertData)
-
-      alert('✅ Documento enviado com sucesso!')
-      
-      // Limpa form
-      setFormData({ categoria: '', tipo_documento: '', entidade_vinculada: '', observacoes: '' })
-      setSelectedFile(null)
-      
-      await onSuccess()
-      onClose()
-    } catch (error: any) {
-      console.error('❌ Erro geral:', error)
-      alert(`Erro: ${error.message}`)
-    } finally {
-      setUploading(false)
-    }
+const handleUpload = async () => {
+  if (!selectedFile || !formData.categoria || !formData.tipo_documento) {
+    alert('Preencha categoria, tipo de documento e selecione um arquivo')
+    return
   }
+
+  setUploading(true)
+  try {
+    const nomeOriginal = selectedFile.name
+    const timestamp = Date.now()
+    const filePath = `${formData.categoria}/${timestamp}_${nomeOriginal}`
+
+    console.log('📤 INICIANDO UPLOAD')
+    console.log('Arquivo:', nomeOriginal)
+    console.log('Tamanho:', selectedFile.size)
+    console.log('Categoria:', formData.categoria)
+    console.log('Tipo:', formData.tipo_documento)
+
+    // Upload no storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('ged-documentos')
+      .upload(filePath, selectedFile)
+
+    if (uploadError) {
+      console.error('❌ ERRO UPLOAD STORAGE:', uploadError)
+      throw uploadError
+    }
+
+    console.log('✅ STORAGE OK:', uploadData)
+
+    // Preparar dados para inserção
+    const documentoData = {
+      nome_arquivo: nomeOriginal,
+      tipo_documento: formData.tipo_documento,
+      categoria: formData.categoria,
+      entidade_vinculada: formData.entidade_vinculada || '',
+      id_vinculo: '',
+      tamanho: selectedFile.size,
+      url_documento: filePath,
+      observacoes: formData.observacoes || '',
+      usuario_upload: userName
+    }
+
+    console.log('📝 INSERINDO NO BANCO:', documentoData)
+
+    // Inserir no banco
+    const { data: insertData, error: insertError } = await supabase
+      .from('ged_documentos')
+      .insert(documentoData)
+      .select()
+
+    if (insertError) {
+      console.error('❌ ERRO INSERT BANCO:', insertError)
+      console.error('Detalhes completos:', JSON.stringify(insertError, null, 2))
+      
+      // Remove do storage se falhou no banco
+      await supabase.storage.from('ged-documentos').remove([filePath])
+      throw insertError
+    }
+
+    console.log('✅ INSERT BANCO OK:', insertData)
+    console.log('🎉 UPLOAD COMPLETO!')
+
+    alert('✅ Documento enviado com sucesso!')
+    
+    // Limpa formulário
+    setFormData({
+      categoria: '',
+      tipo_documento: '',
+      entidade_vinculada: '',
+      observacoes: ''
+    })
+    setSelectedFile(null)
+    
+    // Atualiza lista
+    onSuccess()
+    onClose()
+    
+  } catch (error: any) {
+    console.error('❌ ERRO GERAL:', error)
+    console.error('Stack:', error.stack)
+    alert(`Erro ao enviar documento: ${error.message}`)
+  } finally {
+    setUploading(false)
+  }
+}
 
   if (!isOpen) return null
 
