@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Save, Plane, FolderSearch, Upload, FileText } from 'lucide-react'
+import { X, Save, Plane, Upload, FileText, Download } from 'lucide-react'
+import { supabase } from '../../../lib/supabase'
 import { AeronaveMenuSelector } from './AeronaveMenuSelector'
 import { NumericFormat } from 'react-number-format'
 import InputMask from 'react-input-mask'
 
 export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   
   const [formData, setFormData] = useState({
     tripulacao: '',
@@ -14,7 +16,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
     data: '',
     localidade_destino: '',
     despesa: '',
-    descricao: '', // Adicionado campo Descrição
+    descricao: '',
     fornecedor: '',
     observacao: '',
     faturado_cnpj: 0,
@@ -23,14 +25,14 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
     valor_pago: 0,
     data_vencimento: '',
     data_pagamento: '',
-    tipo_documento: '', // Campo para o GED
-    documento_url: ''   // Referência do arquivo
+    tipo_documento: '',
+    documento_url: ''
   })
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData)
-      if (initialData.documento_url) setSelectedFileName('Documento já anexado')
+      setSelectedFile(null)
     } else {
       setFormData({
         tripulacao: '',
@@ -50,14 +52,85 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
         tipo_documento: '',
         documento_url: ''
       })
-      setSelectedFileName(null)
+      setSelectedFile(null)
     }
   }, [initialData, isOpen])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedFileName(file.name);
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Arquivo muito grande. Tamanho máximo: 10MB')
+        return
+      }
+      setSelectedFile(file);
+    }
+  }
+
+  const handleDownloadDocument = async () => {
+    if (!formData.documento_url) return
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from('aeronave-documentos')
+        .download(formData.documento_url)
+      
+      if (error) throw error
+      
+      const url = URL.createObjectURL(data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = formData.documento_url.split('/').pop() || 'documento.pdf'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Erro ao baixar documento:', error)
+      alert('Erro ao baixar o documento')
+    }
+  }
+
+  const handleSave = async () => {
+    setUploading(true)
+    try {
+      let documentUrl = formData.documento_url
+
+      // Se há novo arquivo para upload
+      if (selectedFile) {
+        // Remove arquivo antigo se existir
+        if (initialData?.documento_url) {
+          await supabase.storage
+            .from('aeronave-documentos')
+            .remove([initialData.documento_url])
+        }
+
+        // Upload novo arquivo
+        const fileExt = selectedFile.name.split('.').pop()
+        const fileName = `${initialData?.id || Date.now()}_${Date.now()}.${fileExt}`
+        const filePath = `${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('aeronave-documentos')
+          .upload(filePath, selectedFile)
+
+        if (uploadError) throw uploadError
+
+        documentUrl = filePath
+      }
+
+      // Salva dados no banco
+      await onSave({
+        ...formData,
+        documento_url: documentUrl
+      })
+
+      setSelectedFile(null)
+    } catch (error) {
+      console.error('Erro ao salvar:', error)
+      alert('Erro ao salvar o registro')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -229,11 +302,37 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   </div>
                 </div>
 
-                {selectedFileName && (
+                {/* Arquivo selecionado (novo) */}
+                {selectedFile && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-white/80 rounded-lg border border-orange-100 animate-in fade-in slide-in-from-left-2">
                     <FileText className="h-3.5 w-3.5 text-orange-500" />
-                    <span className="text-[10px] font-bold text-gray-600 truncate flex-1">{selectedFileName}</span>
-                    <button onClick={() => setSelectedFileName(null)} className="text-gray-400 hover:text-red-500"><X className="h-3.5 w-3.5"/></button>
+                    <span className="text-[10px] font-bold text-gray-600 truncate flex-1">{selectedFile.name}</span>
+                    <button onClick={() => setSelectedFile(null)} className="text-gray-400 hover:text-red-500">
+                      <X className="h-3.5 w-3.5"/>
+                    </button>
+                  </div>
+                )}
+
+                {/* Arquivo vinculado (existente) */}
+                {!selectedFile && formData.documento_url && (
+                  <div className="bg-white/80 p-3 rounded-xl border border-orange-200 animate-in fade-in">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <FileText className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Documento Atual</p>
+                          <p className="text-xs font-bold text-gray-700 truncate">{formData.documento_url.split('/').pop()}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleDownloadDocument}
+                        type="button"
+                        className="p-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-all flex-shrink-0"
+                        title="Baixar documento"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -259,15 +358,29 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
 
         {/* Footer */}
         <div className="px-8 py-5 border-t border-gray-50 bg-white flex justify-end items-center gap-3 flex-shrink-0">
-          <button onClick={onClose} className="px-6 py-2 text-[9px] font-black text-gray-400 hover:text-gray-600 transition-all uppercase tracking-widest">
+          <button 
+            onClick={onClose} 
+            disabled={uploading}
+            className="px-6 py-2 text-[9px] font-black text-gray-400 hover:text-gray-600 transition-all uppercase tracking-widest disabled:opacity-50"
+          >
             Cancelar
           </button>
           <button 
-            onClick={() => onSave(formData)}
-            className="flex items-center gap-2 px-8 py-2 bg-[#1e3a8a] text-white text-[9px] font-black rounded-xl hover:bg-[#112240] shadow-lg transition-all active:scale-95 uppercase tracking-widest"
+            onClick={handleSave}
+            disabled={uploading}
+            className="flex items-center gap-2 px-8 py-2 bg-[#1e3a8a] text-white text-[9px] font-black rounded-xl hover:bg-[#112240] shadow-lg transition-all active:scale-95 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save className="w-3.5 h-3.5" />
-            Salvar Registro
+            {uploading ? (
+              <>
+                <div className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="w-3.5 h-3.5" />
+                Salvar Registro
+              </>
+            )}
           </button>
         </div>
       </div>

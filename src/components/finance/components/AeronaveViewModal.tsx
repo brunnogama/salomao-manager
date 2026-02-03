@@ -1,4 +1,6 @@
-import { X, Edit2, Trash2, Plane, Calendar, MapPin, DollarSign, Info, FolderSearch, Upload, MessageSquare, AlignLeft } from 'lucide-react'
+import { X, Edit2, Trash2, Plane, Calendar, MapPin, DollarSign, Info, FolderSearch, Upload, MessageSquare, AlignLeft, Download, FileText } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { supabase } from '../../../lib/supabase'
 import { AeronaveMenuSelector } from './AeronaveMenuSelector'
 
 interface AeronaveViewModalProps {
@@ -10,6 +12,10 @@ interface AeronaveViewModalProps {
 }
 
 export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: AeronaveViewModalProps) {
+  const [uploading, setUploading] = useState(false)
+  const [tipoDocumento, setTipoDocumento] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   if (!isOpen || !item) return null
 
   const formatCurrency = (val: number) => 
@@ -25,6 +31,82 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
       return dateString
     } catch (e) {
       return dateString
+    }
+  }
+
+  const handleDownloadDocument = async () => {
+    if (!item.documento_url) return
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from('aeronave-documentos')
+        .download(item.documento_url)
+      
+      if (error) throw error
+      
+      const url = URL.createObjectURL(data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = item.documento_url.split('/').pop() || 'documento.pdf'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Erro ao baixar documento:', error)
+      alert('Erro ao baixar o documento')
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !tipoDocumento) {
+      alert('Selecione o tipo de documento antes de fazer upload')
+      return
+    }
+
+    setUploading(true)
+    try {
+      // Remove arquivo antigo se existir
+      if (item.documento_url) {
+        await supabase.storage
+          .from('aeronave-documentos')
+          .remove([item.documento_url])
+      }
+
+      // Upload novo arquivo
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${item.id}_${Date.now()}.${fileExt}`
+      const filePath = `${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('aeronave-documentos')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      // Atualiza registro no banco
+      const { error: updateError } = await supabase
+        .from('financeiro_aeronave')
+        .update({ 
+          documento_url: filePath,
+          tipo_documento: tipoDocumento
+        })
+        .eq('id', item.id)
+
+      if (updateError) throw updateError
+
+      alert('Documento enviado com sucesso!')
+      // Atualiza o item local
+      item.documento_url = filePath
+      item.tipo_documento = tipoDocumento
+      
+    } catch (error) {
+      console.error('Erro no upload:', error)
+      alert('Erro ao enviar documento')
+    } finally {
+      setUploading(false)
+      if (e.target) e.target.value = ''
     }
   }
 
@@ -59,7 +141,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
         </div>
 
         {/* Content */}
-        <div className="px-10 py-8 space-y-8 overflow-visible">
+        <div className="px-10 py-8 space-y-8 overflow-auto max-h-[calc(95vh-180px)]">
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* Seção 1: Operacional */}
@@ -94,20 +176,58 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
               <h4 className="text-[10px] font-black text-orange-600 uppercase tracking-[0.3em] flex items-center gap-2">
                 <FolderSearch className="h-3.5 w-3.5" /> Documentação (GED)
               </h4>
-              <div className="bg-orange-50/30 p-5 rounded-[1.5rem] border border-orange-100/50 h-full flex flex-col justify-center">
-                <div className="flex items-end gap-2">
-                  <div className="flex-1">
-                    <AeronaveMenuSelector 
-                      label="Selecione o Tipo"
-                      value={item.tipo_documento || ''}
-                      onChange={() => {}} 
+              <div className="bg-orange-50/30 p-5 rounded-[1.5rem] border border-orange-100/50 h-full flex flex-col justify-between">
+                <div>
+                  <div className="flex items-end gap-2 mb-4">
+                    <div className="flex-1">
+                      <AeronaveMenuSelector 
+                        label="Selecione o Tipo"
+                        value={tipoDocumento || item.tipo_documento || ''}
+                        onChange={(val: string) => setTipoDocumento(val)} 
+                      />
+                    </div>
+                    <input 
+                      ref={fileInputRef}
+                      type="file" 
+                      accept=".pdf" 
+                      className="hidden" 
+                      onChange={handleFileUpload}
+                      disabled={uploading}
                     />
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="p-2.5 bg-white border border-orange-200 text-orange-600 rounded-xl shadow-sm hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      title="Upload de documento"
+                    >
+                      {uploading ? <div className="h-4 w-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" /> : <Upload className="h-4 w-4" />}
+                    </button>
                   </div>
-                  <button className="p-2.5 bg-white border border-orange-200 text-orange-600 rounded-xl shadow-sm hover:bg-orange-50">
-                    <Upload className="h-4 w-4" />
-                  </button>
+
+                  {/* Arquivo vinculado */}
+                  {item.documento_url && (
+                    <div className="bg-white/80 p-3 rounded-xl border border-orange-200 mb-3 animate-in fade-in">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <FileText className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Documento Anexado</p>
+                            <p className="text-xs font-bold text-gray-700 truncate">{item.documento_url.split('/').pop()}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleDownloadDocument}
+                          className="p-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-all flex-shrink-0"
+                          title="Baixar documento"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="mt-4 pt-3 border-t border-orange-100">
+
+                <div className="pt-3 border-t border-orange-100">
                   <p className="text-[8px] text-orange-700/60 font-black uppercase tracking-widest leading-none">
                     ID Vínculo: <span className="text-[#112240]">{item.id?.split('-')[0]}</span>
                   </p>
