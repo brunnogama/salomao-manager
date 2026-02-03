@@ -60,11 +60,14 @@ export function GED({
 
   const fetchDocumentos = async () => {
     setLoading(true)
-    // Aqui você vai criar a tabela 'ged_documentos' no Supabase
     const { data, error } = await supabase
       .from('ged_documentos')
       .select('*')
       .order('data_upload', { ascending: false })
+    
+    if (error) {
+      console.error('Erro ao buscar documentos:', error)
+    }
     
     if (data) setDocumentos(data)
     setLoading(false)
@@ -79,7 +82,7 @@ export function GED({
       const matchSearch = 
         doc.nome_arquivo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doc.tipo_documento.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.entidade_vinculada.toLowerCase().includes(searchTerm.toLowerCase())
+        (doc.entidade_vinculada && doc.entidade_vinculada.toLowerCase().includes(searchTerm.toLowerCase()))
 
       const matchCategoria = selectedCategoria === 'todas' || doc.categoria.toLowerCase() === selectedCategoria.toLowerCase()
       const matchTipo = selectedTipo === 'todos' || doc.tipo_documento.toLowerCase() === selectedTipo.toLowerCase()
@@ -343,10 +346,12 @@ export function GED({
                     <Tag className="h-3 w-3 text-gray-400" />
                     <span className="text-[10px] font-semibold text-gray-500">{doc.tipo_documento}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-3 w-3 text-gray-400" />
-                    <span className="text-[10px] font-semibold text-gray-500 truncate">{doc.entidade_vinculada}</span>
-                  </div>
+                  {doc.entidade_vinculada && (
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-3 w-3 text-gray-400" />
+                      <span className="text-[10px] font-semibold text-gray-500 truncate">{doc.entidade_vinculada}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <Calendar className="h-3 w-3 text-gray-400" />
                     <span className="text-[10px] font-semibold text-gray-500">{formatDate(doc.data_upload)}</span>
@@ -380,7 +385,6 @@ export function GED({
         )}
       </div>
 
-      {/* Modais serão implementados separadamente */}
       {isUploadModalOpen && (
         <UploadModal 
           isOpen={isUploadModalOpen}
@@ -403,7 +407,7 @@ export function GED({
   )
 }
 
-// Modal de Upload (simplificado - você pode expandir)
+// Modal de Upload (CORRIGIDO)
 function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
   const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState({
@@ -417,46 +421,61 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
 
   const handleUpload = async () => {
     if (!selectedFile || !formData.categoria || !formData.tipo_documento) {
-      alert('Preencha todos os campos obrigatórios')
+      alert('Preencha categoria, tipo de documento e selecione um arquivo')
       return
     }
 
     setUploading(true)
     try {
-      // Upload do arquivo
-      const fileExt = selectedFile.name.split('.').pop()
-      const fileName = `${Date.now()}_${selectedFile.name}`
+      // Mantém o nome original do arquivo
+      const fileName = selectedFile.name
       const filePath = `${formData.categoria}/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('ged-documentos')
-        .upload(filePath, selectedFile)
+      console.log('Iniciando upload:', filePath)
 
-      if (uploadError) throw uploadError
+      // Upload do arquivo
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('ged-documentos')
+        .upload(filePath, selectedFile, {
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error('Erro no upload:', uploadError)
+        throw uploadError
+      }
+
+      console.log('Upload concluído:', uploadData)
 
       // Salva metadados no banco
-      const { error: dbError } = await supabase
+      const { data: dbData, error: dbError } = await supabase
         .from('ged_documentos')
         .insert({
-          nome_arquivo: selectedFile.name,
+          nome_arquivo: fileName,
           tipo_documento: formData.tipo_documento,
           categoria: formData.categoria,
-          entidade_vinculada: formData.entidade_vinculada,
+          entidade_vinculada: formData.entidade_vinculada || null,
           data_upload: new Date().toISOString(),
           tamanho: selectedFile.size,
           url_documento: filePath,
-          observacoes: formData.observacoes,
+          observacoes: formData.observacoes || null,
           usuario_upload: userName
         })
+        .select()
 
-      if (dbError) throw dbError
+      if (dbError) {
+        console.error('Erro ao salvar no banco:', dbError)
+        throw dbError
+      }
+
+      console.log('Documento salvo no banco:', dbData)
 
       alert('Documento enviado com sucesso!')
       onSuccess()
       onClose()
-    } catch (error) {
-      console.error('Erro no upload:', error)
-      alert('Erro ao enviar documento')
+    } catch (error: any) {
+      console.error('Erro completo:', error)
+      alert(`Erro ao enviar documento: ${error.message}`)
     } finally {
       setUploading(false)
     }
@@ -569,7 +588,7 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
           <button
             onClick={onClose}
             disabled={uploading}
-            className="px-6 py-2 text-[9px] font-black text-gray-400 hover:text-gray-600 transition-all uppercase tracking-widest"
+            className="px-6 py-2 text-[9px] font-black text-gray-400 hover:text-gray-600 transition-all uppercase tracking-widest disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -596,7 +615,7 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
   )
 }
 
-// Modal de Visualização (simplificado)
+// Modal de Visualização
 function ViewDocumentModal({ documento, isOpen, onClose, onDownload, onDelete }: any) {
   if (!isOpen) return null
 
