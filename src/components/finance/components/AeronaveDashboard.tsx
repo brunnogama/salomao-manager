@@ -1,5 +1,5 @@
 import { useMemo, useEffect } from 'react'
-import { Plane, Building2, Wallet, TrendingUp, BarChart3, PieChart } from 'lucide-react'
+import { Plane, TrendingUp, BarChart3, PieChart } from 'lucide-react'
 
 interface DashboardProps {
   data: any[];
@@ -8,7 +8,7 @@ interface DashboardProps {
 }
 
 export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: DashboardProps) {
-  // Resetar filtros ao montar o componente (voltar para a aba)
+  // Resetar filtros ao montar o componente
   useEffect(() => {
     if (onResetFilter) {
       onResetFilter();
@@ -18,6 +18,9 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
   const stats = useMemo(() => {
     const totalPaid = data.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
     
+    // Contagem única de missões baseada em data e destino
+    const totalFlights = new Set(data.map(item => `${item.data}-${item.localidade_destino}`)).size
+
     const missionsMap: any = {}
     data.forEach(item => {
       const key = `${item.data} | ${item.localidade_destino}`
@@ -42,6 +45,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
 
     return {
       totalPaid,
+      totalFlights,
       missions: Object.values(missionsMap).sort((a: any, b: any) => b.data.localeCompare(a.data)),
       expenses: Object.entries(expenseMap).sort((a: any, b: any) => b[1] - a[1]),
       suppliers: Object.entries(supplierMap).sort((a: any, b: any) => b[1] - a[1]).slice(0, 5)
@@ -63,19 +67,33 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
       
-      {/* Cards de Totais removidos para evitar duplicidade com o cabeçalho global */}
+      {/* MANTÉM APENAS O CARD DE MISSÕES (Os outros totais já estão no topo global) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col gap-4">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50">
+            <Plane className="h-6 w-6 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Missões</p>
+            <h3 className="text-xl font-black text-[#112240] tracking-tight mt-1">{stats.totalFlights}</h3>
+          </div>
+        </div>
+        {/* Espaçadores vazios para manter o grid alinhado caso queira adicionar novos cards no futuro */}
+        <div className="hidden md:block" />
+        <div className="hidden md:block" />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Lado Esquerdo: Tabela de Missões */}
+        {/* Totais por Missão */}
         <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
           <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
             <h4 className="text-[11px] font-black text-[#112240] uppercase tracking-[0.2em] flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-blue-600" /> Totais por Missão
             </h4>
-            <span className="text-[9px] font-bold text-gray-400 uppercase">{data.length} Lançamentos Filtrados</span>
+            <span className="text-[9px] font-bold text-gray-400 uppercase">{data.length} Lançamentos</span>
           </div>
-          <div className="overflow-x-auto max-h-[600px] custom-scrollbar">
+          <div className="overflow-x-auto max-h-[500px] custom-scrollbar">
             <table className="w-full text-left">
               <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
                 <tr>
@@ -96,7 +114,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
                     <td className="px-8 py-4">
                       <div className="flex flex-col">
                         <span className="text-xs font-black text-[#112240]">{formatDate(m.data)}</span>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase truncate max-w-[250px]">{m.destino}</span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase truncate max-w-[200px]">{m.destino}</span>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-xs font-bold text-orange-600 text-right">{formatCurrency(m.cnpj)}</td>
@@ -137,7 +155,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
               <PieChart className="h-4 w-4" /> Despesas por Tipo
             </h4>
             <div className="space-y-4">
-              {stats.expenses.slice(0, 8).map(([name, value]: any) => (
+              {stats.expenses.slice(0, 6).map(([name, value]: any) => (
                 <div key={name} className="flex items-center justify-between group cursor-default">
                   <div className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform" />
