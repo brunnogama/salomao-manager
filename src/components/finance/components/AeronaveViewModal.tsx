@@ -63,12 +63,14 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
     if (!confirm('Tem certeza que deseja excluir o documento anexo?')) return
 
     try {
+      // 1. Remover do Storage
       const { error: storageError } = await supabase.storage
         .from('aeronave-documentos')
         .remove([item.documento_url])
       
       if (storageError) throw storageError
 
+      // 2. Atualizar o banco de dados
       const { error: updateError } = await supabase
         .from('financeiro_aeronave')
         .update({ 
@@ -79,6 +81,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
 
       if (updateError) throw updateError
 
+      // 3. Atualizar estado local do item
       item.documento_url = null
       item.tipo_documento = null
       setTipoDocumento('')
@@ -90,13 +93,6 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
     }
   }
 
-  const sanitizeFileName = (name: string) => {
-    return name
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\w.-]/g, '_');
-  }
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !tipoDocumento) {
@@ -106,13 +102,15 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
 
     setUploading(true)
     try {
+      // Remove arquivo antigo se existir
       if (item.documento_url) {
         await supabase.storage
           .from('aeronave-documentos')
           .remove([item.documento_url])
       }
 
-      const fileName = sanitizeFileName(file.name);
+      // Upload novo arquivo preservando o nome original
+      const fileName = file.name
       const filePath = `${fileName}`
 
       const { error: uploadError } = await supabase.storage
@@ -121,6 +119,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
 
       if (uploadError) throw uploadError
 
+      // Atualiza registro no banco
       const { error: updateError } = await supabase
         .from('financeiro_aeronave')
         .update({ 
@@ -132,6 +131,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
       if (updateError) throw updateError
 
       alert('Documento enviado com sucesso!')
+      // Atualiza o item local
       item.documento_url = filePath
       item.tipo_documento = tipoDocumento
       
@@ -279,6 +279,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
             </div>
           </div>
 
+          {/* Seção Detalhada: Despesa, Descrição, Fornecedor e Tripulação */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <DataField icon={Info} label="Despesa" value={item.despesa} color="blue" />
             <DataField icon={AlignLeft} label="Descrição" value={item.descricao} color="blue" />
@@ -286,6 +287,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
             <DataField icon={Edit2} label="Tripulação / Responsável" value={item.tripulacao} color="indigo" />
           </div>
 
+          {/* Observações */}
           {item.observacao && (
             <div className="bg-blue-50/30 p-5 rounded-xl border border-blue-100 flex flex-col">
               <div className="flex items-center gap-2 mb-2">
@@ -299,6 +301,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
           )}
         </div>
 
+        {/* Footer */}
         <div className="px-10 py-6 border-t border-gray-50 bg-gray-50/50 flex justify-between items-center flex-shrink-0">
           <button onClick={() => onDelete(item)} className="flex items-center gap-2 px-6 py-3 text-red-500 hover:bg-red-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
             <Trash2 className="h-4 w-4" /> Excluir Registro
