@@ -125,19 +125,39 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
   const handleSaveUser = async () => {
     if (!isAdmin || !userForm.email) return;
     setLoading(true);
+    setStatus({ type: null, message: '' });
+
     try {
       const emailNormalizado = userForm.email.toLowerCase().trim();
-      const { error } = await supabase.from('user_profiles').upsert({
-        email: emailNormalizado, role: userForm.cargo === 'Administrador' ? 'admin' : 'user',
+      const payload = {
+        email: emailNormalizado, 
+        role: userForm.cargo === 'Administrador' ? 'admin' : 'user',
         allowed_modules: userForm.allowed_modules
-      }, { onConflict: 'email' });
+      };
+
+      // O erro 400 ocorria pelo 'onConflict' manual. 
+      // Como a constraint ja existe no banco, o upsert simples resolve.
+      const { error } = await supabase
+        .from('user_profiles')
+        .upsert(payload);
+
       if (error) throw error;
+      
       await logAction('UPDATE', 'USER_PROFILES', `Sincronizou perfil de ${emailNormalizado}`);
-      setStatus({ type: 'success', message: 'Usuário configurado!' });
-      setIsUserModalOpen(false);
-      fetchUsers();
-    } catch (e: any) { setStatus({ type: 'error', message: 'Erro: ' + e.message }); }
-    finally { setLoading(false); }
+      setStatus({ type: 'success', message: 'Usuário configurado com sucesso!' });
+      
+      // Pequeno delay para o usuário ver o sucesso antes de fechar
+      setTimeout(() => {
+        setIsUserModalOpen(false);
+        fetchUsers();
+      }, 500);
+
+    } catch (e: any) { 
+      console.error('Erro ao salvar usuário:', e);
+      setStatus({ type: 'error', message: 'Erro ao salvar: ' + (e.message || 'Erro desconhecido') }); 
+    } finally { 
+      setLoading(false); 
+    }
   }
 
   const handleDeleteUser = async (user: AppUser) => {
@@ -184,7 +204,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
 
   return (
     <div className="max-w-7xl mx-auto pb-12 space-y-6">
-      {/* Header Navigation */}
       <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2 justify-between items-center">
         <button onClick={() => setActiveModule('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
           <LayoutGrid className="h-4 w-4" /> Menu
@@ -215,7 +234,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
         </div>
       </div>
 
-      {/* Status Alert */}
       {status.type && (
         <div className={`p-4 rounded-lg flex items-start gap-3 animate-in slide-in-from-top-2 ${status.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
           {status.type === 'success' ? <CheckCircle className="h-5 w-5 text-green-600" /> : <AlertCircle className="h-5 w-5 text-red-600" />}
@@ -223,11 +241,9 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
         </div>
       )}
 
-      {/* Main Content Area */}
       {activeModule === 'menu' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-12">
-            {/* Grid de Menu Similares ao original... */}
-            <p className="col-span-full text-center text-gray-400">Selecione um módulo acima para gerenciar.</p>
+            <p className="col-span-full text-center text-gray-400 italic">Selecione um módulo no menu superior para gerenciar as configurações.</p>
         </div>
       )}
 
@@ -274,7 +290,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
 
       {activeModule === 'historico' && <div className="bg-white rounded-xl shadow-sm border p-6"><History /></div>}
 
-      {/* Modals */}
       <UserModal 
         isOpen={isUserModalOpen} loading={loading} editingUser={editingUser} userForm={userForm}
         setUserForm={setUserForm} onClose={() => setIsUserModalOpen(false)} onSave={handleSaveUser}
