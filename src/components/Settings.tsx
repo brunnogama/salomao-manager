@@ -3,7 +3,7 @@ import {
   Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, 
   Users, Pencil, Trash2, Save, RefreshCw, 
   AlertTriangle, History as HistoryIcon, Code, Shield, UserPlus, Ban, Check, Lock, Building,
-  Plus, X, Tag, Briefcase, EyeOff, LayoutGrid, ArrowRight, MessageSquare, Heart, Plane, DollarSign
+  Plus, X, Tag, Briefcase, EyeOff, LayoutGrid, ArrowRight, MessageSquare, Heart, Plane, DollarSign, Grid
 } from 'lucide-react'
 import { utils, read, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -82,7 +82,7 @@ const CHANGELOG = [
   }
 ]
 
-export function Settings() {
+export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
   
@@ -573,7 +573,7 @@ export function Settings() {
     <div className="max-w-7xl mx-auto pb-12 space-y-6">
       <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2 justify-between items-center">
           <button onClick={() => handleModuleChange('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"><LayoutGrid className="h-4 w-4" /> Menu</button>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <button onClick={() => handleModuleChange('geral')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'geral' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}><Shield className="h-4 w-4" /> Geral</button>
             <button onClick={() => handleModuleChange('crm')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'crm' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-blue-50'}`}><Briefcase className="h-4 w-4" /> CRM</button>
             <button onClick={() => handleModuleChange('juridico')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'juridico' ? 'bg-[#112240] text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}><Lock className="h-4 w-4" /> Jurídico</button>
@@ -582,6 +582,13 @@ export function Settings() {
             <button onClick={() => handleModuleChange('financial')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'financial' ? 'bg-blue-800 text-white' : 'bg-white text-gray-600 hover:bg-blue-50'}`}><DollarSign className="h-4 w-4" /> Financeiro</button>
             <button onClick={() => handleModuleChange('historico')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'historico' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-purple-50'}`}><HistoryIcon className="h-4 w-4" /> Histórico</button>
             <button onClick={() => handleModuleChange('sistema')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'sistema' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-red-50'}`}><Code className="h-4 w-4" /> Sistema</button>
+            
+            {/* Ícone de mudar módulo adicionado no lado direito */}
+            {onModuleHome && (
+              <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg ml-2 border border-gray-200" title="Mudar Módulo">
+                <Grid className="h-5 w-5" />
+              </button>
+            )}
           </div>
       </div>
       
