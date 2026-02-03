@@ -1,20 +1,20 @@
-import { Pencil, Trash2 } from 'lucide-react';
-import { Colaborador } from '../../../types/colaborador';
-import { Avatar } from './ColaboradorUI';
-import { toTitleCase } from '../utils/colaboradoresUtils';
+import { Pencil, Trash2 } from 'lucide-react'
+import { Colaborador } from '../../../types/colaborador'
+import { Avatar } from './ColaboradorUI'
+import { toTitleCase } from '../utils/colaboradoresUtils'
 
 interface ListProps {
-  colaboradores: Colaborador[];
-  onEdit: (c: Colaborador) => void;
-  onDelete: (id: number, url?: string) => void;
-  onSelect: (c: Colaborador) => void;
+  colaboradores: Colaborador[]
+  onEdit: (c: Colaborador) => void
+  onDelete: (id: number, url?: string) => void
+  onSelect: (c: Colaborador) => void
 }
 
 export function ColaboradoresList({ colaboradores, onEdit, onDelete, onSelect }: ListProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <table className="w-full text-left">
-        <thead className="bg-gray-50 border-b-2 border-gray-200">
+        <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
           <tr>
             <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Colaborador</th>
             <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cargo</th>
@@ -25,11 +25,7 @@ export function ColaboradoresList({ colaboradores, onEdit, onDelete, onSelect }:
         </thead>
         <tbody className="divide-y divide-gray-100">
           {colaboradores.map(c => (
-            <tr 
-              key={c.id} 
-              onClick={() => onSelect(c)} 
-              className="hover:bg-blue-50/40 cursor-pointer transition-colors group"
-            >
+            <tr key={c.id} onClick={() => onSelect(c)} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
               <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
                   <Avatar src={c.foto_url} name={c.nome} />
@@ -45,12 +41,8 @@ export function ColaboradoresList({ colaboradores, onEdit, onDelete, onSelect }:
               </td>
               <td className="px-6 py-4 text-right">
                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={(e) => { e.stopPropagation(); onEdit(c); }} className="p-2 text-[#1e3a8a] hover:bg-white rounded-xl shadow-sm border border-gray-100">
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); onDelete(c.id, c.foto_url); }} className="p-2 text-red-600 hover:bg-white rounded-xl shadow-sm border border-gray-100">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); onEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-white rounded-xl shadow-sm border border-gray-100"><Pencil className="h-4 w-4" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); onDelete(c.id, c.foto_url) }} className="p-2 text-red-600 hover:bg-white rounded-xl shadow-sm border border-gray-100"><Trash2 className="h-4 w-4" /></button>
                 </div>
               </td>
             </tr>
@@ -58,5 +50,5 @@ export function ColaboradoresList({ colaboradores, onEdit, onDelete, onSelect }:
         </tbody>
       </table>
     </div>
-  );
+  )
 }
