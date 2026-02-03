@@ -48,15 +48,28 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         const processados = data.filter((v: any) => {
           if (!v.data_admissao) return false
           
-          // Lógica Exata: 6 meses após admissão - 1 dia
-          const [ano, mes, dia] = v.data_admissao.split('-').map(Number)
+          // Lógica Exata: 6 meses após admissão - 1 dia 
+          // Suporta formato DD/MM/AAAA (da máscara) e YYYY-MM-DD
+          let dia, mes, ano;
+          if (v.data_admissao.includes('/')) {
+            [dia, mes, ano] = v.data_admissao.split('/').map(Number);
+          } else {
+            [ano, mes, dia] = v.data_admissao.split('-').map(Number);
+          }
+
           const dataVenc = new Date(ano, (mes - 1) + 6, dia)
           dataVenc.setDate(dataVenc.getDate() - 1)
 
           // Filtra pelo mês e ano que o usuário está navegando no calendário
           return dataVenc.getMonth() === mesAtual && dataVenc.getFullYear() === anoAtual
         }).map((v: any) => {
-          const [ano, mes, dia] = v.data_admissao.split('-').map(Number)
+          let dia, mes, ano;
+          if (v.data_admissao.includes('/')) {
+            [dia, mes, ano] = v.data_admissao.split('/').map(Number);
+          } else {
+            [ano, mes, dia] = v.data_admissao.split('-').map(Number);
+          }
+
           const dataVenc = new Date(ano, (mes - 1) + 6, dia)
           dataVenc.setDate(dataVenc.getDate() - 1)
           
@@ -236,7 +249,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                       </div>
                       <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Admissão</p>
-                        <p className="text-xs font-bold text-[#0a192f]">{formatDate(vencimento.data_admissao)}</p>
+                        <p className="text-xs font-bold text-[#0a192f]">{vencimento.data_admissao}</p>
                       </div>
                       <div className={`${vencimento.dias_ate_pagamento === 0 ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-100'} p-2.5 rounded-lg border`}>
                         <p className={`text-[8px] font-black ${vencimento.dias_ate_pagamento === 0 ? 'text-orange-600' : 'text-blue-600'} uppercase tracking-wider mb-0.5 flex items-center gap-1`}>
