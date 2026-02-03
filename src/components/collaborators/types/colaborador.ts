@@ -2,9 +2,10 @@ export interface Colaborador {
   id: number;
   nome: string;
   cpf: string;
-  data_nascimento?: string;
   genero?: string;
+  data_nascimento?: string;
   email?: string;
+  // Endereço
   cep?: string;
   endereco?: string;
   numero?: string;
@@ -12,6 +13,11 @@ export interface Colaborador {
   bairro?: string;
   cidade?: string;
   estado?: string;
+  // Dados Profissionais (OAB)
+  oab_numero?: string;
+  oab_uf?: string;
+  oab_validade?: string;
+  oab_suplementares?: string[];
   // Dados Corporativos
   cargo: string;
   equipe: string;
