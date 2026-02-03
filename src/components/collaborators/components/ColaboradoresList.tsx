@@ -25,7 +25,11 @@ export function ColaboradoresList({ colaboradores, onEdit, onDelete, onSelect }:
         </thead>
         <tbody className="divide-y divide-gray-100">
           {colaboradores.map(c => (
-            <tr key={c.id} onClick={() => onSelect(c)} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
+            <tr 
+              key={c.id} 
+              onClick={() => onSelect(c)} 
+              className="hover:bg-blue-50/40 cursor-pointer transition-colors group"
+            >
               <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
                   <Avatar src={c.foto_url} name={c.nome} />
