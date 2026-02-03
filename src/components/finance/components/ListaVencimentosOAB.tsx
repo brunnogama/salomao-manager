@@ -34,7 +34,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   const fetchVencimentos = async () => {
     setLoading(true)
     try {
-      // Busca geral da view para permitir navegação total no tempo
+      // Tenta buscar geral para processar localmente passado e futuro
       const { data, error: viewError } = await supabase
         .from('vw_vencimentos_oab_6meses')
         .select('*')
@@ -48,12 +48,12 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         const processados = data.filter((v: any) => {
           if (!v.data_admissao) return false
           
-          // Cálculo: Admissão + 6 meses - 1 dia
+          // Lógica Exata: 6 meses após admissão - 1 dia
           const [ano, mes, dia] = v.data_admissao.split('-').map(Number)
           const dataVenc = new Date(ano, (mes - 1) + 6, dia)
           dataVenc.setDate(dataVenc.getDate() - 1)
 
-          // Filtra para mostrar apenas quem vence no mês/ano visualizado
+          // Filtra pelo mês e ano que o usuário está navegando no calendário
           return dataVenc.getMonth() === mesAtual && dataVenc.getFullYear() === anoAtual
         }).map((v: any) => {
           const [ano, mes, dia] = v.data_admissao.split('-').map(Number)
