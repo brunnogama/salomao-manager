@@ -3,16 +3,11 @@ import { GraduationCap } from 'lucide-react'
 import { Colaborador } from '../../../types/colaborador'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 
+// UFs em MAIÚSCULAS
 const ESTADOS_BRASIL_UF = [
-  { sigla: 'AC', nome: 'AC' }, { sigla: 'AL', nome: 'AL' }, { sigla: 'AP', nome: 'AP' },
-  { sigla: 'AM', nome: 'AM' }, { sigla: 'BA', nome: 'BA' }, { sigla: 'CE', nome: 'CE' },
-  { sigla: 'DF', nome: 'DF' }, { sigla: 'ES', nome: 'ES' }, { sigla: 'GO', nome: 'GO' },
-  { sigla: 'MA', nome: 'MA' }, { sigla: 'MT', nome: 'MT' }, { sigla: 'MS', nome: 'MS' },
-  { sigla: 'MG', nome: 'MG' }, { sigla: 'PA', nome: 'PA' }, { sigla: 'PB', nome: 'PB' },
-  { sigla: 'PR', nome: 'PR' }, { sigla: 'PE', nome: 'PE' }, { sigla: 'PI', nome: 'PI' },
-  { sigla: 'RJ', nome: 'RJ' }, { sigla: 'RN', nome: 'RN' }, { sigla: 'RS', nome: 'RS' },
-  { sigla: 'RO', nome: 'RO' }, { sigla: 'RR', nome: 'RR' }, { sigla: 'SC', nome: 'SC' },
-  { sigla: 'SP', nome: 'SP' }, { sigla: 'SE', nome: 'SE' }, { sigla: 'TO', nome: 'TO' }
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ]
 
 interface InformacoesProfissionaisSectionProps {
@@ -29,7 +24,7 @@ export function InformacoesProfissionaisSection({
   return (
     <section className="space-y-4">
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
-        <GraduationCap className="h-4 w-4" /> Informações Profissionais
+        <GraduationCap className="h-4 w-4" /> Dados Profissionais
       </h3>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -46,12 +41,12 @@ export function InformacoesProfissionaisSection({
           />
         </div>
 
-        {/* UF OAB */}
+        {/* UF OAB - Forçado em MAIÚSCULAS */}
         <SearchableSelect 
           label="UF OAB" 
           value={formData.oab_uf || ''} 
-          onChange={v => setFormData({ ...formData, oab_uf: v })} 
-          options={ESTADOS_BRASIL_UF.map(e => ({ name: e.nome }))} 
+          onChange={v => setFormData({ ...formData, oab_uf: v.toUpperCase() })} 
+          options={ESTADOS_BRASIL_UF.map(uf => ({ name: uf }))} 
           placeholder="Selecione..."
         />
 
