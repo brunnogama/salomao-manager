@@ -304,14 +304,14 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
     setUploading(true)
     try {
       const nomeOriginal = selectedFile.name
-      const timestamp = Date.now()
-      const filePath = `${formData.categoria}/${timestamp}_${nomeOriginal}`
+      const filePath = `${formData.categoria}/${nomeOriginal}`
 
       console.log('📤 INICIANDO UPLOAD')
       console.log('Arquivo:', nomeOriginal)
       console.log('Tamanho:', selectedFile.size)
       console.log('Categoria:', formData.categoria)
       console.log('Tipo:', formData.tipo_documento)
+      console.log('Caminho:', filePath)
 
       const { data: uploadData, error: uploadError } = await supabase.storage.from('ged-documentos').upload(filePath, selectedFile)
       if (uploadError) { console.error('❌ ERRO UPLOAD STORAGE:', uploadError); throw uploadError; }
