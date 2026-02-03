@@ -50,17 +50,6 @@ const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
 const CHANGELOG = [
   {
-    version: '2.9.2',
-    date: '03/02/2026',
-    type: 'fix',
-    title: '🛠️ Ajuste de Layout e Cadastro',
-    changes: [
-      'Posicionamento do botão de módulos alinhado à direita',
-      'Correção no salvamento de novos usuários (Primary Key)',
-      'Normalização automática de e-mails para minúsculas'
-    ]
-  },
-  {
     version: '2.9.1',
     date: '02/02/2026',
     type: 'minor',
@@ -345,31 +334,33 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
   const handleSaveUser = async () => {
     if (!isAdmin) return;
     if (!userForm.email) return alert("E-mail obrigatório");
-    
+      
     setLoading(true);
     const emailNormalizado = userForm.email.toLowerCase().trim();
     const role = userForm.cargo === 'Administrador' ? 'admin' : 'user';
-
     try {
+      // Buscar perfil existente por email
       const { data: existingProfile } = await supabase
         .from('user_profiles')
         .select('id, email')
         .eq('email', emailNormalizado)
         .maybeSingle();
-
-      if (existingProfile || editingUser) {
+  
+      if (existingProfile) {
+        // Perfil existe - fazer UPDATE usando o ID
         const { error } = await supabase
           .from('user_profiles')
           .update({
             role: role,
             allowed_modules: userForm.allowed_modules
           })
-          .eq('email', emailNormalizado);
-
+          .eq('id', existingProfile.id);
+  
         if (error) throw error;
         await logAction('UPDATE', 'USER_PROFILES', `Atualizou permissões de ${emailNormalizado}`);
-        setStatus({ type: 'success', message: 'Usuário atualizado com sucesso!' });
+        setStatus({ type: 'success', message: 'Permissões atualizadas com sucesso!' });
       } else {
+        // Perfil não existe - criar novo
         const { error } = await supabase
           .from('user_profiles')
           .insert({
@@ -377,11 +368,11 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
             role: role,
             allowed_modules: userForm.allowed_modules
           });
-
         if (error) throw error;
         await logAction('CREATE', 'USER_PROFILES', `Pré-cadastrou ${emailNormalizado}`);
-        setStatus({ type: 'success', message: `Usuário ${emailNormalizado} cadastrado!` });
+        setStatus({ type: 'success', message: `Usuário pré-cadastrado!` });
       }
+          
       setIsUserModalOpen(false);
       fetchUsers();
     } catch (e: any) {
@@ -490,29 +481,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     } catch (error: any) {
         setStatus({ type: 'error', message: 'Erro: ' + error.message })
     } finally { setLoading(false) }
-  }
-
-  const handleDownloadTemplate = () => {
-    const ws = utils.json_to_sheet([{ nome: 'Cliente Exemplo', empresa: 'Empresa SA', cargo: 'Diretor', email: 'email@teste.com', telefone: '11999999999', socio: 'Dr. João', tipo_brinde: 'Brinde VIP', quantidade: 1, cep: '01001000', endereco: 'Praça da Sé', numero: '1', bairro: 'Centro', cidade: 'São Paulo', estado: 'SP' }])
-    const wb = utils.book_new(); utils.book_append_sheet(wb, ws, "Template")
-    writeFile(wb, "template_importacao.xlsx")
-  }
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isAdmin) { alert("Apenas administradores."); return; }
-    const file = e.target.files?.[0]; if (!file) return
-    setLoading(true); setStatus({ type: null, message: 'Processando...' })
-    try {
-      const data = await file.arrayBuffer(); const workbook = read(data)
-      const jsonData = utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]) as any[]
-      const clientsToInsert = jsonData.map((row) => ({
-        nome: row.nome || row.Nome, empresa: row.empresa || row.Empresa || '', cargo: row.cargo || row.Cargo || '', email: row.email || row.Email || '', telefone: row.telefone || row.Telefone || '', socio: row.socio || row.Socio || '', tipo_brinde: row.tipo_brinde || row['Tipo Brinde'] || 'Brinde Médio', quantidade: row.quantidade || row.Quantidade || 1, cep: row.cep || row.CEP || '', endereco: row.endereco || row.Endereco || '', numero: row.numero || row.Numero || '', bairro: row.bairro || row.Bairro || '', cidade: row.cidade || row.Cidade || '', estado: row.estado || row.Estado || ''
-      }))
-      const { error } = await supabase.from('clientes').insert(clientsToInsert); if (error) throw error
-      setStatus({ type: 'success', message: `${clientsToInsert.length} importados!` })
-      await logAction('IMPORTAR', 'SISTEMA', `Importou ${clientsToInsert.length}`)
-    } catch (error: any) { setStatus({ type: 'error', message: 'Erro: ' + error.message }) } 
-    finally { setLoading(false); if (fileInputRef.current) fileInputRef.current.value = '' }
   }
 
   const handleModuleChange = (newModule: any) => {
