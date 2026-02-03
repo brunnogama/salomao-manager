@@ -15,7 +15,10 @@ import {
   Calendar,
   XCircle,
   Tag,
-  Building2
+  Building2,
+  DollarSign,
+  TrendingUp,
+  CheckCircle2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -61,7 +64,6 @@ export function GestaoAeronave({
 
   useEffect(() => { fetchDados() }, [])
 
-  // Opções para os filtros baseadas nos dados carregados
   const expenseOptions = useMemo(() => {
     const expenses = data.map(item => item.despesa).filter(Boolean)
     return Array.from(new Set(expenses)).sort()
@@ -104,6 +106,18 @@ export function GestaoAeronave({
       return matchSearch && matchDate && matchExpense && matchSupplier
     })
   }, [data, searchTerm, startDate, endDate, selectedExpense, selectedSupplier])
+
+  // Cálculos Dinâmicos para os Cards
+  const totals = useMemo(() => {
+    return filteredData.reduce((acc, curr) => ({
+      faturado: acc.faturado + (Number(curr.faturado_cnpj) || 0),
+      previsto: acc.previsto + (Number(curr.valor_previsto) || 0),
+      pago: acc.pago + (Number(curr.valor_pago) || 0),
+    }), { faturado: 0, previsto: 0, pago: 0 })
+  }, [filteredData])
+
+  const formatCurrency = (val: number) => 
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
 
   const handleExportExcel = () => {
     if (filteredData.length === 0) return;
@@ -235,6 +249,7 @@ export function GestaoAeronave({
   return (
     <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
       
+      {/* HEADER PADRÃO SDS */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
@@ -259,6 +274,40 @@ export function GestaoAeronave({
         </div>
       </div>
 
+      {/* CARDS DE TOTAIS DINÂMICOS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-orange-200 transition-all">
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Faturado CNPJ</p>
+            <p className="text-2xl font-black text-orange-600 mt-1">{formatCurrency(totals.faturado)}</p>
+          </div>
+          <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
+            <TrendingUp className="h-6 w-6 text-orange-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Previsto</p>
+            <p className="text-2xl font-black text-blue-600 mt-1">{formatCurrency(totals.previsto)}</p>
+          </div>
+          <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+            <DollarSign className="h-6 w-6 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-all">
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Pago</p>
+            <p className="text-2xl font-black text-emerald-600 mt-1">{formatCurrency(totals.pago)}</p>
+          </div>
+          <div className="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
+            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* TOOLBAR */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full md:w-auto">
@@ -277,7 +326,6 @@ export function GestaoAeronave({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-             {/* Filtro de Despesa */}
              <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-3 py-2">
                 <Tag className="h-3.5 w-3.5 text-gray-400 mr-2" />
                 <select 
@@ -290,7 +338,6 @@ export function GestaoAeronave({
                 </select>
              </div>
 
-             {/* Filtro de Fornecedor */}
              <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-3 py-2">
                 <Building2 className="h-3.5 w-3.5 text-gray-400 mr-2" />
                 <select 
@@ -303,7 +350,6 @@ export function GestaoAeronave({
                 </select>
              </div>
 
-             {/* Filtro de Datas */}
              <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-4 py-2 w-full md:w-auto">
                 <Calendar className="h-4 w-4 text-gray-400 mr-3" />
                 <input 
