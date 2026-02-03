@@ -48,6 +48,13 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         const processados = data.filter((v: any) => {
           if (!v.data_admissao) return false
           
+          // LÓGICA DE FILTRO DE CARGO BLINDADA:
+          // Remove espaços, acentos e coloca em minúsculo para comparar
+          const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
+          const ehCargoValido = cargoLimpo === 'advogado' || cargoLimpo === 'socio';
+          
+          if (!ehCargoValido) return false;
+
           // Suporta formato DD/MM/AAAA (da máscara) e YYYY-MM-DD
           let dia, mes, ano;
           if (v.data_admissao.includes('/')) {
