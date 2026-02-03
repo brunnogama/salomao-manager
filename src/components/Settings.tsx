@@ -3,7 +3,7 @@ import {
   Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, 
   Users, Pencil, Trash2, Save, RefreshCw, 
   AlertTriangle, History as HistoryIcon, Code, Shield, UserPlus, Ban, Check, Lock, Building,
-  Plus, X, Tag, Briefcase, EyeOff, LayoutGrid, ArrowRight, MessageSquare, Heart, Plane, DollarSign, Grid
+  Plus, X, Tag, Briefcase, EyeOff, LayoutGrid, ArrowRight, MessageSquare, Heart, Plane, DollarSign, Grid, Loader2
 } from 'lucide-react'
 import { utils, read, writeFile } from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -50,6 +50,17 @@ const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
 const CHANGELOG = [
   {
+    version: '2.9.2',
+    date: '03/02/2026',
+    type: 'fix',
+    title: '🛠️ Ajuste de Layout e Cadastro',
+    changes: [
+      'Posicionamento do botão de módulos alinhado à direita',
+      'Correção no salvamento de novos usuários (Primary Key)',
+      'Normalização automática de e-mails para minúsculas'
+    ]
+  },
+  {
     version: '2.9.1',
     date: '02/02/2026',
     type: 'minor',
@@ -57,27 +68,6 @@ const CHANGELOG = [
     changes: [
       'Adicionado reset de dados da Gestão de Aeronave em Settings',
       'Nova aba de manutenção para o módulo Financeiro'
-    ]
-  },
-  {
-    version: '2.9.0',
-    date: '29/01/2026',
-    type: 'minor',
-    title: '🏠 Manutenção Secretaria',
-    changes: [
-      'Adicionado reset de dados da Gestão de Família em Settings',
-      'Nova aba de manutenção para o módulo Secretaria Executiva'
-    ]
-  },
-  {
-    version: '2.8.0',
-    date: '29/01/2026',
-    type: 'minor',
-    title: '📅 Calendário e Histórico',
-    changes: [
-      'Adicionado menu Calendário no módulo RH',
-      'Histórico movido para Settings (todas as áreas)',
-      'Melhorias na organização dos menus'
     ]
   }
 ]
@@ -283,7 +273,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       setUserForm({ 
         nome: user.nome, 
         email: user.email, 
-        cargo: user.cargo,
+        cargo: user.role === 'admin' ? 'Administrador' : 'Colaborador',
         allowed_modules: user.allowed_modules || ['crm']
       })
     } else {
@@ -333,59 +323,51 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
 
   const handleSaveUser = async () => {
     if (!isAdmin) return;
-    if (!userForm.email) return alert("E-mail obrigatório")
+    if (!userForm.email) return alert("E-mail obrigatório");
+    
+    setLoading(true);
+    const emailNormalizado = userForm.email.toLowerCase().trim();
+    const role = userForm.cargo === 'Administrador' ? 'admin' : 'user';
+
     try {
-      const role = userForm.cargo === 'Administrador' ? 'admin' : 'user'
-      if (editingUser) {
+      const { data: existingProfile } = await supabase
+        .from('user_profiles')
+        .select('id, email')
+        .eq('email', emailNormalizado)
+        .maybeSingle();
+
+      if (existingProfile || editingUser) {
         const { error } = await supabase
           .from('user_profiles')
           .update({
-            email: userForm.email,
             role: role,
             allowed_modules: userForm.allowed_modules
           })
-          .eq('email', editingUser.email)
-        if (error) throw error
-        await logAction('UPDATE', 'USER_PROFILES', `Atualizou ${userForm.email}`)
-        setStatus({ type: 'success', message: 'Usuário atualizado com sucesso!' })
+          .eq('email', emailNormalizado);
+
+        if (error) throw error;
+        await logAction('UPDATE', 'USER_PROFILES', `Atualizou permissões de ${emailNormalizado}`);
+        setStatus({ type: 'success', message: 'Usuário atualizado com sucesso!' });
       } else {
-        const { data: existingProfile } = await supabase
+        const { error } = await supabase
           .from('user_profiles')
-          .select('id, email')
-          .eq('email', userForm.email)
-          .maybeSingle()
-        if (existingProfile) {
-          const { error } = await supabase
-            .from('user_profiles')
-            .update({
-              role: role,
-              allowed_modules: userForm.allowed_modules
-            })
-            .eq('email', userForm.email)
-          if (error) throw error
-          setStatus({ type: 'success', message: 'Permissões atualizadas!' })
-        } else {
-          const { error } = await supabase
-            .from('user_profiles')
-            .insert({
-              id: null,
-              email: userForm.email,
-              role: role,
-              allowed_modules: userForm.allowed_modules
-            })
-          if (error) throw error
-          await logAction('CREATE', 'USER_PROFILES', `Criou perfil pendente para ${userForm.email}`)
-          setStatus({ 
-            type: 'success', 
-            message: `Usuário ${userForm.email} pré-cadastrado!` 
-          })
-        }
+          .insert({
+            email: emailNormalizado,
+            role: role,
+            allowed_modules: userForm.allowed_modules
+          });
+
+        if (error) throw error;
+        await logAction('CREATE', 'USER_PROFILES', `Pré-cadastrou ${emailNormalizado}`);
+        setStatus({ type: 'success', message: `Usuário ${emailNormalizado} cadastrado!` });
       }
-      setIsUserModalOpen(false)
-      fetchUsers()
+      setIsUserModalOpen(false);
+      fetchUsers();
     } catch (e: any) {
-      console.error('Erro ao salvar usuário:', e)
-      setStatus({ type: 'error', message: 'Erro: ' + e.message })
+      console.error('Erro ao salvar usuário:', e);
+      setStatus({ type: 'error', message: 'Erro ao salvar: ' + e.message });
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -431,7 +413,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     const confirmText = prompt('Digite APAGAR para confirmar:')
     if (confirmText !== 'APAGAR') return;
     setLoading(true)
-    setStatus({ type: null, message: 'Limpando registros de presença...' })
     try {
         const { error } = await supabase.from('presenca_portaria').delete().neq('id', '00000000-0000-0000-0000-000000000000')
         if (error) throw error
@@ -448,7 +429,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     const confirmText = prompt('Digite APAGAR para confirmar:')
     if (confirmText !== 'APAGAR') return;
     setLoading(true)
-    setStatus({ type: null, message: 'Limpando base de colaboradores...' })
     try {
         const { error } = await supabase.from('colaboradores').delete().neq('id', 0)
         if (error) throw error
@@ -461,11 +441,10 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
 
   const handleResetFamily = async () => {
     if (!isAdmin) return alert("Ação restrita a administradores.");
-    if (!confirm('ATENÇÃO: Isso apagará TODOS os dados da Gestão de Família (Lançamentos e Configurações). Prosseguir?')) return;
+    if (!confirm('ATENÇÃO: Isso apagará TODOS os dados da Gestão de Família. Prosseguir?')) return;
     const confirmText = prompt('Digite APAGAR para confirmar:')
     if (confirmText !== 'APAGAR') return;
     setLoading(true)
-    setStatus({ type: null, message: 'Limpando base da Família...' })
     try {
         await supabase.from('familia_salomao_dados').delete().neq('id', '00000000-0000-0000-0000-000000000000')
         await supabase.from('familia_config_opcoes').delete().neq('id', '00000000-0000-0000-0000-000000000000')
@@ -482,7 +461,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     const confirmText = prompt('Digite APAGAR para confirmar:')
     if (confirmText !== 'APAGAR') return;
     setLoading(true)
-    setStatus({ type: null, message: 'Limpando base do Financeiro...' })
     try {
         await supabase.from('financeiro_aeronave').delete().neq('id', '00000000-0000-0000-0000-000000000000')
         await supabase.from('aeronave_fornecedores').delete().neq('id', '00000000-0000-0000-0000-000000000000')
@@ -493,46 +471,23 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     } finally { setLoading(false) }
   }
 
-  const handleDownloadTemplate = () => {
-    const ws = utils.json_to_sheet([{ nome: 'Cliente Exemplo', empresa: 'Empresa SA', cargo: 'Diretor', email: 'email@teste.com', telefone: '11999999999', socio: 'Dr. João', tipo_brinde: 'Brinde VIP', quantidade: 1, cep: '01001000', endereco: 'Praça da Sé', numero: '1', bairro: 'Centro', cidade: 'São Paulo', estado: 'SP' }])
-    const wb = utils.book_new(); utils.book_append_sheet(wb, ws, "Template")
-    writeFile(wb, "template_importacao.xlsx")
-  }
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isAdmin) { alert("Apenas administradores."); return; }
-    const file = e.target.files?.[0]; if (!file) return
-    setLoading(true); setStatus({ type: null, message: 'Processando...' })
-    try {
-      const data = await file.arrayBuffer(); const workbook = read(data)
-      const jsonData = utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]) as any[]
-      const clientsToInsert = jsonData.map((row) => ({
-        nome: row.nome || row.Nome, empresa: row.empresa || row.Empresa || '', cargo: row.cargo || row.Cargo || '', email: row.email || row.Email || '', telefone: row.telefone || row.Telefone || '', socio: row.socio || row.Socio || '', tipo_brinde: row.tipo_brinde || row['Tipo Brinde'] || 'Brinde Médio', quantidade: row.quantidade || row.Quantidade || 1, cep: row.cep || row.CEP || '', endereco: row.endereco || row.Endereco || '', numero: row.numero || row.Numero || '', bairro: row.bairro || row.Bairro || '', cidade: row.cidade || row.Cidade || '', estado: row.estado || row.Estado || ''
-      }))
-      const { error } = await supabase.from('clientes').insert(clientsToInsert); if (error) throw error
-      setStatus({ type: 'success', message: `${clientsToInsert.length} importados!` })
-      await logAction('IMPORTAR', 'SISTEMA', `Importou ${clientsToInsert.length}`)
-    } catch (error: any) { setStatus({ type: 'error', message: 'Erro: ' + error.message }) } 
-    finally { setLoading(false); if (fileInputRef.current) fileInputRef.current.value = '' }
-  }
-
   const handleModuleChange = (newModule: any) => {
     setActiveModule(newModule)
   }
 
   if (activeModule !== 'menu' && activeModule !== 'historico' && !currentUserPermissions[activeModule === 'rh' ? 'collaborators' : activeModule === 'family' ? 'family' : activeModule === 'financial' ? 'financial' : (activeModule as any)] && !isAdmin) {
-      return (
-          <div className="max-w-7xl mx-auto space-y-6">
-              <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
-                   <button onClick={() => handleModuleChange('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"><LayoutGrid className="h-4 w-4" /> Menu</button>
-              </div>
-              <div className="flex flex-col items-center justify-center h-[500px] bg-white rounded-2xl shadow-sm border border-gray-200">
-                  <EyeOff className="h-16 w-16 text-red-400 mb-6" />
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Restrito</h2>
-                  <button onClick={() => handleModuleChange('menu')} className="px-6 py-2 bg-gray-900 text-white rounded-lg font-bold flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> Voltar para o Menu</button>
-              </div>
+    return (
+      <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+               <button onClick={() => handleModuleChange('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"><LayoutGrid className="h-4 w-4" /> Menu</button>
           </div>
-      )
+          <div className="flex flex-col items-center justify-center h-[500px] bg-white rounded-2xl shadow-sm border border-gray-200">
+              <EyeOff className="h-16 w-16 text-red-400 mb-6" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Acesso Restrito</h2>
+              <button onClick={() => handleModuleChange('menu')} className="px-6 py-2 bg-gray-900 text-white rounded-lg font-bold flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> Voltar para o Menu</button>
+          </div>
+      </div>
+    )
   }
 
   if (activeModule === 'menu') {
@@ -583,7 +538,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
             <button onClick={() => handleModuleChange('historico')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'historico' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-purple-50'}`}><HistoryIcon className="h-4 w-4" /> Histórico</button>
             <button onClick={() => handleModuleChange('sistema')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'sistema' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-red-50'}`}><Code className="h-4 w-4" /> Sistema</button>
             
-            {/* Ícone de mudar módulo adicionado no lado direito */}
             {onModuleHome && (
               <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg ml-2 border border-gray-200" title="Mudar Módulo">
                 <Grid className="h-5 w-5" />
@@ -632,7 +586,9 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
               </div>
               <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200">
                   <button onClick={() => setIsUserModalOpen(false)} className="px-4 py-2 text-gray-700 font-medium">Cancelar</button>
-                  <button onClick={handleSaveUser} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold">Salvar Alterações</button>
+                  <button onClick={handleSaveUser} disabled={loading} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold flex items-center gap-2">
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar Alterações'}
+                  </button>
               </div>
           </div>
         </div>
@@ -655,11 +611,11 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
                   <button onClick={() => openUserModal()} disabled={!isAdmin} className="bg-gray-900 text-white px-3 py-2 rounded-lg font-bold flex items-center gap-2 text-xs hover:bg-gray-800 disabled:opacity-50"><UserPlus className="h-4 w-4" /> Novo Usuário</button>
               </div>
               <div className="overflow-x-auto">
-                  <table className="w-full text-left">
+                  <table className="w-full text-left font-sans">
                       <thead>
-                          <tr className="border-b border-gray-100 text-xs text-gray-500 uppercase">
-                              <th className="py-2 px-2">Email</th>
-                              <th className="py-2 px-2">Cargo</th>
+                          <tr className="border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                              <th className="py-2 px-2 text-left">Email</th>
+                              <th className="py-2 px-2">Role</th>
                               <th className="py-2 px-2">Módulos</th>
                               <th className="py-2 px-2">Status</th>
                               <th className="py-2 px-2 text-right">Ações</th>
@@ -668,11 +624,11 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
                       <tbody className="text-sm">
                           {users.map(user => (
                               <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50 group">
-                                  <td className="py-3 px-2 text-xs font-medium">{user.email}</td>
-                                  <td className="py-3 px-2 capitalize"><span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-bold">{user.role}</span></td>
-                                  <td className="py-3 px-2 flex flex-wrap gap-1">{user.allowed_modules.map(m => (<span key={m} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[9px] font-medium uppercase">{m}</span>))}</td>
-                                  <td className="py-3 px-2">{user.ativo ? <Check className="h-3 w-3 text-green-600" /> : <AlertCircle className="h-3 w-3 text-orange-500" />}</td>
-                                  <td className="py-3 px-2 text-right opacity-0 group-hover:opacity-100"><button onClick={() => openUserModal(user)} className="p-1.5 text-blue-600"><Pencil className="h-3.5 w-3.5" /></button><button onClick={() => handleDeleteUser(user)} className="p-1.5 text-red-600"><Trash2 className="h-3.5 w-3.5" /></button></td>
+                                  <td className="py-3 px-2 text-xs font-bold text-[#112240]">{user.email}</td>
+                                  <td className="py-3 px-2 capitalize"><span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-black text-gray-500">{user.role}</span></td>
+                                  <td className="py-3 px-2 flex flex-wrap gap-1">{user.allowed_modules.map(m => (<span key={m} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[9px] font-bold uppercase tracking-tighter">{m === 'collaborators' ? 'RH' : m}</span>))}</td>
+                                  <td className="py-3 px-2">{user.ativo ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Loader2 className="h-3.5 w-3.5 text-orange-400 animate-spin" />}</td>
+                                  <td className="py-3 px-2 text-right opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => openUserModal(user)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Pencil className="h-3.5 w-3.5" /></button><button onClick={() => handleDeleteUser(user)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="h-3.5 w-3.5" /></button></td>
                               </tr>
                           ))}
                       </tbody>
