@@ -21,7 +21,7 @@ import {
   GraduationCap
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { ListaVencimentosOAB } from './ListaVencimentosOAB'
+import { ListaVencimentosOAB } from './components/ListaVencimentosOAB'
 
 interface CalendarioProps {
   userName?: string;

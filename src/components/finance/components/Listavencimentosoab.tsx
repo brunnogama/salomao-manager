@@ -1,7 +1,7 @@
-// src/components/finance/ListaVencimentosOAB.tsx
+// src/components/finance/components/ListaVencimentosOAB.tsx
 import { useState, useEffect } from 'react'
 import { Calendar, GraduationCap, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
+import { supabase } from '../../../lib/supabase'
 
 interface VencimentoOAB {
   id: number
