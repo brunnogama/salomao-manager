@@ -67,7 +67,12 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
           {mainItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => { onNavigate(item.id); onClose(); }}
+              onClick={() => { 
+                // Se o ID for de uma página não implementada, 
+                // garantimos que o componente pai trate como 'underconstruction'
+                onNavigate(item.id); 
+                onClose(); 
+              }}
               className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all group ${
                 activePage === item.id
                   ? 'bg-[#1e3a8a] text-white font-medium shadow-md border-l-4 border-salomao-gold' 
