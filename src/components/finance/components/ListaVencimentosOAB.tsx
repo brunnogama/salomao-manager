@@ -48,6 +48,10 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         const processados = data.filter((v: any) => {
           if (!v.data_admissao) return false
           
+          // FILTRO DE CARGO: Apenas Advogado e Sócio
+          const cargoLower = v.cargo?.toLowerCase() || '';
+          if (cargoLower !== 'advogado' && cargoLower !== 'sócio' && cargoLower !== 'socio') return false;
+          
           // Suporta formato DD/MM/AAAA (da máscara) e YYYY-MM-DD
           let dia, mes, ano;
           if (v.data_admissao.includes('/')) {
@@ -80,6 +84,10 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
             dias_ate_pagamento: diff 
           }
         })
+
+        // ORDENAÇÃO: Do mais próximo (antigo no calendário) para o mais distante
+        processados.sort((a, b) => new Date(a.data_pagamento_oab).getTime() - new Date(b.data_pagamento_oab).getTime())
+
         setVencimentos(processados)
       }
     } catch (error) {
@@ -91,9 +99,13 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
-    const [year, month, day] = dateString.split('-').map(Number)
-    const date = new Date(year, month - 1, day)
-    return date.toLocaleDateString('pt-BR')
+    // Se a data vier no formato ISO (YYYY-MM-DD), inverte para o padrão Brasil
+    if (dateString.includes('-')) {
+      const [year, month, day] = dateString.split('-')
+      return `${day}/${month}/${year}`
+    }
+    // Caso já esteja no formato DD/MM/AAAA
+    return dateString
   }
 
   const getStatusBadge = (dias: number) => {
@@ -225,7 +237,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
-                        <GraduationCap className="h-4 w-4 text-white" />
+                        <OpenIcon as={GraduationCap} className="h-4 w-4 text-white" />
                       </div>
                       <div>
                         <h4 className="text-sm font-black text-[#0a192f]">{vencimento.nome}</h4>
@@ -244,7 +256,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                       </div>
                       <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Admissão</p>
-                        <p className="text-xs font-bold text-[#0a192f]">{vencimento.data_admissao}</p>
+                        <p className="text-xs font-bold text-[#0a192f]">{formatDate(vencimento.data_admissao)}</p>
                       </div>
                       <div className={`${vencimento.dias_ate_pagamento === 0 ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-100'} p-2.5 rounded-lg border`}>
                         <p className={`text-[8px] font-black ${vencimento.dias_ate_pagamento === 0 ? 'text-orange-600' : 'text-blue-600'} uppercase tracking-wider mb-0.5 flex items-center gap-1`}>
@@ -292,4 +304,8 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
       </div>
     </div>
   )
+}
+
+function OpenIcon({ as: Icon, className }: { as: any, className: string }) {
+  return <Icon className={className} />
 }
