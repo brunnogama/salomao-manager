@@ -69,6 +69,27 @@ const CHANGELOG = [
       'Adicionado reset de dados da Gestão de Aeronave em Settings',
       'Nova aba de manutenção para o módulo Financeiro'
     ]
+  },
+  {
+    version: '2.9.0',
+    date: '29/01/2026',
+    type: 'minor',
+    title: '🏠 Manutenção Secretaria',
+    changes: [
+      'Adicionado reset de dados da Gestão de Família em Settings',
+      'Nova aba de manutenção para o módulo Secretaria Executiva'
+    ]
+  },
+  {
+    version: '2.8.0',
+    date: '29/01/2026',
+    type: 'minor',
+    title: '📅 Calendário e Histórico',
+    changes: [
+      'Adicionado menu Calendário no módulo RH',
+      'Histórico movido para Settings (todas as áreas)',
+      'Melhorias na organização dos menus'
+    ]
   }
 ]
 
@@ -469,6 +490,29 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     } catch (error: any) {
         setStatus({ type: 'error', message: 'Erro: ' + error.message })
     } finally { setLoading(false) }
+  }
+
+  const handleDownloadTemplate = () => {
+    const ws = utils.json_to_sheet([{ nome: 'Cliente Exemplo', empresa: 'Empresa SA', cargo: 'Diretor', email: 'email@teste.com', telefone: '11999999999', socio: 'Dr. João', tipo_brinde: 'Brinde VIP', quantidade: 1, cep: '01001000', endereco: 'Praça da Sé', numero: '1', bairro: 'Centro', cidade: 'São Paulo', estado: 'SP' }])
+    const wb = utils.book_new(); utils.book_append_sheet(wb, ws, "Template")
+    writeFile(wb, "template_importacao.xlsx")
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAdmin) { alert("Apenas administradores."); return; }
+    const file = e.target.files?.[0]; if (!file) return
+    setLoading(true); setStatus({ type: null, message: 'Processando...' })
+    try {
+      const data = await file.arrayBuffer(); const workbook = read(data)
+      const jsonData = utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]) as any[]
+      const clientsToInsert = jsonData.map((row) => ({
+        nome: row.nome || row.Nome, empresa: row.empresa || row.Empresa || '', cargo: row.cargo || row.Cargo || '', email: row.email || row.Email || '', telefone: row.telefone || row.Telefone || '', socio: row.socio || row.Socio || '', tipo_brinde: row.tipo_brinde || row['Tipo Brinde'] || 'Brinde Médio', quantidade: row.quantidade || row.Quantidade || 1, cep: row.cep || row.CEP || '', endereco: row.endereco || row.Endereco || '', numero: row.numero || row.Numero || '', bairro: row.bairro || row.Bairro || '', cidade: row.cidade || row.Cidade || '', estado: row.estado || row.Estado || ''
+      }))
+      const { error } = await supabase.from('clientes').insert(clientsToInsert); if (error) throw error
+      setStatus({ type: 'success', message: `${clientsToInsert.length} importados!` })
+      await logAction('IMPORTAR', 'SISTEMA', `Importou ${clientsToInsert.length}`)
+    } catch (error: any) { setStatus({ type: 'error', message: 'Erro: ' + error.message }) } 
+    finally { setLoading(false); if (fileInputRef.current) fileInputRef.current.value = '' }
   }
 
   const handleModuleChange = (newModule: any) => {
