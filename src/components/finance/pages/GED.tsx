@@ -39,6 +39,7 @@ interface Documento {
   url_documento: string;
   observacoes?: string;
   usuario_upload: string;
+  origem?: 'ged' | 'aeronave'; // Campo para controle interno
 }
 
 export function GED({ 
@@ -60,19 +61,41 @@ export function GED({
 
   const fetchDocumentos = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('ged_documentos')
-      .select('*')
-      .order('data_upload', { ascending: false })
     
-    if (error) {
+    try {
+      // Busca documentos da tabela GED e documentos vinculados à Aeronave simultaneamente
+      const [resGed, resAeronave] = await Promise.all([
+        supabase.from('ged_documentos').select('*').order('data_upload', { ascending: false }),
+        supabase.from('financeiro_aeronave').select('*').not('documento_url', 'is', null)
+      ])
+
+      const gedDocs = (resGed.data || []).map(doc => ({ ...doc, origem: 'ged' }))
+      
+      // Mapeia os documentos que vêm da tabela de aeronaves para o formato do GED
+      const aeronaveDocs = (resAeronave.data || []).map(item => ({
+        id: item.id,
+        nome_arquivo: item.documento_url.split('/').pop() || 'documento.pdf',
+        tipo_documento: item.tipo_documento || 'Outros',
+        categoria: 'Aeronave',
+        entidade_vinculada: item.fornecedor || item.aeronave,
+        id_vinculo: item.id,
+        data_upload: item.created_at || item.data,
+        tamanho: 0, // Tamanho não disponível nesta tabela
+        url_documento: item.documento_url,
+        observacoes: item.observacao,
+        usuario_upload: 'Sistema',
+        origem: 'aeronave'
+      }))
+
+      setDocumentos([...gedDocs, ...aeronaveDocs].sort((a, b) => 
+        new Date(b.data_upload).getTime() - new Date(a.data_upload).getTime()
+      ))
+
+    } catch (error) {
       console.error('Erro ao buscar documentos:', error)
-    } else {
-      console.log('Documentos carregados:', data)
-      setDocumentos(data || [])
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -100,7 +123,7 @@ export function GED({
   }
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
+    if (bytes === 0) return '---'
     const k = 1024
     const sizes = ['Bytes', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
@@ -112,10 +135,13 @@ export function GED({
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
   }
 
-  const handleDownload = async (doc: Documento) => {
+  const handleDownload = async (doc: any) => {
     try {
+      // Define o bucket correto baseado na origem do documento
+      const bucket = doc.origem === 'aeronave' ? 'aeronave-documentos' : 'ged-documentos'
+      
       const { data, error } = await supabase.storage
-        .from('ged-documentos')
+        .from(bucket)
         .download(doc.url_documento)
       
       if (error) throw error
@@ -134,13 +160,19 @@ export function GED({
     }
   }
 
-  const handleDelete = async (doc: Documento) => {
+  const handleDelete = async (doc: any) => {
     if (!confirm(`Tem certeza que deseja excluir "${doc.nome_arquivo}"?`)) return
 
     try {
-      await supabase.storage.from('ged-documentos').remove([doc.url_documento])
-      const { error } = await supabase.from('ged_documentos').delete().eq('id', doc.id)
-      if (error) throw error
+      const bucket = doc.origem === 'aeronave' ? 'aeronave-documentos' : 'ged-documentos'
+      await supabase.storage.from(bucket).remove([doc.url_documento])
+      
+      if (doc.origem === 'aeronave') {
+        await supabase.from('financeiro_aeronave').update({ documento_url: null, tipo_documento: null }).eq('id', doc.id)
+      } else {
+        await supabase.from('ged_documentos').delete().eq('id', doc.id)
+      }
+
       alert('Documento excluído com sucesso!')
       fetchDocumentos()
       setIsViewModalOpen(false)
@@ -275,7 +307,6 @@ export function GED({
                   <div className="flex gap-1">
                     <button onClick={(e) => { e.stopPropagation(); handleDownload(doc); }} className="p-1.5 hover:bg-blue-100 rounded-lg transition-all" title="Baixar"><Download className="h-3.5 w-3.5 text-blue-600" /></button>
                     <button onClick={(e) => { e.stopPropagation(); setSelectedDoc(doc); setIsViewModalOpen(true); }} className="p-1.5 hover:bg-emerald-100 rounded-lg transition-all" title="Visualizar"><Eye className="h-3.5 w-3.5 text-emerald-600" /></button>
-                    {/* Botão Deletar adicionado ao card */}
                     <button onClick={(e) => { e.stopPropagation(); handleDelete(doc); }} className="p-1.5 hover:bg-red-100 rounded-lg transition-all text-red-500" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
@@ -308,16 +339,8 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
       const nomeOriginal = selectedFile.name
       const filePath = `${formData.categoria}/${nomeOriginal}`
 
-      console.log('📤 INICIANDO UPLOAD')
-      console.log('Arquivo:', nomeOriginal)
-      console.log('Tamanho:', selectedFile.size)
-      console.log('Categoria:', formData.categoria)
-      console.log('Tipo:', formData.tipo_documento)
-      console.log('Caminho:', filePath)
-
       const { data: uploadData, error: uploadError } = await supabase.storage.from('ged-documentos').upload(filePath, selectedFile)
-      if (uploadError) { console.error('❌ ERRO UPLOAD STORAGE:', uploadError); throw uploadError; }
-      console.log('✅ STORAGE OK:', uploadData)
+      if (uploadError) throw uploadError
 
       const documentoData = {
         nome_arquivo: nomeOriginal,
@@ -331,18 +354,11 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
         usuario_upload: userName
       }
 
-      console.log('📝 INSERINDO NO BANCO:', documentoData)
-
-      const { data: insertData, error: insertError } = await supabase.from('ged_documentos').insert(documentoData).select()
+      const { error: insertError } = await supabase.from('ged_documentos').insert(documentoData).select()
       if (insertError) {
-        console.error('❌ ERRO INSERT BANCO:', insertError)
-        console.error('Detalhes completos:', JSON.stringify(insertError, null, 2))
         await supabase.storage.from('ged-documentos').remove([filePath])
         throw insertError
       }
-
-      console.log('✅ INSERT BANCO OK:', insertData)
-      console.log('🎉 UPLOAD COMPLETO!')
 
       alert('✅ Documento enviado com sucesso!')
       setFormData({ categoria: '', tipo_documento: '', entidade_vinculada: '', observacoes: '' })
@@ -350,8 +366,6 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
       onSuccess()
       onClose()
     } catch (error: any) {
-      console.error('❌ ERRO GERAL:', error)
-      console.error('Stack:', error.stack)
       alert(`Erro ao enviar documento: ${error.message}`)
     } finally {
       setUploading(false)
