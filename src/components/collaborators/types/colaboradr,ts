@@ -12,6 +12,7 @@ export interface Colaborador {
   bairro?: string;
   cidade?: string;
   estado?: string;
+  // Dados Corporativos
   cargo: string;
   equipe: string;
   lider_equipe: string;

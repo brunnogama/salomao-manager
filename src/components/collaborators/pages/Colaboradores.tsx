@@ -340,6 +340,30 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   </div>
                 </div>
               </section>
+
+              {/* DADOS CORPORATIVOS NO FORMULÁRIO */}
+              <section className="space-y-4">
+                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2"><Briefcase className="h-4 w-4" /> Dados Corporativos</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">E-mail Corporativo</label>
+                    <input className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" value={formData.email || ''} onChange={e => setFormData({ ...formData, email: e.target.value.toLowerCase() })} />
+                  </div>
+                  <SearchableSelect label="Status" value={formData.status || ''} onChange={v => setFormData({ ...formData, status: v })} options={[{ name: 'Ativo' }, { name: 'Desligado' }, { name: 'Inativo' }]} />
+                  <SearchableSelect label="Equipe" value={formData.equipe || ''} onChange={v => setFormData({ ...formData, equipe: v })} table="opcoes_equipes" onRefresh={handleRefresh} />
+                  <SearchableSelect label="Cargo" value={formData.cargo || ''} onChange={v => setFormData({ ...formData, cargo: v })} table="opcoes_cargos" onRefresh={handleRefresh} />
+                  <SearchableSelect label="Local" value={formData.local || ''} onChange={v => setFormData({ ...formData, local: v })} table="opcoes_locais" onRefresh={handleRefresh} />
+                  <SearchableSelect label="Líder" value={formData.lider_equipe || ''} onChange={v => setFormData({ ...formData, lider_equipe: v })} table="opcoes_lideres" onRefresh={handleRefresh} />
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Admissão</label>
+                    <input className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" value={formData.data_admissao || ''} onChange={e => setFormData({ ...formData, data_admissao: maskDate(e.target.value) })} maxLength={10} placeholder="DD/MM/AAAA" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Desligamento</label>
+                    <input className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" value={formData.data_desligamento || ''} onChange={e => setFormData({ ...formData, data_desligamento: maskDate(e.target.value) })} maxLength={10} placeholder="DD/MM/AAAA" />
+                  </div>
+                </div>
+              </section>
             </div>
             <div className="flex justify-end gap-4 mt-12 pt-6 border-t border-gray-100">
               <button onClick={() => setViewMode('list')} className="px-6 py-2.5 text-[9px] font-black text-gray-600 uppercase tracking-[0.2em]">Cancelar</button>
@@ -349,22 +373,22 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         )}
 
         {selectedColaborador && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in">
+          <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in">
             <div className="bg-white rounded-[2rem] w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
               <div className="px-8 py-5 border-b flex justify-between bg-gray-50 items-center">
                 <div className="flex items-center gap-4">
                   <Avatar src={selectedColaborador.foto_url} name={selectedColaborador.nome} size="lg" />
                   <div>
                     <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">{toTitleCase(selectedColaborador.nome)}</h2>
-                    <p className="text-sm text-gray-500 font-semibold">{toTitleCase(selectedColaborador.cargo)}</p>
+                    <p className="text-sm text-gray-500 font-semibold">{toTitleCase(selectedColaborador.cargo)} • {toTitleCase(selectedColaborador.equipe)}</p>
                   </div>
                 </div>
-                <button onClick={() => setSelectedColaborador(null)} className="p-2 hover:bg-gray-200 rounded-full transition-all"><X className="h-6 w-6" /></button>
+                <button onClick={() => setSelectedColaborador(null)} className="p-2 hover:bg-gray-200 rounded-full transition-all group"><X className="h-6 w-6 text-gray-400 group-hover:rotate-90 transition-transform" /></button>
               </div>
 
               <div className="flex border-b px-8 bg-white">
-                <button onClick={() => setActiveDetailTab('dados')} className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors ${activeDetailTab === 'dados' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400'}`}>Dados</button>
-                <button onClick={() => setActiveDetailTab('ged')} className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors ${activeDetailTab === 'ged' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400'}`}>Documentos</button>
+                <button onClick={() => setActiveDetailTab('dados')} className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors ${activeDetailTab === 'dados' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400'}`}>Dados Detalhados</button>
+                <button onClick={() => setActiveDetailTab('ged')} className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors ${activeDetailTab === 'ged' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400'}`}>Documentos (GED)</button>
               </div>
 
               <div className="px-8 py-6 flex-1 overflow-y-auto">
@@ -375,12 +399,26 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                       <div className="grid grid-cols-2 gap-4">
                         <DetailRow label="CPF" value={selectedColaborador.cpf} />
                         <DetailRow label="Nascimento" value={formatDateDisplay(selectedColaborador.data_nascimento)} icon={Calendar} />
-                        <DetailRow label="Email" value={selectedColaborador.email} icon={Mail} />
+                        <DetailRow label="Gênero" value={selectedColaborador.genero} />
+                        <DetailRow label="CEP" value={selectedColaborador.cep} />
+                      </div>
+                      <DetailRow label="Endereço" value={`${selectedColaborador.endereco || ''}, ${selectedColaborador.numero || ''}`} />
+                    </div>
+                    {/* DADOS CORPORATIVOS NO MODAL DE DETALHES */}
+                    <div className="space-y-6">
+                      <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Corporativo</h3>
+                      <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <DetailRow label="Equipe" value={selectedColaborador.equipe} />
+                        <DetailRow label="Líder" value={selectedColaborador.lider_equipe} />
                         <DetailRow label="Local" value={selectedColaborador.local} icon={Building2} />
+                        <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.data_admissao)} icon={Calendar} />
+                        <DetailRow label="Desligamento" value={formatDateDisplay(selectedColaborador.data_desligamento)} icon={Calendar} />
                       </div>
                     </div>
                   </div>
                 ) : (
+                  /* CONTEÚDO GED MANTIDO IGUAL */
                   <div className="space-y-6">
                     <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200">
                       <div className="flex flex-col md:flex-row items-end gap-4">
@@ -410,6 +448,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                     </div>
                   </div>
                 )}
+              </div>
+              <div className="px-8 py-5 border-t flex justify-end gap-3 bg-gray-50">
+                <button onClick={() => handleDelete(selectedColaborador.id)} className="px-4 py-2 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50">Excluir</button>
+                <button onClick={() => handleEdit(selectedColaborador)} className="px-6 py-2 bg-[#1e3a8a] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl shadow-lg">Editar Cadastro</button>
               </div>
             </div>
           </div>
