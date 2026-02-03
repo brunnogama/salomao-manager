@@ -50,13 +50,13 @@ const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
 const CHANGELOG = [
   {
-    version: '2.9.2',
+    version: '2.9.5',
     date: '03/02/2026',
     type: 'fix',
-    title: '🔐 Sincronização de Usuários',
+    title: '🛡️ Estabilização de Acesso Admin',
     changes: [
-      'Correção na lógica de vinculação de perfis via e-mail',
-      'Sincronização automática com Supabase Auth Trigger'
+      'Vinculação forçada de UUID para o gestor principal',
+      'Lógica de redundância de permissão via E-mail/ID'
     ]
   },
   {
@@ -98,7 +98,8 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
   const [currentUserPermissions, setCurrentUserPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS)
   const [sessionUserId, setSessionUserId] = useState<string>('')
   
-  const isSuperAdmin = currentUserEmail === SUPER_ADMIN_EMAIL;
+  // LOGICA DE PERMISSÃO REFORÇADA: Verifica por e-mail se o ID for nulo no banco
+  const isSuperAdmin = currentUserEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
   const isAdmin = currentUserRole.toLowerCase() === 'admin' || isSuperAdmin;
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -189,23 +190,10 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
         setCurrentUserEmail(user.email);
         setSessionUserId(user.id);
         
-        if (user.email === SUPER_ADMIN_EMAIL) {
-            setCurrentUserRole('admin');
-            setCurrentUserPermissions({
-                geral: true, 
-                crm: true, 
-                family: true, 
-                collaborators: true, 
-                operational: true, 
-                financial: true
-            });
-            return;
-        }
-
         const { data } = await supabase
           .from('user_profiles')
           .select('role, allowed_modules')
-          .eq('email', user.email)
+          .eq('email', user.email.toLowerCase())
           .maybeSingle()
           
         if (data) {
@@ -219,6 +207,8 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
             operational: modules.includes('operational'),
             financial: modules.includes('financial')
           })
+        } else if (user.email === SUPER_ADMIN_EMAIL) {
+          setCurrentUserRole('admin');
         }
       }
     } catch (error) {
@@ -241,20 +231,20 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('id, email, role, allowed_modules, created_at')
+        .select('*')
         .order('created_at', { ascending: false })
       
       if (error) throw error
       
       if (data) {
         setUsers(data.map((u: any) => ({
-          id: u.id || `pre-${u.email}`,
-          user_id: u.id,
+          id: u.id || `pending-${u.email}`,
+          user_id: u.user_id || u.id,
           nome: u.email.split('@')[0],
           email: u.email,
           cargo: u.role === 'admin' ? 'Administrador' : 'Colaborador',
           role: u.role || 'user',
-          ativo: !!u.id,
+          ativo: !!u.user_id,
           allowed_modules: u.allowed_modules || []
         })))
       }
@@ -300,6 +290,26 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     })
   }
 
+  const handleSaveConfigMagistrados = async () => {
+    if (!isAdmin) return alert("Acesso negado.");
+    setLoadingConfig(true)
+    const emailsArray = magistradosConfig.emails.split(',').map(e => e.trim()).filter(e => e)
+    const { data: current } = await supabase.from('config_magistrados').select('id').single()
+    if (current) {
+        await supabase.from('config_magistrados').update({
+            pin_acesso: magistradosConfig.pin,
+            emails_permitidos: emailsArray
+        }).eq('id', current.id)
+    } else {
+        await supabase.from('config_magistrados').insert({
+            pin_acesso: magistradosConfig.pin,
+            emails_permitidos: emailsArray
+        })
+    }
+    alert('Configurações salvas!')
+    setLoadingConfig(false)
+  }
+
   const handleSaveUser = async () => {
     if (!isAdmin) return;
     if (!userForm.email) return alert("E-mail obrigatório");
@@ -309,40 +319,19 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     const role = userForm.cargo === 'Administrador' ? 'admin' : 'user';
     
     try {
-      // 1. Verificar se o perfil já existe (por email)
-      const { data: existing } = await supabase
+      const { error } = await supabase
         .from('user_profiles')
-        .select('email')
-        .eq('email', emailNormalizado)
-        .maybeSingle();
+        .upsert({
+          email: emailNormalizado,
+          role: role,
+          allowed_modules: userForm.allowed_modules
+        }, { onConflict: 'email' });
 
-      if (existing) {
-        // Atualiza perfil (identificado pelo e-mail para garantir sincronia)
-        const { error } = await supabase
-          .from('user_profiles')
-          .update({
-            role: role,
-            allowed_modules: userForm.allowed_modules
-          })
-          .eq('email', emailNormalizado);
-
-        if (error) throw error;
-        await logAction('UPDATE', 'USER_PROFILES', `Atualizou permissões de ${emailNormalizado}`);
-      } else {
-        // Cria novo perfil para pré-cadastro
-        const { error } = await supabase
-          .from('user_profiles')
-          .insert({
-            email: emailNormalizado,
-            role: role,
-            allowed_modules: userForm.allowed_modules
-          });
-        
-        if (error) throw error;
-        await logAction('CREATE', 'USER_PROFILES', `Pré-cadastrou ${emailNormalizado}`);
-      }
-          
+      if (error) throw error;
+      
+      await logAction('UPDATE', 'USER_PROFILES', `Sincronizou perfil de ${emailNormalizado}`);
       setStatus({ type: 'success', message: 'Usuário configurado com sucesso!' });
+          
       setIsUserModalOpen(false);
       fetchUsers();
     } catch (e: any) {
@@ -457,23 +446,23 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     setActiveModule(newModule)
   }
 
-  // Helper para verificar permissão específica
-  const userHasAccess = (modId: string) => {
-    if (isAdmin) return true;
-    if (modId === 'menu' || modId === 'historico' || modId === 'geral' || modId === 'juridico') return true;
+  // Lógica de proteção de acesso reforçada
+  const hasAccessToModule = (modId: string) => {
+    if (isSuperAdmin || isAdmin) return true;
+    if (['menu', 'historico', 'juridico', 'geral'].includes(modId)) return true;
     
-    const keyMap: Record<string, keyof UserPermissions> = {
-      crm: 'crm',
-      rh: 'collaborators',
-      family: 'family',
-      financial: 'financial'
+    const keyMap: any = { 
+      crm: 'crm', 
+      rh: 'collaborators', 
+      family: 'family', 
+      financial: 'financial' 
     };
 
     const permKey = keyMap[modId];
-    return permKey ? currentUserPermissions[permKey] : false;
+    return permKey ? currentUserPermissions[permKey as keyof UserPermissions] : false;
   }
 
-  if (activeModule !== 'menu' && !userHasAccess(activeModule)) {
+  if (activeModule !== 'menu' && !hasAccessToModule(activeModule)) {
     return (
       <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
@@ -490,14 +479,14 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
 
   if (activeModule === 'menu') {
       const modules = [
-          { id: 'geral', label: 'Geral', icon: Shield, desc: 'Gestão de Usuários', color: 'bg-gray-900', perm: currentUserPermissions.geral },
-          { id: 'crm', label: 'CRM', icon: Briefcase, desc: 'Clientes e Brindes', color: 'bg-blue-600', perm: currentUserPermissions.crm },
+          { id: 'geral', label: 'Geral', icon: Shield, desc: 'Gestão de Usuários', color: 'bg-gray-900', perm: hasAccessToModule('geral') },
+          { id: 'crm', label: 'CRM', icon: Briefcase, desc: 'Clientes e Brindes', color: 'bg-blue-600', perm: hasAccessToModule('crm') },
           { id: 'juridico', label: 'Brindes', icon: Lock, desc: 'Área de Autoridades', color: 'bg-[#112240]', perm: true },
-          { id: 'rh', label: 'RH', icon: Users, desc: 'Controle de Pessoal', color: 'bg-green-600', perm: currentUserPermissions.collaborators },
-          { id: 'family', label: 'Família', icon: Heart, desc: 'Gestão Secretaria', color: 'bg-purple-600', perm: currentUserPermissions.family },
-          { id: 'financial', label: 'Financeiro', icon: DollarSign, desc: 'Gestão de Aeronave', color: 'bg-blue-800', perm: currentUserPermissions.financial },
+          { id: 'rh', label: 'RH', icon: Users, desc: 'Controle de Pessoal', color: 'bg-green-600', perm: hasAccessToModule('rh') },
+          { id: 'family', label: 'Família', icon: Heart, desc: 'Gestão Secretaria', color: 'bg-purple-600', perm: hasAccessToModule('family') },
+          { id: 'financial', label: 'Financeiro', icon: DollarSign, desc: 'Gestão de Aeronave', color: 'bg-blue-800', perm: hasAccessToModule('financial') },
           { id: 'historico', label: 'Histórico', icon: HistoryIcon, desc: 'Log de Atividades', color: 'bg-purple-600', perm: true },
-          { id: 'sistema', label: 'Sistema', icon: Code, desc: 'Configurações Globais', color: 'bg-red-600', perm: currentUserPermissions.geral },
+          { id: 'sistema', label: 'Sistema', icon: Code, desc: 'Configurações Globais', color: 'bg-red-600', perm: isAdmin },
       ]
 
       return (
@@ -507,13 +496,13 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {modules.map((m) => {
-                      const hasAccess = isAdmin || m.perm;
+                      const access = m.perm;
                       return (
-                          <button key={m.id} onClick={() => handleModuleChange(m.id)} className={`relative flex flex-col items-start p-6 rounded-2xl border transition-all duration-300 text-left ${hasAccess ? 'bg-white border-gray-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'bg-gray-50 border-gray-200 opacity-80 cursor-pointer'}`}>
-                              <div className={`p-3 rounded-xl mb-4 text-white shadow-md ${hasAccess ? m.color : 'bg-gray-400 grayscale'}`}><m.icon className="h-6 w-6" /></div>
+                          <button key={m.id} onClick={() => access && handleModuleChange(m.id)} className={`relative flex flex-col items-start p-6 rounded-2xl border transition-all duration-300 text-left ${access ? 'bg-white border-gray-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer' : 'bg-gray-50 border-gray-200 opacity-80'}`}>
+                              <div className={`p-3 rounded-xl mb-4 text-white shadow-md ${access ? m.color : 'bg-gray-400 grayscale'}`}><m.icon className="h-6 w-6" /></div>
                               <h3 className="text-lg font-bold text-gray-900 mb-1">{m.label}</h3>
                               <p className="text-sm text-gray-500">{m.desc}</p>
-                              {!hasAccess && <Lock className="absolute top-6 right-6 h-5 w-5 text-red-300" />}
+                              {!access && <Lock className="absolute top-6 right-6 h-5 w-5 text-red-300" />}
                           </button>
                       )
                   })}
@@ -527,14 +516,14 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2 justify-between items-center">
           <button onClick={() => handleModuleChange('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"><LayoutGrid className="h-4 w-4" /> Menu</button>
           <div className="flex flex-wrap gap-2 items-center">
-            <button onClick={() => handleModuleChange('geral')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'geral' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}><Shield className="h-4 w-4" /> Geral</button>
-            <button onClick={() => handleModuleChange('crm')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'crm' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-blue-50'}`}><Briefcase className="h-4 w-4" /> CRM</button>
+            <button onClick={() => hasAccessToModule('geral') && handleModuleChange('geral')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'geral' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}><Shield className="h-4 w-4" /> Geral</button>
+            <button onClick={() => hasAccessToModule('crm') && handleModuleChange('crm')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'crm' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-blue-50'}`}><Briefcase className="h-4 w-4" /> CRM</button>
             <button onClick={() => handleModuleChange('juridico')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'juridico' ? 'bg-[#112240] text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}><Lock className="h-4 w-4" /> Jurídico</button>
-            <button onClick={() => handleModuleChange('rh')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'rh' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 hover:bg-green-50'}`}><Users className="h-4 w-4" /> RH</button>
-            <button onClick={() => handleModuleChange('family')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'family' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-purple-50'}`}><Heart className="h-4 w-4" /> Família</button>
-            <button onClick={() => handleModuleChange('financial')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'financial' ? 'bg-blue-800 text-white' : 'bg-white text-gray-600 hover:bg-blue-50'}`}><DollarSign className="h-4 w-4" /> Financeiro</button>
+            <button onClick={() => hasAccessToModule('rh') && handleModuleChange('rh')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'rh' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 hover:bg-green-50'}`}><Users className="h-4 w-4" /> RH</button>
+            <button onClick={() => hasAccessToModule('family') && handleModuleChange('family')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'family' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-purple-50'}`}><Heart className="h-4 w-4" /> Família</button>
+            <button onClick={() => hasAccessToModule('financial') && handleModuleChange('financial')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'financial' ? 'bg-blue-800 text-white' : 'bg-white text-gray-600 hover:bg-blue-50'}`}><DollarSign className="h-4 w-4" /> Financeiro</button>
             <button onClick={() => handleModuleChange('historico')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'historico' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-purple-50'}`}><HistoryIcon className="h-4 w-4" /> Histórico</button>
-            <button onClick={() => handleModuleChange('sistema')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'sistema' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-red-50'}`}><Code className="h-4 w-4" /> Sistema</button>
+            <button onClick={() => isAdmin && handleModuleChange('sistema')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === 'sistema' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-red-50'}`}><Code className="h-4 w-4" /> Sistema</button>
             
             {onModuleHome && (
               <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg ml-2 border border-gray-200" title="Mudar Módulo">
@@ -625,7 +614,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
                                   <td className="py-3 px-2 text-xs font-bold text-[#112240]">{user.email}</td>
                                   <td className="py-3 px-2 capitalize"><span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-black text-gray-500">{user.role}</span></td>
                                   <td className="py-3 px-2 flex flex-wrap gap-1">{user.allowed_modules.map(m => (<span key={m} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[9px] font-bold uppercase tracking-tighter">{m === 'collaborators' ? 'RH' : m}</span>))}</td>
-                                  <td className="py-3 px-2">{user.ativo ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Loader2 className="h-3.5 w-3.5 text-orange-400 animate-spin" />}</td>
+                                  <td className="py-3 px-2">{user.ativo ? <Check className="h-3.5 w-3.5 text-green-600" /> : <div className="flex items-center gap-1 text-orange-400"><Loader2 className="h-3 w-3 animate-spin"/><span className="text-[9px] font-bold">Pendente</span></div>}</td>
                                   <td className="py-3 px-2 text-right opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => openUserModal(user)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Pencil className="h-3.5 w-3.5" /></button><button onClick={() => handleDeleteUser(user)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="h-3.5 w-3.5" /></button></td>
                               </tr>
                           ))}
