@@ -207,8 +207,11 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const handleSave = async () => {
     if (!formData.nome) return alert('Nome obrigatório')
+    
+    // Função para converter DD/MM/AAAA para YYYY-MM-DD
     const toISO = (s?: string) => {
       if (!s || s.length !== 10) return null
+      if (!s.includes('/')) return s // Já está no formato ISO
       const [d, m, y] = s.split('/')
       return `${y}-${m}-${d}`
     }
