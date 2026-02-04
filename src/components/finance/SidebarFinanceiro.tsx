@@ -7,7 +7,8 @@ import {
   Plane, 
   FolderSearch, 
   X,
-  Briefcase
+  Briefcase,
+  GraduationCap
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -22,7 +23,7 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'calendario', label: 'Calendário', icon: Calendar },
     { id: 'contas-pagar', label: 'Contas a Pagar', icon: ArrowUpCircle },
-    { id: 'oab', label: 'OAB', icon: Briefcase },
+    { id: 'oab', label: 'OAB', icon: GraduationCap },
     { id: 'contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle },
     { id: 'gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane },
     { id: 'ged', label: 'GED', icon: FolderSearch },
