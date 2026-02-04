@@ -36,12 +36,12 @@ const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
 const CHANGELOG = [
   {
-    version: '2.9.8', date: '03/02/2026', type: 'fix', title: '🛡️ Reset de Segurança e Bypass',
-    changes: ['Remoção de políticas RLS conflitantes (Erro 500)', 'Bypass local prioritário para marcio.gama', 'Sincronização forçada de UUID via Upsert']
+    version: '2.9.9', date: '04/02/2026', type: 'fix', title: '🛡️ Ajuste Permissão RH/Collaborators',
+    changes: ['Unificação de flags de acesso para o módulo de colaboradores', 'Correção de bypass emergencial']
   },
   {
-    version: '2.9.5', date: '03/02/2026', type: 'fix', title: '🛡️ Estabilização de Acesso Admin',
-    changes: ['Vinculação forçada de UUID para o gestor principal', 'Lógica de redundância de permissão via E-mail/ID']
+    version: '2.9.8', date: '03/02/2026', type: 'fix', title: '🛡️ Reset de Segurança e Bypass',
+    changes: ['Remoção de políticas RLS conflitantes (Erro 500)', 'Bypass local prioritário para marcio.gama', 'Sincronização forçada de UUID via Upsert']
   }
 ]
 
@@ -86,6 +86,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       if (emailLower === SUPER_ADMIN_EMAIL.toLowerCase()) {
         setCurrentUserRole('admin');
         setCurrentUserPermissions({ geral: true, crm: true, family: true, collaborators: true, operational: true, financial: true });
+        return;
       }
 
       const { data } = await supabase.from('user_profiles').select('role, allowed_modules').eq('email', emailLower).maybeSingle()
@@ -93,8 +94,13 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
         setCurrentUserRole(data.role || 'user')
         const modules = data.allowed_modules || []
         setCurrentUserPermissions({
-          geral: true, crm: modules.includes('crm'), family: modules.includes('family'),
-          collaborators: modules.includes('collaborators'), operational: modules.includes('operational'), financial: modules.includes('financial')
+          geral: true, 
+          crm: modules.includes('crm'), 
+          family: modules.includes('family'),
+          // Verifica se possui 'rh' OU 'collaborators' no array do banco
+          collaborators: modules.includes('collaborators') || modules.includes('rh'), 
+          operational: modules.includes('operational'), 
+          financial: modules.includes('financial')
         })
       }
     }
@@ -131,7 +137,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       const emailNormalizado = userForm.email.toLowerCase().trim();
       const roleFinal = userForm.cargo === 'Administrador' ? 'admin' : 'user';
       
-      // Verificamos se o usuário já existe na tabela profiles
       const { data: existingProfile } = await supabase
         .from('user_profiles')
         .select('id')
@@ -141,7 +146,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       let error;
 
       if (existingProfile) {
-        // Se existe, fazemos um UPDATE
         const { error: updateError } = await supabase
           .from('user_profiles')
           .update({
@@ -151,14 +155,17 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
           .eq('email', emailNormalizado);
         error = updateError;
       } else {
-        // Se NÃO existe (caso da Bruna), fazemos um INSERT
-        // Como você me passou o UUID, vamos garantir que ele seja usado se for o caso dela
-        const isBruna = emailNormalizado === 'bruna.cardoso@salomaoadv.com.br';
+        const specialUsers: Record<string, string> = {
+          'bruna.cardoso@salomaoadv.com.br': '6c9be206-8a36-4f18-8557-5d28d80929a4',
+          'kaua.mombrine@salomaoadv.com.br': 'bcb197e1-2480-4c8e-81ec-1aa8bb3a98fc'
+        };
+        const targetId = specialUsers[emailNormalizado];
+
         const { error: insertError } = await supabase
           .from('user_profiles')
           .insert({
-            id: isBruna ? '6c9be206-8a36-4f18-8557-5d28d80929a4' : undefined,
-            user_id: isBruna ? '6c9be206-8a36-4f18-8557-5d28d80929a4' : undefined,
+            id: targetId,
+            user_id: targetId,
             email: emailNormalizado,
             role: roleFinal,
             allowed_modules: userForm.allowed_modules
