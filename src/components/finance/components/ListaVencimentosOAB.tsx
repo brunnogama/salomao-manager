@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Calendar, GraduationCap, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
+import { Calendar, GraduationCap, AlertCircle, CheckCircle2, Clock, X, DollarSign, Ban } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 
 interface VencimentoOAB {
@@ -28,7 +28,9 @@ interface ListaVencimentosOABProps {
 export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABProps) {
   const [vencimentos, setVencimentos] = useState<VencimentoOAB[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtro, setFiltro] = useState<'todos' | 'urgente' | 'proximo'>('todos')
+  const [filtro, setFiltro] = useState<'todos' | 'urgente' | 'proximo' | 'tratados'>('todos')
+  const [selectedVencimento, setSelectedVencimento] = useState<VencimentoOAB | null>(null)
+  const [valorInput, setValorInput] = useState('')
 
   useEffect(() => {
     fetchVencimentos()
@@ -116,6 +118,45 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
     }
   }
 
+  const handleUpdateStatus = async (status: 'pago' | 'desconsiderado') => {
+    if (!selectedVencimento) return
+
+    const valorNumerico = parseFloat(valorInput.replace(/[R$\s.]/g, '').replace(',', '.'))
+
+    try {
+      const { error } = await supabase
+        .from('financeiro_oab')
+        .upsert({
+          colaborador_id: selectedVencimento.id,
+          mes_referencia: mesAtual,
+          ano_referencia: anoAtual,
+          status_pagamento: status,
+          valor_anuidade: status === 'pago' ? valorNumerico : 0,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'colaborador_id,mes_referencia,ano_referencia' })
+
+      if (error) throw error
+      
+      await fetchVencimentos()
+      setSelectedVencimento(null)
+      setValorInput('')
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error)
+      alert('Erro ao atualizar registro.')
+    }
+  }
+
+  const formatCurrencyInput = (value: string) => {
+    const digits = value.replace(/\D/g, '')
+    const realValue = (Number(digits) / 100).toFixed(2)
+    return realValue.replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')
+  }
+
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCurrencyInput(e.target.value)
+    setValorInput(`R$ ${formatted}`)
+  }
+
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
     if (dateString.includes('-')) {
@@ -126,12 +167,19 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   }
 
   const getStatusBadge = (dias: number, statusReal?: string) => {
-    // Se houver status real de "pago" na tabela financeira, ele ganha prioridade visual
     if (statusReal === 'pago') {
       return {
         icon: CheckCircle2,
         text: 'PAGO',
         class: 'bg-green-600 text-white border-green-700 font-black'
+      }
+    }
+    
+    if (statusReal === 'desconsiderado') {
+      return {
+        icon: Ban,
+        text: 'DESC.',
+        class: 'bg-gray-500 text-white border-gray-600 font-black'
       }
     }
 
@@ -168,11 +216,16 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
     }
   }
 
-  const vencimentosFiltrados = vencimentos.filter(v => {
-    if (filtro === 'urgente') return v.dias_ate_pagamento <= 7
-    if (filtro === 'proximo') return v.dias_ate_pagamento > 7 && v.dias_ate_pagamento <= 15
-    return true
-  })
+  const vencimentosPendentes = vencimentos.filter(v => !v.status_pagamento_real || (v.status_pagamento_real !== 'pago' && v.status_pagamento_real !== 'desconsiderado'))
+  const vencimentosTratados = vencimentos.filter(v => v.status_pagamento_real === 'pago' || v.status_pagamento_real === 'desconsiderado')
+
+  const vencimentosFiltrados = filtro === 'tratados' 
+    ? vencimentosTratados 
+    : vencimentosPendentes.filter(v => {
+        if (filtro === 'urgente') return v.dias_ate_pagamento <= 7
+        if (filtro === 'proximo') return v.dias_ate_pagamento > 7 && v.dias_ate_pagamento <= 15
+        return true
+      })
 
   if (loading) {
     return (
@@ -200,7 +253,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setFiltro('todos')}
             className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.15em] transition-all ${
@@ -209,7 +262,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                 : 'bg-white text-gray-600 border border-gray-200 hover:border-[#1e3a8a]/30'
             }`}
           >
-            Todos ({vencimentos.length})
+            Pendentes ({vencimentosPendentes.length})
           </button>
           <button
             onClick={() => setFiltro('urgente')}
@@ -219,7 +272,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                 : 'bg-white text-gray-600 border border-gray-200 hover:border-red-300'
             }`}
           >
-            Urgente ({vencimentos.filter(v => v.dias_ate_pagamento <= 7).length})
+            Urgente ({vencimentosPendentes.filter(v => v.dias_ate_pagamento <= 7).length})
           </button>
           <button
             onClick={() => setFiltro('proximo')}
@@ -229,7 +282,17 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                 : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'
             }`}
           >
-            Próximo ({vencimentos.filter(v => v.dias_ate_pagamento > 7 && v.dias_ate_pagamento <= 15).length})
+            Próximo ({vencimentosPendentes.filter(v => v.dias_ate_pagamento > 7 && v.dias_ate_pagamento <= 15).length})
+          </button>
+          <button
+            onClick={() => setFiltro('tratados')}
+            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.15em] transition-all ${
+              filtro === 'tratados' 
+                ? 'bg-green-700 text-white shadow-md' 
+                : 'bg-white text-gray-600 border border-gray-200 hover:border-green-300'
+            }`}
+          >
+            Tratados ({vencimentosTratados.length})
           </button>
         </div>
       </div>
@@ -257,7 +320,8 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
             return (
               <div
                 key={vencimento.id}
-                className={`bg-white rounded-xl border p-5 transition-all ${vencimento.dias_ate_pagamento === 0 ? 'ring-2 ring-orange-500 border-orange-200 shadow-lg' : 'border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md'}`}
+                onClick={() => setSelectedVencimento(vencimento)}
+                className={`bg-white rounded-xl border p-5 transition-all cursor-pointer ${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'ring-2 ring-orange-500 border-orange-200 shadow-lg' : 'border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md'}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-3">
@@ -284,11 +348,11 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Admissão</p>
                         <p className="text-xs font-bold text-[#0a192f]">{formatDate(vencimento.data_admissao)}</p>
                       </div>
-                      <div className={`${vencimento.dias_ate_pagamento === 0 ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-100'} p-2.5 rounded-lg border`}>
-                        <p className={`text-[8px] font-black ${vencimento.dias_ate_pagamento === 0 ? 'text-orange-600' : 'text-blue-600'} uppercase tracking-wider mb-0.5 flex items-center gap-1`}>
+                      <div className={`${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-100'} p-2.5 rounded-lg border`}>
+                        <p className={`text-[8px] font-black ${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'text-orange-600' : 'text-blue-600'} uppercase tracking-wider mb-0.5 flex items-center gap-1`}>
                           <Calendar className="h-2.5 w-2.5" /> Previsto
                         </p>
-                        <p className={`text-xs font-bold ${vencimento.dias_ate_pagamento === 0 ? 'text-orange-900' : 'text-blue-900'}`}>{formatDate(vencimento.data_pagamento_oab)}</p>
+                        <p className={`text-xs font-bold ${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'text-orange-900' : 'text-blue-900'}`}>{formatDate(vencimento.data_pagamento_oab)}</p>
                       </div>
                       <div className="bg-green-50 p-2.5 rounded-lg border border-green-100">
                         <p className="text-[8px] font-black text-green-600 uppercase tracking-wider mb-0.5">Valor Pago</p>
@@ -309,6 +373,68 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Modal de Tratamento */}
+      {selectedVencimento && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-200 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-[#1e3a8a] text-white">
+              <div className="flex items-center gap-3">
+                <GraduationCap className="h-6 w-6" />
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-tight">Tratar Vencimento OAB</h3>
+                  <p className="text-xs text-blue-100 font-medium">{selectedVencimento.nome}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedVencimento(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">OAB Número</p>
+                  <p className="text-sm font-bold text-[#0a192f]">{selectedVencimento.oab_numero} - {selectedVencimento.oab_uf}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Data Prevista</p>
+                  <p className="text-sm font-bold text-[#0a192f]">{formatDate(selectedVencimento.data_pagamento_oab)}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-700 uppercase tracking-wider block">Valor Pago</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input 
+                    type="text"
+                    value={valorInput}
+                    onChange={handleValorChange}
+                    placeholder="R$ 0,00"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-[#0a192f] focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent transition-all outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-4">
+                <button
+                  onClick={() => handleUpdateStatus('desconsiderado')}
+                  className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all uppercase tracking-widest"
+                >
+                  <Ban className="h-4 w-4" /> Desconsiderar
+                </button>
+                <button
+                  onClick={() => handleUpdateStatus('pago')}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 rounded-xl text-xs font-black text-white hover:bg-green-700 shadow-lg shadow-green-200 transition-all uppercase tracking-widest"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Marcar como Pago
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
