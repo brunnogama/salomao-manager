@@ -265,7 +265,7 @@ export function AeronaveDashboard({
       totalBruto,
       totalLiquido,
       tipos: Object.entries(tipoMap).sort((a: any, b: any) => b[1].liquido - a[1].liquido),
-      devedores: Object.entries(devedorMap).sort((a: any, b: any) => b[1].liquido - a[1].liquido).slice(0, 15),
+      fixos: Object.entries(devedorMap).sort((a: any, b: any) => b[1].liquido - a[1].liquido).slice(0, 15),
       monthlyData: sortedMonthlyData
     }
   }, [dataPagamentos, filteredByYear, localSelectedYear, localViewMode])
@@ -344,7 +344,7 @@ export function AeronaveDashboard({
             <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] flex items-center gap-2">
               <TrendingDown className="h-4 w-4 text-blue-600" /> 
               {localViewMode === 'tudo' ? 'Movimentação Mensal' : 
-               localViewMode === 'despesas' ? 'Gastos Mensais' : 'Pagamentos Mensais'}
+               localViewMode === 'despesas' ? 'Gastos Mensais' : 'Despesas fixas Mensais'}
             </h4>
             <div className="text-right">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Geral</p>
@@ -446,12 +446,11 @@ export function AeronaveDashboard({
           <h4 className="text-sm font-black text-blue-300 uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
             <PieChart className="h-4 w-4" /> 
             {localViewMode === 'tudo' ? 'Categorias Combinadas' :
-             localViewMode === 'despesas' ? 'Despesas por Tipo' : 'Pagamentos por Tipo'}
+             localViewMode === 'despesas' ? 'Despesas por Tipo' : 'Despesas fixas por Tipo'}
           </h4>
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-2">
             {localViewMode === 'tudo' ? (
               <>
-                <p className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-2">Despesas</p>
                 {(statsDespesas?.expenses || []).slice(0, 5).map(([name, value]: any) => (
                   <div key={`desp-${name}`} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -461,7 +460,6 @@ export function AeronaveDashboard({
                     <span className="text-xs font-black whitespace-nowrap">{formatCurrency(value)}</span>
                   </div>
                 ))}
-                <p className="text-xs font-bold text-emerald-200 uppercase tracking-widest mt-4 mb-2">Pagamentos</p>
                 {(statsPagamentos?.tipos || []).slice(0, 5).map(([name, values]: any) => (
                   <div key={`pag-${name}`} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -505,7 +503,7 @@ export function AeronaveDashboard({
             <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-blue-600" /> 
               {localViewMode === 'tudo' ? 'Total Geral' :
-               localViewMode === 'despesas' ? 'Totais por Missão' : 'Lista de Pagamentos'}
+               localViewMode === 'despesas' ? 'Totais por Missão' : 'Lista de Despesas fixas'}
             </h4>
             
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1 border border-gray-200">
@@ -599,7 +597,7 @@ export function AeronaveDashboard({
                         <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Emissão</th>
                         <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
                         <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Tipo</th>
-                        <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Devedor</th>
+                        <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Fixos</th>
                         <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Valor Líquido</th>
                       </tr>
                     </thead>
@@ -670,7 +668,7 @@ export function AeronaveDashboard({
                     <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Emissão</th>
                     <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
                     <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Tipo</th>
-                    <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Devedor</th>
+                    <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Fixos</th>
                     <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Valor Líquido</th>
                   </tr>
                 </thead>
@@ -707,8 +705,8 @@ export function AeronaveDashboard({
         <div className="lg:col-span-4 bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-[740px] flex flex-col">
           <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-blue-600" /> 
-            {localViewMode === 'tudo' ? 'Fornecedores e Devedores' :
-             localViewMode === 'despesas' ? 'Principais Fornecedores' : 'Principais Devedores'}
+            {localViewMode === 'tudo' ? 'Fornecedores e Fixos' :
+             localViewMode === 'despesas' ? 'Principais Fornecedores' : 'Principais Fixos'}
           </h4>
           <div className="space-y-6 overflow-y-auto custom-scrollbar flex-1 pr-2">
             {localViewMode === 'tudo' ? (
@@ -731,8 +729,8 @@ export function AeronaveDashboard({
                   ))}
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">Devedores</p>
-                  {(statsPagamentos?.devedores || []).slice(0, 7).map(([name, values]: any) => (
+                  <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">Fixos</p>
+                  {(statsPagamentos?.fixos || []).slice(0, 7).map(([name, values]: any) => (
                     <div key={`dev-${name}`} className="space-y-1.5 mb-4">
                       <div className="flex justify-between items-center gap-3">
                         <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
@@ -764,7 +762,7 @@ export function AeronaveDashboard({
                 </div>
               ))
             ) : (
-              statsPagamentos.devedores.map(([name, values]: any) => (
+              statsPagamentos.fixos.map(([name, values]: any) => (
                 <div key={name} className="space-y-1.5">
                   <div className="flex justify-between items-center gap-3">
                     <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
