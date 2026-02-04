@@ -310,7 +310,7 @@ export function AeronaveDashboard({
             }`}
           >
             <Database className="h-4 w-4" />
-            Tudo
+            Todos os Pagamentos
           </button>
           <button
             onClick={() => handleViewModeChange('despesas')}
@@ -445,7 +445,7 @@ export function AeronaveDashboard({
         <div className="lg:col-span-4 bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white h-[380px] flex flex-col">
           <h4 className="text-sm font-black text-blue-300 uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
             <PieChart className="h-4 w-4" /> 
-            {localViewMode === 'tudo' ? 'Despesas Fixas' :
+            {localViewMode === 'tudo' ? 'Despesas Gerais' :
              localViewMode === 'despesas' ? 'Despesas por Tipo' : 'Despesas fixas por Tipo'}
           </h4>
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-2">
@@ -621,7 +621,7 @@ export function AeronaveDashboard({
                       <tr>
                         <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
                         <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Descrição</th>
-                        <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Fixos</th>
+                        <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</th>
                         <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Valor Líquido</th>
                       </tr>
                     </thead>
