@@ -211,45 +211,57 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
             nome = nome.trim();
             let dataFinal: Date | null = null;
             if (typeof tempoRaw === 'string') {
-              const tempoStr = tempoRaw.trim(); const parts = tempoStr.split(' '); const datePart = parts[0];
+              const tempoStr = tempoRaw.trim(); 
+              const parts = tempoStr.split(' '); 
+              const datePart = parts[0];
+              const timePart = parts[1] || '00:00:00';
+              
               if (datePart.includes('-')) {
                 const dateParts = datePart.split('-');
+                const timeParts = timePart.split(':');
                 if (dateParts.length === 3) {
                   const y = parseInt(dateParts[0]), m = parseInt(dateParts[1]), d = parseInt(dateParts[2]);
-                  if (y && m && d) dataFinal = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+                  const hh = parseInt(timeParts[0]) || 0, mm = parseInt(timeParts[1]) || 0, ss = parseInt(timeParts[2]) || 0;
+                  if (y && m && d) dataFinal = new Date(y, m - 1, d, hh, mm, ss);
                 }
               } else if (datePart.includes('/')) {
                 const dateParts = datePart.split('/');
+                const timeParts = timePart.split(':');
                 if (dateParts.length === 3) {
                   const d = parseInt(dateParts[0]), m = parseInt(dateParts[1]), y = parseInt(dateParts[2]);
-                  if (y && m && d) dataFinal = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+                  const hh = parseInt(timeParts[0]) || 0, mm = parseInt(timeParts[1]) || 0, ss = parseInt(timeParts[2]) || 0;
+                  if (y && m && d) dataFinal = new Date(y, m - 1, d, hh, mm, ss);
                 }
               }
             } else if (typeof tempoRaw === 'number') {
-              const dateObj = new Date((tempoRaw - 25569) * 86400 * 1000);
-              dataFinal = new Date(Date.UTC(dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate(), 12, 0, 0));
+              dataFinal = new Date((tempoRaw - 25569) * 86400 * 1000);
             }
             if (!dataFinal || isNaN(dataFinal.getTime())) return null;
             return { nome_colaborador: nome, data_hora: dataFinal, arquivo_origem: file.name };
           }).filter((r: any) => r !== null);
+
+        if (rawRecords.length === 0) { alert('Nenhum dado válido encontrado.'); setUploading(false); return; }
+
         const allDates = rawRecords.map((r: any) => r.data_hora);
         const minDate = new Date(Math.min(...allDates.map((d: Date) => d.getTime())));
         const maxDate = new Date(Math.max(...allDates.map((d: Date) => d.getTime())));
+        
         const { data: existingRecords } = await supabase.from('presenca_portaria').select('nome_colaborador, data_hora').gte('data_hora', minDate.toISOString()).lte('data_hora', maxDate.toISOString());
+        
         const existingSignatures = new Set<string>();
         if (existingRecords) {
           existingRecords.forEach(r => {
-            const d = new Date(r.data_hora);
-            existingSignatures.add(`${normalizeKey(r.nome_colaborador)}_${d.toISOString().split('T')[0]}`);
+            existingSignatures.add(`${normalizeKey(r.nome_colaborador)}_${new Date(r.data_hora).toISOString()}`);
           });
         }
-        const uniqueSet = new Set<string>();
+        
         const recordsToInsert = rawRecords.filter((r: any) => {
-          const key = `${normalizeKey(r.nome_colaborador)}_${r.data_hora.toISOString().split('T')[0]}`;
-          if (existingSignatures.has(key) || uniqueSet.has(key)) return false;
-          uniqueSet.add(key); return true;
+          const key = `${normalizeKey(r.nome_colaborador)}_${r.data_hora.toISOString()}`;
+          return !existingSignatures.has(key);
         });
+
         if (recordsToInsert.length === 0) { alert('Nenhum registro novo.'); setUploading(false); return; }
+        
         const BATCH_SIZE = 1000;
         for (let i = 0; i < recordsToInsert.length; i += BATCH_SIZE) {
           const batch = recordsToInsert.slice(i, i + BATCH_SIZE).map((r: any) => ({ nome_colaborador: r.nome_colaborador, data_hora: r.data_hora.toISOString(), arquivo_origem: r.arquivo_origem }));
@@ -338,7 +350,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
         const weekDays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
         dataToExport = descriptiveData.map(item => ({
             'Colaborador': toTitleCase(item.nome_colaborador), 'Sócio Responsável': toTitleCase(socioMap.get(normalizeKey(item.nome_colaborador)) || '-'),
-            'Data': new Date(item.data_hora).toLocaleDateString('pt-BR'), 'Dia da Semana': weekDays[new Date(item.data_hora).getUTCDay()]
+            'Data': new Date(item.data_hora).toLocaleDateString('pt-BR'), 'Hora': new Date(item.data_hora).toLocaleTimeString('pt-BR'), 'Dia da Semana': weekDays[new Date(item.data_hora).getDay()]
         }));
         sheetName = 'Descritivo'; fileName = 'Presencial_Descritivo';
     }
