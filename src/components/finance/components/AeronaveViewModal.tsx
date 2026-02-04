@@ -1,7 +1,7 @@
 import { X, Edit2, Trash2, Plane, Calendar, MapPin, DollarSign, Info, FolderSearch, Upload, MessageSquare, AlignLeft, Download, FileText } from 'lucide-react'
 import { useState, useRef } from 'react'
 import { supabase } from '../../../lib/supabase'
-import { AeronaveMenuSelector } from './AeronaveMenuSelector'
+import { ManagedDropdown } from './ManagedDropdown'
 
 interface AeronaveViewModalProps {
   item: any;
@@ -214,11 +214,14 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
                 <div>
                   <div className="flex items-end gap-2 mb-4">
                     <div className="flex-1">
-                      <AeronaveMenuSelector 
-                        label="Selecione o Tipo"
-                        type="documento"
+                      <ManagedDropdown
+                        label="Tipo de Documento"
                         value={tipoDocumento || item.tipo_documento || ''}
-                        onChange={(val: string) => setTipoDocumento(val)} 
+                        onChange={(val: string) => setTipoDocumento(val)}
+                        tableName="aeronave_tipos_documento"
+                        columnName="tipo"
+                        placeholder="Selecione o tipo"
+                        icon={<FileText className="w-4 h-4" />}
                       />
                     </div>
                     <input 
