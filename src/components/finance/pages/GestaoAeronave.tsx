@@ -164,7 +164,7 @@ export function GestaoAeronave({
       .select('*')
       .order('data', { ascending: false })
     if (result) setData(result)
-    setLoading(false)
+    loading && setLoading(false)
   }
 
   const fetchPagamentos = async () => {
@@ -747,12 +747,12 @@ export function GestaoAeronave({
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto custom-scrollbar pb-1 md:pb-0">
              <div className="relative">
-                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-3 py-2 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                  <Tag className="h-3.5 w-3.5 text-blue-600 mr-2 flex-shrink-0" />
+                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-2 py-1.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
+                  <Tag className="h-3 w-3 text-blue-600 mr-1.5 flex-shrink-0" />
                   <select 
-                    className="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer"
+                    className="bg-transparent text-[10px] font-bold text-gray-700 outline-none cursor-pointer"
                     value={selectedExpense}
                     onChange={e => setSelectedExpense(e.target.value)}
                   >
@@ -772,10 +772,10 @@ export function GestaoAeronave({
              </div>
 
              <div className="relative">
-                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-3 py-2 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                  <Building2 className="h-3.5 w-3.5 text-blue-600 mr-2 flex-shrink-0" />
+                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-2 py-1.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
+                  <Building2 className="h-3 w-3 text-blue-600 mr-1.5 flex-shrink-0" />
                   <select 
-                    className="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer"
+                    className="bg-transparent text-[10px] font-bold text-gray-700 outline-none cursor-pointer"
                     value={selectedSupplier}
                     onChange={e => setSelectedSupplier(e.target.value)}
                   >
@@ -794,18 +794,18 @@ export function GestaoAeronave({
                 </div>
              </div>
 
-             <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-3 py-2 transition-all shadow-sm hover:shadow-md">
-                <Calendar className="h-3.5 w-3.5 text-blue-600 mr-2 flex-shrink-0" />
+             <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-2 py-1.5 transition-all shadow-sm hover:shadow-md">
+                <Calendar className="h-3 w-3 text-blue-600 mr-1.5 flex-shrink-0" />
                 <input 
                   type="date" 
-                  className="bg-transparent text-xs font-bold text-gray-700 outline-none w-28"
+                  className="bg-transparent text-[10px] font-bold text-gray-700 outline-none w-24"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
                 />
-                <span className="mx-2 text-gray-400 text-[9px] font-black uppercase tracking-widest">até</span>
+                <span className="mx-1.5 text-gray-400 text-[8px] font-black uppercase tracking-widest">até</span>
                 <input 
                   type="date" 
-                  className="bg-transparent text-xs font-bold text-gray-700 outline-none w-28"
+                  className="bg-transparent text-[10px] font-bold text-gray-700 outline-none w-24"
                   value={endDate}
                   onChange={e => setEndDate(e.target.value)}
                 />
@@ -814,10 +814,10 @@ export function GestaoAeronave({
              {(startDate || endDate || searchTerm || selectedExpense || selectedSupplier) && (
                <button 
                 onClick={resetFilters} 
-                className="flex items-center gap-1.5 px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border-2 border-red-200 shadow-sm hover:shadow-md"
+                className="flex items-center gap-1 px-2 py-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border-2 border-red-200 shadow-sm hover:shadow-md flex-shrink-0"
                >
-                 <XCircle className="h-3.5 w-3.5" />
-                 <span className="text-[9px] font-black uppercase tracking-widest">Limpar</span>
+                 <XCircle className="h-3 w-3" />
+                 <span className="text-[8px] font-black uppercase tracking-widest">Limpar</span>
                </button>
              )}
           </div>
