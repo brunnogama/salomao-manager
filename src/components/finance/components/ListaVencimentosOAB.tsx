@@ -60,6 +60,10 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         const processados = colaboradores.filter((v: any) => {
           if (!v.data_admissao) return false
           
+          // Filtro de Status Ativo
+          const statusLimpo = v.status?.trim().toLowerCase() || '';
+          if (statusLimpo !== 'ativo') return false;
+
           const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
           const ehCargoValido = cargoLimpo === 'advogado' || cargoLimpo === 'socio';
           
