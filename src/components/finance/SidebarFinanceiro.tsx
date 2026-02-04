@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   LayoutDashboard, 
   Calendar,
@@ -10,6 +10,7 @@ import {
   Briefcase,
   GraduationCap
 } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 
 interface SidebarProps {
   activePage: string;
@@ -19,6 +20,46 @@ interface SidebarProps {
 }
 
 export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: SidebarProps) {
+  const [vencidosCount, setVencidosCount] = useState(0)
+
+  useEffect(() => {
+    const fetchVencidosOAB = async () => {
+      try {
+        const { data } = await supabase.from('colaboradores').select('cargo, data_admissao')
+        
+        if (data) {
+          const hoje = new Date()
+          hoje.setHours(0, 0, 0, 0)
+
+          const count = data.filter((v: any) => {
+            if (!v.data_admissao) return false
+            const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ''
+            const ehCargoValido = cargoLimpo === 'advogado' || cargoLimpo === 'socio'
+            if (!ehCargoValido) return false
+
+            let dia, mes, ano
+            if (v.data_admissao.includes('/')) {
+              [dia, mes, ano] = v.data_admissao.split('/').map(Number)
+            } else {
+              [ano, mes, dia] = v.data_admissao.split('-').map(Number)
+            }
+
+            const dataVenc = new Date(ano, (mes - 1) + 6, dia)
+            dataVenc.setDate(dataVenc.getDate() - 1)
+            
+            return dataVenc < hoje
+          }).length
+
+          setVencidosCount(count)
+        }
+      } catch (error) {
+        console.error('Erro ao contar OAB vencidas:', error)
+      }
+    }
+
+    fetchVencidosOAB()
+  }, [])
+
   const mainItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'calendario', label: 'Calendário', icon: Calendar },
@@ -89,6 +130,12 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
                 />
                 <span className="text-sm">{item.label}</span>
               </div>
+
+              {item.id === 'oab' && vencidosCount > 0 && (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white animate-pulse shadow-lg shadow-red-900/20">
+                  {vencidosCount}
+                </span>
+              )}
             </button>
           ))}
         </nav>
