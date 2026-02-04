@@ -135,7 +135,7 @@ export function GestaoAeronave({
   onTogglePresentationMode
 }: GestaoAeronaveProps) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'gerencial'>('gerencial')
-  const [dataType, setDataType] = useState<'despesas' | 'pagamentos'>('despesas')
+  const [dataType, setDataType] = useState<'tudo' | 'despesas' | 'pagamentos'>('tudo')
   const [searchTerm, setSearchTerm] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -255,14 +255,25 @@ export function GestaoAeronave({
     })
   }, [dataPagamentos, searchTerm, startDate, endDate, selectedExpense, selectedSupplier])
 
-  const currentFilteredData = dataType === 'despesas' ? filteredDataDespesas : filteredDataPagamentos
+  const currentFilteredData = dataType === 'despesas' ? filteredDataDespesas : 
+                              dataType === 'pagamentos' ? filteredDataPagamentos : 
+                              [...filteredDataDespesas, ...filteredDataPagamentos]
 
   // CARDS DINÂMICOS - Filtra por ano do dashboard
   const filteredDataForCards = useMemo(() => {
-    const sourceData = dataType === 'despesas' ? filteredDataDespesas : filteredDataPagamentos
+    let sourceData: any[] = []
+    if (dataType === 'tudo') {
+      sourceData = [...filteredDataDespesas, ...filteredDataPagamentos]
+    } else if (dataType === 'despesas') {
+      sourceData = filteredDataDespesas
+    } else {
+      sourceData = filteredDataPagamentos
+    }
+    
     if (selectedDashboardYear === 'total') return sourceData
+    
     return sourceData.filter(item => {
-      const dateField = dataType === 'despesas' ? item.data : item.emissao
+      const dateField = item.data || item.emissao
       if (!dateField) return false
       const year = dateField.split('-')[0]
       return year === selectedDashboardYear
@@ -270,7 +281,26 @@ export function GestaoAeronave({
   }, [filteredDataDespesas, filteredDataPagamentos, selectedDashboardYear, dataType])
 
   const totals = useMemo(() => {
-    if (dataType === 'despesas') {
+    if (dataType === 'tudo') {
+      const despesas = filteredDataForCards.filter(item => item.data)
+      const pagamentos = filteredDataForCards.filter(item => item.emissao)
+      
+      const totalFlights = new Set(despesas.map(item => `${item.data}-${item.localidade_destino}`)).size
+      const totalDespesasPrevisto = despesas.reduce((acc, curr) => acc + (Number(curr.valor_previsto) || 0), 0)
+      const totalDespesasPago = despesas.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
+      const totalPagamentosBruto = pagamentos.reduce((acc, curr) => acc + (Number(curr.valor_bruto) || 0), 0)
+      const totalPagamentosLiquido = pagamentos.reduce((acc, curr) => acc + (Number(curr.valor_liquido_realizado) || 0), 0)
+      
+      return {
+        missoes: totalFlights,
+        totalRegistros: filteredDataForCards.length,
+        despesasPrevisto: totalDespesasPrevisto,
+        despesasPago: totalDespesasPago,
+        pagamentosBruto: totalPagamentosBruto,
+        pagamentosLiquido: totalPagamentosLiquido,
+        totalGeral: totalDespesasPago + totalPagamentosLiquido
+      }
+    } else if (dataType === 'despesas') {
       const totalFlights = new Set(filteredDataForCards.map(item => `${item.data}-${item.localidade_destino}`)).size
       return filteredDataForCards.reduce((acc, curr) => ({
         missoes: totalFlights,
@@ -556,7 +586,39 @@ export function GestaoAeronave({
 
       {/* CARDS DINÂMICOS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in duration-500">
-        {dataType === 'despesas' ? (
+        {dataType === 'tudo' ? (
+          <>
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-all">
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Registros</p>
+                <p className="text-2xl font-black text-indigo-600 mt-1">{totals.totalRegistros}</p>
+              </div>
+              <div className="p-3 bg-indigo-50 rounded-xl group-hover:bg-indigo-100 transition-colors">
+                <Database className="h-6 w-6 text-indigo-600" />
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Despesas</p>
+                <p className="text-2xl font-black text-blue-600 mt-1">{formatCurrency(totals.despesasPago)}</p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+                <Receipt className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-all">
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Pagamentos</p>
+                <p className="text-2xl font-black text-emerald-600 mt-1">{formatCurrency(totals.pagamentosLiquido)}</p>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
+                <DollarSign className="h-6 w-6 text-emerald-600" />
+              </div>
+            </div>
+          </>
+        ) : dataType === 'despesas' ? (
           <>
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
               <div>
@@ -644,6 +706,12 @@ export function GestaoAeronave({
 
             {activeTab === 'gerencial' && (
               <div className="flex bg-white border-2 border-gray-200 p-1 rounded-xl shadow-sm ml-2">
+                <button 
+                  onClick={() => { setDataType('tudo'); resetFilters(); }} 
+                  className={`flex items-center gap-2 px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dataType === 'tudo' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <Database className="h-3 w-3" /> Tudo
+                </button>
                 <button 
                   onClick={() => { setDataType('despesas'); resetFilters(); }} 
                   className={`flex items-center gap-2 px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dataType === 'despesas' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
@@ -785,7 +853,32 @@ export function GestaoAeronave({
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible animate-in fade-in duration-1000">
         {activeTab === 'gerencial' ? (
           <div className="w-full">
-            {dataType === 'despesas' ? (
+            {dataType === 'tudo' ? (
+              <div className="space-y-8 p-6">
+                <div>
+                  <h3 className="text-lg font-black text-[#112240] uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Receipt className="h-5 w-5 text-blue-600" />
+                    Despesas ({filteredDataDespesas.length})
+                  </h3>
+                  <AeronaveTable 
+                    data={filteredDataDespesas} 
+                    loading={loading} 
+                    onRowClick={handleRowClick}
+                  />
+                </div>
+                <div className="border-t-2 border-gray-100 pt-8">
+                  <h3 className="text-lg font-black text-[#112240] uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-emerald-600" />
+                    Pagamentos ({filteredDataPagamentos.length})
+                  </h3>
+                  <AeronavePagamentoTable 
+                    data={filteredDataPagamentos} 
+                    loading={loading} 
+                    onRowClick={handleRowClick}
+                  />
+                </div>
+              </div>
+            ) : dataType === 'despesas' ? (
               <AeronaveTable 
                 data={filteredDataDespesas} 
                 loading={loading} 
