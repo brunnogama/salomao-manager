@@ -46,6 +46,7 @@ export function GestaoAeronave({
   const [endDate, setEndDate] = useState('')
   const [selectedExpense, setSelectedExpense] = useState('')
   const [selectedSupplier, setSelectedSupplier] = useState('')
+  const [selectedDashboardYear, setSelectedDashboardYear] = useState<string>('total')
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -110,15 +111,25 @@ export function GestaoAeronave({
     })
   }, [data, searchTerm, startDate, endDate, selectedExpense, selectedSupplier])
 
-  const totals = useMemo(() => {
-    const totalFlights = new Set(filteredData.map(item => `${item.data}-${item.localidade_destino}`)).size
+  // CARDS DINÂMICOS - Filtra por ano do dashboard
+  const filteredDataForCards = useMemo(() => {
+    if (selectedDashboardYear === 'total') return filteredData
+    return filteredData.filter(item => {
+      if (!item.data) return false
+      const year = item.data.split('-')[0]
+      return year === selectedDashboardYear
+    })
+  }, [filteredData, selectedDashboardYear])
 
-    return filteredData.reduce((acc, curr) => ({
+  const totals = useMemo(() => {
+    const totalFlights = new Set(filteredDataForCards.map(item => `${item.data}-${item.localidade_destino}`)).size
+
+    return filteredDataForCards.reduce((acc, curr) => ({
       missoes: totalFlights,
       previsto: acc.previsto + (Number(curr.valor_previsto) || 0),
       pago: acc.pago + (Number(curr.valor_pago) || 0),
     }), { missoes: totalFlights, previsto: 0, pago: 0 })
-  }, [filteredData])
+  }, [filteredDataForCards])
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
@@ -261,7 +272,7 @@ export function GestaoAeronave({
   return (
     <div className={`flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 transition-all duration-300 p-6 space-y-6`}>
       
-      {/* HEADER - Sempre visível, mas compacto em modo apresentação */}
+      {/* HEADER */}
       <div className={`flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in fade-in duration-300 ${isPresentationMode ? 'py-3' : ''}`}>
         <div className="flex items-center gap-4">
           <div className={`rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg ${isPresentationMode ? 'p-2' : 'p-3'}`}>
@@ -283,7 +294,6 @@ export function GestaoAeronave({
             </div>
           )}
           
-          {/* BOTÃO MODO APRESENTAÇÃO */}
           <button
             onClick={handleTogglePresentation}
             className={`p-2.5 bg-white border-2 rounded-lg transition-all shadow-sm hover:shadow-md ${
@@ -308,7 +318,7 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* CARDS DE TOTAIS - Sempre visíveis */}
+      {/* CARDS DINÂMICOS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in duration-500">
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
           <div>
@@ -341,7 +351,7 @@ export function GestaoAeronave({
         </div>
       </div>
 
-      {/* TOOLBAR - Sempre visível */}
+      {/* TOOLBAR */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4 animate-in fade-in duration-700">
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -366,7 +376,7 @@ export function GestaoAeronave({
                 <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
                   <Tag className="h-3.5 w-3.5 text-blue-600 mr-2" />
                   <select 
-                    className="bg-transparent text-xs font-bold text-gray-700 outline-none min-w-[130px] cursor-pointer"
+                    className="bg-transparent text-sm font-bold text-gray-700 outline-none min-w-[130px] cursor-pointer"
                     value={selectedExpense}
                     onChange={e => setSelectedExpense(e.target.value)}
                   >
@@ -380,7 +390,7 @@ export function GestaoAeronave({
                 <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
                   <Building2 className="h-3.5 w-3.5 text-blue-600 mr-2" />
                   <select 
-                    className="bg-transparent text-xs font-bold text-gray-700 outline-none min-w-[140px] cursor-pointer"
+                    className="bg-transparent text-sm font-bold text-gray-700 outline-none min-w-[140px] cursor-pointer"
                     value={selectedSupplier}
                     onChange={e => setSelectedSupplier(e.target.value)}
                   >
@@ -394,14 +404,14 @@ export function GestaoAeronave({
                 <Calendar className="h-4 w-4 text-blue-600 mr-3" />
                 <input 
                   type="date" 
-                  className="bg-transparent text-xs font-bold text-gray-700 outline-none"
+                  className="bg-transparent text-sm font-bold text-gray-700 outline-none"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
                 />
                 <span className="mx-3 text-gray-400 text-[10px] font-black uppercase tracking-widest">até</span>
                 <input 
                   type="date" 
-                  className="bg-transparent text-xs font-bold text-gray-700 outline-none"
+                  className="bg-transparent text-sm font-bold text-gray-700 outline-none"
                   value={endDate}
                   onChange={e => setEndDate(e.target.value)}
                 />
@@ -467,7 +477,9 @@ export function GestaoAeronave({
         ) : (
           <AeronaveDashboard 
             data={filteredData} 
-            onMissionClick={handleMissionClick} 
+            onMissionClick={handleMissionClick}
+            selectedYear={selectedDashboardYear}
+            onYearChange={setSelectedDashboardYear}
           />
         )}
       </div>

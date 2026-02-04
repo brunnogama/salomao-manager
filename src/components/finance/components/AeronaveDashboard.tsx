@@ -5,10 +5,12 @@ interface DashboardProps {
   data: any[];
   onMissionClick?: (data: string, destino: string) => void;
   onResetFilter?: () => void;
+  selectedYear?: string;
+  onYearChange?: (year: string) => void;
 }
 
-export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: DashboardProps) {
-  const [selectedYear, setSelectedYear] = useState<string>('total')
+export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selectedYear = 'total', onYearChange }: DashboardProps) {
+  const [localSelectedYear, setLocalSelectedYear] = useState<string>(selectedYear)
 
   useEffect(() => {
     if (onResetFilter) {
@@ -16,14 +18,25 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
     }
   }, [onResetFilter]);
 
+  useEffect(() => {
+    setLocalSelectedYear(selectedYear)
+  }, [selectedYear])
+
+  const handleYearChange = (year: string) => {
+    setLocalSelectedYear(year)
+    if (onYearChange) {
+      onYearChange(year)
+    }
+  }
+
   const filteredByYear = useMemo(() => {
-    if (selectedYear === 'total') return data
+    if (localSelectedYear === 'total') return data
     return data.filter(item => {
       if (!item.data) return false
       const year = item.data.split('-')[0]
-      return year === selectedYear
+      return year === localSelectedYear
     })
-  }, [data, selectedYear])
+  }, [data, localSelectedYear])
 
   const stats = useMemo(() => {
     const totalPaid = filteredByYear.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
@@ -79,11 +92,6 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
     } catch { return dateStr }
   }
 
-  const getYearLabel = () => {
-    if (selectedYear === 'total') return 'Total'
-    return selectedYear
-  }
-
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
       
@@ -100,9 +108,9 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1 border border-gray-200">
               <Calendar className="h-3.5 w-3.5 text-gray-400 ml-2" />
               <button
-                onClick={() => setSelectedYear('total')}
+                onClick={() => handleYearChange('total')}
                 className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  selectedYear === 'total' 
+                  localSelectedYear === 'total' 
                     ? 'bg-[#1e3a8a] text-white shadow-md' 
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -110,9 +118,9 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
                 Total
               </button>
               <button
-                onClick={() => setSelectedYear('2026')}
+                onClick={() => handleYearChange('2026')}
                 className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  selectedYear === '2026' 
+                  localSelectedYear === '2026' 
                     ? 'bg-[#1e3a8a] text-white shadow-md' 
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -120,9 +128,9 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
                 2026
               </button>
               <button
-                onClick={() => setSelectedYear('2025')}
+                onClick={() => handleYearChange('2025')}
                 className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  selectedYear === '2025' 
+                  localSelectedYear === '2025' 
                     ? 'bg-[#1e3a8a] text-white shadow-md' 
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -134,7 +142,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
           
           <div className="px-8 py-3 bg-blue-50/30 border-b border-blue-100/50">
             <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">
-              {filteredByYear.length} Lançamentos {selectedYear !== 'total' && `em ${selectedYear}`}
+              {filteredByYear.length} Lançamentos {localSelectedYear !== 'total' && `em ${localSelectedYear}`}
             </span>
           </div>
 
@@ -177,7 +185,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
         {/* LADO DIREITO: Gráficos */}
         <div className="lg:col-span-4 space-y-6">
           
-          {/* Card Principais Fornecedores */}
+          {/* Card Principais Fornecedores - NOMES COMPLETOS */}
           <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-[360px] flex flex-col">
             <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-blue-600" /> Principais Fornecedores
@@ -185,9 +193,9 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
             <div className="space-y-5 overflow-y-auto custom-scrollbar flex-1">
               {stats.suppliers.map(([name, value]: any) => (
                 <div key={name} className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-black text-gray-500 truncate max-w-[140px] uppercase">{name}</span>
-                    <span className="text-xs font-black text-[#112240]">{formatCurrency(value)}</span>
+                  <div className="flex justify-between items-center gap-3">
+                    <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
+                    <span className="text-xs font-black text-[#112240] whitespace-nowrap">{formatCurrency(value)}</span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div 
@@ -207,12 +215,12 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
             </h4>
             <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1">
               {stats.expenses.map(([name, value]: any) => (
-                <div key={name} className="flex items-center justify-between group cursor-default">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform" />
-                    <span className="text-xs font-bold uppercase tracking-widest text-gray-300">{name}</span>
+                <div key={name} className="flex items-center justify-between group cursor-default gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform flex-shrink-0" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-gray-300 break-words">{name}</span>
                   </div>
-                  <span className="text-xs font-black">{formatCurrency(value)}</span>
+                  <span className="text-xs font-black whitespace-nowrap">{formatCurrency(value)}</span>
                 </div>
               ))}
             </div>

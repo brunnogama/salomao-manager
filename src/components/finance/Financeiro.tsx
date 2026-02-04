@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Menu } from 'lucide-react'
-import { SidebarFinanceiro } from './SidebarFinanceiro'
+import { SidebarFinanceiro } from './components/SidebarFinanceiro'
 import { GestaoAeronave } from './pages/GestaoAeronave'
 import { Calendario } from './pages/Calendario'
 import { GED } from './pages/GED'
@@ -12,7 +12,6 @@ export function Financeiro() {
 
   const handleTogglePresentationMode = (isPresenting: boolean) => {
     setIsPresentationMode(isPresenting)
-    // Quando entra em modo apresentação, fecha a sidebar mobile
     if (isPresenting) {
       setIsSidebarOpen(false)
     }
@@ -85,7 +84,7 @@ export function Financeiro() {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
       
-      {/* SIDEBAR - Esconde completamente em modo apresentação */}
+      {/* SIDEBAR - ESCONDE quando isPresentationMode = true */}
       {!isPresentationMode && (
         <SidebarFinanceiro
           activePage={activePage}
