@@ -330,13 +330,13 @@ export function GestaoAeronave({
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-amber-200 transition-all">
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Previsto</p>
-            <p className="text-2xl font-black text-blue-600 mt-1">{formatCurrency(totals.previsto)}</p>
+            <p className="text-2xl font-black text-amber-600 mt-1">{formatCurrency(totals.previsto)}</p>
           </div>
-          <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-            <DollarSign className="h-6 w-6 text-blue-600" />
+          <div className="p-3 bg-amber-50 rounded-xl group-hover:bg-amber-100 transition-colors">
+            <DollarSign className="h-6 w-6 text-amber-600" />
           </div>
         </div>
 
