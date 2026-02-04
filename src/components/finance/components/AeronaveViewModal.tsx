@@ -216,6 +216,7 @@ export function AeronaveViewModal({ item, isOpen, onClose, onEdit, onDelete }: A
                     <div className="flex-1">
                       <AeronaveMenuSelector 
                         label="Selecione o Tipo"
+                        type="documento"
                         value={tipoDocumento || item.tipo_documento || ''}
                         onChange={(val: string) => setTipoDocumento(val)} 
                       />
