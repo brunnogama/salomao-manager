@@ -28,6 +28,7 @@ import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 import { GestaoAeronave } from './components/finance/pages/GestaoAeronave'
 import { GED } from './components/finance/pages/GED'
 import { Calendario as CalendarioFinanceiro } from './components/finance/pages/Calendario'
+import { ListaOAB } from './components/finance/pages/ListaOAB'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
 
@@ -144,7 +145,7 @@ export default function App() {
                     userName={getUserDisplayName()} 
                     onModuleHome={() => setCurrentModule('home')} 
                     onLogout={handleLogout} 
-                  />
+                    />
                 )}
                 {activePage === 'magistrados' && (
                   <Magistrados 
@@ -192,6 +193,13 @@ export default function App() {
                 {activePage === 'calendario' && <CalendarioFinanceiro userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {(activePage === 'dashboard' || activePage === 'contas-pagar' || activePage === 'contas-receber') && (
                   <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />
+                )}
+                {activePage === 'oab' && (
+                  <ListaOAB 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
                 )}
                 {activePage === 'gestao-aeronave' && (
                   <GestaoAeronave 
