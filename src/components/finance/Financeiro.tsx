@@ -12,6 +12,7 @@ export function Financeiro() {
 
   const handleTogglePresentationMode = (isPresenting: boolean) => {
     setIsPresentationMode(isPresenting)
+    // Quando entra em modo apresentação, fecha a sidebar mobile
     if (isPresenting) {
       setIsSidebarOpen(false)
     }
@@ -24,11 +25,9 @@ export function Financeiro() {
           <GestaoAeronave
             userName="Bruno Silva"
             onModuleHome={() => {
-              // TODO: Implementar navegação para seleção de módulos
               console.log('Voltar para seleção de módulos')
             }}
             onLogout={() => {
-              // TODO: Implementar lógica de logout
               console.log('Logout')
             }}
             onTogglePresentationMode={handleTogglePresentationMode}
@@ -86,7 +85,7 @@ export function Financeiro() {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
       
-      {/* SIDEBAR - Esconde em modo apresentação */}
+      {/* SIDEBAR - Esconde completamente em modo apresentação */}
       {!isPresentationMode && (
         <SidebarFinanceiro
           activePage={activePage}

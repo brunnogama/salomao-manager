@@ -8,7 +8,7 @@ interface DashboardProps {
 }
 
 export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: DashboardProps) {
-  const [selectedYear, setSelectedYear] = useState<string>('2026')
+  const [selectedYear, setSelectedYear] = useState<string>('total')
 
   useEffect(() => {
     if (onResetFilter) {
@@ -17,6 +17,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
   }, [onResetFilter]);
 
   const filteredByYear = useMemo(() => {
+    if (selectedYear === 'total') return data
     return data.filter(item => {
       if (!item.data) return false
       const year = item.data.split('-')[0]
@@ -78,6 +79,11 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
     } catch { return dateStr }
   }
 
+  const getYearLabel = () => {
+    if (selectedYear === 'total') return 'Total'
+    return selectedYear
+  }
+
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
       
@@ -86,22 +92,22 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
         {/* LADO ESQUERDO: Totais por Missão */}
         <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[740px]">
           <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
-            <h4 className="text-[11px] font-black text-[#112240] uppercase tracking-[0.2em] flex items-center gap-2">
+            <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-blue-600" /> Totais por Missão
             </h4>
             
-            {/* Filtro de Ano */}
+            {/* Filtro de Ano: Total | 2026 | 2025 */}
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1 border border-gray-200">
               <Calendar className="h-3.5 w-3.5 text-gray-400 ml-2" />
               <button
-                onClick={() => setSelectedYear('2025')}
+                onClick={() => setSelectedYear('total')}
                 className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  selectedYear === '2025' 
+                  selectedYear === 'total' 
                     ? 'bg-[#1e3a8a] text-white shadow-md' 
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                2025
+                Total
               </button>
               <button
                 onClick={() => setSelectedYear('2026')}
@@ -113,12 +119,22 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
               >
                 2026
               </button>
+              <button
+                onClick={() => setSelectedYear('2025')}
+                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  selectedYear === '2025' 
+                    ? 'bg-[#1e3a8a] text-white shadow-md' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                2025
+              </button>
             </div>
           </div>
           
           <div className="px-8 py-3 bg-blue-50/30 border-b border-blue-100/50">
-            <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest">
-              {filteredByYear.length} Lançamentos em {selectedYear}
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">
+              {filteredByYear.length} Lançamentos {selectedYear !== 'total' && `em ${selectedYear}`}
             </span>
           </div>
 
@@ -126,10 +142,10 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
             <table className="w-full text-left">
               <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
                 <tr>
-                  <th className="px-8 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Missão</th>
-                  <th className="px-4 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Data</th>
-                  <th className="px-4 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Previsto</th>
-                  <th className="px-8 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Pago</th>
+                  <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Missão</th>
+                  <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Data</th>
+                  <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Previsto</th>
+                  <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Pago</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -142,15 +158,15 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
                     className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
                   >
                     <td className="px-8 py-4">
-                      <span className="text-[11px] font-black text-[#112240] uppercase truncate block max-w-[220px]">
+                      <span className="text-sm font-black text-[#112240] uppercase truncate block max-w-[220px]">
                         {m.missao}
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="text-xs font-bold text-gray-600">{formatDate(m.data)}</span>
+                      <span className="text-sm font-bold text-gray-600">{formatDate(m.data)}</span>
                     </td>
-                    <td className="px-4 py-4 text-xs font-bold text-blue-600 text-right">{formatCurrency(m.previsto)}</td>
-                    <td className="px-8 py-4 text-xs font-black text-emerald-600 text-right">{formatCurrency(m.pago)}</td>
+                    <td className="px-4 py-4 text-sm font-bold text-blue-600 text-right">{formatCurrency(m.previsto)}</td>
+                    <td className="px-8 py-4 text-sm font-black text-emerald-600 text-right">{formatCurrency(m.pago)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -170,8 +186,8 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
               {stats.suppliers.map(([name, value]: any) => (
                 <div key={name} className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-gray-500 truncate max-w-[140px] uppercase">{name}</span>
-                    <span className="text-[10px] font-black text-[#112240]">{formatCurrency(value)}</span>
+                    <span className="text-xs font-black text-gray-500 truncate max-w-[140px] uppercase">{name}</span>
+                    <span className="text-xs font-black text-[#112240]">{formatCurrency(value)}</span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div 
@@ -194,9 +210,9 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
                 <div key={name} className="flex items-center justify-between group cursor-default">
                   <div className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform" />
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-gray-300">{name}</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-gray-300">{name}</span>
                   </div>
-                  <span className="text-[10px] font-black">{formatCurrency(value)}</span>
+                  <span className="text-xs font-black">{formatCurrency(value)}</span>
                 </div>
               ))}
             </div>
