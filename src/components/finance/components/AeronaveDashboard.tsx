@@ -1,7 +1,7 @@
 // Caminho do arquivo: AeronaveViewModal.tsx
 
 import { useMemo, useEffect, useState } from 'react'
-import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown, Receipt, DollarSign, Database } from 'lucide-react'
+import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown, Receipt, DollarSign, Wallet } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart, LabelList } from 'recharts'
 
 interface DashboardProps {
@@ -309,7 +309,7 @@ export function AeronaveDashboard({
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
-            <Database className="h-4 w-4" />
+            <Wallet className="h-4 w-4" />
             Todos os Pagamentos
           </button>
           <button
