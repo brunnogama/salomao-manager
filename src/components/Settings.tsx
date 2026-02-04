@@ -205,7 +205,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     if (confirmText !== 'APAGAR') return;
     setLoading(true);
     try {
-      const { error } = await supabase.from(table).delete().neq('id', table.includes('familia') || table.includes('financeiro') ? '00000000-0000-0000-0000-000000000000' : 0);
+      const { error } = await supabase.from(table).delete().neq('id', isNaN(Number('1')) ? '00000000-0000-0000-0000-000000000000' : -1);
       if (error) throw error;
       setStatus({ type: 'success', message: `${moduleName} resetado!` });
       await logAction('RESET', moduleName.toUpperCase(), logMsg);
@@ -301,8 +301,8 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       {activeModule === 'rh' && (
         <MaintenanceSection 
           type="rh" isAdmin={isAdmin} 
-          onReset={() => handleResetAction('presenca_portaria', 'RH', 'Resetou presenças')}
-          onResetSecondary={() => handleResetAction('colaboradores', 'RH', 'Resetou colaboradores')}
+          onReset={() => handleResetAction('presenca_portaria', 'Presencial', 'Resetou presenças')}
+          onResetSecondary={() => handleResetAction('colaboradores', 'Colaboradores', 'Resetou colaboradores')}
         />
       )}
 
