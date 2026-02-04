@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useState } from 'react'
 import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
 
 interface DashboardProps {
   data: any[];
@@ -126,13 +127,11 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
     }
   }, [filteredByYear, localSelectedYear])
 
-  const maxMonthlyValue = Math.max(...stats.monthlyData.map(d => d.value), 1)
-
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* GRÁFICO DE COLUNAS MENSAL */}
+        {/* GRÁFICO DE LINHAS MENSAL */}
         <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-8 h-[380px] flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] flex items-center gap-2">
@@ -140,42 +139,54 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
             </h4>
             <div className="text-right">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Geral</p>
-              <p className="text-xl font-black text-blue-600">{formatCurrency(stats.totalPaid)}</p>
+              <p className="text-2xl font-black text-blue-600 leading-tight">{formatCurrency(stats.totalPaid)}</p>
             </div>
           </div>
 
-          <div className="relative flex-1 flex items-end gap-3 overflow-x-auto custom-scrollbar pb-2">
-            {stats.monthlyData.map((item) => {
-              const height = (item.value / maxMonthlyValue) * 100
-              
-              return (
-                <div key={item.month} className="relative flex-shrink-0 group flex flex-col justify-end" style={{ width: '70px' }}>
-                  <div className="text-[9px] font-black text-blue-600 text-center mb-2 opacity-100 transition-opacity">
-                    {item.value > 0 ? formatCurrency(item.value).replace('R$', '').trim() : ''}
-                  </div>
-
-                  <div className="relative h-full flex flex-col justify-end items-center">
-                    <div 
-                      className={`w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-300 group-hover:from-blue-700 group-hover:to-blue-500 relative ${item.value === 0 ? 'bg-gray-100' : ''}`}
-                      style={{ height: `${Math.max(height, 2)}%` }}
-                    >
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                        <div className="bg-[#112240] text-white px-3 py-2 rounded-lg shadow-xl whitespace-nowrap">
-                          <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest">{item.label}</p>
-                          <p className="text-xs font-black">{formatCurrency(item.value)}</p>
+          <div className="flex-1 w-full min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={stats.monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis 
+                  dataKey="label" 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 9, fontWeight: 900, fill: '#9ca3af' }}
+                  dy={10}
+                />
+                <YAxis hide domain={[0, 'auto']} />
+                <Tooltip 
+                  cursor={{ stroke: '#2563eb', strokeWidth: 2, strokeDasharray: '5 5' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-[#112240] text-white px-4 py-3 rounded-xl shadow-2xl border border-white/10">
+                          <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-1">{payload[0].payload.label}</p>
+                          <p className="text-sm font-black">{formatCurrency(payload[0].value as number)}</p>
                         </div>
-                      </div>
-                    </div>
-                    
-                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-3 text-center leading-tight">
-                      {item.label}
-                    </p>
-                  </div>
-                </div>
-              )
-            })}
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke="#2563eb" 
+                  strokeWidth={4}
+                  fillOpacity={1} 
+                  fill="url(#colorValue)" 
+                  animationDuration={1500}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-          <div className="h-px bg-gray-100 w-full mt-2" />
         </div>
 
         {/* Card Despesas por Tipo */}
