@@ -98,6 +98,9 @@ export function AeronaveDashboard({
 
     const missionsMap: any = {}
     filteredByYear.forEach(item => {
+      // Filtrar missões sem data ou destino
+      if (!item.data || !item.localidade_destino) return
+      
       const key = `${item.data} | ${item.localidade_destino}`
       if (!missionsMap[key]) {
         missionsMap[key] = { 
@@ -127,11 +130,29 @@ export function AeronaveDashboard({
 
     const monthlyData: { [key: string]: number } = {}
     
+    // Sempre inicializar todos os 12 meses
     if (localSelectedYear !== 'total') {
+      // Ano específico: preencher todos os meses do ano
       for (let i = 1; i <= 12; i++) {
         const monthKey = `${localSelectedYear}-${String(i).padStart(2, '0')}`
         monthlyData[monthKey] = 0
       }
+    } else {
+      // Total: preencher todos os meses de todos os anos presentes nos dados
+      const allYears = new Set<string>()
+      filteredByYear.forEach(item => {
+        if (item.data) {
+          const year = item.data.split('-')[0]
+          allYears.add(year)
+        }
+      })
+      
+      allYears.forEach(year => {
+        for (let i = 1; i <= 12; i++) {
+          const monthKey = `${year}-${String(i).padStart(2, '0')}`
+          monthlyData[monthKey] = 0
+        }
+      })
     }
 
     filteredByYear.forEach(item => {
@@ -189,11 +210,29 @@ export function AeronaveDashboard({
 
     const monthlyData: { [key: string]: { bruto: number, liquido: number } } = {}
     
+    // Sempre inicializar todos os 12 meses
     if (localSelectedYear !== 'total') {
+      // Ano específico: preencher todos os meses do ano
       for (let i = 1; i <= 12; i++) {
         const monthKey = `${localSelectedYear}-${String(i).padStart(2, '0')}`
         monthlyData[monthKey] = { bruto: 0, liquido: 0 }
       }
+    } else {
+      // Total: preencher todos os meses de todos os anos presentes nos dados
+      const allYears = new Set<string>()
+      pagamentosData.forEach(item => {
+        if (item.emissao) {
+          const year = item.emissao.split('-')[0]
+          allYears.add(year)
+        }
+      })
+      
+      allYears.forEach(year => {
+        for (let i = 1; i <= 12; i++) {
+          const monthKey = `${year}-${String(i).padStart(2, '0')}`
+          monthlyData[monthKey] = { bruto: 0, liquido: 0 }
+        }
+      })
     }
 
     pagamentosData.forEach(item => {
