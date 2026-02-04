@@ -90,8 +90,16 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
       supplierMap[sup] = (supplierMap[sup] || 0) + (Number(item.valor_pago) || 0)
     })
 
-    // DADOS MENSAIS para o gráfico
+    // DADOS MENSAIS para o gráfico (Garantindo todos os meses se um ano estiver selecionado)
     const monthlyData: { [key: string]: number } = {}
+    
+    if (localSelectedYear !== 'total') {
+      for (let i = 1; i <= 12; i++) {
+        const monthKey = `${localSelectedYear}-${String(i).padStart(2, '0')}`
+        monthlyData[monthKey] = 0
+      }
+    }
+
     filteredByYear.forEach(item => {
       if (item.data) {
         const [year, month] = item.data.split('-')
@@ -100,7 +108,6 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
       }
     })
 
-    // Ordenar meses cronologicamente
     const sortedMonthlyData = Object.entries(monthlyData)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([month, value]) => ({
@@ -117,9 +124,8 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
       suppliers: Object.entries(supplierMap).sort((a: any, b: any) => b[1] - a[1]).slice(0, 15),
       monthlyData: sortedMonthlyData
     }
-  }, [filteredByYear])
+  }, [filteredByYear, localSelectedYear])
 
-  // Calcular altura relativa para o gráfico
   const maxMonthlyValue = Math.max(...stats.monthlyData.map(d => d.value), 1)
 
   return (
@@ -127,7 +133,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* GRÁFICO DE COLUNAS MENSAL */}
-        <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-8">
+        <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-8 h-[380px] flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] flex items-center gap-2">
               <TrendingDown className="h-4 w-4 text-blue-600" /> Gastos Mensais
@@ -138,23 +144,21 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
             </div>
           </div>
 
-          <div className="relative h-64 flex items-end gap-3 overflow-x-auto custom-scrollbar pb-2">
+          <div className="relative flex-1 flex items-end gap-3 overflow-x-auto custom-scrollbar pb-2">
             {stats.monthlyData.map((item) => {
               const height = (item.value / maxMonthlyValue) * 100
               
               return (
                 <div key={item.month} className="relative flex-shrink-0 group flex flex-col justify-end" style={{ width: '70px' }}>
-                  {/* Valor no topo da coluna */}
                   <div className="text-[9px] font-black text-blue-600 text-center mb-2 opacity-100 transition-opacity">
-                    {formatCurrency(item.value).replace('R$', '').trim()}
+                    {item.value > 0 ? formatCurrency(item.value).replace('R$', '').trim() : ''}
                   </div>
 
                   <div className="relative h-full flex flex-col justify-end items-center">
                     <div 
-                      className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-300 group-hover:from-blue-700 group-hover:to-blue-500 relative"
-                      style={{ height: `${height}%` }}
+                      className={`w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-300 group-hover:from-blue-700 group-hover:to-blue-500 relative ${item.value === 0 ? 'bg-gray-100' : ''}`}
+                      style={{ height: `${Math.max(height, 2)}%` }}
                     >
-                      {/* Tooltip ao hover */}
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
                         <div className="bg-[#112240] text-white px-3 py-2 rounded-lg shadow-xl whitespace-nowrap">
                           <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest">{item.label}</p>
@@ -163,7 +167,6 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
                       </div>
                     </div>
                     
-                    {/* Label do mês */}
                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-3 text-center leading-tight">
                       {item.label}
                     </p>
@@ -175,14 +178,14 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
           <div className="h-px bg-gray-100 w-full mt-2" />
         </div>
 
-        {/* Card Despesas por Tipo (Lado do gráfico mensal) */}
-        <div className="lg:col-span-4 bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white h-auto flex flex-col">
+        {/* Card Despesas por Tipo */}
+        <div className="lg:col-span-4 bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white h-[380px] flex flex-col">
           <h4 className="text-sm font-black text-blue-300 uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
             <PieChart className="h-4 w-4" /> Despesas por Tipo
           </h4>
-          <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1">
+          <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-2">
             {stats.expenses.map(([name, value]: any) => (
-              <div key={name} className="flex items-center justify-between group cursor-default gap-3">
+              <div key={name} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform flex-shrink-0" />
                   <span className="text-xs font-bold uppercase tracking-widest text-gray-300 break-words">{name}</span>
@@ -280,7 +283,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
           </div>
         </div>
 
-        {/* LADO DIREITO: Principais Fornecedores (Aumentado) */}
+        {/* LADO DIREITO: Principais Fornecedores */}
         <div className="lg:col-span-4 bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-[740px] flex flex-col">
           <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-blue-600" /> Principais Fornecedores
