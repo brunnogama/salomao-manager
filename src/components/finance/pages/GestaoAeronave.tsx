@@ -609,8 +609,8 @@ export function GestaoAeronave({
           <>
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-all">
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Registros</p>
-                <p className="text-2xl font-black text-indigo-600 mt-1">{totals.totalRegistros ?? 0}</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Geral</p>
+                <p className="text-2xl font-black text-indigo-600 mt-1">{formatCurrency(totals.totalGeral ?? 0)}</p>
               </div>
               <div className="p-3 bg-indigo-50 rounded-xl group-hover:bg-indigo-100 transition-colors">
                 <Database className="h-6 w-6 text-indigo-600" />
@@ -735,13 +735,13 @@ export function GestaoAeronave({
                   onClick={() => { setDataType('despesas'); resetFilters(); }} 
                   className={`flex items-center gap-2 px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dataType === 'despesas' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  <Receipt className="h-3 w-3" /> Despesas
+                  <Receipt className="h-3 w-3" /> Custo Missões
                 </button>
                 <button 
                   onClick={() => { setDataType('pagamentos'); resetFilters(); }} 
                   className={`flex items-center gap-2 px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dataType === 'pagamentos' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  <DollarSign className="h-3 w-3" /> Pagamentos
+                  <DollarSign className="h-3 w-3" /> Despesas Fixas
                 </button>
               </div>
             )}
