@@ -451,7 +451,7 @@ export function AeronaveDashboard({
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-2">
             {localViewMode === 'tudo' ? (
               <>
-                {(statsDespesas?.expenses || []).filter(([_, value]: any) => value > 0).slice(0, 5).map(([name, value]: any) => (
+                {(statsDespesas?.expenses || []).filter(([_, value]: any) => value > 0).map(([name, value]: any) => (
                   <div key={`desp-${name}`} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform flex-shrink-0" />
@@ -460,7 +460,7 @@ export function AeronaveDashboard({
                     <span className="text-xs font-black whitespace-nowrap">{formatCurrency(value)}</span>
                   </div>
                 ))}
-                {(statsPagamentos?.tipos || []).filter(([_, values]: any) => values.liquido > 0).slice(0, 5).map(([name, values]: any) => (
+                {(statsPagamentos?.tipos || []).filter(([_, values]: any) => values.liquido > 0).map(([name, values]: any) => (
                   <div key={`pag-${name}`} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 group-hover:scale-150 transition-transform flex-shrink-0" />
@@ -621,7 +621,7 @@ export function AeronaveDashboard({
                       <tr>
                         <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
                         <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Descrição</th>
-                        <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</th>
+                        <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Devedor</th>
                         <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Valor Líquido</th>
                       </tr>
                     </thead>
