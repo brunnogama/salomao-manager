@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from 'react'
-import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown, Receipt, DollarSign } from 'lucide-react'
+import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown, Receipt, DollarSign, Database } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, LabelList } from 'recharts'
 
 interface DashboardProps {
