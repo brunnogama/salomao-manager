@@ -39,7 +39,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
   const [loading, setLoading] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [viewMode, setViewMode] = useState<'calendario' | 'lista'>('calendario')
   const [vencimentosOAB, setVencimentosOAB] = useState<any[]>([])
 
   // Estados para o Modal de Evento
@@ -260,90 +259,39 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           >
             <Plus className="h-4 w-4" /> Novo Lançamento
           </button>
-
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setViewMode('calendario')} 
-              className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm flex items-center gap-2 ${
-                viewMode === 'calendario' 
-                  ? 'bg-[#1e3a8a] text-white' 
-                  : 'bg-white text-gray-600 border border-gray-200'
-              }`}
-            >
-              <CalendarIcon className="h-4 w-4" /> Mês
-            </button>
-            <button 
-              onClick={() => setViewMode('lista')} 
-              className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm flex items-center gap-2 ${
-                viewMode === 'lista' 
-                  ? 'bg-[#1e3a8a] text-white' 
-                  : 'bg-white text-gray-600 border border-gray-200'
-              }`}
-            >
-              <GraduationCap className="h-4 w-4" /> OAB
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* CONTEÚDO PRINCIPAL */}
-      {viewMode === 'calendario' ? (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
-            <button 
-              onClick={handlePreviousMonth} 
-              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
-            >
-              <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
-            </button>
-            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
-              {MESES[selectedMonth]} {selectedYear}
-            </h2>
-            <button 
-              onClick={handleNextMonth} 
-              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
-            >
-              <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-7 gap-2 mb-3">
-            {DIAS_SEMANA.map(dia => (
-              <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">{dia}</div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-2">
-            {renderCalendar()}
-          </div>
+      {/* CONTEÚDO PRINCIPAL - Calendário Fixo */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
+          <button 
+            onClick={handlePreviousMonth} 
+            className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
+          >
+            <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
+          </button>
+          <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
+            {MESES[selectedMonth]} {selectedYear}
+          </h2>
+          <button 
+            onClick={handleNextMonth} 
+            className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
+          >
+            <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
+          </button>
         </div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
-            <button 
-              onClick={handlePreviousMonth} 
-              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
-            >
-              <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
-            </button>
-            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
-              {MESES[selectedMonth]} {selectedYear}
-            </h2>
-            <button 
-              onClick={handleNextMonth} 
-              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
-            >
-              <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
-            </button>
-          </div>
 
-          {/* COMPONENTE DE LISTA DE VENCIMENTOS OAB */}
-          <ListaVencimentosOAB 
-            mesAtual={selectedMonth} 
-            anoAtual={selectedYear} 
-          />
+        <div className="grid grid-cols-7 gap-2 mb-3">
+          {DIAS_SEMANA.map(dia => (
+            <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">{dia}</div>
+          ))}
         </div>
-      )}
+
+        <div className="grid grid-cols-7 gap-2">
+          {renderCalendar()}
+        </div>
+      </div>
 
       {/* MODAL NOVO LANÇAMENTO */}
       {isModalOpen && (
