@@ -429,40 +429,42 @@ export function GestaoAeronave({
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Buscar lançamentos..." 
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border-2 border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)} 
-            />
+        {activeTab === 'gerencial' && (
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Buscar lançamentos..." 
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border-2 border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)} 
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <button 
+                onClick={handleExportExcel}
+                className="flex items-center justify-center p-2.5 bg-white border-2 border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 hover:border-blue-300 transition-all"
+                title="Exportar"
+              >
+                <Download className="h-5 w-5 text-[#1e3a8a]" />
+              </button>
+
+              <label className="flex items-center justify-center p-2.5 bg-white border-2 border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 hover:border-green-300 cursor-pointer transition-all" title="Importar">
+                {isImporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileSpreadsheet className="h-5 w-5 text-green-600" />}
+                <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
+              </label>
+
+              <button 
+                onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
+                className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95"
+              >
+                <Plus className="h-3.5 w-3.5" /> Novo Registro
+              </button>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <button 
-              onClick={handleExportExcel}
-              className="flex items-center justify-center p-2.5 bg-white border-2 border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 hover:border-blue-300 transition-all"
-              title="Exportar"
-            >
-              <Download className="h-5 w-5 text-[#1e3a8a]" />
-            </button>
-
-            <label className="flex items-center justify-center p-2.5 bg-white border-2 border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 hover:border-green-300 cursor-pointer transition-all" title="Importar">
-              {isImporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileSpreadsheet className="h-5 w-5 text-green-600" />}
-              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
-            </label>
-
-            <button 
-              onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
-              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95"
-            >
-              <Plus className="h-3.5 w-3.5" /> Novo Registro
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible animate-in fade-in duration-1000">
