@@ -28,7 +28,7 @@ interface ListaVencimentosOABProps {
 export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABProps) {
   const [vencimentos, setVencimentos] = useState<VencimentoOAB[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtro, setFiltro] = useState<'todos' | 'urgente' | 'proximo' | 'tratados'>('todos')
+  const [filtro, setFiltro] = useState<'todos' | 'urgente' | 'tratados'>('todos')
   const [selectedVencimento, setSelectedVencimento] = useState<VencimentoOAB | null>(null)
   const [valorInput, setValorInput] = useState('')
 
@@ -223,7 +223,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
     ? vencimentosTratados 
     : vencimentosPendentes.filter(v => {
         if (filtro === 'urgente') return v.dias_ate_pagamento <= 7
-        if (filtro === 'proximo') return v.dias_ate_pagamento > 7 && v.dias_ate_pagamento <= 15
         return true
       })
 
@@ -262,7 +261,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                 : 'bg-white text-gray-600 border border-gray-200 hover:border-[#1e3a8a]/30'
             }`}
           >
-            Pendentes ({vencimentosPendentes.length})
+            Todos ({vencimentosPendentes.length})
           </button>
           <button
             onClick={() => setFiltro('urgente')}
@@ -275,20 +274,10 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
             Urgente ({vencimentosPendentes.filter(v => v.dias_ate_pagamento <= 7).length})
           </button>
           <button
-            onClick={() => setFiltro('proximo')}
-            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.15em] transition-all ${
-              filtro === 'proximo' 
-                ? 'bg-blue-600 text-white shadow-md' 
-                : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'
-            }`}
-          >
-            Próximo ({vencimentosPendentes.filter(v => v.dias_ate_pagamento > 7 && v.dias_ate_pagamento <= 15).length})
-          </button>
-          <button
             onClick={() => setFiltro('tratados')}
             className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.15em] transition-all ${
               filtro === 'tratados' 
-                ? 'bg-green-700 text-white shadow-md' 
+                ? 'bg-green-600 text-white shadow-md' 
                 : 'bg-white text-gray-600 border border-gray-200 hover:border-green-300'
             }`}
           >
