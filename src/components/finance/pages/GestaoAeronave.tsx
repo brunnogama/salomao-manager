@@ -292,21 +292,21 @@ export function GestaoAeronave({
       const totalPagamentosLiquido = pagamentos.reduce((acc, curr) => acc + (Number(curr.valor_liquido_realizado) || 0), 0)
       
       return {
-        missoes: totalFlights,
-        totalRegistros: filteredDataForCards.length,
-        despesasPrevisto: totalDespesasPrevisto,
-        despesasPago: totalDespesasPago,
-        pagamentosBruto: totalPagamentosBruto,
-        pagamentosLiquido: totalPagamentosLiquido,
-        totalGeral: totalDespesasPago + totalPagamentosLiquido
+        missoes: totalFlights || 0,
+        totalRegistros: filteredDataForCards.length || 0,
+        despesasPrevisto: totalDespesasPrevisto || 0,
+        despesasPago: totalDespesasPago || 0,
+        pagamentosBruto: totalPagamentosBruto || 0,
+        pagamentosLiquido: totalPagamentosLiquido || 0,
+        totalGeral: (totalDespesasPago || 0) + (totalPagamentosLiquido || 0)
       }
     } else if (dataType === 'despesas') {
       const totalFlights = new Set(filteredDataForCards.map(item => `${item.data}-${item.localidade_destino}`)).size
       return filteredDataForCards.reduce((acc, curr) => ({
-        missoes: totalFlights,
+        missoes: totalFlights || 0,
         previsto: acc.previsto + (Number(curr.valor_previsto) || 0),
         pago: acc.pago + (Number(curr.valor_pago) || 0),
-      }), { missoes: totalFlights, previsto: 0, pago: 0 })
+      }), { missoes: totalFlights || 0, previsto: 0, pago: 0 })
     } else {
       return filteredDataForCards.reduce((acc, curr) => ({
         quantidade: acc.quantidade + 1,
@@ -591,7 +591,7 @@ export function GestaoAeronave({
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-all">
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Registros</p>
-                <p className="text-2xl font-black text-indigo-600 mt-1">{totals.totalRegistros}</p>
+                <p className="text-2xl font-black text-indigo-600 mt-1">{totals.totalRegistros ?? 0}</p>
               </div>
               <div className="p-3 bg-indigo-50 rounded-xl group-hover:bg-indigo-100 transition-colors">
                 <Database className="h-6 w-6 text-indigo-600" />
@@ -601,7 +601,7 @@ export function GestaoAeronave({
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Despesas</p>
-                <p className="text-2xl font-black text-blue-600 mt-1">{formatCurrency(totals.despesasPago)}</p>
+                <p className="text-2xl font-black text-blue-600 mt-1">{formatCurrency(totals.despesasPago ?? 0)}</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
                 <Receipt className="h-6 w-6 text-blue-600" />
@@ -611,7 +611,7 @@ export function GestaoAeronave({
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-all">
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Pagamentos</p>
-                <p className="text-2xl font-black text-emerald-600 mt-1">{formatCurrency(totals.pagamentosLiquido)}</p>
+                <p className="text-2xl font-black text-emerald-600 mt-1">{formatCurrency(totals.pagamentosLiquido ?? 0)}</p>
               </div>
               <div className="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
                 <DollarSign className="h-6 w-6 text-emerald-600" />

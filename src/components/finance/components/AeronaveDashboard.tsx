@@ -226,11 +226,19 @@ export function AeronaveDashboard({
     }
   }, [filteredByYear, localSelectedYear])
 
-  const stats = localViewMode === 'tudo' ? { 
-    ...statsDespesas, 
-    ...statsPagamentos,
-    totalCombinado: statsDespesas.totalPaid + statsPagamentos.totalLiquido
-  } : localViewMode === 'despesas' ? statsDespesas : statsPagamentos
+  const stats = useMemo(() => {
+    if (localViewMode === 'tudo') {
+      return { 
+        ...statsDespesas, 
+        ...statsPagamentos,
+        totalCombinado: (statsDespesas?.totalPaid || 0) + (statsPagamentos?.totalLiquido || 0)
+      }
+    } else if (localViewMode === 'despesas') {
+      return statsDespesas
+    } else {
+      return statsPagamentos
+    }
+  }, [localViewMode, statsDespesas, statsPagamentos])
 
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
@@ -287,10 +295,10 @@ export function AeronaveDashboard({
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Geral</p>
               <p className="text-2xl font-black text-blue-600 leading-tight">
                 {localViewMode === 'tudo' 
-                  ? formatCurrency(stats.totalCombinado)
+                  ? formatCurrency(stats.totalCombinado ?? 0)
                   : localViewMode === 'despesas' 
-                    ? formatCurrency(statsDespesas.totalPaid) 
-                    : formatCurrency(statsPagamentos.totalLiquido)}
+                    ? formatCurrency(stats.totalPaid ?? 0) 
+                    : formatCurrency(stats.totalLiquido ?? 0)}
               </p>
             </div>
           </div>
@@ -394,7 +402,7 @@ export function AeronaveDashboard({
             {localViewMode === 'tudo' ? (
               <>
                 <p className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-2">Despesas</p>
-                {statsDespesas.expenses.slice(0, 5).map(([name, value]: any) => (
+                {(statsDespesas?.expenses || []).slice(0, 5).map(([name, value]: any) => (
                   <div key={`desp-${name}`} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform flex-shrink-0" />
@@ -404,7 +412,7 @@ export function AeronaveDashboard({
                   </div>
                 ))}
                 <p className="text-xs font-bold text-emerald-200 uppercase tracking-widest mt-4 mb-2">Pagamentos</p>
-                {statsPagamentos.tipos.slice(0, 5).map(([name, values]: any) => (
+                {(statsPagamentos?.tipos || []).slice(0, 5).map(([name, values]: any) => (
                   <div key={`pag-${name}`} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 group-hover:scale-150 transition-transform flex-shrink-0" />
@@ -496,7 +504,7 @@ export function AeronaveDashboard({
               <div className="space-y-6">
                 <div>
                   <h5 className="px-8 py-4 text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50/50">
-                    Missões ({statsDespesas.missions.length})
+                    Missões ({(statsDespesas?.missions || []).length})
                   </h5>
                   <table className="w-full text-left">
                     <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
@@ -508,7 +516,7 @@ export function AeronaveDashboard({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {statsDespesas.missions.slice(0, 10).map((m: any) => (
+                      {(statsDespesas?.missions || []).slice(0, 10).map((m: any) => (
                         <tr 
                           key={m.key} 
                           onClick={() => {
@@ -657,7 +665,7 @@ export function AeronaveDashboard({
               <>
                 <div>
                   <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">Fornecedores</p>
-                  {statsDespesas.suppliers.slice(0, 7).map(([name, value]: any) => (
+                  {(statsDespesas?.suppliers || []).slice(0, 7).map(([name, value]: any) => (
                     <div key={`forn-${name}`} className="space-y-1.5 mb-4">
                       <div className="flex justify-between items-center gap-3">
                         <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
@@ -666,7 +674,7 @@ export function AeronaveDashboard({
                       <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-blue-600 rounded-full" 
-                          style={{ width: `${(value / (statsDespesas.totalPaid || 1)) * 100}%` }}
+                          style={{ width: `${(value / ((statsDespesas?.totalPaid || 1))) * 100}%` }}
                         />
                       </div>
                     </div>
@@ -674,7 +682,7 @@ export function AeronaveDashboard({
                 </div>
                 <div>
                   <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">Devedores</p>
-                  {statsPagamentos.devedores.slice(0, 7).map(([name, values]: any) => (
+                  {(statsPagamentos?.devedores || []).slice(0, 7).map(([name, values]: any) => (
                     <div key={`dev-${name}`} className="space-y-1.5 mb-4">
                       <div className="flex justify-between items-center gap-3">
                         <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
@@ -683,7 +691,7 @@ export function AeronaveDashboard({
                       <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-emerald-600 rounded-full" 
-                          style={{ width: `${(values.liquido / (statsPagamentos.totalLiquido || 1)) * 100}%` }}
+                          style={{ width: `${(values.liquido / ((statsPagamentos?.totalLiquido || 1))) * 100}%` }}
                         />
                       </div>
                     </div>
