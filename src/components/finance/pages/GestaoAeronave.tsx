@@ -27,6 +27,8 @@ import { AeronaveTable } from '../components/AeronaveTable'
 import { AeronaveFormModal } from '../components/AeronaveFormModal'
 import { AeronaveViewModal } from '../components/AeronaveViewModal'
 import { AeronaveDashboard } from '../components/AeronaveDashboard'
+import { TipoLancamentoModal } from '../components/TipoLancamentoModal'
+import { AeronavePagamentoFormModal } from '../components/AeronavePagamentoFormModal'
 
 // ============================================================================
 // COMPONENTE INLINE: AeronavePagamentoTable (incorporado para evitar import)
@@ -146,6 +148,8 @@ export function GestaoAeronave({
   const [dataPagamentos, setDataPagamentos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isTipoModalOpen, setIsTipoModalOpen] = useState(false)
+  const [isPagamentoModalOpen, setIsPagamentoModalOpen] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [isPresentationMode, setIsPresentationMode] = useState(false)
   
@@ -334,6 +338,15 @@ export function GestaoAeronave({
       setIsModalOpen(false)
       setSelectedItem(null)
       fetchDados()
+    }
+  }
+
+  const handleSavePagamento = async (formData: any) => {
+    const { error } = await supabase.from('financeiro_aeronave_pagamentos').upsert(formData)
+    if (!error) {
+      setIsPagamentoModalOpen(false)
+      setSelectedItem(null)
+      fetchPagamentos()
     }
   }
 
@@ -837,12 +850,12 @@ export function GestaoAeronave({
                 />
               </label>
 
-              {dataType === 'despesas' && (
+              {(dataType === 'despesas' || dataType === 'pagamentos' || dataType === 'tudo') && (
                 <button 
-                  onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
+                  onClick={() => { setSelectedItem(null); setIsTipoModalOpen(true); }} 
                   className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Novo Registro
+                  <Plus className="h-3.5 w-3.5" /> Novo Lançamento
                 </button>
               )}
             </div>
@@ -905,8 +918,40 @@ export function GestaoAeronave({
         )}
       </div>
 
-      <AeronaveFormModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedItem(null); }} onSave={handleSave} initialData={selectedItem} />
-      <AeronaveViewModal item={selectedItem} isOpen={isViewModalOpen} onClose={() => { setIsViewModalOpen(false); setSelectedItem(null); }} onEdit={handleEditFromView} onDelete={handleDeleteItem} />
+      <TipoLancamentoModal 
+        isOpen={isTipoModalOpen} 
+        onClose={() => setIsTipoModalOpen(false)}
+        onSelectDespesa={() => {
+          setIsTipoModalOpen(false)
+          setIsModalOpen(true)
+        }}
+        onSelectPagamento={() => {
+          setIsTipoModalOpen(false)
+          setIsPagamentoModalOpen(true)
+        }}
+      />
+
+      <AeronaveFormModal 
+        isOpen={isModalOpen} 
+        onClose={() => { setIsModalOpen(false); setSelectedItem(null); }} 
+        onSave={handleSave} 
+        initialData={selectedItem} 
+      />
+
+      <AeronavePagamentoFormModal 
+        isOpen={isPagamentoModalOpen} 
+        onClose={() => { setIsPagamentoModalOpen(false); setSelectedItem(null); }} 
+        onSave={handleSavePagamento} 
+        initialData={selectedItem} 
+      />
+
+      <AeronaveViewModal 
+        item={selectedItem} 
+        isOpen={isViewModalOpen} 
+        onClose={() => { setIsViewModalOpen(false); setSelectedItem(null); }} 
+        onEdit={handleEditFromView} 
+        onDelete={handleDeleteItem} 
+      />
     </div>
   )
 }
