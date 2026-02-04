@@ -1,16 +1,18 @@
 import { useMemo, useEffect, useState } from 'react'
-import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown } from 'lucide-react'
+import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown, Receipt, DollarSign } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, LabelList } from 'recharts'
 
 interface DashboardProps {
   data: any[];
+  dataPagamentos: any[];
   onMissionClick?: (data: string, destino: string) => void;
   onResetFilter?: () => void;
   selectedYear?: string;
   onYearChange?: (year: string) => void;
+  viewMode?: 'despesas' | 'pagamentos';
+  onViewModeChange?: (mode: 'despesas' | 'pagamentos') => void;
 }
 
-// Funções utilitárias movidas para fora para evitar erros de inicialização e performance
 const formatMonthLabel = (monthKey: string) => {
   const [year, month] = monthKey.split('-')
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -29,8 +31,18 @@ const formatDate = (dateStr: string) => {
   } catch { return dateStr }
 }
 
-export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selectedYear = 'total', onYearChange }: DashboardProps) {
+export function AeronaveDashboard({ 
+  data, 
+  dataPagamentos = [],
+  onMissionClick, 
+  onResetFilter, 
+  selectedYear = 'total', 
+  onYearChange,
+  viewMode = 'despesas',
+  onViewModeChange
+}: DashboardProps) {
   const [localSelectedYear, setLocalSelectedYear] = useState<string>(selectedYear)
+  const [localViewMode, setLocalViewMode] = useState<'despesas' | 'pagamentos'>(viewMode)
 
   useEffect(() => {
     if (onResetFilter) {
@@ -42,6 +54,10 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
     setLocalSelectedYear(selectedYear)
   }, [selectedYear])
 
+  useEffect(() => {
+    setLocalViewMode(viewMode)
+  }, [viewMode])
+
   const handleYearChange = (year: string) => {
     setLocalSelectedYear(year)
     if (onYearChange) {
@@ -49,16 +65,25 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
     }
   }
 
+  const handleViewModeChange = (mode: 'despesas' | 'pagamentos') => {
+    setLocalViewMode(mode)
+    if (onViewModeChange) {
+      onViewModeChange(mode)
+    }
+  }
+
   const filteredByYear = useMemo(() => {
-    if (localSelectedYear === 'total') return data
-    return data.filter(item => {
-      if (!item.data) return false
-      const year = item.data.split('-')[0]
+    const sourceData = localViewMode === 'despesas' ? data : dataPagamentos
+    if (localSelectedYear === 'total') return sourceData
+    return sourceData.filter(item => {
+      const dateField = localViewMode === 'despesas' ? item.data : item.emissao
+      if (!dateField) return false
+      const year = dateField.split('-')[0]
       return year === localSelectedYear
     })
-  }, [data, localSelectedYear])
+  }, [data, dataPagamentos, localSelectedYear, localViewMode])
 
-  const stats = useMemo(() => {
+  const statsDespesas = useMemo(() => {
     const totalPaid = filteredByYear.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
     const totalFlights = new Set(filteredByYear.map(item => `${item.data}-${item.localidade_destino}`)).size
 
@@ -91,7 +116,6 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
       supplierMap[sup] = (supplierMap[sup] || 0) + (Number(item.valor_pago) || 0)
     })
 
-    // DADOS MENSAIS para o gráfico
     const monthlyData: { [key: string]: number } = {}
     
     if (localSelectedYear !== 'total') {
@@ -127,19 +151,117 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
     }
   }, [filteredByYear, localSelectedYear])
 
+  const statsPagamentos = useMemo(() => {
+    const totalBruto = filteredByYear.reduce((acc, curr) => acc + (Number(curr.valor_bruto) || 0), 0)
+    const totalLiquido = filteredByYear.reduce((acc, curr) => acc + (Number(curr.valor_liquido_realizado) || 0), 0)
+
+    const tipoMap: any = {}
+    filteredByYear.forEach(item => {
+      const tipo = item.tipo || 'Outros'
+      if (!tipoMap[tipo]) {
+        tipoMap[tipo] = { bruto: 0, liquido: 0 }
+      }
+      tipoMap[tipo].bruto += Number(item.valor_bruto) || 0
+      tipoMap[tipo].liquido += Number(item.valor_liquido_realizado) || 0
+    })
+
+    const devedorMap: any = {}
+    filteredByYear.forEach(item => {
+      const dev = item.devedor || 'Não Informado'
+      if (!devedorMap[dev]) {
+        devedorMap[dev] = { bruto: 0, liquido: 0 }
+      }
+      devedorMap[dev].bruto += Number(item.valor_bruto) || 0
+      devedorMap[dev].liquido += Number(item.valor_liquido_realizado) || 0
+    })
+
+    const monthlyData: { [key: string]: { bruto: number, liquido: number } } = {}
+    
+    if (localSelectedYear !== 'total') {
+      for (let i = 1; i <= 12; i++) {
+        const monthKey = `${localSelectedYear}-${String(i).padStart(2, '0')}`
+        monthlyData[monthKey] = { bruto: 0, liquido: 0 }
+      }
+    }
+
+    filteredByYear.forEach(item => {
+      if (item.emissao) {
+        const [year, month] = item.emissao.split('-')
+        const monthKey = `${year}-${month}`
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { bruto: 0, liquido: 0 }
+        }
+        monthlyData[monthKey].bruto += Number(item.valor_bruto) || 0
+        monthlyData[monthKey].liquido += Number(item.valor_liquido_realizado) || 0
+      }
+    })
+
+    const sortedMonthlyData = Object.entries(monthlyData)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([month, values]) => ({
+        month,
+        bruto: values.bruto,
+        liquido: values.liquido,
+        label: formatMonthLabel(month)
+      }))
+
+    return {
+      totalBruto,
+      totalLiquido,
+      tipos: Object.entries(tipoMap).sort((a: any, b: any) => b[1].liquido - a[1].liquido),
+      devedores: Object.entries(devedorMap).sort((a: any, b: any) => b[1].liquido - a[1].liquido).slice(0, 15),
+      monthlyData: sortedMonthlyData
+    }
+  }, [filteredByYear, localSelectedYear])
+
+  const stats = localViewMode === 'despesas' ? statsDespesas : statsPagamentos
+
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
       
+      {/* BOTÕES DE ALTERNÂNCIA DESPESAS/PAGAMENTOS */}
+      <div className="flex justify-center">
+        <div className="inline-flex bg-white p-1.5 rounded-2xl border-2 border-gray-200 shadow-sm">
+          <button
+            onClick={() => handleViewModeChange('despesas')}
+            className={`flex items-center gap-2 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              localViewMode === 'despesas'
+                ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] text-white shadow-lg'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <Receipt className="h-4 w-4" />
+            Despesas
+          </button>
+          <button
+            onClick={() => handleViewModeChange('pagamentos')}
+            className={`flex items-center gap-2 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              localViewMode === 'pagamentos'
+                ? 'bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-lg'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <DollarSign className="h-4 w-4" />
+            Pagamentos
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* GRÁFICO DE LINHAS MENSAL */}
         <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-8 h-[380px] flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-blue-600" /> Gastos Mensais
+              <TrendingDown className="h-4 w-4 text-blue-600" /> 
+              {localViewMode === 'despesas' ? 'Gastos Mensais' : 'Pagamentos Mensais'}
             </h4>
             <div className="text-right">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Geral</p>
-              <p className="text-2xl font-black text-blue-600 leading-tight">{formatCurrency(stats.totalPaid)}</p>
+              <p className="text-2xl font-black text-blue-600 leading-tight">
+                {localViewMode === 'despesas' 
+                  ? formatCurrency(statsDespesas.totalPaid) 
+                  : formatCurrency(statsPagamentos.totalLiquido)}
+              </p>
             </div>
           </div>
 
@@ -150,6 +272,10 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
                     <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorLiquido" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -168,62 +294,105 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
                     if (active && payload && payload.length) {
                       return (
                         <div className="bg-[#112240] text-white px-4 py-3 rounded-xl shadow-2xl border border-white/10">
-                          <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-1">{payload[0].payload.label}</p>
-                          <p className="text-sm font-black">{formatCurrency(payload[0].value as number)}</p>
+                          <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-1">
+                            {payload[0].payload.label}
+                          </p>
+                          {localViewMode === 'despesas' ? (
+                            <p className="text-sm font-black">{formatCurrency(payload[0].value as number)}</p>
+                          ) : (
+                            <>
+                              <p className="text-xs font-bold text-emerald-300">Líquido: {formatCurrency(payload[0].payload.liquido)}</p>
+                              <p className="text-xs font-bold text-amber-300">Bruto: {formatCurrency(payload[0].payload.bruto)}</p>
+                            </>
+                          )}
                         </div>
                       );
                     }
                     return null;
                   }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#2563eb" 
-                  strokeWidth={4}
-                  fillOpacity={1} 
-                  fill="url(#colorValue)" 
-                  animationDuration={1500}
-                >
-                  <LabelList 
+                {localViewMode === 'despesas' ? (
+                  <Area 
+                    type="monotone" 
                     dataKey="value" 
-                    position="top" 
-                    formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
-                    style={{ fontSize: '12px', fontWeight: 'bold', fill: '#2563eb' }}
-                    offset={12}
-                  />
-                </Area>
+                    stroke="#2563eb" 
+                    strokeWidth={4}
+                    fillOpacity={1} 
+                    fill="url(#colorValue)" 
+                    animationDuration={1500}
+                  >
+                    <LabelList 
+                      dataKey="value" 
+                      position="top" 
+                      formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
+                      style={{ fontSize: '12px', fontWeight: 'bold', fill: '#2563eb' }}
+                      offset={12}
+                    />
+                  </Area>
+                ) : (
+                  <Area 
+                    type="monotone" 
+                    dataKey="liquido" 
+                    stroke="#10b981" 
+                    strokeWidth={4}
+                    fillOpacity={1} 
+                    fill="url(#colorLiquido)" 
+                    animationDuration={1500}
+                  >
+                    <LabelList 
+                      dataKey="liquido" 
+                      position="top" 
+                      formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
+                      style={{ fontSize: '12px', fontWeight: 'bold', fill: '#10b981' }}
+                      offset={12}
+                    />
+                  </Area>
+                )}
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Card Despesas por Tipo */}
+        {/* Card Lateral Direito */}
         <div className="lg:col-span-4 bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white h-[380px] flex flex-col">
           <h4 className="text-sm font-black text-blue-300 uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
-            <PieChart className="h-4 w-4" /> Despesas por Tipo
+            <PieChart className="h-4 w-4" /> 
+            {localViewMode === 'despesas' ? 'Despesas por Tipo' : 'Pagamentos por Tipo'}
           </h4>
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-2">
-            {stats.expenses.map(([name, value]: any) => (
-              <div key={name} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform flex-shrink-0" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-gray-300 break-words">{name}</span>
+            {localViewMode === 'despesas' ? (
+              statsDespesas.expenses.map(([name, value]: any) => (
+                <div key={name} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform flex-shrink-0" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-gray-300 break-words">{name}</span>
+                  </div>
+                  <span className="text-xs font-black whitespace-nowrap">{formatCurrency(value)}</span>
                 </div>
-                <span className="text-xs font-black whitespace-nowrap">{formatCurrency(value)}</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              statsPagamentos.tipos.map(([name, values]: any) => (
+                <div key={name} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 group-hover:scale-150 transition-transform flex-shrink-0" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-gray-300 break-words">{name}</span>
+                  </div>
+                  <span className="text-xs font-black whitespace-nowrap">{formatCurrency(values.liquido)}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* LADO ESQUERDO: Totais por Missão */}
+        {/* LADO ESQUERDO */}
         <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[740px]">
           <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
             <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-blue-600" /> Totais por Missão
+              <TrendingUp className="h-4 w-4 text-blue-600" /> 
+              {localViewMode === 'despesas' ? 'Totais por Missão' : 'Lista de Pagamentos'}
             </h4>
             
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1 border border-gray-200">
@@ -268,61 +437,117 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
           </div>
 
           <div className="overflow-x-auto flex-1 custom-scrollbar">
-            <table className="w-full text-left">
-              <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
-                <tr>
-                  <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Missão</th>
-                  <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Data</th>
-                  <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Previsto</th>
-                  <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Pago</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {stats.missions.map((m: any) => (
-                  <tr 
-                    key={m.key} 
-                    onClick={() => {
-                      if (onMissionClick) onMissionClick(m.data, m.destino);
-                    }}
-                    className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
-                  >
-                    <td className="px-8 py-4">
-                      <span className="text-sm font-black text-[#112240] uppercase truncate block max-w-[220px]">
-                        {m.missao}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="text-sm font-bold text-gray-600">{formatDate(m.data)}</span>
-                    </td>
-                    <td className="px-4 py-4 text-sm font-bold text-blue-600 text-right">{formatCurrency(m.previsto)}</td>
-                    <td className="px-8 py-4 text-sm font-black text-emerald-600 text-right">{formatCurrency(m.pago)}</td>
+            {localViewMode === 'despesas' ? (
+              <table className="w-full text-left">
+                <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
+                  <tr>
+                    <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Missão</th>
+                    <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Data</th>
+                    <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Previsto</th>
+                    <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Pago</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {statsDespesas.missions.map((m: any) => (
+                    <tr 
+                      key={m.key} 
+                      onClick={() => {
+                        if (onMissionClick) onMissionClick(m.data, m.destino);
+                      }}
+                      className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
+                    >
+                      <td className="px-8 py-4">
+                        <span className="text-sm font-black text-[#112240] uppercase truncate block max-w-[220px]">
+                          {m.missao}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-sm font-bold text-gray-600">{formatDate(m.data)}</span>
+                      </td>
+                      <td className="px-4 py-4 text-sm font-bold text-blue-600 text-right">{formatCurrency(m.previsto)}</td>
+                      <td className="px-8 py-4 text-sm font-black text-emerald-600 text-right">{formatCurrency(m.pago)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full text-left">
+                <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
+                  <tr>
+                    <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Emissão</th>
+                    <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
+                    <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Tipo</th>
+                    <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Devedor</th>
+                    <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Valor Líquido</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredByYear.map((item: any) => (
+                    <tr 
+                      key={item.id} 
+                      className="hover:bg-blue-50/30 transition-colors group"
+                    >
+                      <td className="px-8 py-4">
+                        <span className="text-sm font-bold text-gray-600">{formatDate(item.emissao)}</span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-sm font-semibold text-gray-600">{formatDate(item.vencimento)}</span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-sm font-black text-[#112240] uppercase">{item.tipo}</span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-sm font-semibold text-gray-700">{item.devedor}</span>
+                      </td>
+                      <td className="px-8 py-4 text-sm font-black text-emerald-600 text-right">
+                        {formatCurrency(item.valor_liquido_realizado)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
-        {/* LADO DIREITO: Principais Fornecedores */}
+        {/* LADO DIREITO */}
         <div className="lg:col-span-4 bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-[740px] flex flex-col">
           <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-blue-600" /> Principais Fornecedores
+            <BarChart3 className="h-4 w-4 text-blue-600" /> 
+            {localViewMode === 'despesas' ? 'Principais Fornecedores' : 'Principais Devedores'}
           </h4>
           <div className="space-y-6 overflow-y-auto custom-scrollbar flex-1 pr-2">
-            {stats.suppliers.map(([name, value]: any) => (
-              <div key={name} className="space-y-1.5">
-                <div className="flex justify-between items-center gap-3">
-                  <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
-                  <span className="text-xs font-black text-[#112240] whitespace-nowrap">{formatCurrency(value)}</span>
+            {localViewMode === 'despesas' ? (
+              statsDespesas.suppliers.map(([name, value]: any) => (
+                <div key={name} className="space-y-1.5">
+                  <div className="flex justify-between items-center gap-3">
+                    <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
+                    <span className="text-xs font-black text-[#112240] whitespace-nowrap">{formatCurrency(value)}</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-600 rounded-full" 
+                      style={{ width: `${(value / (statsDespesas.totalPaid || 1)) * 100}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-blue-600 rounded-full" 
-                    style={{ width: `${(value / (stats.totalPaid || 1)) * 100}%` }}
-                  />
+              ))
+            ) : (
+              statsPagamentos.devedores.map(([name, values]: any) => (
+                <div key={name} className="space-y-1.5">
+                  <div className="flex justify-between items-center gap-3">
+                    <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
+                    <span className="text-xs font-black text-[#112240] whitespace-nowrap">{formatCurrency(values.liquido)}</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-emerald-600 rounded-full" 
+                      style={{ width: `${(values.liquido / (statsPagamentos.totalLiquido || 1)) * 100}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
