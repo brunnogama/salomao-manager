@@ -9,6 +9,25 @@ interface DashboardProps {
   onYearChange?: (year: string) => void;
 }
 
+// Funções utilitárias movidas para fora para evitar erros de inicialização e performance
+const formatMonthLabel = (monthKey: string) => {
+  const [year, month] = monthKey.split('-')
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+  return `${months[parseInt(month) - 1]}/${year.slice(2)}`
+}
+
+const formatCurrency = (val: number) => 
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '---'
+  try {
+    if (dateStr.includes('/')) return dateStr
+    const [y, m, d] = dateStr.split('-')
+    return `${d}/${m}/${y}`
+  } catch { return dateStr }
+}
+
 export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selectedYear = 'total', onYearChange }: DashboardProps) {
   const [localSelectedYear, setLocalSelectedYear] = useState<string>(selectedYear)
 
@@ -99,24 +118,6 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
       monthlyData: sortedMonthlyData
     }
   }, [filteredByYear])
-
-  const formatMonthLabel = (monthKey: string) => {
-    const [year, month] = monthKey.split('-')
-    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
-    return `${months[parseInt(month) - 1]}/${year.slice(2)}`
-  }
-
-  const formatCurrency = (val: number) => 
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '---'
-    try {
-      if (dateStr.includes('/')) return dateStr
-      const [y, m, d] = dateStr.split('-')
-      return `${d}/${m}/${y}`
-    } catch { return dateStr }
-  }
 
   // Calcular altura relativa para o gráfico
   const maxMonthlyValue = Math.max(...stats.monthlyData.map(d => d.value), 1)
