@@ -109,11 +109,14 @@ export function GestaoAeronave({
 
   // Cálculos Dinâmicos para os Cards
   const totals = useMemo(() => {
+    // Contagem única de missões baseada em data e destino
+    const totalFlights = new Set(filteredData.map(item => `${item.data}-${item.localidade_destino}`)).size
+
     return filteredData.reduce((acc, curr) => ({
-      faturado: acc.faturado + (Number(curr.faturado_cnpj) || 0),
+      missoes: totalFlights,
       previsto: acc.previsto + (Number(curr.valor_previsto) || 0),
       pago: acc.pago + (Number(curr.valor_pago) || 0),
-    }), { faturado: 0, previsto: 0, pago: 0 })
+    }), { missoes: totalFlights, previsto: 0, pago: 0 })
   }, [filteredData])
 
   const formatCurrency = (val: number) => 
@@ -276,13 +279,13 @@ export function GestaoAeronave({
 
       {/* CARDS DE TOTAIS DINÂMICOS (UNIFICADOS) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-orange-200 transition-all">
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Faturado CNPJ</p>
-            <p className="text-2xl font-black text-orange-600 mt-1">{formatCurrency(totals.faturado)}</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Missões</p>
+            <p className="text-2xl font-black text-blue-600 mt-1">{totals.missoes}</p>
           </div>
-          <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
-            <TrendingUp className="h-6 w-6 text-orange-600" />
+          <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+            <Plane className="h-6 w-6 text-blue-600" />
           </div>
         </div>
 

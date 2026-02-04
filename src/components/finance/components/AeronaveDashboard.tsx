@@ -1,5 +1,5 @@
 import { useMemo, useEffect } from 'react'
-import { Plane, TrendingUp, BarChart3, PieChart } from 'lucide-react'
+import { TrendingUp, BarChart3, PieChart } from 'lucide-react'
 
 interface DashboardProps {
   data: any[];
@@ -25,10 +25,10 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
     data.forEach(item => {
       const key = `${item.data} | ${item.localidade_destino}`
       if (!missionsMap[key]) {
-        missionsMap[key] = { key, data: item.data, destino: item.localidade_destino, pago: 0, cnpj: 0 }
+        missionsMap[key] = { key, data: item.data, destino: item.localidade_destino, pago: 0, previsto: 0 }
       }
       missionsMap[key].pago += Number(item.valor_pago) || 0
-      missionsMap[key].cnpj += Number(item.faturado_cnpj) || 0
+      missionsMap[key].previsto += Number(item.valor_previsto) || 0
     })
 
     const expenseMap: any = {}
@@ -69,7 +69,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* LADO ESQUERDO: Totais por Missão (Subiu para o topo e aumentou altura) */}
+        {/* LADO ESQUERDO: Totais por Missão */}
         <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[740px]">
           <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
             <h4 className="text-[11px] font-black text-[#112240] uppercase tracking-[0.2em] flex items-center gap-2">
@@ -82,7 +82,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
               <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
                 <tr>
                   <th className="px-8 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Data / Trecho</th>
-                  <th className="px-4 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">CNPJ</th>
+                  <th className="px-4 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Previsto</th>
                   <th className="px-8 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Pago</th>
                 </tr>
               </thead>
@@ -101,7 +101,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
                         <span className="text-[10px] font-bold text-gray-400 uppercase truncate max-w-[200px]">{m.destino}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-xs font-bold text-orange-600 text-right">{formatCurrency(m.cnpj)}</td>
+                    <td className="px-4 py-4 text-xs font-bold text-blue-600 text-right">{formatCurrency(m.previsto)}</td>
                     <td className="px-8 py-4 text-xs font-black text-emerald-600 text-right">{formatCurrency(m.pago)}</td>
                   </tr>
                 ))}
@@ -110,19 +110,9 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
           </div>
         </div>
 
-        {/* LADO DIREITO: Card Missões + Gráficos */}
+        {/* LADO DIREITO: Gráficos */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Card Total de Missões (Movido para cá) */}
-          <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col gap-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50">
-              <Plane className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Missões</p>
-              <h3 className="text-xl font-black text-[#112240] tracking-tight mt-1">{stats.totalFlights}</h3>
-            </div>
-          </div>
-
+          
           <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-[260px]">
             <h4 className="text-[11px] font-black text-[#112240] uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-blue-600" /> Principais Fornecedores
