@@ -748,11 +748,11 @@ export function GestaoAeronave({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-             <div className="relative group">
-                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                  <Tag className="h-3.5 w-3.5 text-blue-600 mr-2" />
+             <div className="relative">
+                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-3 py-2 transition-all cursor-pointer shadow-sm hover:shadow-md">
+                  <Tag className="h-3.5 w-3.5 text-blue-600 mr-2 flex-shrink-0" />
                   <select 
-                    className="bg-transparent text-sm font-bold text-gray-700 outline-none min-w-[130px] cursor-pointer"
+                    className="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer"
                     value={selectedExpense}
                     onChange={e => setSelectedExpense(e.target.value)}
                   >
@@ -771,11 +771,11 @@ export function GestaoAeronave({
                 </div>
              </div>
 
-             <div className="relative group">
-                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                  <Building2 className="h-3.5 w-3.5 text-blue-600 mr-2" />
+             <div className="relative">
+                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-3 py-2 transition-all cursor-pointer shadow-sm hover:shadow-md">
+                  <Building2 className="h-3.5 w-3.5 text-blue-600 mr-2 flex-shrink-0" />
                   <select 
-                    className="bg-transparent text-sm font-bold text-gray-700 outline-none min-w-[140px] cursor-pointer"
+                    className="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer"
                     value={selectedSupplier}
                     onChange={e => setSelectedSupplier(e.target.value)}
                   >
@@ -794,18 +794,18 @@ export function GestaoAeronave({
                 </div>
              </div>
 
-             <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 w-full md:w-auto transition-all shadow-sm hover:shadow-md">
-                <Calendar className="h-4 w-4 text-blue-600 mr-3" />
+             <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-3 py-2 transition-all shadow-sm hover:shadow-md">
+                <Calendar className="h-3.5 w-3.5 text-blue-600 mr-2 flex-shrink-0" />
                 <input 
                   type="date" 
-                  className="bg-transparent text-sm font-bold text-gray-700 outline-none"
+                  className="bg-transparent text-xs font-bold text-gray-700 outline-none w-28"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
                 />
-                <span className="mx-3 text-gray-400 text-[10px] font-black uppercase tracking-widest">até</span>
+                <span className="mx-2 text-gray-400 text-[9px] font-black uppercase tracking-widest">até</span>
                 <input 
                   type="date" 
-                  className="bg-transparent text-sm font-bold text-gray-700 outline-none"
+                  className="bg-transparent text-xs font-bold text-gray-700 outline-none w-28"
                   value={endDate}
                   onChange={e => setEndDate(e.target.value)}
                 />
@@ -814,10 +814,10 @@ export function GestaoAeronave({
              {(startDate || endDate || searchTerm || selectedExpense || selectedSupplier) && (
                <button 
                 onClick={resetFilters} 
-                className="flex items-center gap-2 px-4 py-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border-2 border-red-200 animate-in zoom-in duration-300 shadow-sm hover:shadow-md"
+                className="flex items-center gap-1.5 px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border-2 border-red-200 shadow-sm hover:shadow-md"
                >
-                 <XCircle className="h-4 w-4" />
-                 <span className="text-[10px] font-black uppercase tracking-widest">Limpar</span>
+                 <XCircle className="h-3.5 w-3.5" />
+                 <span className="text-[9px] font-black uppercase tracking-widest">Limpar</span>
                </button>
              )}
           </div>
