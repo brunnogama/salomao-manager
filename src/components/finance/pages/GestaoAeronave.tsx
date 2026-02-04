@@ -18,7 +18,9 @@ import {
   Building2,
   DollarSign,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  Maximize2,
+  Minimize2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -48,6 +50,7 @@ export function GestaoAeronave({
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
+  const [isPresentationMode, setIsPresentationMode] = useState(false)
   
   const [selectedItem, setSelectedItem] = useState<any | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
@@ -250,175 +253,206 @@ export function GestaoAeronave({
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
+    <div className={`flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 transition-all duration-300 ${isPresentationMode ? 'p-2' : 'p-6'} space-y-6`}>
       
       {/* HEADER PADRÃO SDS */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <Plane className="h-7 w-7 text-white" />
+      {!isPresentationMode && (
+        <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in fade-in duration-300">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+              <Plane className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Gestão da Aeronave</h1>
+              <p className="text-sm font-semibold text-gray-500 mt-0.5">Operacional e Financeiro</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Gestão da Aeronave</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Operacional e Financeiro</p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex flex-col items-end mr-2">
+              <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
+            </div>
+            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
+              <UserCircle className="h-5 w-5" />
+            </div>
+            {onModuleHome && <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Grid className="h-5 w-5" /></button>}
+            {onLogout && <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><LogOut className="h-5 w-5" /></button>}
           </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Grid className="h-5 w-5" /></button>}
-          {onLogout && <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><LogOut className="h-5 w-5" /></button>}
         </div>
-      </div>
+      )}
 
-      {/* CARDS DE TOTAIS DINÂMICOS (UNIFICADOS) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Missões</p>
-            <p className="text-2xl font-black text-blue-600 mt-1">{totals.missoes}</p>
+      {/* CARDS DE TOTAIS DINÂMICOS */}
+      {!isPresentationMode && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in duration-500">
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Missões</p>
+              <p className="text-2xl font-black text-blue-600 mt-1">{totals.missoes}</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+              <Plane className="h-6 w-6 text-blue-600" />
+            </div>
           </div>
-          <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-            <Plane className="h-6 w-6 text-blue-600" />
-          </div>
-        </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Previsto</p>
-            <p className="text-2xl font-black text-blue-600 mt-1">{formatCurrency(totals.previsto)}</p>
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Previsto</p>
+              <p className="text-2xl font-black text-blue-600 mt-1">{formatCurrency(totals.previsto)}</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+              <DollarSign className="h-6 w-6 text-blue-600" />
+            </div>
           </div>
-          <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-            <DollarSign className="h-6 w-6 text-blue-600" />
-          </div>
-        </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-all">
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Pago</p>
-            <p className="text-2xl font-black text-emerald-600 mt-1">{formatCurrency(totals.pago)}</p>
-          </div>
-          <div className="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
-            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-all">
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Pago</p>
+              <p className="text-2xl font-black text-emerald-600 mt-1">{formatCurrency(totals.pago)}</p>
+            </div>
+            <div className="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
+              <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* TOOLBAR */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4 animate-in fade-in duration-700">
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-full md:w-auto">
-            <button 
-              onClick={() => { setActiveTab('dashboard'); resetFilters(); }} 
-              className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+          <div className="flex items-center gap-2">
+            <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm">
+              <button 
+                onClick={() => { setActiveTab('dashboard'); resetFilters(); }} 
+                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+              </button>
+              <button 
+                onClick={() => setActiveTab('gerencial')} 
+                className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'gerencial' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <Database className="h-3.5 w-3.5" /> Gerencial
+              </button>
+            </div>
+
+            {/* BOTÃO MODO APRESENTAÇÃO */}
+            <button
+              onClick={() => setIsPresentationMode(!isPresentationMode)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                isPresentationMode 
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-lg' 
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+              }`}
+              title={isPresentationMode ? 'Sair do Modo Apresentação' : 'Modo Apresentação'}
             >
-              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
-            </button>
-            <button 
-              onClick={() => setActiveTab('gerencial')} 
-              className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'gerencial' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <Database className="h-3.5 w-3.5" /> Gerencial
+              {isPresentationMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">{isPresentationMode ? 'Normal' : 'Apresentar'}</span>
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-             <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-3 py-2">
-                <Tag className="h-3.5 w-3.5 text-gray-400 mr-2" />
-                <select 
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none min-w-[120px]"
-                  value={selectedExpense}
-                  onChange={e => setSelectedExpense(e.target.value)}
-                >
-                  <option value="">Todas Despesas</option>
-                  {expenseOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-             </div>
+          {!isPresentationMode && (
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+               {/* Dropdown Despesas - UI Melhorada */}
+               <div className="relative group">
+                  <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
+                    <Tag className="h-3.5 w-3.5 text-blue-600 mr-2" />
+                    <select 
+                      className="bg-transparent text-xs font-bold text-gray-700 outline-none min-w-[130px] cursor-pointer"
+                      value={selectedExpense}
+                      onChange={e => setSelectedExpense(e.target.value)}
+                    >
+                      <option value="">Todas Despesas</option>
+                      {expenseOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+               </div>
 
-             <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-3 py-2">
-                <Building2 className="h-3.5 w-3.5 text-gray-400 mr-2" />
-                <select 
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none min-w-[120px]"
-                  value={selectedSupplier}
-                  onChange={e => setSelectedSupplier(e.target.value)}
-                >
-                  <option value="">Todos Fornecedores</option>
-                  {supplierOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-             </div>
+               {/* Dropdown Fornecedores - UI Melhorada */}
+               <div className="relative group">
+                  <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
+                    <Building2 className="h-3.5 w-3.5 text-blue-600 mr-2" />
+                    <select 
+                      className="bg-transparent text-xs font-bold text-gray-700 outline-none min-w-[140px] cursor-pointer"
+                      value={selectedSupplier}
+                      onChange={e => setSelectedSupplier(e.target.value)}
+                    >
+                      <option value="">Todos Fornecedores</option>
+                      {supplierOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+               </div>
 
-             <div className="flex items-center bg-gray-100/50 border border-gray-200 rounded-xl px-4 py-2 w-full md:w-auto">
-                <Calendar className="h-4 w-4 text-gray-400 mr-3" />
-                <input 
-                  type="date" 
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                />
-                <span className="mx-3 text-gray-400 text-[10px] font-black uppercase tracking-widest">até</span>
-                <input 
-                  type="date" 
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none"
-                  value={endDate}
-                  onChange={e => setEndDate(e.target.value)}
-                />
-             </div>
+               {/* Date Range - UI Melhorada */}
+               <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 w-full md:w-auto transition-all shadow-sm hover:shadow-md">
+                  <Calendar className="h-4 w-4 text-blue-600 mr-3" />
+                  <input 
+                    type="date" 
+                    className="bg-transparent text-xs font-bold text-gray-700 outline-none"
+                    value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
+                  />
+                  <span className="mx-3 text-gray-400 text-[10px] font-black uppercase tracking-widest">até</span>
+                  <input 
+                    type="date" 
+                    className="bg-transparent text-xs font-bold text-gray-700 outline-none"
+                    value={endDate}
+                    onChange={e => setEndDate(e.target.value)}
+                  />
+               </div>
 
-             {(startDate || endDate || searchTerm || selectedExpense || selectedSupplier) && (
-               <button 
-                onClick={resetFilters} 
-                className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border border-red-100 animate-in zoom-in duration-300"
-               >
-                 <XCircle className="h-4 w-4" />
-                 <span className="text-[10px] font-black uppercase tracking-widest">Limpar</span>
-               </button>
-             )}
-          </div>
+               {(startDate || endDate || searchTerm || selectedExpense || selectedSupplier) && (
+                 <button 
+                  onClick={resetFilters} 
+                  className="flex items-center gap-2 px-4 py-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border-2 border-red-200 animate-in zoom-in duration-300 shadow-sm hover:shadow-md"
+                 >
+                   <XCircle className="h-4 w-4" />
+                   <span className="text-[10px] font-black uppercase tracking-widest">Limpar</span>
+                 </button>
+               )}
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Buscar lançamentos..." 
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)} 
-            />
+        {!isPresentationMode && (
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Buscar lançamentos..." 
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border-2 border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)} 
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <button 
+                onClick={handleExportExcel}
+                className="flex items-center justify-center p-2.5 bg-white border-2 border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 hover:border-blue-300 transition-all"
+                title="Exportar"
+              >
+                <Download className="h-5 w-5 text-[#1e3a8a]" />
+              </button>
+
+              <label className="flex items-center justify-center p-2.5 bg-white border-2 border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 hover:border-green-300 cursor-pointer transition-all" title="Importar">
+                {isImporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileSpreadsheet className="h-5 w-5 text-green-600" />}
+                <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
+              </label>
+
+              <button 
+                onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
+                className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95"
+              >
+                <Plus className="h-3.5 w-3.5" /> Novo Registro
+              </button>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <button 
-              onClick={handleExportExcel}
-              className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 transition-all"
-              title="Exportar"
-            >
-              <Download className="h-5 w-5 text-[#1e3a8a]" />
-            </button>
-
-            <label className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 cursor-pointer transition-all" title="Importar">
-              {isImporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileSpreadsheet className="h-5 w-5 text-green-600" />}
-              <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
-            </label>
-
-            <button 
-              onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
-              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95"
-            >
-              <Plus className="h-3.5 w-3.5" /> Novo Registro
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
-      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible">
+      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible animate-in fade-in duration-1000">
         {activeTab === 'gerencial' ? (
           <div className="w-full">
             <AeronaveTable 
