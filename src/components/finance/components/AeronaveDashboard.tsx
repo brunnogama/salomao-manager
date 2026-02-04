@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useState } from 'react'
 import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown, Receipt, DollarSign, Wallet } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart, LabelList } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart, LabelList, Tooltip } from 'recharts'
 
 interface DashboardProps {
   data: any[];
@@ -32,6 +32,20 @@ const formatDate = (dateStr: string) => {
     return `${d}/${m}/${y}`
   } catch { return dateStr }
 }
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-4 rounded-2xl shadow-2xl border border-gray-100 animate-in zoom-in duration-200">
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{payload[0].payload.label}</p>
+        <p className="text-lg font-black text-[#112240]">
+          {formatCurrency(payload[0].value)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export function AeronaveDashboard({ 
   data, 
@@ -381,6 +395,7 @@ export function AeronaveDashboard({
                   padding={{ left: 20, right: 20 }}
                 />
                 <YAxis hide domain={[0, 'auto']} />
+                <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#f3f4f6', strokeWidth: 2 }} />
                 {localViewMode === 'tudo' ? (
                   <Area 
                     type="monotone" 
@@ -390,12 +405,14 @@ export function AeronaveDashboard({
                     fillOpacity={1} 
                     fill="url(#colorValue)" 
                     animationDuration={1500}
+                    dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 6, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }}
                   >
                     <LabelList 
                       dataKey="totalMensal" 
                       position="top" 
                       formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
-                      style={{ fontSize: '12px', fontWeight: 'bold', fill: '#2563eb' }}
+                      style={{ fontSize: '10px', fontWeight: 'bold', fill: '#2563eb' }}
                       offset={12}
                     />
                   </Area>
@@ -408,12 +425,14 @@ export function AeronaveDashboard({
                     fillOpacity={1} 
                     fill="url(#colorValue)" 
                     animationDuration={1500}
+                    dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 6, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }}
                   >
                     <LabelList 
                       dataKey="value" 
                       position="top" 
                       formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
-                      style={{ fontSize: '12px', fontWeight: 'bold', fill: '#2563eb' }}
+                      style={{ fontSize: '10px', fontWeight: 'bold', fill: '#2563eb' }}
                       offset={12}
                     />
                   </Area>
@@ -426,12 +445,14 @@ export function AeronaveDashboard({
                     fillOpacity={1} 
                     fill="url(#colorLiquido)" 
                     animationDuration={1500}
+                    dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 6, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
                   >
                     <LabelList 
                       dataKey="liquido" 
                       position="top" 
                       formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
-                      style={{ fontSize: '12px', fontWeight: 'bold', fill: '#10b981' }}
+                      style={{ fontSize: '10px', fontWeight: 'bold', fill: '#10b981' }}
                       offset={12}
                     />
                   </Area>
