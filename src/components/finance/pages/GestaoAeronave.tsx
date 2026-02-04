@@ -29,6 +29,7 @@ import { AeronaveViewModal } from '../components/AeronaveViewModal'
 import { AeronaveDashboard } from '../components/AeronaveDashboard'
 import { TipoLancamentoModal } from '../components/TipoLancamentoModal'
 import { AeronavePagamentoFormModal } from '../components/AeronavePagamentoFormModal'
+import { AeronavePagamentoViewModal } from '../components/AeronavePagamentoViewModal'
 
 // ============================================================================
 // COMPONENTE INLINE: AeronavePagamentoTable (incorporado para evitar import)
@@ -358,7 +359,12 @@ export function GestaoAeronave({
   const handleEditFromView = (item: any) => {
     setIsViewModalOpen(false)
     setSelectedItem(item)
-    setIsModalOpen(true)
+    // Verifica se é pagamento ou despesa pelo campo 'emissao'
+    if (item.emissao) {
+      setIsPagamentoModalOpen(true)
+    } else {
+      setIsModalOpen(true)
+    }
   }
 
   const handleDeleteItem = async (item: any) => {
@@ -945,13 +951,24 @@ export function GestaoAeronave({
         initialData={selectedItem} 
       />
 
-      <AeronaveViewModal 
-        item={selectedItem} 
-        isOpen={isViewModalOpen} 
-        onClose={() => { setIsViewModalOpen(false); setSelectedItem(null); }} 
-        onEdit={handleEditFromView} 
-        onDelete={handleDeleteItem} 
-      />
+      {/* Modal de Visualização - Renderiza o correto baseado no tipo */}
+      {selectedItem?.emissao ? (
+        <AeronavePagamentoViewModal 
+          item={selectedItem} 
+          isOpen={isViewModalOpen} 
+          onClose={() => { setIsViewModalOpen(false); setSelectedItem(null); }} 
+          onEdit={handleEditFromView} 
+          onDelete={handleDeleteItem} 
+        />
+      ) : (
+        <AeronaveViewModal 
+          item={selectedItem} 
+          isOpen={isViewModalOpen} 
+          onClose={() => { setIsViewModalOpen(false); setSelectedItem(null); }} 
+          onEdit={handleEditFromView} 
+          onDelete={handleDeleteItem} 
+        />
+      )}
     </div>
   )
 }
