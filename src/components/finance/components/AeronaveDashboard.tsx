@@ -90,7 +90,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
       supplierMap[sup] = (supplierMap[sup] || 0) + (Number(item.valor_pago) || 0)
     })
 
-    // DADOS MENSAIS para o gráfico de linha
+    // DADOS MENSAIS para o gráfico
     const monthlyData: { [key: string]: number } = {}
     filteredByYear.forEach(item => {
       if (item.data) {
@@ -114,7 +114,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
       totalFlights,
       missions: Object.values(missionsMap).sort((a: any, b: any) => b.data.localeCompare(a.data)),
       expenses: Object.entries(expenseMap).sort((a: any, b: any) => b[1] - a[1]),
-      suppliers: Object.entries(supplierMap).sort((a: any, b: any) => b[1] - a[1]).slice(0, 10),
+      suppliers: Object.entries(supplierMap).sort((a: any, b: any) => b[1] - a[1]).slice(0, 15),
       monthlyData: sortedMonthlyData
     }
   }, [filteredByYear])
@@ -125,71 +125,73 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen animate-in fade-in duration-500">
       
-      {/* GRÁFICO DE LINHA MENSAL */}
-      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] flex items-center gap-2">
-            <TrendingDown className="h-4 w-4 text-blue-600" /> Gastos Mensais
-          </h4>
-          <div className="text-right">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Geral</p>
-            <p className="text-xl font-black text-blue-600">{formatCurrency(stats.totalPaid)}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* GRÁFICO DE COLUNAS MENSAL */}
+        <div className="lg:col-span-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] flex items-center gap-2">
+              <TrendingDown className="h-4 w-4 text-blue-600" /> Gastos Mensais
+            </h4>
+            <div className="text-right">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Geral</p>
+              <p className="text-xl font-black text-blue-600">{formatCurrency(stats.totalPaid)}</p>
+            </div>
           </div>
-        </div>
 
-        {/* Gráfico de Linha */}
-        <div className="relative h-64 flex items-end gap-2 overflow-x-auto custom-scrollbar pb-8">
-          {stats.monthlyData.map((item, index) => {
-            const height = (item.value / maxMonthlyValue) * 100
-            const isLast = index === stats.monthlyData.length - 1
-            
-            return (
-              <div key={item.month} className="relative flex-shrink-0 group" style={{ width: '60px' }}>
-                {/* Linha conectando pontos */}
-                {!isLast && (
-                  <div 
-                    className="absolute top-0 left-1/2 w-full h-0.5 bg-blue-500 origin-left"
-                    style={{ 
-                      transform: `rotate(${Math.atan2(
-                        ((stats.monthlyData[index + 1].value / maxMonthlyValue) * 100) - height,
-                        60
-                      )}rad)`,
-                      transformOrigin: 'left center',
-                      top: `${100 - height}%`
-                    }}
-                  />
-                )}
-                
-                {/* Barra vertical */}
-                <div className="relative h-full flex flex-col justify-end items-center">
-                  <div 
-                    className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-300 group-hover:from-blue-700 group-hover:to-blue-500 relative"
-                    style={{ height: `${height}%` }}
-                  >
-                    {/* Ponto no topo */}
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg group-hover:scale-125 transition-transform" />
-                    
-                    {/* Tooltip ao hover */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      <div className="bg-[#112240] text-white px-3 py-2 rounded-lg shadow-xl whitespace-nowrap">
-                        <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest">{item.label}</p>
-                        <p className="text-xs font-black">{formatCurrency(item.value)}</p>
+          <div className="relative h-64 flex items-end gap-3 overflow-x-auto custom-scrollbar pb-2">
+            {stats.monthlyData.map((item) => {
+              const height = (item.value / maxMonthlyValue) * 100
+              
+              return (
+                <div key={item.month} className="relative flex-shrink-0 group flex flex-col justify-end" style={{ width: '70px' }}>
+                  {/* Valor no topo da coluna */}
+                  <div className="text-[9px] font-black text-blue-600 text-center mb-2 opacity-100 transition-opacity">
+                    {formatCurrency(item.value).replace('R$', '').trim()}
+                  </div>
+
+                  <div className="relative h-full flex flex-col justify-end items-center">
+                    <div 
+                      className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-300 group-hover:from-blue-700 group-hover:to-blue-500 relative"
+                      style={{ height: `${height}%` }}
+                    >
+                      {/* Tooltip ao hover */}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                        <div className="bg-[#112240] text-white px-3 py-2 rounded-lg shadow-xl whitespace-nowrap">
+                          <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest">{item.label}</p>
+                          <p className="text-xs font-black">{formatCurrency(item.value)}</p>
+                        </div>
                       </div>
                     </div>
+                    
+                    {/* Label do mês */}
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-3 text-center leading-tight">
+                      {item.label}
+                    </p>
                   </div>
-                  
-                  {/* Label do mês */}
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-2 rotate-0 text-center leading-tight">
-                    {item.label}
-                  </p>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
+          <div className="h-px bg-gray-100 w-full mt-2" />
         </div>
 
-        {/* Linha de base */}
-        <div className="h-px bg-gray-200 -mt-8 mb-8" />
+        {/* Card Despesas por Tipo (Lado do gráfico mensal) */}
+        <div className="lg:col-span-4 bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white h-auto flex flex-col">
+          <h4 className="text-sm font-black text-blue-300 uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
+            <PieChart className="h-4 w-4" /> Despesas por Tipo
+          </h4>
+          <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1">
+            {stats.expenses.map(([name, value]: any) => (
+              <div key={name} className="flex items-center justify-between group cursor-default gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform flex-shrink-0" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-gray-300 break-words">{name}</span>
+                </div>
+                <span className="text-xs font-black whitespace-nowrap">{formatCurrency(value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -201,7 +203,6 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
               <TrendingUp className="h-4 w-4 text-blue-600" /> Totais por Missão
             </h4>
             
-            {/* Filtro de Ano: Total | 2026 | 2025 */}
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1 border border-gray-200">
               <Calendar className="h-3.5 w-3.5 text-gray-400 ml-2" />
               <button
@@ -279,48 +280,26 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
           </div>
         </div>
 
-        {/* LADO DIREITO: Gráficos */}
-        <div className="lg:col-span-4 space-y-6">
-          
-          {/* Card Principais Fornecedores */}
-          <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-[360px] flex flex-col">
-            <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-blue-600" /> Principais Fornecedores
-            </h4>
-            <div className="space-y-5 overflow-y-auto custom-scrollbar flex-1">
-              {stats.suppliers.map(([name, value]: any) => (
-                <div key={name} className="space-y-1.5">
-                  <div className="flex justify-between items-center gap-3">
-                    <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
-                    <span className="text-xs font-black text-[#112240] whitespace-nowrap">{formatCurrency(value)}</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-600 rounded-full" 
-                      style={{ width: `${(value / (stats.totalPaid || 1)) * 100}%` }}
-                    />
-                  </div>
+        {/* LADO DIREITO: Principais Fornecedores (Aumentado) */}
+        <div className="lg:col-span-4 bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-[740px] flex flex-col">
+          <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-blue-600" /> Principais Fornecedores
+          </h4>
+          <div className="space-y-6 overflow-y-auto custom-scrollbar flex-1 pr-2">
+            {stats.suppliers.map(([name, value]: any) => (
+              <div key={name} className="space-y-1.5">
+                <div className="flex justify-between items-center gap-3">
+                  <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
+                  <span className="text-xs font-black text-[#112240] whitespace-nowrap">{formatCurrency(value)}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Card Despesas por Tipo */}
-          <div className="bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white h-[360px] flex flex-col">
-            <h4 className="text-sm font-black text-blue-300 uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
-              <PieChart className="h-4 w-4" /> Despesas por Tipo
-            </h4>
-            <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1">
-              {stats.expenses.map(([name, value]: any) => (
-                <div key={name} className="flex items-center justify-between group cursor-default gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform flex-shrink-0" />
-                    <span className="text-xs font-bold uppercase tracking-widest text-gray-300 break-words">{name}</span>
-                  </div>
-                  <span className="text-xs font-black whitespace-nowrap">{formatCurrency(value)}</span>
+                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-blue-600 rounded-full" 
+                    style={{ width: `${(value / (stats.totalPaid || 1)) * 100}%` }}
+                  />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
