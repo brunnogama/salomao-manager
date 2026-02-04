@@ -619,7 +619,7 @@ export function GestaoAeronave({
 
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Despesas</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Custo Missões</p>
                 <p className="text-2xl font-black text-blue-600 mt-1">{formatCurrency(totals.despesasPago ?? 0)}</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
@@ -629,7 +629,7 @@ export function GestaoAeronave({
 
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-all">
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Pagamentos</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</p>
                 <p className="text-2xl font-black text-emerald-600 mt-1">{formatCurrency(totals.pagamentosLiquido ?? 0)}</p>
               </div>
               <div className="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">

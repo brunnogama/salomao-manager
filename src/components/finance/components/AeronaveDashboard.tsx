@@ -394,7 +394,7 @@ export function AeronaveDashboard({
                     <LabelList 
                       dataKey="totalMensal" 
                       position="top" 
-                      formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
+                      formatter={(val: number) => val >= 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
                       style={{ fontSize: '12px', fontWeight: 'bold', fill: '#2563eb' }}
                       offset={12}
                     />
@@ -412,7 +412,7 @@ export function AeronaveDashboard({
                     <LabelList 
                       dataKey="value" 
                       position="top" 
-                      formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
+                      formatter={(val: number) => val >= 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
                       style={{ fontSize: '12px', fontWeight: 'bold', fill: '#2563eb' }}
                       offset={12}
                     />
@@ -430,7 +430,7 @@ export function AeronaveDashboard({
                     <LabelList 
                       dataKey="liquido" 
                       position="top" 
-                      formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
+                      formatter={(val: number) => val >= 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
                       style={{ fontSize: '12px', fontWeight: 'bold', fill: '#10b981' }}
                       offset={12}
                     />
@@ -504,7 +504,7 @@ export function AeronaveDashboard({
           <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
             <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-blue-600" /> 
-              {localViewMode === 'tudo' ? 'Todos os Registros' :
+              {localViewMode === 'tudo' ? 'Total Geral' :
                localViewMode === 'despesas' ? 'Totais por Missão' : 'Lista de Pagamentos'}
             </h4>
             
@@ -554,7 +554,7 @@ export function AeronaveDashboard({
               <div className="space-y-6">
                 <div>
                   <h5 className="px-8 py-4 text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50/50">
-                    Missões ({(statsDespesas?.missions || []).length})
+                    Custo Missões ({(statsDespesas?.missions || []).length})
                   </h5>
                   <table className="w-full text-left">
                     <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
@@ -591,7 +591,7 @@ export function AeronaveDashboard({
                 </div>
                 <div>
                   <h5 className="px-8 py-4 text-xs font-black text-emerald-600 uppercase tracking-widest bg-emerald-50/50">
-                    Pagamentos ({dataPagamentos.length})
+                    Despesas Fixas ({dataPagamentos.length})
                   </h5>
                   <table className="w-full text-left">
                     <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
