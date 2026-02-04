@@ -32,8 +32,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   const [selectedVencimento, setSelectedVencimento] = useState<VencimentoOAB | null>(null)
   const [valorInput, setValorInput] = useState('')
 
-  const nomeMesAtual = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date());
-
   useEffect(() => {
     fetchVencimentos()
   }, [mesAtual, anoAtual])
@@ -242,17 +240,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   return (
     <div className="space-y-6">
       <div className="flex gap-2 flex-wrap p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-        <button
-          onClick={() => setFiltro('mes_atual')}
-          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-            filtro === 'mes_atual' 
-              ? 'bg-[#1e3a8a] text-white shadow-md' 
-              : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-          }`}
-        >
-          {nomeMesAtual}
-        </button>
-
         <button
           onClick={() => setFiltro('todos')}
           className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
