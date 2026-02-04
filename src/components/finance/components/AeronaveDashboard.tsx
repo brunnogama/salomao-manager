@@ -98,7 +98,6 @@ export function AeronaveDashboard({
 
     const missionsMap: any = {}
     filteredByYear.forEach(item => {
-      // Filtrar missões sem data ou destino
       if (!item.data || !item.localidade_destino) return
       
       const key = `${item.data} | ${item.localidade_destino}`
@@ -130,36 +129,35 @@ export function AeronaveDashboard({
 
     const monthlyData: { [key: string]: number } = {}
     
-    // Sempre inicializar todos os 12 meses
     if (localSelectedYear !== 'total') {
-      // Ano específico: preencher todos os meses do ano
       for (let i = 1; i <= 12; i++) {
         const monthKey = `${localSelectedYear}-${String(i).padStart(2, '0')}`
         monthlyData[monthKey] = 0
       }
     } else {
-      // Total: preencher todos os meses de todos os anos presentes nos dados
-      const allYears = new Set<string>()
-      filteredByYear.forEach(item => {
-        if (item.data) {
-          const year = item.data.split('-')[0]
-          allYears.add(year)
-        }
-      })
-      
-      allYears.forEach(year => {
-        for (let i = 1; i <= 12; i++) {
-          const monthKey = `${year}-${String(i).padStart(2, '0')}`
+      // Iniciar obrigatoriamente em Outubro de 2025
+      const startYear = 2025;
+      const startMonth = 10;
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+
+      for (let y = startYear; y <= currentYear; y++) {
+        const mStart = (y === startYear) ? startMonth : 1;
+        const mEnd = (y === currentYear) ? 12 : 12;
+        for (let m = mStart; m <= mEnd; m++) {
+          const monthKey = `${y}-${String(m).padStart(2, '0')}`
           monthlyData[monthKey] = 0
         }
-      })
+      }
     }
 
     filteredByYear.forEach(item => {
       if (item.data) {
         const [year, month] = item.data.split('-')
         const monthKey = `${year}-${month}`
-        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (Number(item.valor_pago) || 0)
+        if (monthlyData.hasOwnProperty(monthKey)) {
+          monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (Number(item.valor_pago) || 0)
+        }
       }
     })
 
@@ -182,7 +180,6 @@ export function AeronaveDashboard({
   }, [filteredByYear, localSelectedYear])
 
   const statsPagamentos = useMemo(() => {
-    // Filtrar apenas pagamentos (itens que têm emissao)
     const pagamentosData = filteredByYear.filter(item => item.emissao)
     
     const totalBruto = pagamentosData.reduce((acc, curr) => acc + (Number(curr.valor_bruto) || 0), 0)
@@ -210,40 +207,34 @@ export function AeronaveDashboard({
 
     const monthlyData: { [key: string]: { bruto: number, liquido: number } } = {}
     
-    // Sempre inicializar todos os 12 meses
     if (localSelectedYear !== 'total') {
-      // Ano específico: preencher todos os meses do ano
       for (let i = 1; i <= 12; i++) {
         const monthKey = `${localSelectedYear}-${String(i).padStart(2, '0')}`
         monthlyData[monthKey] = { bruto: 0, liquido: 0 }
       }
     } else {
-      // Total: preencher todos os meses de todos os anos presentes nos dados
-      const allYears = new Set<string>()
-      pagamentosData.forEach(item => {
-        if (item.emissao) {
-          const year = item.emissao.split('-')[0]
-          allYears.add(year)
-        }
-      })
-      
-      allYears.forEach(year => {
-        for (let i = 1; i <= 12; i++) {
-          const monthKey = `${year}-${String(i).padStart(2, '0')}`
+      // Iniciar obrigatoriamente em Outubro de 2025
+      const startYear = 2025;
+      const startMonth = 10;
+      const currentYear = new Date().getFullYear();
+
+      for (let y = startYear; y <= currentYear; y++) {
+        const mStart = (y === startYear) ? startMonth : 1;
+        for (let m = mStart; m <= 12; m++) {
+          const monthKey = `${y}-${String(m).padStart(2, '0')}`
           monthlyData[monthKey] = { bruto: 0, liquido: 0 }
         }
-      })
+      }
     }
 
     pagamentosData.forEach(item => {
       if (item.emissao) {
         const [year, month] = item.emissao.split('-')
         const monthKey = `${year}-${month}`
-        if (!monthlyData[monthKey]) {
-          monthlyData[monthKey] = { bruto: 0, liquido: 0 }
+        if (monthlyData.hasOwnProperty(monthKey)) {
+          monthlyData[monthKey].bruto += Number(item.valor_bruto) || 0
+          monthlyData[monthKey].liquido += Number(item.valor_liquido_realizado) || 0
         }
-        monthlyData[monthKey].bruto += Number(item.valor_bruto) || 0
-        monthlyData[monthKey].liquido += Number(item.valor_liquido_realizado) || 0
       }
     })
 
