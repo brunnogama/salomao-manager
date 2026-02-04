@@ -19,7 +19,8 @@ import {
   CheckCircle2,
   Maximize2,
   Minimize2,
-  Receipt
+  Receipt,
+  Wallet
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -613,7 +614,7 @@ export function GestaoAeronave({
                 <p className="text-2xl font-black text-indigo-600 mt-1">{formatCurrency(totals.totalGeral ?? 0)}</p>
               </div>
               <div className="p-3 bg-indigo-50 rounded-xl group-hover:bg-indigo-100 transition-colors">
-                <Database className="h-6 w-6 text-indigo-600" />
+                <Wallet className="h-6 w-6 text-indigo-600" />
               </div>
             </div>
 
@@ -727,19 +728,19 @@ export function GestaoAeronave({
               <div className="flex bg-white border-2 border-gray-200 p-1 rounded-xl shadow-sm ml-2">
                 <button 
                   onClick={() => { setDataType('tudo'); resetFilters(); }} 
-                  className={`flex items-center gap-2 px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dataType === 'tudo' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dataType === 'tudo' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  <Database className="h-3 w-3" /> Tudo
+                  <Wallet className="h-3 w-3" /> Todos os pagamentos
                 </button>
                 <button 
                   onClick={() => { setDataType('despesas'); resetFilters(); }} 
-                  className={`flex items-center gap-2 px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dataType === 'despesas' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dataType === 'despesas' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                   <Receipt className="h-3 w-3" /> Custo Missões
                 </button>
                 <button 
                   onClick={() => { setDataType('pagamentos'); resetFilters(); }} 
-                  className={`flex items-center gap-2 px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dataType === 'pagamentos' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${dataType === 'pagamentos' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                   <DollarSign className="h-3 w-3" /> Despesas Fixas
                 </button>
@@ -747,7 +748,7 @@ export function GestaoAeronave({
             )}
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto custom-scrollbar pb-1 md:pb-0">
+          <div className="flex items-center gap-2 w-full md:w-auto overflow-x-visible pb-1 md:pb-0">
              <div className="relative">
                 <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-2 py-1.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
                   <Tag className="h-3 w-3 text-blue-600 mr-1.5 flex-shrink-0" />
