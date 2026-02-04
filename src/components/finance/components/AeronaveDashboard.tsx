@@ -93,11 +93,16 @@ export function AeronaveDashboard({
   }, [data, dataPagamentos, localSelectedYear, localViewMode])
 
   const statsDespesas = useMemo(() => {
-    const totalPaid = filteredByYear.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
-    const totalFlights = new Set(filteredByYear.map(item => `${item.data}-${item.localidade_destino}`)).size
+    const despesasData = localViewMode === 'tudo' ? data : (localViewMode === 'despesas' ? filteredByYear : [])
+    const filteredDespesas = localSelectedYear === 'total' 
+      ? despesasData 
+      : despesasData.filter(item => item.data?.startsWith(localSelectedYear))
+
+    const totalPaid = filteredDespesas.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
+    const totalFlights = new Set(filteredDespesas.map(item => `${item.data}-${item.localidade_destino}`)).size
 
     const missionsMap: any = {}
-    filteredByYear.forEach(item => {
+    filteredDespesas.forEach(item => {
       if (!item.data || !item.localidade_destino) return
       
       const key = `${item.data} | ${item.localidade_destino}`
@@ -116,34 +121,35 @@ export function AeronaveDashboard({
     })
 
     const expenseMap: any = {}
-    filteredByYear.forEach(item => {
+    filteredDespesas.forEach(item => {
       const cat = item.despesa || 'Outros'
       expenseMap[cat] = (expenseMap[cat] || 0) + (Number(item.valor_pago) || 0)
     })
 
     const supplierMap: any = {}
-    filteredByYear.forEach(item => {
+    filteredDespesas.forEach(item => {
       const sup = item.fornecedor || 'Não Informado'
       supplierMap[sup] = (supplierMap[sup] || 0) + (Number(item.valor_pago) || 0)
     })
 
     const monthlyData: { [key: string]: number } = {}
-    
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+
     if (localSelectedYear !== 'total') {
-      for (let i = 1; i <= 12; i++) {
+      const limitMonth = parseInt(localSelectedYear) === currentYear ? currentMonth : 12
+      for (let i = 1; i <= limitMonth; i++) {
         const monthKey = `${localSelectedYear}-${String(i).padStart(2, '0')}`
         monthlyData[monthKey] = 0
       }
     } else {
-      // Iniciar obrigatoriamente em Outubro de 2025
       const startYear = 2025;
       const startMonth = 10;
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth() + 1;
 
       for (let y = startYear; y <= currentYear; y++) {
         const mStart = (y === startYear) ? startMonth : 1;
-        const mEnd = (y === currentYear) ? 12 : 12;
+        const mEnd = (y === currentYear) ? currentMonth : 12;
         for (let m = mStart; m <= mEnd; m++) {
           const monthKey = `${y}-${String(m).padStart(2, '0')}`
           monthlyData[monthKey] = 0
@@ -151,7 +157,7 @@ export function AeronaveDashboard({
       }
     }
 
-    filteredByYear.forEach(item => {
+    filteredDespesas.forEach(item => {
       if (item.data) {
         const [year, month] = item.data.split('-')
         const monthKey = `${year}-${month}`
@@ -177,10 +183,13 @@ export function AeronaveDashboard({
       suppliers: Object.entries(supplierMap).sort((a: any, b: any) => b[1] - a[1]).slice(0, 15),
       monthlyData: sortedMonthlyData
     }
-  }, [filteredByYear, localSelectedYear])
+  }, [data, filteredByYear, localSelectedYear, localViewMode])
 
   const statsPagamentos = useMemo(() => {
-    const pagamentosData = filteredByYear.filter(item => item.emissao)
+    const pagamentosBase = localViewMode === 'tudo' ? dataPagamentos : (localViewMode === 'pagamentos' ? filteredByYear : [])
+    const pagamentosData = localSelectedYear === 'total'
+      ? pagamentosBase
+      : pagamentosBase.filter(item => item.emissao?.startsWith(localSelectedYear))
     
     const totalBruto = pagamentosData.reduce((acc, curr) => acc + (Number(curr.valor_bruto) || 0), 0)
     const totalLiquido = pagamentosData.reduce((acc, curr) => acc + (Number(curr.valor_liquido_realizado) || 0), 0)
@@ -206,21 +215,24 @@ export function AeronaveDashboard({
     })
 
     const monthlyData: { [key: string]: { bruto: number, liquido: number } } = {}
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
     
     if (localSelectedYear !== 'total') {
-      for (let i = 1; i <= 12; i++) {
+      const limitMonth = parseInt(localSelectedYear) === currentYear ? currentMonth : 12
+      for (let i = 1; i <= limitMonth; i++) {
         const monthKey = `${localSelectedYear}-${String(i).padStart(2, '0')}`
         monthlyData[monthKey] = { bruto: 0, liquido: 0 }
       }
     } else {
-      // Iniciar obrigatoriamente em Outubro de 2025
       const startYear = 2025;
       const startMonth = 10;
-      const currentYear = new Date().getFullYear();
 
       for (let y = startYear; y <= currentYear; y++) {
         const mStart = (y === startYear) ? startMonth : 1;
-        for (let m = mStart; m <= 12; m++) {
+        const mEnd = (y === currentYear) ? currentMonth : 12;
+        for (let m = mStart; m <= mEnd; m++) {
           const monthKey = `${y}-${String(m).padStart(2, '0')}`
           monthlyData[monthKey] = { bruto: 0, liquido: 0 }
         }
@@ -254,13 +266,23 @@ export function AeronaveDashboard({
       devedores: Object.entries(devedorMap).sort((a: any, b: any) => b[1].liquido - a[1].liquido).slice(0, 15),
       monthlyData: sortedMonthlyData
     }
-  }, [filteredByYear, localSelectedYear])
+  }, [dataPagamentos, filteredByYear, localSelectedYear, localViewMode])
 
   const stats = useMemo(() => {
     if (localViewMode === 'tudo') {
+      const combinedMonthly = statsDespesas.monthlyData.map(d => {
+        const pag = statsPagamentos.monthlyData.find(p => p.month === d.month)
+        return {
+          ...d,
+          liquido: pag?.liquido || 0,
+          bruto: pag?.bruto || 0
+        }
+      })
+
       return { 
         ...statsDespesas, 
         ...statsPagamentos,
+        monthlyData: combinedMonthly,
         totalCombinado: (statsDespesas?.totalPaid || 0) + (statsPagamentos?.totalLiquido || 0)
       }
     } else if (localViewMode === 'despesas') {
@@ -367,10 +389,15 @@ export function AeronaveDashboard({
                           </p>
                           {localViewMode === 'despesas' ? (
                             <p className="text-sm font-black">{formatCurrency(payload[0].value as number)}</p>
-                          ) : (
+                          ) : localViewMode === 'pagamentos' ? (
                             <>
                               <p className="text-xs font-bold text-emerald-300">Líquido: {formatCurrency(payload[0].payload.liquido)}</p>
                               <p className="text-xs font-bold text-amber-300">Bruto: {formatCurrency(payload[0].payload.bruto)}</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-xs font-bold text-blue-300">Despesa: {formatCurrency(payload[0].payload.value)}</p>
+                              <p className="text-xs font-bold text-emerald-300">Recebido: {formatCurrency(payload[0].payload.liquido)}</p>
                             </>
                           )}
                         </div>
@@ -379,7 +406,12 @@ export function AeronaveDashboard({
                     return null;
                   }}
                 />
-                {localViewMode === 'despesas' ? (
+                {localViewMode === 'tudo' ? (
+                  <>
+                    <Area type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                    <Area type="monotone" dataKey="liquido" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorLiquido)" />
+                  </>
+                ) : localViewMode === 'despesas' ? (
                   <Area 
                     type="monotone" 
                     dataKey="value" 
@@ -525,7 +557,7 @@ export function AeronaveDashboard({
           
           <div className="px-8 py-3 bg-blue-50/30 border-b border-blue-100/50">
             <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">
-              {filteredByYear.length} Lançamentos {localSelectedYear !== 'total' && `em ${localSelectedYear}`}
+              {localViewMode === 'tudo' ? (statsDespesas.missions.length + statsPagamentos.totalBruto/statsPagamentos.totalBruto || 0) : filteredByYear.length} Lançamentos {localSelectedYear !== 'total' && `em ${localSelectedYear}`}
             </span>
           </div>
 
@@ -571,7 +603,7 @@ export function AeronaveDashboard({
                 </div>
                 <div>
                   <h5 className="px-8 py-4 text-xs font-black text-emerald-600 uppercase tracking-widest bg-emerald-50/50">
-                    Pagamentos ({filteredByYear.filter(item => item.emissao).length})
+                    Pagamentos ({dataPagamentos.length})
                   </h5>
                   <table className="w-full text-left">
                     <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
@@ -584,7 +616,7 @@ export function AeronaveDashboard({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {filteredByYear.filter(item => item.emissao).slice(0, 10).map((item: any) => (
+                      {dataPagamentos.slice(0, 10).map((item: any) => (
                         <tr 
                           key={item.id} 
                           className="hover:bg-blue-50/30 transition-colors group"
