@@ -182,7 +182,7 @@ export function AeronaveDashboard({
       totalFlights,
       missions: Object.values(missionsMap).sort((a: any, b: any) => b.data.localeCompare(a.data)),
       expenses: Object.entries(expenseMap).sort((a: any, b: any) => b[1] - a[1]),
-      suppliers: Object.entries(supplierMap).sort((a: any, b: any) => b[1] - a[1]).slice(0, 15),
+      suppliers: Object.entries(supplierMap).sort((a: any, b: any) => b[1] - a[1]),
       monthlyData: sortedMonthlyData
     }
   }, [data, filteredByYear, localSelectedYear, localViewMode])
@@ -265,7 +265,7 @@ export function AeronaveDashboard({
       totalBruto,
       totalLiquido,
       tipos: Object.entries(tipoMap).sort((a: any, b: any) => b[1].liquido - a[1].liquido),
-      fixos: Object.entries(devedorMap).sort((a: any, b: any) => b[1].liquido - a[1].liquido).slice(0, 15),
+      fixos: Object.entries(devedorMap).sort((a: any, b: any) => b[1].liquido - a[1].liquido),
       monthlyData: sortedMonthlyData
     }
   }, [dataPagamentos, filteredByYear, localSelectedYear, localViewMode])
@@ -730,7 +730,7 @@ export function AeronaveDashboard({
               <>
                 <div>
                   <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">Fornecedores</p>
-                  {(statsDespesas?.suppliers || []).filter(([_, value]: any) => value > 0).slice(0, 7).map(([name, value]: any) => (
+                  {(statsDespesas?.suppliers || []).filter(([_, value]: any) => value > 0).map(([name, value]: any) => (
                     <div key={`forn-${name}`} className="space-y-1.5 mb-4">
                       <div className="flex justify-between items-center gap-3">
                         <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
@@ -747,7 +747,7 @@ export function AeronaveDashboard({
                 </div>
                 <div>
                   <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">Fixos</p>
-                  {(statsPagamentos?.fixos || []).filter(([_, values]: any) => values.liquido > 0).slice(0, 7).map(([name, values]: any) => (
+                  {(statsPagamentos?.fixos || []).filter(([_, values]: any) => values.liquido > 0).map(([name, values]: any) => (
                     <div key={`dev-${name}`} className="space-y-1.5 mb-4">
                       <div className="flex justify-between items-center gap-3">
                         <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
