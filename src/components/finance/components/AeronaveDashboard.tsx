@@ -1,6 +1,8 @@
+// Caminho do arquivo: AeronaveViewModal.tsx
+
 import { useMemo, useEffect, useState } from 'react'
 import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown, Receipt, DollarSign, Database } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, LabelList } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart, LabelList } from 'recharts'
 
 interface DashboardProps {
   data: any[];
@@ -275,7 +277,8 @@ export function AeronaveDashboard({
         return {
           ...d,
           liquido: pag?.liquido || 0,
-          bruto: pag?.bruto || 0
+          bruto: pag?.bruto || 0,
+          totalMensal: (d.value || 0) + (pag?.liquido || 0)
         }
       })
 
@@ -318,7 +321,7 @@ export function AeronaveDashboard({
             }`}
           >
             <Receipt className="h-4 w-4" />
-            Despesas
+            Custo Missões
           </button>
           <button
             onClick={() => handleViewModeChange('pagamentos')}
@@ -329,7 +332,7 @@ export function AeronaveDashboard({
             }`}
           >
             <DollarSign className="h-4 w-4" />
-            Pagamentos
+            Despesas Fixas
           </button>
         </div>
       </div>
@@ -378,39 +381,24 @@ export function AeronaveDashboard({
                   padding={{ left: 20, right: 20 }}
                 />
                 <YAxis hide domain={[0, 'auto']} />
-                <Tooltip 
-                  cursor={{ stroke: '#2563eb', strokeWidth: 2, strokeDasharray: '5 5' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-[#112240] text-white px-4 py-3 rounded-xl shadow-2xl border border-white/10">
-                          <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-1">
-                            {payload[0].payload.label}
-                          </p>
-                          {localViewMode === 'despesas' ? (
-                            <p className="text-sm font-black">{formatCurrency(payload[0].value as number)}</p>
-                          ) : localViewMode === 'pagamentos' ? (
-                            <>
-                              <p className="text-xs font-bold text-emerald-300">Líquido: {formatCurrency(payload[0].payload.liquido)}</p>
-                              <p className="text-xs font-bold text-amber-300">Bruto: {formatCurrency(payload[0].payload.bruto)}</p>
-                            </>
-                          ) : (
-                            <>
-                              <p className="text-xs font-bold text-blue-300">Despesa: {formatCurrency(payload[0].payload.value)}</p>
-                              <p className="text-xs font-bold text-emerald-300">Recebido: {formatCurrency(payload[0].payload.liquido)}</p>
-                            </>
-                          )}
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
                 {localViewMode === 'tudo' ? (
-                  <>
-                    <Area type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                    <Area type="monotone" dataKey="liquido" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorLiquido)" />
-                  </>
+                  <Area 
+                    type="monotone" 
+                    dataKey="totalMensal" 
+                    stroke="#2563eb" 
+                    strokeWidth={4} 
+                    fillOpacity={1} 
+                    fill="url(#colorValue)" 
+                    animationDuration={1500}
+                  >
+                    <LabelList 
+                      dataKey="totalMensal" 
+                      position="top" 
+                      formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
+                      style={{ fontSize: '12px', fontWeight: 'bold', fill: '#2563eb' }}
+                      offset={12}
+                    />
+                  </Area>
                 ) : localViewMode === 'despesas' ? (
                   <Area 
                     type="monotone" 
