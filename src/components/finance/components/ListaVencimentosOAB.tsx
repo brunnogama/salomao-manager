@@ -15,6 +15,9 @@ interface VencimentoOAB {
   equipe: string
   status: string
   email: string
+  // Novos campos da tabela financeira
+  valor_anuidade?: number
+  status_pagamento_real?: string
 }
 
 interface ListaVencimentosOABProps {
@@ -34,28 +37,34 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   const fetchVencimentos = async () => {
     setLoading(true)
     try {
-      // BUSCA DIRETA NA TABELA (Garante que puxe tudo sem depender de View)
-      const { data, error } = await supabase
+      // 1. Busca Colaboradores
+      const { data: colaboradores, error: colError } = await supabase
         .from('colaboradores')
         .select('*')
       
-      if (error) throw error
+      if (colError) throw colError
 
-      if (data) {
+      // 2. Busca Dados Financeiros Reais do período
+      const { data: financeiros, error: finError } = await supabase
+        .from('financeiro_oab')
+        .select('*')
+        .eq('mes_referencia', mesAtual)
+        .eq('ano_referencia', anoAtual)
+
+      if (finError) throw finError
+
+      if (colaboradores) {
         const hoje = new Date()
         hoje.setHours(0, 0, 0, 0)
 
-        const processados = data.filter((v: any) => {
+        const processados = colaboradores.filter((v: any) => {
           if (!v.data_admissao) return false
           
-          // LÓGICA DE FILTRO DE CARGO BLINDADA:
-          // Remove espaços, acentos e coloca em minúsculo para comparar
           const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
           const ehCargoValido = cargoLimpo === 'advogado' || cargoLimpo === 'socio';
           
           if (!ehCargoValido) return false;
 
-          // Suporta formato DD/MM/AAAA (da máscara) e YYYY-MM-DD
           let dia, mes, ano;
           if (v.data_admissao.includes('/')) {
             [dia, mes, ano] = v.data_admissao.split('/').map(Number);
@@ -63,11 +72,9 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
             [ano, mes, dia] = v.data_admissao.split('-').map(Number);
           }
 
-          // Lógica: Admissão + 6 meses - 1 dia 
           const dataVenc = new Date(ano, (mes - 1) + 6, dia)
           dataVenc.setDate(dataVenc.getDate() - 1)
 
-          // Só entra na lista se o vencimento calculado for no mês/ano visualizado
           return dataVenc.getMonth() === mesAtual && dataVenc.getFullYear() === anoAtual
         }).map((v: any) => {
           let dia, mes, ano;
@@ -81,14 +88,19 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
           dataVenc.setDate(dataVenc.getDate() - 1)
           
           const diff = Math.ceil((dataVenc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+          
+          // Cruzamento com dados financeiros reais
+          const fin = financeiros?.find(f => f.colaborador_id === v.id)
+
           return { 
             ...v, 
             data_pagamento_oab: dataVenc.toISOString().split('T')[0],
-            dias_ate_pagamento: diff 
+            dias_ate_pagamento: diff,
+            valor_anuidade: fin?.valor_anuidade,
+            status_pagamento_real: fin?.status_pagamento
           }
         })
 
-        // ORDENAÇÃO: Do mais próximo (antigo no calendário) para o mais distante
         processados.sort((a, b) => new Date(a.data_pagamento_oab).getTime() - new Date(b.data_pagamento_oab).getTime())
 
         setVencimentos(processados)
@@ -102,7 +114,6 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
-    // Formatação visual para o padrão brasileiro DD/MM/AAAA
     if (dateString.includes('-')) {
       const [year, month, day] = dateString.split('T')[0].split('-')
       return `${day}/${month}/${year}`
@@ -110,7 +121,16 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
     return dateString
   }
 
-  const getStatusBadge = (dias: number) => {
+  const getStatusBadge = (dias: number, statusReal?: string) => {
+    // Se houver status real de "pago" na tabela financeira, ele ganha prioridade visual
+    if (statusReal === 'pago') {
+      return {
+        icon: CheckCircle2,
+        text: 'PAGO',
+        class: 'bg-green-600 text-white border-green-700 font-black'
+      }
+    }
+
     if (dias < 0) {
       return {
         icon: AlertCircle,
@@ -227,7 +247,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
       ) : (
         <div className="space-y-3">
           {vencimentosFiltrados.map((vencimento) => {
-            const status = getStatusBadge(vencimento.dias_ate_pagamento)
+            const status = getStatusBadge(vencimento.dias_ate_pagamento, vencimento.status_pagamento_real)
             const StatusIcon = status.icon
 
             return (
@@ -247,7 +267,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                       <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">OAB</p>
                         <p className="text-xs font-bold text-[#0a192f]">{vencimento.oab_numero}</p>
@@ -262,9 +282,15 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                       </div>
                       <div className={`${vencimento.dias_ate_pagamento === 0 ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-100'} p-2.5 rounded-lg border`}>
                         <p className={`text-[8px] font-black ${vencimento.dias_ate_pagamento === 0 ? 'text-orange-600' : 'text-blue-600'} uppercase tracking-wider mb-0.5 flex items-center gap-1`}>
-                          <Calendar className="h-2.5 w-2.5" /> Pagamento
+                          <Calendar className="h-2.5 w-2.5" /> Previsto
                         </p>
                         <p className={`text-xs font-bold ${vencimento.dias_ate_pagamento === 0 ? 'text-orange-900' : 'text-blue-900'}`}>{formatDate(vencimento.data_pagamento_oab)}</p>
+                      </div>
+                      <div className="bg-green-50 p-2.5 rounded-lg border border-green-100">
+                        <p className="text-[8px] font-black text-green-600 uppercase tracking-wider mb-0.5">Valor Pago</p>
+                        <p className="text-xs font-bold text-green-900">
+                          {vencimento.valor_anuidade ? `R$ ${vencimento.valor_anuidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -289,7 +315,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-orange-500" /><span className="text-xs font-semibold text-gray-600">Hoje</span></div>
           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-yellow-500" /><span className="text-xs font-semibold text-gray-600">Até 7 dias</span></div>
           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500" /><span className="text-xs font-semibold text-gray-600">8-15 dias</span></div>
-          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500" /><span className="text-xs font-semibold text-gray-600">+15 dias</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500" /><span className="text-xs font-semibold text-gray-600">Pago / +15 dias</span></div>
         </div>
       </div>
 
