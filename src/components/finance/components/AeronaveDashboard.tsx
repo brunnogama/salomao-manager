@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState } from 'react'
 import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, LabelList } from 'recharts'
 
 interface DashboardProps {
   data: any[];
@@ -91,7 +91,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
       supplierMap[sup] = (supplierMap[sup] || 0) + (Number(item.valor_pago) || 0)
     })
 
-    // DADOS MENSAIS para o gráfico (Garantindo todos os meses se um ano estiver selecionado)
+    // DADOS MENSAIS para o gráfico
     const monthlyData: { [key: string]: number } = {}
     
     if (localSelectedYear !== 'total') {
@@ -145,7 +145,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
 
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats.monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <AreaChart data={stats.monthlyData} margin={{ top: 30, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
@@ -183,7 +183,14 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
                   fillOpacity={1} 
                   fill="url(#colorValue)" 
                   animationDuration={1500}
-                />
+                >
+                  <LabelList 
+                    dataKey="value" 
+                    position="top" 
+                    formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
+                    style={{ fontSize: '10px', fontWeight: 'bold', fill: '#2563eb' }}
+                  />
+                </Area>
               </AreaChart>
             </ResponsiveContainer>
           </div>
