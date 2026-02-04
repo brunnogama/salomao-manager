@@ -145,7 +145,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
 
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats.monthlyData} margin={{ top: 30, right: 10, left: 0, bottom: 0 }}>
+              <AreaChart data={stats.monthlyData} margin={{ top: 30, right: 30, left: 30, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
@@ -159,6 +159,7 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
                   tickLine={false}
                   tick={{ fontSize: 9, fontWeight: 900, fill: '#9ca3af' }}
                   dy={10}
+                  padding={{ left: 20, right: 20 }}
                 />
                 <YAxis hide domain={[0, 'auto']} />
                 <Tooltip 
@@ -188,7 +189,8 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter, selecte
                     dataKey="value" 
                     position="top" 
                     formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
-                    style={{ fontSize: '10px', fontWeight: 'bold', fill: '#2563eb' }}
+                    style={{ fontSize: '12px', fontWeight: 'bold', fill: '#2563eb' }}
+                    offset={12}
                   />
                 </Area>
               </AreaChart>
