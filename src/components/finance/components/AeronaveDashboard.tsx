@@ -394,7 +394,7 @@ export function AeronaveDashboard({
                     <LabelList 
                       dataKey="totalMensal" 
                       position="top" 
-                      formatter={(val: number) => val >= 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
+                      formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
                       style={{ fontSize: '12px', fontWeight: 'bold', fill: '#2563eb' }}
                       offset={12}
                     />
@@ -412,7 +412,7 @@ export function AeronaveDashboard({
                     <LabelList 
                       dataKey="value" 
                       position="top" 
-                      formatter={(val: number) => val >= 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
+                      formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
                       style={{ fontSize: '12px', fontWeight: 'bold', fill: '#2563eb' }}
                       offset={12}
                     />
@@ -430,7 +430,7 @@ export function AeronaveDashboard({
                     <LabelList 
                       dataKey="liquido" 
                       position="top" 
-                      formatter={(val: number) => val >= 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
+                      formatter={(val: number) => val > 0 ? new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(val) : ''}
                       style={{ fontSize: '12px', fontWeight: 'bold', fill: '#10b981' }}
                       offset={12}
                     />
@@ -451,7 +451,7 @@ export function AeronaveDashboard({
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-2">
             {localViewMode === 'tudo' ? (
               <>
-                {(statsDespesas?.expenses || []).slice(0, 5).map(([name, value]: any) => (
+                {(statsDespesas?.expenses || []).filter(([_, value]: any) => value > 0).slice(0, 5).map(([name, value]: any) => (
                   <div key={`desp-${name}`} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform flex-shrink-0" />
@@ -460,7 +460,7 @@ export function AeronaveDashboard({
                     <span className="text-xs font-black whitespace-nowrap">{formatCurrency(value)}</span>
                   </div>
                 ))}
-                {(statsPagamentos?.tipos || []).slice(0, 5).map(([name, values]: any) => (
+                {(statsPagamentos?.tipos || []).filter(([_, values]: any) => values.liquido > 0).slice(0, 5).map(([name, values]: any) => (
                   <div key={`pag-${name}`} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 group-hover:scale-150 transition-transform flex-shrink-0" />
@@ -471,7 +471,7 @@ export function AeronaveDashboard({
                 ))}
               </>
             ) : localViewMode === 'despesas' ? (
-              statsDespesas.expenses.map(([name, value]: any) => (
+              statsDespesas.expenses.filter(([_, value]: any) => value > 0).map(([name, value]: any) => (
                 <div key={name} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:scale-150 transition-transform flex-shrink-0" />
@@ -481,7 +481,7 @@ export function AeronaveDashboard({
                 </div>
               ))
             ) : (
-              statsPagamentos.tipos.map(([name, values]: any) => (
+              statsPagamentos.tipos.filter(([_, values]: any) => values.liquido > 0).map(([name, values]: any) => (
                 <div key={name} className="flex items-center justify-between group cursor-default gap-3 border-b border-white/5 pb-2">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 group-hover:scale-150 transition-transform flex-shrink-0" />
@@ -506,38 +506,63 @@ export function AeronaveDashboard({
                localViewMode === 'despesas' ? 'Totais por Missão' : 'Lista de Despesas fixas'}
             </h4>
             
-            <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1 border border-gray-200">
-              <Calendar className="h-3.5 w-3.5 text-gray-400 ml-2" />
-              <button
-                onClick={() => handleYearChange('total')}
-                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  localSelectedYear === 'total' 
-                    ? 'bg-[#1e3a8a] text-white shadow-md' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Total
-              </button>
-              <button
-                onClick={() => handleYearChange('2026')}
-                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  localSelectedYear === '2026' 
-                    ? 'bg-[#1e3a8a] text-white shadow-md' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                2026
-              </button>
-              <button
-                onClick={() => handleYearChange('2025')}
-                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  localSelectedYear === '2025' 
-                    ? 'bg-[#1e3a8a] text-white shadow-md' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                2025
-              </button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1 border border-gray-200">
+                <Calendar className="h-3.5 w-3.5 text-gray-400 ml-2" />
+                <button
+                  onClick={() => handleYearChange('total')}
+                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                    localSelectedYear === 'total' 
+                      ? 'bg-[#1e3a8a] text-white shadow-md' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Total
+                </button>
+                <button
+                  onClick={() => handleYearChange('2026')}
+                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                    localSelectedYear === '2026' 
+                      ? 'bg-[#1e3a8a] text-white shadow-md' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  2026
+                </button>
+                <button
+                  onClick={() => handleYearChange('2025')}
+                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                    localSelectedYear === '2025' 
+                      ? 'bg-[#1e3a8a] text-white shadow-md' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  2025
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1 border border-gray-200">
+                <button
+                  onClick={() => handleViewModeChange('despesas')}
+                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                    localViewMode === 'despesas' 
+                      ? 'bg-blue-600 text-white shadow-md' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Custo Missões
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('pagamentos')}
+                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                    localViewMode === 'pagamentos' 
+                      ? 'bg-emerald-600 text-white shadow-md' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Despesas Fixas
+                </button>
+              </div>
             </div>
           </div>
           
@@ -564,7 +589,7 @@ export function AeronaveDashboard({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {(statsDespesas?.missions || []).map((m: any) => (
+                      {(statsDespesas?.missions || []).filter((m: any) => m.pago > 0 || m.previsto > 0).map((m: any) => (
                         <tr 
                           key={m.key} 
                           onClick={() => {
@@ -601,7 +626,7 @@ export function AeronaveDashboard({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {dataPagamentos.map((item: any) => (
+                      {dataPagamentos.filter((item: any) => (Number(item.valor_liquido_realizado) || 0) > 0).map((item: any) => (
                         <tr 
                           key={item.id} 
                           className="hover:bg-blue-50/30 transition-colors group"
@@ -635,7 +660,7 @@ export function AeronaveDashboard({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {statsDespesas.missions.map((m: any) => (
+                  {statsDespesas.missions.filter((m: any) => m.pago > 0 || m.previsto > 0).map((m: any) => (
                     <tr 
                       key={m.key} 
                       onClick={() => {
@@ -668,7 +693,7 @@ export function AeronaveDashboard({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredByYear.map((item: any) => (
+                  {filteredByYear.filter((item: any) => (Number(item.valor_liquido_realizado) || 0) > 0).map((item: any) => (
                     <tr 
                       key={item.id} 
                       className="hover:bg-blue-50/30 transition-colors group"
@@ -705,7 +730,7 @@ export function AeronaveDashboard({
               <>
                 <div>
                   <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">Fornecedores</p>
-                  {(statsDespesas?.suppliers || []).slice(0, 7).map(([name, value]: any) => (
+                  {(statsDespesas?.suppliers || []).filter(([_, value]: any) => value > 0).slice(0, 7).map(([name, value]: any) => (
                     <div key={`forn-${name}`} className="space-y-1.5 mb-4">
                       <div className="flex justify-between items-center gap-3">
                         <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
@@ -722,7 +747,7 @@ export function AeronaveDashboard({
                 </div>
                 <div>
                   <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">Fixos</p>
-                  {(statsPagamentos?.fixos || []).slice(0, 7).map(([name, values]: any) => (
+                  {(statsPagamentos?.fixos || []).filter(([_, values]: any) => values.liquido > 0).slice(0, 7).map(([name, values]: any) => (
                     <div key={`dev-${name}`} className="space-y-1.5 mb-4">
                       <div className="flex justify-between items-center gap-3">
                         <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
@@ -739,7 +764,7 @@ export function AeronaveDashboard({
                 </div>
               </>
             ) : localViewMode === 'despesas' ? (
-              statsDespesas.suppliers.map(([name, value]: any) => (
+              statsDespesas.suppliers.filter(([_, value]: any) => value > 0).map(([name, value]: any) => (
                 <div key={name} className="space-y-1.5">
                   <div className="flex justify-between items-center gap-3">
                     <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
@@ -754,7 +779,7 @@ export function AeronaveDashboard({
                 </div>
               ))
             ) : (
-              statsPagamentos.fixos.map(([name, values]: any) => (
+              statsPagamentos.fixos.filter(([_, values]: any) => values.liquido > 0).map(([name, values]: any) => (
                 <div key={name} className="space-y-1.5">
                   <div className="flex justify-between items-center gap-3">
                     <span className="text-xs font-black text-gray-500 uppercase break-words">{name}</span>
