@@ -7,7 +7,6 @@ import {
   Plus, 
   Search, 
   FileSpreadsheet,
-  RefreshCw,
   LayoutDashboard,
   Database,
   Loader2,
@@ -17,7 +16,6 @@ import {
   Tag,
   Building2,
   DollarSign,
-  TrendingUp,
   CheckCircle2,
   Maximize2,
   Minimize2
@@ -33,12 +31,14 @@ interface GestaoAeronaveProps {
   userName?: string;
   onModuleHome?: () => void;
   onLogout?: () => void;
+  onTogglePresentationMode?: (isPresenting: boolean) => void;
 }
 
 export function GestaoAeronave({ 
   userName = 'Usuário', 
   onModuleHome, 
-  onLogout 
+  onLogout,
+  onTogglePresentationMode
 }: GestaoAeronaveProps) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'gerencial'>('gerencial')
   const [searchTerm, setSearchTerm] = useState('')
@@ -110,9 +110,7 @@ export function GestaoAeronave({
     })
   }, [data, searchTerm, startDate, endDate, selectedExpense, selectedSupplier])
 
-  // Cálculos Dinâmicos para os Cards
   const totals = useMemo(() => {
-    // Contagem única de missões baseada em data e destino
     const totalFlights = new Set(filteredData.map(item => `${item.data}-${item.localidade_destino}`)).size
 
     return filteredData.reduce((acc, curr) => ({
@@ -169,6 +167,14 @@ export function GestaoAeronave({
     setStartDate(dataMissao)
     setEndDate(dataMissao)
     setActiveTab('gerencial')
+  }
+
+  const handleTogglePresentation = () => {
+    const newMode = !isPresentationMode
+    setIsPresentationMode(newMode)
+    if (onTogglePresentationMode) {
+      onTogglePresentationMode(newMode)
+    }
   }
 
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,12 +279,42 @@ export function GestaoAeronave({
               <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
               <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
             </div>
+            
+            {/* BOTÃO MODO APRESENTAÇÃO NO HEADER */}
+            <button
+              onClick={handleTogglePresentation}
+              className="p-2.5 bg-white border-2 border-gray-200 text-gray-600 rounded-lg hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all shadow-sm hover:shadow-md"
+              title="Modo Apresentação"
+            >
+              <Maximize2 className="h-5 w-5" />
+            </button>
+
             <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
               <UserCircle className="h-5 w-5" />
             </div>
             {onModuleHome && <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><Grid className="h-5 w-5" /></button>}
             {onLogout && <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><LogOut className="h-5 w-5" /></button>}
           </div>
+        </div>
+      )}
+
+      {/* MODO APRESENTAÇÃO - HEADER MINIMALISTA */}
+      {isPresentationMode && (
+        <div className="flex items-center justify-between gap-4 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-lg border border-gray-200 animate-in fade-in duration-300">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
+              <Plane className="h-5 w-5 text-white" />
+            </div>
+            <h1 className="text-xl font-black text-[#0a192f] tracking-tight">Gestão da Aeronave</h1>
+          </div>
+          
+          <button
+            onClick={handleTogglePresentation}
+            className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md"
+            title="Sair do Modo Apresentação"
+          >
+            <Minimize2 className="h-5 w-5" />
+          </button>
         </div>
       )}
 
@@ -335,25 +371,10 @@ export function GestaoAeronave({
                 <Database className="h-3.5 w-3.5" /> Gerencial
               </button>
             </div>
-
-            {/* BOTÃO MODO APRESENTAÇÃO */}
-            <button
-              onClick={() => setIsPresentationMode(!isPresentationMode)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                isPresentationMode 
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-lg' 
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
-              }`}
-              title={isPresentationMode ? 'Sair do Modo Apresentação' : 'Modo Apresentação'}
-            >
-              {isPresentationMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-              <span className="hidden sm:inline">{isPresentationMode ? 'Normal' : 'Apresentar'}</span>
-            </button>
           </div>
 
           {!isPresentationMode && (
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-               {/* Dropdown Despesas - UI Melhorada */}
                <div className="relative group">
                   <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
                     <Tag className="h-3.5 w-3.5 text-blue-600 mr-2" />
@@ -368,7 +389,6 @@ export function GestaoAeronave({
                   </div>
                </div>
 
-               {/* Dropdown Fornecedores - UI Melhorada */}
                <div className="relative group">
                   <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
                     <Building2 className="h-3.5 w-3.5 text-blue-600 mr-2" />
@@ -383,7 +403,6 @@ export function GestaoAeronave({
                   </div>
                </div>
 
-               {/* Date Range - UI Melhorada */}
                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 w-full md:w-auto transition-all shadow-sm hover:shadow-md">
                   <Calendar className="h-4 w-4 text-blue-600 mr-3" />
                   <input 

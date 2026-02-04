@@ -10,14 +10,12 @@ interface DashboardProps {
 export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: DashboardProps) {
   const [selectedYear, setSelectedYear] = useState<string>('2026')
 
-  // Resetar filtros ao montar o componente
   useEffect(() => {
     if (onResetFilter) {
       onResetFilter();
     }
   }, [onResetFilter]);
 
-  // Filtrar dados por ano
   const filteredByYear = useMemo(() => {
     return data.filter(item => {
       if (!item.data) return false
@@ -28,8 +26,6 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
 
   const stats = useMemo(() => {
     const totalPaid = filteredByYear.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
-    
-    // Contagem única de missões baseada em data e destino
     const totalFlights = new Set(filteredByYear.map(item => `${item.data}-${item.localidade_destino}`)).size
 
     const missionsMap: any = {}
@@ -162,14 +158,15 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
           </div>
         </div>
 
-        {/* LADO DIREITO: Gráficos - ALTURA AUMENTADA */}
+        {/* LADO DIREITO: Gráficos */}
         <div className="lg:col-span-4 space-y-6">
           
-          <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-[360px] overflow-y-auto custom-scrollbar">
-            <h4 className="text-[11px] font-black text-[#112240] uppercase tracking-[0.2em] mb-6 flex items-center gap-2 sticky top-0 bg-white pb-2">
+          {/* Card Principais Fornecedores */}
+          <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm h-[360px] flex flex-col">
+            <h4 className="text-sm font-black text-[#112240] uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-blue-600" /> Principais Fornecedores
             </h4>
-            <div className="space-y-5">
+            <div className="space-y-5 overflow-y-auto custom-scrollbar flex-1">
               {stats.suppliers.map(([name, value]: any) => (
                 <div key={name} className="space-y-1.5">
                   <div className="flex justify-between items-center">
@@ -187,11 +184,12 @@ export function AeronaveDashboard({ data, onMissionClick, onResetFilter }: Dashb
             </div>
           </div>
 
-          <div className="bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white h-[360px] overflow-y-auto custom-scrollbar">
-            <h4 className="text-[11px] font-black text-blue-300 uppercase tracking-[0.2em] mb-6 flex items-center gap-2 sticky top-0 bg-[#112240] pb-2">
+          {/* Card Despesas por Tipo */}
+          <div className="bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white h-[360px] flex flex-col">
+            <h4 className="text-sm font-black text-blue-300 uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
               <PieChart className="h-4 w-4" /> Despesas por Tipo
             </h4>
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1">
               {stats.expenses.map(([name, value]: any) => (
                 <div key={name} className="flex items-center justify-between group cursor-default">
                   <div className="flex items-center gap-3">
