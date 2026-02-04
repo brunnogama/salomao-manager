@@ -1,7 +1,7 @@
 // Caminho do arquivo: AeronaveViewModal.tsx
 
 import { useMemo, useEffect, useState } from 'react'
-import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown, Receipt, DollarSign, Database } from 'lucide-react'
+import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown, Receipt, DollarSign, Database } from 'lucide-center'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart, LabelList } from 'recharts'
 
 interface DashboardProps {
@@ -445,7 +445,7 @@ export function AeronaveDashboard({
         <div className="lg:col-span-4 bg-[#112240] p-8 rounded-[2rem] shadow-xl text-white h-[380px] flex flex-col">
           <h4 className="text-sm font-black text-blue-300 uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
             <PieChart className="h-4 w-4" /> 
-            {localViewMode === 'tudo' ? 'Categorias Combinadas' :
+            {localViewMode === 'tudo' ? 'Despesas Fixas' :
              localViewMode === 'despesas' ? 'Despesas por Tipo' : 'Despesas fixas por Tipo'}
           </h4>
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-2">
@@ -543,7 +543,7 @@ export function AeronaveDashboard({
           
           <div className="px-8 py-3 bg-blue-50/30 border-b border-blue-100/50">
             <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">
-              {localViewMode === 'tudo' ? (statsDespesas.missions.length + statsPagamentos.totalBruto/statsPagamentos.totalBruto || 0) : filteredByYear.length} Lançamentos {localSelectedYear !== 'total' && `em ${localSelectedYear}`}
+              Lançamentos {localSelectedYear !== 'total' && `em ${localSelectedYear}`}
             </span>
           </div>
 
@@ -564,7 +564,7 @@ export function AeronaveDashboard({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {(statsDespesas?.missions || []).slice(0, 10).map((m: any) => (
+                      {(statsDespesas?.missions || []).map((m: any) => (
                         <tr 
                           key={m.key} 
                           onClick={() => {
@@ -594,27 +594,23 @@ export function AeronaveDashboard({
                   <table className="w-full text-left">
                     <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
                       <tr>
-                        <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Emissão</th>
-                        <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
-                        <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Tipo</th>
+                        <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
+                        <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Descrição</th>
                         <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Fixos</th>
                         <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Valor Líquido</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {dataPagamentos.slice(0, 10).map((item: any) => (
+                      {dataPagamentos.map((item: any) => (
                         <tr 
                           key={item.id} 
                           className="hover:bg-blue-50/30 transition-colors group"
                         >
                           <td className="px-8 py-4">
-                            <span className="text-sm font-bold text-gray-600">{formatDate(item.emissao)}</span>
-                          </td>
-                          <td className="px-4 py-4">
                             <span className="text-sm font-semibold text-gray-600">{formatDate(item.vencimento)}</span>
                           </td>
                           <td className="px-4 py-4">
-                            <span className="text-sm font-black text-[#112240] uppercase">{item.tipo}</span>
+                            <span className="text-sm font-black text-[#112240] uppercase">{item.descricao || 'Sem Descrição'}</span>
                           </td>
                           <td className="px-4 py-4">
                             <span className="text-sm font-semibold text-gray-700">{item.devedor}</span>
@@ -665,9 +661,8 @@ export function AeronaveDashboard({
               <table className="w-full text-left">
                 <thead className="sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
                   <tr>
-                    <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Emissão</th>
-                    <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
-                    <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Tipo</th>
+                    <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
+                    <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Descrição</th>
                     <th className="px-4 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Fixos</th>
                     <th className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Valor Líquido</th>
                   </tr>
@@ -679,13 +674,10 @@ export function AeronaveDashboard({
                       className="hover:bg-blue-50/30 transition-colors group"
                     >
                       <td className="px-8 py-4">
-                        <span className="text-sm font-bold text-gray-600">{formatDate(item.emissao)}</span>
-                      </td>
-                      <td className="px-4 py-4">
                         <span className="text-sm font-semibold text-gray-600">{formatDate(item.vencimento)}</span>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="text-sm font-black text-[#112240] uppercase">{item.tipo}</span>
+                        <span className="text-sm font-black text-[#112240] uppercase">{item.descricao || 'Sem Descrição'}</span>
                       </td>
                       <td className="px-4 py-4">
                         <span className="text-sm font-semibold text-gray-700">{item.devedor}</span>
