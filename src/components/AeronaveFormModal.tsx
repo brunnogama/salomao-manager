@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Save, Plus, Calendar, DollarSign, FileText, Plane, Settings } from 'lucide-react'
-import { supabase } from '../../../lib/supabase'
+import { supabase } from '../lib/supabase' // <--- CORRIGIDO AQUI
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
 import { GerenciadorOpcoesModal } from './GerenciadorOpcoesModal'
 
