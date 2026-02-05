@@ -174,11 +174,11 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-full">
       
-      {/* LINHA 1: GRÁFICO (8 COLUNAS) E RANKING DE FORNECEDORES (4 COLUNAS) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[450px]">
+      {/* LINHA 1: GRÁFICO (67%) E RANKING DE FORNECEDORES (33%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* 1. GRÁFICO DE LINHA (8/12 colunas) */}
-        <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full relative">
+        {/* 1. GRÁFICO DE LINHA (2 colunas de 3) */}
+        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[450px]">
           
           {/* Header Integrado no Card */}
           <div className="flex items-center justify-between mb-6">
@@ -243,8 +243,8 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
           </div>
         </div>
 
-        {/* 2. RANKING DE FORNECEDORES (4/12 colunas) */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+        {/* 2. RANKING DE FORNECEDORES (1 coluna de 3) */}
+        <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[450px]">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <Users className="h-4 w-4 text-gray-400" />
             <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Ranking de Fornecedores</h4>
@@ -280,10 +280,10 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
       </div>
 
       {/* LINHA 2: MISSÕES E DESPESAS FIXAS LADO A LADO */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[400px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* CARD ESQUERDA: RELAÇÃO DAS MISSÕES */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <Plane className="h-4 w-4 text-blue-600" />
             <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Relação de Missões</h4>
@@ -322,7 +322,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
         </div>
 
         {/* CARD DIREITA: DESPESAS FIXAS */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <DollarSign className="h-4 w-4 text-emerald-600" />
             <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</h4>
