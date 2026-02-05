@@ -1,4 +1,4 @@
-import { X, Edit3, Trash2, Calendar, CreditCard, FileText, Printer } from 'lucide-react'
+import { X, Edit3, Trash2, Calendar, CreditCard, FileText, Printer, AlertTriangle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
 
@@ -34,6 +34,12 @@ export function AeronaveViewModal({
     return new Intl.DateTimeFormat('pt-BR').format(new Date(date.getTime() + userTimezoneOffset))
   }
 
+  // Cálculo de divergência para faturas agrupadas
+  const totalItens = isGroup ? itemsGroup.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0) : 0
+  const valorTotalDoc = Number(item.valor_total_doc) || 0
+  const temDivergencia = isGroup && Math.abs(totalItens - valorTotalDoc) > 0.01
+  const diferenca = valorTotalDoc - totalItens
+
   const handlePrint = () => {
     window.print()
   }
@@ -61,7 +67,7 @@ export function AeronaveViewModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 print:p-0 print:bg-white">
-      <div id="printable-modal" className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300 print:shadow-none print:max-h-none print:rounded-none">
+      <div id="printable-modal" className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300 print:shadow-none print:max-h-none print:rounded-none">
         
         {/* Header */}
         <div className={`px-6 py-5 border-b border-gray-100 flex items-center justify-between ${isMissao ? 'bg-blue-50/50' : 'bg-emerald-50/50'} print:bg-white print:border-b-2`}>
@@ -96,17 +102,33 @@ export function AeronaveViewModal({
           
           {isGroup ? (
             /* VISUALIZAÇÃO AGRUPADA (ITENS DA FATURA) */
-            <section>
+            <section className="space-y-4">
               <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-gray-400" />
                   <h3 className="text-xs font-bold text-gray-500 uppercase">Relação de Itens</h3>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-black text-gray-400 uppercase">Total da Fatura</span>
-                  <p className="text-lg font-black text-[#1e3a8a]">{formatMoney(item.valor_total_doc)}</p>
+                <div className="flex gap-6">
+                  <div className="text-right">
+                    <span className="text-[10px] font-black text-gray-400 uppercase">Soma dos Itens</span>
+                    <p className="text-sm font-bold text-gray-600">{formatMoney(totalItens)}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-black text-gray-400 uppercase">Total da Fatura</span>
+                    <p className="text-lg font-black text-[#1e3a8a]">{formatMoney(valorTotalDoc)}</p>
+                  </div>
                 </div>
               </div>
+
+              {temDivergencia && (
+                <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 print:bg-white print:border-amber-500">
+                  <AlertTriangle className="h-5 w-5 shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-black uppercase">Atenção: Divergência de Valores</p>
+                    <p className="font-medium">A soma dos itens não corresponde ao total da fatura. Diferença: <span className="font-bold">{formatMoney(diferenca)}</span></p>
+                  </div>
+                </div>
+              )}
               
               <div className="overflow-hidden border border-gray-100 rounded-xl">
                 <table className="w-full text-left text-sm">
@@ -114,6 +136,7 @@ export function AeronaveViewModal({
                     <tr>
                       <th className="px-4 py-3">ID Missão</th>
                       <th className="px-4 py-3">Missão</th>
+                      <th className="px-4 py-3">Fornecedor</th>
                       <th className="px-4 py-3">Tipo / Descrição</th>
                       <th className="px-4 py-3 text-right">Valor Pago</th>
                     </tr>
@@ -126,6 +149,9 @@ export function AeronaveViewModal({
                         </td>
                         <td className="px-4 py-3 font-semibold text-gray-700">
                           {subItem.nome_missao || 'Despesa Fixa'}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-gray-600">
+                          {subItem.fornecedor || '-'}
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-bold text-[#1e3a8a] text-[11px] uppercase">{subItem.tipo}</p>
