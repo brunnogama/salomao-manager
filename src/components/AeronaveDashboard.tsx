@@ -19,15 +19,18 @@ interface AeronaveDashboardProps {
 }
 
 export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos' }: AeronaveDashboardProps) {
+  // Alteração 1: Padrão "all" para todos os anos
   const [yearFilter, setYearFilter] = useState<string>('all')
 
+  // --- Cores do Sistema ---
   const COLORS = {
-    line: '#1e3a8a',
+    line: '#1e3a8a', // Azul Salomão Principal
     dot: '#ffffff',
-    activeDot: '#f59e0b',
+    activeDot: '#f59e0b', // Amber
     text: '#64748b'
   }
 
+  // --- Helpers de Formatação ---
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val)
 
@@ -38,9 +41,11 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
     return new Intl.DateTimeFormat('pt-BR').format(new Date(date.getTime() + userTimezoneOffset))
   }
 
+  // --- Filtro de Ano ---
   const availableYears = useMemo(() => {
     const years = new Set(data.map(d => (d.data_pagamento || d.vencimento || '').split('-')[0]).filter(Boolean))
     const sorted = Array.from(years).sort().reverse()
+    // Se não tiver anos, retorna o atual, senão retorna a lista ordenada
     return sorted.length > 0 ? sorted : [new Date().getFullYear().toString()]
   }, [data])
 
@@ -52,20 +57,24 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
     })
   }, [data, yearFilter])
 
-  // --- 1. Gráfico ---
+  // --- 1. Dados do Gráfico (CORRIGIDO: Ordem Cronológica por data_pagamento) ---
   const chartData = useMemo(() => {
+    // Filtra apenas registros com data_pagamento e valor_pago > 0
     const validRecords = dashboardData.filter(item => 
       item.data_pagamento && (item.valor_pago || 0) > 0
     )
 
+    // Agrupa por mês YYYY-MM usando data_pagamento
     const grouped = validRecords.reduce((acc, item) => {
       const dateStr = item.data_pagamento
       if (!dateStr) return acc
       
       const date = new Date(dateStr)
+      // Ajuste timezone
       const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000)
       const key = `${adjustedDate.getFullYear()}-${String(adjustedDate.getMonth() + 1).padStart(2, '0')}`
       
+      // Exibe mês/ano se for "Todos", senão só mês
       const monthLabel = adjustedDate.toLocaleDateString('pt-BR', { 
         month: 'short', 
         year: yearFilter === 'all' ? '2-digit' : undefined 
@@ -82,12 +91,13 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       return acc
     }, {} as Record<string, any>)
 
+    // Converte para array e ordena CRONOLOGICAMENTE por fullDate (YYYY-MM)
     return Object.values(grouped)
-      .filter(item => item.value > 0)
-      .sort((a, b) => a.fullDate.localeCompare(b.fullDate))
+      .filter(item => item.value > 0) // Remove meses com valor zero
+      .sort((a, b) => a.fullDate.localeCompare(b.fullDate)) // Ordem crescente
   }, [dashboardData, yearFilter])
 
-  // --- 2. Fornecedores ---
+  // --- 2. Dados de Fornecedores (Todos, Ordenados) ---
   const suppliersList = useMemo(() => {
     const groups = dashboardData.reduce((acc, item) => {
       const name = item.fornecedor || 'Não Informado'
@@ -107,7 +117,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       .sort((a, b) => b.total - a.total)
   }, [dashboardData])
 
-  // --- 3. Missões ---
+  // --- 3. Dados de Missões (Agrupados por Missão) ---
   const missionsList = useMemo(() => {
     const missions = dashboardData.filter(i => i.origem === 'missao')
     const groups = missions.reduce((acc, item) => {
@@ -116,7 +126,12 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       const key = `${id}-${nome}`
 
       if (!acc[key]) {
-        acc[key] = { id, nome, data: item.data_missao, total: 0 }
+        acc[key] = { 
+          id, 
+          nome, 
+          data: item.data_missao, 
+          total: 0 
+        }
       }
       acc[key].total += (item.valor_pago || 0)
       if (!acc[key].data && item.data_missao) acc[key].data = item.data_missao
@@ -126,7 +141,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
     return Object.values(groups).sort((a, b) => b.total - a.total)
   }, [dashboardData])
 
-  // --- 4. Despesas Fixas ---
+  // --- 4. Dados de Despesas Fixas (Agrupados por Fornecedor + Tipo) ---
   const fixedExpensesList = useMemo(() => {
     const fixed = dashboardData.filter(i => i.origem === 'fixa')
     const groups = fixed.reduce((acc, item) => {
@@ -144,9 +159,11 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
     return Object.values(groups).sort((a, b) => b.total - a.total)
   }, [dashboardData])
 
-  // --- 5. Pagamentos Pendentes ---
+  // --- 5. NOVO: Pagamentos Pendentes (Baseado em vencimento e valor_previsto) ---
   const pendingPaymentsList = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
+    
+    // Filtra registros com vencimento definido, valor_previsto > 0 e sem pagamento ainda
     const pending = dashboardData.filter(item => 
       item.vencimento && 
       (item.valor_previsto || 0) > 0 && 
@@ -193,12 +210,14 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       .slice(0, 5)
   }, [dashboardData])
 
+  // --- Handler seguro para clique em missão ---
   const handleMissionClick = (missionName: string) => {
     if (onMissionClick && typeof onMissionClick === 'function') {
       onMissionClick(missionName)
     }
   }
 
+  // --- Custom Tooltip Chart ---
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -214,9 +233,13 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-full">
       
-      {/* LINHA 1: GRÁFICO E RANKING */}
+      {/* LINHA 1: GRÁFICO (67%) E RANKING DE FORNECEDORES (33%) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* 1. GRÁFICO DE LINHA (2 colunas de 3) */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[450px]">
+          
+          {/* Header Integrado no Card */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-indigo-100 rounded-lg text-indigo-700">
@@ -224,6 +247,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
               </div>
               <h4 className="text-sm font-black text-[#112240] uppercase tracking-widest">Análise Financeira</h4>
             </div>
+            
             <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-100 transition-colors">
               <Filter className="h-3.5 w-3.5 text-gray-400" />
               <select 
@@ -236,6 +260,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
               </select>
             </div>
           </div>
+
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 10 }}>
@@ -262,7 +287,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                   strokeWidth={3}
                   dot={{ r: 5, fill: COLORS.line, strokeWidth: 2, stroke: '#fff' }}
                   activeDot={{ r: 8, fill: COLORS.activeDot, strokeWidth: 0 }}
-                  animationDuration={800} 
+                  animationDuration={500} 
                   animationEasing="ease-out"
                 >
                   <LabelList 
@@ -278,15 +303,20 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           </div>
         </div>
 
+        {/* 2. RANKING DE FORNECEDORES (1 coluna de 3) */}
         <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[450px]">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <Users className="h-4 w-4 text-gray-400" />
             <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Ranking de Fornecedores</h4>
           </div>
+          
+          {/* Cabeçalho */}
           <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
             <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
             <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
           </div>
+
+          {/* Lista com Scroll */}
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
             {suppliersList.map((item, idx) => (
               <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50/30 transition-colors items-center">
@@ -306,24 +336,29 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
             )}
           </div>
         </div>
+
       </div>
 
       {/* LINHA 2: LISTAS DETALHADAS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[400px]">
-        {/* CARD ESQUERDA: RELAÇÃO DAS MISSÕES */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* CARD ESQUERDA: RELAÇÃO DAS MISSÕES OU PAGAMENTOS PENDENTES (quando fixa) */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
           {filterOrigem === 'fixa' ? (
+            // PAGAMENTOS PENDENTES (quando filtro é Despesas Fixas)
             <>
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
                 <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Pagamentos Pendentes</h4>
               </div>
+
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
                 <div className="col-span-3 text-[10px] font-black uppercase text-gray-500">Vencimento</div>
                 <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
                 <div className="col-span-2 text-[10px] font-black uppercase text-gray-500">Tipo</div>
                 <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Valor</div>
               </div>
+
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
                 {pendingPaymentsList.length > 0 ? (
                   pendingPaymentsList.map((item, idx) => (
@@ -353,15 +388,18 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
               </div>
             </>
           ) : (
+            // RELAÇÃO DE MISSÕES (padrão)
             <>
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
                 <Plane className="h-4 w-4 text-blue-600" />
                 <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Relação de Missões</h4>
               </div>
+
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
                 <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Missão</div>
                 <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
               </div>
+
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
                 {missionsList.map((missao, idx) => (
                   <button 
@@ -391,20 +429,23 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           )}
         </div>
 
-        {/* CARD DIREITA: DESPESAS FIXAS */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+        {/* CARD DIREITA: DESPESAS FIXAS OU PAGAMENTOS PENDENTES (quando missao) */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
           {filterOrigem === 'missao' ? (
+            // PAGAMENTOS PENDENTES (quando filtro é Custo Missões)
             <>
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
                 <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Pagamentos Pendentes</h4>
               </div>
+
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
                 <div className="col-span-3 text-[10px] font-black uppercase text-gray-500">Vencimento</div>
                 <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
                 <div className="col-span-2 text-[10px] font-black uppercase text-gray-500">Tipo</div>
                 <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Valor</div>
               </div>
+
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
                 {pendingPaymentsList.length > 0 ? (
                   pendingPaymentsList.map((item, idx) => (
@@ -434,28 +475,30 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
               </div>
             </>
           ) : (
+            // DESPESAS FIXAS (padrão)
             <>
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
                 <DollarSign className="h-4 w-4 text-emerald-600" />
                 <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</h4>
               </div>
+
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
-                <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
-                <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Tipo</div>
-                <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
+                <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
+                <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
               </div>
+
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
                 {fixedExpensesList.map((item, idx) => (
                   <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-emerald-50/30 transition-colors items-center">
-                    <div className="col-span-5 text-xs font-bold text-gray-700 truncate" title={item.fornecedor}>
-                      {item.fornecedor}
-                    </div>
-                    <div className="col-span-4">
-                      <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100 truncate max-w-full">
+                    <div className="col-span-7 flex flex-col gap-0.5 overflow-hidden">
+                      <span className="text-xs font-bold text-gray-700 truncate" title={item.fornecedor}>
+                        {item.fornecedor}
+                      </span>
+                      <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100 truncate max-w-fit">
                         {item.tipo}
                       </span>
                     </div>
-                    <div className="col-span-3 text-xs font-black text-emerald-600 text-right">
+                    <div className="col-span-5 text-xs font-black text-emerald-600 text-right">
                       {formatCurrency(item.total)}
                     </div>
                   </div>
@@ -467,6 +510,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
             </>
           )}
         </div>
+
       </div>
 
       {/* LINHA 3: EVOLUÇÃO DE GASTOS POR TIPO (TOP 5) */}
