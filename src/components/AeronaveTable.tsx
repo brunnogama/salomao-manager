@@ -59,6 +59,7 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
         <thead>
           <tr className="text-[#112240]">
             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-24">ID</th>
+            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Data Missão</th>
             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Missão</th>
             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Despesa</th>
             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Tipo</th>
@@ -80,6 +81,11 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
                 {/* ID */}
                 <td className="px-4 py-4 text-[11px] font-black text-blue-600/60 first:rounded-l-xl uppercase tracking-widest">
                   #{isMissao ? formatId(item.id_missao) : formatId(item.id_missao) /* Mantém ID se existir, ou --- */}
+                </td>
+
+                {/* Data Missão (NOVO) */}
+                <td className="px-4 py-4 text-sm font-semibold text-gray-600">
+                  {formatDate(item.data_missao)}
                 </td>
 
                 {/* Missão (N/A se for Despesa Fixa) */}
