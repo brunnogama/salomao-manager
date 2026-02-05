@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { X, Save, Plus, Calendar, DollarSign, FileText, Plane, Settings } from 'lucide-react'
-import { supabase } from '../lib/supabase' // <--- CORRIGIDO AQUI
+import { X, Save, Plus, DollarSign, FileText, Plane, Settings } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
 import { GerenciadorOpcoesModal } from './GerenciadorOpcoesModal'
 
@@ -37,7 +37,7 @@ export function AeronaveFormModal({
   const emptyForm: Partial<AeronaveLancamento> = {
     origem: origem,
     tripulacao: '',
-    aeronave: '', // Será preenchido com default se houver frota
+    aeronave: '', 
     data_missao: '',
     id_missao: undefined,
     nome_missao: '',
@@ -78,7 +78,6 @@ export function AeronaveFormModal({
     setDocFiscalOpcoes(docs)
     setFrotaOpcoes(frota)
 
-    // Define aeronave default se estiver vazia e houver frota
     if (!formData.aeronave && frota.length > 0) {
       setFormData(prev => ({ ...prev, aeronave: frota[0] }))
     }
@@ -108,7 +107,6 @@ export function AeronaveFormModal({
     setConfigModal({ open: true, tipo: titulo, tabela: tabela })
   }
 
-  // Ao fechar config, recarrega listas para refletir mudanças
   const handleCloseConfig = () => {
     setConfigModal({ ...configModal, open: false })
     fetchListas()
@@ -117,15 +115,15 @@ export function AeronaveFormModal({
   const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
     const displayValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
     return (
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 w-full">
         <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
-        <div className="relative group">
+        <div className="relative group w-full">
           <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
           <input
             type="text"
-            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+            className="input-base pl-9"
             value={displayValue}
             onChange={(e) => onChange(Number(e.target.value.replace(/\D/g, '')) / 100)}
           />
@@ -142,7 +140,6 @@ export function AeronaveFormModal({
       
       if (saveAndNew) {
         setFormData({ ...emptyForm, origem: origem, despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa' })
-        // Re-aplica aeronave default
         if (frotaOpcoes.length > 0) setFormData(prev => ({ ...prev, aeronave: frotaOpcoes[0] }))
       } else {
         onClose()
@@ -183,10 +180,10 @@ export function AeronaveFormModal({
 
         {/* Form Body */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
 
-            {/* SEÇÃO 1: Dados Principais */}
-            <div className="col-span-1 md:col-span-2 flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+            {/* SEÇÃO 1: DADOS PRINCIPAIS */}
+            <div className="col-span-1 md:col-span-2 flex items-center gap-2 pb-2 border-b border-gray-100 mb-2">
               <FileText className="h-4 w-4 text-gray-400" />
               <span className="text-xs font-bold text-gray-500 uppercase">Dados do Lançamento</span>
             </div>
@@ -206,18 +203,24 @@ export function AeronaveFormModal({
             {/* Aeronave (Com Config) */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Aeronave</label>
-              <div className="flex gap-2">
-                <select 
-                  className="input-base flex-1"
-                  value={formData.aeronave || ''}
-                  onChange={e => handleChange('aeronave', e.target.value)}
-                >
-                  <option value="">Selecione...</option>
-                  {frotaOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+              <div className="flex gap-2 w-full">
+                <div className="relative flex-1">
+                  <select 
+                    className="input-base w-full appearance-none pr-8 cursor-pointer"
+                    value={formData.aeronave || ''}
+                    onChange={e => handleChange('aeronave', e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    {frotaOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                  {/* Seta customizada para o select */}
+                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
                 <button 
                   onClick={() => handleOpenConfig('Frota', 'aeronave_frota')}
-                  className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200"
+                  className="px-3 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200 flex items-center justify-center"
                   title="Gerenciar Frota"
                 >
                   <Settings className="h-4 w-4" />
@@ -236,7 +239,7 @@ export function AeronaveFormModal({
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">ID Missão (999999)</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">ID Missão</label>
                   <input 
                     type="number" className="input-base"
                     value={formData.id_missao || ''}
@@ -258,27 +261,34 @@ export function AeronaveFormModal({
 
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Despesa (Categoria)</label>
-              <select disabled className="input-base bg-gray-100 text-gray-500 cursor-not-allowed" value={formData.despesa}>
-                <option value="Custo Missões">Custo Missões</option>
-                <option value="Despesa Fixa">Despesa Fixa</option>
-              </select>
+              <div className="relative w-full">
+                <select disabled className="input-base bg-gray-100 text-gray-400 cursor-not-allowed w-full appearance-none" value={formData.despesa}>
+                  <option value="Custo Missões">Custo Missões</option>
+                  <option value="Despesa Fixa">Despesa Fixa</option>
+                </select>
+              </div>
             </div>
 
             {/* Tipo (Com Config) */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Tipo</label>
-              <div className="flex gap-2">
-                <select 
-                  className="input-base flex-1"
-                  value={formData.tipo || ''}
-                  onChange={e => handleChange('tipo', e.target.value)}
-                >
-                  <option value="">Selecione...</option>
-                  {tiposOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+              <div className="flex gap-2 w-full">
+                <div className="relative flex-1">
+                  <select 
+                    className="input-base w-full appearance-none pr-8 cursor-pointer"
+                    value={formData.tipo || ''}
+                    onChange={e => handleChange('tipo', e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    {tiposOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
                 <button 
                   onClick={() => handleOpenConfig('Tipos de Despesa', 'aeronave_tipos')}
-                  className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200"
+                  className="px-3 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200 flex items-center justify-center"
                   title="Gerenciar Tipos"
                 >
                   <Settings className="h-4 w-4" />
@@ -294,18 +304,23 @@ export function AeronaveFormModal({
             {/* Fornecedor (Com Config) */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Fornecedor</label>
-              <div className="flex gap-2">
-                <select 
-                  className="input-base flex-1"
-                  value={formData.fornecedor || ''}
-                  onChange={e => handleChange('fornecedor', e.target.value)}
-                >
-                  <option value="">Selecione...</option>
-                  {fornecedoresOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+              <div className="flex gap-2 w-full">
+                <div className="relative flex-1">
+                  <select 
+                    className="input-base w-full appearance-none pr-8 cursor-pointer"
+                    value={formData.fornecedor || ''}
+                    onChange={e => handleChange('fornecedor', e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    {fornecedoresOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
                 <button 
                   onClick={() => handleOpenConfig('Fornecedores', 'aeronave_fornecedores')}
-                  className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200"
+                  className="px-3 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200 flex items-center justify-center"
                   title="Gerenciar Fornecedores"
                 >
                   <Settings className="h-4 w-4" />
@@ -317,8 +332,8 @@ export function AeronaveFormModal({
               <CurrencyInput label="Faturado CNPJ Salomão" value={formData.faturado_cnpj || 0} onChange={val => handleChange('faturado_cnpj', val)} />
             )}
 
-            {/* SEÇÃO 2: Financeiro */}
-            <div className="col-span-1 md:col-span-2 flex items-center gap-2 mt-4 mb-2 pb-2 border-b border-gray-100">
+            {/* SEÇÃO 2: FINANCEIRO */}
+            <div className="col-span-1 md:col-span-2 flex items-center gap-2 mt-4 pb-2 border-b border-gray-100 mb-2">
               <DollarSign className="h-4 w-4 text-gray-400" />
               <span className="text-xs font-bold text-gray-500 uppercase">Detalhes Financeiros</span>
             </div>
@@ -337,26 +352,31 @@ export function AeronaveFormModal({
 
             <CurrencyInput label="Valor Pago" value={formData.valor_pago || 0} onChange={val => handleChange('valor_pago', val)} />
 
-            {/* SEÇÃO 3: Fiscal */}
-            <div className="col-span-1 md:col-span-2 flex items-center gap-2 mt-4 mb-2 pb-2 border-b border-gray-100">
+            {/* SEÇÃO 3: FISCAL */}
+            <div className="col-span-1 md:col-span-2 flex items-center gap-2 mt-4 pb-2 border-b border-gray-100 mb-2">
               <FileText className="h-4 w-4 text-gray-400" />
               <span className="text-xs font-bold text-gray-500 uppercase">Documentação Fiscal</span>
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Doc. Fiscal</label>
-              <div className="flex gap-2">
-                <select 
-                  className="input-base flex-1"
-                  value={formData.doc_fiscal || ''}
-                  onChange={e => handleChange('doc_fiscal', e.target.value)}
-                >
-                  <option value="">Selecione...</option>
-                  {docFiscalOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+              <div className="flex gap-2 w-full">
+                <div className="relative flex-1">
+                  <select 
+                    className="input-base w-full appearance-none pr-8 cursor-pointer"
+                    value={formData.doc_fiscal || ''}
+                    onChange={e => handleChange('doc_fiscal', e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    {docFiscalOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
                 <button 
                   onClick={() => handleOpenConfig('Docs Fiscais', 'aeronave_docs_fiscais')}
-                  className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200"
+                  className="px-3 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200 flex items-center justify-center"
                   title="Gerenciar Docs"
                 >
                   <Settings className="h-4 w-4" />
