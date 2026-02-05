@@ -158,6 +158,13 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
     return Object.values(groups).sort((a, b) => b.total - a.total)
   }, [dashboardData])
 
+  // --- Handler seguro para clique em missão ---
+  const handleMissionClick = (missionName: string) => {
+    if (onMissionClick && typeof onMissionClick === 'function') {
+      onMissionClick(missionName)
+    }
+  }
+
   // --- Custom Tooltip Chart ---
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -298,7 +305,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
             {missionsList.map((missao, idx) => (
               <button 
                 key={idx}
-                onClick={() => onMissionClick && onMissionClick(missao.nome)}
+                onClick={() => handleMissionClick(missao.nome)}
                 className="w-full grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all items-center text-left group"
               >
                 <div className="col-span-7 flex flex-col gap-0.5 overflow-hidden">
