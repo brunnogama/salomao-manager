@@ -1,40 +1,51 @@
 import { useMemo, useState } from 'react'
 import { 
-  BarChart, 
-  Bar, 
+  LineChart, 
+  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  Legend 
+  ResponsiveContainer,
+  LabelList
 } from 'recharts'
-import { Filter, PieChart as PieIcon, TrendingUp } from 'lucide-react'
+import { Filter, TrendingUp, Plane, DollarSign, Users, Calendar } from 'lucide-react'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
 
 interface AeronaveDashboardProps {
   data: AeronaveLancamento[];
+  onMissionClick?: (missionName: string) => void;
 }
 
-export function AeronaveDashboard({ data }: AeronaveDashboardProps) {
+export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardProps) {
   const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString())
 
   // --- Cores do Sistema ---
   const COLORS = {
-    missao: '#1e3a8a', // Azul Salomão
-    fixa: '#059669',   // Emerald
-    bg: '#f8fafc',
+    line: '#1e3a8a', // Azul Salomão Principal
+    dot: '#ffffff',
+    activeDot: '#f59e0b', // Amber
     text: '#64748b'
   }
 
-  const PIE_COLORS = ['#1e3a8a', '#3b82f6', '#059669', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1']
+  // --- Helpers de Formatação ---
+  const formatCurrency = (val: number) => 
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val)
 
-  // --- Filtro de Ano (Interno do Dashboard) ---
-  // Filtramos os dados recebidos para garantir que o gráfico mostre o ano selecionado
-  // (Caso o filtro global da página principal esteja vazio, usamos este. Se estiver preenchido, respeitamos o dataset)
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '-'
+    const date = new Date(dateStr)
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000
+    return new Intl.DateTimeFormat('pt-BR').format(new Date(date.getTime() + userTimezoneOffset))
+  }
+
+  // --- Filtro de Ano ---
+  const availableYears = useMemo(() => {
+    const years = new Set(data.map(d => (d.data_pagamento || d.vencimento || '').split('-')[0]).filter(Boolean))
+    const sorted = Array.from(years).sort().reverse()
+    return sorted.length > 0 ? sorted : [new Date().getFullYear().toString()]
+  }, [data])
+
   const dashboardData = useMemo(() => {
     return data.filter(item => {
       const dateStr = item.data_pagamento || item.vencimento || item.created_at || ''
@@ -42,93 +53,110 @@ export function AeronaveDashboard({ data }: AeronaveDashboardProps) {
     })
   }, [data, yearFilter])
 
-  // --- Processamento Gráfico 1: Evolução Mensal ---
-  const monthlyData = useMemo(() => {
-    const months = [
-      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
-      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
-    ]
-
-    const result = months.map(m => ({ name: m, missao: 0, fixa: 0, total: 0 }))
-
-    dashboardData.forEach(item => {
+  // --- 1. Dados do Gráfico (Dinâmico: Meses com movimento) ---
+  const chartData = useMemo(() => {
+    // Agrupa por mês YYYY-MM
+    const grouped = dashboardData.reduce((acc, item) => {
       const dateStr = item.data_pagamento || item.vencimento
-      if (!dateStr) return
-
-      const date = new Date(dateStr)
-      // Ajuste timezone básico
-      const monthIndex = new Date(date.getTime() + date.getTimezoneOffset() * 60000).getMonth()
+      if (!dateStr) return acc
       
-      const valor = item.valor_pago || 0
+      const date = new Date(dateStr)
+      // Ajuste timezone
+      const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000)
+      const key = `${adjustedDate.getFullYear()}-${String(adjustedDate.getMonth() + 1).padStart(2, '0')}`
+      const monthLabel = adjustedDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
+      const monthIndex = adjustedDate.getMonth()
 
-      if (item.origem === 'missao') {
-        result[monthIndex].missao += valor
-      } else {
-        result[monthIndex].fixa += valor
+      if (!acc[key]) {
+        acc[key] = { 
+          name: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1), 
+          fullDate: key, 
+          value: 0,
+          originalIndex: monthIndex // Para ordenação
+        }
       }
-      result[monthIndex].total += valor
-    })
+      acc[key].value += (item.valor_pago || 0)
+      return acc
+    }, {} as Record<string, any>)
 
-    return result
+    // Converte para array e ordena cronologicamente
+    return Object.values(grouped).sort((a, b) => {
+      if (a.fullDate < b.fullDate) return -1
+      if (a.fullDate > b.fullDate) return 1
+      return 0
+    })
   }, [dashboardData])
 
-  // --- Processamento Gráfico 2: Distribuição por Tipo ---
-  const typeData = useMemo(() => {
-    const groups: Record<string, number> = {}
+  // --- 2. Dados de Fornecedores (Todos, Ordenados) ---
+  const suppliersList = useMemo(() => {
+    const groups = dashboardData.reduce((acc, item) => {
+      const name = item.fornecedor || 'Não Informado'
+      if (!acc[name]) {
+        acc[name] = { name, despesas: new Set(), total: 0 }
+      }
+      acc[name].total += (item.valor_pago || 0)
+      if (item.despesa) acc[name].despesas.add(item.despesa) // Coleta tipos de despesa
+      return acc
+    }, {} as Record<string, any>)
 
-    dashboardData.forEach(item => {
-      const tipo = item.tipo || 'Outros'
-      const valor = item.valor_pago || 0
-      groups[tipo] = (groups[tipo] || 0) + valor
-    })
-
-    return Object.entries(groups)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value) // Ordenar maior para menor
-      .slice(0, 8) // Pegar top 8
+    return Object.values(groups)
+      .map(g => ({
+        ...g,
+        despesaLabel: Array.from(g.despesas).join(', ') || '-'
+      }))
+      .sort((a, b) => b.total - a.total)
   }, [dashboardData])
 
-  // --- Processamento: Top Fornecedores ---
-  const topSuppliers = useMemo(() => {
-    const groups: Record<string, number> = {}
-    dashboardData.forEach(item => {
-      const supplier = item.fornecedor || 'Não informado'
-      const valor = item.valor_pago || 0
-      groups[supplier] = (groups[supplier] || 0) + valor
-    })
+  // --- 3. Dados de Missões (Agrupados por Missão) ---
+  const missionsList = useMemo(() => {
+    const missions = dashboardData.filter(i => i.origem === 'missao')
+    const groups = missions.reduce((acc, item) => {
+      const id = item.id_missao || 'S/ID'
+      const nome = item.nome_missao || `Missão ${id}`
+      const key = `${id}-${nome}` // Chave única composta
 
-    return Object.entries(groups)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
+      if (!acc[key]) {
+        acc[key] = { 
+          id, 
+          nome, 
+          data: item.data_missao, 
+          total: 0 
+        }
+      }
+      acc[key].total += (item.valor_pago || 0)
+      // Atualiza data se encontrar (prioriza a primeira encontrada)
+      if (!acc[key].data && item.data_missao) acc[key].data = item.data_missao
+      return acc
+    }, {} as Record<string, any>)
+
+    return Object.values(groups).sort((a, b) => b.total - a.total)
   }, [dashboardData])
 
-  // --- Helpers ---
-  const formatCurrency = (val: number) => 
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val)
+  // --- 4. Dados de Despesas Fixas (Agrupados por Fornecedor + Tipo) ---
+  const fixedExpensesList = useMemo(() => {
+    const fixed = dashboardData.filter(i => i.origem === 'fixa')
+    const groups = fixed.reduce((acc, item) => {
+      const fornecedor = item.fornecedor || 'Não Informado'
+      const tipo = item.tipo || 'Geral'
+      const key = `${fornecedor}-${tipo}`
 
-  const availableYears = useMemo(() => {
-    const years = new Set(data.map(d => (d.data_pagamento || d.vencimento || '').split('-')[0]).filter(Boolean))
-    return Array.from(years).sort().reverse()
-  }, [data])
+      if (!acc[key]) {
+        acc[key] = { fornecedor, tipo, total: 0 }
+      }
+      acc[key].total += (item.valor_pago || 0)
+      return acc
+    }, {} as Record<string, any>)
 
-  // Se não houver dados no ano, adicionar o atual para não quebrar a UI
-  if (!availableYears.includes(new Date().getFullYear().toString())) {
-    availableYears.unshift(new Date().getFullYear().toString())
-  }
+    return Object.values(groups).sort((a, b) => b.total - a.total)
+  }, [dashboardData])
 
-  // Custom Tooltip
+  // --- Custom Tooltip Chart ---
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-xl text-xs">
-          <p className="font-bold text-gray-700 mb-2 uppercase tracking-wide">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-              <span className="text-gray-500 font-medium capitalize">{entry.name}:</span>
-              <span className="font-bold text-gray-800">{formatCurrency(entry.value)}</span>
-            </div>
-          ))}
+        <div className="bg-white p-4 border border-gray-200 shadow-xl rounded-xl min-w-[150px]">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
+          <p className="text-lg font-black text-[#1e3a8a]">{formatCurrency(payload[0].value)}</p>
         </div>
       )
     }
@@ -138,8 +166,8 @@ export function AeronaveDashboard({ data }: AeronaveDashboardProps) {
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-full">
       
-      {/* Header do Dashboard (Filtro de Ano) */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Header do Dashboard */}
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-indigo-100 rounded-lg text-indigo-700">
             <TrendingUp className="h-5 w-5" />
@@ -159,145 +187,163 @@ export function AeronaveDashboard({ data }: AeronaveDashboardProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* 1. GRÁFICO DE LINHA (Dinâmico) */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Evolução de Gastos (Mensal)</h4>
+        <div className="h-[350px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} 
+                dy={15}
+                padding={{ left: 20, right: 20 }}
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: COLORS.text, fontSize: 11 }}
+                tickFormatter={(val) => `R$${val/1000}k`} 
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+              <Line 
+                type="monotone" 
+                dataKey="value" 
+                stroke={COLORS.line} 
+                strokeWidth={3}
+                dot={{ r: 5, fill: COLORS.line, strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 8, fill: COLORS.activeDot, strokeWidth: 0 }}
+                animationDuration={1500}
+              >
+                <LabelList 
+                  dataKey="value" 
+                  position="top" 
+                  formatter={(val: number) => formatCurrency(val)} 
+                  style={{ fill: '#1e3a8a', fontSize: '10px', fontWeight: 800 }} 
+                  offset={15}
+                />
+              </Line>
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* 2. TABELA: TODOS OS FORNECEDORES */}
+      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
+        <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
+          <Users className="h-4 w-4 text-gray-400" />
+          <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Ranking de Fornecedores</h4>
+        </div>
         
-        {/* GRÁFICO 1: Evolução Mensal (Barras Empilhadas) */}
-        <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Fluxo de Caixa Mensal (Pago)</h4>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }} 
-                  dy={10}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: COLORS.text, fontSize: 10 }}
-                  tickFormatter={(val) => `R$${val/1000}k`} 
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                <Bar 
-                  dataKey="fixa" 
-                  name="Despesas Fixas" 
-                  stackId="a" 
-                  fill={COLORS.fixa} 
-                  radius={[0, 0, 4, 4]} 
-                  barSize={32} 
-                />
-                <Bar 
-                  dataKey="missao" 
-                  name="Custo Missões" 
-                  stackId="a" 
-                  fill={COLORS.missao} 
-                  radius={[4, 4, 0, 0]} 
-                  barSize={32} 
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        {/* Cabeçalho */}
+        <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 rounded-lg mb-2">
+          <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
+          <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Despesa</div>
+          <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total Pago</div>
         </div>
 
-        {/* GRÁFICO 2: Top Fornecedores (Lista Visual) */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Top 5 Fornecedores</h4>
-          <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-2">
-            {topSuppliers.length > 0 ? topSuppliers.map(([name, value], idx) => (
-              <div key={name} className="flex items-center justify-between group">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="flex-shrink-0 w-6 h-6 rounded bg-gray-100 text-gray-500 flex items-center justify-center text-[10px] font-black">
-                    {idx + 1}
-                  </div>
-                  <span className="text-xs font-bold text-gray-700 truncate" title={name}>{name}</span>
-                </div>
-                <div className="flex flex-col items-end">
-                   <span className="text-xs font-black text-[#1e3a8a]">{formatCurrency(value)}</span>
-                   <div className="w-16 h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
-                      <div 
-                        className="h-full bg-[#1e3a8a]" 
-                        style={{ width: `${(value / topSuppliers[0][1]) * 100}%` }} 
-                      />
-                   </div>
-                </div>
+        {/* Lista com Scroll */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+          {suppliersList.map((item, idx) => (
+            <div key={idx} className="grid grid-cols-12 gap-4 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50/30 transition-colors items-center">
+              <div className="col-span-5 flex items-center gap-3 overflow-hidden">
+                <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-gray-100 text-[9px] font-bold text-gray-500 rounded">
+                  {idx + 1}
+                </span>
+                <span className="text-xs font-bold text-gray-700 truncate" title={item.name}>{item.name}</span>
               </div>
-            )) : (
-              <p className="text-xs text-gray-400 text-center py-10">Sem dados para o período</p>
+              <div className="col-span-4 text-xs font-medium text-gray-500 truncate" title={item.despesaLabel}>
+                {item.despesaLabel}
+              </div>
+              <div className="col-span-3 text-xs font-black text-[#1e3a8a] text-right">
+                {formatCurrency(item.total)}
+              </div>
+            </div>
+          ))}
+          {suppliersList.length === 0 && (
+            <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhum dado disponível</div>
+          )}
+        </div>
+      </div>
+
+      {/* 3. ROW DUPLA: MISSÕES E DESPESAS FIXAS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* CARD ESQUERDA: RELAÇÃO DAS MISSÕES */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
+          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
+            <Plane className="h-4 w-4 text-blue-600" />
+            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Relação de Missões</h4>
+          </div>
+
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2">
+            <div className="col-span-6 text-[10px] font-black uppercase text-gray-500">Missão</div>
+            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-center">Data</div>
+            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+            {missionsList.map((missao, idx) => (
+              <button 
+                key={idx}
+                onClick={() => onMissionClick && onMissionClick(missao.nome)}
+                className="w-full grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all items-center text-left group"
+              >
+                <div className="col-span-6 text-xs font-bold text-gray-700 truncate group-hover:text-blue-700">
+                  {missao.nome}
+                </div>
+                <div className="col-span-3 flex items-center justify-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-50 py-1 rounded">
+                  <Calendar className="h-3 w-3" />
+                  {formatDate(missao.data)}
+                </div>
+                <div className="col-span-3 text-xs font-black text-blue-600 text-right">
+                  {formatCurrency(missao.total)}
+                </div>
+              </button>
+            ))}
+            {missionsList.length === 0 && (
+              <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhuma missão no período</div>
             )}
           </div>
         </div>
 
-        {/* GRÁFICO 3: Distribuição por Tipo (Donut) */}
-        <div className="lg:col-span-1 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm h-[350px]">
-          <div className="flex items-center gap-2 mb-2">
-            <PieIcon className="h-4 w-4 text-gray-400" />
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Despesas por Categoria</h4>
+        {/* CARD DIREITA: DESPESA FIXA (Ranking) */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
+          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
+            <DollarSign className="h-4 w-4 text-emerald-600" />
+            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</h4>
           </div>
-          <div className="h-full w-full relative -top-4">
-             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={typeData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {typeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend 
-                  layout="horizontal" 
-                  verticalAlign="bottom" 
-                  align="center"
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: '10px' }} 
-                />
-              </PieChart>
-            </ResponsiveContainer>
+
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2">
+            <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
+            <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Tipo</div>
+            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+            {fixedExpensesList.map((item, idx) => (
+              <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-emerald-50/30 transition-colors items-center">
+                <div className="col-span-5 text-xs font-bold text-gray-700 truncate" title={item.fornecedor}>
+                  {item.fornecedor}
+                </div>
+                <div className="col-span-4">
+                  <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100 truncate max-w-full">
+                    {item.tipo}
+                  </span>
+                </div>
+                <div className="col-span-3 text-xs font-black text-emerald-600 text-right">
+                  {formatCurrency(item.total)}
+                </div>
+              </div>
+            ))}
+            {fixedExpensesList.length === 0 && (
+              <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhuma despesa fixa no período</div>
+            )}
           </div>
         </div>
-
-         {/* KPIs Rápidos */}
-         <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-               <p className="text-[9px] font-black uppercase text-blue-400 mb-1">Total Missões (Ano)</p>
-               <p className="text-xl font-black text-blue-700">
-                  {formatCurrency(dashboardData.filter(i => i.origem === 'missao').reduce((acc, curr) => acc + (curr.valor_pago || 0), 0))}
-               </p>
-            </div>
-            <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-               <p className="text-[9px] font-black uppercase text-emerald-400 mb-1">Total Fixo (Ano)</p>
-               <p className="text-xl font-black text-emerald-700">
-                  {formatCurrency(dashboardData.filter(i => i.origem === 'fixa').reduce((acc, curr) => acc + (curr.valor_pago || 0), 0))}
-               </p>
-            </div>
-            <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
-               <p className="text-[9px] font-black uppercase text-amber-400 mb-1">A Pagar (Previsto)</p>
-               <p className="text-xl font-black text-amber-700">
-                  {formatCurrency(dashboardData.reduce((acc, curr) => {
-                     // Lógica simples: Se não tem data de pagamento, conta o previsto
-                     return !curr.data_pagamento ? acc + (curr.valor_previsto || 0) : acc
-                  }, 0))}
-               </p>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
-               <p className="text-[9px] font-black uppercase text-purple-400 mb-1">Média Mensal</p>
-               <p className="text-xl font-black text-purple-700">
-                 {formatCurrency(dashboardData.reduce((acc, curr) => acc + (curr.valor_pago || 0), 0) / 12)}
-               </p>
-            </div>
-         </div>
 
       </div>
     </div>
