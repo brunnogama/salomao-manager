@@ -145,7 +145,7 @@ export function GestaoAeronave({
     XLSX.writeFile(wb, `Aeronave_Export_${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
-  // --- Lógica de Importação (Atualizada) ---
+  // --- Lógica de Importação (CORRIGIDA) ---
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -159,25 +159,51 @@ export function GestaoAeronave({
         const ws = wb.Sheets[wb.SheetNames[0]]
         const rawData = XLSX.utils.sheet_to_json(ws)
 
-        // Funções auxiliares de parse
+        // Funções auxiliares de parse ROBUSTAS
         const parseDate = (val: any) => {
           if (!val) return null
+          
+          // Ignora textos inválidos explicitamente
+          if (typeof val === 'string') {
+            const clean = val.trim().toUpperCase()
+            if (['N/A', '-', 'NAN', 'UNDEFINED', ''].includes(clean)) return null
+          }
+
           // Se for número serial do Excel
           if (typeof val === 'number') {
             const date = new Date(Math.round((val - 25569) * 86400 * 1000))
-            return date.toISOString().split('T')[0]
+            return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0]
           }
+          
           // Se for string DD/MM/AAAA
           if (typeof val === 'string' && val.includes('/')) {
-            const [d, m, a] = val.split('/')
-            return `${a}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+            const parts = val.split('/')
+            // Garante que tem dia, mês e ano (evita erro "N/A")
+            if (parts.length !== 3) return null 
+            
+            const [d, m, a] = parts
+            
+            // Valida se são números
+            if (isNaN(Number(d)) || isNaN(Number(m)) || isNaN(Number(a))) return null
+
+            // Formata YYYY-MM-DD
+            const anoFull = a.length === 2 ? `20${a}` : a
+            return `${anoFull}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
           }
-          return val // Retorna como está se já for ISO ou desconhecido
+
+           // Se for string YYYY-MM-DD (ISO)
+           if (typeof val === 'string' && val.includes('-') && !isNaN(Date.parse(val))) {
+             return val
+           }
+          
+          return null // Retorna null para qualquer outro caso estranho
         }
 
         const parseMoney = (val: any) => {
           if (typeof val === 'number') return val
           if (!val) return 0
+          if (typeof val === 'string' && (val.toUpperCase() === 'N/A' || val === '-')) return 0
+          
           const clean = String(val)
             .replace('R$', '')
             .replace(/\./g, '') // remove ponto de milhar
@@ -193,8 +219,10 @@ export function GestaoAeronave({
 
         const mappedData = rawData.map((row: any) => {
           // Tenta encontrar ID da missão para definir a origem
-          const idMissao = findVal(row, ['id', 'id missao', 'id_missao'])
-          const isMissao = !!idMissao // Se tem ID, é missão
+          const idMissaoRaw = findVal(row, ['id', 'id missao', 'id_missao'])
+          // Considera missão apenas se tiver um ID numérico válido
+          const idMissao = idMissaoRaw && !isNaN(parseInt(idMissaoRaw)) ? parseInt(idMissaoRaw) : null
+          const isMissao = !!idMissao
 
           return {
             origem: isMissao ? 'missao' : 'fixa',
@@ -203,7 +231,7 @@ export function GestaoAeronave({
             tripulacao: findVal(row, ['tripulação', 'tripulacao'])?.toString() || null,
             aeronave: findVal(row, ['aeronave'])?.toString() || 'Aeronave Principal',
             data_missao: parseDate(findVal(row, ['data missao', 'data_missao'])),
-            id_missao: idMissao ? parseInt(idMissao) : null,
+            id_missao: idMissao,
             nome_missao: findVal(row, ['missao', 'missão', 'nome_missao'])?.toString() || null,
             
             // Dados Financeiros
