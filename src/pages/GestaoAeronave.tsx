@@ -558,12 +558,12 @@ export function GestaoAeronave({
             <table className="w-full text-left border-separate border-spacing-y-2 px-4">
               <thead>
                 <tr className="text-[#112240]">
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-24">Doc. Fiscal</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-24">Número</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-right w-32">Valor Total Doc</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-20">ID Missão</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Missão</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Observação</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-24 whitespace-nowrap">Doc. Fiscal</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-24 whitespace-nowrap">Número</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-right w-32 whitespace-nowrap">Valor Total Doc</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-20 whitespace-nowrap">ID Missão</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Missão</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Observação</th>
                 </tr>
               </thead>
               <tbody>
