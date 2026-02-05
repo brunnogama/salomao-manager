@@ -204,18 +204,18 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     if (confirmText !== 'APAGAR') return;
     setLoading(true);
     try {
-      // Uso de gte em created_at para selecionar todos os registros de forma universal
+      // Delete usando NOT com condição impossível para deletar tudo
       const { error } = await supabase
         .from(table)
         .delete()
-        .gte('created_at', '1900-01-01');
+        .not('id', 'eq', '00000000-0000-0000-0000-000000000000');
       
       if (error) throw error;
-      setStatus({ type: 'success', message: `${moduleName} resetado!` });
+      setStatus({ type: 'success', message: `${moduleName} resetado com sucesso!` });
       await logAction('RESET', moduleName.toUpperCase(), logMsg);
     } catch (e: any) { 
       console.error('Erro ao resetar:', e);
-      setStatus({ type: 'error', message: 'Erro: ' + (e.message || 'Falha ao processar no banco') }); 
+      setStatus({ type: 'error', message: 'Erro ao resetar: ' + (e.message || 'Falha ao processar no banco') }); 
     } finally { 
       setLoading(false); 
     }
@@ -311,6 +311,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
           type="rh" isAdmin={isAdmin} 
           onReset={() => handleResetAction('presenca_portaria', 'Presencial', 'Resetou presenças')}
           onResetSecondary={() => handleResetAction('colaboradores', 'Colaboradores', 'Resetou colaboradores')}
+          onResetTertiary={() => handleResetAction('marcacoes_ponto', 'Controle de Horas', 'Resetou marcações de ponto')}
         />
       )}
 
