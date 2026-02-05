@@ -1,5 +1,3 @@
-// path: src/components/AeronaveDashboard.tsx
-
 import { useMemo, useState } from 'react'
 import { 
   LineChart, 
@@ -20,15 +18,18 @@ interface AeronaveDashboardProps {
 }
 
 export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardProps) {
+  // Alteração 1: Padrão "all" para todos os anos
   const [yearFilter, setYearFilter] = useState<string>('all')
 
+  // --- Cores do Sistema ---
   const COLORS = {
-    line: '#1e3a8a',
+    line: '#1e3a8a', // Azul Salomão Principal
     dot: '#ffffff',
-    activeDot: '#f59e0b',
+    activeDot: '#f59e0b', // Amber
     text: '#64748b'
   }
 
+  // --- Helpers de Formatação ---
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val)
 
@@ -39,9 +40,11 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
     return new Intl.DateTimeFormat('pt-BR').format(new Date(date.getTime() + userTimezoneOffset))
   }
 
+  // --- Filtro de Ano ---
   const availableYears = useMemo(() => {
     const years = new Set(data.map(d => (d.data_pagamento || d.vencimento || '').split('-')[0]).filter(Boolean))
     const sorted = Array.from(years).sort().reverse()
+    // Se não tiver anos, retorna o atual, senão retorna a lista ordenada
     return sorted.length > 0 ? sorted : [new Date().getFullYear().toString()]
   }, [data])
 
@@ -53,14 +56,18 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
     })
   }, [data, yearFilter])
 
+  // --- 1. Dados do Gráfico (Dinâmico: Meses com movimento) ---
   const chartData = useMemo(() => {
+    // Agrupa por mês YYYY-MM
     const grouped = dashboardData.reduce((acc, item) => {
       const dateStr = item.data_pagamento || item.vencimento
       if (!dateStr) return acc
       
       const date = new Date(dateStr)
+      // Ajuste timezone
       const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000)
       const key = `${adjustedDate.getFullYear()}-${String(adjustedDate.getMonth() + 1).padStart(2, '0')}`
+      // Exibe mês/ano se for "Todos", senão só mês
       const monthLabel = adjustedDate.toLocaleDateString('pt-BR', { month: 'short', year: yearFilter === 'all' ? '2-digit' : undefined }).replace('.', '')
       
       if (!acc[key]) {
@@ -74,6 +81,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
       return acc
     }, {} as Record<string, any>)
 
+    // Converte para array e ordena cronologicamente
     return Object.values(grouped).sort((a, b) => {
       if (a.fullDate < b.fullDate) return -1
       if (a.fullDate > b.fullDate) return 1
@@ -81,6 +89,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
     })
   }, [dashboardData, yearFilter])
 
+  // --- 2. Dados de Fornecedores (Todos, Ordenados) ---
   const suppliersList = useMemo(() => {
     const groups = dashboardData.reduce((acc, item) => {
       const name = item.fornecedor || 'Não Informado'
@@ -100,6 +109,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
       .sort((a, b) => b.total - a.total)
   }, [dashboardData])
 
+  // --- 3. Dados de Missões (Agrupados por Missão) ---
   const missionsList = useMemo(() => {
     const missions = dashboardData.filter(i => i.origem === 'missao')
     const groups = missions.reduce((acc, item) => {
@@ -123,6 +133,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
     return Object.values(groups).sort((a, b) => b.total - a.total)
   }, [dashboardData])
 
+  // --- 4. Dados de Despesas Fixas (Agrupados por Fornecedor + Tipo) ---
   const fixedExpensesList = useMemo(() => {
     const fixed = dashboardData.filter(i => i.origem === 'fixa')
     const groups = fixed.reduce((acc, item) => {
@@ -140,6 +151,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
     return Object.values(groups).sort((a, b) => b.total - a.total)
   }, [dashboardData])
 
+  // --- Custom Tooltip Chart ---
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -155,11 +167,13 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-full">
       
-      {/* LINHA SUPERIOR: GRÁFICO E RANKING LADO A LADO */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[450px]">
+      {/* LINHA SUPERIOR: GRÁFICO (8 COLUNAS) E RANKING (4 COLUNAS) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[450px]">
         
-        {/* 1. GRÁFICO DE LINHA */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full relative">
+        {/* 1. GRÁFICO DE LINHA (8/12 colunas - mais largo) */}
+        <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full relative">
+          
+          {/* Header Integrado no Card */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-indigo-100 rounded-lg text-indigo-700">
@@ -222,41 +236,43 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
           </div>
         </div>
 
-        {/* 2. TABELA: RANKING DE FORNECEDORES */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+        {/* 2. RANKING DE FORNECEDORES (4/12 colunas - mais estreito) */}
+        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <Users className="h-4 w-4 text-gray-400" />
             <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Ranking de Fornecedores</h4>
           </div>
           
-          <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
-            <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
-            <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Despesa</div>
-            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total Pago</div>
+          {/* Cabeçalho */}
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
+            <div className="col-span-6 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
+            <div className="col-span-6 text-[10px] font-black uppercase text-gray-500 text-right">Total Pago</div>
           </div>
 
+          {/* Lista com Scroll */}
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
             {suppliersList.map((item, idx) => (
-              <div key={idx} className="grid grid-cols-12 gap-4 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50/30 transition-colors items-center">
-                <div className="col-span-5 flex items-center gap-3 overflow-hidden">
+              <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50/30 transition-colors items-center">
+                <div className="col-span-6 flex items-center gap-2 overflow-hidden">
                   <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-gray-100 text-[9px] font-bold text-gray-500 rounded">
                     {idx + 1}
                   </span>
                   <span className="text-xs font-bold text-gray-700 truncate" title={item.name}>{item.name}</span>
                 </div>
-                <div className="col-span-4 text-xs font-medium text-gray-500 truncate" title={item.despesaLabel}>
-                  {item.despesaLabel}
-                </div>
-                <div className="col-span-3 text-xs font-black text-[#1e3a8a] text-right">
+                <div className="col-span-6 text-xs font-black text-[#1e3a8a] text-right">
                   {formatCurrency(item.total)}
                 </div>
               </div>
             ))}
+            {suppliersList.length === 0 && (
+              <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhum dado disponível</div>
+            )}
           </div>
         </div>
+
       </div>
 
-      {/* 3. ROW DUPLA: MISSÕES E DESPESAS FIXAS */}
+      {/* LINHA INFERIOR: MISSÕES E DESPESAS FIXAS LADO A LADO */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[400px]">
         
         {/* CARD ESQUERDA: RELAÇÃO DAS MISSÕES */}
@@ -268,8 +284,8 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
 
           <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
             <div className="col-span-6 text-[10px] font-black uppercase text-gray-500">Missão</div>
-            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-center">Data Missão</div>
-            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total Gasto</div>
+            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-center">Data</div>
+            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
@@ -291,10 +307,13 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
                 </div>
               </button>
             ))}
+            {missionsList.length === 0 && (
+              <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhuma missão no período</div>
+            )}
           </div>
         </div>
 
-        {/* CARD DIREITA: DESPESA FIXA */}
+        {/* CARD DIREITA: DESPESA FIXA (Ranking) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <DollarSign className="h-4 w-4 text-emerald-600" />
@@ -304,7 +323,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
           <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
             <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
             <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Tipo</div>
-            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total Pago</div>
+            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
@@ -323,6 +342,9 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
                 </div>
               </div>
             ))}
+            {fixedExpensesList.length === 0 && (
+              <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhuma despesa fixa no período</div>
+            )}
           </div>
         </div>
 
