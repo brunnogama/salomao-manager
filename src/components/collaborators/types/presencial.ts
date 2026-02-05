@@ -22,6 +22,8 @@ export interface RegistroDiario {
   entrada?: string
   saida_almoco?: string
   volta_almoco?: string
+  intervalo1?: string
+  intervalo2?: string
   saida?: string
   saidas_extras?: string[]
   tempo_util: string

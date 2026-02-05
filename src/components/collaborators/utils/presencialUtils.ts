@@ -49,12 +49,26 @@ export const formatarDataBR = (date: Date): string => {
   return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
 }
 
-export const calcularTempoUtil = (entrada: Date, saida: Date, saidaAlmoco?: Date, voltaAlmoco?: Date): string => {
+export const calcularTempoUtil = (
+  entrada: Date, 
+  saida: Date, 
+  saidaAlmoco?: Date, 
+  voltaAlmoco?: Date,
+  intervalo1?: Date,
+  intervalo2?: Date
+): string => {
   let totalMinutos = Math.floor((saida.getTime() - entrada.getTime()) / (1000 * 60))
   
+  // Desconta almoço
   if (saidaAlmoco && voltaAlmoco) {
     const almocoMinutos = Math.floor((voltaAlmoco.getTime() - saidaAlmoco.getTime()) / (1000 * 60))
     totalMinutos -= almocoMinutos
+  }
+  
+  // Desconta intervalo adicional
+  if (intervalo1 && intervalo2) {
+    const intervaloMinutos = Math.floor((intervalo2.getTime() - intervalo1.getTime()) / (1000 * 60))
+    totalMinutos -= intervaloMinutos
   }
   
   const horas = Math.floor(totalMinutos / 60)
@@ -107,33 +121,64 @@ export const processarMarcacoesDiarias = (marcacoes: MarcacaoPonto[]): RegistroD
     
     let saida_almoco: string | undefined
     let volta_almoco: string | undefined
+    let intervalo1: string | undefined
+    let intervalo2: string | undefined
     let saida: string | undefined
     let saidas_extras: string[] = []
     let observacoes: string[] = []
     let tem_inconsistencia = false
     
+    // Lógica baseada na quantidade de marcações
     if (datas.length === 2) {
+      // Entrada + Saída
       saida = formatarHora(datas[1])
     } else if (datas.length === 3) {
+      // Entrada + Saída Almoço + Saída (falta volta)
       saida_almoco = formatarHora(datas[1])
       saida = formatarHora(datas[2])
       observacoes.push('Falta volta do almoço')
       tem_inconsistencia = true
     } else if (datas.length === 4) {
+      // Padrão: Entrada + Saída Almoço + Volta Almoço + Saída
       saida_almoco = formatarHora(datas[1])
       volta_almoco = formatarHora(datas[2])
       saida = formatarHora(datas[3])
-    } else if (datas.length > 4) {
+    } else if (datas.length === 5) {
+      // Falta uma marcação de intervalo
       saida_almoco = formatarHora(datas[1])
       volta_almoco = formatarHora(datas[2])
-      for (let i = 3; i < datas.length; i++) {
+      intervalo1 = formatarHora(datas[3])
+      saida = formatarHora(datas[4])
+      observacoes.push('Falta retorno de intervalo')
+      tem_inconsistencia = true
+    } else if (datas.length === 6) {
+      // Completo com intervalos: Entrada + Saída Almoço + Volta Almoço + Intervalo1 + Intervalo2 + Saída
+      saida_almoco = formatarHora(datas[1])
+      volta_almoco = formatarHora(datas[2])
+      intervalo1 = formatarHora(datas[3])
+      intervalo2 = formatarHora(datas[4])
+      saida = formatarHora(datas[5])
+      
+      // Calcular tempo de intervalo
+      const int1 = datas[3]
+      const int2 = datas[4]
+      const minutos = Math.floor((int2.getTime() - int1.getTime()) / (1000 * 60))
+      observacoes.push(`Descontados ${minutos} minutos de intervalos`)
+    } else if (datas.length > 6) {
+      // Mais de 6 marcações - múltiplas saídas
+      saida_almoco = formatarHora(datas[1])
+      volta_almoco = formatarHora(datas[2])
+      intervalo1 = formatarHora(datas[3])
+      intervalo2 = formatarHora(datas[4])
+      
+      for (let i = 5; i < datas.length; i++) {
         if (i === datas.length - 1) {
           saida = formatarHora(datas[i])
         } else {
           saidas_extras.push(formatarHora(datas[i]))
         }
       }
-      observacoes.push('Duplicidade de saída')
+      observacoes.push('Múltiplas marcações extras')
       tem_inconsistencia = true
     }
     
@@ -142,7 +187,7 @@ export const processarMarcacoesDiarias = (marcacoes: MarcacaoPonto[]): RegistroD
       tem_inconsistencia = true
     }
     
-    if (saida_almoco && !volta_almoco) {
+    if (saida_almoco && !volta_almoco && datas.length > 3) {
       observacoes.push('Não marcou volta almoço')
       tem_inconsistencia = true
     }
@@ -156,10 +201,12 @@ export const processarMarcacoesDiarias = (marcacoes: MarcacaoPonto[]): RegistroD
     if (saida) {
       const entradaDate = datas[0]
       const saidaDate = datas[datas.length - 1]
-      const saidaAlmocoDate = saida_almoco && datas[1] ? datas[1] : undefined
-      const voltaAlmocoDate = volta_almoco && datas[2] ? datas[2] : undefined
+      const saidaAlmocoDate = saida_almoco && datas.length > 1 ? datas[1] : undefined
+      const voltaAlmocoDate = volta_almoco && datas.length > 2 ? datas[2] : undefined
+      const intervalo1Date = intervalo1 && datas.length > 3 ? datas[3] : undefined
+      const intervalo2Date = intervalo2 && datas.length > 4 ? datas[4] : undefined
       
-      tempo_util = calcularTempoUtil(entradaDate, saidaDate, saidaAlmocoDate, voltaAlmocoDate)
+      tempo_util = calcularTempoUtil(entradaDate, saidaDate, saidaAlmocoDate, voltaAlmocoDate, intervalo1Date, intervalo2Date)
     }
     
     registros.push({
@@ -168,6 +215,8 @@ export const processarMarcacoesDiarias = (marcacoes: MarcacaoPonto[]): RegistroD
       entrada,
       saida_almoco,
       volta_almoco,
+      intervalo1,
+      intervalo2,
       saida,
       saidas_extras,
       tempo_util,

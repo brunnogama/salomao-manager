@@ -24,9 +24,11 @@ export function HorasTable({ registros, tableRef }: HorasTableProps) {
             <tr>
               <th className="px-4 py-3 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Colaborador</th>
               <th className="px-4 py-3 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Data</th>
-              <th className="px-4 py-3 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Chegada</th>
+              <th className="px-4 py-3 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Entrada</th>
               <th className="px-4 py-3 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Saída Almoço</th>
               <th className="px-4 py-3 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Volta Almoço</th>
+              <th className="px-4 py-3 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Intervalo 1</th>
+              <th className="px-4 py-3 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Intervalo 2</th>
               <th className="px-4 py-3 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Saída</th>
               <th className="px-4 py-3 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Tempo Útil</th>
               <th className="px-4 py-3 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Observações</th>
@@ -43,6 +45,12 @@ export function HorasTable({ registros, tableRef }: HorasTableProps) {
                 </td>
                 <td className={`px-4 py-3 text-center text-sm font-mono font-semibold ${reg.saida_almoco && !reg.volta_almoco ? 'text-red-600 bg-red-50' : 'text-gray-800'}`}>
                   {reg.volta_almoco || (reg.saida_almoco && !reg.volta_almoco ? 'Não marcou' : '-')}
+                </td>
+                <td className="px-4 py-3 text-center text-sm font-mono font-semibold text-gray-800">
+                  {reg.intervalo1 || '-'}
+                </td>
+                <td className={`px-4 py-3 text-center text-sm font-mono font-semibold ${reg.intervalo1 && !reg.intervalo2 ? 'text-red-600 bg-red-50' : 'text-gray-800'}`}>
+                  {reg.intervalo2 || (reg.intervalo1 && !reg.intervalo2 ? 'Não marcou' : '-')}
                 </td>
                 <td className="px-4 py-3 text-center text-sm font-mono font-semibold text-gray-800">
                   {reg.saida || '-'}

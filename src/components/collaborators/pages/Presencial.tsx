@@ -346,9 +346,11 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
         dataToExport = registrosHoras.map(item => ({
             'Colaborador': item.colaborador,
             'Data': item.data,
-            'Hora Chegada': item.entrada,
+            'Entrada': item.entrada,
             'Saída Almoço': item.saida_almoco || '-',
             'Volta Almoço': item.volta_almoco || '-',
+            'Intervalo 1': item.intervalo1 || '-',
+            'Intervalo 2': item.intervalo2 || '-',
             'Saída': item.saida || '-',
             'Tempo Útil': item.tempo_util,
             'Observações': item.observacoes
