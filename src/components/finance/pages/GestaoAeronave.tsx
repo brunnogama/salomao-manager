@@ -158,7 +158,7 @@ export function GestaoAeronave({
 
   const fetchDados = async () => {
     setLoading(true)
-    const { data: result } = await supabase
+    const { data: result, error } = await supabase
       .from('financeiro_aeronave')
       .select('*')
       .order('data', { ascending: false })
@@ -166,6 +166,7 @@ export function GestaoAeronave({
       console.log('Dados buscados do banco:', result.length, 'registros');
       setData(result);
     }
+    if (error) console.error('Erro ao buscar dados:', error);
     setLoading(false)
   }
 
@@ -421,10 +422,10 @@ export function GestaoAeronave({
         const rawData = XLSX.utils.sheet_to_json(ws)
         
         console.log('Linhas brutas lidas do Excel:', rawData.length);
+        console.log('Exemplo da primeira linha bruta:', rawData[0]);
 
         const formatExcelDate = (val: any) => {
           if (!val) return null
-          // Trata formato ISO da planilha AAAA-MM-DD
           if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) {
             return val.split(' ')[0]
           }
@@ -452,31 +453,31 @@ export function GestaoAeronave({
 
         const mapped = rawData.map((row: any) => {
           const cleanRow: any = {};
-          // Limpa nomes de colunas com espaços extras
           Object.keys(row).forEach(key => {
-            cleanRow[key.trim()] = row[key];
+            const cleanKey = key.trim().toLowerCase();
+            cleanRow[cleanKey] = row[key];
           });
 
           return {
-            missao_id: cleanRow['ID'] ? parseInt(cleanRow['ID']) : null,
-            tripulacao: cleanRow['Tripulação']?.toString() || '',
-            aeronave: cleanRow['Aeronave']?.toString() || '',
-            data: formatExcelDate(cleanRow['Data']),
-            localidade_destino: cleanRow['Localidade e destino']?.toString() || '',
-            despesa: cleanRow['Despesa']?.toString() || '',
-            descricao: cleanRow['Descrição']?.toString() || '',
-            fornecedor: cleanRow['Fornecedor']?.toString() || '',
-            faturado_cnpj: parseCurrency(cleanRow['Faturado CNPJ SALOMÃO']),
-            valor_previsto: parseCurrency(cleanRow['R$ Previsto total']),
-            valor_extra: parseCurrency(cleanRow['R$ Extra']),
-            valor_pago: parseCurrency(cleanRow['R$ pago']),
-            data_vencimento: formatExcelDate(cleanRow['Data Venc.']),
-            data_pagamento: formatExcelDate(cleanRow['Data Pgto']),
-            observacao: cleanRow['Observação']?.toString() || ''
+            missao_id: cleanRow['id'] ? parseInt(cleanRow['id']) : null,
+            tripulacao: (cleanRow['tripulação'] || cleanRow['tripulacao'])?.toString() || '',
+            aeronave: cleanRow['aeronave']?.toString() || '',
+            data: formatExcelDate(cleanRow['data']),
+            localidade_destino: (cleanRow['localidade e destino'] || cleanRow['localidade_destino'])?.toString() || '',
+            despesa: cleanRow['despesa']?.toString() || '',
+            descricao: (cleanRow['descrição'] || cleanRow['descricao'])?.toString() || '',
+            fornecedor: cleanRow['fornecedor']?.toString() || '',
+            faturado_cnpj: parseCurrency(cleanRow['faturado cnpj salomão'] || cleanRow['faturado_cnpj']),
+            valor_previsto: parseCurrency(cleanRow['r$ previsto total'] || cleanRow['valor_previsto']),
+            valor_extra: parseCurrency(cleanRow['r$ extra'] || cleanRow['valor_extra']),
+            valor_pago: parseCurrency(cleanRow['r$ pago'] || cleanRow['valor_pago']),
+            data_vencimento: formatExcelDate(cleanRow['data venc.'] || cleanRow['data_vencimento']),
+            data_pagamento: formatExcelDate(cleanRow['data pgto'] || cleanRow['data_pagamento']),
+            observacao: (cleanRow['observação'] || cleanRow['observacao'])?.toString() || ''
           }
         })
 
-        console.log('Mapeamento concluído. Exemplo do primeiro registro:', mapped[0]);
+        console.log('Dados mapeados para o Supabase (primeiro item):', mapped[0]);
 
         const { data: insertData, error } = await supabase.from('financeiro_aeronave').insert(mapped).select()
         
@@ -484,7 +485,7 @@ export function GestaoAeronave({
           console.error('Erro detalhado do Supabase:', error)
           alert(`Erro na importação: ${error.message}`)
         } else {
-          console.log('Inserção bem-sucedida. Registros criados:', insertData?.length);
+          console.log('Inserção concluída com sucesso. Registros inseridos:', insertData?.length);
           alert(`${mapped.length} registros importados com sucesso!`)
           await fetchDados()
         }
@@ -542,17 +543,18 @@ export function GestaoAeronave({
         const mapped = rawData.map((row: any) => {
           const cleanRow: any = {};
           Object.keys(row).forEach(key => {
-            cleanRow[key.trim()] = row[key];
+            const cleanKey = key.trim().toLowerCase();
+            cleanRow[cleanKey] = row[key];
           });
 
           return {
-            emissao: formatExcelDate(cleanRow['Emissão']),
-            vencimento: formatExcelDate(cleanRow['Vencimento']),
-            valor_bruto: parseCurrency(cleanRow['Valor bruto']),
-            valor_liquido_realizado: parseCurrency(cleanRow['Valor líquido realizado']),
-            tipo: cleanRow['Tipo']?.toString() || '',
-            devedor: cleanRow['Devedor']?.toString() || '',
-            descricao: cleanRow['Descrição']?.toString() || ''
+            emissao: formatExcelDate(cleanRow['emissão'] || cleanRow['emissao']),
+            vencimento: formatExcelDate(cleanRow['vencimento']),
+            valor_bruto: parseCurrency(cleanRow['valor bruto'] || cleanRow['valor_bruto']),
+            valor_liquido_realizado: parseCurrency(cleanRow['valor líquido realizado'] || cleanRow['valor_liquido_realizado']),
+            tipo: cleanRow['tipo']?.toString() || '',
+            devedor: cleanRow['devedor']?.toString() || '',
+            descricao: (cleanRow['descrição'] || cleanRow['descricao'])?.toString() || ''
           }
         })
 
