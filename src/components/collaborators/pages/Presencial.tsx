@@ -231,17 +231,9 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
         const wb = XLSX.read(evt.target?.result, { type: 'binary' });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const allData = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false }) as any[][];
-        let startIndex = 0;
-        for (let i = 0; i < allData.length; i++) {
-          const row = allData[i];
-          if (row && row[0] && typeof row[0] === 'string') {
-            const firstCol = row[0].trim().toLowerCase();
-            if (firstCol !== 'nome' && firstCol !== 'colaborador' && firstCol !== '' && !firstCol.includes('departamento')) {
-              startIndex = i; break;
-            }
-          }
-        }
-        const dataRows = allData.slice(startIndex);
+        
+        // Dados sempre começam na linha 9 (índice 8, pois linha 8 é cabeçalho)
+        const dataRows = allData.slice(8);
         const rawRecords = dataRows.map((row: any[]) => {
             if (!row || row.length < 3) return null;
             let nome = row[0]; const tempoRaw = row[2];
