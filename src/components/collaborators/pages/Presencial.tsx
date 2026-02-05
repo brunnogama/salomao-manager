@@ -4,11 +4,10 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Upload, FileSpreadsheet, RefreshCw, Download,
   Users, Briefcase, FileText,
-  Plus, Search, Eraser, Mail, X, Grid, LogOut, UserCircle, Clock
+  Plus, Search, Eraser, Grid, LogOut, UserCircle, Clock
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
-import html2canvas from 'html2canvas'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 
 // Importações Modularizadas
@@ -42,7 +41,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   const [progress, setProgress] = useState(0)
   const [filterSocio, setFilterSocio] = useState('')
   const [filterColaborador, setFilterColaborador] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
+  const [filterMes, setFilterMes] = useState('')
   const [searchText, setSearchText] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingRule, setEditingRule] = useState<Partial<SocioRule> | null>(null)
@@ -55,7 +54,6 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   // === REFS ===
   const presenceInputRef = useRef<HTMLInputElement>(null)
   const socioInputRef = useRef<HTMLInputElement>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
   const horasRef = useRef<HTMLDivElement>(null)
 
   // === TODA A LÓGICA DO COMPONENTE ===
@@ -109,7 +107,6 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
 
   useEffect(() => { fetchInitialPeriod() }, [])
   useEffect(() => { if (!isInitialLoad) { fetchRecords() } }, [startDate, endDate, isInitialLoad])
-  useEffect(() => { if (showSearch && searchInputRef.current) { searchInputRef.current.focus() } }, [showSearch])
   useEffect(() => { fetchSociosList() }, [])
 
   const socioMap = useMemo(() => {
@@ -130,6 +127,15 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
           const start = new Date(startDate + 'T00:00:00');
           const end = new Date(endDate + 'T23:59:59');
           if (dateObj < start || dateObj > end) return false
+          
+          // Filtro por mês
+          if (filterMes) {
+            const [year, month] = filterMes.split('-')
+            const recordYear = dateObj.getFullYear().toString()
+            const recordMonth = String(dateObj.getMonth() + 1).padStart(2, '0')
+            if (recordYear !== year || recordMonth !== month) return false
+          }
+          
           const normName = normalizeKey(record.nome_colaborador)
           const socioRaw = socioMap.get(normName) || '-'
           const socioFormatted = toTitleCase(socioRaw)
@@ -150,6 +156,15 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
           const start = new Date(startDate + 'T00:00:00');
           const end = new Date(endDate + 'T23:59:59');
           if (dateObj < start || dateObj > end) return false
+          
+          // Filtro por mês
+          if (filterMes) {
+            const [year, month] = filterMes.split('-')
+            const recordYear = dateObj.getFullYear().toString()
+            const recordMonth = String(dateObj.getMonth() + 1).padStart(2, '0')
+            if (recordYear !== year || recordMonth !== month) return false
+          }
+          
           const nameFormatted = toTitleCase(marcacao.nome_colaborador)
           if (filterColaborador && nameFormatted !== filterColaborador) return false
           if (searchText) {
@@ -172,7 +187,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
           return true
       })
       return { filteredRecords, filteredMarcacoes, filteredRules }
-  }, [records, marcacoes, socioRules, startDate, endDate, filterSocio, filterColaborador, searchText, socioMap])
+  }, [records, marcacoes, socioRules, startDate, endDate, filterSocio, filterColaborador, filterMes, searchText, socioMap])
 
   const descriptiveData = useMemo(() => {
     return [...filteredData.filteredRecords].sort((a, b) => {
@@ -312,55 +327,29 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   }
   const handleDeleteRule = async (id: string) => { if (!confirm("Excluir?")) return; setLoading(true); await supabase.from('socios_regras').delete().eq('id', id); fetchRecords() }
 
-  const clearFilters = () => { setFilterSocio(''); setFilterColaborador(''); setSearchText(''); }
-  const hasActiveFilters = filterSocio !== '' || filterColaborador !== '' || searchText !== '';
-
-  const handleSendEmail = async () => {
-    if (!horasRef.current || viewMode !== 'horas') return alert("Vá para a aba 'Horas'.");
-    setLoading(true);
-    try {
-        const canvas = await html2canvas(horasRef.current, { scale: 2, backgroundColor: '#ffffff' });
-        canvas.toBlob(async (blob) => {
-            if (!blob) { setLoading(false); return alert("Erro ao gerar imagem."); }
-            try {
-                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                const subject = `Relatório de Horas - ${new Date().toLocaleDateString()}`;
-                const body = `Segue em anexo (colado) o relatório filtrado.\n\n(Pressione Ctrl+V para colar a imagem aqui)`;
-                window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
-                alert("📸 Imagem copiada!");
-            } catch (err) { alert("Erro ao copiar."); }
-        });
-    } catch (error) { alert("Erro ao gerar imagem."); } finally { setLoading(false); }
-  }
+  const clearFilters = () => { setFilterSocio(''); setFilterColaborador(''); setFilterMes(''); setSearchText(''); }
+  const hasActiveFilters = filterSocio !== '' || filterColaborador !== '' || filterMes !== '' || searchText !== '';
 
   const handleExportXLSX = () => {
-    let dataToExport: any[] = []; let sheetName = 'Dados'; let fileName = 'Presencial';
-    if (viewMode === 'descriptive') {
-        const weekDays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-        dataToExport = descriptiveData.map(item => ({
-            'Colaborador': toTitleCase(item.nome_colaborador), 'Sócio Responsável': toTitleCase(socioMap.get(normalizeKey(item.nome_colaborador)) || '-'),
-            'Data': new Date(item.data_hora).toLocaleDateString('pt-BR'), 'Hora': new Date(item.data_hora).toLocaleTimeString('pt-BR'), 'Dia da Semana': weekDays[new Date(item.data_hora).getDay()]
-        }));
-        sheetName = 'Descritivo'; fileName = 'Presencial_Descritivo';
-    } else if (viewMode === 'horas') {
-        dataToExport = registrosHoras.map(item => ({
-            'Colaborador': item.colaborador,
-            'Data': item.data,
-            'Entrada': item.entrada,
-            'Saída Almoço': item.saida_almoco || '-',
-            'Volta Almoço': item.volta_almoco || '-',
-            'Intervalo 1': item.intervalo1 || '-',
-            'Intervalo 2': item.intervalo2 || '-',
-            'Saída': item.saida || '-',
-            'Tempo Útil': item.tempo_util,
-            'Observações': item.observacoes
-        }));
-        sheetName = 'Horas'; fileName = 'Controle_Horas';
-    }
-    if (dataToExport.length === 0) return alert('Sem dados.');
-    const ws = XLSX.utils.json_to_sheet(dataToExport); const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
+    if (viewMode !== 'horas' || registrosHoras.length === 0) return;
+    
+    const dataToExport = registrosHoras.map(item => ({
+        'Colaborador': item.colaborador,
+        'Data': item.data,
+        'Entrada': item.entrada,
+        'Saída Almoço': item.saida_almoco || '-',
+        'Volta Almoço': item.volta_almoco || '-',
+        'Intervalo 1': item.intervalo1 || '-',
+        'Intervalo 2': item.intervalo2 || '-',
+        'Saída': item.saida || '-',
+        'Tempo Útil': item.tempo_util,
+        'Observações': item.observacoes
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Horas');
+    XLSX.writeFile(wb, 'Controle_Horas.xlsx');
   }
 
   return (
@@ -430,11 +419,8 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
                 <input type="file" accept=".xlsx" ref={presenceInputRef} onChange={handlePresenceUpload} className="hidden" />
                 <input type="file" accept=".xlsx" ref={socioInputRef} onChange={handleSocioUpload} className="hidden" />
                 <button onClick={() => fetchRecords()} className="p-2.5 text-gray-400 hover:text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all" title="Atualizar"><RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} /></button>
-                {(viewMode === 'descriptive' || viewMode === 'horas') && ((viewMode === 'descriptive' && descriptiveData.length > 0) || (viewMode === 'horas' && registrosHoras.length > 0)) && (
-                  <div className="flex gap-2">
-                    {viewMode === 'horas' && <button onClick={handleSendEmail} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Mail className="h-4 w-4" /> Email</button>}
-                    <button onClick={handleExportXLSX} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Download className="h-4 w-4" /> Exportar</button>
-                  </div>
+                {viewMode === 'horas' && registrosHoras.length > 0 && (
+                  <button onClick={handleExportXLSX} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Download className="h-4 w-4" /> Exportar</button>
                 )}
                 {viewMode === 'socios' ? (
                     <div className="flex gap-2">
@@ -449,28 +435,74 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
 
         {/* FILTERS - Design System */}
         <div className="flex flex-col lg:flex-row items-center justify-between border-t border-gray-100 pt-4 gap-4">
-            <div className="hidden lg:block">{hasActiveFilters && <button onClick={clearFilters} className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all"><Eraser className="h-3.5 w-3.5" /> Limpar</button>}</div>
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
-                <div className={`flex items-center bg-gray-50 border border-gray-200 rounded-xl transition-all duration-300 ${showSearch ? 'w-full sm:w-64 px-2' : 'w-10 justify-center'}`}>
-                    <button onClick={() => setShowSearch(!showSearch)} className="p-2 text-gray-400 hover:text-[#1e3a8a] transition-colors">{showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}</button>
-                    {showSearch && <input ref={searchInputRef} type="text" placeholder="Buscar..." className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium" value={searchText} onChange={(e) => setSearchText(e.target.value)} />}
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full">
+                {/* Barra de Pesquisa - Sempre visível */}
+                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-full sm:w-64">
+                    <Search className="h-4 w-4 text-gray-400 mr-2" />
+                    <input 
+                        type="text" 
+                        placeholder="Buscar colaborador..." 
+                        className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400" 
+                        value={searchText} 
+                        onChange={(e) => setSearchText(e.target.value)} 
+                    />
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                    {viewMode !== 'horas' && <SearchableSelect value={filterSocio} onChange={setFilterSocio} table="socios_lista" nameField="nome" placeholder="Todos Sócios" className="w-full sm:w-48" onRefresh={fetchSociosList} />}
-                    <SearchableSelect value={filterColaborador} onChange={setFilterColaborador} options={uniqueColaboradores} placeholder="Todos Colab." className="w-full sm:w-48" />
-                    {(viewMode === 'descriptive' || viewMode === 'horas') && (
-                        <div className="flex items-center gap-2 border-l border-gray-200 pl-2">
-                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 hover:border-[#1e3a8a] transition-all">
-                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
-                                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent border-none text-sm p-1 outline-none text-gray-700 font-medium cursor-pointer" />
-                            </div>
-                            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 hover:border-[#1e3a8a] transition-all">
-                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
-                                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent border-none text-sm p-1 outline-none text-gray-700 font-medium cursor-pointer" />
-                            </div>
+                
+                {/* Botão Limpar - Aparece quando há filtros ativos */}
+                {hasActiveFilters && (
+                    <button 
+                        onClick={clearFilters} 
+                        className="flex items-center gap-1.5 px-3 py-2 text-[9px] font-black uppercase tracking-[0.2em] text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all whitespace-nowrap"
+                    >
+                        <Eraser className="h-3.5 w-3.5" /> Limpar
+                    </button>
+                )}
+                
+                {/* Filtro por Mês Dinâmico */}
+                {(viewMode === 'descriptive' || viewMode === 'horas') && (
+                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 hover:border-[#1e3a8a] transition-all">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Mês</span>
+                        <input 
+                            type="month" 
+                            value={filterMes} 
+                            onChange={(e) => setFilterMes(e.target.value)} 
+                            className="bg-transparent border-none text-sm p-1 outline-none text-gray-700 font-medium cursor-pointer"
+                        />
+                    </div>
+                )}
+                
+                {/* Filtro de Colaboradores */}
+                <SearchableSelect 
+                    value={filterColaborador} 
+                    onChange={setFilterColaborador} 
+                    options={uniqueColaboradores} 
+                    placeholder="Todos Colab." 
+                    className="w-full sm:w-48" 
+                />
+                
+                {/* Filtro por Período */}
+                {(viewMode === 'descriptive' || viewMode === 'horas') && (
+                    <div className="flex items-center gap-2 border-l border-gray-200 pl-2">
+                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 hover:border-[#1e3a8a] transition-all">
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
+                            <input 
+                                type="date" 
+                                value={startDate} 
+                                onChange={(e) => setStartDate(e.target.value)} 
+                                className="bg-transparent border-none text-sm p-1 outline-none text-gray-700 font-medium cursor-pointer" 
+                            />
                         </div>
-                    )}
-                </div>
+                        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 hover:border-[#1e3a8a] transition-all">
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Até</span>
+                            <input 
+                                type="date" 
+                                value={endDate} 
+                                onChange={(e) => setEndDate(e.target.value)} 
+                                className="bg-transparent border-none text-sm p-1 outline-none text-gray-700 font-medium cursor-pointer" 
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
       </div>
