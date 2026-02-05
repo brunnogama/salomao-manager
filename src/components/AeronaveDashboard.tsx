@@ -31,8 +31,9 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
   }
 
   // --- Helpers de Formatação ---
+  // ALTERAÇÃO: Removido maximumFractionDigits: 0 para mostrar centavos
   const formatCurrency = (val: number) => 
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val)
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
 
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '-'
@@ -305,8 +306,8 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                   strokeWidth={3}
                   dot={{ r: 5, fill: COLORS.line, strokeWidth: 2, stroke: '#fff' }}
                   activeDot={{ r: 8, fill: COLORS.activeDot, strokeWidth: 0 }}
-                  animationDuration={500} 
-                  animationEasing="ease-out"
+                  animationDuration={2000} // ALTERAÇÃO: 2000ms para desenhar devagar
+                  animationEasing="ease-in-out" // Suave
                 >
                   <LabelList 
                     dataKey="value" 
@@ -413,9 +414,11 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                 <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Relação de Missões</h4>
               </div>
 
+              {/* ALTERAÇÃO: Adicionada coluna ID e ajustado grid para 12 colunas */}
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
-                <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Missão</div>
-                <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
+                <div className="col-span-2 text-[10px] font-black uppercase text-gray-500">ID</div>
+                <div className="col-span-6 text-[10px] font-black uppercase text-gray-500">Missão</div>
+                <div className="col-span-4 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
@@ -425,7 +428,12 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                     onClick={() => handleMissionClick(missao.nome)}
                     className="w-full grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all items-center text-left group"
                   >
-                    <div className="col-span-7 flex flex-col gap-0.5 overflow-hidden">
+                    {/* Coluna ID */}
+                    <div className="col-span-2 text-xs font-bold text-gray-500 truncate">
+                      #{String(missao.id || '').padStart(6, '0')}
+                    </div>
+                    {/* Coluna Missão + Data */}
+                    <div className="col-span-6 flex flex-col gap-0.5 overflow-hidden">
                       <span className="text-xs font-bold text-gray-700 truncate group-hover:text-blue-700">
                         {missao.nome}
                       </span>
@@ -434,7 +442,8 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                         {formatDate(missao.data)}
                       </span>
                     </div>
-                    <div className="col-span-5 text-xs font-black text-blue-600 text-right">
+                    {/* Coluna Total */}
+                    <div className="col-span-4 text-xs font-black text-blue-600 text-right">
                       {formatCurrency(missao.total)}
                     </div>
                   </button>
@@ -542,7 +551,14 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           </div>
           <div className="space-y-3">
             {topMissionCategories.map((cat, idx) => (
-              <div key={idx} className="space-y-1 cursor-help" title={cat.insight}>
+              // ALTERAÇÃO: Tooltip personalizado via CSS (group-hover)
+              <div key={idx} className="space-y-1 relative group cursor-default">
+                {/* Custom Tooltip */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[200px] bg-gray-800 text-white text-[10px] font-medium px-3 py-1.5 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  {cat.insight}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+
                 <div className="flex justify-between text-xs items-center">
                   <span className="font-bold text-gray-700">{cat.name}</span>
                   <div className="flex items-center gap-1.5">
@@ -572,7 +588,13 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           </div>
           <div className="space-y-3">
             {topFixedCategories.map((cat, idx) => (
-              <div key={idx} className="space-y-1 cursor-help" title={cat.insight}>
+              <div key={idx} className="space-y-1 relative group cursor-default">
+                {/* Custom Tooltip */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[200px] bg-gray-800 text-white text-[10px] font-medium px-3 py-1.5 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  {cat.insight}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+
                 <div className="flex justify-between text-xs items-center">
                   <span className="font-bold text-gray-700">{cat.name}</span>
                   <div className="flex items-center gap-1.5">
