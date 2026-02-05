@@ -15,7 +15,8 @@ import {
   Wallet,
   Receipt,
   DollarSign,
-  Loader2
+  Loader2,
+  FileText // Adicionado para o ícone da aba Faturas
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -42,8 +43,8 @@ export function GestaoAeronave({
   onLogout 
 }: GestaoAeronaveProps) {
   // --- Estados de Controle ---
-  // ALTERAÇÃO: Padrão alterado para 'dashboard'
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dashboard')
+  // ALTERAÇÃO: Adicionado 'faturas' ao tipo do estado
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'faturas' | 'dados'>('dashboard')
   const [filterOrigem, setFilterOrigem] = useState<'todos' | 'missao' | 'fixa'>('todos')
   
   // --- Estados de Dados e Filtros ---
@@ -110,6 +111,11 @@ export function GestaoAeronave({
     })
   }, [data, filterOrigem, searchTerm, startDate, endDate])
 
+  // --- Dados para Faturas (Filtra apenas quem tem Doc Fiscal) ---
+  const faturasData = useMemo(() => {
+    return filteredData.filter(item => item.doc_fiscal && item.doc_fiscal.trim() !== '')
+  }, [filteredData])
+
   // --- Totais (Cards) ---
   const totals = useMemo(() => {
     return filteredData.reduce((acc, curr) => {
@@ -173,14 +179,14 @@ export function GestaoAeronave({
     setIsViewModalOpen(true)
   }
 
-  // ATUALIZADO: Navegação via Dashboard com filtro de missão
+  // Navegação via Dashboard com filtro de missão
   const handleMissionClick = (missionName: string) => {
     setSearchTerm(missionName)
     setFilterOrigem('missao')
     setActiveTab('dados')
   }
 
-  // NOVO: Handler para salvar lançamento (criar ou editar)
+  // Handler para salvar lançamento (criar ou editar)
   const handleSaveLancamento = async (formData: Partial<AeronaveLancamento>) => {
     if (formData.id) {
       // Edição
@@ -207,7 +213,7 @@ export function GestaoAeronave({
     XLSX.writeFile(wb, `Aeronave_Export_${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
-  // --- Lógica de Importação (CORRIGIDA) ---
+  // --- Lógica de Importação ---
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -221,7 +227,7 @@ export function GestaoAeronave({
         const ws = wb.Sheets[wb.SheetNames[0]]
         const rawData = XLSX.utils.sheet_to_json(ws)
 
-        // Funções auxiliares de parse ROBUSTAS
+        // Funções auxiliares de parse
         const parseDate = (val: any) => {
           if (!val) return null
           
@@ -429,6 +435,14 @@ export function GestaoAeronave({
               <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
             </button>
             <button
+              onClick={() => setActiveTab('faturas')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                activeTab === 'faturas' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <FileText className="h-3.5 w-3.5" /> Faturas
+            </button>
+            <button
               onClick={() => setActiveTab('dados')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                 activeTab === 'dados' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
@@ -488,7 +502,7 @@ export function GestaoAeronave({
           </div>
         </div>
 
-        {/* ALTERAÇÃO: Renderização Condicional da Barra de Ações (Apenas na aba 'dados') */}
+        {/* Barra de Ações (Apenas na aba 'dados') */}
         {activeTab === 'dados' && (
           <>
             <div className="h-px bg-gray-100 w-full my-2"></div>
@@ -539,6 +553,57 @@ export function GestaoAeronave({
             onMissionClick={handleMissionClick}
             filterOrigem={filterOrigem}
           />
+        ) : activeTab === 'faturas' ? (
+          // VISUALIZAÇÃO DE FATURAS
+          <div className="overflow-x-auto custom-scrollbar pb-4">
+            <table className="w-full text-left border-separate border-spacing-y-2 px-4">
+              <thead>
+                <tr className="text-[#112240]">
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Doc. Fiscal</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Número</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-right">Valor Total Doc</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Observação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {faturasData.length > 0 ? (
+                  faturasData.map((item) => (
+                    <tr 
+                      key={item.id} 
+                      onClick={() => handleRowClick(item)}
+                      className="group bg-white hover:bg-blue-50/40 border border-gray-100 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer"
+                    >
+                      <td className="px-4 py-4 text-sm font-semibold text-[#1e3a8a] first:rounded-l-xl">
+                        {item.doc_fiscal}
+                      </td>
+                      <td className="px-4 py-4 text-sm font-medium text-gray-700">
+                        {item.numero_doc || '-'}
+                      </td>
+                      <td className="px-4 py-4 text-sm font-black text-gray-800 text-right">
+                        {item.valor_total_doc && item.valor_total_doc > 0 ? (
+                          handleFormatCurrency(item.valor_total_doc)
+                        ) : (
+                          <span className="text-gray-300">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-500 last:rounded-r-xl max-w-[300px] truncate" title={item.observacao || ''}>
+                        {item.observacao || '-'}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center text-gray-300 gap-2">
+                        <FileText className="h-8 w-8" />
+                        <p className="text-xs font-bold uppercase tracking-widest">Nenhuma fatura encontrada</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <AeronaveTable 
             data={filteredData} 
