@@ -163,7 +163,7 @@ export function GestaoAeronave({
       .select('*')
       .order('data', { ascending: false })
     if (result) setData(result)
-    loading && setLoading(false)
+    setLoading(false)
   }
 
   const fetchPagamentos = async () => {
@@ -288,7 +288,7 @@ export function GestaoAeronave({
       
       const totalFlights = new Set(
         despesas
-          .filter(item => item.missao_id) // Apenas registros com missao_id
+          .filter(item => item.missao_id) 
           .map(item => item.missao_id)
       ).size
       const totalDespesasPrevisto = despesas.reduce((acc, curr) => acc + (Number(curr.valor_previsto) || 0), 0)
@@ -308,7 +308,7 @@ export function GestaoAeronave({
     } else if (dataType === 'despesas') {
       const totalFlights = new Set(
         filteredDataForCards
-          .filter(item => item.missao_id) // Apenas registros com missao_id
+          .filter(item => item.missao_id) 
           .map(item => item.missao_id)
       ).size
       return filteredDataForCards.reduce((acc, curr) => ({
@@ -363,7 +363,6 @@ export function GestaoAeronave({
   const handleEditFromView = (item: any) => {
     setIsViewModalOpen(false)
     setSelectedItem(item)
-    // Verifica se é pagamento ou despesa pelo campo 'emissao'
     if (item.emissao) {
       setIsPagamentoModalOpen(true)
     } else {
@@ -447,7 +446,7 @@ export function GestaoAeronave({
           });
 
           return {
-            missao_id: cleanRow['ID'] ? parseInt(cleanRow['ID']) : null, // ✅ NOVO
+            missao_id: cleanRow['ID'] ? parseInt(cleanRow['ID']) : null,
             tripulacao: cleanRow['Tripulação']?.toString() || '',
             aeronave: cleanRow['Aeronave']?.toString() || '',
             data: formatExcelDate(cleanRow['Data']),
