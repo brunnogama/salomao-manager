@@ -25,7 +25,7 @@ import { Calendario as CalendarioRH } from './components/collaborators/pages/Cal
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 
 // Módulo Financeiro
-import { GestaoAeronave } from './components/finance/pages/GestaoAeronave'
+//import { GestaoAeronave } from './components/finance/pages/GestaoAeronave'
 import { GED } from './components/finance/pages/GED'
 import { Calendario as CalendarioFinanceiro } from './components/finance/pages/Calendario'
 import { ListaOAB } from './components/finance/pages/ListaOAB'
