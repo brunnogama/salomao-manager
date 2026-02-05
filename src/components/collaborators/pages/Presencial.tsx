@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Upload, FileSpreadsheet, RefreshCw, Download,
-  BarChart3, Users, Briefcase, FileText,
+  Users, Briefcase, FileText,
   Plus, Search, Eraser, Mail, X, Grid, LogOut, UserCircle, Clock
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -12,7 +12,7 @@ import html2canvas from 'html2canvas'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 
 // Importações Modularizadas
-import { PresenceRecord, SocioRule, ReportItem, MarcacaoPonto, RegistroDiario } from '../types/presencial'
+import { PresenceRecord, SocioRule, MarcacaoPonto, RegistroDiario } from '../types/presencial'
 import { 
   normalizeKey, 
   toTitleCase, 
@@ -22,7 +22,6 @@ import {
   processarMarcacoesDiarias
 } from '../utils/presencialUtils'
 import { SocioRuleModal } from '../components/SocioRuleModal'
-import { ReportTable } from '../components/ReportTable'
 import { DescriptiveTable } from '../components/DescriptiveTable'
 import { SocioRulesTable } from '../components/SocioRulesTable'
 import { HorasTable } from '../components/HorasTable'
@@ -47,7 +46,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   const [searchText, setSearchText] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingRule, setEditingRule] = useState<Partial<SocioRule> | null>(null)
-  const [viewMode, setViewMode] = useState<'report' | 'descriptive' | 'socios' | 'horas'>('report')
+  const [viewMode, setViewMode] = useState<'horas' | 'descriptive' | 'socios'>('horas')
   const [startDate, setStartDate] = useState(getFirstDayOfMonth())
   const [endDate, setEndDate] = useState(getLastDayOfMonth())
   const [isInitialLoad, setIsInitialLoad] = useState(true)
@@ -57,7 +56,6 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   const presenceInputRef = useRef<HTMLInputElement>(null)
   const socioInputRef = useRef<HTMLInputElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const reportRef = useRef<HTMLDivElement>(null)
   const horasRef = useRef<HTMLDivElement>(null)
 
   // === TODA A LÓGICA DO COMPONENTE ===
@@ -175,38 +173,6 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
       })
       return { filteredRecords, filteredMarcacoes, filteredRules }
   }, [records, marcacoes, socioRules, startDate, endDate, filterSocio, filterColaborador, searchText, socioMap])
-
-  const reportData = useMemo(() => {
-    const grouped: { [key: string]: { originalName: string, uniqueDays: Set<string>, weekDays: { [key: number]: number }, datesSet: Set<string> } } = {}
-    filteredData.filteredRecords.forEach(record => {
-      const dateObj = new Date(record.data_hora)
-      const normalizedName = normalizeKey(record.nome_colaborador)
-      const displayName = toTitleCase(record.nome_colaborador)
-      const year = dateObj.getUTCFullYear()
-      const month = dateObj.getUTCMonth() + 1
-      const day = dateObj.getUTCDate()
-      const dayKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      const dayNumber = String(day).padStart(2, '0')
-      const weekDay = dateObj.getUTCDay()
-      if (!grouped[normalizedName]) { grouped[normalizedName] = { originalName: displayName, uniqueDays: new Set(), weekDays: {}, datesSet: new Set() } }
-      if (!grouped[normalizedName].uniqueDays.has(dayKey)) {
-        grouped[normalizedName].uniqueDays.add(dayKey)
-        grouped[normalizedName].datesSet.add(dayNumber)
-        grouped[normalizedName].weekDays[weekDay] = (grouped[normalizedName].weekDays[weekDay] || 0) + 1
-      }
-    })
-    const result: ReportItem[] = Object.keys(grouped).map(key => {
-      const item = grouped[key]
-      const weekDaysMap: { [key: string]: number } = {}
-      const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-      Object.entries(item.weekDays).forEach(([i, count]) => weekDaysMap[days[Number(i)]] = count)
-      const socioRaw = socioMap.get(key) || '-'
-      const socioFormatted = toTitleCase(socioRaw)
-      const sortedDates = Array.from(item.datesSet).map(d => parseInt(d)).sort((a, b) => a - b).map(d => String(d).padStart(2, '0'))
-      return { nome: item.originalName, socio: socioFormatted, diasPresentes: item.uniqueDays.size, diasSemana: weekDaysMap, datas: sortedDates }
-    })
-    return result.sort((a, b) => a.nome.localeCompare(b.nome))
-  }, [filteredData.filteredRecords, socioMap])
 
   const descriptiveData = useMemo(() => {
     return [...filteredData.filteredRecords].sort((a, b) => {
@@ -350,16 +316,15 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   const hasActiveFilters = filterSocio !== '' || filterColaborador !== '' || searchText !== '';
 
   const handleSendEmail = async () => {
-    const refToUse = viewMode === 'horas' ? horasRef : reportRef;
-    if (!refToUse.current || (viewMode !== 'report' && viewMode !== 'horas')) return alert("Vá para a aba 'Relatório' ou 'Horas'.");
+    if (!horasRef.current || viewMode !== 'horas') return alert("Vá para a aba 'Horas'.");
     setLoading(true);
     try {
-        const canvas = await html2canvas(refToUse.current, { scale: 2, backgroundColor: '#ffffff' });
+        const canvas = await html2canvas(horasRef.current, { scale: 2, backgroundColor: '#ffffff' });
         canvas.toBlob(async (blob) => {
             if (!blob) { setLoading(false); return alert("Erro ao gerar imagem."); }
             try {
                 await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                const subject = `Relatório de ${viewMode === 'horas' ? 'Horas' : 'Presença'} - ${new Date().toLocaleDateString()}`;
+                const subject = `Relatório de Horas - ${new Date().toLocaleDateString()}`;
                 const body = `Segue em anexo (colado) o relatório filtrado.\n\n(Pressione Ctrl+V para colar a imagem aqui)`;
                 window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
                 alert("📸 Imagem copiada!");
@@ -370,14 +335,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
 
   const handleExportXLSX = () => {
     let dataToExport: any[] = []; let sheetName = 'Dados'; let fileName = 'Presencial';
-    if (viewMode === 'report') {
-        dataToExport = reportData.map(item => ({
-            'Colaborador': item.nome, 'Sócio Responsável': item.socio !== '-' ? item.socio : 'Sem Sócio', 'Dias Presentes': item.diasPresentes,
-            'Segunda': item.diasSemana['Seg'] || 0, 'Terça': item.diasSemana['Ter'] || 0, 'Quarta': item.diasSemana['Qua'] || 0,
-            'Quinta': item.diasSemana['Qui'] || 0, 'Sexta': item.diasSemana['Sex'] || 0, 'Sábado': item.diasSemana['Sáb'] || 0, 'Domingo': item.diasSemana['Dom'] || 0
-        }));
-        sheetName = 'Relatório';
-    } else if (viewMode === 'descriptive') {
+    if (viewMode === 'descriptive') {
         const weekDays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
         dataToExport = descriptiveData.map(item => ({
             'Colaborador': toTitleCase(item.nome_colaborador), 'Sócio Responsável': toTitleCase(socioMap.get(normalizeKey(item.nome_colaborador)) || '-'),
@@ -460,7 +418,6 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
             
             {/* VIEW MODE - Navy Gradient quando ativo */}
             <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
-                <button onClick={() => setViewMode('report')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'report' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><BarChart3 className="h-4 w-4" /> Relatório</button>
                 <button onClick={() => setViewMode('horas')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'horas' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><Clock className="h-4 w-4" /> Horas</button>
                 <button onClick={() => setViewMode('descriptive')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'descriptive' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><FileText className="h-4 w-4" /> Descritivo</button>
                 <button onClick={() => setViewMode('socios')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'socios' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><Briefcase className="h-4 w-4" /> Regras</button>
@@ -471,9 +428,9 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
                 <input type="file" accept=".xlsx" ref={presenceInputRef} onChange={handlePresenceUpload} className="hidden" />
                 <input type="file" accept=".xlsx" ref={socioInputRef} onChange={handleSocioUpload} className="hidden" />
                 <button onClick={() => fetchRecords()} className="p-2.5 text-gray-400 hover:text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all" title="Atualizar"><RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} /></button>
-                {(viewMode === 'report' || viewMode === 'descriptive' || viewMode === 'horas') && ((viewMode === 'report' && reportData.length > 0) || (viewMode === 'descriptive' && descriptiveData.length > 0) || (viewMode === 'horas' && registrosHoras.length > 0)) && (
+                {(viewMode === 'descriptive' || viewMode === 'horas') && ((viewMode === 'descriptive' && descriptiveData.length > 0) || (viewMode === 'horas' && registrosHoras.length > 0)) && (
                   <div className="flex gap-2">
-                    {(viewMode === 'report' || viewMode === 'horas') && <button onClick={handleSendEmail} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Mail className="h-4 w-4" /> Email</button>}
+                    {viewMode === 'horas' && <button onClick={handleSendEmail} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Mail className="h-4 w-4" /> Email</button>}
                     <button onClick={handleExportXLSX} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Download className="h-4 w-4" /> Exportar</button>
                   </div>
                 )}
@@ -499,7 +456,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     {viewMode !== 'horas' && <SearchableSelect value={filterSocio} onChange={setFilterSocio} table="socios_lista" nameField="nome" placeholder="Todos Sócios" className="w-full sm:w-48" onRefresh={fetchSociosList} />}
                     <SearchableSelect value={filterColaborador} onChange={setFilterColaborador} options={uniqueColaboradores} placeholder="Todos Colab." className="w-full sm:w-48" />
-                    {(viewMode === 'report' || viewMode === 'descriptive' || viewMode === 'horas') && (
+                    {(viewMode === 'descriptive' || viewMode === 'horas') && (
                         <div className="flex items-center gap-2 border-l border-gray-200 pl-2">
                             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 hover:border-[#1e3a8a] transition-all">
                                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
@@ -518,7 +475,6 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
 
       {/* CONTENT */}
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-        {viewMode === 'report' && <ReportTable reportData={reportData} reportRef={reportRef} startDate={startDate} endDate={endDate} />}
         {viewMode === 'horas' && <HorasTable registros={registrosHoras} tableRef={horasRef} />}
         {viewMode === 'descriptive' && <DescriptiveTable descriptiveData={descriptiveData} socioMap={socioMap} />}
         {viewMode === 'socios' && <SocioRulesTable filteredRules={filteredData.filteredRules} onEdit={handleOpenModal} onDelete={handleDeleteRule} />}

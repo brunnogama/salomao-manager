@@ -1,10 +1,14 @@
 // src/components/collaborators/utils/presencialUtils.ts
 
+import { MarcacaoPonto, RegistroDiario } from '../types/presencial'
+
+// --- HELPER NORMALIZAÇÃO ---
 export const normalizeKey = (text: string) => {
   if (!text) return ""
   return text.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ")
 }
 
+// --- HELPER FORMATAÇÃO ---
 export const toTitleCase = (text: string) => {
   if (!text) return ""
   return text
@@ -14,6 +18,7 @@ export const toTitleCase = (text: string) => {
     .join(' ')
 }
 
+// --- UTILS EXCEL ---
 export const findValue = (row: any, keys: string[]) => {
   const rowKeys = Object.keys(row)
   for (const searchKey of keys) {
@@ -23,14 +28,15 @@ export const findValue = (row: any, keys: string[]) => {
   return null
 }
 
+// --- HELPERS DE DATA ---
 export const getFirstDayOfMonth = () => {
-  const date = new Date()
-  return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0]
+  const date = new Date();
+  return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
 }
 
 export const getLastDayOfMonth = () => {
-  const date = new Date()
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0]
+  const date = new Date();
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
 }
 
 // NOVAS FUNÇÕES PARA CONTROLE DE HORAS
@@ -57,6 +63,22 @@ export const calcularTempoUtil = (entrada: Date, saida: Date, saidaAlmoco?: Date
   return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`
 }
 
+// Remove duplicatas de marcações no mesmo minuto
+const removerDuplicatasPorMinuto = (marcacoes: MarcacaoPonto[]): MarcacaoPonto[] => {
+  const mapa = new Map<string, MarcacaoPonto>()
+  
+  marcacoes.forEach(m => {
+    const data = new Date(m.data_hora)
+    const chave = `${data.getFullYear()}-${data.getMonth()}-${data.getDate()}-${data.getHours()}-${data.getMinutes()}`
+    
+    if (!mapa.has(chave)) {
+      mapa.set(chave, m)
+    }
+  })
+  
+  return Array.from(mapa.values())
+}
+
 export const processarMarcacoesDiarias = (marcacoes: MarcacaoPonto[]): RegistroDiario[] => {
   const registrosPorDia = new Map<string, MarcacaoPonto[]>()
   
@@ -73,7 +95,10 @@ export const processarMarcacoesDiarias = (marcacoes: MarcacaoPonto[]): RegistroD
   const registros: RegistroDiario[] = []
   
   registrosPorDia.forEach((marcacoesDia, key) => {
-    const ordenadas = marcacoesDia.sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime())
+    // Remove duplicatas por minuto
+    const marcacoesSemDuplicatas = removerDuplicatasPorMinuto(marcacoesDia)
+    
+    const ordenadas = marcacoesSemDuplicatas.sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime())
     const datas = ordenadas.map(m => new Date(m.data_hora))
     
     const colaborador = toTitleCase(ordenadas[0].nome_colaborador)
