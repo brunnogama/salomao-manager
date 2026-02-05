@@ -162,7 +162,10 @@ export function GestaoAeronave({
       .from('financeiro_aeronave')
       .select('*')
       .order('data', { ascending: false })
-    if (result) setData(result)
+    if (result) {
+      console.log('Dados buscados do banco:', result.length, 'registros');
+      setData(result);
+    }
     setLoading(false)
   }
 
@@ -407,6 +410,8 @@ export function GestaoAeronave({
     if (!file) return
     setIsImporting(true)
     
+    console.log('Iniciando importação de arquivo:', file.name);
+
     const reader = new FileReader()
     reader.onload = async (evt) => {
       try {
@@ -414,19 +419,19 @@ export function GestaoAeronave({
         const wb = XLSX.read(bstr, { type: 'binary', cellDates: false })
         const ws = wb.Sheets[wb.SheetNames[0]]
         const rawData = XLSX.utils.sheet_to_json(ws)
+        
+        console.log('Linhas brutas lidas do Excel:', rawData.length);
+        console.log('Exemplo da primeira linha bruta:', rawData[0]);
 
         const formatExcelDate = (val: any) => {
           if (!val) return null
-          // Se for string no formato ISO AAAA-MM-DD
           if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) {
             return val.split(' ')[0]
           }
-          // Se for string no formato brasileiro DD/MM/AAAA
           if (typeof val === 'string' && val.includes('/')) {
             const [d, m, a] = val.split('/')
             return `${a}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
           }
-          // Se for número serial do Excel
           if (typeof val === 'number') {
             const date = new Date(Math.round((val - 25569) * 86400 * 1000))
             return date.toISOString().split('T')[0]
@@ -470,17 +475,20 @@ export function GestaoAeronave({
           }
         })
 
-        const { error } = await supabase.from('financeiro_aeronave').insert(mapped)
+        console.log('Dados mapeados para o Supabase (primeiro item):', mapped[0]);
+
+        const { data: insertData, error } = await supabase.from('financeiro_aeronave').insert(mapped).select()
         
         if (error) {
-          console.error('Erro detalhado:', error)
+          console.error('Erro detalhado do Supabase:', error)
           alert(`Erro na importação: ${error.message}`)
         } else {
+          console.log('Inserção concluída com sucesso. Registros inseridos:', insertData?.length);
           alert(`${mapped.length} registros importados com sucesso!`)
           await fetchDados()
         }
       } catch (err) { 
-        console.error(err) 
+        console.error('Erro de processamento:', err) 
         alert('Erro ao processar o arquivo Excel.')
       } finally { 
         setIsImporting(false) 
