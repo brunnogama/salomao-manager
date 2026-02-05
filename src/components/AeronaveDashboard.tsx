@@ -18,7 +18,7 @@ interface AeronaveDashboardProps {
 }
 
 export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardProps) {
-  // Alteração 1: Padrão "all" para todos os anos
+  // Alteração: Padrão "all" para todos os anos
   const [yearFilter, setYearFilter] = useState<string>('all')
 
   // --- Cores do Sistema ---
