@@ -18,12 +18,13 @@ import {
   Loader2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { supabase } from '../../../lib/supabase'
+// CORREÇÃO AQUI: De ../../../lib/supabase para ../lib/supabase
+import { supabase } from '../lib/supabase'
 
 // Tipos
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
 
-// Componentes (Serão criados nos próximos passos)
+// Componentes
 import { AeronaveTable } from '../components/AeronaveTable'
 import { AeronaveDashboard } from '../components/AeronaveDashboard'
 import { AeronaveFormModal } from '../components/AeronaveFormModal'
@@ -41,7 +42,7 @@ export function GestaoAeronave({
   onModuleHome, 
   onLogout 
 }: GestaoAeronaveProps) {
-  // --- Estados de Controle ---
+  // ... (Mantenha o restante do código exatamente como estava)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dados')
   const [filterOrigem, setFilterOrigem] = useState<'todos' | 'missao' | 'fixa'>('todos')
   
@@ -70,7 +71,7 @@ export function GestaoAeronave({
         .select('*')
         .order('created_at', { ascending: false })
 
-      // Aplicar filtro de data no fetch se necessário, ou filtrar no front (preferível no front para datasets médios)
+      // Aplicar filtro de data no fetch se necessário
       const { data: result, error } = await query
       
       if (error) throw error
@@ -95,7 +96,7 @@ export function GestaoAeronave({
       // 2. Filtro de Texto (Busca)
       const searchString = searchTerm.toLowerCase()
       const matchSearch = 
-        (item.missao_id?.toString() || '').includes(searchString) ||
+        (item.id_missao?.toString() || '').includes(searchString) ||
         (item.nome_missao || '').toLowerCase().includes(searchString) ||
         (item.fornecedor || '').toLowerCase().includes(searchString) ||
         (item.descricao || '').toLowerCase().includes(searchString) ||
@@ -103,7 +104,7 @@ export function GestaoAeronave({
 
       if (searchTerm && !matchSearch) return false
 
-      // 3. Filtro de Data (Considerando Data da Missão ou Vencimento como referência)
+      // 3. Filtro de Data
       const dateRef = item.data_missao || item.vencimento
       if (startDate && dateRef && dateRef < startDate) return false
       if (endDate && dateRef && dateRef > endDate) return false
@@ -148,10 +149,8 @@ export function GestaoAeronave({
     XLSX.writeFile(wb, `Aeronave_Export_${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
-  // Placeholder para importação (lógica deve ser refinada baseada no template)
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Implementar lógica de leitura e insert na tabela 'aeronave_lancamentos'
-    // Similar ao código anterior, mas mapeando para a nova estrutura única.
+    // Lógica futura de importação
     alert("Funcionalidade de importação deve ser ajustada para o novo layout de tabela.")
   }
 

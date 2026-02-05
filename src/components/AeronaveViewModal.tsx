@@ -1,13 +1,16 @@
 import { X, Edit3, Trash2, Calendar, CreditCard, FileText } from 'lucide-react'
-import { supabase } from '../../../lib/supabase'
+// CORREÇÃO AQUI: De ../../../lib/supabase para ../lib/supabase
+import { supabase } from '../lib/supabase'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
+
+// ... (Resto do componente inalterado)
 
 interface AeronaveViewModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: AeronaveLancamento | null;
   onEdit: (item: AeronaveLancamento) => void;
-  onDelete: () => void; // Callback para atualizar a lista após deletar
+  onDelete: () => void;
 }
 
 export function AeronaveViewModal({ isOpen, onClose, item, onEdit, onDelete }: AeronaveViewModalProps) {
@@ -15,7 +18,6 @@ export function AeronaveViewModal({ isOpen, onClose, item, onEdit, onDelete }: A
 
   const isMissao = item.origem === 'missao'
 
-  // --- Helpers ---
   const formatMoney = (val: number | undefined | null) => 
     val ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) : 'R$ 0,00'
 
@@ -38,7 +40,6 @@ export function AeronaveViewModal({ isOpen, onClose, item, onEdit, onDelete }: A
     }
   }
 
-  // Componente interno para exibir campo-valor
   const InfoRow = ({ label, value, highlight = false }: { label: string, value: string | number | undefined | null, highlight?: boolean }) => (
     <div className="flex flex-col gap-1">
       <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{label}</span>
@@ -52,7 +53,6 @@ export function AeronaveViewModal({ isOpen, onClose, item, onEdit, onDelete }: A
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
         
-        {/* Header */}
         <div className={`px-6 py-5 border-b border-gray-100 flex items-center justify-between ${isMissao ? 'bg-blue-50/50' : 'bg-emerald-50/50'}`}>
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -70,10 +70,8 @@ export function AeronaveViewModal({ isOpen, onClose, item, onEdit, onDelete }: A
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
           
-          {/* Bloco 1: Detalhes Gerais */}
           <section>
             <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
               <FileText className="h-4 w-4 text-gray-400" />
@@ -94,7 +92,6 @@ export function AeronaveViewModal({ isOpen, onClose, item, onEdit, onDelete }: A
             </div>
           </section>
 
-          {/* Bloco 2: Financeiro */}
           <section className="bg-gray-50 p-4 rounded-xl border border-gray-100">
             <div className="flex items-center gap-2 mb-3">
               <CreditCard className="h-4 w-4 text-gray-400" />
@@ -119,7 +116,6 @@ export function AeronaveViewModal({ isOpen, onClose, item, onEdit, onDelete }: A
             </div>
           </section>
 
-          {/* Bloco 3: Fiscal e Obs */}
           <section>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -136,7 +132,6 @@ export function AeronaveViewModal({ isOpen, onClose, item, onEdit, onDelete }: A
 
         </div>
 
-        {/* Footer */}
         <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
           <button 
             onClick={handleDelete}
