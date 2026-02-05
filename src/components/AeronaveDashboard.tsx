@@ -18,7 +18,8 @@ interface AeronaveDashboardProps {
 }
 
 export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardProps) {
-  const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString())
+  // Alteração 1: Padrão "all" para todos os anos
+  const [yearFilter, setYearFilter] = useState<string>('all')
 
   // --- Cores do Sistema ---
   const COLORS = {
@@ -43,10 +44,12 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
   const availableYears = useMemo(() => {
     const years = new Set(data.map(d => (d.data_pagamento || d.vencimento || '').split('-')[0]).filter(Boolean))
     const sorted = Array.from(years).sort().reverse()
+    // Se não tiver anos, retorna o atual, senão retorna a lista ordenada
     return sorted.length > 0 ? sorted : [new Date().getFullYear().toString()]
   }, [data])
 
   const dashboardData = useMemo(() => {
+    if (yearFilter === 'all') return data
     return data.filter(item => {
       const dateStr = item.data_pagamento || item.vencimento || item.created_at || ''
       return dateStr.startsWith(yearFilter)
@@ -64,15 +67,14 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
       // Ajuste timezone
       const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000)
       const key = `${adjustedDate.getFullYear()}-${String(adjustedDate.getMonth() + 1).padStart(2, '0')}`
-      const monthLabel = adjustedDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
-      const monthIndex = adjustedDate.getMonth()
-
+      // Exibe mês/ano se for "Todos", senão só mês
+      const monthLabel = adjustedDate.toLocaleDateString('pt-BR', { month: 'short', year: yearFilter === 'all' ? '2-digit' : undefined }).replace('.', '')
+      
       if (!acc[key]) {
         acc[key] = { 
           name: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1), 
           fullDate: key, 
-          value: 0,
-          originalIndex: monthIndex // Para ordenação
+          value: 0
         }
       }
       acc[key].value += (item.valor_pago || 0)
@@ -85,7 +87,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
       if (a.fullDate > b.fullDate) return 1
       return 0
     })
-  }, [dashboardData])
+  }, [dashboardData, yearFilter])
 
   // --- 2. Dados de Fornecedores (Todos, Ordenados) ---
   const suppliersList = useMemo(() => {
@@ -95,7 +97,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
         acc[name] = { name, despesas: new Set(), total: 0 }
       }
       acc[name].total += (item.valor_pago || 0)
-      if (item.despesa) acc[name].despesas.add(item.despesa) // Coleta tipos de despesa
+      if (item.despesa) acc[name].despesas.add(item.despesa)
       return acc
     }, {} as Record<string, any>)
 
@@ -113,7 +115,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
     const groups = missions.reduce((acc, item) => {
       const id = item.id_missao || 'S/ID'
       const nome = item.nome_missao || `Missão ${id}`
-      const key = `${id}-${nome}` // Chave única composta
+      const key = `${id}-${nome}`
 
       if (!acc[key]) {
         acc[key] = { 
@@ -124,7 +126,6 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
         }
       }
       acc[key].total += (item.valor_pago || 0)
-      // Atualiza data se encontrar (prioriza a primeira encontrada)
       if (!acc[key].data && item.data_missao) acc[key].data = item.data_missao
       return acc
     }, {} as Record<string, any>)
@@ -154,7 +155,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-4 border border-gray-200 shadow-xl rounded-xl min-w-[150px]">
+        <div className="bg-white p-4 border border-gray-200 shadow-xl rounded-xl min-w-[150px] z-50">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
           <p className="text-lg font-black text-[#1e3a8a]">{formatCurrency(payload[0].value)}</p>
         </div>
@@ -166,126 +167,132 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-full">
       
-      {/* Header do Dashboard */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-indigo-100 rounded-lg text-indigo-700">
-            <TrendingUp className="h-5 w-5" />
-          </div>
-          <h3 className="text-lg font-black text-[#112240] uppercase tracking-tight">Análise Financeira</h3>
-        </div>
+      {/* LINHA SUPERIOR: GRÁFICO E RANKING LADO A LADO */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[450px]">
         
-        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
-          <Filter className="h-4 w-4 text-gray-400" />
-          <select 
-            value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
-            className="bg-transparent text-sm font-bold text-gray-700 outline-none cursor-pointer"
-          >
-            {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {/* 1. GRÁFICO DE LINHA (Dinâmico) */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Evolução de Gastos (Mensal)</h4>
-        <div className="h-[350px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} 
-                dy={15}
-                padding={{ left: 20, right: 20 }}
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: COLORS.text, fontSize: 11 }}
-                tickFormatter={(val) => `R$${val/1000}k`} 
-              />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
-              <Line 
-                type="monotone" 
-                dataKey="value" 
-                stroke={COLORS.line} 
-                strokeWidth={3}
-                dot={{ r: 5, fill: COLORS.line, strokeWidth: 2, stroke: '#fff' }}
-                activeDot={{ r: 8, fill: COLORS.activeDot, strokeWidth: 0 }}
-                animationDuration={1500}
-              >
-                <LabelList 
-                  dataKey="value" 
-                  position="top" 
-                  formatter={(val: number) => formatCurrency(val)} 
-                  style={{ fill: '#1e3a8a', fontSize: '10px', fontWeight: 800 }} 
-                  offset={15}
-                />
-              </Line>
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* 2. TABELA: TODOS OS FORNECEDORES */}
-      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
-        <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
-          <Users className="h-4 w-4 text-gray-400" />
-          <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Ranking de Fornecedores</h4>
-        </div>
-        
-        {/* Cabeçalho */}
-        <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 rounded-lg mb-2">
-          <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
-          <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Despesa</div>
-          <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total Pago</div>
-        </div>
-
-        {/* Lista com Scroll */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
-          {suppliersList.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-12 gap-4 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50/30 transition-colors items-center">
-              <div className="col-span-5 flex items-center gap-3 overflow-hidden">
-                <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-gray-100 text-[9px] font-bold text-gray-500 rounded">
-                  {idx + 1}
-                </span>
-                <span className="text-xs font-bold text-gray-700 truncate" title={item.name}>{item.name}</span>
+        {/* 1. GRÁFICO DE LINHA (Com Header Integrado) */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full relative">
+          
+          {/* Header Integrado no Card */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-indigo-100 rounded-lg text-indigo-700">
+                <TrendingUp className="h-5 w-5" />
               </div>
-              <div className="col-span-4 text-xs font-medium text-gray-500 truncate" title={item.despesaLabel}>
-                {item.despesaLabel}
-              </div>
-              <div className="col-span-3 text-xs font-black text-[#1e3a8a] text-right">
-                {formatCurrency(item.total)}
-              </div>
+              <h4 className="text-sm font-black text-[#112240] uppercase tracking-widest">Análise Financeira</h4>
             </div>
-          ))}
-          {suppliersList.length === 0 && (
-            <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhum dado disponível</div>
-          )}
+            
+            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-100 transition-colors">
+              <Filter className="h-3.5 w-3.5 text-gray-400" />
+              <select 
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
+                className="bg-transparent text-xs font-bold text-gray-700 outline-none cursor-pointer"
+              >
+                <option value="all">Todos os Anos</option>
+                {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex-1 w-full min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 700 }} 
+                  dy={15}
+                  interval={0} // Força mostrar todos os ticks se couber
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: COLORS.text, fontSize: 10 }}
+                  tickFormatter={(val) => `R$${val/1000}k`} 
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                <Line 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke={COLORS.line} 
+                  strokeWidth={3}
+                  dot={{ r: 5, fill: COLORS.line, strokeWidth: 2, stroke: '#fff' }}
+                  activeDot={{ r: 8, fill: COLORS.activeDot, strokeWidth: 0 }}
+                  animationDuration={1500}
+                >
+                  <LabelList 
+                    dataKey="value" 
+                    position="top" 
+                    formatter={(val: number) => formatCurrency(val)} 
+                    style={{ fill: '#1e3a8a', fontSize: '10px', fontWeight: 800 }} 
+                    offset={15}
+                  />
+                </Line>
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
+
+        {/* 2. TABELA: RANKING DE FORNECEDORES */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
+            <Users className="h-4 w-4 text-gray-400" />
+            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Ranking de Fornecedores</h4>
+          </div>
+          
+          {/* Cabeçalho */}
+          <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
+            <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
+            <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Despesa</div>
+            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total Pago</div>
+          </div>
+
+          {/* Lista com Scroll */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
+            {suppliersList.map((item, idx) => (
+              <div key={idx} className="grid grid-cols-12 gap-4 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50/30 transition-colors items-center">
+                <div className="col-span-5 flex items-center gap-3 overflow-hidden">
+                  <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-gray-100 text-[9px] font-bold text-gray-500 rounded">
+                    {idx + 1}
+                  </span>
+                  <span className="text-xs font-bold text-gray-700 truncate" title={item.name}>{item.name}</span>
+                </div>
+                <div className="col-span-4 text-xs font-medium text-gray-500 truncate" title={item.despesaLabel}>
+                  {item.despesaLabel}
+                </div>
+                <div className="col-span-3 text-xs font-black text-[#1e3a8a] text-right">
+                  {formatCurrency(item.total)}
+                </div>
+              </div>
+            ))}
+            {suppliersList.length === 0 && (
+              <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhum dado disponível</div>
+            )}
+          </div>
+        </div>
+
       </div>
 
       {/* 3. ROW DUPLA: MISSÕES E DESPESAS FIXAS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[400px]">
         
         {/* CARD ESQUERDA: RELAÇÃO DAS MISSÕES */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
-          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <Plane className="h-4 w-4 text-blue-600" />
             <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Relação de Missões</h4>
           </div>
 
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
             <div className="col-span-6 text-[10px] font-black uppercase text-gray-500">Missão</div>
             <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-center">Data</div>
             <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
             {missionsList.map((missao, idx) => (
               <button 
                 key={idx}
@@ -311,19 +318,19 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
         </div>
 
         {/* CARD DIREITA: DESPESA FIXA (Ranking) */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
-          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <DollarSign className="h-4 w-4 text-emerald-600" />
             <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</h4>
           </div>
 
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
             <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
             <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Tipo</div>
             <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
             {fixedExpensesList.map((item, idx) => (
               <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-emerald-50/30 transition-colors items-center">
                 <div className="col-span-5 text-xs font-bold text-gray-700 truncate" title={item.fornecedor}>

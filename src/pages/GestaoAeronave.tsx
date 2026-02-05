@@ -42,7 +42,8 @@ export function GestaoAeronave({
   onLogout 
 }: GestaoAeronaveProps) {
   // --- Estados de Controle ---
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dados')
+  // ALTERAÇÃO: Padrão alterado para 'dashboard'
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dashboard')
   const [filterOrigem, setFilterOrigem] = useState<'todos' | 'missao' | 'fixa'>('todos')
   
   // --- Estados de Dados e Filtros ---
@@ -172,6 +173,12 @@ export function GestaoAeronave({
     setIsViewModalOpen(true)
   }
 
+  // NOVO: Navegação via Dashboard
+  const handleMissionClick = (missionName: string) => {
+    setSearchTerm(missionName)
+    setActiveTab('dados')
+  }
+
   const handleExportExcel = () => {
     const ws = XLSX.utils.json_to_sheet(filteredData)
     const wb = XLSX.utils.book_new()
@@ -252,7 +259,7 @@ export function GestaoAeronave({
             aeronave: findVal(row, ['aeronave'])?.toString() || 'Aeronave Principal',
             data_missao: parseDate(findVal(row, ['data missao', 'data_missao'])),
             id_missao: idMissao,
-            nome_missao: findVal(row, ['missao', 'missão', 'nome_missao'])?.toString() || null,
+            nome_missao: findVal(row, ['missao', 'missão', 'nome_missao', 'misao'])?.toString() || null,
             despesa: findVal(row, ['despesa'])?.toString() || (isMissao ? 'Custo Missões' : 'Despesa Fixa'),
             tipo: findVal(row, ['tipo'])?.toString() || 'Outros',
             descricao: findVal(row, ['descricao', 'descrição'])?.toString() || '',
@@ -388,7 +395,10 @@ export function GestaoAeronave({
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex gap-2 bg-gray-100/50 p-1 rounded-xl w-fit">
             <button
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => {
+                setActiveTab('dashboard')
+                setSearchTerm('') // NOVO: Limpa filtro ao voltar para Dashboard
+              }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                 activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
               }`}
@@ -455,49 +465,56 @@ export function GestaoAeronave({
           </div>
         </div>
 
-        <div className="h-px bg-gray-100 w-full my-2"></div>
+        {/* ALTERAÇÃO: Renderização Condicional da Barra de Ações (Apenas na aba 'dados') */}
+        {activeTab === 'dados' && (
+          <>
+            <div className="h-px bg-gray-100 w-full my-2"></div>
 
-        {/* Linha Inferior: Busca e Ações */}
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por ID, Missão, Fornecedor ou Descrição..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+            <div className="flex flex-col md:flex-row justify-between gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por ID, Missão, Fornecedor ou Descrição..."
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
 
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={handleExportExcel}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-green-400 transition-all text-xs font-bold uppercase tracking-wide"
-            >
-              <Download className="h-4 w-4" /> Exportar
-            </button>
-            
-            <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-all text-xs font-bold uppercase tracking-wide cursor-pointer">
-              {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
-              Importar
-              <input type="file" accept=".xlsx" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
-            </label>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={handleExportExcel}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-green-400 transition-all text-xs font-bold uppercase tracking-wide"
+                >
+                  <Download className="h-4 w-4" /> Exportar
+                </button>
+                
+                <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-all text-xs font-bold uppercase tracking-wide cursor-pointer">
+                  {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+                  Importar
+                  <input type="file" accept=".xlsx" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
+                </label>
 
-            <button
-              onClick={() => setIsTipoModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest"
-            >
-              <Plus className="h-4 w-4" /> Novo Lançamento
-            </button>
-          </div>
-        </div>
+                <button
+                  onClick={() => setIsTipoModalOpen(true)}
+                  className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest"
+                >
+                  <Plus className="h-4 w-4" /> Novo Lançamento
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* 4. Área de Conteúdo */}
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px]">
         {activeTab === 'dashboard' ? (
-          <AeronaveDashboard data={filteredData} />
+          <AeronaveDashboard 
+            data={filteredData} 
+            onMissionClick={handleMissionClick} // NOVO: Prop passada para o Dashboard
+          />
         ) : (
           <AeronaveTable 
             data={filteredData} 
