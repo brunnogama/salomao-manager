@@ -66,6 +66,8 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Fornecedor</th>
             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-center">Pagamento</th>
             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-right">Valor Pago</th>
+            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Tipo Documento</th>
+            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Número</th>
           </tr>
         </thead>
         <tbody>
@@ -128,12 +130,22 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
                 </td>
 
                 {/* Valor Pago */}
-                <td className="px-4 py-4 text-sm font-black text-right last:rounded-r-xl">
+                <td className="px-4 py-4 text-sm font-black text-right">
                   {item.valor_pago && item.valor_pago > 0 ? (
                      <span className="text-emerald-600">{formatCurrency(item.valor_pago)}</span>
                   ) : (
                      <span className="text-gray-300">-</span>
                   )}
+                </td>
+
+                {/* Tipo Documento */}
+                <td className="px-4 py-4 text-sm font-medium text-gray-500">
+                  {item.doc_fiscal || '-'}
+                </td>
+
+                {/* Número */}
+                <td className="px-4 py-4 text-sm font-bold text-gray-700 last:rounded-r-xl">
+                  {item.numero_doc || '-'}
                 </td>
               </tr>
             )
