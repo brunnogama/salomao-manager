@@ -122,6 +122,40 @@ export function GestaoAeronave({
     }, { totalGeral: 0, custoMissoes: 0, despesasFixas: 0 })
   }, [filteredData])
 
+  // --- Totais do Ano Corrente (Para Cards Dinâmicos) ---
+  const currentYear = new Date().getFullYear()
+  const yearTotals = useMemo(() => {
+    return data.reduce((acc, curr) => {
+      const dateStr = curr.data_pagamento || curr.vencimento
+      if (dateStr) {
+        // Verifica se a data é do ano atual (suporta YYYY-MM-DD)
+        const year = dateStr.startsWith(String(currentYear)) 
+          ? currentYear 
+          : new Date(dateStr).getFullYear()
+          
+        if (year === currentYear) {
+          const val = Number(curr.valor_pago) || 0
+          if (curr.origem === 'missao') acc.missao += val
+          if (curr.origem === 'fixa') acc.fixa += val
+        }
+      }
+      return acc
+    }, { missao: 0, fixa: 0 })
+  }, [data, currentYear])
+
+  // --- Contagens Dinâmicas ---
+  const countDisplay = useMemo(() => {
+    if (filterOrigem === 'missao') {
+      // Conta missões únicas baseadas no ID, ou linhas se não houver ID
+      const uniqueIds = new Set(filteredData.filter(i => i.id_missao).map(i => i.id_missao))
+      return uniqueIds.size > 0 ? uniqueIds.size : filteredData.length
+    }
+    if (filterOrigem === 'fixa') {
+      return filteredData.length
+    }
+    return 0
+  }, [filteredData, filterOrigem])
+
   // --- Handlers ---
   const handleFormatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
@@ -163,40 +197,30 @@ export function GestaoAeronave({
         const parseDate = (val: any) => {
           if (!val) return null
           
-          // Ignora textos inválidos explicitamente
           if (typeof val === 'string') {
             const clean = val.trim().toUpperCase()
             if (['N/A', '-', 'NAN', 'UNDEFINED', ''].includes(clean)) return null
           }
 
-          // Se for número serial do Excel
           if (typeof val === 'number') {
             const date = new Date(Math.round((val - 25569) * 86400 * 1000))
             return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0]
           }
           
-          // Se for string DD/MM/AAAA
           if (typeof val === 'string' && val.includes('/')) {
             const parts = val.split('/')
-            // Garante que tem dia, mês e ano (evita erro "N/A")
             if (parts.length !== 3) return null 
-            
             const [d, m, a] = parts
-            
-            // Valida se são números
             if (isNaN(Number(d)) || isNaN(Number(m)) || isNaN(Number(a))) return null
-
-            // Formata YYYY-MM-DD
             const anoFull = a.length === 2 ? `20${a}` : a
             return `${anoFull}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
           }
 
-           // Se for string YYYY-MM-DD (ISO)
            if (typeof val === 'string' && val.includes('-') && !isNaN(Date.parse(val))) {
              return val
            }
           
-          return null // Retorna null para qualquer outro caso estranho
+          return null
         }
 
         const parseMoney = (val: any) => {
@@ -206,8 +230,8 @@ export function GestaoAeronave({
           
           const clean = String(val)
             .replace('R$', '')
-            .replace(/\./g, '') // remove ponto de milhar
-            .replace(',', '.') // troca vírgula decimal
+            .replace(/\./g, '')
+            .replace(',', '.')
             .trim()
           return parseFloat(clean) || 0
         }
@@ -218,38 +242,27 @@ export function GestaoAeronave({
         }
 
         const mappedData = rawData.map((row: any) => {
-          // Tenta encontrar ID da missão para definir a origem
           const idMissaoRaw = findVal(row, ['id', 'id missao', 'id_missao'])
-          // Considera missão apenas se tiver um ID numérico válido
           const idMissao = idMissaoRaw && !isNaN(parseInt(idMissaoRaw)) ? parseInt(idMissaoRaw) : null
           const isMissao = !!idMissao
 
           return {
             origem: isMissao ? 'missao' : 'fixa',
-            
-            // Dados Comuns e de Missão
             tripulacao: findVal(row, ['tripulação', 'tripulacao'])?.toString() || null,
             aeronave: findVal(row, ['aeronave'])?.toString() || 'Aeronave Principal',
             data_missao: parseDate(findVal(row, ['data missao', 'data_missao'])),
             id_missao: idMissao,
             nome_missao: findVal(row, ['missao', 'missão', 'nome_missao'])?.toString() || null,
-            
-            // Dados Financeiros
             despesa: findVal(row, ['despesa'])?.toString() || (isMissao ? 'Custo Missões' : 'Despesa Fixa'),
             tipo: findVal(row, ['tipo'])?.toString() || 'Outros',
             descricao: findVal(row, ['descricao', 'descrição'])?.toString() || '',
             fornecedor: findVal(row, ['fornecedor'])?.toString() || '',
-            
             faturado_cnpj: parseMoney(findVal(row, ['faturado cnpj salomão', 'faturado cnpj'])),
             vencimento: parseDate(findVal(row, ['vencimento'])),
             valor_previsto: parseMoney(findVal(row, ['valor previsto', 'previsto'])),
-            
             data_pagamento: parseDate(findVal(row, ['pagamento', 'data pagamento'])),
             valor_pago: parseMoney(findVal(row, ['valor pago', 'pago'])),
-            
             observacao: findVal(row, ['observação', 'observacao', 'obs'])?.toString() || '',
-            
-            // Fiscal
             doc_fiscal: findVal(row, ['doc fiscal', 'doc_fiscal'])?.toString() || null,
             numero_doc: findVal(row, ['numero', 'número', 'numero_doc'])?.toString() || null,
             valor_total_doc: parseMoney(findVal(row, ['valor total doc', 'total doc']))
@@ -315,36 +328,52 @@ export function GestaoAeronave({
 
       {/* 2. Cards de Totais */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Total Geral */}
+        {/* CARD 1: Total Geral / Quantidade */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Geral</p>
-            <p className="text-2xl font-black text-indigo-900 mt-1">{handleFormatCurrency(totals.totalGeral)}</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              {filterOrigem === 'missao' ? 'Quantidade de Missões' :
+               filterOrigem === 'fixa' ? 'Quantidade de lançamentos' : 
+               'Total Geral'}
+            </p>
+            <p className="text-2xl font-black text-indigo-900 mt-1">
+              {filterOrigem === 'missao' ? countDisplay :
+               filterOrigem === 'fixa' ? countDisplay :
+               handleFormatCurrency(totals.totalGeral)}
+            </p>
           </div>
           <div className="p-3 bg-indigo-50 rounded-xl">
             <Wallet className="h-6 w-6 text-indigo-600" />
           </div>
         </div>
 
-        {/* Custo Missões */}
+        {/* CARD 2: Custo Missões / Total Anual Fixo */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Custo Missões</p>
-            <p className="text-2xl font-black text-blue-900 mt-1">{handleFormatCurrency(totals.custoMissoes)}</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              {filterOrigem === 'fixa' ? `Total gasto no ano (${currentYear})` : 'Custo Missões'}
+            </p>
+            <p className="text-2xl font-black text-blue-900 mt-1">
+              {filterOrigem === 'fixa' ? handleFormatCurrency(yearTotals.missao) : handleFormatCurrency(totals.custoMissoes)}
+            </p>
           </div>
           <div className="p-3 bg-blue-50 rounded-xl">
             <Receipt className="h-6 w-6 text-blue-600" />
           </div>
         </div>
 
-        {/* Despesas Fixas */}
+        {/* CARD 3: Despesas Fixas / Total Anual Missão */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</p>
-            <p className="text-2xl font-black text-emerald-900 mt-1">{handleFormatCurrency(totals.despesasFixas)}</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              {filterOrigem === 'missao' ? `Total gasto no ano (${currentYear})` : 'Despesas Fixas'}
+            </p>
+            <p className="text-2xl font-black text-emerald-900 mt-1">
+              {filterOrigem === 'missao' ? handleFormatCurrency(yearTotals.fixa) : handleFormatCurrency(totals.despesasFixas)}
+            </p>
           </div>
           <div className="p-3 bg-emerald-50 rounded-xl">
             <DollarSign className="h-6 w-6 text-emerald-600" />
