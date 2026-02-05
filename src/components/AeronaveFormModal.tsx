@@ -197,7 +197,16 @@ export function AeronaveFormModal({
 
   // --- Helpers ---
   const handleChange = (field: keyof AeronaveLancamento, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // Regra de Negócio: Se alterar o valor pago, reflete no valor total do doc automaticamente
+      if (field === 'valor_pago' && (!prev.valor_total_doc || prev.valor_total_doc === 0)) {
+        newData.valor_total_doc = value;
+      }
+      
+      return newData;
+    });
   }
 
   const handleOpenConfig = (titulo: string, tabela: string) => {
@@ -253,7 +262,6 @@ export function AeronaveFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      {/* ALTERADO: Largura do modal aumentada para max-w-7xl */}
       <div className="bg-white w-full max-w-7xl max-h-[95vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
         
         {/* Header */}
@@ -292,7 +300,6 @@ export function AeronaveFormModal({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                {/* Aeronave (Com Config) - FULL WIDTH */}
                 <div className="col-span-2 flex flex-col gap-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Aeronave</label>
                   <div className="flex gap-2 w-full">
@@ -312,7 +319,6 @@ export function AeronaveFormModal({
                   </div>
                 </div>
 
-                {/* Campos Condicionais de Missão */}
                 {origem === 'missao' && (
                   <>
                     <div className="col-span-2 flex flex-col gap-1.5">
@@ -353,7 +359,6 @@ export function AeronaveFormModal({
                   </>
                 )}
 
-                {/* Tipo e Despesa */}
                 <div className="col-span-2 grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Categoria</label>
@@ -383,13 +388,11 @@ export function AeronaveFormModal({
                   </div>
                 </div>
 
-                {/* Descrição Detalhada */}
                 <div className="col-span-2 flex flex-col gap-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Descrição Detalhada</label>
                   <input type="text" className="input-base" value={formData.descricao || ''} onChange={e => handleChange('descricao', e.target.value)} />
                 </div>
 
-                {/* Fornecedor */}
                 <div className="col-span-2 flex flex-col gap-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Fornecedor</label>
                   <div className="flex gap-2 w-full">
@@ -418,8 +421,6 @@ export function AeronaveFormModal({
 
             {/* COLUNA 2: Financeiro e Fiscal */}
             <div className="space-y-8">
-              
-              {/* BLOCO FINANCEIRO */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
                   <div className="p-1.5 bg-gray-100 rounded-lg text-gray-500">
@@ -445,7 +446,6 @@ export function AeronaveFormModal({
                 </div>
               </div>
 
-              {/* BLOCO FISCAL */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
                   <div className="p-1.5 bg-gray-100 rounded-lg text-gray-500">
@@ -500,7 +500,6 @@ export function AeronaveFormModal({
 
       </div>
       
-      {/* Styles Injected */}
       <style>{`
         .input-base {
           width: 100%;
@@ -525,8 +524,7 @@ export function AeronaveFormModal({
         }
       `}</style>
 
-      {/* Modal de Configuração (Aninhado) */}
-      <GerenciadorOpcoesModal 
+      < GerenciadorOpcoesModal 
         isOpen={configModal.open}
         onClose={handleCloseConfig}
         titulo={configModal.tipo}
