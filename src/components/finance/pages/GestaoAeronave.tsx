@@ -11,7 +11,7 @@ import {
   Database,
   Loader2,
   Download,
-  Calendar,
+  Calendar, 
   XCircle,
   DollarSign,
   CheckCircle2,
@@ -158,7 +158,7 @@ export function GestaoAeronave({
 
   const fetchDados = async () => {
     setLoading(true)
-    const { data: result, error } = await supabase
+    const { data: result } = await supabase
       .from('financeiro_aeronave')
       .select('*')
       .order('data', { ascending: false })
@@ -166,7 +166,6 @@ export function GestaoAeronave({
       console.log('Dados buscados do banco:', result.length, 'registros');
       setData(result);
     }
-    if (error) console.error('Erro ao buscar dados:', error);
     setLoading(false)
   }
 
@@ -452,45 +451,45 @@ export function GestaoAeronave({
         }
 
         const mapped = rawData.map((row: any) => {
-          const cleanRow: any = {};
-          Object.keys(row).forEach(key => {
-            const cleanKey = key.trim().toLowerCase();
-            cleanRow[cleanKey] = row[key];
-          });
+          // Limpeza rigorosa para encontrar colunas independente de Case ou Espaços
+          const findVal = (names: string[]) => {
+            const key = Object.keys(row).find(k => names.includes(k.trim().toLowerCase()));
+            return key ? row[key] : null;
+          };
 
           return {
-            missao_id: cleanRow['id'] ? parseInt(cleanRow['id']) : null,
-            tripulacao: (cleanRow['tripulação'] || cleanRow['tripulacao'])?.toString() || '',
-            aeronave: cleanRow['aeronave']?.toString() || '',
-            data: formatExcelDate(cleanRow['data']),
-            localidade_destino: (cleanRow['localidade e destino'] || cleanRow['localidade_destino'])?.toString() || '',
-            despesa: cleanRow['despesa']?.toString() || '',
-            descricao: (cleanRow['descrição'] || cleanRow['descricao'])?.toString() || '',
-            fornecedor: cleanRow['fornecedor']?.toString() || '',
-            faturado_cnpj: parseCurrency(cleanRow['faturado cnpj salomão'] || cleanRow['faturado_cnpj']),
-            valor_previsto: parseCurrency(cleanRow['r$ previsto total'] || cleanRow['valor_previsto']),
-            valor_extra: parseCurrency(cleanRow['r$ extra'] || cleanRow['valor_extra']),
-            valor_pago: parseCurrency(cleanRow['r$ pago'] || cleanRow['valor_pago']),
-            data_vencimento: formatExcelDate(cleanRow['data venc.'] || cleanRow['data_vencimento']),
-            data_pagamento: formatExcelDate(cleanRow['data pgto'] || cleanRow['data_pagamento']),
-            observacao: (cleanRow['observação'] || cleanRow['observacao'])?.toString() || ''
+            missao_id: findVal(['id', 'missao_id', 'missão_id']) ? parseInt(findVal(['id', 'missao_id', 'missão_id'])) : null,
+            tripulacao: findVal(['tripulação', 'tripulacao'])?.toString() || '',
+            aeronave: findVal(['aeronave'])?.toString() || '',
+            data: formatExcelDate(findVal(['data'])),
+            localidade_destino: findVal(['localidade e destino', 'localidade_destino'])?.toString() || '',
+            despesa: findVal(['despesa'])?.toString() || '',
+            descricao: findVal(['descrição', 'descricao'])?.toString() || '',
+            fornecedor: findVal(['fornecedor'])?.toString() || '',
+            faturado_cnpj: parseCurrency(findVal(['faturado cnpj salomão', 'faturado_cnpj'])),
+            valor_previsto: parseCurrency(findVal(['r$ previsto total', 'valor_previsto', 'previsto total'])),
+            valor_extra: parseCurrency(findVal(['r$ extra', 'valor_extra', 'extra'])),
+            valor_pago: parseCurrency(findVal(['r$ pago', 'valor_pago', 'pago'])),
+            data_vencimento: formatExcelDate(findVal(['data venc.', 'data_vencimento', 'vencimento'])),
+            data_pagamento: formatExcelDate(findVal(['data pgto', 'data_pagamento', 'pagamento'])),
+            observacao: findVal(['observação', 'observacao', 'obs'])?.toString() || ''
           }
         })
 
-        console.log('Dados mapeados para o Supabase (primeiro item):', mapped[0]);
+        console.log('Mapeamento concluído. Exemplo do primeiro registro para o banco:', mapped[0]);
 
         const { data: insertData, error } = await supabase.from('financeiro_aeronave').insert(mapped).select()
         
         if (error) {
-          console.error('Erro detalhado do Supabase:', error)
+          console.error('Erro detalhado do Supabase na inserção:', error)
           alert(`Erro na importação: ${error.message}`)
         } else {
-          console.log('Inserção concluída com sucesso. Registros inseridos:', insertData?.length);
-          alert(`${mapped.length} registros importados com sucesso!`)
+          console.log('Inserção bem-sucedida. Registros gravados no banco:', insertData?.length);
+          alert(`${mapped.length} registros importados com sucesso!`);
           await fetchDados()
         }
       } catch (err) { 
-        console.error('Erro de processamento:', err) 
+        console.error('Erro crítico de processamento:', err) 
         alert('Erro ao processar o arquivo Excel.')
       } finally { 
         setIsImporting(false) 
@@ -541,20 +540,19 @@ export function GestaoAeronave({
         }
 
         const mapped = rawData.map((row: any) => {
-          const cleanRow: any = {};
-          Object.keys(row).forEach(key => {
-            const cleanKey = key.trim().toLowerCase();
-            cleanRow[cleanKey] = row[key];
-          });
+          const findVal = (names: string[]) => {
+            const key = Object.keys(row).find(k => names.includes(k.trim().toLowerCase()));
+            return key ? row[key] : null;
+          };
 
           return {
-            emissao: formatExcelDate(cleanRow['emissão'] || cleanRow['emissao']),
-            vencimento: formatExcelDate(cleanRow['vencimento']),
-            valor_bruto: parseCurrency(cleanRow['valor bruto'] || cleanRow['valor_bruto']),
-            valor_liquido_realizado: parseCurrency(cleanRow['valor líquido realizado'] || cleanRow['valor_liquido_realizado']),
-            tipo: cleanRow['tipo']?.toString() || '',
-            devedor: cleanRow['devedor']?.toString() || '',
-            descricao: (cleanRow['descrição'] || cleanRow['descricao'])?.toString() || ''
+            emissao: formatExcelDate(findVal(['emissão', 'emissao'])),
+            vencimento: formatExcelDate(findVal(['vencimento'])),
+            valor_bruto: parseCurrency(findVal(['valor bruto', 'bruto'])),
+            valor_liquido_realizado: parseCurrency(findVal(['valor líquido realizado', 'líquido realizado', 'liquido realizado'])),
+            tipo: findVal(['tipo'])?.toString() || '',
+            devedor: findVal(['devedor'])?.toString() || '',
+            descricao: findVal(['descrição', 'descricao'])?.toString() || ''
           }
         })
 
