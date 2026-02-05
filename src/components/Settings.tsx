@@ -204,13 +204,22 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     if (confirmText !== 'APAGAR') return;
     setLoading(true);
     try {
-      // Delete usando NOT com condição impossível para deletar tudo
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .not('id', 'eq', '00000000-0000-0000-0000-000000000000');
+      // CORREÇÃO AQUI: Se for o módulo Financeiro/Aeronave, deleta da tabela nova com UUID
+      if (moduleName === 'Financeiro' || table === 'financeiro_aeronave') {
+        const { error } = await supabase
+          .from('aeronave_lancamentos')
+          .delete()
+          .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all UUIDs
+        if (error) throw error;
+      } else {
+        // Lógica padrão para tabelas legadas (INT ID)
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .not('id', 'eq', 0); // Ajustado para INT se for o caso, ou mantém lógica de string se for UUID antigo
+        if (error) throw error;
+      }
       
-      if (error) throw error;
       setStatus({ type: 'success', message: `${moduleName} resetado com sucesso!` });
       await logAction('RESET', moduleName.toUpperCase(), logMsg);
     } catch (e: any) { 
