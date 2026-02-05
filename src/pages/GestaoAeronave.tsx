@@ -16,7 +16,7 @@ import {
   Receipt,
   DollarSign,
   Loader2,
-  FileText // Adicionado para o ícone da aba Faturas
+  FileText
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -43,7 +43,6 @@ export function GestaoAeronave({
   onLogout 
 }: GestaoAeronaveProps) {
   // --- Estados de Controle ---
-  // ALTERAÇÃO: Adicionado 'faturas' ao tipo do estado
   const [activeTab, setActiveTab] = useState<'dashboard' | 'faturas' | 'dados'>('dashboard')
   const [filterOrigem, setFilterOrigem] = useState<'todos' | 'missao' | 'fixa'>('todos')
   
@@ -559,9 +558,11 @@ export function GestaoAeronave({
             <table className="w-full text-left border-separate border-spacing-y-2 px-4">
               <thead>
                 <tr className="text-[#112240]">
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Doc. Fiscal</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Número</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-right">Valor Total Doc</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-24">Doc. Fiscal</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-24">Número</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-right w-32">Valor Total Doc</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-20">ID Missão</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Missão</th>
                   <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Observação</th>
                 </tr>
               </thead>
@@ -586,6 +587,12 @@ export function GestaoAeronave({
                           <span className="text-gray-300">-</span>
                         )}
                       </td>
+                      <td className="px-4 py-4 text-sm font-bold text-gray-500">
+                        {item.id_missao ? `#${item.id_missao}` : '-'}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-700 max-w-[200px] truncate" title={item.nome_missao || ''}>
+                        {item.nome_missao || '-'}
+                      </td>
                       <td className="px-4 py-4 text-sm text-gray-500 last:rounded-r-xl max-w-[300px] truncate" title={item.observacao || ''}>
                         {item.observacao || '-'}
                       </td>
@@ -593,7 +600,7 @@ export function GestaoAeronave({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-4 py-12 text-center">
+                    <td colSpan={6} className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center justify-center text-gray-300 gap-2">
                         <FileText className="h-8 w-8" />
                         <p className="text-xs font-bold uppercase tracking-widest">Nenhuma fatura encontrada</p>
