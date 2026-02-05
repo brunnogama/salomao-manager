@@ -18,7 +18,6 @@ import {
   Loader2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-// CORREÇÃO AQUI: De ../../../lib/supabase para ../lib/supabase
 import { supabase } from '../lib/supabase'
 
 // Tipos
@@ -42,7 +41,7 @@ export function GestaoAeronave({
   onModuleHome, 
   onLogout 
 }: GestaoAeronaveProps) {
-  // ... (Mantenha o restante do código exatamente como estava)
+  // --- Estados de Controle ---
   const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dados')
   const [filterOrigem, setFilterOrigem] = useState<'todos' | 'missao' | 'fixa'>('todos')
   
@@ -66,13 +65,10 @@ export function GestaoAeronave({
   const fetchDados = async () => {
     try {
       setLoading(true)
-      let query = supabase
+      const { data: result, error } = await supabase
         .from('aeronave_lancamentos')
         .select('*')
         .order('created_at', { ascending: false })
-
-      // Aplicar filtro de data no fetch se necessário
-      const { data: result, error } = await query
       
       if (error) throw error
       if (result) setData(result)
@@ -149,9 +145,108 @@ export function GestaoAeronave({
     XLSX.writeFile(wb, `Aeronave_Export_${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
+  // --- Lógica de Importação (Atualizada) ---
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Lógica futura de importação
-    alert("Funcionalidade de importação deve ser ajustada para o novo layout de tabela.")
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsImporting(true)
+
+    const reader = new FileReader()
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result
+        const wb = XLSX.read(bstr, { type: 'binary' })
+        const ws = wb.Sheets[wb.SheetNames[0]]
+        const rawData = XLSX.utils.sheet_to_json(ws)
+
+        // Funções auxiliares de parse
+        const parseDate = (val: any) => {
+          if (!val) return null
+          // Se for número serial do Excel
+          if (typeof val === 'number') {
+            const date = new Date(Math.round((val - 25569) * 86400 * 1000))
+            return date.toISOString().split('T')[0]
+          }
+          // Se for string DD/MM/AAAA
+          if (typeof val === 'string' && val.includes('/')) {
+            const [d, m, a] = val.split('/')
+            return `${a}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+          }
+          return val // Retorna como está se já for ISO ou desconhecido
+        }
+
+        const parseMoney = (val: any) => {
+          if (typeof val === 'number') return val
+          if (!val) return 0
+          const clean = String(val)
+            .replace('R$', '')
+            .replace(/\./g, '') // remove ponto de milhar
+            .replace(',', '.') // troca vírgula decimal
+            .trim()
+          return parseFloat(clean) || 0
+        }
+
+        const findVal = (row: any, keys: string[]) => {
+          const key = Object.keys(row).find(k => keys.includes(k.trim().toLowerCase()))
+          return key ? row[key] : null
+        }
+
+        const mappedData = rawData.map((row: any) => {
+          // Tenta encontrar ID da missão para definir a origem
+          const idMissao = findVal(row, ['id', 'id missao', 'id_missao'])
+          const isMissao = !!idMissao // Se tem ID, é missão
+
+          return {
+            origem: isMissao ? 'missao' : 'fixa',
+            
+            // Dados Comuns e de Missão
+            tripulacao: findVal(row, ['tripulação', 'tripulacao'])?.toString() || null,
+            aeronave: findVal(row, ['aeronave'])?.toString() || 'Aeronave Principal',
+            data_missao: parseDate(findVal(row, ['data missao', 'data_missao'])),
+            id_missao: idMissao ? parseInt(idMissao) : null,
+            nome_missao: findVal(row, ['missao', 'missão', 'nome_missao'])?.toString() || null,
+            
+            // Dados Financeiros
+            despesa: findVal(row, ['despesa'])?.toString() || (isMissao ? 'Custo Missões' : 'Despesa Fixa'),
+            tipo: findVal(row, ['tipo'])?.toString() || 'Outros',
+            descricao: findVal(row, ['descricao', 'descrição'])?.toString() || '',
+            fornecedor: findVal(row, ['fornecedor'])?.toString() || '',
+            
+            faturado_cnpj: parseMoney(findVal(row, ['faturado cnpj salomão', 'faturado cnpj'])),
+            vencimento: parseDate(findVal(row, ['vencimento'])),
+            valor_previsto: parseMoney(findVal(row, ['valor previsto', 'previsto'])),
+            
+            data_pagamento: parseDate(findVal(row, ['pagamento', 'data pagamento'])),
+            valor_pago: parseMoney(findVal(row, ['valor pago', 'pago'])),
+            
+            observacao: findVal(row, ['observação', 'observacao', 'obs'])?.toString() || '',
+            
+            // Fiscal
+            doc_fiscal: findVal(row, ['doc fiscal', 'doc_fiscal'])?.toString() || null,
+            numero_doc: findVal(row, ['numero', 'número', 'numero_doc'])?.toString() || null,
+            valor_total_doc: parseMoney(findVal(row, ['valor total doc', 'total doc']))
+          }
+        })
+
+        const { error } = await supabase.from('aeronave_lancamentos').insert(mappedData)
+
+        if (error) {
+          console.error(error)
+          alert(`Erro na importação: ${error.message}`)
+        } else {
+          alert(`${mappedData.length} registros importados com sucesso!`)
+          fetchDados()
+        }
+
+      } catch (err) {
+        console.error(err)
+        alert('Erro crítico ao processar arquivo.')
+      } finally {
+        setIsImporting(false)
+        if (e.target) e.target.value = ''
+      }
+    }
+    reader.readAsBinaryString(file)
   }
 
   return (
