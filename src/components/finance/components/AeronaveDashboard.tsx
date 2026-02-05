@@ -1,4 +1,4 @@
-// Caminho do arquivo: AeronaveViewModal.tsx
+// Caminho do arquivo: AeronaveDashboard.tsx
 
 import { useMemo, useEffect, useState } from 'react'
 import { TrendingUp, BarChart3, PieChart, Calendar, TrendingDown, Receipt, DollarSign, Wallet } from 'lucide-react'
@@ -563,6 +563,16 @@ export function AeronaveDashboard({
               </div>
 
               <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1 border border-gray-200">
+                <button
+                  onClick={() => handleViewModeChange('tudo')}
+                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                    localViewMode === 'tudo' 
+                      ? 'bg-indigo-600 text-white shadow-md' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Todos
+                </button>
                 <button
                   onClick={() => handleViewModeChange('despesas')}
                   className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
