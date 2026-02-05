@@ -13,8 +13,6 @@ import {
   Download,
   Calendar,
   XCircle,
-  Tag,
-  Building2,
   DollarSign,
   CheckCircle2,
   Maximize2,
@@ -254,12 +252,9 @@ export function GestaoAeronave({
         matchDate = false
       }
 
-      const matchTipo = !selectedExpense || item.tipo === selectedExpense
-      const matchDevedor = !selectedSupplier || item.devedor === selectedSupplier
-
-      return matchSearch && matchDate && matchTipo && matchDevedor
+      return matchSearch && matchDate
     })
-  }, [dataPagamentos, searchTerm, startDate, endDate, selectedExpense, selectedSupplier])
+  }, [dataPagamentos, searchTerm, startDate, endDate])
 
   const currentFilteredData = dataType === 'despesas' ? filteredDataDespesas : 
                               dataType === 'pagamentos' ? filteredDataPagamentos : 
@@ -749,76 +744,30 @@ export function GestaoAeronave({
           </div>
 
           <div className="flex items-center gap-2 w-full md:w-auto overflow-x-visible pb-1 md:pb-0">
-             <div className="relative">
-                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-2 py-1.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                  <Tag className="h-3 w-3 text-blue-600 mr-1.5 flex-shrink-0" />
-                  <select 
-                    className="bg-transparent text-[10px] font-bold text-gray-700 outline-none cursor-pointer"
-                    value={selectedExpense}
-                    onChange={e => setSelectedExpense(e.target.value)}
-                  >
-                    {dataType === 'despesas' ? (
-                      <>
-                        <option value="">Todas Despesas</option>
-                        {expenseOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </>
-                    ) : (
-                      <>
-                        <option value="">Todos Tipos</option>
-                        {tipoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </>
-                    )}
-                  </select>
-                </div>
-             </div>
-
-             <div className="relative">
-                <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-2 py-1.5 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                  <Building2 className="h-3 w-3 text-blue-600 mr-1.5 flex-shrink-0" />
-                  <select 
-                    className="bg-transparent text-[10px] font-bold text-gray-700 outline-none cursor-pointer"
-                    value={selectedSupplier}
-                    onChange={e => setSelectedSupplier(e.target.value)}
-                  >
-                    {dataType === 'despesas' ? (
-                      <>
-                        <option value="">Todos Fornecedores</option>
-                        {supplierOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </>
-                    ) : (
-                      <>
-                        <option value="">Todos Devedores</option>
-                        {devedorOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </>
-                    )}
-                  </select>
-                </div>
-             </div>
-
-             <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-2 py-1.5 transition-all shadow-sm hover:shadow-md">
-                <Calendar className="h-3 w-3 text-blue-600 mr-1.5 flex-shrink-0" />
+             <div className="flex items-center bg-white border-2 border-gray-200 hover:border-blue-400 rounded-xl px-4 py-2.5 transition-all shadow-sm hover:shadow-md">
+                <Calendar className="h-4 w-4 text-blue-600 mr-2 flex-shrink-0" />
                 <input 
                   type="date" 
-                  className="bg-transparent text-[10px] font-bold text-gray-700 outline-none w-24"
+                  className="bg-transparent text-xs font-bold text-gray-700 outline-none w-28"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
                 />
-                <span className="mx-1.5 text-gray-400 text-[8px] font-black uppercase tracking-widest">até</span>
+                <span className="mx-2 text-gray-400 text-xs font-black uppercase tracking-widest">até</span>
                 <input 
                   type="date" 
-                  className="bg-transparent text-[10px] font-bold text-gray-700 outline-none w-24"
+                  className="bg-transparent text-xs font-bold text-gray-700 outline-none w-28"
                   value={endDate}
                   onChange={e => setEndDate(e.target.value)}
                 />
              </div>
 
-             {(startDate || endDate || searchTerm || selectedExpense || selectedSupplier) && (
+             {(startDate || endDate) && (
                <button 
                 onClick={resetFilters} 
-                className="flex items-center gap-1 px-2 py-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border-2 border-red-200 shadow-sm hover:shadow-md flex-shrink-0"
+                className="flex items-center gap-1.5 px-3 py-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border-2 border-red-200 shadow-sm hover:shadow-md flex-shrink-0"
                >
-                 <XCircle className="h-3 w-3" />
-                 <span className="text-[8px] font-black uppercase tracking-widest">Limpar</span>
+                 <XCircle className="h-4 w-4" />
+                 <span className="text-[10px] font-black uppercase tracking-widest">Limpar</span>
                </button>
              )}
           </div>
@@ -835,6 +784,14 @@ export function GestaoAeronave({
                 value={searchTerm} 
                 onChange={e => setSearchTerm(e.target.value)} 
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <XCircle className="h-4 w-4" />
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-2 w-full md:w-auto">
