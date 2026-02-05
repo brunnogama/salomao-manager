@@ -8,7 +8,7 @@ interface AeronaveFormModalProps {
   origem: OrigemLancamento; // 'missao' ou 'fixa'
   initialData?: AeronaveLancamento | null;
   onSave: (data: Partial<AeronaveLancamento>) => Promise<void>; // A função de salvar vem do pai
-  onSuccess: () => void; // Para recarregar a tabela
+  onSuccess?: () => void; // Para recarregar a tabela - OPCIONAL
 }
 
 export function AeronaveFormModal({ 
@@ -100,13 +100,16 @@ export function AeronaveFormModal({
     )
   }
 
-  // --- Submit ---
+  // --- Submit (CORRIGIDO) ---
   const handleSubmit = async (saveAndNew: boolean) => {
     try {
       setLoading(true)
       await onSave(formData)
       
-      onSuccess() // Atualiza tabela no pai
+      // CORREÇÃO: Verifica se onSuccess existe e é função
+      if (onSuccess && typeof onSuccess === 'function') {
+        onSuccess()
+      }
       
       if (saveAndNew) {
         // Reseta mantendo a origem correta
