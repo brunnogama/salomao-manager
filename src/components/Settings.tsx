@@ -97,7 +97,6 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
           geral: true, 
           crm: modules.includes('crm'), 
           family: modules.includes('family'),
-          // Verifica se possui 'rh' OU 'collaborators' no array do banco
           collaborators: modules.includes('collaborators') || modules.includes('rh'), 
           operational: modules.includes('operational'), 
           financial: modules.includes('financial')
@@ -205,12 +204,17 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     if (confirmText !== 'APAGAR') return;
     setLoading(true);
     try {
-      const { error } = await supabase.from(table).delete().neq('id', isNaN(Number('1')) ? '00000000-0000-0000-0000-000000000000' : -1);
+      // Correção do erro 400: Filtro genérico que funciona para UUID e Integer
+      const { error } = await supabase.from(table).delete().neq('created_at', '1900-01-01');
+      
       if (error) throw error;
       setStatus({ type: 'success', message: `${moduleName} resetado!` });
       await logAction('RESET', moduleName.toUpperCase(), logMsg);
-    } catch (e: any) { setStatus({ type: 'error', message: 'Erro: ' + e.message }); }
-    finally { setLoading(false); }
+    } catch (e: any) { 
+      setStatus({ type: 'error', message: 'Erro: ' + e.message }); 
+    } finally { 
+      setLoading(false); 
+    }
   }
 
   const hasAccessToModule = (modId: string) => {
