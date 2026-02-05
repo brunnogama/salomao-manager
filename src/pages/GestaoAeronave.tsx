@@ -180,6 +180,26 @@ export function GestaoAeronave({
     setActiveTab('dados')
   }
 
+  // NOVO: Handler para salvar lançamento (criar ou editar)
+  const handleSaveLancamento = async (formData: Partial<AeronaveLancamento>) => {
+    if (formData.id) {
+      // Edição
+      const { error } = await supabase
+        .from('aeronave_lancamentos')
+        .update(formData)
+        .eq('id', formData.id)
+      
+      if (error) throw error
+    } else {
+      // Criação
+      const { error } = await supabase
+        .from('aeronave_lancamentos')
+        .insert(formData)
+      
+      if (error) throw error
+    }
+  }
+
   const handleExportExcel = () => {
     const ws = XLSX.utils.json_to_sheet(filteredData)
     const wb = XLSX.utils.book_new()
@@ -536,25 +556,32 @@ export function GestaoAeronave({
 
       <AeronaveFormModal 
         isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
+        onClose={() => {
+          setIsFormModalOpen(false)
+          setSelectedItem(null)
+        }}
         origem={selectedOrigemForNew}
         initialData={selectedItem}
+        onSave={handleSaveLancamento}
         onSuccess={fetchDados}
       />
 
       <AeronaveViewModal 
         isOpen={isViewModalOpen}
-        onClose={() => setIsViewModalOpen(false)}
-        item={selectedItem}
-        onEdit={() => {
+        onClose={() => {
           setIsViewModalOpen(false)
-          if (selectedItem) {
-            setSelectedOrigemForNew(selectedItem.origem)
-            setIsFormModalOpen(true)
-          }
+          setSelectedItem(null)
+        }}
+        item={selectedItem}
+        onEdit={(item) => {
+          setIsViewModalOpen(false)
+          setSelectedItem(item)
+          setSelectedOrigemForNew(item.origem)
+          setIsFormModalOpen(true)
         }}
         onDelete={() => {
           setIsViewModalOpen(false)
+          setSelectedItem(null)
           fetchDados()
         }}
       />
