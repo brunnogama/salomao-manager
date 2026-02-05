@@ -9,6 +9,7 @@ import {
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { MonthSelect } from '../components/MonthSelect'
 
 // Importações Modularizadas
 import { PresenceRecord, SocioRule, MarcacaoPonto, RegistroDiario } from '../types/presencial'
@@ -435,19 +436,20 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
 
         {/* FILTERS - Design System */}
         <div className="flex flex-col lg:flex-row items-center justify-between border-t border-gray-100 pt-4 gap-4">
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full">
-                {/* Barra de Pesquisa - Sempre visível */}
-                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-full sm:w-64">
-                    <Search className="h-4 w-4 text-gray-400 mr-2" />
-                    <input 
-                        type="text" 
-                        placeholder="Buscar colaborador..." 
-                        className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400" 
-                        value={searchText} 
-                        onChange={(e) => setSearchText(e.target.value)} 
-                    />
-                </div>
-                
+            {/* Left: Barra de Pesquisa - Ocupa espaço disponível */}
+            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-full lg:flex-1">
+                <Search className="h-4 w-4 text-gray-400 mr-2" />
+                <input 
+                    type="text" 
+                    placeholder="Buscar colaborador..." 
+                    className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400" 
+                    value={searchText} 
+                    onChange={(e) => setSearchText(e.target.value)} 
+                />
+            </div>
+            
+            {/* Right: Filtros */}
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
                 {/* Botão Limpar - Aparece quando há filtros ativos */}
                 {hasActiveFilters && (
                     <button 
@@ -458,17 +460,14 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
                     </button>
                 )}
                 
-                {/* Filtro por Mês Dinâmico */}
+                {/* Filtro por Mês - Menu suspenso */}
                 {(viewMode === 'descriptive' || viewMode === 'horas') && (
-                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 hover:border-[#1e3a8a] transition-all">
-                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">Mês</span>
-                        <input 
-                            type="month" 
-                            value={filterMes} 
-                            onChange={(e) => setFilterMes(e.target.value)} 
-                            className="bg-transparent border-none text-sm p-1 outline-none text-gray-700 font-medium cursor-pointer"
-                        />
-                    </div>
+                    <MonthSelect
+                        value={filterMes}
+                        onChange={setFilterMes}
+                        placeholder="Todos os meses"
+                        className="w-full sm:w-48"
+                    />
                 )}
                 
                 {/* Filtro de Colaboradores */}
