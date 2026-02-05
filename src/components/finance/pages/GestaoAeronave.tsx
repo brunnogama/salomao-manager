@@ -157,26 +157,37 @@ export function GestaoAeronave({
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
 
   const fetchDados = async () => {
-    setLoading(true)
-    const { data: result } = await supabase
-      .from('financeiro_aeronave')
-      .select('*')
-      .order('data', { ascending: false })
-    if (result) {
-      console.log('Dados buscados do banco:', result.length, 'registros');
-      setData(result);
+    try {
+      setLoading(true)
+      const { data: result, error } = await supabase
+        .from('financeiro_aeronave')
+        .select('*')
+        .order('data', { ascending: false })
+      
+      if (error) throw error
+      if (result) setData(result)
+    } catch (err) {
+      console.error('Erro ao buscar dados:', err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const fetchPagamentos = async () => {
-    setLoading(true)
-    const { data: result } = await supabase
-      .from('financeiro_aeronave_pagamentos')
-      .select('*')
-      .order('emissao', { ascending: false })
-    if (result) setDataPagamentos(result)
-    setLoading(false)
+    try {
+      setLoading(true)
+      const { data: result, error } = await supabase
+        .from('financeiro_aeronave_pagamentos')
+        .select('*')
+        .order('emissao', { ascending: false })
+      
+      if (error) throw error
+      if (result) setDataPagamentos(result)
+    } catch (err) {
+      console.error('Erro ao buscar pagamentos:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { 
@@ -410,8 +421,6 @@ export function GestaoAeronave({
     if (!file) return
     setIsImporting(true)
     
-    console.log('Iniciando importação de arquivo:', file.name);
-
     const reader = new FileReader()
     reader.onload = async (evt) => {
       try {
@@ -419,9 +428,6 @@ export function GestaoAeronave({
         const wb = XLSX.read(bstr, { type: 'binary', cellDates: false })
         const ws = wb.Sheets[wb.SheetNames[0]]
         const rawData = XLSX.utils.sheet_to_json(ws)
-        
-        console.log('Linhas brutas lidas do Excel:', rawData.length);
-        console.log('Exemplo da primeira linha bruta:', rawData[0]);
 
         const formatExcelDate = (val: any) => {
           if (!val) return null
@@ -451,7 +457,6 @@ export function GestaoAeronave({
         }
 
         const mapped = rawData.map((row: any) => {
-          // Limpeza rigorosa para encontrar colunas independente de Case ou Espaços
           const findVal = (names: string[]) => {
             const key = Object.keys(row).find(k => names.includes(k.trim().toLowerCase()));
             return key ? row[key] : null;
@@ -476,17 +481,13 @@ export function GestaoAeronave({
           }
         })
 
-        console.log('Mapeamento concluído. Exemplo do primeiro registro para o banco:', mapped[0]);
-
-        const { data: insertData, error } = await supabase.from('financeiro_aeronave').insert(mapped).select()
+        const { error } = await supabase.from('financeiro_aeronave').insert(mapped)
         
         if (error) {
-          console.error('Erro detalhado do Supabase na inserção:', error)
           alert(`Erro na importação: ${error.message}`)
         } else {
-          console.log('Inserção bem-sucedida. Registros gravados no banco:', insertData?.length);
           alert(`${mapped.length} registros importados com sucesso!`);
-          await fetchDados()
+          fetchDados()
         }
       } catch (err) { 
         console.error('Erro crítico de processamento:', err) 
@@ -559,11 +560,10 @@ export function GestaoAeronave({
         const { error } = await supabase.from('financeiro_aeronave_pagamentos').insert(mapped)
         
         if (error) {
-          console.error('Erro detalhado:', error)
           alert(`Erro na importação: ${error.message}`)
         } else {
           alert(`${mapped.length} despesas fixas importadas com sucesso!`)
-          await fetchPagamentos()
+          fetchPagamentos()
         }
       } catch (err) { 
         console.error(err) 
