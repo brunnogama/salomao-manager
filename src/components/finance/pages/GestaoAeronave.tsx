@@ -68,7 +68,7 @@ function AeronavePagamentoTable({ data, loading, onRowClick }: PagamentoTablePro
 
   if (!data || data.length === 0) return (
     <div className="p-20 text-center">
-      <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Nenhum pagamento encontrado</p>
+      <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Nenhuma despesa fixa encontrada</p>
     </div>
   )
 
@@ -324,7 +324,7 @@ export function GestaoAeronave({
     if (currentFilteredData.length === 0) return;
     const ws = XLSX.utils.json_to_sheet(currentFilteredData)
     const wb = XLSX.utils.book_new()
-    const sheetName = dataType === 'despesas' ? 'Despesas' : 'Pagamentos'
+    const sheetName = dataType === 'despesas' ? 'Custo_Missoes' : 'Despesas_Fixas'
     XLSX.utils.book_append_sheet(wb, ws, sheetName)
     XLSX.writeFile(wb, `Aeronave_${sheetName}_${new Date().toISOString().split('T')[0]}.xlsx`)
   }
@@ -536,7 +536,7 @@ export function GestaoAeronave({
           console.error('Erro detalhado:', error)
           alert(`Erro na importação: ${error.message}`)
         } else {
-          alert(`${mapped.length} pagamentos importados com sucesso!`)
+          alert(`${mapped.length} despesas fixas importadas com sucesso!`)
           await fetchPagamentos()
         }
       } catch (err) { 
@@ -669,7 +669,7 @@ export function GestaoAeronave({
           <>
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-purple-200 transition-all">
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Pagamentos</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Despesas Fixas</p>
                 <p className="text-2xl font-black text-purple-600 mt-1">{totals.quantidade}</p>
               </div>
               <div className="p-3 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
@@ -779,7 +779,7 @@ export function GestaoAeronave({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input 
                 type="text" 
-                placeholder={dataType === 'despesas' ? 'Buscar lançamentos...' : 'Buscar pagamentos...'} 
+                placeholder={dataType === 'despesas' ? 'Buscar lançamentos...' : 'Buscar despesas fixas...'} 
                 className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border-2 border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
                 value={searchTerm} 
                 onChange={e => setSearchTerm(e.target.value)} 
@@ -835,7 +835,7 @@ export function GestaoAeronave({
                 <div>
                   <h3 className="text-lg font-black text-[#112240] uppercase tracking-widest mb-4 flex items-center gap-2">
                     <Receipt className="h-5 w-5 text-blue-600" />
-                    Despesas ({filteredDataDespesas.length})
+                    Custo Missões ({filteredDataDespesas.length})
                   </h3>
                   <AeronaveTable 
                     data={filteredDataDespesas} 
@@ -846,7 +846,7 @@ export function GestaoAeronave({
                 <div className="border-t-2 border-gray-100 pt-8">
                   <h3 className="text-lg font-black text-[#112240] uppercase tracking-widest mb-4 flex items-center gap-2">
                     <DollarSign className="h-5 w-5 text-emerald-600" />
-                    Pagamentos ({filteredDataPagamentos.length})
+                    Despesas Fixas ({filteredDataPagamentos.length})
                   </h3>
                   <AeronavePagamentoTable 
                     data={filteredDataPagamentos} 
