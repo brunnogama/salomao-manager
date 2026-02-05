@@ -9,15 +9,16 @@ import {
   ResponsiveContainer,
   LabelList
 } from 'recharts'
-import { Filter, TrendingUp, Plane, DollarSign, Users, Calendar } from 'lucide-react'
+import { Filter, TrendingUp, Plane, DollarSign, Users, Calendar, AlertCircle } from 'lucide-react'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
 
 interface AeronaveDashboardProps {
   data: AeronaveLancamento[];
   onMissionClick?: (missionName: string) => void;
+  filterOrigem?: 'todos' | 'missao' | 'fixa';
 }
 
-export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardProps) {
+export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos' }: AeronaveDashboardProps) {
   // Alteração 1: Padrão "all" para todos os anos
   const [yearFilter, setYearFilter] = useState<string>('all')
 
@@ -158,6 +159,27 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
     return Object.values(groups).sort((a, b) => b.total - a.total)
   }, [dashboardData])
 
+  // --- 5. NOVO: Pagamentos Pendentes (Baseado em vencimento e valor_previsto) ---
+  const pendingPaymentsList = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0]
+    
+    // Filtra registros com vencimento definido, valor_previsto > 0 e sem pagamento ainda
+    const pending = dashboardData.filter(item => 
+      item.vencimento && 
+      (item.valor_previsto || 0) > 0 && 
+      (!item.data_pagamento || item.data_pagamento >= today)
+    )
+
+    return pending
+      .map(item => ({
+        vencimento: item.vencimento,
+        fornecedor: item.fornecedor || 'Não Informado',
+        tipo: item.tipo || 'Outros',
+        valor: item.valor_previsto || 0
+      }))
+      .sort((a, b) => (a.vencimento || '').localeCompare(b.vencimento || ''))
+  }, [dashboardData])
+
   // --- Handler seguro para clique em missão ---
   const handleMissionClick = (missionName: string) => {
     if (onMissionClick && typeof onMissionClick === 'function') {
@@ -286,80 +308,176 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
 
       </div>
 
-      {/* LINHA 2: MISSÕES E DESPESAS FIXAS LADO A LADO */}
+      {/* LINHA 2: MISSÕES/PENDENTES E DESPESAS FIXAS/PENDENTES LADO A LADO */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* CARD ESQUERDA: RELAÇÃO DAS MISSÕES */}
+        {/* CARD ESQUERDA: RELAÇÃO DAS MISSÕES OU PAGAMENTOS PENDENTES (quando fixa) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
-          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
-            <Plane className="h-4 w-4 text-blue-600" />
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Relação de Missões</h4>
-          </div>
+          {filterOrigem === 'fixa' ? (
+            // PAGAMENTOS PENDENTES (quando filtro é Despesas Fixas)
+            <>
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Pagamentos Pendentes</h4>
+              </div>
 
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
-            <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Missão</div>
-            <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
-          </div>
+              <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
+                <div className="col-span-3 text-[10px] font-black uppercase text-gray-500">Vencimento</div>
+                <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
+                <div className="col-span-2 text-[10px] font-black uppercase text-gray-500">Tipo</div>
+                <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Valor</div>
+              </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
-            {missionsList.map((missao, idx) => (
-              <button 
-                key={idx}
-                onClick={() => handleMissionClick(missao.nome)}
-                className="w-full grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all items-center text-left group"
-              >
-                <div className="col-span-7 flex flex-col gap-0.5 overflow-hidden">
-                  <span className="text-xs font-bold text-gray-700 truncate group-hover:text-blue-700">
-                    {missao.nome}
-                  </span>
-                  <span className="text-[9px] font-medium text-gray-400 flex items-center gap-1">
-                    <Calendar className="h-2.5 w-2.5" />
-                    {formatDate(missao.data)}
-                  </span>
-                </div>
-                <div className="col-span-5 text-xs font-black text-blue-600 text-right">
-                  {formatCurrency(missao.total)}
-                </div>
-              </button>
-            ))}
-            {missionsList.length === 0 && (
-              <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhuma missão no período</div>
-            )}
-          </div>
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
+                {pendingPaymentsList.length > 0 ? (
+                  pendingPaymentsList.map((item, idx) => (
+                    <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-amber-50/30 transition-colors items-center">
+                      <div className="col-span-3 text-[10px] font-semibold text-gray-600">
+                        {formatDate(item.vencimento)}
+                      </div>
+                      <div className="col-span-4 text-xs font-bold text-gray-700 truncate" title={item.fornecedor}>
+                        {item.fornecedor}
+                      </div>
+                      <div className="col-span-2">
+                        <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-100 truncate max-w-full">
+                          {item.tipo}
+                        </span>
+                      </div>
+                      <div className="col-span-3 text-xs font-black text-amber-600 text-right">
+                        {formatCurrency(item.valor)}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-emerald-600 gap-2">
+                    <AlertCircle className="h-8 w-8" />
+                    <p className="text-sm font-bold">Sem pendências</p>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            // RELAÇÃO DE MISSÕES (padrão)
+            <>
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
+                <Plane className="h-4 w-4 text-blue-600" />
+                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Relação de Missões</h4>
+              </div>
+
+              <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
+                <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Missão</div>
+                <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
+                {missionsList.map((missao, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => handleMissionClick(missao.nome)}
+                    className="w-full grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all items-center text-left group"
+                  >
+                    <div className="col-span-7 flex flex-col gap-0.5 overflow-hidden">
+                      <span className="text-xs font-bold text-gray-700 truncate group-hover:text-blue-700">
+                        {missao.nome}
+                      </span>
+                      <span className="text-[9px] font-medium text-gray-400 flex items-center gap-1">
+                        <Calendar className="h-2.5 w-2.5" />
+                        {formatDate(missao.data)}
+                      </span>
+                    </div>
+                    <div className="col-span-5 text-xs font-black text-blue-600 text-right">
+                      {formatCurrency(missao.total)}
+                    </div>
+                  </button>
+                ))}
+                {missionsList.length === 0 && (
+                  <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhuma missão no período</div>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
-        {/* CARD DIREITA: DESPESAS FIXAS */}
+        {/* CARD DIREITA: DESPESAS FIXAS OU PAGAMENTOS PENDENTES (quando missao) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
-          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
-            <DollarSign className="h-4 w-4 text-emerald-600" />
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</h4>
-          </div>
-
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
-            <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
-            <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
-            {fixedExpensesList.map((item, idx) => (
-              <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-emerald-50/30 transition-colors items-center">
-                <div className="col-span-7 flex flex-col gap-0.5 overflow-hidden">
-                  <span className="text-xs font-bold text-gray-700 truncate" title={item.fornecedor}>
-                    {item.fornecedor}
-                  </span>
-                  <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100 truncate max-w-fit">
-                    {item.tipo}
-                  </span>
-                </div>
-                <div className="col-span-5 text-xs font-black text-emerald-600 text-right">
-                  {formatCurrency(item.total)}
-                </div>
+          {filterOrigem === 'missao' ? (
+            // PAGAMENTOS PENDENTES (quando filtro é Custo Missões)
+            <>
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Pagamentos Pendentes</h4>
               </div>
-            ))}
-            {fixedExpensesList.length === 0 && (
-              <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhuma despesa fixa no período</div>
-            )}
-          </div>
+
+              <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
+                <div className="col-span-3 text-[10px] font-black uppercase text-gray-500">Vencimento</div>
+                <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
+                <div className="col-span-2 text-[10px] font-black uppercase text-gray-500">Tipo</div>
+                <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Valor</div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
+                {pendingPaymentsList.length > 0 ? (
+                  pendingPaymentsList.map((item, idx) => (
+                    <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-amber-50/30 transition-colors items-center">
+                      <div className="col-span-3 text-[10px] font-semibold text-gray-600">
+                        {formatDate(item.vencimento)}
+                      </div>
+                      <div className="col-span-4 text-xs font-bold text-gray-700 truncate" title={item.fornecedor}>
+                        {item.fornecedor}
+                      </div>
+                      <div className="col-span-2">
+                        <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-100 truncate max-w-full">
+                          {item.tipo}
+                        </span>
+                      </div>
+                      <div className="col-span-3 text-xs font-black text-amber-600 text-right">
+                        {formatCurrency(item.valor)}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-emerald-600 gap-2">
+                    <AlertCircle className="h-8 w-8" />
+                    <p className="text-sm font-bold">Sem pendências</p>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            // DESPESAS FIXAS (padrão)
+            <>
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
+                <DollarSign className="h-4 w-4 text-emerald-600" />
+                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</h4>
+              </div>
+
+              <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
+                <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
+                <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
+                {fixedExpensesList.map((item, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-emerald-50/30 transition-colors items-center">
+                    <div className="col-span-7 flex flex-col gap-0.5 overflow-hidden">
+                      <span className="text-xs font-bold text-gray-700 truncate" title={item.fornecedor}>
+                        {item.fornecedor}
+                      </span>
+                      <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100 truncate max-w-fit">
+                        {item.tipo}
+                      </span>
+                    </div>
+                    <div className="col-span-5 text-xs font-black text-emerald-600 text-right">
+                      {formatCurrency(item.total)}
+                    </div>
+                  </div>
+                ))}
+                {fixedExpensesList.length === 0 && (
+                  <div className="h-full flex items-center justify-center text-gray-400 text-xs">Nenhuma despesa fixa no período</div>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
       </div>
