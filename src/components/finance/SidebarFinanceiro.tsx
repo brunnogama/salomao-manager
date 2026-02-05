@@ -66,7 +66,7 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
     { id: 'contas-pagar', label: 'Contas a Pagar', icon: ArrowUpCircle },
     { id: 'oab', label: 'OAB', icon: GraduationCap },
     { id: 'contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle },
-    { id: 'gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane },
+    { id: 'gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane }, // Item adicionado
     { id: 'ged', label: 'GED', icon: FolderSearch },
   ]
 

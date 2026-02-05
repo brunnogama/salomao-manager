@@ -8,7 +8,7 @@ import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
 import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
 import { SidebarFinanceiro } from './components/finance/SidebarFinanceiro'
 
-// Componentes
+// Componentes CRM
 import { Clients } from './components/crm/Clients'
 import { Magistrados } from './components/crm/Magistrados'
 import { Settings } from './components/Settings'
@@ -19,13 +19,17 @@ import { History } from './components/crm/History'
 import { Manual } from './components/crm/Manual'
 import { WelcomeModal } from './components/WelcomeModal'
 import { UnderConstruction } from './components/UnderConstruction'
+
+// Componentes RH
 import { Presencial } from './components/collaborators/pages/Presencial' 
 import { Colaboradores } from './components/collaborators/pages/Colaboradores'
 import { Calendario as CalendarioRH } from './components/collaborators/pages/Calendario'
+
+// Componentes Executivo
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
 
-// Módulo Financeiro
-//import { GestaoAeronave } from './components/finance/pages/GestaoAeronave'
+// Componentes Financeiro
+import { GestaoAeronave } from './pages/GestaoAeronave' // Nova importação
 import { GED } from './components/finance/pages/GED'
 import { Calendario as CalendarioFinanceiro } from './components/finance/pages/Calendario'
 import { ListaOAB } from './components/finance/pages/ListaOAB'
@@ -129,6 +133,8 @@ export default function App() {
           </div>
 
           <div className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
+            
+            {/* --- MÓDULO CRM --- */}
             {currentModule === 'crm' && (
               <>
                 {activePage === 'dashboard' && (
@@ -173,6 +179,7 @@ export default function App() {
               </>
             )}
 
+            {/* --- MÓDULO RH (COLABORADORES) --- */}
             {currentModule === 'collaborators' && (
               <>
                 {activePage === 'calendario' && <CalendarioRH userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
@@ -188,6 +195,7 @@ export default function App() {
               </>
             )}
 
+            {/* --- MÓDULO FINANCEIRO --- */}
             {currentModule === 'financial' && (
               <>
                 {activePage === 'calendario' && <CalendarioFinanceiro userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
@@ -201,6 +209,8 @@ export default function App() {
                     onLogout={handleLogout} 
                   />
                 )}
+                
+                {/* Gestão da Aeronave (Atualizado) */}
                 {activePage === 'gestao-aeronave' && (
                   <GestaoAeronave 
                     userName={getUserDisplayName()} 
@@ -208,6 +218,7 @@ export default function App() {
                     onLogout={handleLogout} 
                   />
                 )}
+
                 {activePage === 'ged' && (
                   <GED 
                     userName={getUserDisplayName()} 
@@ -219,6 +230,7 @@ export default function App() {
               </>
             )}
 
+            {/* --- MÓDULO EXECUTIVO --- */}
             {currentModule === 'executive' && (
               <>
                 {activePage === 'gestao-familia' && (
