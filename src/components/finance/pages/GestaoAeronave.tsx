@@ -421,10 +421,10 @@ export function GestaoAeronave({
         const rawData = XLSX.utils.sheet_to_json(ws)
         
         console.log('Linhas brutas lidas do Excel:', rawData.length);
-        console.log('Exemplo da primeira linha bruta:', rawData[0]);
 
         const formatExcelDate = (val: any) => {
           if (!val) return null
+          // Trata formato ISO da planilha AAAA-MM-DD
           if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) {
             return val.split(' ')[0]
           }
@@ -452,6 +452,7 @@ export function GestaoAeronave({
 
         const mapped = rawData.map((row: any) => {
           const cleanRow: any = {};
+          // Limpa nomes de colunas com espaços extras
           Object.keys(row).forEach(key => {
             cleanRow[key.trim()] = row[key];
           });
@@ -475,7 +476,7 @@ export function GestaoAeronave({
           }
         })
 
-        console.log('Dados mapeados para o Supabase (primeiro item):', mapped[0]);
+        console.log('Mapeamento concluído. Exemplo do primeiro registro:', mapped[0]);
 
         const { data: insertData, error } = await supabase.from('financeiro_aeronave').insert(mapped).select()
         
@@ -483,7 +484,7 @@ export function GestaoAeronave({
           console.error('Erro detalhado do Supabase:', error)
           alert(`Erro na importação: ${error.message}`)
         } else {
-          console.log('Inserção concluída com sucesso. Registros inseridos:', insertData?.length);
+          console.log('Inserção bem-sucedida. Registros criados:', insertData?.length);
           alert(`${mapped.length} registros importados com sucesso!`)
           await fetchDados()
         }
