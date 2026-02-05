@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   LabelList
 } from 'recharts'
-import { Filter, TrendingUp, Plane, DollarSign, Users, Calendar, AlertCircle, PieChart } from 'lucide-react'
+import { Filter, TrendingUp, Plane, DollarSign, Users, Calendar, AlertCircle, PieChart, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
 
 interface AeronaveDashboardProps {
@@ -180,7 +180,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       .sort((a, b) => (a.vencimento || '').localeCompare(b.vencimento || ''))
   }, [dashboardData])
 
-  // --- 6. Top Categorias (Missão) ---
+  // --- 6. Top Categorias (Missão) + Insights ---
   const topMissionCategories = useMemo(() => {
     const data = dashboardData.filter(i => i.origem === 'missao')
     const groups = data.reduce((acc, item) => {
@@ -189,13 +189,22 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       return acc
     }, {} as Record<string, number>)
 
+    const keys = Object.keys(groups)
+    const totalSum = Object.values(groups).reduce((a, b) => a + b, 0)
+    const average = keys.length > 0 ? totalSum / keys.length : 0
+
     return Object.entries(groups)
-      .map(([name, value]) => ({ name, value }))
+      .map(([name, value]) => ({ 
+        name, 
+        value,
+        isHigh: value > average,
+        insight: `${Math.abs(average > 0 ? (value - average) / average * 100 : 0).toFixed(0)}% ${value > average ? 'acima' : 'abaixo'} da média`
+      }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5)
   }, [dashboardData])
 
-  // --- 7. Top Categorias (Fixa) ---
+  // --- 7. Top Categorias (Fixa) + Insights ---
   const topFixedCategories = useMemo(() => {
     const data = dashboardData.filter(i => i.origem === 'fixa')
     const groups = data.reduce((acc, item) => {
@@ -204,8 +213,17 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       return acc
     }, {} as Record<string, number>)
 
+    const keys = Object.keys(groups)
+    const totalSum = Object.values(groups).reduce((a, b) => a + b, 0)
+    const average = keys.length > 0 ? totalSum / keys.length : 0
+
     return Object.entries(groups)
-      .map(([name, value]) => ({ name, value }))
+      .map(([name, value]) => ({ 
+        name, 
+        value,
+        isHigh: value > average,
+        insight: `${Math.abs(average > 0 ? (value - average) / average * 100 : 0).toFixed(0)}% ${value > average ? 'acima' : 'abaixo'} da média`
+      }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5)
   }, [dashboardData])
@@ -524,10 +542,13 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           </div>
           <div className="space-y-3">
             {topMissionCategories.map((cat, idx) => (
-              <div key={idx} className="space-y-1">
-                <div className="flex justify-between text-xs">
+              <div key={idx} className="space-y-1 cursor-help" title={cat.insight}>
+                <div className="flex justify-between text-xs items-center">
                   <span className="font-bold text-gray-700">{cat.name}</span>
-                  <span className="font-black text-blue-600">{formatCurrency(cat.value)}</span>
+                  <div className="flex items-center gap-1.5">
+                    {cat.isHigh ? <ArrowUpRight className="h-3 w-3 text-red-500" /> : <ArrowDownRight className="h-3 w-3 text-emerald-500" />}
+                    <span className="font-black text-blue-600">{formatCurrency(cat.value)}</span>
+                  </div>
                 </div>
                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div 
@@ -551,10 +572,13 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           </div>
           <div className="space-y-3">
             {topFixedCategories.map((cat, idx) => (
-              <div key={idx} className="space-y-1">
-                <div className="flex justify-between text-xs">
+              <div key={idx} className="space-y-1 cursor-help" title={cat.insight}>
+                <div className="flex justify-between text-xs items-center">
                   <span className="font-bold text-gray-700">{cat.name}</span>
-                  <span className="font-black text-emerald-600">{formatCurrency(cat.value)}</span>
+                  <div className="flex items-center gap-1.5">
+                    {cat.isHigh ? <ArrowUpRight className="h-3 w-3 text-red-500" /> : <ArrowDownRight className="h-3 w-3 text-emerald-500" />}
+                    <span className="font-black text-emerald-600">{formatCurrency(cat.value)}</span>
+                  </div>
                 </div>
                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div 
