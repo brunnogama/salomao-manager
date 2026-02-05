@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Save, Plus, Calendar, DollarSign, FileText, Plane } from 'lucide-react'
+import { X, Save, Plus, Calendar, DollarSign, FileText, Plane, Settings } from 'lucide-react'
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
 
 interface AeronaveFormModalProps {
@@ -129,6 +129,12 @@ export function AeronaveFormModal({
     }
   }
 
+  // Handler Placeholder para Configurações
+  const handleConfigClick = (tipoConfig: string) => {
+    // AQUI VOCÊ IMPLEMENTARÁ A ABERTURA DO MODAL DE CONFIGURAÇÃO
+    alert(`Abrir configurações de: ${tipoConfig}`)
+  }
+
   if (!isOpen) return null
 
   // --- Listas de Opções (Mocks) ---
@@ -252,14 +258,23 @@ export function AeronaveFormModal({
             {/* Tipo */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Tipo</label>
-              <select 
-                className="input-base"
-                value={formData.tipo || ''}
-                onChange={e => handleChange('tipo', e.target.value)}
-              >
-                <option value="">Selecione...</option>
-                {tiposOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
+              <div className="flex gap-2">
+                <select 
+                  className="input-base flex-1"
+                  value={formData.tipo || ''}
+                  onChange={e => handleChange('tipo', e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  {tiposOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+                <button 
+                  onClick={() => handleConfigClick('tipo')}
+                  className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200"
+                  title="Gerenciar Tipos"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             {/* Descrição */}
@@ -276,14 +291,23 @@ export function AeronaveFormModal({
              {/* Fornecedor */}
              <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Fornecedor</label>
-              <select 
-                className="input-base"
-                value={formData.fornecedor || ''}
-                onChange={e => handleChange('fornecedor', e.target.value)}
-              >
-                <option value="">Selecione...</option>
-                {fornecedoresOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
+              <div className="flex gap-2">
+                <select 
+                  className="input-base flex-1"
+                  value={formData.fornecedor || ''}
+                  onChange={e => handleChange('fornecedor', e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  {fornecedoresOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+                <button 
+                  onClick={() => handleConfigClick('fornecedor')}
+                  className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200"
+                  title="Gerenciar Fornecedores"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             {/* Faturado CNPJ (Só Missão) */}
@@ -341,14 +365,23 @@ export function AeronaveFormModal({
 
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Doc. Fiscal</label>
-              <select 
-                className="input-base"
-                value={formData.doc_fiscal || ''}
-                onChange={e => handleChange('doc_fiscal', e.target.value)}
-              >
-                 <option value="">Selecione...</option>
-                {docFiscalOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
+              <div className="flex gap-2">
+                <select 
+                  className="input-base flex-1"
+                  value={formData.doc_fiscal || ''}
+                  onChange={e => handleChange('doc_fiscal', e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  {docFiscalOpcoes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+                <button 
+                  onClick={() => handleConfigClick('doc_fiscal')}
+                  className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-xl transition-colors border border-gray-200"
+                  title="Gerenciar Documentos"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
