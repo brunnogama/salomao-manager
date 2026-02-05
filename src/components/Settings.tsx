@@ -204,14 +204,18 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     if (confirmText !== 'APAGAR') return;
     setLoading(true);
     try {
-      // Correção do erro 400: Filtro genérico que funciona para UUID e Integer
-      const { error } = await supabase.from(table).delete().neq('created_at', '1900-01-01');
+      // Uso de gte em created_at para selecionar todos os registros de forma universal
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .gte('created_at', '1900-01-01');
       
       if (error) throw error;
       setStatus({ type: 'success', message: `${moduleName} resetado!` });
       await logAction('RESET', moduleName.toUpperCase(), logMsg);
     } catch (e: any) { 
-      setStatus({ type: 'error', message: 'Erro: ' + e.message }); 
+      console.error('Erro ao resetar:', e);
+      setStatus({ type: 'error', message: 'Erro: ' + (e.message || 'Falha ao processar no banco') }); 
     } finally { 
       setLoading(false); 
     }
