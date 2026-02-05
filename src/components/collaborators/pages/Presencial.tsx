@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Upload, FileSpreadsheet, RefreshCw, Download,
   BarChart3, Users, Briefcase, FileText,
-  Plus, Search, Eraser, Mail, X, Grid, LogOut, UserCircle
+  Plus, Search, Eraser, Mail, X, Grid, LogOut, UserCircle, Clock
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -12,18 +12,20 @@ import html2canvas from 'html2canvas'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 
 // Importações Modularizadas
-import { PresenceRecord, SocioRule, ReportItem } from '../types/presencial'
+import { PresenceRecord, SocioRule, ReportItem, MarcacaoPonto, RegistroDiario } from '../types/presencial'
 import { 
   normalizeKey, 
   toTitleCase, 
   findValue, 
   getFirstDayOfMonth, 
-  getLastDayOfMonth 
+  getLastDayOfMonth,
+  processarMarcacoesDiarias
 } from '../utils/presencialUtils'
 import { SocioRuleModal } from '../components/SocioRuleModal'
 import { ReportTable } from '../components/ReportTable'
 import { DescriptiveTable } from '../components/DescriptiveTable'
 import { SocioRulesTable } from '../components/SocioRulesTable'
+import { HorasTable } from '../components/HorasTable'
 
 interface PresencialProps {
   userName?: string;
@@ -34,6 +36,7 @@ interface PresencialProps {
 export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: PresencialProps) {
   // === ESTADOS ===
   const [records, setRecords] = useState<PresenceRecord[]>([])
+  const [marcacoes, setMarcacoes] = useState<MarcacaoPonto[]>([])
   const [socioRules, setSocioRules] = useState<SocioRule[]>([]) 
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -44,7 +47,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   const [searchText, setSearchText] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingRule, setEditingRule] = useState<Partial<SocioRule> | null>(null)
-  const [viewMode, setViewMode] = useState<'report' | 'descriptive' | 'socios'>('report')
+  const [viewMode, setViewMode] = useState<'report' | 'descriptive' | 'socios' | 'horas'>('report')
   const [startDate, setStartDate] = useState(getFirstDayOfMonth())
   const [endDate, setEndDate] = useState(getLastDayOfMonth())
   const [isInitialLoad, setIsInitialLoad] = useState(true)
@@ -55,10 +58,11 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   const socioInputRef = useRef<HTMLInputElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const reportRef = useRef<HTMLDivElement>(null)
+  const horasRef = useRef<HTMLDivElement>(null)
 
   // === TODA A LÓGICA DO COMPONENTE ===
   const fetchInitialPeriod = async () => {
-      const { data } = await supabase.from('presenca_portaria').select('data_hora').order('data_hora', { ascending: false }).limit(1)
+      const { data } = await supabase.from('marcacoes_ponto').select('data_hora').order('data_hora', { ascending: false }).limit(1)
       if (data && data.length > 0) {
           const lastDate = new Date(data[0].data_hora)
           setEndDate(lastDate.toISOString().split('T')[0])
@@ -72,17 +76,31 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
     if (isInitialLoad) return
     setLoading(true)
     let allPresenceData: any[] = [];
+    let allMarcacoesData: any[] = [];
     let from = 0;
     const pageSize = 1000;
     let hasMore = true;
+    
+    // Buscar dados antigos da tabela presenca_portaria
     while (hasMore) {
       const { data: presenceData, error } = await supabase.from('presenca_portaria').select('*', { count: 'exact' }).gte('data_hora', startDate + 'T00:00:00').lte('data_hora', endDate + 'T23:59:59').order('data_hora', { ascending: true }).range(from, from + pageSize - 1);
       if (error) { console.error(error); break; }
       if (presenceData && presenceData.length > 0) { allPresenceData = [...allPresenceData, ...presenceData]; if (presenceData.length < pageSize) { hasMore = false; } else { from += pageSize; } } else { hasMore = false; }
     }
+    
+    // Buscar novos dados da tabela marcacoes_ponto
+    from = 0;
+    hasMore = true;
+    while (hasMore) {
+      const { data: marcacoesData, error } = await supabase.from('marcacoes_ponto').select('*', { count: 'exact' }).gte('data_hora', startDate + 'T00:00:00').lte('data_hora', endDate + 'T23:59:59').order('data_hora', { ascending: true }).range(from, from + pageSize - 1);
+      if (error) { console.error(error); break; }
+      if (marcacoesData && marcacoesData.length > 0) { allMarcacoesData = [...allMarcacoesData, ...marcacoesData]; if (marcacoesData.length < pageSize) { hasMore = false; } else { from += pageSize; } } else { hasMore = false; }
+    }
+    
     const { data: rulesData } = await supabase.from('socios_regras').select('*').order('nome_colaborador', { ascending: true }).limit(3000)
     if (rulesData) setSocioRules(rulesData)
     setRecords(allPresenceData)
+    setMarcacoes(allMarcacoesData)
     setLoading(false)
   }
 
@@ -128,6 +146,22 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
           }
           return true
       })
+      
+      const filteredMarcacoes = marcacoes.filter(marcacao => {
+          const dateObj = new Date(marcacao.data_hora)
+          const start = new Date(startDate + 'T00:00:00');
+          const end = new Date(endDate + 'T23:59:59');
+          if (dateObj < start || dateObj > end) return false
+          const nameFormatted = toTitleCase(marcacao.nome_colaborador)
+          if (filterColaborador && nameFormatted !== filterColaborador) return false
+          if (searchText) {
+              const lowerSearch = searchText.toLowerCase()
+              const matchesName = marcacao.nome_colaborador.toLowerCase().includes(lowerSearch)
+              if (!matchesName) return false
+          }
+          return true
+      })
+      
       const filteredRules = socioRules.filter(rule => {
           const socioFormatted = toTitleCase(rule.socio_responsavel)
           const nameFormatted = toTitleCase(rule.nome_colaborador)
@@ -139,8 +173,8 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
           }
           return true
       })
-      return { filteredRecords, filteredRules }
-  }, [records, socioRules, startDate, endDate, filterSocio, filterColaborador, searchText, socioMap])
+      return { filteredRecords, filteredMarcacoes, filteredRules }
+  }, [records, marcacoes, socioRules, startDate, endDate, filterSocio, filterColaborador, searchText, socioMap])
 
   const reportData = useMemo(() => {
     const grouped: { [key: string]: { originalName: string, uniqueDays: Set<string>, weekDays: { [key: number]: number }, datesSet: Set<string> } } = {}
@@ -183,6 +217,10 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
         return new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime();
     });
   }, [filteredData.filteredRecords]);
+
+  const registrosHoras = useMemo(() => {
+    return processarMarcacoesDiarias(filteredData.filteredMarcacoes)
+  }, [filteredData.filteredMarcacoes])
 
   const handlePresenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -246,7 +284,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
         const minDate = new Date(Math.min(...allDates.map((d: Date) => d.getTime())));
         const maxDate = new Date(Math.max(...allDates.map((d: Date) => d.getTime())));
         
-        const { data: existingRecords } = await supabase.from('presenca_portaria').select('nome_colaborador, data_hora').gte('data_hora', minDate.toISOString()).lte('data_hora', maxDate.toISOString());
+        const { data: existingRecords } = await supabase.from('marcacoes_ponto').select('nome_colaborador, data_hora').gte('data_hora', minDate.toISOString()).lte('data_hora', maxDate.toISOString());
         
         const existingSignatures = new Set<string>();
         if (existingRecords) {
@@ -265,7 +303,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
         const BATCH_SIZE = 1000;
         for (let i = 0; i < recordsToInsert.length; i += BATCH_SIZE) {
           const batch = recordsToInsert.slice(i, i + BATCH_SIZE).map((r: any) => ({ nome_colaborador: r.nome_colaborador, data_hora: r.data_hora.toISOString(), arquivo_origem: r.arquivo_origem }));
-          const { error } = await supabase.from('presenca_portaria').insert(batch);
+          const { error } = await supabase.from('marcacoes_ponto').insert(batch);
           if (error) throw error;
           setProgress(Math.round(((i / BATCH_SIZE) + 1) / Math.ceil(recordsToInsert.length / BATCH_SIZE) * 100));
         }
@@ -320,15 +358,16 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   const hasActiveFilters = filterSocio !== '' || filterColaborador !== '' || searchText !== '';
 
   const handleSendEmail = async () => {
-    if (!reportRef.current || viewMode !== 'report') return alert("Vá para a aba 'Relatório'.");
+    const refToUse = viewMode === 'horas' ? horasRef : reportRef;
+    if (!refToUse.current || (viewMode !== 'report' && viewMode !== 'horas')) return alert("Vá para a aba 'Relatório' ou 'Horas'.");
     setLoading(true);
     try {
-        const canvas = await html2canvas(reportRef.current, { scale: 2, backgroundColor: '#ffffff' });
+        const canvas = await html2canvas(refToUse.current, { scale: 2, backgroundColor: '#ffffff' });
         canvas.toBlob(async (blob) => {
             if (!blob) { setLoading(false); return alert("Erro ao gerar imagem."); }
             try {
                 await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                const subject = `Relatório de Presença - ${new Date().toLocaleDateString()}`;
+                const subject = `Relatório de ${viewMode === 'horas' ? 'Horas' : 'Presença'} - ${new Date().toLocaleDateString()}`;
                 const body = `Segue em anexo (colado) o relatório filtrado.\n\n(Pressione Ctrl+V para colar a imagem aqui)`;
                 window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
                 alert("📸 Imagem copiada!");
@@ -353,6 +392,18 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
             'Data': new Date(item.data_hora).toLocaleDateString('pt-BR'), 'Hora': new Date(item.data_hora).toLocaleTimeString('pt-BR'), 'Dia da Semana': weekDays[new Date(item.data_hora).getDay()]
         }));
         sheetName = 'Descritivo'; fileName = 'Presencial_Descritivo';
+    } else if (viewMode === 'horas') {
+        dataToExport = registrosHoras.map(item => ({
+            'Colaborador': item.colaborador,
+            'Data': item.data,
+            'Hora Chegada': item.entrada,
+            'Saída Almoço': item.saida_almoco || '-',
+            'Volta Almoço': item.volta_almoco || '-',
+            'Saída': item.saida || '-',
+            'Tempo Útil': item.tempo_util,
+            'Observações': item.observacoes
+        }));
+        sheetName = 'Horas'; fileName = 'Controle_Horas';
     }
     if (dataToExport.length === 0) return alert('Sem dados.');
     const ws = XLSX.utils.json_to_sheet(dataToExport); const wb = XLSX.utils.book_new();
@@ -418,6 +469,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
             {/* VIEW MODE - Navy Gradient quando ativo */}
             <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
                 <button onClick={() => setViewMode('report')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'report' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><BarChart3 className="h-4 w-4" /> Relatório</button>
+                <button onClick={() => setViewMode('horas')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'horas' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><Clock className="h-4 w-4" /> Horas</button>
                 <button onClick={() => setViewMode('descriptive')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'descriptive' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><FileText className="h-4 w-4" /> Descritivo</button>
                 <button onClick={() => setViewMode('socios')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'socios' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><Briefcase className="h-4 w-4" /> Regras</button>
             </div>
@@ -427,9 +479,9 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
                 <input type="file" accept=".xlsx" ref={presenceInputRef} onChange={handlePresenceUpload} className="hidden" />
                 <input type="file" accept=".xlsx" ref={socioInputRef} onChange={handleSocioUpload} className="hidden" />
                 <button onClick={() => fetchRecords()} className="p-2.5 text-gray-400 hover:text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all" title="Atualizar"><RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} /></button>
-                {(viewMode === 'report' || viewMode === 'descriptive') && (reportData.length > 0 || descriptiveData.length > 0) && (
+                {(viewMode === 'report' || viewMode === 'descriptive' || viewMode === 'horas') && ((viewMode === 'report' && reportData.length > 0) || (viewMode === 'descriptive' && descriptiveData.length > 0) || (viewMode === 'horas' && registrosHoras.length > 0)) && (
                   <div className="flex gap-2">
-                    {viewMode === 'report' && <button onClick={handleSendEmail} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Mail className="h-4 w-4" /> Email</button>}
+                    {(viewMode === 'report' || viewMode === 'horas') && <button onClick={handleSendEmail} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Mail className="h-4 w-4" /> Email</button>}
                     <button onClick={handleExportXLSX} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Download className="h-4 w-4" /> Exportar</button>
                   </div>
                 )}
@@ -453,9 +505,9 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
                     {showSearch && <input ref={searchInputRef} type="text" placeholder="Buscar..." className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium" value={searchText} onChange={(e) => setSearchText(e.target.value)} />}
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <SearchableSelect value={filterSocio} onChange={setFilterSocio} table="socios_lista" nameField="nome" placeholder="Todos Sócios" className="w-full sm:w-48" onRefresh={fetchSociosList} />
+                    {viewMode !== 'horas' && <SearchableSelect value={filterSocio} onChange={setFilterSocio} table="socios_lista" nameField="nome" placeholder="Todos Sócios" className="w-full sm:w-48" onRefresh={fetchSociosList} />}
                     <SearchableSelect value={filterColaborador} onChange={setFilterColaborador} options={uniqueColaboradores} placeholder="Todos Colab." className="w-full sm:w-48" />
-                    {(viewMode === 'report' || viewMode === 'descriptive') && (
+                    {(viewMode === 'report' || viewMode === 'descriptive' || viewMode === 'horas') && (
                         <div className="flex items-center gap-2 border-l border-gray-200 pl-2">
                             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 hover:border-[#1e3a8a] transition-all">
                                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider pl-1">De</span>
@@ -475,6 +527,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
       {/* CONTENT */}
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         {viewMode === 'report' && <ReportTable reportData={reportData} reportRef={reportRef} startDate={startDate} endDate={endDate} />}
+        {viewMode === 'horas' && <HorasTable registros={registrosHoras} tableRef={horasRef} />}
         {viewMode === 'descriptive' && <DescriptiveTable descriptiveData={descriptiveData} socioMap={socioMap} />}
         {viewMode === 'socios' && <SocioRulesTable filteredRules={filteredData.filteredRules} onEdit={handleOpenModal} onDelete={handleDeleteRule} />}
       </div>
