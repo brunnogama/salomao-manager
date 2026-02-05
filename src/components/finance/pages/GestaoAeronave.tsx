@@ -417,10 +417,16 @@ export function GestaoAeronave({
 
         const formatExcelDate = (val: any) => {
           if (!val) return null
+          // Se for string no formato ISO AAAA-MM-DD
+          if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) {
+            return val.split(' ')[0]
+          }
+          // Se for string no formato brasileiro DD/MM/AAAA
           if (typeof val === 'string' && val.includes('/')) {
             const [d, m, a] = val.split('/')
             return `${a}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
           }
+          // Se for número serial do Excel
           if (typeof val === 'number') {
             const date = new Date(Math.round((val - 25569) * 86400 * 1000))
             return date.toISOString().split('T')[0]
@@ -499,6 +505,9 @@ export function GestaoAeronave({
 
         const formatExcelDate = (val: any) => {
           if (!val) return null
+          if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) {
+            return val.split(' ')[0]
+          }
           if (typeof val === 'string' && val.includes('/')) {
             const [d, m, a] = val.split('/')
             return `${a}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
