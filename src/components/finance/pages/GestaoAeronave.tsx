@@ -286,7 +286,11 @@ export function GestaoAeronave({
       const despesas = filteredDataForCards.filter(item => item.data)
       const pagamentos = filteredDataForCards.filter(item => item.emissao)
       
-      const totalFlights = new Set(despesas.map(item => `${item.data}-${item.localidade_destino}`)).size
+      const totalFlights = new Set(
+        despesas
+          .filter(item => item.missao_id) // Apenas registros com missao_id
+          .map(item => item.missao_id)
+      ).size
       const totalDespesasPrevisto = despesas.reduce((acc, curr) => acc + (Number(curr.valor_previsto) || 0), 0)
       const totalDespesasPago = despesas.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
       const totalPagamentosBruto = pagamentos.reduce((acc, curr) => acc + (Number(curr.valor_bruto) || 0), 0)
@@ -302,7 +306,11 @@ export function GestaoAeronave({
         totalGeral: (totalDespesasPago || 0) + (totalPagamentosLiquido || 0)
       }
     } else if (dataType === 'despesas') {
-      const totalFlights = new Set(filteredDataForCards.map(item => `${item.data}-${item.localidade_destino}`)).size
+      const totalFlights = new Set(
+        filteredDataForCards
+          .filter(item => item.missao_id) // Apenas registros com missao_id
+          .map(item => item.missao_id)
+      ).size
       return filteredDataForCards.reduce((acc, curr) => ({
         missoes: totalFlights || 0,
         previsto: acc.previsto + (Number(curr.valor_previsto) || 0),
@@ -439,6 +447,7 @@ export function GestaoAeronave({
           });
 
           return {
+            missao_id: cleanRow['ID'] ? parseInt(cleanRow['ID']) : null, // ✅ NOVO
             tripulacao: cleanRow['Tripulação']?.toString() || '',
             aeronave: cleanRow['Aeronave']?.toString() || '',
             data: formatExcelDate(cleanRow['Data']),

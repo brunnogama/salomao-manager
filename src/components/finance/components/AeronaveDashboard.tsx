@@ -115,19 +115,24 @@ export function AeronaveDashboard({
       : despesasData.filter(item => item.data?.startsWith(localSelectedYear))
 
     const totalPaid = filteredDespesas.reduce((acc, curr) => acc + (Number(curr.valor_pago) || 0), 0)
-    const totalFlights = new Set(filteredDespesas.map(item => `${item.data}-${item.localidade_destino}`)).size
+    const totalFlights = new Set(
+      filteredDespesas
+        .filter(item => item.missao_id)
+        .map(item => item.missao_id)
+    ).size
 
     const missionsMap: any = {}
     filteredDespesas.forEach(item => {
       if (!item.data || !item.localidade_destino) return
       
-      const key = `${item.data} | ${item.localidade_destino}`
+      const key = item.missao_id || `${item.data} | ${item.localidade_destino}` // Fallback para dados antigos
       if (!missionsMap[key]) {
         missionsMap[key] = { 
-          key, 
+          key,
+          missao_id: item.missao_id, // ✅ NOVO
           data: item.data, 
           destino: item.localidade_destino,
-          missao: item.localidade_destino,
+          missao: item.missao_id ? `Missão #${item.missao_id}` : item.localidade_destino, // ✅ ATUALIZADO
           pago: 0, 
           previsto: 0 
         }

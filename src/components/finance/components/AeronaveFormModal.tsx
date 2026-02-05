@@ -11,6 +11,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
   const [uploading, setUploading] = useState(false);
   
   const [formData, setFormData] = useState({
+    missao_id: null,
     tripulacao: '',
     aeronave: '',
     data: '',
@@ -35,6 +36,7 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
       setSelectedFile(null)
     } else {
       setFormData({
+        missao_id: null,
         tripulacao: '',
         aeronave: '',
         data: '',
@@ -218,6 +220,22 @@ export function AeronaveFormModal({ isOpen, onClose, onSave, initialData }: any)
                   onChange={(e: any) => setFormData({...formData, data: e.target.value})}
                   placeholder="DD/MM/AAAA"
                 />
+              </label>
+
+              <label className="block">
+                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">
+                  ID da Missão
+                </span>
+                <input 
+                  type="number"
+                  className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
+                  value={formData.missao_id || ''}
+                  onChange={e => setFormData({...formData, missao_id: e.target.value ? parseInt(e.target.value) : null})}
+                  placeholder="Número da missão"
+                />
+                <p className="text-[8px] text-gray-400 mt-1 font-bold">
+                  Múltiplos lançamentos de uma mesma viagem compartilham o mesmo ID
+                </p>
               </label>
             </div>
 
