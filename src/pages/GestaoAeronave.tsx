@@ -537,6 +537,7 @@ export function GestaoAeronave({
           <AeronaveDashboard 
             data={filteredData} 
             onMissionClick={handleMissionClick}
+            filterOrigem={filterOrigem}
           />
         ) : (
           <AeronaveTable 
