@@ -167,11 +167,9 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-full">
       
-      {/* LINHA SUPERIOR: GRÁFICO (8 COLUNAS) E RANKING (4 COLUNAS) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[450px]">
-        
-        {/* 1. GRÁFICO DE LINHA (8/12 colunas - mais largo) */}
-        <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full relative">
+      {/* LINHA 1: GRÁFICO OCUPANDO LARGURA TOTAL */}
+      <div className="h-[450px]">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full relative">
           
           {/* Header Integrado no Card */}
           <div className="flex items-center justify-between mb-6">
@@ -235,9 +233,13 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
-        {/* 2. RANKING DE FORNECEDORES (4/12 colunas - mais estreito) */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+      {/* LINHA 2: RANKING DE FORNECEDORES, MISSÕES E DESPESAS FIXAS - 3 COLUNAS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[400px]">
+        
+        {/* 1. RANKING DE FORNECEDORES */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <Users className="h-4 w-4 text-gray-400" />
             <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Ranking de Fornecedores</h4>
@@ -245,21 +247,21 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
           
           {/* Cabeçalho */}
           <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
-            <div className="col-span-6 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
-            <div className="col-span-6 text-[10px] font-black uppercase text-gray-500 text-right">Total Pago</div>
+            <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
+            <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
           </div>
 
           {/* Lista com Scroll */}
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
             {suppliersList.map((item, idx) => (
               <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50/30 transition-colors items-center">
-                <div className="col-span-6 flex items-center gap-2 overflow-hidden">
+                <div className="col-span-7 flex items-center gap-2 overflow-hidden">
                   <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-gray-100 text-[9px] font-bold text-gray-500 rounded">
                     {idx + 1}
                   </span>
                   <span className="text-xs font-bold text-gray-700 truncate" title={item.name}>{item.name}</span>
                 </div>
-                <div className="col-span-6 text-xs font-black text-[#1e3a8a] text-right">
+                <div className="col-span-5 text-xs font-black text-[#1e3a8a] text-right">
                   {formatCurrency(item.total)}
                 </div>
               </div>
@@ -270,12 +272,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
           </div>
         </div>
 
-      </div>
-
-      {/* LINHA INFERIOR: MISSÕES E DESPESAS FIXAS LADO A LADO */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[400px]">
-        
-        {/* CARD ESQUERDA: RELAÇÃO DAS MISSÕES */}
+        {/* 2. RELAÇÃO DAS MISSÕES */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <Plane className="h-4 w-4 text-blue-600" />
@@ -283,9 +280,8 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
           </div>
 
           <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
-            <div className="col-span-6 text-[10px] font-black uppercase text-gray-500">Missão</div>
-            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-center">Data</div>
-            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
+            <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Missão</div>
+            <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
@@ -295,14 +291,16 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
                 onClick={() => onMissionClick && onMissionClick(missao.nome)}
                 className="w-full grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all items-center text-left group"
               >
-                <div className="col-span-6 text-xs font-bold text-gray-700 truncate group-hover:text-blue-700">
-                  {missao.nome}
+                <div className="col-span-7 flex flex-col gap-0.5 overflow-hidden">
+                  <span className="text-xs font-bold text-gray-700 truncate group-hover:text-blue-700">
+                    {missao.nome}
+                  </span>
+                  <span className="text-[9px] font-medium text-gray-400 flex items-center gap-1">
+                    <Calendar className="h-2.5 w-2.5" />
+                    {formatDate(missao.data)}
+                  </span>
                 </div>
-                <div className="col-span-3 flex items-center justify-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-50 py-1 rounded">
-                  <Calendar className="h-3 w-3" />
-                  {formatDate(missao.data)}
-                </div>
-                <div className="col-span-3 text-xs font-black text-blue-600 text-right">
+                <div className="col-span-5 text-xs font-black text-blue-600 text-right">
                   {formatCurrency(missao.total)}
                 </div>
               </button>
@@ -313,7 +311,7 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
           </div>
         </div>
 
-        {/* CARD DIREITA: DESPESA FIXA (Ranking) */}
+        {/* 3. DESPESAS FIXAS */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
             <DollarSign className="h-4 w-4 text-emerald-600" />
@@ -321,23 +319,22 @@ export function AeronaveDashboard({ data, onMissionClick }: AeronaveDashboardPro
           </div>
 
           <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
-            <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
-            <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Tipo</div>
-            <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
+            <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
+            <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
             {fixedExpensesList.map((item, idx) => (
               <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-emerald-50/30 transition-colors items-center">
-                <div className="col-span-5 text-xs font-bold text-gray-700 truncate" title={item.fornecedor}>
-                  {item.fornecedor}
-                </div>
-                <div className="col-span-4">
-                  <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100 truncate max-w-full">
+                <div className="col-span-7 flex flex-col gap-0.5 overflow-hidden">
+                  <span className="text-xs font-bold text-gray-700 truncate" title={item.fornecedor}>
+                    {item.fornecedor}
+                  </span>
+                  <span className="inline-flex px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100 truncate max-w-fit">
                     {item.tipo}
                   </span>
                 </div>
-                <div className="col-span-3 text-xs font-black text-emerald-600 text-right">
+                <div className="col-span-5 text-xs font-black text-emerald-600 text-right">
                   {formatCurrency(item.total)}
                 </div>
               </div>

@@ -173,9 +173,10 @@ export function GestaoAeronave({
     setIsViewModalOpen(true)
   }
 
-  // NOVO: Navegação via Dashboard
+  // ATUALIZADO: Navegação via Dashboard com filtro de missão
   const handleMissionClick = (missionName: string) => {
     setSearchTerm(missionName)
+    setFilterOrigem('missao')
     setActiveTab('dados')
   }
 
@@ -397,7 +398,9 @@ export function GestaoAeronave({
             <button
               onClick={() => {
                 setActiveTab('dashboard')
-                setSearchTerm('') // NOVO: Limpa filtro ao voltar para Dashboard
+                setSearchTerm('')
+                setStartDate('')
+                setEndDate('')
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                 activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
@@ -513,7 +516,7 @@ export function GestaoAeronave({
         {activeTab === 'dashboard' ? (
           <AeronaveDashboard 
             data={filteredData} 
-            onMissionClick={handleMissionClick} // NOVO: Prop passada para o Dashboard
+            onMissionClick={handleMissionClick}
           />
         ) : (
           <AeronaveTable 
