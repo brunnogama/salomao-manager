@@ -49,6 +49,35 @@ export function SecretariaExecutivaCalendario({
     }
   }
 
+  // Funções para gerar a grade real do calendário
+  const getDaysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate()
+  const getFirstDayOfMonth = (month: number, year: number) => new Date(year, month, 1).getDay()
+
+  const renderCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(selectedMonth, selectedYear)
+    const firstDay = getFirstDayOfMonth(selectedMonth, selectedYear)
+    const days = []
+
+    // Espaços vazios para o início do mês
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="aspect-square p-2" />)
+    }
+
+    // Dias do mês
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(
+        <div 
+          key={day} 
+          className="aspect-square p-2 border border-gray-50 rounded-xl hover:bg-blue-50/30 transition-all cursor-pointer group relative bg-white"
+        >
+          <span className="text-sm font-bold text-gray-400 group-hover:text-[#1e3a8a]">{day}</span>
+        </div>
+      )
+    }
+
+    return days
+  }
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
       
@@ -118,7 +147,7 @@ export function SecretariaExecutivaCalendario({
           </button>
         </div>
 
-        {/* CALENDAR GRID PLACEHOLDER */}
+        {/* CALENDAR GRID */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
           <div className="grid grid-cols-7 gap-2 mb-4">
             {DIAS_SEMANA.map(dia => (
@@ -129,12 +158,7 @@ export function SecretariaExecutivaCalendario({
           </div>
           
           <div className="grid grid-cols-7 gap-2 min-h-[400px]">
-            {/* Simulação de dias vazios para preenchimento visual */}
-            {Array.from({ length: 31 }).map((_, i) => (
-              <div key={i} className="aspect-square p-2 border border-gray-50 rounded-xl hover:bg-blue-50/30 transition-all cursor-pointer group relative">
-                <span className="text-sm font-bold text-gray-400 group-hover:text-[#1e3a8a]">{i + 1}</span>
-              </div>
-            ))}
+            {renderCalendarDays()}
           </div>
         </div>
 
