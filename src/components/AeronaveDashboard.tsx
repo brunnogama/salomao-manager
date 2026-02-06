@@ -14,7 +14,7 @@ import {
   LinearGradient,
   Stop
 } from 'recharts'
-import { Filter, TrendingUp, Plane, DollarSign, Users, Calendar, AlertCircle, PieChart, ArrowUpRight, ArrowDownRight, BarChart3 } from 'lucide-react'
+import { Filter, TrendingUp, Plane, DollarSign, Users, Calendar, AlertCircle, PieChart, ArrowUpRight, ArrowDownRight, BarChart3, BarChart4 } from 'lucide-react'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
 
 interface AeronaveDashboardProps {
@@ -345,6 +345,8 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                   strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorValue)"
+                  dot={{ r: 6, fill: '#ffffff', stroke: '#1e3a8a', strokeWidth: 3 }}
+                  activeDot={{ r: 8, fill: '#f59e0b', strokeWidth: 0 }}
                   animationDuration={1000}
                 >
                   <LabelList content={<CustomDataLabel />} />
@@ -356,9 +358,14 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
 
         {/* 2. RANKING DE FORNECEDORES (1 coluna de 3) */}
         <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[480px]">
-          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
-            <Users className="h-4 w-4 text-gray-400" />
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Ranking de Fornecedores</h4>
+          <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Fornecedores</h2>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Maiores volumes financeiros</p>
+            </div>
           </div>
           
           <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
@@ -395,9 +402,14 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
           {filterOrigem === 'fixa' ? (
             <>
-              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Pagamentos Pendentes</h4>
+              <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Pendentes</h2>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Pagamentos aguardando</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
@@ -437,9 +449,14 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
             </>
           ) : (
             <>
-              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
-                <Plane className="h-4 w-4 text-blue-600" />
-                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Relação de Missões</h4>
+              <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+                  <Plane className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Missões</h2>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Relação completa no período</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
@@ -484,9 +501,14 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
           {filterOrigem === 'missao' ? (
             <>
-              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Pagamentos Pendentes</h4>
+              <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Pendentes</h2>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Pagamentos aguardando</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
@@ -526,9 +548,14 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
             </>
           ) : (
             <>
-              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 shrink-0">
-                <DollarSign className="h-4 w-4 text-emerald-600" />
-                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Despesas Fixas</h4>
+              <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Despesas</h2>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Gastos fixos operacionais</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
@@ -565,10 +592,15 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       {/* LINHA 3: EVOLUÇÃO DE GASTOS POR TIPO */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-auto">
-          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
-            <PieChart className="h-4 w-4 text-blue-600" />
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Maiores Gastos em Missões</h4>
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-5 flex flex-col h-auto">
+          <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+              <BarChart4 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Custo Missão</h2>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Maiores gastos por categoria</p>
+            </div>
           </div>
           <div className="space-y-3">
             {topMissionCategories.map((cat, idx) => (
@@ -599,10 +631,15 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-auto">
-          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
-            <PieChart className="h-4 w-4 text-emerald-600" />
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Maiores Despesas Fixas</h4>
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-5 flex flex-col h-auto">
+          <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+              <PieChart className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Custo Fixo</h2>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Maiores gastos por categoria</p>
+            </div>
           </div>
           <div className="space-y-3">
             {topFixedCategories.map((cat, idx) => (
