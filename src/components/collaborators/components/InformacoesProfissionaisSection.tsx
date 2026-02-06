@@ -1,5 +1,5 @@
 // src/components/collaborators/components/InformacoesProfissionaisSection.tsx
-import { GraduationCap, ExternalLink } from 'lucide-react'
+import { GraduationCap } from 'lucide-react'
 import { Colaborador } from '../../../types/colaborador'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 
@@ -20,13 +20,6 @@ export function InformacoesProfissionaisSection({
   setFormData, 
   maskDate 
 }: InformacoesProfissionaisSectionProps) {
-  const getCNAUrl = () => {
-    if (formData.oab_numero && formData.oab_uf) {
-      return `https://cna.oab.org.br/Home/Search?SearchOabNumber=${formData.oab_numero}&SearchOabState=${formData.oab_uf}`
-    }
-    return 'https://cna.oab.org.br'
-  }
-
   return (
     <section className="space-y-4">
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
@@ -65,21 +58,6 @@ export function InformacoesProfissionaisSection({
             maxLength={10} 
             placeholder="DD/MM/AAAA" 
           />
-        </div>
-      </div>
-
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-2 text-blue-700 text-xs">
-        <ExternalLink className="h-4 w-4 shrink-0 mt-0.5" />
-        <div>
-          <p className="font-medium">Consultar vínculos societários no CNA</p>
-          <a 
-            href={getCNAUrl()} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline"
-          >
-            Clique aqui para consultar no site oficial da OAB
-          </a>
         </div>
       </div>
     </section>
