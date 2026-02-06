@@ -86,11 +86,11 @@ export function GestaoAeronave({
     fetchDados()
   }, [])
 
-  // --- Filtragem no Front-end (ALTERAÇÃO 2: filtro de data usa data_pagamento) ---
+  // --- Filtragem no Front-end ---
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      // 1. Filtro de Origem
-      if (filterOrigem !== 'todos' && item.origem !== filterOrigem) return false
+      // 1. Filtro de Origem (não aplicar na aba Faturas)
+      if (activeTab !== 'faturas' && filterOrigem !== 'todos' && item.origem !== filterOrigem) return false
 
       // 2. Filtro de Texto (Busca)
       const searchString = searchTerm.toLowerCase()
@@ -103,14 +103,14 @@ export function GestaoAeronave({
 
       if (searchTerm && !matchSearch) return false
 
-      // 3. Filtro de Data (ALTERADO: usa data_pagamento)
-      const dateRef = item.data_pagamento
+      // 3. Filtro de Data (ALTERADO: usa data_pagamento para Dados, data_missao para Dashboard)
+      const dateRef = activeTab === 'dashboard' ? item.data_missao : item.data_pagamento
       if (startDate && dateRef && dateRef < startDate) return false
       if (endDate && dateRef && dateRef > endDate) return false
 
       return true
     })
-  }, [data, filterOrigem, searchTerm, startDate, endDate])
+  }, [data, filterOrigem, searchTerm, startDate, endDate, activeTab])
 
   // --- Agrupamento de Faturas (Tarefa 3) ---
   const faturasAgrupadas = useMemo(() => {
@@ -441,8 +441,8 @@ export function GestaoAeronave({
             </button>
           </div>
 
-          {/* ALTERAÇÃO 3: Esconder botões de filtro na aba Dashboard */}
-          {activeTab !== 'dashboard' && (
+          {/* ALTERAÇÃO: Esconder botões APENAS na aba Faturas */}
+          {activeTab !== 'faturas' && (
             <div className="flex gap-2">
               <button
                 onClick={() => setFilterOrigem('todos')}
@@ -471,9 +471,11 @@ export function GestaoAeronave({
             </div>
           )}
 
-          {/* ALTERAÇÃO 2: Indicativo de Período de Pagamento */}
+          {/* ALTERAÇÃO: Label dinâmico para o filtro de período */}
           <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Período de Pagamento</span>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+              {activeTab === 'dashboard' ? 'Período de Missões' : 'Período de Pagamento'}
+            </span>
             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
               <Calendar className="h-4 w-4 text-gray-400" />
               <input 
