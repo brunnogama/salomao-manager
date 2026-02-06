@@ -277,7 +277,8 @@ export default function App() {
             {currentModule === 'executive' && (
               <>
                 {activePage === 'dashboard' && <SecretariaExecutivaDashboard userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
-                {activePage === 'agenda' && <SecretariaExecutivaCalendario userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {/* ALTERAÇÃO AQUI: Aceita 'agenda' ou 'calendario' para evitar tela branca */}
+                {(activePage === 'agenda' || activePage === 'calendario') && <SecretariaExecutivaCalendario userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'despesas' && <SecretariaExecutivaDespesas userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'ged' && <SecretariaExecutivaGED userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'gestao-familia' && (
