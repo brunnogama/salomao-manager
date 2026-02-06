@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { 
   Shield, Users, History as HistoryIcon, Code, Lock, 
   Briefcase, EyeOff, LayoutGrid, Heart, Plane, DollarSign, Grid, 
-  CheckCircle, AlertCircle, Trash2, AlertTriangle
+  CheckCircle, AlertCircle, Trash2, AlertTriangle, ChevronRight
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
@@ -255,7 +255,7 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
   const getModuleConfig = (modId: string) => {
     const configs: Record<string, { label: string; icon: any; color: string; bgColor: string; description: string }> = {
       geral: { label: 'Geral', icon: Shield, color: 'text-gray-700', bgColor: 'bg-gray-50', description: 'Gerenciamento de usuários e permissões' },
-      crm: { label: 'CRM', icon: Briefcase, color: 'text-blue-700', bgColor: 'bg-blue-50', description: 'Configurações de clientes e brindes' },
+      crm: { label: 'CRM Brindes', icon: Briefcase, color: 'text-blue-700', bgColor: 'bg-blue-50', description: 'Manutenção da base de dados do CRM' },
       rh: { label: 'RH', icon: Users, color: 'text-green-700', bgColor: 'bg-green-50', description: 'Gestão de colaboradores e presença' },
       family: { label: 'Família', icon: Heart, color: 'text-purple-700', bgColor: 'bg-purple-50', description: 'Controle familiar e financeiro' },
       financial: { label: 'Financeiro', icon: DollarSign, color: 'text-blue-800', bgColor: 'bg-blue-50', description: 'Gestão financeira da aeronave' },
@@ -264,6 +264,16 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     };
     return configs[modId] || configs.geral;
   }
+
+  const menuItems = [
+    { id: 'geral', label: 'Geral', icon: Shield },
+    { id: 'crm', label: 'CRM Brindes', icon: Briefcase },
+    { id: 'rh', label: 'RH', icon: Users },
+    { id: 'family', label: 'Família', icon: Heart },
+    { id: 'financial', label: 'Financeiro', icon: DollarSign },
+    { id: 'historico', label: 'Histórico', icon: HistoryIcon },
+    { id: 'sistema', label: 'Sistema', icon: Code, adminOnly: true },
+  ];
 
   if (activeModule !== 'menu' && !hasAccessToModule(activeModule)) {
     return (
@@ -280,107 +290,121 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
   const currentModuleConfig = getModuleConfig(activeModule);
 
   return (
-    <div className="max-w-7xl mx-auto pb-12 space-y-6">
-      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2 justify-between items-center">
-        <button onClick={() => setActiveModule('menu')} className="px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
-          <LayoutGrid className="h-4 w-4" /> Menu
-        </button>
-        <div className="flex flex-wrap gap-2 items-center">
-          {[
-            { id: 'geral', label: 'Geral', icon: Shield, color: 'bg-gray-900' },
-            { id: 'crm', label: 'CRM', icon: Briefcase, color: 'bg-blue-600' },
-            { id: 'rh', label: 'RH', icon: Users, color: 'bg-green-600' },
-            { id: 'family', label: 'Família', icon: Heart, color: 'bg-purple-600' },
-            { id: 'financial', label: 'Financeiro', icon: DollarSign, color: 'bg-blue-800' },
-            { id: 'historico', label: 'Histórico', icon: HistoryIcon, color: 'bg-purple-600' },
-            { id: 'sistema', label: 'Sistema', icon: Code, color: 'bg-red-600', adminOnly: true },
-          ].map(m => (
-            (!m.adminOnly || isAdmin) && hasAccessToModule(m.id) && (
-              <button 
-                key={m.id} 
-                onClick={() => setActiveModule(m.id as any)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${activeModule === m.id ? `${m.color} text-white` : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-100'}`}
-              >
-                <m.icon className="h-4 w-4" /> {m.label}
-              </button>
-            )
-          ))}
-          {onModuleHome && (
-            <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg ml-2 border border-gray-200"><Grid className="h-5 w-5" /></button>
-          )}
-        </div>
-      </div>
+    <div className="max-w-7xl mx-auto pb-12">
+      <div className="flex gap-6">
+        <div className="w-64 flex-shrink-0">
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 sticky top-6">
+            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200">
+              <Shield className="h-5 w-5 text-gray-700" />
+              <h3 className="font-bold text-gray-900">Configurações</h3>
+            </div>
 
-      {activeModule !== 'menu' && (
-        <div className={`${currentModuleConfig.bgColor} border border-gray-200 rounded-xl p-6`}>
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-xl ${currentModuleConfig.color} bg-white border`}>
-              <currentModuleConfig.icon className="h-6 w-6" />
-            </div>
-            <div>
-              <h2 className={`text-2xl font-bold ${currentModuleConfig.color}`}>{currentModuleConfig.label}</h2>
-              <p className="text-gray-600 text-sm">{currentModuleConfig.description}</p>
-            </div>
+            <nav className="space-y-1">
+              {menuItems.map(item => (
+                (!item.adminOnly || isAdmin) && hasAccessToModule(item.id) && (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveModule(item.id as any)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                      activeModule === item.id
+                        ? 'bg-gray-900 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </div>
+                    {activeModule === item.id && <ChevronRight className="h-4 w-4" />}
+                  </button>
+                )
+              ))}
+            </nav>
+
+            {onModuleHome && (
+              <button 
+                onClick={onModuleHome} 
+                className="w-full mt-6 pt-4 border-t border-gray-200 flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 text-sm font-medium"
+              >
+                <Grid className="h-4 w-4" />
+                Voltar ao Início
+              </button>
+            )}
           </div>
         </div>
-      )}
 
-      {status.type && (
-        <div className={`p-4 rounded-lg flex items-start gap-3 animate-in slide-in-from-top-2 ${status.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-          {status.type === 'success' ? <CheckCircle className="h-5 w-5 text-green-600" /> : <AlertCircle className="h-5 w-5 text-red-600" />}
-          <p className={`text-sm font-medium ${status.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>{status.message}</p>
+        <div className="flex-1 space-y-6">
+          {activeModule !== 'menu' && (
+            <div className={`${currentModuleConfig.bgColor} border border-gray-200 rounded-xl p-6`}>
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-xl ${currentModuleConfig.color} bg-white border`}>
+                  <currentModuleConfig.icon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className={`text-2xl font-bold ${currentModuleConfig.color}`}>{currentModuleConfig.label}</h2>
+                  <p className="text-gray-600 text-sm">{currentModuleConfig.description}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {status.type && (
+            <div className={`p-4 rounded-lg flex items-start gap-3 animate-in slide-in-from-top-2 ${status.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+              {status.type === 'success' ? <CheckCircle className="h-5 w-5 text-green-600" /> : <AlertCircle className="h-5 w-5 text-red-600" />}
+              <p className={`text-sm font-medium ${status.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>{status.message}</p>
+            </div>
+          )}
+
+          {activeModule === 'menu' && (
+            <div className="grid grid-cols-1 gap-6 py-12">
+              <p className="text-center text-gray-400 italic">Selecione uma opção no menu lateral.</p>
+            </div>
+          )}
+
+          {activeModule === 'geral' && (
+            <UserManagement 
+              users={users} 
+              isAdmin={isAdmin} 
+              onOpenModal={(user) => {
+                setEditingUser(user || null);
+                setUserForm(user ? { nome: user.nome, email: user.email, cargo: user.cargo, allowed_modules: user.allowed_modules } : { nome: '', email: '', cargo: 'Colaborador', allowed_modules: ['crm'] });
+                setIsUserModalOpen(true);
+              }} 
+              onDeleteUser={handleDeleteUser} 
+            />
+          )}
+
+          {activeModule === 'crm' && (
+            <CRMSection 
+              isAdmin={isAdmin}
+              onReset={() => openResetModal('clientes', 'CRM Brindes', 'Resetou base do CRM', 'Remove TODOS os clientes, brindes e histórico do CRM')}
+            />
+          )}
+
+          {activeModule === 'rh' && (
+            <MaintenanceSection 
+              type="rh" isAdmin={isAdmin} 
+              onReset={() => openResetModal('presenca_portaria', 'Presencial', 'Resetou presenças', 'Remove todos os registros de presença da portaria')}
+              onResetSecondary={() => openResetModal('colaboradores', 'Colaboradores', 'Resetou colaboradores', 'Remove todos os dados cadastrais de colaboradores')}
+              onResetTertiary={() => openResetModal('marcacoes_ponto', 'Controle de Horas', 'Resetou marcações de ponto', 'Remove todos os registros de marcações de ponto')}
+            />
+          )}
+
+          {activeModule === 'family' && (
+            <MaintenanceSection type="family" isAdmin={isAdmin} onReset={() => openResetModal('familia_salomao_dados', 'Família', 'Resetou base da família', 'Remove todos os dados financeiros da família')} />
+          )}
+
+          {activeModule === 'financial' && (
+            <MaintenanceSection type="financial" isAdmin={isAdmin} onReset={() => openResetModal('financeiro_aeronave', 'Financeiro', 'Resetou base da aeronave', 'Remove todos os lançamentos financeiros da aeronave')} />
+          )}
+
+          {activeModule === 'sistema' && (
+            <SystemSection changelog={CHANGELOG} isAdmin={isAdmin} onSystemReset={() => openResetModal('clientes', 'SISTEMA', 'Reset Total', 'Remove TODOS os dados do sistema (clientes, histórico, etc.)')} />
+          )}
+
+          {activeModule === 'historico' && <div className="bg-white rounded-xl shadow-sm border p-6"><History /></div>}
         </div>
-      )}
-
-      {activeModule === 'menu' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-12">
-            <p className="col-span-full text-center text-gray-400 italic">Módulo de configurações. Selecione uma opção acima.</p>
-        </div>
-      )}
-
-      {activeModule === 'geral' && (
-        <UserManagement 
-          users={users} 
-          isAdmin={isAdmin} 
-          onOpenModal={(user) => {
-            setEditingUser(user || null);
-            setUserForm(user ? { nome: user.nome, email: user.email, cargo: user.cargo, allowed_modules: user.allowed_modules } : { nome: '', email: '', cargo: 'Colaborador', allowed_modules: ['crm'] });
-            setIsUserModalOpen(true);
-          }} 
-          onDeleteUser={handleDeleteUser} 
-        />
-      )}
-
-      {activeModule === 'crm' && (
-        <CRMSection 
-          brindes={brindes} socios={socios} 
-          onDeleteBrinde={(id, nome) => isAdmin && confirm(`Excluir ${nome}?`) && supabase.from('tipos_brinde').delete().eq('id', id).then(fetchBrindes)}
-          onDeleteSocio={(id, nome) => isAdmin && confirm(`Excluir ${nome}?`) && supabase.from('socios').delete().eq('id', id).then(fetchSocios)}
-        />
-      )}
-
-      {activeModule === 'rh' && (
-        <MaintenanceSection 
-          type="rh" isAdmin={isAdmin} 
-          onReset={() => openResetModal('presenca_portaria', 'Presencial', 'Resetou presenças', 'Remove todos os registros de presença da portaria')}
-          onResetSecondary={() => openResetModal('colaboradores', 'Colaboradores', 'Resetou colaboradores', 'Remove todos os dados cadastrais de colaboradores')}
-          onResetTertiary={() => openResetModal('marcacoes_ponto', 'Controle de Horas', 'Resetou marcações de ponto', 'Remove todos os registros de marcações de ponto')}
-        />
-      )}
-
-      {activeModule === 'family' && (
-        <MaintenanceSection type="family" isAdmin={isAdmin} onReset={() => openResetModal('familia_salomao_dados', 'Família', 'Resetou base da família', 'Remove todos os dados financeiros da família')} />
-      )}
-
-      {activeModule === 'financial' && (
-        <MaintenanceSection type="financial" isAdmin={isAdmin} onReset={() => openResetModal('financeiro_aeronave', 'Financeiro', 'Resetou base da aeronave', 'Remove todos os lançamentos financeiros da aeronave')} />
-      )}
-
-      {activeModule === 'sistema' && (
-        <SystemSection changelog={CHANGELOG} isAdmin={isAdmin} onSystemReset={() => openResetModal('clientes', 'SISTEMA', 'Reset Total', 'Remove TODOS os dados do sistema (clientes, histórico, etc.)')} />
-      )}
-
-      {activeModule === 'historico' && <div className="bg-white rounded-xl shadow-sm border p-6"><History /></div>}
+      </div>
 
       <UserModal 
         isOpen={isUserModalOpen} loading={loading} editingUser={editingUser} userForm={userForm}
