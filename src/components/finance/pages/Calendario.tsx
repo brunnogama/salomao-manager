@@ -17,7 +17,10 @@ import {
   Grid,
   LogOut,
   UserCircle,
-  GraduationCap
+  GraduationCap,
+  Pencil,
+  Trash2,
+  CalendarDays as MonthIcon
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { ListaVencimentosOAB } from '../components/ListaVencimentosOAB'
@@ -37,6 +40,7 @@ const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: CalendarioProps) {
   const [loading, setLoading] = useState(false)
+  const [currentDate] = useState(new Date())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [vencimentosOAB, setVencimentosOAB] = useState<any[]>([])
@@ -50,6 +54,9 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     data: new Date().toISOString().split('T')[0],
     descricao: ''
   })
+
+  // Estado para o Modal de Lista do Dia (mantendo lógica do sistema anterior)
+  const [selectedDayEvents, setSelectedDayEvents] = useState<{ day: number, events: any[] } | null>(null)
 
   // Efeito para buscar colaboradores e calcular vencimentos para a visão de grade
   useEffect(() => {
@@ -69,7 +76,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           }
           const dataVenc = new Date(ano, (mes - 1) + 6, dia)
           dataVenc.setDate(dataVenc.getDate() - 1)
-          return { nome: v.nome, dataVenc }
+          return { nome: v.nome, dataVenc, tipo: 'OAB' }
         })
         setVencimentosOAB(processados)
       }
@@ -80,7 +87,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
   const handleSaveEvento = async () => {
     if (!novoEvento.titulo || !novoEvento.data) return
     setSavingEvento(true)
-    // Lógica de salvamento será implementada conforme sua necessidade futura
     setTimeout(() => {
       setIsModalOpen(false)
       setSavingEvento(false)
@@ -109,11 +115,30 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     }
   }
 
+  // Agrupamento de eventos para a lista lateral (Lógica aplicada do RH)
+  const getAgrupadosPorDia = () => {
+    const list = vencimentosOAB.filter(v => 
+      v.dataVenc.getMonth() === selectedMonth && 
+      v.dataVenc.getFullYear() === selectedYear
+    );
+    const grouped: { [key: number]: any[] } = {};
+    
+    list.forEach(item => {
+      const day = item.dataVenc.getDate();
+      if (!grouped[day]) grouped[day] = [];
+      grouped[day].push(item);
+    });
+
+    return Object.keys(grouped)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .map(day => ({ day, items: grouped[day] }));
+  };
+
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(selectedMonth, selectedYear)
     const firstDay = getFirstDayOfMonth(selectedMonth, selectedYear)
     const days = []
-    const today = new Date()
 
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="aspect-square" />)
@@ -121,11 +146,10 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
     for (let day = 1; day <= daysInMonth; day++) {
       const isToday = 
-        day === today.getDate() && 
-        selectedMonth === today.getMonth() && 
-        selectedYear === today.getFullYear()
+        day === currentDate.getDate() && 
+        selectedMonth === currentDate.getMonth() && 
+        selectedYear === currentDate.getFullYear()
 
-      // Filtra vencimentos calculados para o dia específico na grade
       const vencimentosDoDia = vencimentosOAB.filter(v => 
         v.dataVenc.getDate() === day && 
         v.dataVenc.getMonth() === selectedMonth && 
@@ -135,9 +159,12 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
       days.push(
         <div
           key={day}
-          className={`aspect-square p-2 rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden ${
+          onClick={() => setSelectedDayEvents({ day, events: vencimentosDoDia })}
+          className={`aspect-square p-2 rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer ${
             isToday 
               ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a] shadow-xl' 
+              : vencimentosDoDia.length > 0
+              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg hover:scale-105 hover:border-[#1e3a8a]/50'
               : 'bg-white border-gray-100 hover:border-[#1e3a8a]/30 hover:bg-blue-50/30'
           }`}
         >
@@ -145,20 +172,22 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
             {day}
           </div>
           
-          <div className="flex flex-col gap-1 overflow-y-auto">
-            {/* Vencimentos OAB Integrados */}
-            {vencimentosDoDia.map((v, idx) => (
-              <div key={`oab-${idx}`} className="flex items-center gap-1 bg-orange-50 px-1 py-0.5 rounded border border-orange-100">
-                <GraduationCap className="h-2 w-2 text-orange-600" />
-                <span className="text-[7px] font-bold text-orange-700 truncate">{v.nome}</span>
+          <div className="space-y-1 mt-1">
+            {vencimentosDoDia.slice(0, 2).map((v, idx) => (
+              <div key={`oab-${idx}`} className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-1.5 py-1 rounded-lg shadow-sm border border-orange-100">
+                <GraduationCap className="h-3 w-3 text-orange-600 flex-shrink-0" />
+                <span className="text-[9px] font-bold text-gray-700 truncate w-full leading-tight">{v.nome}</span>
               </div>
             ))}
-
-            {/* Mock de Evento Financeiro Original mantido para compatibilidade visual */}
+            {vencimentosDoDia.length > 2 && (
+              <div className="text-[8px] font-black text-[#1e3a8a] text-center bg-white/80 rounded px-1">
+                +{vencimentosDoDia.length - 2}
+              </div>
+            )}
             {day === 15 && !isToday && vencimentosDoDia.length === 0 && (
-              <div className="flex items-center gap-1 bg-red-50 px-1 py-0.5 rounded border border-red-100">
-                <ArrowUpCircle className="h-2 w-2 text-red-600" />
-                <span className="text-[8px] font-bold text-red-700 truncate">Vencimento</span>
+              <div className="flex items-center gap-1 bg-white/90 px-1.5 py-1 rounded-lg border border-red-100">
+                <ArrowUpCircle className="h-3 w-3 text-red-600 flex-shrink-0" />
+                <span className="text-[9px] font-bold text-gray-700 truncate">Vencimento</span>
               </div>
             )}
           </div>
@@ -171,7 +200,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
       
-      {/* PAGE HEADER */}
+      {/* PAGE HEADER COMPLETO */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
@@ -198,7 +227,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           {onModuleHome && (
             <button 
               onClick={onModuleHome} 
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
               title="Voltar aos módulos"
             >
               <Grid className="h-5 w-5" />
@@ -216,7 +245,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-6 w-full">
+      <div className="max-w-[1600px] mx-auto space-y-6 w-full">
       
       {/* TOOLBAR & STATS */}
       <div className="flex flex-col xl:flex-row gap-4 items-center justify-between">
@@ -262,34 +291,76 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
         </div>
       </div>
 
-      {/* CONTEÚDO PRINCIPAL - Calendário Fixo */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
-          <button 
-            onClick={handlePreviousMonth} 
-            className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
-          >
-            <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
-          </button>
-          <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
-            {MESES[selectedMonth]} {selectedYear}
-          </h2>
-          <button 
-            onClick={handleNextMonth} 
-            className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all"
-          >
-            <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
-          </button>
+      {/* CONTEÚDO PRINCIPAL - GRID 3:1 APLICADO */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Calendário */}
+        <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
+            <button 
+              onClick={handlePreviousMonth} 
+              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
+            >
+              <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
+            </button>
+            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
+              {MESES[selectedMonth]} {selectedYear}
+            </h2>
+            <button 
+              onClick={handleNextMonth} 
+              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
+            >
+              <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-2 mb-3">
+            {DIAS_SEMANA.map(dia => (
+              <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">{dia}</div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-2">
+            {renderCalendar()}
+          </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-2 mb-3">
-          {DIAS_SEMANA.map(dia => (
-            <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">{dia}</div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-2">
-          {renderCalendar()}
+        {/* Lista Lateral - Agrupada e com ações (Design Unificado) */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col h-full">
+          <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Clock className="h-4 w-4 text-[#1e3a8a]" /> Lançamentos do Mês
+          </h3>
+          <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: '600px' }}>
+            {getAgrupadosPorDia().length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-400 font-bold text-sm italic">Nenhum lançamento agendado.</p>
+              </div>
+            ) : (
+              getAgrupadosPorDia().map((group) => (
+                <div key={group.day} className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
+                  <div className="bg-gray-200/50 px-3 py-1.5 flex justify-between items-center">
+                    <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-wider">
+                      Dia {group.day}
+                    </span>
+                    <span className="text-[9px] font-bold text-gray-400 italic">
+                      {group.items.length} {group.items.length > 1 ? 'itens' : 'item'}
+                    </span>
+                  </div>
+                  <div className="p-2 space-y-2">
+                    {group.items.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <GraduationCap className="h-3.5 w-3.5 text-orange-600 shrink-0" />
+                          <p className="text-xs font-bold text-[#0a192f] truncate">
+                            {item.nome}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
@@ -302,7 +373,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                 <CalendarDays className="h-5 w-5" />
                 <h3 className="font-black text-base tracking-tight">Novo Lançamento</h3>
               </div>
-              <button onClick={() => setIsModalOpen(false)}>
+              <button onClick={() => setIsModalOpen(false)} className="text-white/70 hover:text-white p-1.5 rounded-lg transition-all">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -315,7 +386,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                   type="text" 
                   value={novoEvento.titulo} 
                   onChange={(e) => setNovoEvento({...novoEvento, titulo: e.target.value})} 
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium" 
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium transition-all" 
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -326,7 +397,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                   <select 
                     value={novoEvento.tipo} 
                     onChange={(e) => setNovoEvento({...novoEvento, tipo: e.target.value})} 
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none bg-white font-medium"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none bg-white font-medium transition-all"
                   >
                     <option value="Pagamento">Contas a Pagar</option>
                     <option value="Recebimento">Contas a Receber</option>
@@ -341,7 +412,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                     type="date" 
                     value={novoEvento.data} 
                     onChange={(e) => setNovoEvento({...novoEvento, data: e.target.value})} 
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium" 
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium transition-all" 
                   />
                 </div>
               </div>
@@ -349,14 +420,14 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
             <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
               <button 
                 onClick={() => setIsModalOpen(false)} 
-                className="px-6 py-2.5 text-[9px] font-black text-gray-600 uppercase tracking-[0.2em]"
+                className="px-6 py-2.5 text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] hover:bg-gray-200 rounded-xl transition-all"
               >
                 Cancelar
               </button>
               <button 
                 onClick={handleSaveEvento} 
                 disabled={savingEvento} 
-                className="flex items-center gap-2 px-6 py-2.5 bg-[#112240] text-white font-black text-[9px] rounded-xl uppercase tracking-[0.2em] shadow-md"
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl uppercase tracking-[0.2em] shadow-md hover:shadow-lg transition-all active:scale-95"
               >
                 {savingEvento ? (
                   <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
