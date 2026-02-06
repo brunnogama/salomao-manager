@@ -6,20 +6,22 @@ import {
   ChevronRight, 
   Cake, 
   Users, 
-  Sparkles,
-  PartyPopper,
-  Clock,
-  Filter,
-  X,
-  Plus,
-  Save,
-  AlignLeft,
-  CalendarDays,
-  Grid,
-  LogOut,
-  UserCircle
+  Sparkles, 
+  PartyPopper, 
+  Clock, 
+  Filter, 
+  X, 
+  Plus, 
+  Save, 
+  AlignLeft, 
+  CalendarDays, 
+  Grid, 
+  LogOut, 
+  UserCircle,
+  Calendar as CalendarEventIcon
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { RHCalendarioDiaModal } from '../components/RHCalendarioDiaModal'
 
 interface CalendarioProps {
   userName?: string;
@@ -33,6 +35,14 @@ interface Colaborador {
   data_nascimento: string;
   cargo: string;
   foto_url?: string;
+}
+
+interface Evento {
+  id: number;
+  titulo: string;
+  tipo: string;
+  data_evento: string;
+  descricao?: string;
 }
 
 interface AniversarioData {
@@ -55,6 +65,7 @@ const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: CalendarioProps) {
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
+  const [eventos, setEventos] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
@@ -65,6 +76,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
   // Estados para o Modal de Evento
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [savingEvento, setSavingEvento] = useState(false)
+  const [editingEvento, setEditingEvento] = useState<Evento | null>(null)
   const [novoEvento, setNovoEvento] = useState({
     titulo: '',
     tipo: 'Reunião',
@@ -72,9 +84,31 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     descricao: ''
   })
 
+  // Estado para o Modal de Lista do Dia
+  const [selectedDayEvents, setSelectedDayEvents] = useState<{ day: number, events: any[] } | null>(null)
+
   useEffect(() => {
-    fetchColaboradores()
+    fetchData()
   }, [])
+
+  const fetchData = async () => {
+    setLoading(true)
+    const { data: colabs } = await supabase
+      .from('colaboradores')
+      .select('id, nome, data_nascimento, cargo, foto_url')
+      .not('data_nascimento', 'is', null)
+      .eq('status', 'Ativo')
+      .order('nome')
+    
+    const { data: evs } = await supabase
+      .from('eventos')
+      .select('*')
+      .order('data_evento')
+    
+    if (colabs) setColaboradores(colabs)
+    if (evs) setEventos(evs)
+    setLoading(false)
+  }
 
   const fetchColaboradores = async () => {
     setLoading(true)
@@ -94,31 +128,69 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     
     setSavingEvento(true)
     try {
-      const { error } = await supabase
-        .from('eventos')
-        .insert({
-          titulo: novoEvento.titulo,
-          tipo: novoEvento.tipo,
-          data_evento: novoEvento.data,
-          descricao: novoEvento.descricao
-        })
+      if (editingEvento) {
+        const { error } = await supabase
+          .from('eventos')
+          .update({
+            titulo: novoEvento.titulo,
+            tipo: novoEvento.tipo,
+            data_evento: novoEvento.data,
+            descricao: novoEvento.descricao
+          })
+          .eq('id', editingEvento.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('eventos')
+          .insert({
+            titulo: novoEvento.titulo,
+            tipo: novoEvento.tipo,
+            data_evento: novoEvento.data,
+            descricao: novoEvento.descricao
+          })
+        if (error) throw error
+      }
 
-      if (error) throw error
-
+      await fetchData()
       setIsModalOpen(false)
+      setEditingEvento(null)
       setNovoEvento({
         titulo: '',
         tipo: 'Reunião',
         data: new Date().toISOString().split('T')[0],
         descricao: ''
       })
-      alert('Evento criado com sucesso!')
+      alert(editingEvento ? 'Evento atualizado!' : 'Evento criado!')
     } catch (error) {
       console.error('Erro ao salvar evento:', error)
-      alert('Erro ao salvar evento. Verifique se a tabela "eventos" existe.')
+      alert('Erro ao salvar evento.')
     } finally {
       setSavingEvento(false)
     }
+  }
+
+  const handleDeleteEvento = async (id: number) => {
+    if (!confirm('Deseja realmente excluir este evento?')) return
+    try {
+      const { error } = await supabase.from('eventos').delete().eq('id', id)
+      if (error) throw error
+      await fetchData()
+      setSelectedDayEvents(null)
+    } catch (error) {
+      alert('Erro ao excluir evento')
+    }
+  }
+
+  const handleEditClick = (evento: any) => {
+    setEditingEvento(evento)
+    setNovoEvento({
+      titulo: evento.titulo,
+      tipo: evento.tipo,
+      data: evento.data_evento,
+      descricao: evento.descricao || ''
+    })
+    setIsModalOpen(true)
+    setSelectedDayEvents(null)
   }
 
   const toTitleCase = (str: string) => {
@@ -191,6 +263,13 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     return aniversarios.filter(a => a.mes === mes)
   }
 
+  const eventosDoMes = (mes: number, ano: number) => {
+    return eventos.filter(e => {
+      const d = new Date(e.data_evento + 'T12:00:00')
+      return d.getMonth() === mes && d.getFullYear() === ano
+    })
+  }
+
   const getAniversariosHoje = () => aniversarios.filter(a => a.isHoje)
   const getAniversariosEstaSemana = () => aniversarios.filter(a => a.isEstaSemana && !a.isHoje)
   const getProximosAniversarios = () => {
@@ -213,6 +292,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     const firstDay = getFirstDayOfMonth(selectedMonth, selectedYear)
     const days = []
     const anivMes = aniversariosDoMes(selectedMonth, selectedYear)
+    const evMes = eventosDoMes(selectedMonth, selectedYear)
 
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="aspect-square" />)
@@ -220,6 +300,9 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
     for (let day = 1; day <= daysInMonth; day++) {
       const anivDoDia = anivMes.filter(a => a.dia === day)
+      const evDoDia = evMes.filter(e => new Date(e.data_evento + 'T12:00:00').getDate() === day)
+      const totalDia = [...anivDoDia, ...evDoDia]
+
       const isToday = 
         day === currentDate.getDate() && 
         selectedMonth === currentDate.getMonth() && 
@@ -228,34 +311,38 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
       days.push(
         <div
           key={day}
-          className={`aspect-square p-2 rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden ${
+          onClick={() => setSelectedDayEvents({ day, events: totalDia })}
+          className={`aspect-square p-2 rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer ${
             isToday 
               ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a] shadow-xl' 
-              : anivDoDia.length > 0
-              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg hover:scale-105 cursor-pointer hover:border-[#1e3a8a]/50'
+              : totalDia.length > 0
+              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg hover:scale-105 hover:border-[#1e3a8a]/50'
               : 'bg-white border-gray-100 hover:border-[#1e3a8a]/30 hover:bg-blue-50/30'
           }`}
         >
           <div className={`text-sm font-black ${isToday ? 'text-white' : 'text-[#0a192f]'}`}>
             {day}
           </div>
-          {anivDoDia.length > 0 && (
+          {totalDia.length > 0 && (
             <div className="space-y-1 mt-1">
-              {anivDoDia.slice(0, 2).map((aniv, idx) => (
+              {totalDia.slice(0, 2).map((item, idx) => (
                 <div
                   key={idx}
                   className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-1.5 py-1 rounded-lg shadow-sm border border-blue-100"
-                  title={formatName(aniv.colaborador.nome)}
                 >
-                  <Cake className="h-3 w-3 text-[#1e3a8a] flex-shrink-0" />
+                  {'colaborador' in item ? (
+                    <Cake className="h-3 w-3 text-[#1e3a8a] flex-shrink-0" />
+                  ) : (
+                    <CalendarEventIcon className="h-3 w-3 text-green-600 flex-shrink-0" />
+                  )}
                   <span className="text-[9px] font-bold text-gray-700 truncate w-full leading-tight">
-                    {formatName(aniv.colaborador.nome)}
+                    {'colaborador' in item ? formatName(item.colaborador.nome) : item.titulo}
                   </span>
                 </div>
               ))}
-              {anivDoDia.length > 2 && (
+              {totalDia.length > 2 && (
                 <div className="text-[8px] font-black text-[#1e3a8a] text-center bg-white/80 rounded px-1">
-                  +{anivDoDia.length - 2}
+                  +{totalDia.length - 2}
                 </div>
               )}
             </div>
@@ -380,7 +467,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
         {/* Buttons */}
         <div className="flex flex-wrap gap-3 w-full xl:w-auto justify-end">
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => { setEditingEvento(null); setIsModalOpen(true); }}
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#15803d] to-green-700 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 hover:from-green-700 hover:to-[#15803d]"
           >
             <Plus className="h-4 w-4" />
@@ -457,38 +544,61 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
       {/* CONTEÚDO PRINCIPAL */}
       {viewMode === 'calendario' ? (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-          {/* Navegação do Calendário */}
-          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
-            <button
-              onClick={handlePrevMonth}
-              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
-            >
-              <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
-            </button>
-            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
-              {MESES[selectedMonth]} {selectedYear}
-            </h2>
-            <button
-              onClick={handleNextMonth}
-              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
-            >
-              <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
-            </button>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Calendário */}
+          <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
+              <button
+                onClick={handlePrevMonth}
+                className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
+              >
+                <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
+              </button>
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
+                {MESES[selectedMonth]} {selectedYear}
+              </h2>
+              <button
+                onClick={handleNextMonth}
+                className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
+              >
+                <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-2 mb-3">
+              {DIAS_SEMANA.map(dia => (
+                <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">
+                  {dia}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {renderCalendar()}
+            </div>
           </div>
 
-          {/* Dias da Semana */}
-          <div className="grid grid-cols-7 gap-2 mb-3">
-            {DIAS_SEMANA.map(dia => (
-              <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">
-                {dia}
-              </div>
-            ))}
-          </div>
-
-          {/* Grade do Calendário */}
-          <div className="grid grid-cols-7 gap-2">
-            {renderCalendar()}
+          {/* Lista Lateral */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col h-full">
+            <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[#1e3a8a]" /> Eventos do Mês
+            </h3>
+            <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: '600px' }}>
+              {[...aniversariosDoMes(selectedMonth, selectedYear), ...eventosDoMes(selectedMonth, selectedYear)]
+                .sort((a, b) => ('dia' in a ? a.dia : new Date(a.data_evento + 'T12:00:00').getDate()) - ('dia' in b ? b.dia : new Date(b.data_evento + 'T12:00:00').getDate()))
+                .map((ev, idx) => (
+                  <div key={idx} className="p-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white transition-all">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-black text-[#1e3a8a] bg-blue-100 px-2 py-0.5 rounded-full">
+                        Dia {'dia' in ev ? ev.dia : new Date(ev.data_evento + 'T12:00:00').getDate()}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold text-[#0a192f] mt-1">
+                      {'colaborador' in ev ? `Aniversário: ${formatName(ev.colaborador.nome)}` : ev.titulo}
+                    </p>
+                  </div>
+                ))}
+            </div>
           </div>
         </div>
       ) : (
@@ -575,17 +685,17 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
         </div>
       )}
 
-      {/* MODAL NOVO EVENTO */}
+      {/* MODAL NOVO/EDITAR EVENTO */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between">
               <div className="flex items-center gap-2 text-white">
                 <CalendarDays className="h-5 w-5" />
-                <h3 className="font-black text-base tracking-tight">Novo Evento</h3>
+                <h3 className="font-black text-base tracking-tight">{editingEvento ? 'Editar Evento' : 'Novo Evento'}</h3>
               </div>
               <button 
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => { setIsModalOpen(false); setEditingEvento(null); }}
                 className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all"
               >
                 <X className="h-5 w-5" />
@@ -599,7 +709,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                   type="text"
                   value={novoEvento.titulo}
                   onChange={(e) => setNovoEvento({...novoEvento, titulo: e.target.value})}
-                  placeholder="Ex: Reunião Geral"
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
                 />
               </div>
@@ -643,7 +752,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => { setIsModalOpen(false); setEditingEvento(null); }}
                 className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-xl transition-all uppercase tracking-[0.2em]"
               >
                 Cancelar
@@ -651,7 +760,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
               <button
                 onClick={handleSaveEvento}
                 disabled={savingEvento || !novoEvento.titulo}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md uppercase tracking-[0.2em] active:scale-95"
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl hover:shadow-lg transition-all disabled:opacity-50 shadow-md uppercase tracking-[0.2em] active:scale-95"
               >
                 {savingEvento ? (
                   <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -663,6 +772,18 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
             </div>
           </div>
         </div>
+      )}
+
+      {/* MODAL DETALHES DO DIA */}
+      {selectedDayEvents && (
+        <RHCalendarioDiaModal
+          day={selectedDayEvents.day}
+          events={selectedDayEvents.events}
+          onClose={() => setSelectedDayEvents(null)}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteEvento}
+          formatName={formatName}
+        />
       )}
       
       </div>
