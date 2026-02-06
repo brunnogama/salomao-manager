@@ -12,7 +12,7 @@ import {
   Briefcase,
   Banknote,
   Megaphone,
-  FolderSearch,
+  Folder,
   Calendar
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
