@@ -18,7 +18,9 @@ import {
   Grid, 
   LogOut, 
   UserCircle,
-  Calendar as CalendarEventIcon
+  Calendar as CalendarEventIcon,
+  Pencil,
+  Trash2
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { RHCalendarioDiaModal } from '../components/RHCalendarioDiaModal'
@@ -107,19 +109,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     
     if (colabs) setColaboradores(colabs)
     if (evs) setEventos(evs)
-    setLoading(false)
-  }
-
-  const fetchColaboradores = async () => {
-    setLoading(true)
-    const { data } = await supabase
-      .from('colaboradores')
-      .select('id, nome, data_nascimento, cargo, foto_url')
-      .not('data_nascimento', 'is', null)
-      .eq('status', 'Ativo')
-      .order('nome')
-    
-    if (data) setColaboradores(data)
     setLoading(false)
   }
 
@@ -231,7 +220,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
     colaboradores.forEach(colab => {
       if (colab.data_nascimento) {
-        // CORREÇÃO: Compensar o fuso horário ao extrair a data
         const nascimento = new Date(colab.data_nascimento)
         const nascimentoCorrigido = new Date(nascimento.valueOf() + nascimento.getTimezoneOffset() * 60000)
         
@@ -259,7 +247,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
   const aniversarios = processarAniversarios()
 
-  const aniversariosDoMes = (mes: number, ano: number): AniversarioData[] => {
+  const aniversariosDoMes = (mes: number, _ano: number): AniversarioData[] => {
     return aniversarios.filter(a => a.mes === mes)
   }
 
@@ -375,12 +363,28 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
   const aniversariosHoje = getAniversariosHoje()
   const aniversariosEstaSemana = getAniversariosEstaSemana()
 
+  // Agrupamento de eventos para a lista lateral
+  const getAgrupadosPorDia = () => {
+    const list = [...aniversariosDoMes(selectedMonth, selectedYear), ...eventosDoMes(selectedMonth, selectedYear)];
+    const grouped: { [key: number]: any[] } = {};
+    
+    list.forEach(item => {
+      const day = 'dia' in item ? item.dia : new Date(item.data_evento + 'T12:00:00').getDate();
+      if (!grouped[day]) grouped[day] = [];
+      grouped[day].push(item);
+    });
+
+    return Object.keys(grouped)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .map(day => ({ day, items: grouped[day] }));
+  };
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
       
       {/* PAGE HEADER COMPLETO - Título + User Info */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        {/* Left: Título e Ícone */}
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
             <CalendarIcon className="h-7 w-7 text-white" />
@@ -395,7 +399,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           </div>
         </div>
 
-        {/* Right: User Info & Actions */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="hidden md:flex flex-col items-end">
             <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
@@ -425,12 +428,11 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-6 w-full">
+      <div className="max-w-[1600px] mx-auto space-y-6 w-full">
       
       {/* TOOLBAR & STATS */}
       <div className="flex flex-col xl:flex-row gap-4 items-center justify-between">
         <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-          {/* Stat Card - Hoje */}
           <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
             <div className="p-2 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 shadow-lg">
               <Sparkles className="h-5 w-5 text-white" />
@@ -441,7 +443,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
             </div>
           </div>
           
-          {/* Stat Card - Esta Semana */}
           <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
             <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 shadow-lg">
               <PartyPopper className="h-5 w-5 text-white" />
@@ -452,7 +453,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
             </div>
           </div>
           
-          {/* Stat Card - Total */}
           <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
             <div className="p-2 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
               <Users className="h-5 w-5 text-white" />
@@ -464,7 +464,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="flex flex-wrap gap-3 w-full xl:w-auto justify-end">
           <button
             onClick={() => { setEditingEvento(null); setIsModalOpen(true); }}
@@ -578,26 +577,58 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
             </div>
           </div>
 
-          {/* Lista Lateral */}
+          {/* Lista Lateral - Agrupada e com ações */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col h-full">
             <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-4 flex items-center gap-2">
               <Clock className="h-4 w-4 text-[#1e3a8a]" /> Eventos do Mês
             </h3>
-            <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: '600px' }}>
-              {[...aniversariosDoMes(selectedMonth, selectedYear), ...eventosDoMes(selectedMonth, selectedYear)]
-                .sort((a, b) => ('dia' in a ? a.dia : new Date(a.data_evento + 'T12:00:00').getDate()) - ('dia' in b ? b.dia : new Date(b.data_evento + 'T12:00:00').getDate()))
-                .map((ev, idx) => (
-                  <div key={idx} className="p-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white transition-all">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[10px] font-black text-[#1e3a8a] bg-blue-100 px-2 py-0.5 rounded-full">
-                        Dia {'dia' in ev ? ev.dia : new Date(ev.data_evento + 'T12:00:00').getDate()}
-                      </span>
-                    </div>
-                    <p className="text-xs font-bold text-[#0a192f] mt-1">
-                      {'colaborador' in ev ? `Aniversário: ${formatName(ev.colaborador.nome)}` : ev.titulo}
-                    </p>
+            <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: '600px' }}>
+              {getAgrupadosPorDia().map((group) => (
+                <div key={group.day} className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
+                  <div className="bg-gray-200/50 px-3 py-1.5 flex justify-between items-center">
+                    <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-wider">
+                      Dia {group.day}
+                    </span>
+                    <span className="text-[9px] font-bold text-gray-400 italic">
+                      {group.items.length} {group.items.length > 1 ? 'itens' : 'item'}
+                    </span>
                   </div>
-                ))}
+                  <div className="p-2 space-y-2">
+                    {group.items.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-100 shadow-sm group">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          {'colaborador' in item ? (
+                            <Cake className="h-3.5 w-3.5 text-pink-500 shrink-0" />
+                          ) : (
+                            <CalendarEventIcon className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                          )}
+                          <p className="text-xs font-bold text-[#0a192f] truncate">
+                            {'colaborador' in item ? `Aniversário: ${formatName(item.colaborador.nome)}` : item.titulo}
+                          </p>
+                        </div>
+                        
+                        {/* Botões de Ação para Eventos (não aniversários) */}
+                        {!('colaborador' in item) && (
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => handleEditClick(item)}
+                              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteEvento(item.id)}
+                              className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
