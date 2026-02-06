@@ -1,4 +1,4 @@
-mimport { useState } from 'react'
+import { useState } from 'react'
 import { 
   ArrowDownCircle, 
   UserCircle, 
@@ -110,3 +110,4 @@ export function FinanceContasReceber({ userName = 'Usuário', onModuleHome, onLo
   )
 
 }
+
