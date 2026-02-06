@@ -1,5 +1,6 @@
 import { Loader2, AlertCircle } from 'lucide-react'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
+import { useMemo } from 'react'
 
 interface AeronaveTableProps {
   data: AeronaveLancamento[];
@@ -30,6 +31,22 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
     if (!id) return '---'
     return String(id).padStart(6, '0')
   }
+
+  // --- NOVO: Ordenação por Data de Pagamento (decrescente) ---
+  const sortedData = useMemo(() => {
+    return [...data].sort((a, b) => {
+      const dateA = a.data_pagamento || ''
+      const dateB = b.data_pagamento || ''
+      
+      // Datas vazias vão para o final
+      if (!dateA && !dateB) return 0
+      if (!dateA) return 1
+      if (!dateB) return -1
+      
+      // Ordem decrescente (mais recente primeiro)
+      return dateB.localeCompare(dateA)
+    })
+  }, [data])
 
   // --- Render ---
 
@@ -71,7 +88,7 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
           </tr>
         </thead>
         <tbody>
-          {data.map((item) => {
+          {sortedData.map((item) => {
             const isMissao = item.origem === 'missao'
 
             return (
@@ -85,7 +102,7 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
                   #{isMissao ? formatId(item.id_missao) : formatId(item.id_missao) /* Mantém ID se existir, ou --- */}
                 </td>
 
-                {/* Data Missão (NOVO) */}
+                {/* Data Missão */}
                 <td className="px-4 py-4 text-sm font-semibold text-gray-600">
                   {formatDate(item.data_missao)}
                 </td>

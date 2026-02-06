@@ -15,9 +15,7 @@ import {
   Wallet,
   Receipt,
   DollarSign,
-  Loader2,
-  FileText,
-  Printer
+  Loader2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -44,7 +42,7 @@ export function GestaoAeronave({
   onLogout 
 }: GestaoAeronaveProps) {
   // --- Estados de Controle ---
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'faturas' | 'dados'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dashboard')
   const [filterOrigem, setFilterOrigem] = useState<'todos' | 'missao' | 'fixa'>('todos')
   
   // --- Estados de Dados e Filtros ---
@@ -61,7 +59,6 @@ export function GestaoAeronave({
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   
   const [selectedItem, setSelectedItem] = useState<AeronaveLancamento | null>(null)
-  const [selectedGroup, setSelectedGroup] = useState<AeronaveLancamento[]>([])
   const [selectedOrigemForNew, setSelectedOrigemForNew] = useState<OrigemLancamento>('missao')
 
   // --- Buscando Dados ---
@@ -86,7 +83,7 @@ export function GestaoAeronave({
     fetchDados()
   }, [])
 
-  // --- Filtragem no Front-end ---
+  // --- Filtragem no Front-end (ATUALIZADO: filtro de data usa data_pagamento) ---
   const filteredData = useMemo(() => {
     return data.filter(item => {
       // 1. Filtro de Origem
@@ -103,34 +100,14 @@ export function GestaoAeronave({
 
       if (searchTerm && !matchSearch) return false
 
-      // 3. Filtro de Data
-      const dateRef = item.data_missao || item.vencimento
+      // 3. Filtro de Data (ALTERADO: usa data_pagamento)
+      const dateRef = item.data_pagamento
       if (startDate && dateRef && dateRef < startDate) return false
       if (endDate && dateRef && dateRef > endDate) return false
 
       return true
     })
   }, [data, filterOrigem, searchTerm, startDate, endDate])
-
-  // --- Agrupamento de Faturas (Tarefa 3) ---
-  const faturasAgrupadas = useMemo(() => {
-    const validFaturas = filteredData.filter(item => item.doc_fiscal && item.doc_fiscal.trim() !== '')
-    
-    const groups: { [key: string]: AeronaveLancamento[] } = {}
-    validFaturas.forEach(item => {
-      const key = `${item.doc_fiscal}-${item.numero_doc}`
-      if (!groups[key]) groups[key] = []
-      groups[key].push(item)
-    })
-
-    return Object.values(groups).map(group => {
-      // O item representante do grupo para a listagem principal
-      return {
-        ...group[0],
-        _items: group // Mantemos a lista de todos os itens para o modal
-      }
-    })
-  }, [filteredData])
 
   // --- Totais (Cards) ---
   const totals = useMemo(() => {
@@ -145,12 +122,13 @@ export function GestaoAeronave({
     }, { totalGeral: 0, custoMissoes: 0, despesasFixas: 0 })
   }, [filteredData])
 
-  // --- Totais do Ano Corrente ---
+  // --- Totais do Ano Corrente (Para Cards Dinâmicos) ---
   const currentYear = new Date().getFullYear()
   const yearTotals = useMemo(() => {
     return data.reduce((acc, curr) => {
       const dateStr = curr.data_pagamento || curr.vencimento
       if (dateStr) {
+        // Verifica se a data é do ano atual (suporta YYYY-MM-DD)
         const year = dateStr.startsWith(String(currentYear)) 
           ? currentYear 
           : new Date(dateStr).getFullYear()
@@ -168,6 +146,7 @@ export function GestaoAeronave({
   // --- Contagens Dinâmicas ---
   const countDisplay = useMemo(() => {
     if (filterOrigem === 'missao') {
+      // Conta missões únicas baseadas no ID, ou linhas se não houver ID
       const uniqueIds = new Set(filteredData.filter(i => i.id_missao).map(i => i.id_missao))
       return uniqueIds.size > 0 ? uniqueIds.size : filteredData.length
     }
@@ -193,29 +172,29 @@ export function GestaoAeronave({
     setIsViewModalOpen(true)
   }
 
-  const handleFaturaClick = (group: any) => {
-    setSelectedItem(group)
-    setSelectedGroup(group._items || [])
-    setIsViewModalOpen(true)
-  }
-
+  // ATUALIZADO: Navegação via Dashboard com filtro de missão
   const handleMissionClick = (missionName: string) => {
     setSearchTerm(missionName)
     setFilterOrigem('missao')
     setActiveTab('dados')
   }
 
+  // NOVO: Handler para salvar lançamento (criar ou editar)
   const handleSaveLancamento = async (formData: Partial<AeronaveLancamento>) => {
     if (formData.id) {
+      // Edição
       const { error } = await supabase
         .from('aeronave_lancamentos')
         .update(formData)
         .eq('id', formData.id)
+      
       if (error) throw error
     } else {
+      // Criação
       const { error } = await supabase
         .from('aeronave_lancamentos')
         .insert(formData)
+      
       if (error) throw error
     }
   }
@@ -227,6 +206,7 @@ export function GestaoAeronave({
     XLSX.writeFile(wb, `Aeronave_Export_${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
+  // --- Lógica de Importação (CORRIGIDA) ---
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -240,31 +220,46 @@ export function GestaoAeronave({
         const ws = wb.Sheets[wb.SheetNames[0]]
         const rawData = XLSX.utils.sheet_to_json(ws)
 
+        // Funções auxiliares de parse ROBUSTAS
         const parseDate = (val: any) => {
           if (!val) return null
+          
           if (typeof val === 'string') {
             const clean = val.trim().toUpperCase()
             if (['N/A', '-', 'NAN', 'UNDEFINED', ''].includes(clean)) return null
           }
+
           if (typeof val === 'number') {
             const date = new Date(Math.round((val - 25569) * 86400 * 1000))
             return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0]
           }
+          
           if (typeof val === 'string' && val.includes('/')) {
             const parts = val.split('/')
             if (parts.length !== 3) return null 
             const [d, m, a] = parts
+            if (isNaN(Number(d)) || isNaN(Number(m)) || isNaN(Number(a))) return null
             const anoFull = a.length === 2 ? `20${a}` : a
             return `${anoFull}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
           }
-          if (typeof val === 'string' && val.includes('-') && !isNaN(Date.parse(val))) return val
+
+           if (typeof val === 'string' && val.includes('-') && !isNaN(Date.parse(val))) {
+             return val
+           }
+          
           return null
         }
 
         const parseMoney = (val: any) => {
           if (typeof val === 'number') return val
           if (!val) return 0
-          const clean = String(val).replace('R$', '').replace(/\./g, '').replace(',', '.').trim()
+          if (typeof val === 'string' && (val.toUpperCase() === 'N/A' || val === '-')) return 0
+          
+          const clean = String(val)
+            .replace('R$', '')
+            .replace(/\./g, '')
+            .replace(',', '.')
+            .trim()
           return parseFloat(clean) || 0
         }
 
@@ -302,13 +297,17 @@ export function GestaoAeronave({
         })
 
         const { error } = await supabase.from('aeronave_lancamentos').insert(mappedData)
+
         if (error) {
+          console.error(error)
           alert(`Erro na importação: ${error.message}`)
         } else {
           alert(`${mappedData.length} registros importados com sucesso!`)
           fetchDados()
         }
+
       } catch (err) {
+        console.error(err)
         alert('Erro crítico ao processar arquivo.')
       } finally {
         setIsImporting(false)
@@ -356,6 +355,7 @@ export function GestaoAeronave({
 
       {/* 2. Cards de Totais */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* CARD 1: Total Geral / Quantidade */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
           <div>
@@ -375,6 +375,7 @@ export function GestaoAeronave({
           </div>
         </div>
 
+        {/* CARD 2: Custo Missões / Total Anual Fixo */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
           <div>
@@ -390,6 +391,7 @@ export function GestaoAeronave({
           </div>
         </div>
 
+        {/* CARD 3: Despesas Fixas / Total Anual Missão */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
           <div>
@@ -408,6 +410,8 @@ export function GestaoAeronave({
 
       {/* 3. Toolbar Principal */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+        
+        {/* Linha Superior: Tabs e Filtros de Tipo */}
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex gap-2 bg-gray-100/50 p-1 rounded-xl w-fit">
             <button
@@ -424,14 +428,6 @@ export function GestaoAeronave({
               <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
             </button>
             <button
-              onClick={() => setActiveTab('faturas')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                activeTab === 'faturas' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <FileText className="h-3.5 w-3.5" /> Faturas
-            </button>
-            <button
               onClick={() => setActiveTab('dados')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                 activeTab === 'dados' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
@@ -441,59 +437,68 @@ export function GestaoAeronave({
             </button>
           </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilterOrigem('todos')}
-              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
-                filterOrigem === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
-              }`}
-            >
-              Todos Pagamentos
-            </button>
-            <button
-              onClick={() => setFilterOrigem('missao')}
-              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
-                filterOrigem === 'missao' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-400'
-              }`}
-            >
-              Custo Missões
-            </button>
-            <button
-              onClick={() => setFilterOrigem('fixa')}
-              className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
-                filterOrigem === 'fixa' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-500 border-gray-200 hover:border-emerald-400'
-              }`}
-            >
-              Despesas Fixas
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-            <Calendar className="h-4 w-4 text-gray-400" />
-            <input 
-              type="date" 
-              className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-            <span className="text-gray-300">|</span>
-            <input 
-              type="date" 
-              className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-            {(startDate || endDate) && (
-              <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
-                <XCircle className="h-3.5 w-3.5" />
+          {/* ALTERAÇÃO: Esconder botões no Dashboard */}
+          {activeTab === 'dados' && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setFilterOrigem('todos')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
+                  filterOrigem === 'todos' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                }`}
+              >
+                Todos Pagamentos
               </button>
-            )}
+              <button
+                onClick={() => setFilterOrigem('missao')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
+                  filterOrigem === 'missao' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-400'
+                }`}
+              >
+                Custo Missões
+              </button>
+              <button
+                onClick={() => setFilterOrigem('fixa')}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
+                  filterOrigem === 'fixa' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-500 border-gray-200 hover:border-emerald-400'
+                }`}
+              >
+                Despesas Fixas
+              </button>
+            </div>
+          )}
+
+          {/* ALTERAÇÃO: Indicativo de Período de Pagamento */}
+          <div className="flex flex-col gap-1">
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Período de Pagamento</span>
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <input 
+                type="date" 
+                className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+              <span className="text-gray-300">|</span>
+              <input 
+                type="date" 
+                className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+              {(startDate || endDate) && (
+                <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
+                  <XCircle className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
+        {/* ALTERAÇÃO: Renderização Condicional da Barra de Ações (Apenas na aba 'dados') */}
         {activeTab === 'dados' && (
           <>
             <div className="h-px bg-gray-100 w-full my-2"></div>
+
             <div className="flex flex-col md:flex-row justify-between gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -505,6 +510,7 @@ export function GestaoAeronave({
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+
               <div className="flex items-center gap-2">
                 <button 
                   onClick={handleExportExcel}
@@ -512,11 +518,13 @@ export function GestaoAeronave({
                 >
                   <Download className="h-4 w-4" /> Exportar
                 </button>
+                
                 <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-blue-400 transition-all text-xs font-bold uppercase tracking-wide cursor-pointer">
                   {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
                   Importar
                   <input type="file" accept=".xlsx" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
                 </label>
+
                 <button
                   onClick={() => setIsTipoModalOpen(true)}
                   className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest"
@@ -537,56 +545,6 @@ export function GestaoAeronave({
             onMissionClick={handleMissionClick}
             filterOrigem={filterOrigem}
           />
-        ) : activeTab === 'faturas' ? (
-          <div className="overflow-x-auto custom-scrollbar pb-4">
-            <table className="w-full text-left border-separate border-spacing-y-2 px-4 table-fixed">
-              <thead>
-                <tr className="text-[#112240]">
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-[15%]">Doc. Fiscal</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-[15%]">Número</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-[20%] text-right">Valor Total Doc</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-[50%]">Observação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {faturasAgrupadas.length > 0 ? (
-                  faturasAgrupadas.map((group, idx) => (
-                    <tr 
-                      key={idx} 
-                      onClick={() => handleFaturaClick(group)}
-                      className="group bg-white hover:bg-blue-50/40 border border-gray-100 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer"
-                    >
-                      <td className="px-4 py-4 text-sm font-semibold text-[#1e3a8a] first:rounded-l-xl whitespace-nowrap overflow-hidden text-ellipsis">
-                        {group.doc_fiscal}
-                      </td>
-                      <td className="px-4 py-4 text-sm font-medium text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis">
-                        {group.numero_doc || '-'}
-                      </td>
-                      <td className="px-4 py-4 text-sm font-black text-gray-800 text-right whitespace-nowrap">
-                        {group.valor_total_doc && group.valor_total_doc > 0 ? (
-                          handleFormatCurrency(group.valor_total_doc)
-                        ) : (
-                          <span className="text-gray-300">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-sm text-gray-500 last:rounded-r-xl overflow-hidden text-ellipsis" title={group.observacao || ''}>
-                        {group.observacao || '-'}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-12 text-center">
-                      <div className="flex flex-col items-center justify-center text-gray-300 gap-2">
-                        <FileText className="h-8 w-8" />
-                        <p className="text-xs font-bold uppercase tracking-widest">Nenhuma fatura encontrada</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
         ) : (
           <AeronaveTable 
             data={filteredData} 
@@ -620,10 +578,8 @@ export function GestaoAeronave({
         onClose={() => {
           setIsViewModalOpen(false)
           setSelectedItem(null)
-          setSelectedGroup([])
         }}
         item={selectedItem}
-        itemsGroup={selectedGroup}
         onEdit={(item) => {
           setIsViewModalOpen(false)
           setSelectedItem(item)
