@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { 
-  FolderSearch, 
+  Folder, 
   UserCircle, 
   LogOut, 
   Grid, 
@@ -189,7 +189,7 @@ export function GED({
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <FolderSearch className="h-7 w-7 text-white" />
+            <Folder className="h-7 w-7 text-white" />
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">GED - Gestão Eletrônica de Documentos</h1>
@@ -265,7 +265,7 @@ export function GED({
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Espaço Utilizado</p>
               <p className="text-2xl font-black text-[#0a192f] mt-1">{formatFileSize(documentos.reduce((acc, doc) => acc + (doc.tamanho || 0), 0))}</p>
             </div>
-            <div className="p-3 bg-orange-50 rounded-xl"><FolderSearch className="h-5 w-5 text-orange-600" /></div>
+            <div className="p-3 bg-orange-50 rounded-xl"><Folder className="h-5 w-5 text-orange-600" /></div>
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
@@ -284,7 +284,7 @@ export function GED({
           <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
         ) : filteredData.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
-            <FolderSearch className="h-16 w-16 text-gray-300 mb-4" />
+            <Folder className="h-16 w-16 text-gray-300 mb-4" />
             <p className="text-lg font-bold text-gray-400">Nenhum documento encontrado</p>
             <p className="text-sm text-gray-400 mt-2">Tente ajustar os filtros ou faça upload de um novo documento</p>
           </div>

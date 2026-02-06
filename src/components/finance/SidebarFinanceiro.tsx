@@ -5,7 +5,7 @@ import {
   ArrowUpCircle, 
   ArrowDownCircle, 
   Plane, 
-  FolderSearch, 
+  Folder, 
   X,
   Briefcase,
   GraduationCap
@@ -67,7 +67,7 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
     { id: 'oab', label: 'OAB', icon: GraduationCap },
     { id: 'contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle },
     { id: 'gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane }, // Item adicionado
-    { id: 'ged', label: 'GED', icon: FolderSearch },
+    { id: 'ged', label: 'GED', icon: Folder },
   ]
 
   return (
