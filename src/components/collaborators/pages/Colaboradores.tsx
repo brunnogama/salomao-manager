@@ -287,7 +287,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   )
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-4">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
       
       {/* PAGE HEADER COMPLETO - Título + User Info */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
