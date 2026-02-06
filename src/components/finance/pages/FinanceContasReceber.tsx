@@ -1,4 +1,4 @@
-import { useState } from 'react'
+mimport { useState } from 'react'
 import { 
   ArrowDownCircle, 
   UserCircle, 
@@ -98,9 +98,9 @@ export function FinanceContasReceber({ userName = 'Usuário', onModuleHome, onLo
             <div className="p-4 rounded-full bg-blue-50 mb-4">
               <FileText className="h-12 w-12 text-[#1e3a8a] opacity-20" />
             </div>
-            <h2 className="text-xl font-black text-[#0a192f]">Nenhum recebimento encontrado</h2>
+            <h2 className="text-xl font-black text-[#0a192f]">Em breve!</h2>
             <p className="text-gray-500 max-w-sm mt-2">
-              Não existem registros de entrada para os critérios selecionados.
+              Módulo Contas a Receber em construção.
             </p>
           </div>
         </div>
@@ -108,4 +108,5 @@ export function FinanceContasReceber({ userName = 'Usuário', onModuleHome, onLo
       </div>
     </div>
   )
+
 }
