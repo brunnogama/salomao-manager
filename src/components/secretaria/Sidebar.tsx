@@ -4,7 +4,7 @@ import {
   Calendar,
   Receipt,
   Home,
-  FolderSearch,
+  Folder,
   X,
   Briefcase
 } from 'lucide-react'
@@ -58,7 +58,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
     { id: 'calendario', label: 'Calendário', icon: Calendar },
     { id: 'despesas', label: 'Despesas', icon: Receipt },
     { id: 'gestao-familia', label: 'Gestão Família Salomão', icon: Home },
-    { id: 'ged', label: 'GED', icon: FolderSearch },
+    { id: 'ged', label: 'GED', icon: Folder },
   ]
 
   return (
