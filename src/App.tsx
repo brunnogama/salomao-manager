@@ -36,6 +36,10 @@ import { RHGED } from './components/collaborators/pages/RHGED'
 
 // Componentes Executivo
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
+import { SecretariaExecutivaDashboard } from './components/secretaria/pages/SecretariaExecutivaDashboard'
+import { SecretariaExecutivaCalendario } from './components/secretaria/pages/SecretariaExecutivaCalendario'
+import { SecretariaExecutivaDespesas } from './components/secretaria/pages/SecretariaExecutivaDespesas'
+import { SecretariaExecutivaGED } from './components/secretaria/pages/SecretariaExecutivaGED'
 
 // Componentes Financeiro
 import { GestaoAeronave } from './pages/GestaoAeronave' // Nova importação
@@ -272,6 +276,10 @@ export default function App() {
             {/* --- MÓDULO EXECUTIVO --- */}
             {currentModule === 'executive' && (
               <>
+                {activePage === 'dashboard' && <SecretariaExecutivaDashboard userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'agenda' && <SecretariaExecutivaCalendario userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'despesas' && <SecretariaExecutivaDespesas userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'ged' && <SecretariaExecutivaGED userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'gestao-familia' && (
                   <GestaoFamilia 
                     userName={getUserDisplayName()} 
