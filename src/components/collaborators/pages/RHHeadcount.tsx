@@ -1,22 +1,24 @@
+// src/components/collaborators/pages/RHHeadcount.tsx
+
 import { useState } from 'react'
 import { 
-  RefreshCw, 
+  Users, 
   UserCircle, 
   Grid, 
   LogOut,
-  TrendingDown,
-  TrendingUp,
-  UserMinus,
-  AlertCircle
+  PieChart,
+  BarChart3,
+  Map,
+  Filter
 } from 'lucide-react'
 
-interface RHTurnoverProps {
+interface RHHeadcountProps {
   userName?: string;
   onModuleHome?: () => void;
   onLogout?: () => void;
 }
 
-export function RHTurnover({ userName = 'Usuário', onModuleHome, onLogout }: RHTurnoverProps) {
+export function RHHeadcount({ userName = 'Usuário', onModuleHome, onLogout }: RHHeadcountProps) {
   const [loading, setLoading] = useState(false)
 
   return (
@@ -26,14 +28,14 @@ export function RHTurnover({ userName = 'Usuário', onModuleHome, onLogout }: RH
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <RefreshCw className="h-7 w-7 text-white" />
+            <BarChart3 className="h-7 w-7 text-white" />
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Turnover & Retenção
+              Headcount & Estrutura
             </h1>
             <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              Análise de rotatividade e indicadores de desligamento
+              Análise quantitativa e distribuição do quadro de pessoal
             </p>
           </div>
         </div>
@@ -69,52 +71,51 @@ export function RHTurnover({ userName = 'Usuário', onModuleHome, onLogout }: RH
 
       <div className="max-w-7xl mx-auto space-y-6 w-full">
         
-        {/* INDICADORES DE TURNOVER */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-red-50 text-red-600">
-                <UserMinus className="h-5 w-5" />
+        {/* FILTROS DE DISTRIBUIÇÃO */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[240px] bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-50 text-[#1e3a8a] rounded-lg">
+                <PieChart className="h-5 w-5" />
               </div>
-              <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Desligamentos (Mês)</p>
+              <span className="text-xs font-bold text-[#0a192f]">Por Departamento</span>
             </div>
-            <p className="text-3xl font-black text-[#0a192f]">0</p>
+            <Filter className="h-4 w-4 text-gray-300" />
           </div>
 
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-blue-50 text-[#1e3a8a]">
-                <TrendingDown className="h-5 w-5" />
+          <div className="flex-1 min-w-[240px] bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-50 text-[#1e3a8a] rounded-lg">
+                <BarChart3 className="h-5 w-5" />
               </div>
-              <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Taxa de Turnover</p>
+              <span className="text-xs font-bold text-[#0a192f]">Por Cargo</span>
             </div>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-black text-[#0a192f]">0%</p>
-              <span className="text-[10px] font-bold text-green-500">0% vs mês ant.</span>
-            </div>
+            <Filter className="h-4 w-4 text-gray-300" />
           </div>
 
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-blue-50 text-[#1e3a8a]">
-                <TrendingUp className="h-5 w-5" />
+          <div className="flex-1 min-w-[240px] bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-50 text-[#1e3a8a] rounded-lg">
+                <Map className="h-5 w-5" />
               </div>
-              <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Índice de Retenção</p>
+              <span className="text-xs font-bold text-[#0a192f]">Por Unidade</span>
             </div>
-            <p className="text-3xl font-black text-[#0a192f]">100%</p>
+            <Filter className="h-4 w-4 text-gray-300" />
           </div>
         </div>
 
-        {/* ÁREA DE ANÁLISE */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="p-12 flex flex-col items-center justify-center text-center">
-            <div className="p-4 rounded-full bg-blue-50 mb-4">
-              <AlertCircle className="h-12 w-12 text-[#1e3a8a] opacity-20" />
-            </div>
-            <h2 className="text-xl font-black text-[#0a192f]">Dados insuficientes para análise</h2>
-            <p className="text-gray-500 max-w-sm mt-2">
-              As métricas de turnover serão calculadas automaticamente conforme os registros de movimentação de pessoal no sistema.
-            </p>
+        {/* CONTAINER DE GRÁFICOS (PLACEHOLDER) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white p-12 rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center justify-center text-center">
+             <BarChart3 className="h-12 w-12 text-[#1e3a8a] opacity-10 mb-4" />
+             <p className="text-sm font-black text-[#0a192f] uppercase tracking-widest">Distribuição Mensal</p>
+             <p className="text-xs text-gray-400 mt-1 font-medium">Processando dados do Supabase...</p>
+          </div>
+
+          <div className="bg-white p-12 rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center justify-center text-center">
+             <PieChart className="h-12 w-12 text-[#1e3a8a] opacity-10 mb-4" />
+             <p className="text-sm font-black text-[#0a192f] uppercase tracking-widest">Composição por Vínculo</p>
+             <p className="text-xs text-gray-400 mt-1 font-medium">Aguardando registros...</p>
           </div>
         </div>
 
