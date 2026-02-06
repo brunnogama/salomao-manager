@@ -1,3 +1,4 @@
+// src/components/collaborators/components/InformacoesProfissionaisSection.tsx
 import { GraduationCap, Search, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Colaborador } from '../../../types/colaborador'
 import { SearchableSelect } from '../../crm/SearchableSelect'
@@ -67,7 +68,7 @@ export function InformacoesProfissionaisSection({
   return (
     <section className="space-y-4">
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
-        <刻GraduationCap className="h-4 w-4" /> Dados Profissionais
+        <GraduationCap className="h-4 w-4" /> Dados Profissionais
       </h3>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
