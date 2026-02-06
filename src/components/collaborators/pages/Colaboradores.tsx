@@ -418,12 +418,12 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       {/* MODAL DE FORMULÁRIO */}
       {showFormModal && (
         <div 
-          className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300"
+          className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowFormModal(false)
           }}
         >
-          <div className="bg-white rounded-[2rem] w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200/50 overflow-visible">
+          <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50">
             
             {/* Header */}
             <div className="px-8 py-5 border-b flex justify-between items-center bg-gray-50 shrink-0 rounded-t-[2rem]">
@@ -440,7 +440,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             </div>
 
             {/* Body com Scroll */}
-            <div className="px-8 py-6 overflow-y-auto flex-1 custom-scrollbar">
+            <div className="px-8 py-6 max-h-[calc(90vh-200px)] overflow-y-auto custom-scrollbar">
               <div className="space-y-8">
                 {/* Photo Upload */}
                 <PhotoUploadSection 
@@ -504,8 +504,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
       {/* MODAL DE DETALHES DO COLABORADOR */}
       {selectedColaborador && (
-        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[2rem] w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200/50 overflow-visible">
+        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
+          <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50">
             
             {/* Header */}
             <div className="px-8 py-5 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-[2rem]">
@@ -532,7 +532,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             </div>
 
             {/* Body */}
-            <div className={`px-8 py-6 flex-1 custom-scrollbar ${activeDetailTab === 'ged' ? 'overflow-visible' : 'overflow-y-auto'}`}>
+            <div className={`px-8 py-6 ${activeDetailTab === 'dados' ? 'max-h-[calc(90vh-320px)] overflow-y-auto custom-scrollbar' : ''}`}>
               {activeDetailTab === 'dados' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-6">
@@ -578,7 +578,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 overflow-visible relative">
+                  <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 relative">
                     <div className="flex flex-col md:flex-row items-end gap-4">
                       <div className="flex-1 w-full relative z-[110]">
                         <SearchableSelect label="Tipo de Documento" placeholder="Selecione ou gerencie..." value={selectedGedCategory} onChange={setSelectedGedCategory} table="opcoes_ged_colaboradores" onRefresh={handleRefresh} />
