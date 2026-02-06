@@ -98,9 +98,9 @@ export function FinanceContasPagar({ userName = 'Usuário', onModuleHome, onLogo
             <div className="p-4 rounded-full bg-blue-50 mb-4">
               <FileText className="h-12 w-12 text-[#1e3a8a] opacity-20" />
             </div>
-            <h2 className="text-xl font-black text-[#0a192f]">Nenhuma conta encontrada</h2>
+            <h2 className="text-xl font-black text-[#0a192f]">Em breve!</h2>
             <p className="text-gray-500 max-w-sm mt-2">
-              Não existem lançamentos para os critérios selecionados ou ainda não houve registros.
+              Módulo de Contas a Pagar em Construção.
             </p>
           </div>
         </div>
@@ -108,4 +108,5 @@ export function FinanceContasPagar({ userName = 'Usuário', onModuleHome, onLogo
       </div>
     </div>
   )
+
 }
