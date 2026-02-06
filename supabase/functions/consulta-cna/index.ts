@@ -1,4 +1,6 @@
+// supabase/functions/consulta-cna/index.ts
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,15 +9,30 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // 1. Trata o Preflight (O navegador pergunta se pode acessar)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { 
-      status: 200, // IMPORTANTE: Precisa ser 200
+      status: 200,
       headers: corsHeaders 
     })
   }
 
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('Sem autorização')
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Usuário não autenticado')
+    }
+
     const { numero, uf } = await req.json()
 
     if (!numero || !uf) {
@@ -54,7 +71,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
-        status: 200, // Retornamos 200 mesmo no erro para o CORS não bloquear a leitura da mensagem
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )

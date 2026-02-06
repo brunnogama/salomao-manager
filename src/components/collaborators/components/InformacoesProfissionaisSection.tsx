@@ -37,10 +37,19 @@ export function InformacoesProfissionaisSection({
     setVinculos([])
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        throw new Error('Usuário não autenticado')
+      }
+
       const { data, error } = await supabase.functions.invoke('consulta-cna', {
         body: { 
           numero: formData.oab_numero, 
           uf: formData.oab_uf 
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       })
 
