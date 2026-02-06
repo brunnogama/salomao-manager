@@ -77,7 +77,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
     { id: 'remuneracao', label: 'Remuneração', icon: Banknote },
     { id: 'acoes', label: 'Ações', icon: Megaphone },
     { id: 'kanban', label: 'Kanban', icon: KanbanSquare },
-    { id: 'ged', label: 'GED', icon: FolderSearch },
+    { id: 'ged', label: 'GED', icon: Folder },
   ]
 
   return (

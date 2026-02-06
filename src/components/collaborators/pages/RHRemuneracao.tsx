@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { 
-  DollarSign, 
+  Banknote, 
   UserCircle, 
   Grid, 
   LogOut,
@@ -8,7 +8,8 @@ import {
   TrendingUp,
   PieChart,
   FileText,
-  Search
+  Search,
+  DollarSign
 } from 'lucide-react'
 
 interface RHRemuneracaoProps {
@@ -27,7 +28,7 @@ export function RHRemuneracao({ userName = 'Usuário', onModuleHome, onLogout }:
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <DollarSign className="h-7 w-7 text-white" />
+            <Banknote className="h-7 w-7 text-white" />
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { 
-  ShieldAlert, 
+  Megaphone, 
   UserCircle, 
   Grid, 
   LogOut,
@@ -8,7 +8,8 @@ import {
   MessageSquare,
   ClipboardCheck,
   Search,
-  Plus
+  Plus,
+  ShieldAlert
 } from 'lucide-react'
 
 interface RHAcoesProps {
@@ -27,7 +28,7 @@ export function RHAcoes({ userName = 'Usuário', onModuleHome, onLogout }: RHAco
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <ShieldAlert className="h-7 w-7 text-white" />
+            <Megaphone className="h-7 w-7 text-white" />
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
