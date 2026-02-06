@@ -33,6 +33,7 @@ import { GestaoAeronave } from './pages/GestaoAeronave' // Nova importação
 import { GED } from './components/finance/pages/GED'
 import { Calendario as CalendarioFinanceiro } from './components/finance/pages/Calendario'
 import { ListaOAB } from './components/finance/pages/ListaOAB'
+import { FinanceDashboard } from './components/finance/pages/FinanceDashboard'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
 
@@ -198,8 +199,15 @@ export default function App() {
             {/* --- MÓDULO FINANCEIRO --- */}
             {currentModule === 'financial' && (
               <>
+                {activePage === 'dashboard' && (
+                  <FinanceDashboard 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
                 {activePage === 'calendario' && <CalendarioFinanceiro userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
-                {(activePage === 'dashboard' || activePage === 'contas-pagar' || activePage === 'contas-receber') && (
+                {(activePage === 'contas-pagar' || activePage === 'contas-receber') && (
                   <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />
                 )}
                 {activePage === 'oab' && (
