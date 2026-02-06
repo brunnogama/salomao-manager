@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { 
   Shield, Users, History as HistoryIcon, Code, Lock, 
   Briefcase, EyeOff, LayoutGrid, Heart, Plane, DollarSign, Grid, 
-  CheckCircle, AlertCircle
+  CheckCircle, AlertCircle, Trash2, AlertTriangle
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
@@ -63,6 +63,9 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
   
   const [brindes, setBrindes] = useState<GenericItem[]>([])
   const [socios, setSocios] = useState<GenericItem[]>([])
+
+  const [resetModal, setResetModal] = useState<{ isOpen: boolean; table: string; moduleName: string; logMsg: string; description: string } | null>(null)
+  const [confirmText, setConfirmText] = useState('')
 
   const isSuperAdmin = currentUserEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
   const isAdmin = currentUserRole.toLowerCase() === 'admin' || isSuperAdmin;
@@ -198,13 +201,16 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     }
   }
 
-  const handleResetAction = async (table: string, moduleName: string, logMsg: string) => {
-    if (!isAdmin || !confirm(`ATENÇÃO: Isso apagará TODOS os dados de ${moduleName}. Prosseguir?`)) return;
-    const confirmText = prompt('Digite APAGAR para confirmar:');
-    if (confirmText !== 'APAGAR') return;
+  const openResetModal = (table: string, moduleName: string, logMsg: string, description: string) => {
+    if (!isAdmin) return;
+    setResetModal({ isOpen: true, table, moduleName, logMsg, description });
+    setConfirmText('');
+  }
+
+  const handleResetAction = async () => {
+    if (!resetModal || confirmText !== 'APAGAR') return;
     setLoading(true);
     try {
-      // Tabelas que usam UUID
       const uuidTables = [
         'aeronave_lancamentos', 
         'financeiro_aeronave', 
@@ -213,23 +219,24 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
         'colaboradores'
       ];
 
-      if (uuidTables.includes(table)) {
+      if (uuidTables.includes(resetModal.table)) {
         const { error } = await supabase
-          .from(table)
+          .from(resetModal.table)
           .delete()
           .neq('id', '00000000-0000-0000-0000-000000000000'); 
         if (error) throw error;
       } else {
-        // Lógica padrão para tabelas legadas (INT ID)
         const { error } = await supabase
-          .from(table)
+          .from(resetModal.table)
           .delete()
           .not('id', 'eq', 0);
         if (error) throw error;
       }
       
-      setStatus({ type: 'success', message: `${moduleName} resetado com sucesso!` });
-      await logAction('RESET', moduleName.toUpperCase(), logMsg);
+      setStatus({ type: 'success', message: `${resetModal.moduleName} resetado com sucesso!` });
+      await logAction('RESET', resetModal.moduleName.toUpperCase(), resetModal.logMsg);
+      setResetModal(null);
+      setConfirmText('');
     } catch (e: any) { 
       console.error('Erro ao resetar:', e);
       setStatus({ type: 'error', message: 'Erro ao resetar: ' + (e.message || 'Falha ao processar no banco') }); 
@@ -245,6 +252,19 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
     return currentUserPermissions[keyMap[modId] as keyof UserPermissions] || false;
   }
 
+  const getModuleConfig = (modId: string) => {
+    const configs: Record<string, { label: string; icon: any; color: string; bgColor: string; description: string }> = {
+      geral: { label: 'Geral', icon: Shield, color: 'text-gray-700', bgColor: 'bg-gray-50', description: 'Gerenciamento de usuários e permissões' },
+      crm: { label: 'CRM', icon: Briefcase, color: 'text-blue-700', bgColor: 'bg-blue-50', description: 'Configurações de clientes e brindes' },
+      rh: { label: 'RH', icon: Users, color: 'text-green-700', bgColor: 'bg-green-50', description: 'Gestão de colaboradores e presença' },
+      family: { label: 'Família', icon: Heart, color: 'text-purple-700', bgColor: 'bg-purple-50', description: 'Controle familiar e financeiro' },
+      financial: { label: 'Financeiro', icon: DollarSign, color: 'text-blue-800', bgColor: 'bg-blue-50', description: 'Gestão financeira da aeronave' },
+      historico: { label: 'Histórico', icon: HistoryIcon, color: 'text-purple-700', bgColor: 'bg-purple-50', description: 'Registro de atividades do sistema' },
+      sistema: { label: 'Sistema', icon: Code, color: 'text-red-700', bgColor: 'bg-red-50', description: 'Informações técnicas e manutenção' },
+    };
+    return configs[modId] || configs.geral;
+  }
+
   if (activeModule !== 'menu' && !hasAccessToModule(activeModule)) {
     return (
       <div className="max-w-7xl mx-auto flex flex-col items-center justify-center h-[500px] bg-white rounded-2xl border text-center">
@@ -256,6 +276,8 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       </div>
     )
   }
+
+  const currentModuleConfig = getModuleConfig(activeModule);
 
   return (
     <div className="max-w-7xl mx-auto pb-12 space-y-6">
@@ -288,6 +310,20 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
           )}
         </div>
       </div>
+
+      {activeModule !== 'menu' && (
+        <div className={`${currentModuleConfig.bgColor} border border-gray-200 rounded-xl p-6`}>
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-xl ${currentModuleConfig.color} bg-white border`}>
+              <currentModuleConfig.icon className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className={`text-2xl font-bold ${currentModuleConfig.color}`}>{currentModuleConfig.label}</h2>
+              <p className="text-gray-600 text-sm">{currentModuleConfig.description}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {status.type && (
         <div className={`p-4 rounded-lg flex items-start gap-3 animate-in slide-in-from-top-2 ${status.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
@@ -326,22 +362,22 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
       {activeModule === 'rh' && (
         <MaintenanceSection 
           type="rh" isAdmin={isAdmin} 
-          onReset={() => handleResetAction('presenca_portaria', 'Presencial', 'Resetou presenças')}
-          onResetSecondary={() => handleResetAction('colaboradores', 'Colaboradores', 'Resetou colaboradores')}
-          onResetTertiary={() => handleResetAction('marcacoes_ponto', 'Controle de Horas', 'Resetou marcações de ponto')}
+          onReset={() => openResetModal('presenca_portaria', 'Presencial', 'Resetou presenças', 'Remove todos os registros de presença da portaria')}
+          onResetSecondary={() => openResetModal('colaboradores', 'Colaboradores', 'Resetou colaboradores', 'Remove todos os dados cadastrais de colaboradores')}
+          onResetTertiary={() => openResetModal('marcacoes_ponto', 'Controle de Horas', 'Resetou marcações de ponto', 'Remove todos os registros de marcações de ponto')}
         />
       )}
 
       {activeModule === 'family' && (
-        <MaintenanceSection type="family" isAdmin={isAdmin} onReset={() => handleResetAction('familia_salomao_dados', 'Família', 'Resetou base da família')} />
+        <MaintenanceSection type="family" isAdmin={isAdmin} onReset={() => openResetModal('familia_salomao_dados', 'Família', 'Resetou base da família', 'Remove todos os dados financeiros da família')} />
       )}
 
       {activeModule === 'financial' && (
-        <MaintenanceSection type="financial" isAdmin={isAdmin} onReset={() => handleResetAction('financeiro_aeronave', 'Financeiro', 'Resetou base da aeronave')} />
+        <MaintenanceSection type="financial" isAdmin={isAdmin} onReset={() => openResetModal('financeiro_aeronave', 'Financeiro', 'Resetou base da aeronave', 'Remove todos os lançamentos financeiros da aeronave')} />
       )}
 
       {activeModule === 'sistema' && (
-        <SystemSection changelog={CHANGELOG} isAdmin={isAdmin} onSystemReset={() => handleResetAction('clientes', 'SISTEMA', 'Reset Total')} />
+        <SystemSection changelog={CHANGELOG} isAdmin={isAdmin} onSystemReset={() => openResetModal('clientes', 'SISTEMA', 'Reset Total', 'Remove TODOS os dados do sistema (clientes, histórico, etc.)')} />
       )}
 
       {activeModule === 'historico' && <div className="bg-white rounded-xl shadow-sm border p-6"><History /></div>}
@@ -356,6 +392,69 @@ export function Settings({ onModuleHome }: { onModuleHome?: () => void }) {
           setUserForm({...userForm, allowed_modules: mods});
         }}
       />
+
+      {resetModal?.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 animate-in zoom-in-95">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 bg-red-100 rounded-xl">
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Confirmar Reset de Dados</h3>
+                <p className="text-gray-600">Esta ação é <span className="font-bold text-red-600">IRREVERSÍVEL</span></p>
+              </div>
+            </div>
+
+            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Trash2 className="h-5 w-5 text-red-600" />
+                <p className="font-bold text-red-900">Base a ser excluída:</p>
+              </div>
+              <p className="text-2xl font-bold text-red-700 mb-2">{resetModal.moduleName}</p>
+              <p className="text-sm text-red-700">{resetModal.description}</p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Digite <span className="font-mono bg-gray-100 px-2 py-1 rounded text-red-600 font-bold">APAGAR</span> para confirmar:
+              </label>
+              <input
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="Digite APAGAR"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-lg"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setResetModal(null); setConfirmText(''); }}
+                disabled={loading}
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleResetAction}
+                disabled={loading || confirmText !== 'APAGAR'}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>Processando...</>
+                ) : (
+                  <>
+                    <Trash2 className="h-5 w-5" />
+                    Confirmar Reset
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
