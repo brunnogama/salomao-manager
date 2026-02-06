@@ -24,6 +24,15 @@ import { UnderConstruction } from './components/UnderConstruction'
 import { Presencial } from './components/collaborators/pages/Presencial' 
 import { Colaboradores } from './components/collaborators/pages/Colaboradores'
 import { Calendario as CalendarioRH } from './components/collaborators/pages/Calendario'
+import { RHDashboard } from './components/collaborators/pages/RHDashboard'
+import { RHEvolucaoPessoal } from './components/collaborators/pages/RHEvolucaoPessoal'
+import { RHTempoCasa } from './components/collaborators/pages/RHTempoCasa'
+import { RHHeadcount } from './components/collaborators/pages/RHHeadcount'
+import { RHTurnover } from './components/collaborators/pages/RHTurnover'
+import { RHVagas } from './components/collaborators/pages/RHVagas'
+import { RHRemuneracao } from './components/collaborators/pages/RHRemuneracao'
+import { RHAcoes } from './components/collaborators/pages/RHAcoes'
+import { RHGED } from './components/collaborators/pages/RHGED'
 
 // Componentes Executivo
 import { GestaoFamilia } from './components/secretaria/GestaoFamilia'
@@ -185,9 +194,18 @@ export default function App() {
             {/* --- MÓDULO RH (COLABORADORES) --- */}
             {currentModule === 'collaborators' && (
               <>
+                {activePage === 'dashboard' && <RHDashboard userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'calendario' && <CalendarioRH userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'presencial' && <Presencial userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'colaboradores' && <Colaboradores userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'evolucao' && <RHEvolucaoPessoal userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'tempo-casa' && <RHTempoCasa userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'headcount' && <RHHeadcount userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'turnover' && <RHTurnover userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'vagas' && <RHVagas userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'remuneracao' && <RHRemuneracao userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'acoes' && <RHAcoes userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
+                {activePage === 'ged' && <RHGED userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'kanban' && (
                   <Kanban 
                     userName={getUserDisplayName()} 
