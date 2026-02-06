@@ -20,7 +20,8 @@ import {
   UserCircle,
   Calendar as CalendarEventIcon,
   Pencil,
-  Trash2
+  Trash2,
+  CalendarDays as MonthIcon
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { RHCalendarioDiaModal } from '../components/RHCalendarioDiaModal'
@@ -260,6 +261,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
   const getAniversariosHoje = () => aniversarios.filter(a => a.isHoje)
   const getAniversariosEstaSemana = () => aniversarios.filter(a => a.isEstaSemana && !a.isHoje)
+  const getAniversariosEsteMes = () => aniversarios.filter(a => a.isEsteMes)
   const getProximosAniversarios = () => {
     if (filterMes !== null) {
       return aniversarios.filter(a => a.mes === filterMes)
@@ -362,6 +364,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
   const aniversariosHoje = getAniversariosHoje()
   const aniversariosEstaSemana = getAniversariosEstaSemana()
+  const aniversariosEsteMes = getAniversariosEsteMes()
 
   // Agrupamento de eventos para a lista lateral
   const getAgrupadosPorDia = () => {
@@ -450,6 +453,16 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
             <div>
               <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Semana</p>
               <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{aniversariosEstaSemana.length}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg">
+              <MonthIcon className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Mês</p>
+              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{aniversariosEsteMes.length}</p>
             </div>
           </div>
           
