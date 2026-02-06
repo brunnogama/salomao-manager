@@ -31,10 +31,10 @@ export function RHAcoes({ userName = 'Usuário', onModuleHome, onLogout }: RHAco
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Ações & Feedbacks
+              Ações do RH
             </h1>
             <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              Gestão de medidas disciplinares, ocorrências e registros de comportamento
+              Ações promvidas pelo Recursos Humanos
             </p>
           </div>
         </div>
@@ -131,7 +131,7 @@ export function RHAcoes({ userName = 'Usuário', onModuleHome, onLogout }: RHAco
             </div>
             <h2 className="text-xl font-black text-[#0a192f]">Nenhuma ocorrência registrada</h2>
             <p className="text-gray-500 max-w-sm mt-2">
-              Históricos disciplinares e feedbacks formais aparecerão aqui para acompanhamento da diretoria de RH.
+              Históricos de ações promovidas pelo Recursos Humanos
             </p>
           </div>
         </div>
