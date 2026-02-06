@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { 
-  ArrowUpCircle, 
+  ArrowDownCircle, 
   UserCircle, 
   Grid, 
   LogOut,
@@ -10,13 +10,13 @@ import {
   FileText
 } from 'lucide-react'
 
-interface FinanceContasPagarProps {
+interface FinanceContasReceberProps {
   userName?: string;
   onModuleHome?: () => void;
   onLogout?: () => void;
 }
 
-export function FinanceContasPagar({ userName = 'Usuário', onModuleHome, onLogout }: FinanceContasPagarProps) {
+export function FinanceContasReceber({ userName = 'Usuário', onModuleHome, onLogout }: FinanceContasReceberProps) {
   const [searchTerm, setSearchTerm] = useState('')
 
   return (
@@ -26,14 +26,14 @@ export function FinanceContasPagar({ userName = 'Usuário', onModuleHome, onLogo
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <ArrowUpCircle className="h-7 w-7 text-white" />
+            <ArrowDownCircle className="h-7 w-7 text-white" />
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Contas a Pagar
+              Contas a Receber
             </h1>
             <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              Gestão de saídas, fornecedores e obrigações financeiras
+              Gestão de entradas, honorários e recebíveis financeiros
             </p>
           </div>
         </div>
@@ -75,7 +75,7 @@ export function FinanceContasPagar({ userName = 'Usuário', onModuleHome, onLogo
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input 
               type="text"
-              placeholder="Buscar conta ou fornecedor..."
+              placeholder="Buscar recebimento ou cliente..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-xl shadow-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium text-sm"
@@ -87,7 +87,7 @@ export function FinanceContasPagar({ userName = 'Usuário', onModuleHome, onLogo
               <Filter className="h-4 w-4" /> Filtros
             </button>
             <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95">
-              <Plus className="h-4 w-4" /> Nova Conta
+              <Plus className="h-4 w-4" /> Novo Recebimento
             </button>
           </div>
         </div>
@@ -98,9 +98,9 @@ export function FinanceContasPagar({ userName = 'Usuário', onModuleHome, onLogo
             <div className="p-4 rounded-full bg-blue-50 mb-4">
               <FileText className="h-12 w-12 text-[#1e3a8a] opacity-20" />
             </div>
-            <h2 className="text-xl font-black text-[#0a192f]">Nenhuma conta encontrada</h2>
+            <h2 className="text-xl font-black text-[#0a192f]">Nenhum recebimento encontrado</h2>
             <p className="text-gray-500 max-w-sm mt-2">
-              Não existem lançamentos para os critérios selecionados ou ainda não houve registros.
+              Não existem registros de entrada para os critérios selecionados.
             </p>
           </div>
         </div>

@@ -35,6 +35,7 @@ import { Calendario as CalendarioFinanceiro } from './components/finance/pages/C
 import { ListaOAB } from './components/finance/pages/ListaOAB'
 import { FinanceDashboard } from './components/finance/pages/FinanceDashboard'
 import { FinanceContasPagar } from './components/finance/pages/FinanceContasPagar'
+import { FinanceContasReceber } from './components/finance/pages/FinanceContasReceber'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
 
@@ -216,7 +217,11 @@ export default function App() {
                   />
                 )}
                 {activePage === 'contas-receber' && (
-                  <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />
+                  <FinanceContasReceber 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
                 )}
                 {activePage === 'oab' && (
                   <ListaOAB 
