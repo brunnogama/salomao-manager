@@ -439,8 +439,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               </button>
             </div>
 
-            {/* Body com Scroll - Alterado para overflow-visible para comportar dropdowns */}
-            <div className="px-8 py-6 overflow-visible flex-1 custom-scrollbar">
+            {/* Body com Scroll */}
+            <div className="px-8 py-6 overflow-y-auto flex-1 custom-scrollbar">
               <div className="space-y-8">
                 {/* Photo Upload */}
                 <PhotoUploadSection 
@@ -531,8 +531,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               </button>
             </div>
 
-            {/* Body - Alterado para overflow-visible para comportar dropdowns */}
-            <div className={`px-8 py-6 flex-1 custom-scrollbar overflow-visible`}>
+            {/* Body */}
+            <div className={`px-8 py-6 flex-1 custom-scrollbar ${activeDetailTab === 'ged' ? 'overflow-visible' : 'overflow-y-auto'}`}>
               {activeDetailTab === 'dados' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-6">
