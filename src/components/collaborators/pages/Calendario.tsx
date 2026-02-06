@@ -492,7 +492,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
               }`}
             >
-              Próximos
+              Lista
             </button>
           </div>
         </div>
