@@ -7,10 +7,10 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // ESSENCIAL: Trata a requisição OPTIONS (Preflight) do navegador
+  // 1. Trata o Preflight (O navegador pergunta se pode acessar)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { 
-      status: 200, 
+      status: 200, // IMPORTANTE: Precisa ser 200
       headers: corsHeaders 
     })
   }
@@ -31,10 +31,9 @@ serve(async (req) => {
     })
 
     const html = await response.text()
-
-    // Extração simples de sociedades no HTML do CNA
     const sociedades: string[] = []
     const regexSociedade = /Sociedade de Advogados:<\/strong>\s*([^<]+)/gi
+    
     let match
     while ((match = regexSociedade.exec(html)) !== null) {
       if (match[1]) sociedades.push(match[1].trim())
@@ -55,7 +54,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
-        status: 400,
+        status: 200, // Retornamos 200 mesmo no erro para o CORS não bloquear a leitura da mensagem
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )
