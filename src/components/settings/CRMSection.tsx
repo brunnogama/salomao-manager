@@ -15,7 +15,7 @@ interface CRMSectionProps {
 
 export function CRMSection({ brindes, socios, onDeleteBrinde, onDeleteSocio }: CRMSectionProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-6">
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <Gift className="h-6 w-6 text-blue-700" />
