@@ -218,29 +218,67 @@ export function AeronaveFormModal({
     fetchListas()
   }
 
-  // CORRIGIDO: CurrencyInput que permite digitação
+  // CORRIGIDO: // CORRIGIDO: CurrencyInput com digitação funcional e UI limpa
   const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
-    const [displayValue, setDisplayValue] = useState('')
+    const [localValue, setLocalValue] = useState('')
+    const [isFocused, setIsFocused] = useState(false)
 
     useEffect(() => {
+      if (!isFocused) {
+        const formatted = new Intl.NumberFormat('pt-BR', { 
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(value || 0)
+        setLocalValue(formatted)
+      }
+    }, [value, isFocused])
+
+    const handleFocus = () => {
+      setIsFocused(true)
+      // Ao focar, mostra apenas os números sem formatação
+      if (value === 0) {
+        setLocalValue('')
+      } else {
+        const formatted = new Intl.NumberFormat('pt-BR', { 
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(value || 0)
+        setLocalValue(formatted)
+      }
+    }
+
+    const handleBlur = () => {
+      setIsFocused(false)
+      // Ao desfocar, formata novamente
       const formatted = new Intl.NumberFormat('pt-BR', { 
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       }).format(value || 0)
-      setDisplayValue(formatted)
-    }, [value])
+      setLocalValue(formatted)
+    }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const input = e.target.value
-      const numbers = input.replace(/\D/g, '')
-      const numericValue = numbers ? parseInt(numbers) / 100 : 0
       
+      // Remove tudo exceto números
+      const numbers = input.replace(/\D/g, '')
+      
+      if (numbers === '') {
+        setLocalValue('')
+        onChange(0)
+        return
+      }
+      
+      // Converte para número (centavos)
+      const numericValue = parseInt(numbers) / 100
+      
+      // Formata para exibição
       const formatted = new Intl.NumberFormat('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       }).format(numericValue)
       
-      setDisplayValue(formatted)
+      setLocalValue(formatted)
       onChange(numericValue)
     }
 
@@ -250,14 +288,17 @@ export function AeronaveFormModal({
           {label} {required && <span className="text-red-500">*</span>}
         </label>
         <div className="relative group w-full">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 group-focus-within:text-blue-600 transition-colors">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 group-focus-within:text-blue-600 transition-colors pointer-events-none select-none">
             R$
-          </span>
+          </div>
           <input
             type="text"
-            className="input-base pl-12"
-            value={displayValue}
+            inputMode="numeric"
+            className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all"
+            value={localValue}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             placeholder="0,00"
           />
         </div>
