@@ -34,6 +34,7 @@ import { GED } from './components/finance/pages/GED'
 import { Calendario as CalendarioFinanceiro } from './components/finance/pages/Calendario'
 import { ListaOAB } from './components/finance/pages/ListaOAB'
 import { FinanceDashboard } from './components/finance/pages/FinanceDashboard'
+import { FinanceContasPagar } from './components/finance/pages/FinanceContasPagar'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
 
@@ -207,7 +208,14 @@ export default function App() {
                   />
                 )}
                 {activePage === 'calendario' && <CalendarioFinanceiro userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
-                {(activePage === 'contas-pagar' || activePage === 'contas-receber') && (
+                {activePage === 'contas-pagar' && (
+                  <FinanceContasPagar 
+                    userName={getUserDisplayName()} 
+                    onModuleHome={() => setCurrentModule('home')} 
+                    onLogout={handleLogout} 
+                  />
+                )}
+                {activePage === 'contas-receber' && (
                   <UnderConstruction moduleName="Financeiro" onBack={() => setCurrentModule('home')} />
                 )}
                 {activePage === 'oab' && (
