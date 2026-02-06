@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Upload, FileSpreadsheet, RefreshCw, Download,
   Users, Briefcase, FileText,
-  Plus, Search, Eraser, Grid, LogOut, UserCircle, Clock
+  Plus, Search, Eraser, Grid, LogOut, UserCircle, Clock, MapPin
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -362,7 +362,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
         {/* Left: Título e Ícone */}
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <Users className="h-7 w-7 text-white" />
+            <MapPin className="h-7 w-7 text-white" />
           </div>
           <div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
