@@ -306,7 +306,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                   strokeWidth={3}
                   dot={{ r: 5, fill: COLORS.line, strokeWidth: 2, stroke: '#fff' }}
                   activeDot={{ r: 8, fill: COLORS.activeDot, strokeWidth: 0 }}
-                  animationDuration={2000} // ALTERAÇÃO: 2000ms para desenhar devagar
+                  animationDuration={500} // ALTERAÇÃO: 500ms para um efeito mais rápido ao entrar
                   animationEasing="ease-in-out" // Suave
                 >
                   <LabelList 
