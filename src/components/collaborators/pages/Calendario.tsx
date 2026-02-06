@@ -288,15 +288,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
   const aniversariosHoje = getAniversariosHoje()
   const aniversariosEstaSemana = getAniversariosEstaSemana()
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 gap-4">
-        <div className="w-12 h-12 border-4 border-[#1e3a8a]/20 border-t-[#1e3a8a] rounded-full animate-spin"></div>
-        <p className="text-sm font-semibold text-gray-500">Carregando calendário...</p>
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
       
