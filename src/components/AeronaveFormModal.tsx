@@ -110,6 +110,87 @@ function SearchableSelect({ value, onChange, options, placeholder = 'Selecione..
   )
 }
 
+// CORRIGIDO: CurrencyInput movido para fora do componente pai para evitar perda de foco
+const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
+  const [localValue, setLocalValue] = useState('')
+  const [isFocused, setIsFocused] = useState(false)
+
+  useEffect(() => {
+    if (!isFocused) {
+      const formatted = new Intl.NumberFormat('pt-BR', { 
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value || 0)
+      setLocalValue(formatted)
+    }
+  }, [value, isFocused])
+
+  const handleFocus = () => {
+    setIsFocused(true)
+    if (value === 0) {
+      setLocalValue('')
+    } else {
+      const formatted = new Intl.NumberFormat('pt-BR', { 
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value || 0)
+      setLocalValue(formatted)
+    }
+  }
+
+  const handleBlur = () => {
+    setIsFocused(false)
+    const formatted = new Intl.NumberFormat('pt-BR', { 
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value || 0)
+    setLocalValue(formatted)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value
+    const numbers = input.replace(/\D/g, '')
+    
+    if (numbers === '') {
+      setLocalValue('')
+      onChange(0)
+      return
+    }
+    
+    const numericValue = parseInt(numbers) / 100
+    const formatted = new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(numericValue)
+    
+    setLocalValue(formatted)
+    onChange(numericValue)
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative group w-full">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 group-focus-within:text-blue-600 transition-colors pointer-events-none select-none">
+          R$
+        </div>
+        <input
+          type="text"
+          inputMode="numeric"
+          className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all"
+          value={localValue}
+          onChange={handleInputChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          placeholder="0,00"
+        />
+      </div>
+    </div>
+  )
+}
+
 export function AeronaveFormModal({ 
   isOpen, 
   onClose, 
@@ -216,94 +297,6 @@ export function AeronaveFormModal({
   const handleCloseConfig = () => {
     setConfigModal({ ...configModal, open: false })
     fetchListas()
-  }
-
-  // CORRIGIDO: // CORRIGIDO: CurrencyInput com digitação funcional e UI limpa
-  const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
-    const [localValue, setLocalValue] = useState('')
-    const [isFocused, setIsFocused] = useState(false)
-
-    useEffect(() => {
-      if (!isFocused) {
-        const formatted = new Intl.NumberFormat('pt-BR', { 
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }).format(value || 0)
-        setLocalValue(formatted)
-      }
-    }, [value, isFocused])
-
-    const handleFocus = () => {
-      setIsFocused(true)
-      // Ao focar, mostra apenas os números sem formatação
-      if (value === 0) {
-        setLocalValue('')
-      } else {
-        const formatted = new Intl.NumberFormat('pt-BR', { 
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }).format(value || 0)
-        setLocalValue(formatted)
-      }
-    }
-
-    const handleBlur = () => {
-      setIsFocused(false)
-      // Ao desfocar, formata novamente
-      const formatted = new Intl.NumberFormat('pt-BR', { 
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(value || 0)
-      setLocalValue(formatted)
-    }
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const input = e.target.value
-      
-      // Remove tudo exceto números
-      const numbers = input.replace(/\D/g, '')
-      
-      if (numbers === '') {
-        setLocalValue('')
-        onChange(0)
-        return
-      }
-      
-      // Converte para número (centavos)
-      const numericValue = parseInt(numbers) / 100
-      
-      // Formata para exibição
-      const formatted = new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(numericValue)
-      
-      setLocalValue(formatted)
-      onChange(numericValue)
-    }
-
-    return (
-      <div className="flex flex-col gap-1.5 w-full">
-        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        <div className="relative group w-full">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 group-focus-within:text-blue-600 transition-colors pointer-events-none select-none">
-            R$
-          </div>
-          <input
-            type="text"
-            inputMode="numeric"
-            className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all"
-            value={localValue}
-            onChange={handleInputChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            placeholder="0,00"
-          />
-        </div>
-      </div>
-    )
   }
 
   const handleSubmit = async (saveAndNew: boolean) => {
@@ -481,7 +474,7 @@ export function AeronaveFormModal({
 
                 {origem === 'missao' && (
                   <div className="col-span-2">
-                    <CurrencyInput label="Faturado CNPJ Salomão" value={formData.faturado_cnpj || 0} onChange={val => handleChange('faturado_cnpj', val)} />
+                    <CurrencyInput label="Faturado CNPJ Salomão" value={formData.faturado_cnpj || 0} onChange={(val: number) => handleChange('faturado_cnpj', val)} />
                   </div>
                 )}
               </div>
@@ -503,14 +496,14 @@ export function AeronaveFormModal({
                     <input type="date" className="input-base" value={formData.vencimento || ''} onChange={e => handleChange('vencimento', e.target.value)} />
                   </div>
 
-                  <CurrencyInput label="Valor Previsto" value={formData.valor_previsto || 0} onChange={val => handleChange('valor_previsto', val)} />
+                  <CurrencyInput label="Valor Previsto" value={formData.valor_previsto || 0} onChange={(val: number) => handleChange('valor_previsto', val)} />
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Data Pagamento</label>
                     <input type="date" className="input-base" value={formData.data_pagamento || ''} onChange={e => handleChange('data_pagamento', e.target.value)} />
                   </div>
 
-                  <CurrencyInput label="Valor Pago" value={formData.valor_pago || 0} onChange={val => handleChange('valor_pago', val)} />
+                  <CurrencyInput label="Valor Pago" value={formData.valor_pago || 0} onChange={(val: number) => handleChange('valor_pago', val)} />
                 </div>
               </div>
 
@@ -546,7 +539,7 @@ export function AeronaveFormModal({
                     <input type="text" className="input-base" value={formData.numero_doc || ''} onChange={e => handleChange('numero_doc', e.target.value)} />
                   </div>
 
-                  <CurrencyInput label="Valor Total Doc" value={formData.valor_total_doc || 0} onChange={val => handleChange('valor_total_doc', val)} />
+                  <CurrencyInput label="Valor Total Doc" value={formData.valor_total_doc || 0} onChange={(val: number) => handleChange('valor_total_doc', val)} />
 
                   <div className="col-span-2 flex flex-col gap-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Observação</label>
