@@ -328,8 +328,8 @@ export function GestaoAeronave({
             <Plane className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-[#0a192f] tracking-tight">Gestão da Aeronave</h1>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Controle Unificado</p>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Gestão da Aeronave</h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">Controle Unificado</p>
           </div>
         </div>
 
