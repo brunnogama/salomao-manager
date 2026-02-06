@@ -67,7 +67,7 @@ export function SecretariaExecutivaCalendario({
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(
         <div 
-          key={day} 
+          key={`day-${day}`} 
           className="aspect-square p-2 border border-gray-50 rounded-xl hover:bg-blue-50/30 transition-all cursor-pointer group relative bg-white"
         >
           <span className="text-sm font-bold text-gray-400 group-hover:text-[#1e3a8a]">{day}</span>
