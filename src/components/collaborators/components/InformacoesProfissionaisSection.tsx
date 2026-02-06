@@ -3,7 +3,7 @@ import { GraduationCap, Search, Loader2, AlertCircle, CheckCircle2 } from 'lucid
 import { Colaborador } from '../../../types/colaborador'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { useState } from 'react'
-import { supabase } from '../../../lib/supabase'
+import { supabase, supabaseUrl, supabaseKey } from '../../../lib/supabase'
 
 const ESTADOS_BRASIL_UF = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
@@ -39,21 +39,27 @@ export function InformacoesProfissionaisSection({
     try {
       const { data: { session } } = await supabase.auth.getSession()
       
-      if (!session) {
-        throw new Error('Usuário não autenticado')
-      }
-
-      const { data, error } = await supabase.functions.invoke('consulta-cna', {
-        body: { 
-          numero: formData.oab_numero, 
-          uf: formData.oab_uf 
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/consulta-cna`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token || supabaseKey}`,
+            'apikey': supabaseKey
+          },
+          body: JSON.stringify({
+            numero: formData.oab_numero,
+            uf: formData.oab_uf
+          })
         }
-      })
+      )
 
-      if (error) throw error
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro na consulta')
+      }
 
       if (data?.sociedades && data.sociedades.length > 0) {
         setVinculos(data.sociedades)
