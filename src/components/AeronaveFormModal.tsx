@@ -218,20 +218,47 @@ export function AeronaveFormModal({
     fetchListas()
   }
 
+  // CORRIGIDO: CurrencyInput que permite digitação
   const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
-    const displayValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
+    const [displayValue, setDisplayValue] = useState('')
+
+    useEffect(() => {
+      const formatted = new Intl.NumberFormat('pt-BR', { 
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value || 0)
+      setDisplayValue(formatted)
+    }, [value])
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const input = e.target.value
+      const numbers = input.replace(/\D/g, '')
+      const numericValue = numbers ? parseInt(numbers) / 100 : 0
+      
+      const formatted = new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(numericValue)
+      
+      setDisplayValue(formatted)
+      onChange(numericValue)
+    }
+
     return (
       <div className="flex flex-col gap-1.5 w-full">
         <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
         <div className="relative group w-full">
-          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 group-focus-within:text-blue-600 transition-colors">
+            R$
+          </span>
           <input
             type="text"
-            className="input-base pl-9"
+            className="input-base pl-12"
             value={displayValue}
-            onChange={(e) => onChange(Number(e.target.value.replace(/\D/g, '')) / 100)}
+            onChange={handleInputChange}
+            placeholder="0,00"
           />
         </div>
       </div>
@@ -524,7 +551,7 @@ export function AeronaveFormModal({
         }
       `}</style>
 
-      < GerenciadorOpcoesModal 
+      <GerenciadorOpcoesModal 
         isOpen={configModal.open}
         onClose={handleCloseConfig}
         titulo={configModal.tipo}
