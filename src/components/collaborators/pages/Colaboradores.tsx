@@ -423,7 +423,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             if (e.target === e.currentTarget) setShowFormModal(false)
           }}
         >
-          <div className="bg-white rounded-[2rem] w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200/50">
+          <div className="bg-white rounded-[2rem] w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl border border-gray-200/50 overflow-visible">
             
             {/* Header */}
             <div className="px-8 py-5 border-b flex justify-between items-center bg-gray-50 shrink-0 rounded-t-[2rem]">
@@ -580,7 +580,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 <div className="space-y-6">
                   <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 overflow-visible relative">
                     <div className="flex flex-col md:flex-row items-end gap-4">
-                      <div className="flex-1 w-full relative z-[100]">
+                      <div className="flex-1 w-full relative z-[110]">
                         <SearchableSelect label="Tipo de Documento" placeholder="Selecione ou gerencie..." value={selectedGedCategory} onChange={setSelectedGedCategory} table="opcoes_ged_colaboradores" onRefresh={handleRefresh} />
                       </div>
                       <div className="shrink-0 w-full md:w-auto">
