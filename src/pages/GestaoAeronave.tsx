@@ -203,6 +203,7 @@ export function GestaoAeronave({
     setSearchTerm(missionName)
     setFilterOrigem('missao')
     setActiveTab('dados')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleSaveLancamento = async (formData: Partial<AeronaveLancamento>) => {
