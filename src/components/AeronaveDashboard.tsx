@@ -260,6 +260,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
 
   const handleMissionClick = (missionName: string) => {
     if (onMissionClick && typeof onMissionClick === 'function') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       onMissionClick(missionName)
     }
   }
