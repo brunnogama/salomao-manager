@@ -54,6 +54,22 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
     return new Intl.DateTimeFormat('pt-BR').format(new Date(date.getTime() + userTimezoneOffset))
   }
 
+  // Helper para formatar o período: "19/11 a 25/12 2025"
+  const formatPeriod = (start: string | null, end: string | null) => {
+    if (!start || !end) return '-'
+    const dStart = new Date(start + 'T00:00:00')
+    const dEnd = new Date(end + 'T00:00:00')
+    
+    const dayStart = String(dStart.getDate()).padStart(2, '0')
+    const monthStart = String(dStart.getMonth() + 1).padStart(2, '0')
+    const dayEnd = String(dEnd.getDate()).padStart(2, '0')
+    const monthEnd = String(dEnd.getMonth() + 1).padStart(2, '0')
+    const yearEnd = dEnd.getFullYear()
+
+    if (start === end) return `${dayStart}/${monthStart}/${yearEnd}`
+    return `${dayStart}/${monthStart} a ${dayEnd}/${monthEnd} ${yearEnd}`
+  }
+
   // --- Filtro de Ano ---
   const availableYears = useMemo(() => {
     const years = new Set(data.map(d => (d.data_pagamento || d.vencimento || '').split('-')[0]).filter(Boolean))
@@ -131,19 +147,26 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       const id = item.id_missao || 'S/ID'
       const nome = item.nome_missao || `Missão ${id}`
       const key = `${id}-${nome}`
+      const itemDate = item.data_missao || item.vencimento || item.data_pagamento
 
       if (!acc[key]) {
         acc[key] = { 
           id, 
           nome, 
-          data: item.data_missao, 
+          dataInicio: itemDate,
+          dataFim: itemDate,
           total: 0,
           quantidade: 0
         }
       }
       acc[key].total += (item.valor_pago || 0)
       acc[key].quantidade += 1
-      if (!acc[key].data && item.data_missao) acc[key].data = item.data_missao
+      
+      if (itemDate) {
+        if (!acc[key].dataInicio || itemDate < acc[key].dataInicio) acc[key].dataInicio = itemDate
+        if (!acc[key].dataFim || itemDate > acc[key].dataFim) acc[key].dataFim = itemDate
+      }
+      
       return acc
     }, {} as Record<string, any>)
 
@@ -463,8 +486,8 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
 
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
                 <div className="col-span-1 text-[10px] font-black uppercase text-gray-500">ID</div>
-                <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Missão</div>
-                <div className="col-span-3 text-[10px] font-black uppercase text-gray-500">Período</div>
+                <div className="col-span-4 text-[10px] font-black uppercase text-gray-500">Missão</div>
+                <div className="col-span-4 text-[10px] font-black uppercase text-gray-500 text-center">Período</div>
                 <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
               </div>
 
@@ -478,7 +501,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                     <div className="col-span-1 text-[10px] font-bold text-gray-400 truncate">
                       #{String(missao.id || '').padStart(3, '0')}
                     </div>
-                    <div className="col-span-5 flex flex-col gap-0.5 overflow-hidden">
+                    <div className="col-span-4 flex flex-col gap-0.5 overflow-hidden">
                       <span className="text-xs font-bold text-gray-700 truncate group-hover:text-blue-700">
                         {missao.nome}
                       </span>
@@ -487,10 +510,10 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                         {missao.quantidade} Despesas
                       </span>
                     </div>
-                    <div className="col-span-3">
-                      <span className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
+                    <div className="col-span-4 text-center">
+                      <span className="text-[10px] font-bold text-gray-500 inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
                         <Calendar className="h-2.5 w-2.5 text-gray-400" />
-                        {formatDate(missao.data)}
+                        {formatPeriod(missao.dataInicio, missao.dataFim)}
                       </span>
                     </div>
                     <div className="col-span-3 text-xs font-black text-blue-600 text-right">
