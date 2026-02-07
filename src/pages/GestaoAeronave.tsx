@@ -86,10 +86,16 @@ export function GestaoAeronave({
     fetchDados()
   }, [])
 
-  // ADICIONE ESTE useEffect AQUI:
   useEffect(() => {
     if (activeTab === 'dados') {
-      window.scrollTo({ top: 0, behavior: 'auto' })
+      // Força o scroll para o topo imediatamente
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+      
+      // Garante que o scroll acontece após renderização
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'auto' })
+      }, 50)
     }
   }, [activeTab])
 
