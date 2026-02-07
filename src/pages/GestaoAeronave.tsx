@@ -86,6 +86,13 @@ export function GestaoAeronave({
     fetchDados()
   }, [])
 
+  // ADICIONE ESTE useEffect AQUI:
+  useEffect(() => {
+    if (activeTab === 'dados') {
+      window.scrollTo({ top: 0, behavior: 'auto' })
+    }
+  }, [activeTab])
+
   // --- Filtragem no Front-end ---
   const filteredData = useMemo(() => {
     return data.filter(item => {
@@ -203,10 +210,6 @@ export function GestaoAeronave({
     setSearchTerm(missionName)
     setFilterOrigem('missao')
     setActiveTab('dados')
-    // Rola para o topo da página
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }, 100)
   }
 
   const handleSaveLancamento = async (formData: Partial<AeronaveLancamento>) => {
