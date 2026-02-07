@@ -258,7 +258,13 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       .slice(0, 5)
   }, [dashboardData])
 
-    // --- Custom Tooltip Chart (Identidade Replicada) ---
+  const handleMissionClick = (missionName: string) => {
+    if (onMissionClick && typeof onMissionClick === 'function') {
+      onMissionClick(missionName)
+    }
+  }
+
+  // --- Custom Tooltip Chart (Identidade Replicada) ---
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
