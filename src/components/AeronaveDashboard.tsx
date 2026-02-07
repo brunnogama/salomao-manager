@@ -463,7 +463,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
 
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
                 <div className="col-span-1 text-[10px] font-black uppercase text-gray-500">ID</div>
-                <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Missão / Lançamentos</div>
+                <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Missão</div>
                 <div className="col-span-3 text-[10px] font-black uppercase text-gray-500">Período</div>
                 <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
               </div>
@@ -484,7 +484,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                       </span>
                       <span className="text-[9px] font-black text-gray-400 flex items-center gap-1 uppercase tracking-tighter">
                         <Hash className="h-2.5 w-2.5" />
-                        {missao.quantidade} Lançamentos
+                        {missao.quantidade} Despesas
                       </span>
                     </div>
                     <div className="col-span-3">
