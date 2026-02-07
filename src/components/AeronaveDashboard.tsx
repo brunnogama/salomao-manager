@@ -14,7 +14,7 @@ import {
   LinearGradient,
   Stop
 } from 'recharts'
-import { Filter, TrendingUp, Plane, DollarSign, Users, Calendar, AlertCircle, PieChart, ArrowUpRight, ArrowDownRight, BarChart3, BarChart4 } from 'lucide-react'
+import { Filter, TrendingUp, Plane, DollarSign, Users, Calendar, AlertCircle, PieChart, ArrowUpRight, ArrowDownRight, BarChart3, BarChart4, Hash } from 'lucide-react'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
 
 interface AeronaveDashboardProps {
@@ -137,10 +137,12 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           id, 
           nome, 
           data: item.data_missao, 
-          total: 0 
+          total: 0,
+          quantidade: 0
         }
       }
       acc[key].total += (item.valor_pago || 0)
+      acc[key].quantidade += 1
       if (!acc[key].data && item.data_missao) acc[key].data = item.data_missao
       return acc
     }, {} as Record<string, any>)
@@ -460,9 +462,10 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
               </div>
 
               <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
-                <div className="col-span-2 text-[10px] font-black uppercase text-gray-500">ID</div>
-                <div className="col-span-6 text-[10px] font-black uppercase text-gray-500">Missão</div>
-                <div className="col-span-4 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
+                <div className="col-span-1 text-[10px] font-black uppercase text-gray-500">ID</div>
+                <div className="col-span-5 text-[10px] font-black uppercase text-gray-500">Missão / Lançamentos</div>
+                <div className="col-span-3 text-[10px] font-black uppercase text-gray-500">Período</div>
+                <div className="col-span-3 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
@@ -472,19 +475,25 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                     onClick={() => handleMissionClick(missao.nome)}
                     className="w-full grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all items-center text-left group"
                   >
-                    <div className="col-span-2 text-xs font-bold text-gray-500 truncate">
-                      #{String(missao.id || '').padStart(6, '0')}
+                    <div className="col-span-1 text-[10px] font-bold text-gray-400 truncate">
+                      #{String(missao.id || '').padStart(3, '0')}
                     </div>
-                    <div className="col-span-6 flex flex-col gap-0.5 overflow-hidden">
+                    <div className="col-span-5 flex flex-col gap-0.5 overflow-hidden">
                       <span className="text-xs font-bold text-gray-700 truncate group-hover:text-blue-700">
                         {missao.nome}
                       </span>
-                      <span className="text-[9px] font-medium text-gray-400 flex items-center gap-1">
-                        <Calendar className="h-2.5 w-2.5" />
+                      <span className="text-[9px] font-black text-gray-400 flex items-center gap-1 uppercase tracking-tighter">
+                        <Hash className="h-2.5 w-2.5" />
+                        {missao.quantidade} Lançamentos
+                      </span>
+                    </div>
+                    <div className="col-span-3">
+                      <span className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
+                        <Calendar className="h-2.5 w-2.5 text-gray-400" />
                         {formatDate(missao.data)}
                       </span>
                     </div>
-                    <div className="col-span-4 text-xs font-black text-blue-600 text-right">
+                    <div className="col-span-3 text-xs font-black text-blue-600 text-right">
                       {formatCurrency(missao.total)}
                     </div>
                   </button>
