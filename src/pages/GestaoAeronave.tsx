@@ -17,7 +17,8 @@ import {
   DollarSign,
   Loader2,
   FileText,
-  Printer
+  Printer,
+  TrendingUp
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -31,6 +32,7 @@ import { AeronaveDashboard } from '../components/AeronaveDashboard'
 import { AeronaveFormModal } from '../components/AeronaveFormModal'
 import { AeronaveViewModal } from '../components/AeronaveViewModal'
 import { TipoLancamentoModal } from '../components/TipoLancamentoModal'
+import { AeronaveComparativoComercialParticular } from '../components/AeronaveComparativoComercialParticular'
 
 interface GestaoAeronaveProps {
   userName?: string;
@@ -44,7 +46,7 @@ export function GestaoAeronave({
   onLogout 
 }: GestaoAeronaveProps) {
   // --- Estados de Controle ---
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'faturas' | 'dados'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'comparativo' | 'faturas' | 'dados'>('dashboard')
   const [filterOrigem, setFilterOrigem] = useState<'todos' | 'missao' | 'fixa'>('todos')
   
   // --- Estados de Dados e Filtros ---
@@ -92,8 +94,8 @@ export function GestaoAeronave({
   // --- Filtragem no Front-end ---
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      // 1. Filtro de Origem (não aplicar na aba Faturas)
-      if (activeTab !== 'faturas' && filterOrigem !== 'todos' && item.origem !== filterOrigem) return false
+      // 1. Filtro de Origem (não aplicar na aba Faturas e Comparativo)
+      if (activeTab !== 'faturas' && activeTab !== 'comparativo' && filterOrigem !== 'todos' && item.origem !== filterOrigem) return false
 
       // 2. Filtro de Texto (Busca)
       const searchString = searchTerm.toLowerCase()
@@ -303,6 +305,7 @@ export function GestaoAeronave({
             data_pagamento: parseDate(findVal(row, ['pagamento', 'data pagamento'])),
             valor_pago: parseMoney(findVal(row, ['valor pago', 'pago'])),
             observacao: findVal(row, ['observação', 'observacao', 'obs'])?.toString() || '',
+            centro_custo: findVal(row, ['centro_custo', 'centro custo', 'centro de custo'])?.toString() || '',
             doc_fiscal: findVal(row, ['doc fiscal', 'doc_fiscal'])?.toString() || null,
             numero_doc: findVal(row, ['numero', 'número', 'numero_doc'])?.toString() || null,
             valor_total_doc: parseMoney(findVal(row, ['valor total doc', 'total doc']))
@@ -433,6 +436,19 @@ export function GestaoAeronave({
               <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
             </button>
             <button
+              onClick={() => {
+                setActiveTab('comparativo')
+                setSearchTerm('')
+                setStartDate('')
+                setEndDate('')
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                activeTab === 'comparativo' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <TrendingUp className="h-3.5 w-3.5" /> Comparativo
+            </button>
+            <button
               onClick={() => setActiveTab('faturas')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                 activeTab === 'faturas' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
@@ -450,8 +466,8 @@ export function GestaoAeronave({
             </button>
           </div>
 
-          {/* ALTERAÇÃO: Esconder botões APENAS na aba Faturas */}
-          {activeTab !== 'faturas' && (
+          {/* Esconder botões nas abas Faturas e Comparativo */}
+          {activeTab !== 'faturas' && activeTab !== 'comparativo' && (
             <div className="flex gap-2">
               <button
                 onClick={() => setFilterOrigem('todos')}
@@ -480,33 +496,35 @@ export function GestaoAeronave({
             </div>
           )}
 
-          {/* ALTERAÇÃO: Label dinâmico para o filtro de período */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-              {activeTab === 'dashboard' ? 'Período de Missões' : 'Período de Pagamento'}
-            </span>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <input 
-                type="date" 
-                className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-              <span className="text-gray-300">|</span>
-              <input 
-                type="date" 
-                className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-              {(startDate || endDate) && (
-                <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
-                  <XCircle className="h-3.5 w-3.5" />
-                </button>
-              )}
+          {/* Esconder filtro de data na aba Comparativo */}
+          {activeTab !== 'comparativo' && (
+            <div className="flex flex-col gap-1">
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                {activeTab === 'dashboard' ? 'Período de Missões' : 'Período de Pagamento'}
+              </span>
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
+                <Calendar className="h-4 w-4 text-gray-400" />
+                <input 
+                  type="date" 
+                  className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+                <span className="text-gray-300">|</span>
+                <input 
+                  type="date" 
+                  className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+                {(startDate || endDate) && (
+                  <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
+                    <XCircle className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {activeTab === 'dados' && (
@@ -555,6 +573,8 @@ export function GestaoAeronave({
             onMissionClick={handleMissionClick}
             filterOrigem={filterOrigem}
           />
+        ) : activeTab === 'comparativo' ? (
+          <AeronaveComparativoComercialParticular data={data} />
         ) : activeTab === 'faturas' ? (
           <div className="overflow-x-auto custom-scrollbar pb-4">
             <table className="w-full text-left border-separate border-spacing-y-2 px-4 table-fixed">

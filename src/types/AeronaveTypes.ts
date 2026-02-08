@@ -29,6 +29,7 @@ export interface AeronaveLancamento {
 
   // Detalhes
   observacao?: string | null;
+  centro_custo?: string | null;
   
   // Fiscal
   doc_fiscal?: string | null;

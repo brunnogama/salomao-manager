@@ -231,7 +231,8 @@ export function AeronaveFormModal({
     observacao: '',
     doc_fiscal: '',
     numero_doc: '',
-    valor_total_doc: 0
+    valor_total_doc: 0,
+    centro_custo: ''
   }
 
   const [formData, setFormData] = useState<Partial<AeronaveLancamento>>(emptyForm)
@@ -544,6 +545,11 @@ export function AeronaveFormModal({
                   <div className="col-span-2 flex flex-col gap-1">
                     <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Observação</label>
                     <textarea rows={2} className="input-base py-2 resize-none" value={formData.observacao || ''} onChange={e => handleChange('observacao', e.target.value)} />
+                  </div>
+
+                  <div className="col-span-2 flex flex-col gap-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Centro de Custo</label>
+                    <input type="text" className="input-base" value={formData.centro_custo || ''} onChange={e => handleChange('centro_custo', e.target.value)} placeholder="Ex: Administrativo, Jurídico..." />
                   </div>
                 </div>
               </div>
