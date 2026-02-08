@@ -421,6 +421,7 @@ export function GestaoAeronave({
             <button
               onClick={() => {
                 setActiveTab('dashboard')
+                setFilterOrigem('todos')
                 setSearchTerm('')
                 setStartDate('')
                 setEndDate('')
