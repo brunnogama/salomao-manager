@@ -407,30 +407,22 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
 
         {casosAgencia.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full table-fixed">
-              <colgroup>
-                <col className="w-[110px]" /> {/* Data */}
-                <col className="w-[180px]" /> {/* Centro de Custo */}
-                <col className="w-[180px]" /> {/* Fornecedor */}
-                <col className="w-[120px]" /> {/* Tipo */}
-                <col className="w-[130px]" /> {/* Valor */}
-                <col className="w-auto" /> {/* Observações */}
-              </colgroup>
+            <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider whitespace-nowrap">
                     Data
                   </th>
-                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider whitespace-nowrap">
                     Centro de Custo
                   </th>
-                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider whitespace-nowrap">
                     Fornecedor
                   </th>
-                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider whitespace-nowrap">
                     Tipo
                   </th>
-                  <th className="px-4 py-3 text-right text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                  <th className="px-4 py-3 text-right text-[10px] font-black uppercase text-gray-500 tracking-wider whitespace-nowrap">
                     Valor
                   </th>
                   <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
@@ -444,19 +436,19 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
                     <td className="px-4 py-3 text-xs font-bold text-gray-700 whitespace-nowrap">
                       {formatDate(item.data_pagamento || item.data_emissao)}
                     </td>
-                    <td className="px-4 py-3 text-xs font-semibold text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis" title={item.centro_custo || '-'}>
+                    <td className="px-4 py-3 text-xs font-semibold text-gray-600 whitespace-nowrap">
                       {item.centro_custo || '-'}
                     </td>
-                    <td className="px-4 py-3 text-xs font-semibold text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis" title={item.fornecedor || '-'}>
+                    <td className="px-4 py-3 text-xs font-semibold text-gray-600 whitespace-nowrap">
                       {item.fornecedor || '-'}
                     </td>
-                    <td className="px-4 py-3 text-xs font-semibold text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis" title={item.tipo || item.despesa || '-'}>
+                    <td className="px-4 py-3 text-xs font-semibold text-gray-600 whitespace-nowrap">
                       {item.tipo || item.despesa || '-'}
                     </td>
                     <td className="px-4 py-3 text-xs font-black text-emerald-600 text-right whitespace-nowrap">
                       {formatCurrency(item.valor_pago || item.valor || 0)}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500 break-words">
+                    <td className="px-4 py-3 text-xs text-gray-500 break-words min-w-[200px] max-w-[400px]">
                       {item.observacoes || item.descricao || '-'}
                     </td>
                   </tr>
