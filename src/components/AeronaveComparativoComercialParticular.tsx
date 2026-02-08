@@ -6,7 +6,9 @@ import {
   Info,
   Plane,
   Building2,
-  Filter
+  Filter,
+  ChevronDown,
+  X
 } from 'lucide-react'
 import { 
   LineChart, 
@@ -429,20 +431,35 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
           </div>
 
           {/* Filtro de Centro de Custo */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <select
-              value={filtroCentroCusto}
-              onChange={(e) => setFiltroCentroCusto(e.target.value)}
-              className="px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
-            >
-              <option value="todos">Todos os Centros de Custo</option>
-              {centrosCustoUnicos.map(centro => (
-                <option key={centro} value={centro}>
-                  {centro}
-                </option>
-              ))}
-            </select>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+              <select
+                value={filtroCentroCusto}
+                onChange={(e) => setFiltroCentroCusto(e.target.value)}
+                className="pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer min-w-[200px] text-gray-700 shadow-sm"
+              >
+                <option value="todos">Todos os Centros de Custo</option>
+                {centrosCustoUnicos.map(centro => (
+                  <option key={centro} value={centro}>
+                    {centro}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
+            </div>
+
+            {/* Botão Limpar Filtro */}
+            {filtroCentroCusto !== 'todos' && (
+              <button
+                onClick={() => setFiltroCentroCusto('todos')}
+                className="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 text-[9px] font-black rounded-xl hover:bg-red-600 hover:text-white shadow-sm transition-all active:scale-95 uppercase tracking-widest border border-red-100"
+                title="Limpar filtro"
+              >
+                <X className="w-3.5 h-3.5" />
+                Limpar
+              </button>
+            )}
           </div>
         </div>
 
