@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { 
   Plane, 
   UserCircle, 
@@ -64,6 +64,9 @@ export function GestaoAeronave({
   const [selectedGroup, setSelectedGroup] = useState<AeronaveLancamento[]>([])
   const [selectedOrigemForNew, setSelectedOrigemForNew] = useState<OrigemLancamento>('missao')
 
+  // Ref para scroll ao topo
+  const topRef = useRef<HTMLDivElement>(null)
+
   // --- Buscando Dados ---
   const fetchDados = async () => {
     try {
@@ -85,19 +88,6 @@ export function GestaoAeronave({
   useEffect(() => { 
     fetchDados()
   }, [])
-
-  useEffect(() => {
-    if (activeTab === 'dados') {
-      // Força o scroll para o topo imediatamente
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
-      
-      // Garante que o scroll acontece após renderização
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'auto' })
-      }, 50)
-    }
-  }, [activeTab])
 
   // --- Filtragem no Front-end ---
   const filteredData = useMemo(() => {
@@ -216,6 +206,11 @@ export function GestaoAeronave({
     setSearchTerm(missionName)
     setFilterOrigem('missao')
     setActiveTab('dados')
+    
+    // Scroll para o topo após mudança de estado
+    requestAnimationFrame(() => {
+      topRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' })
+    })
   }
 
   const handleSaveLancamento = async (formData: Partial<AeronaveLancamento>) => {
@@ -332,7 +327,7 @@ export function GestaoAeronave({
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
+    <div ref={topRef} className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
       
       {/* 1. Header */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
