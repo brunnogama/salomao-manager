@@ -407,11 +407,22 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
 
         {casosAgencia.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full table-fixed">
+              <colgroup>
+                <col className="w-[110px]" /> {/* Data */}
+                <col className="w-[180px]" /> {/* Centro de Custo */}
+                <col className="w-[180px]" /> {/* Fornecedor */}
+                <col className="w-[120px]" /> {/* Tipo */}
+                <col className="w-[130px]" /> {/* Valor */}
+                <col className="w-auto" /> {/* Observações */}
+              </colgroup>
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
                     Data
+                  </th>
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                    Centro de Custo
                   </th>
                   <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
                     Fornecedor
@@ -433,16 +444,19 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
                     <td className="px-4 py-3 text-xs font-bold text-gray-700 whitespace-nowrap">
                       {formatDate(item.data_pagamento || item.data_emissao)}
                     </td>
-                    <td className="px-4 py-3 text-xs font-semibold text-gray-600">
+                    <td className="px-4 py-3 text-xs font-semibold text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis" title={item.centro_custo || '-'}>
+                      {item.centro_custo || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-semibold text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis" title={item.fornecedor || '-'}>
                       {item.fornecedor || '-'}
                     </td>
-                    <td className="px-4 py-3 text-xs font-semibold text-gray-600">
+                    <td className="px-4 py-3 text-xs font-semibold text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis" title={item.tipo || item.despesa || '-'}>
                       {item.tipo || item.despesa || '-'}
                     </td>
                     <td className="px-4 py-3 text-xs font-black text-emerald-600 text-right whitespace-nowrap">
                       {formatCurrency(item.valor_pago || item.valor || 0)}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
+                    <td className="px-4 py-3 text-xs text-gray-500 break-words">
                       {item.observacoes || item.descricao || '-'}
                     </td>
                   </tr>
