@@ -18,7 +18,9 @@ import {
   Loader2,
   FileText,
   Printer,
-  TrendingUp
+  TrendingUp,
+  TrendingDown,
+  Building2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -33,6 +35,96 @@ import { AeronaveFormModal } from '../components/AeronaveFormModal'
 import { AeronaveViewModal } from '../components/AeronaveViewModal'
 import { TipoLancamentoModal } from '../components/TipoLancamentoModal'
 import { AeronaveComparativoComercialParticular } from '../components/AeronaveComparativoComercialParticular'
+
+// Componente de Cards do Comparativo
+function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
+  const formatCurrency = (val: number) => 
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
+
+  const { mediaMensalComercial, mediaMensalParticular, insights } = useMemo(() => {
+    const comercial = data.filter(item => {
+      const aeronave = (item.aeronave || '').toLowerCase().trim()
+      return aeronave.includes('comercial') && item.data_pagamento && item.valor_pago
+    })
+    
+    const particular = data.filter(item => {
+      const aeronave = (item.aeronave || '').toLowerCase().trim()
+      return !aeronave.includes('comercial') && aeronave !== '' && item.data_pagamento && item.valor_pago
+    })
+
+    // Média Mensal Comercial
+    const mesesUnicosComercial = new Set(
+      comercial.map(item => {
+        const date = new Date(item.data_pagamento!)
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      })
+    )
+    const totalComercial = comercial.reduce((acc, item) => acc + (item.valor_pago || 0), 0)
+    const mediaComercial = mesesUnicosComercial.size > 0 ? totalComercial / mesesUnicosComercial.size : 0
+
+    // Média Mensal Particular
+    const mesesUnicosParticular = new Set(
+      particular.map(item => {
+        const date = new Date(item.data_pagamento!)
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      })
+    )
+    const totalParticular = particular.reduce((acc, item) => acc + (item.valor_pago || 0), 0)
+    const mediaParticular = mesesUnicosParticular.size > 0 ? totalParticular / mesesUnicosParticular.size : 0
+
+    // Insights
+    const economia = mediaComercial - mediaParticular
+    const percentual = mediaComercial > 0 ? ((economia / mediaComercial) * 100) : 0
+    const economizando = economia > 0
+
+    return {
+      mediaMensalComercial: mediaComercial,
+      mediaMensalParticular: mediaParticular,
+      insights: {
+        economizando,
+        economia: Math.abs(economia),
+        percentual: Math.abs(percentual)
+      }
+    }
+  }, [data])
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <Building2 className="h-5 w-5 text-blue-600" />
+          <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Média/Mês</span>
+        </div>
+        <p className="text-2xl font-black text-blue-900">{formatCurrency(mediaMensalComercial)}</p>
+        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-1">Voos Comerciais</p>
+      </div>
+
+      <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <Plane className="h-5 w-5 text-emerald-600" />
+          <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Média/Mês</span>
+        </div>
+        <p className="text-2xl font-black text-emerald-900">{formatCurrency(mediaMensalParticular)}</p>
+        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-1">Aeronave Particular</p>
+      </div>
+
+      <div className={`bg-gradient-to-br ${insights.economizando ? 'from-green-50 to-green-100 border-green-200' : 'from-amber-50 to-amber-100 border-amber-200'} border rounded-xl p-5 shadow-sm`}>
+        <div className="flex items-center justify-between mb-2">
+          {insights.economizando ? <TrendingDown className="h-5 w-5 text-green-600" /> : <TrendingUp className="h-5 w-5 text-amber-600" />}
+          <span className={`text-[9px] font-black uppercase tracking-widest ${insights.economizando ? 'text-green-400' : 'text-amber-400'}`}>
+            {insights.economizando ? 'Economia' : 'Custo Adicional'}
+          </span>
+        </div>
+        <p className={`text-2xl font-black ${insights.economizando ? 'text-green-900' : 'text-amber-900'}`}>
+          {formatCurrency(insights.economia)}
+        </p>
+        <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${insights.economizando ? 'text-green-600' : 'text-amber-600'}`}>
+          {insights.percentual.toFixed(1)}% {insights.economizando ? 'de redução' : 'a mais'}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 interface GestaoAeronaveProps {
   userName?: string;
@@ -400,56 +492,62 @@ export function GestaoAeronave({
       </div>
 
       {/* 2. Cards de Totais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              {filterOrigem === 'missao' ? 'Quantidade de Missões' :
-               filterOrigem === 'fixa' ? 'Quantidade de lançamentos' : 
-               'Total Geral'}
-            </p>
-            <p className="text-2xl font-black text-indigo-900 mt-1">
-              {filterOrigem === 'missao' ? countDisplay :
-               filterOrigem === 'fixa' ? countDisplay :
-               handleFormatCurrency(totals.totalGeral)}
-            </p>
+      {activeTab === 'comparativo' ? (
+        // Cards do Comparativo
+        <ComparativoCards data={data} />
+      ) : (
+        // Cards Normais (Dashboard, Faturas, Dados)
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+            <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                {filterOrigem === 'missao' ? 'Quantidade de Missões' :
+                 filterOrigem === 'fixa' ? 'Quantidade de lançamentos' : 
+                 'Total Geral'}
+              </p>
+              <p className="text-2xl font-black text-indigo-900 mt-1">
+                {filterOrigem === 'missao' ? countDisplay :
+                 filterOrigem === 'fixa' ? countDisplay :
+                 handleFormatCurrency(totals.totalGeral)}
+              </p>
+            </div>
+            <div className="p-3 bg-indigo-50 rounded-xl">
+              <Wallet className="h-6 w-6 text-indigo-600" />
+            </div>
           </div>
-          <div className="p-3 bg-indigo-50 rounded-xl">
-            <Wallet className="h-6 w-6 text-indigo-600" />
-          </div>
-        </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              {filterOrigem === 'fixa' ? `Total gasto no ano (${currentYear})` : 'Custo Missões'}
-            </p>
-            <p className="text-2xl font-black text-blue-900 mt-1">
-              {filterOrigem === 'fixa' ? handleFormatCurrency(yearTotals.missao) : handleFormatCurrency(totals.custoMissoes)}
-            </p>
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+            <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                {filterOrigem === 'fixa' ? `Total gasto no ano (${currentYear})` : 'Custo Missões'}
+              </p>
+              <p className="text-2xl font-black text-blue-900 mt-1">
+                {filterOrigem === 'fixa' ? handleFormatCurrency(yearTotals.missao) : handleFormatCurrency(totals.custoMissoes)}
+              </p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-xl">
+              <Receipt className="h-6 w-6 text-blue-600" />
+            </div>
           </div>
-          <div className="p-3 bg-blue-50 rounded-xl">
-            <Receipt className="h-6 w-6 text-blue-600" />
-          </div>
-        </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              {filterOrigem === 'missao' ? `Total gasto no ano (${currentYear})` : 'Despesas Fixas'}
-            </p>
-            <p className="text-2xl font-black text-emerald-900 mt-1">
-              {filterOrigem === 'missao' ? handleFormatCurrency(yearTotals.fixa) : handleFormatCurrency(totals.despesasFixas)}
-            </p>
-          </div>
-          <div className="p-3 bg-emerald-50 rounded-xl">
-            <DollarSign className="h-6 w-6 text-emerald-600" />
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+            <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                {filterOrigem === 'missao' ? `Total gasto no ano (${currentYear})` : 'Despesas Fixas'}
+              </p>
+              <p className="text-2xl font-black text-emerald-900 mt-1">
+                {filterOrigem === 'missao' ? handleFormatCurrency(yearTotals.fixa) : handleFormatCurrency(totals.despesasFixas)}
+              </p>
+            </div>
+            <div className="p-3 bg-emerald-50 rounded-xl">
+              <DollarSign className="h-6 w-6 text-emerald-600" />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 3. Toolbar Principal */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">

@@ -198,42 +198,6 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-full">
       
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <Building2 className="h-5 w-5 text-blue-600" />
-            <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Média/Mês</span>
-          </div>
-          <p className="text-2xl font-black text-blue-900">{formatCurrency(mediaMensalComercial)}</p>
-          <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-1">Voos Comerciais</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <Plane className="h-5 w-5 text-emerald-600" />
-            <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Média/Mês</span>
-          </div>
-          <p className="text-2xl font-black text-emerald-900">{formatCurrency(mediaMensalParticular)}</p>
-          <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-1">Aeronave Particular</p>
-        </div>
-
-        <div className={`bg-gradient-to-br ${insights.economizando ? 'from-green-50 to-green-100 border-green-200' : 'from-amber-50 to-amber-100 border-amber-200'} border rounded-xl p-5 shadow-sm`}>
-          <div className="flex items-center justify-between mb-2">
-            {insights.economizando ? <TrendingDown className="h-5 w-5 text-green-600" /> : <TrendingUp className="h-5 w-5 text-amber-600" />}
-            <span className={`text-[9px] font-black uppercase tracking-widest ${insights.economizando ? 'text-green-400' : 'text-amber-400'}`}>
-              {insights.economizando ? 'Economia' : 'Custo Adicional'}
-            </span>
-          </div>
-          <p className={`text-2xl font-black ${insights.economizando ? 'text-green-900' : 'text-amber-900'}`}>
-            {formatCurrency(insights.economia)}
-          </p>
-          <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${insights.economizando ? 'text-green-600' : 'text-amber-600'}`}>
-            {insights.percentual.toFixed(1)}% {insights.economizando ? 'de redução' : 'a mais'}
-          </p>
-        </div>
-      </div>
-
       {/* Linha: Gráfico + Tabela */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
