@@ -184,83 +184,44 @@ export function GestaoAeronave({
   }, [])
 
   // --- Filtragem no Front-end ---
-  const filteredData = useMemo(() => {
-    return data.filter(item => {
-      // 1. Filtro de Origem (não aplicar na aba Faturas e Comparativo)
-      if (activeTab !== 'faturas' && activeTab !== 'comparativo' && filterOrigem !== 'todos' && item.origem !== filterOrigem) return false
-
-      // 2. Filtro de Texto (Busca)
-      const searchString = searchTerm.toLowerCase()
-      const matchSearch = 
-        (item.id_missao?.toString() || '').includes(searchString) ||
-        (item.nome_missao || '').toLowerCase().includes(searchString) ||
-        (item.fornecedor || '').toLowerCase().includes(searchString) ||
-        (item.descricao || '').toLowerCase().includes(searchString) ||
-        (item.despesa || '').toLowerCase().includes(searchString)
-
-      if (searchTerm && !matchSearch) return false
-
-      // 3. Filtro de Data (ALTERADO: usa data_pagamento para Dados, data_missao para Dashboard)
-      const dateRef = activeTab === 'dashboard' ? item.data_missao : item.data_pagamento
-      if (startDate && dateRef && dateRef < startDate) return false
-      if (endDate && dateRef && dateRef > endDate) return false
-
-      return true
-    })
-  }, [data, filterOrigem, searchTerm, startDate, endDate, activeTab])
-
-  // --- Agrupamento de Faturas (Tarefa 3) ---
-  const faturasAgrupadas = useMemo(() => {
-    const validFaturas = filteredData.filter(item => item.doc_fiscal && item.doc_fiscal.trim() !== '')
+const filteredData = useMemo(() => {
+  return data.filter(item => {
+    // 0. FILTRO ESPECIAL PARA DASHBOARD: Excluir Voos Comerciais
+    if (activeTab === 'dashboard') {
+      const aeronave = (item.aeronave || '').toLowerCase().trim()
+      const despesa = (item.despesa || '').toLowerCase().trim()
+      const tipo = (item.tipo || '').toLowerCase().trim()
+      
+      const isComercial = aeronave.includes('comercial')
+      const isAgencia = despesa.includes('agência') || despesa.includes('agencia')
+      const isPassagem = tipo.includes('passagem')
+      
+      // Se for comercial/agência/passagem, excluir do dashboard
+      if (isComercial || isAgencia || isPassagem) return false
+    }
     
-    const groups: { [key: string]: AeronaveLancamento[] } = {}
-    validFaturas.forEach(item => {
-      const key = `${item.doc_fiscal}-${item.numero_doc}`
-      if (!groups[key]) groups[key] = []
-      groups[key].push(item)
-    })
+    // 1. Filtro de Origem (não aplicar na aba Faturas e Comparativo)
+    if (activeTab !== 'faturas' && activeTab !== 'comparativo' && filterOrigem !== 'todos' && item.origem !== filterOrigem) return false
 
-    return Object.values(groups).map(group => {
-      // O item representante do grupo para a listagem principal
-      return {
-        ...group[0],
-        _items: group // Mantemos a lista de todos os itens para o modal
-      }
-    })
-  }, [filteredData])
+    // 2. Filtro de Texto (Busca)
+    const searchString = searchTerm.toLowerCase()
+    const matchSearch = 
+      (item.id_missao?.toString() || '').includes(searchString) ||
+      (item.nome_missao || '').toLowerCase().includes(searchString) ||
+      (item.fornecedor || '').toLowerCase().includes(searchString) ||
+      (item.descricao || '').toLowerCase().includes(searchString) ||
+      (item.despesa || '').toLowerCase().includes(searchString)
 
-  // --- Totais (Cards) ---
-  const totals = useMemo(() => {
-    return filteredData.reduce((acc, curr) => {
-      const valor = Number(curr.valor_pago) || 0
-      
-      acc.totalGeral += valor
-      if (curr.origem === 'missao') acc.custoMissoes += valor
-      if (curr.origem === 'fixa') acc.despesasFixas += valor
-      
-      return acc
-    }, { totalGeral: 0, custoMissoes: 0, despesasFixas: 0 })
-  }, [filteredData])
+    if (searchTerm && !matchSearch) return false
 
-  // --- Totais do Ano Corrente ---
-  const currentYear = new Date().getFullYear()
-  const yearTotals = useMemo(() => {
-    return data.reduce((acc, curr) => {
-      const dateStr = curr.data_pagamento || curr.vencimento
-      if (dateStr) {
-        const year = dateStr.startsWith(String(currentYear)) 
-          ? currentYear 
-          : new Date(dateStr).getFullYear()
-          
-        if (year === currentYear) {
-          const val = Number(curr.valor_pago) || 0
-          if (curr.origem === 'missao') acc.missao += val
-          if (curr.origem === 'fixa') acc.fixa += val
-        }
-      }
-      return acc
-    }, { missao: 0, fixa: 0 })
-  }, [data, currentYear])
+    // 3. Filtro de Data (ALTERADO: usa data_pagamento para Dados, data_missao para Dashboard)
+    const dateRef = activeTab === 'dashboard' ? item.data_missao : item.data_pagamento
+    if (startDate && dateRef && dateRef < startDate) return false
+    if (endDate && dateRef && dateRef > endDate) return false
+
+    return true
+  })
+}, [data, filterOrigem, searchTerm, startDate, endDate, activeTab])
 
   // --- Contagens Dinâmicas ---
   const countDisplay = useMemo(() => {
@@ -809,4 +770,5 @@ export function GestaoAeronave({
 
     </div>
   )
+
 }
