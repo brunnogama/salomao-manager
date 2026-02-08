@@ -37,14 +37,22 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
     }).format(val);
   }
 
-  // --- Separação de Dados: Comercial vs Particular ---
+  // --- Separação de Dados: Comercial vs Particular (CORRIGIDO) ---
   const { comercialData, particularData } = useMemo(() => {
-    const comercial = data.filter(item => 
-      item.aeronave === 'Comercial' && item.data_pagamento
-    )
-    const particular = data.filter(item => 
-      item.aeronave !== 'Comercial' && item.data_pagamento
-    )
+    const comercial = data.filter(item => {
+      const aeronave = (item.aeronave || '').toLowerCase().trim()
+      return aeronave.includes('comercial') && item.data_pagamento && item.valor_pago
+    })
+    
+    const particular = data.filter(item => {
+      const aeronave = (item.aeronave || '').toLowerCase().trim()
+      return !aeronave.includes('comercial') && aeronave !== '' && item.data_pagamento && item.valor_pago
+    })
+    
+    // Debug
+    console.log('Comercial:', comercial.length, 'registros')
+    console.log('Particular:', particular.length, 'registros')
+    
     return { comercialData: comercial, particularData: particular }
   }, [data])
 
@@ -116,28 +124,36 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
       })
   }, [comercialData, particularData])
 
-  // --- Gastos por Centro de Custo (Todos os dados) ---
+  // --- Gastos por Centro de Custo (CORRIGIDO) ---
   const gastosPorCentroCusto = useMemo(() => {
     const grupos: Record<string, { despesas: Set<string>, total: number }> = {}
 
     data.forEach(item => {
-      if (!item.centro_custo || !item.valor_pago) return
+      const cc = (item.centro_custo || '').trim()
+      const valorPago = item.valor_pago || 0
       
-      const cc = item.centro_custo.trim()
+      // Ignorar se não tem centro de custo OU não tem valor pago
+      if (!cc || valorPago === 0) return
+      
       if (!grupos[cc]) {
         grupos[cc] = { despesas: new Set(), total: 0 }
       }
-      grupos[cc].total += item.valor_pago
+      grupos[cc].total += valorPago
       if (item.despesa) grupos[cc].despesas.add(item.despesa)
     })
 
-    return Object.entries(grupos)
+    const resultado = Object.entries(grupos)
       .map(([centro, dados]) => ({
         centro_custo: centro,
         despesa: Array.from(dados.despesas).join(', ') || '-',
         total: dados.total
       }))
       .sort((a, b) => b.total - a.total)
+    
+    // Debug
+    console.log('Centros de Custo encontrados:', resultado.length)
+    
+    return resultado
   }, [data])
 
   // --- Insights Automáticos ---
