@@ -195,6 +195,23 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
     return null
   }
 
+  // --- Custom Label para mostrar valores nos pontos ---
+  const CustomLabel = ({ x, y, value, color }: any) => {
+    if (!value || value === 0) return null
+    return (
+      <text 
+        x={x} 
+        y={y - 10} 
+        fill={color}
+        fontSize={9}
+        fontWeight={900}
+        textAnchor="middle"
+      >
+        {formatCompact(value)}
+      </text>
+    )
+  }
+
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-full">
       
@@ -233,7 +250,7 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
                   tickFormatter={(val) => formatCompact(val)}
                   width={60}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#e5e7eb', strokeWidth: 2 }} />
                 <Legend 
                   wrapperStyle={{ paddingTop: '20px' }}
                   iconType="line"
@@ -250,6 +267,7 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
                   strokeWidth={3}
                   dot={{ r: 5, fill: '#ffffff', stroke: '#3b82f6', strokeWidth: 3 }}
                   activeDot={{ r: 7, fill: '#3b82f6', strokeWidth: 0 }}
+                  label={<CustomLabel color="#3b82f6" />}
                 />
                 <Line 
                   type="monotone" 
@@ -258,6 +276,7 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
                   strokeWidth={3}
                   dot={{ r: 5, fill: '#ffffff', stroke: '#10b981', strokeWidth: 3 }}
                   activeDot={{ r: 7, fill: '#10b981', strokeWidth: 0 }}
+                  label={<CustomLabel color="#10b981" />}
                 />
               </LineChart>
             </ResponsiveContainer>
