@@ -37,6 +37,16 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
     }).format(val);
   }
 
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return '-'
+    const date = new Date(dateString)
+    return date.toLocaleDateString('pt-BR', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    })
+  }
+
   // --- Separação de Dados: Comercial vs Particular (CORRIGIDO) ---
   const { comercialData, particularData } = useMemo(() => {
     const comercial = data.filter(item => {
@@ -154,6 +164,21 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
     console.log('Centros de Custo encontrados:', resultado.length)
     
     return resultado
+  }, [data])
+
+  // --- Casos da Agencia ---
+  const casosAgencia = useMemo(() => {
+    const agenciaData = data.filter(item => {
+      const cc = (item.centro_custo || '').toLowerCase().trim()
+      return cc.includes('agencia') || cc.includes('agência')
+    })
+
+    return agenciaData
+      .sort((a, b) => {
+        const dateA = new Date(a.data_pagamento || a.data_emissao || '').getTime()
+        const dateB = new Date(b.data_pagamento || b.data_emissao || '').getTime()
+        return dateB - dateA // Ordem decrescente
+      })
   }, [data])
 
   // --- Insights Automáticos ---
@@ -356,6 +381,68 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Casos da Agencia */}
+      <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6">
+        <div className="mb-6 pb-5 border-b border-gray-100 flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+            <Plane className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Casos da Agencia</h2>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
+              Relação de passagens • {casosAgencia.length} registro{casosAgencia.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+
+        {casosAgencia.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                    Data Passagem
+                  </th>
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                    Fornecedor
+                  </th>
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                    Tipo
+                  </th>
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                    Observações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {casosAgencia.map((item, idx) => (
+                  <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
+                    <td className="px-4 py-3 text-xs font-bold text-gray-700 whitespace-nowrap">
+                      {formatDate(item.data_pagamento || item.data_emissao)}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-semibold text-gray-600">
+                      {item.fornecedor || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-semibold text-gray-600">
+                      {item.tipo || item.despesa || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500">
+                      {item.observacoes || item.descricao || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <Plane className="w-12 h-12 mb-3 opacity-30" />
+            <p className="text-sm font-semibold">Nenhum caso da Agencia encontrado</p>
+            <p className="text-xs mt-1">Os registros serão exibidos aqui quando disponíveis</p>
+          </div>
+        )}
       </div>
 
     </div>
