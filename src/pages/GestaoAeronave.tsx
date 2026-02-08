@@ -250,33 +250,66 @@ export function GestaoAeronave({
       const ws = wb.Sheets[wb.SheetNames[0]]
       const rawData = XLSX.utils.sheet_to_json(ws)
 
-      const parseDate = (val: any) => {
+      const parseDate = (val: any): string | null => {
         if (!val) return null
-        if (typeof val === 'string') {
-          const clean = val.trim().toUpperCase()
-          if (['N/A', '-', 'NAN', 'UNDEFINED', ''].includes(clean)) return null
+        
+        // Se for Date do Excel (objeto)
+        if (val instanceof Date) {
+          return val.toISOString().split('T')[0]
         }
+        
+        // Se for número (serial date do Excel)
         if (typeof val === 'number') {
           const date = new Date(Math.round((val - 25569) * 86400 * 1000))
           return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0]
         }
-        if (typeof val === 'string' && val.includes('/')) {
-          const parts = val.split('/')
-          if (parts.length !== 3) return null 
-          const [d, m, a] = parts
-          const anoFull = a.length === 2 ? `20${a}` : a
-          return `${anoFull}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+        
+        // Se for string
+        if (typeof val === 'string') {
+          const clean = val.trim().toUpperCase()
+          if (['N/A', '-', 'NAN', 'UNDEFINED', ''].includes(clean)) return null
+          
+          // Formato ISO (YYYY-MM-DD HH:MM:SS ou YYYY-MM-DD)
+          if (val.includes('-')) {
+            const dateOnly = val.split(' ')[0] // Pega só a parte da data
+            const parsed = new Date(dateOnly)
+            return isNaN(parsed.getTime()) ? null : dateOnly
+          }
+          
+          // Formato brasileiro (DD/MM/YYYY)
+          if (val.includes('/')) {
+            const parts = val.split('/')
+            if (parts.length !== 3) return null
+            const [d, m, a] = parts
+            const anoFull = a.length === 2 ? `20${a}` : a
+            return `${anoFull}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+          }
         }
-        if (typeof val === 'string' && val.includes('-') && !isNaN(Date.parse(val))) return val
-        if (typeof val === 'object' && val instanceof Date) return val.toISOString().split('T')[0]
+        
         return null
       }
 
-      const parseMoney = (val: any) => {
+      const parseMoney = (val: any): number => {
+        // Se já for número, retorna direto
         if (typeof val === 'number') return val
-        if (!val) return 0
-        const clean = String(val).replace('R$', '').replace(/\./g, '').replace(',', '.').trim()
-        return parseFloat(clean) || 0
+        
+        // Se for null/undefined/vazio
+        if (!val || val === '') return 0
+        
+        // Converte para string e limpa
+        const str = String(val).trim()
+        if (str === '' || str.toUpperCase() === 'N/A') return 0
+        
+        // Remove símbolos de moeda e formata
+        const cleaned = str
+          .replace('R$', '')
+          .replace(/\s/g, '')
+          .replace(/\./g, '') // Remove pontos de milhar
+          .replace(',', '.') // Troca vírgula decimal por ponto
+          .trim()
+        
+        const number = parseFloat(cleaned)
+        return isNaN(number) ? 0 : number
       }
 
       const findVal = (row: any, keys: string[]) => {
