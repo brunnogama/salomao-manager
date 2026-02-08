@@ -168,19 +168,36 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
 
   // --- Casos da Agencia (Despesa: Agência, Tipo: Passagem) ---
   const casosAgencia = useMemo(() => {
-    // Filtra registros onde Despesa = Agência e Tipo = Passagem
-    const agenciaData = data.filter(item => {
-      const despesa = (item.despesa || '').trim()
-      const tipo = (item.tipo || '').trim()
+    // Debug: ver estrutura dos dados
+    if (data.length > 0) {
+      console.log('=== DEBUG CASOS DA AGÊNCIA ===')
+      console.log('Primeiro registro completo:', data[0])
+      console.log('Campos disponíveis:', Object.keys(data[0]))
       
-      const isAgencia = despesa === 'Agência'
-      const isPassagem = tipo === 'Passagem'
+      // Ver valores únicos de despesa e tipo
+      const despesasUnicas = [...new Set(data.map(item => item.despesa).filter(Boolean))]
+      const tiposUnicos = [...new Set(data.map(item => item.tipo).filter(Boolean))]
+      
+      console.log('Despesas únicas encontradas:', despesasUnicas)
+      console.log('Tipos únicos encontrados:', tiposUnicos)
+    }
+    
+    // Filtra registros onde Despesa = Agência e Tipo = Passagem (normalizado)
+    const agenciaData = data.filter(item => {
+      const despesa = (item.despesa || '').trim().toLowerCase()
+      const tipo = (item.tipo || '').trim().toLowerCase()
+      
+      const isAgencia = despesa.includes('agência') || despesa.includes('agencia')
+      const isPassagem = tipo.includes('passagem')
+      
+      if (isAgencia && isPassagem) {
+        console.log('Match encontrado:', { despesa: item.despesa, tipo: item.tipo, data: item.data_pagamento })
+      }
       
       return isAgencia && isPassagem
     })
 
     console.log('Total de casos da Agência encontrados:', agenciaData.length)
-    console.log('Exemplos:', agenciaData.slice(0, 3))
 
     return agenciaData
       .sort((a, b) => {
