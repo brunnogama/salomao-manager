@@ -1,11 +1,12 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { 
   BarChart3, 
   TrendingUp, 
   TrendingDown,
   Info,
   Plane,
-  Building2
+  Building2,
+  Filter
 } from 'lucide-react'
 import { 
   LineChart, 
@@ -24,6 +25,8 @@ interface AeronaveComparativoProps {
 }
 
 export function AeronaveComparativoComercialParticular({ data }: AeronaveComparativoProps) {
+  
+  const [filtroCentroCusto, setFiltroCentroCusto] = useState<string>('todos')
   
   // --- Formatadores ---
   const formatCurrency = (val: number) => 
@@ -188,6 +191,25 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
         return dateB - dateA // Ordem decrescente
       })
   }, [data])
+
+  // --- Centros de Custo Únicos para Filtro ---
+  const centrosCustoUnicos = useMemo(() => {
+    const centros = casosAgencia
+      .map(item => item.centro_custo)
+      .filter(Boolean)
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .sort()
+    
+    return centros as string[]
+  }, [casosAgencia])
+
+  // --- Aplicar Filtro de Centro de Custo ---
+  const casosAgenciaFiltrados = useMemo(() => {
+    if (filtroCentroCusto === 'todos') {
+      return casosAgencia
+    }
+    return casosAgencia.filter(item => item.centro_custo === filtroCentroCusto)
+  }, [casosAgencia, filtroCentroCusto])
 
   // --- Insights Automáticos ---
   const insights = useMemo(() => {
@@ -391,21 +413,40 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
         </div>
       </div>
 
-      {/* Casos da Agencia */}
+      {/* Voos Comerciais */}
       <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-6">
-        <div className="mb-6 pb-5 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
-            <Plane className="w-5 h-5" />
+        <div className="mb-6 pb-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+              <Plane className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Voos Comerciais</h2>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                Relação de passagens • {casosAgenciaFiltrados.length} de {casosAgencia.length} registro{casosAgencia.length !== 1 ? 's' : ''}
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Casos da Agencia</h2>
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
-              Relação de passagens • {casosAgencia.length} registro{casosAgencia.length !== 1 ? 's' : ''}
-            </p>
+
+          {/* Filtro de Centro de Custo */}
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <select
+              value={filtroCentroCusto}
+              onChange={(e) => setFiltroCentroCusto(e.target.value)}
+              className="px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
+            >
+              <option value="todos">Todos os Centros de Custo</option>
+              {centrosCustoUnicos.map(centro => (
+                <option key={centro} value={centro}>
+                  {centro}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
-        {casosAgencia.length > 0 ? (
+        {casosAgenciaFiltrados.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -431,7 +472,7 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {casosAgencia.map((item, idx) => (
+                {casosAgenciaFiltrados.map((item, idx) => (
                   <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
                     <td className="px-4 py-3 text-xs font-bold text-gray-700 whitespace-nowrap">
                       {formatDate(item.data_pagamento || item.data_emissao)}
@@ -459,8 +500,16 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-gray-400">
             <Plane className="w-12 h-12 mb-3 opacity-30" />
-            <p className="text-sm font-semibold">Nenhum caso da Agencia encontrado</p>
-            <p className="text-xs mt-1">Os registros serão exibidos aqui quando disponíveis</p>
+            <p className="text-sm font-semibold">
+              {casosAgencia.length === 0 
+                ? 'Nenhum voo comercial encontrado' 
+                : 'Nenhum registro para o filtro selecionado'}
+            </p>
+            <p className="text-xs mt-1">
+              {casosAgencia.length === 0 
+                ? 'Os registros serão exibidos aqui quando disponíveis'
+                : 'Selecione outro centro de custo ou "Todos" para ver mais registros'}
+            </p>
           </div>
         )}
       </div>
