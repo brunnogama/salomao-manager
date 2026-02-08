@@ -170,16 +170,16 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
   const casosAgencia = useMemo(() => {
     // Filtra registros onde Despesa = Agência e Tipo = Passagem
     const agenciaData = data.filter(item => {
-      const despesa = (item.despesa || '').toLowerCase().trim()
-      const tipo = (item.tipo || '').toLowerCase().trim()
+      const despesa = (item.despesa || '').trim()
+      const tipo = (item.tipo || '').trim()
       
-      const isAgencia = despesa.includes('agencia') || despesa.includes('agência')
-      const isPassagem = tipo.includes('passagem')
+      const isAgencia = despesa === 'Agência'
+      const isPassagem = tipo === 'Passagem'
       
       return isAgencia && isPassagem
     })
 
-    console.log('Total de casos da Agencia encontrados:', agenciaData.length)
+    console.log('Total de casos da Agência encontrados:', agenciaData.length)
     console.log('Exemplos:', agenciaData.slice(0, 3))
 
     return agenciaData
