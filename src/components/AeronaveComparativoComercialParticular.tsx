@@ -166,12 +166,21 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
     return resultado
   }, [data])
 
-  // --- Casos da Agencia ---
+  // --- Casos da Agencia (Despesa: Agência, Tipo: Passagem) ---
   const casosAgencia = useMemo(() => {
+    // Filtra registros onde Despesa = Agência e Tipo = Passagem
     const agenciaData = data.filter(item => {
-      const cc = (item.centro_custo || '').toLowerCase().trim()
-      return cc.includes('agencia') || cc.includes('agência')
+      const despesa = (item.despesa || '').toLowerCase().trim()
+      const tipo = (item.tipo || '').toLowerCase().trim()
+      
+      const isAgencia = despesa.includes('agencia') || despesa.includes('agência')
+      const isPassagem = tipo.includes('passagem')
+      
+      return isAgencia && isPassagem
     })
+
+    console.log('Total de casos da Agencia encontrados:', agenciaData.length)
+    console.log('Exemplos:', agenciaData.slice(0, 3))
 
     return agenciaData
       .sort((a, b) => {
