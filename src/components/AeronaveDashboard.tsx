@@ -78,12 +78,27 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
   }, [data])
 
   const dashboardData = useMemo(() => {
-    if (yearFilter === 'all') return data
-    return data.filter(item => {
-      const dateStr = item.data_pagamento || item.vencimento || item.created_at || ''
-      return dateStr.startsWith(yearFilter)
-    })
-  }, [data, yearFilter])
+  // FILTRO 1: Excluir Voos Comerciais (Agência/Passagem)
+  const filteredData = data.filter(item => {
+    const aeronave = (item.aeronave || '').toLowerCase().trim()
+    const despesa = (item.despesa || '').toLowerCase().trim()
+    const tipo = (item.tipo || '').toLowerCase().trim()
+    
+    // Excluir se for aeronave comercial OU despesa de agência OU tipo passagem
+    const isComercial = aeronave.includes('comercial')
+    const isAgencia = despesa.includes('agência') || despesa.includes('agencia')
+    const isPassagem = tipo.includes('passagem')
+    
+    return !isComercial && !isAgencia && !isPassagem
+  })
+  
+  // FILTRO 2: Filtro de Ano
+  if (yearFilter === 'all') return filteredData
+  return filteredData.filter(item => {
+    const dateStr = item.data_pagamento || item.vencimento || item.created_at || ''
+    return dateStr.startsWith(yearFilter)
+  })
+}, [data, yearFilter])
 
   // --- 1. Dados do Gráfico ---
   const chartData = useMemo(() => {
@@ -705,4 +720,5 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       </div>
     </div>
   )
+
 }
