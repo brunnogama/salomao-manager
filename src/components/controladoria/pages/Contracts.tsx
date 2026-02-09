@@ -5,7 +5,7 @@ import {
   LayoutGrid, List, Download, ArrowUpDown, Edit, Trash2, Bell, ArrowDownAZ, ArrowUpAZ,
   FileSignature, ChevronDown, X, FileSearch, Paperclip, Eye
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import * as XLSX from 'xlsx';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner'; 

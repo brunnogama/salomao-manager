@@ -2,8 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { useDashboardData } from '../hooks/useDashboardData';
+import { supabase } from '../../../lib/supabase'; // Aponta para o lib central do Manager
+import { useDashboardData } from '../hooks/useDashboardData'; // Mantém relativo se a pasta hooks foi movida junto
 
 // --- COMPONENTES MODULARES ---
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';

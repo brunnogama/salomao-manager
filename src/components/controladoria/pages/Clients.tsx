@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../../lib/supabase'; // Caminho corrigido para o Manager
 import { Users, Search, Plus, Filter, User, MapPin, Phone, Mail, Edit, Trash2, Building, Briefcase, X, FileText, Shield } from 'lucide-react';
-import { Client, Partner } from '../types';
-import { ClientFormModal } from '../components/clients/ClientFormModal';
-import { maskCNPJ } from '../utils/masks';
+import { Client, Partner } from '../types'; // Caminho corrigido para subir um nível
+import { ClientFormModal } from '../components/clients/ClientFormModal'; // Caminho corrigido para subir um nível
+import { maskCNPJ } from '../utils/masks'; // Caminho corrigido para subir um nível
 
 export function Clients() {
   // --- ROLE STATE ---
