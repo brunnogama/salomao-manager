@@ -8,17 +8,18 @@ import { Sidebar as CrmSidebar } from './components/crm/Sidebar'
 import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
 import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
 import { SidebarFinanceiro } from './components/finance/SidebarFinanceiro'
-// Importação da nova Sidebar da Controladoria
-import { Sidebar as ControladoriaSidebar } from './components/controladoria/components/Sidebar'
+
+// CORREÇÃO: Caminho direto para a Sidebar da Controladoria
+import { Sidebar as ControladoriaSidebar } from './components/controladoria/Sidebar'
 
 // Componentes CRM
 import { Clients } from './components/crm/Clients'
 import { Magistrados } from './components/crm/Magistrados'
 import { Settings } from './components/Settings'
 import { IncompleteClients } from './components/crm/IncompleteClients'
-import { Kanban as CrmKanban } from './components/crm/Kanban' // Rename para evitar conflito
-import { Dashboard as CrmDashboard } from './components/crm/Dashboard' // Rename para evitar conflito
-import { History as CrmHistory } from './components/crm/History' // Rename para evitar conflito
+import { Kanban as CrmKanban } from './components/crm/Kanban' 
+import { Dashboard as CrmDashboard } from './components/crm/Dashboard' 
+import { History as CrmHistory } from './components/crm/History' 
 import { Manual } from './components/crm/Manual'
 import { WelcomeModal } from './components/WelcomeModal'
 import { UnderConstruction } from './components/UnderConstruction'
@@ -54,6 +55,7 @@ import { FinanceContasPagar } from './components/finance/pages/FinanceContasPaga
 import { FinanceContasReceber } from './components/finance/contasareceber/pages/FinanceContasReceber'
 
 // --- NOVOS COMPONENTES CONTROLADORIA ---
+// CORREÇÃO: Certifique-se de que os caminhos /pages/ existam dentro de controladoria
 import { Dashboard as ControlDashboard } from './components/controladoria/pages/Dashboard'
 import { Contracts as ControlContracts } from './components/controladoria/pages/Contracts'
 import { Clients as ControlClients } from './components/controladoria/pages/Clients'
@@ -142,7 +144,6 @@ export default function App() {
     )
   }
 
-  // Removido 'legal-control' da lista de construção
   if (['family', 'operational'].includes(currentModule)) {
     return <UnderConstruction moduleName={currentModule} onBack={() => setCurrentModule('home')} />
   }
