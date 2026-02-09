@@ -1,4 +1,4 @@
-//src/App.tsx
+// src/App.tsx
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Login from './Login'
@@ -8,15 +8,17 @@ import { Sidebar as CrmSidebar } from './components/crm/Sidebar'
 import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
 import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
 import { SidebarFinanceiro } from './components/finance/SidebarFinanceiro'
+// Importação da nova Sidebar da Controladoria
+import { Sidebar as ControladoriaSidebar } from './components/controladoria/components/Sidebar'
 
 // Componentes CRM
 import { Clients } from './components/crm/Clients'
 import { Magistrados } from './components/crm/Magistrados'
 import { Settings } from './components/Settings'
 import { IncompleteClients } from './components/crm/IncompleteClients'
-import { Kanban } from './components/crm/Kanban'
-import { Dashboard } from './components/crm/Dashboard'
-import { History } from './components/crm/History'
+import { Kanban as CrmKanban } from './components/crm/Kanban' // Rename para evitar conflito
+import { Dashboard as CrmDashboard } from './components/crm/Dashboard' // Rename para evitar conflito
+import { History as CrmHistory } from './components/crm/History' // Rename para evitar conflito
 import { Manual } from './components/crm/Manual'
 import { WelcomeModal } from './components/WelcomeModal'
 import { UnderConstruction } from './components/UnderConstruction'
@@ -43,15 +45,29 @@ import { SecretariaExecutivaDespesas } from './components/secretaria/pages/Secre
 import { SecretariaExecutivaGED } from './components/secretaria/pages/SecretariaExecutivaGED'
 
 // Componentes Financeiro
-import { GestaoAeronave } from './pages/GestaoAeronave' // Nova importação
-import { GED } from './components/finance/pages/GED'
+import { GestaoAeronave } from './pages/GestaoAeronave'
+import { GED as FinanceGED } from './components/finance/pages/GED'
 import { Calendario as CalendarioFinanceiro } from './components/finance/pages/Calendario'
 import { ListaOAB } from './components/finance/pages/ListaOAB'
 import { FinanceDashboard } from './components/finance/pages/FinanceDashboard'
 import { FinanceContasPagar } from './components/finance/pages/FinanceContasPagar'
 import { FinanceContasReceber } from './components/finance/contasareceber/pages/FinanceContasReceber'
 
+// --- NOVOS COMPONENTES CONTROLADORIA ---
+import { Dashboard as ControlDashboard } from './components/controladoria/pages/Dashboard'
+import { Contracts as ControlContracts } from './components/controladoria/pages/Contracts'
+import { Clients as ControlClients } from './components/controladoria/pages/Clients'
+import { Kanban as ControlKanban } from './components/controladoria/pages/Kanban'
+import { Finance as ControlFinance } from './components/controladoria/pages/Finance'
+import { GED as ControlGED } from './components/controladoria/pages/GED'
+import { Proposals as ControlProposals } from './components/controladoria/pages/Proposals'
+import { Jurimetria as ControlJurimetria } from './components/controladoria/pages/Jurimetria'
+import { Volumetry as ControlVolumetry } from './components/controladoria/pages/Volumetry'
+import { History as ControlHistory } from './components/controladoria/pages/History'
+import { Settings as ControlSettings } from './components/controladoria/pages/Settings'
+
 import { Menu, LogOut, Grid } from 'lucide-react'
+import { Toaster } from 'sonner'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
@@ -126,12 +142,14 @@ export default function App() {
     )
   }
 
-  if (['family', 'operational', 'legal-control'].includes(currentModule)) {
+  // Removido 'legal-control' da lista de construção
+  if (['family', 'operational'].includes(currentModule)) {
     return <UnderConstruction moduleName={currentModule} onBack={() => setCurrentModule('home')} />
   }
 
   return (
     <>
+      <Toaster position="top-right" richColors closeButton />
       <WelcomeModal />
       <div className="flex h-screen bg-gray-100 overflow-hidden w-full">
         {currentModule === 'collaborators' ? (
@@ -140,6 +158,8 @@ export default function App() {
           <SidebarFinanceiro activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         ) : currentModule === 'executive' ? (
           <ExecutiveSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        ) : currentModule === 'legal-control' ? (
+          <ControladoriaSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         ) : (
           <CrmSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         )}
@@ -155,7 +175,7 @@ export default function App() {
             {currentModule === 'crm' && (
               <>
                 {activePage === 'dashboard' && (
-                  <Dashboard 
+                  <CrmDashboard 
                     userName={getUserDisplayName()}
                     onModuleHome={() => setCurrentModule('home')}
                     onLogout={handleLogout}
@@ -186,13 +206,13 @@ export default function App() {
                 )}
                 {activePage === 'manual' && <Manual />}
                 {activePage === 'kanban' && (
-                  <Kanban 
+                  <CrmKanban 
                     userName={getUserDisplayName()} 
                     onModuleHome={() => setCurrentModule('home')} 
                     onLogout={handleLogout} 
                   />
                 )}
-                {activePage === 'historico' && <History />}
+                {activePage === 'historico' && <CrmHistory />}
               </>
             )}
 
@@ -212,7 +232,7 @@ export default function App() {
                 {activePage === 'acoes' && <RHAcoes userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'ged' && <RHGED userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'kanban' && (
-                  <Kanban 
+                  <CrmKanban 
                     userName={getUserDisplayName()} 
                     onModuleHome={() => setCurrentModule('home')} 
                     onLogout={handleLogout} 
@@ -254,8 +274,6 @@ export default function App() {
                     onLogout={handleLogout} 
                   />
                 )}
-                
-                {/* Gestão da Aeronave (Atualizado) */}
                 {activePage === 'gestao-aeronave' && (
                   <GestaoAeronave 
                     userName={getUserDisplayName()} 
@@ -263,15 +281,14 @@ export default function App() {
                     onLogout={handleLogout} 
                   />
                 )}
-
                 {activePage === 'ged' && (
-                  <GED 
+                  <FinanceGED 
                     userName={getUserDisplayName()} 
                     onModuleHome={() => setCurrentModule('home')} 
                     onLogout={handleLogout} 
                   />
                 )}
-                {activePage === 'historico' && <History />}
+                {activePage === 'historico' && <CrmHistory />}
               </>
             )}
 
@@ -279,7 +296,6 @@ export default function App() {
             {currentModule === 'executive' && (
               <>
                 {activePage === 'dashboard' && <SecretariaExecutivaDashboard userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
-                {/* ALTERAÇÃO AQUI: Aceita 'agenda' ou 'calendario' para evitar tela branca */}
                 {(activePage === 'agenda' || activePage === 'calendario') && <SecretariaExecutivaCalendario userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'despesas' && <SecretariaExecutivaDespesas userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'ged' && <SecretariaExecutivaGED userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
@@ -290,6 +306,23 @@ export default function App() {
                     onLogout={handleLogout} 
                   />
                 )}
+              </>
+            )}
+
+            {/* --- MÓDULO CONTROLADORIA JURÍDICA --- */}
+            {currentModule === 'legal-control' && (
+              <>
+                {activePage === 'dashboard' && <ControlDashboard />}
+                {activePage === 'contratos' && <ControlContracts />}
+                {activePage === 'clientes' && <ControlClients />}
+                {activePage === 'kanban' && <ControlKanban />}
+                {activePage === 'financeiro' && <ControlFinance />}
+                {activePage === 'ged' && <ControlGED />}
+                {activePage === 'propostas' && <ControlProposals />}
+                {activePage === 'jurimetria' && <ControlJurimetria />}
+                {activePage === 'volumetria' && <ControlVolumetry />}
+                {activePage === 'historico' && <ControlHistory />}
+                {activePage === 'configuracoes' && <ControlSettings />}
               </>
             )}
           </div>
