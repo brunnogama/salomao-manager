@@ -114,26 +114,26 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800">Gerenciar Analistas</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+      <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-white/20">
+        {/* Header - Navy Estilizado */}
+        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-[#0a192f]">
+          <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Gerenciar Analistas</h2>
+          <button onClick={onClose} className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition-all">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Form */}
-        <div className="p-6 border-b border-gray-100">
+        {/* Form - Estilo Densa */}
+        <div className="p-8 border-b border-gray-100 bg-gray-50/30">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <div className="md:col-span-5">
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Nome do Analista <span className="text-red-500">*</span>
+              <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">
+                Nome do Analista <span className="text-amber-500">*</span>
               </label>
               <input
                 type="text"
-                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:border-salomao-blue outline-none"
+                className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white"
                 placeholder="Nome completo"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -142,13 +142,13 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
             </div>
 
             <div className="md:col-span-5">
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                E-mail
+              <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">
+                E-mail Corporativo
               </label>
               <input
                 type="email"
-                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:border-salomao-blue outline-none"
-                placeholder="email@exemplo.com"
+                className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white"
+                placeholder="email@salomao.com.br"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 disabled={loading}
@@ -159,45 +159,50 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
               <button
                 onClick={handleSave}
                 disabled={loading || !formData.name.trim()}
-                className="w-full bg-salomao-blue text-white px-3 py-2.5 rounded-lg hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 text-sm font-medium"
+                className="w-full bg-[#0a192f] text-white p-3 rounded-xl hover:bg-slate-800 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
               >
-                {editingId ? <><Save className="w-4 h-4" /> Salvar</> : <><Plus className="w-4 h-4" /> Add</>}
+                {editingId ? <><Save className="w-4 h-4 text-amber-500" /> Salvar</> : <><Plus className="w-4 h-4 text-amber-500" /> Add</>}
               </button>
             </div>
           </div>
         </div>
 
-        {/* List */}
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* List - Custom Scrollbar */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           {loading && analysts.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">Carregando...</div>
+            <div className="text-center py-12">
+               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a192f] mx-auto"></div>
+               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4">Sincronizando base...</p>
+            </div>
           ) : analysts.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">Nenhum analista cadastrado</div>
+            <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nenhum analista cadastrado</p>
+            </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {analysts.map((analyst) => (
                 <div
                   key={analyst.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
+                  className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl group hover:border-amber-200 hover:shadow-md transition-all"
                 >
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-800">{analyst.name}</h3>
+                    <h3 className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{analyst.name}</h3>
                     {analyst.email && (
-                      <p className="text-xs text-gray-500">{analyst.email}</p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">{analyst.email}</p>
                     )}
                   </div>
                   
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
                     <button
                       onClick={() => handleEdit(analyst)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                      className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"
                       title="Editar"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(analyst.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                      className="p-2 text-red-400 hover:bg-red-50 rounded-xl transition-colors"
                       title="Excluir"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -209,13 +214,13 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-100 flex justify-end">
+        {/* Footer - Navy Estilizado */}
+        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
+            className="px-8 py-2.5 bg-white border border-gray-200 text-[#0a192f] rounded-xl hover:bg-gray-100 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all active:scale-95"
           >
-            Fechar
+            Fechar Janela
           </button>
         </div>
       </div>
