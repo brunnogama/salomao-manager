@@ -1,3 +1,40 @@
+CONTEXTO: Estou enviando o código oficial e atualizado do arquivo:  
+
+
+Atualize esse e me peça o restante que eu vou enviando, vamos atualizar um arquivo por vez.
+Veja se precisamos criar tabelas no Supabase e quais arquivos precisamos criar.
+SEMPRE DEVOLVA O CODIGO COMPLETO, SEM ALTERAR MAIS NADA. Observa a quantidade de linhas no arquivos que mandei
+ATENÇÃO: Aplique rigorosamente as alterações solicitadas, mantendo a integridade do restante do código e as suas lógicas e design.
+
+
+SUA TAREFA: 
+1. Coloque o filtro Centro de Custo da aba Comparativo, dentro do grupo Comparativo Mensal (do lado direito do titulo), deixando ele universal para a aba
+2. Crie um botao filtrar, quando o filtro estiver sendo usado
+3. Os cards da aba Comparativo nao estao ficando do mesmo tamanho dos das oturas abas por causa do subtitulo 
+Voos Comerciais | Aeronave Particular | Custo Adicional
+Mova todos para titulo e ao lado de cada um escreva (média/mes), exemplo
+Custo Adicional (média/mês)
+Assim eles ficarão do mesmo taamanho dos outros cards
+
+
+
+
+
+ 
+
+
+DIRETRIZES DE SEGURANÇA (LEIA COM ATENÇÃO):
+
+PROIBIDO REFATORAR: Não altere absolutamente nada além do que foi pedido. Mantenha nomes de variáveis, estrutura de funções, comentários e indentação idênticos, a menos que a mudança exija alterá-los.
+PRESERVE A UI/UX: Não toque em classes CSS, Tailwind ou estrutura HTML que não façam parte da tarefa.
+ZERO CRIATIVIDADE: Não tente "melhorar" ou "otimizar" o código. Apenas execute a tarefa.
+SAÍDA: Retorne o arquivo INTEIRO (sem abreviações // ...)
+DESIGN: Sempre utilize o Salomão Design System
+
+
+
+CÓDIGO FONTE:
+
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { 
   Plane, 
