@@ -1,6 +1,6 @@
 // src/components/finance/contasareceber/hooks/useFinanceContasReceber.ts
 import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../../../../lib/supabase'; // Ajustado de ../../../ para ../../../../
 
 export type FaturaStatus = 'enviado' | 'aguardando_resposta' | 'radar' | 'contato_direto' | 'pago';
 
@@ -47,19 +47,24 @@ export function useFinanceContasReceber() {
 
   const fetchFaturas = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('finance_faturas')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('finance_faturas')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      const processadas = data.map(f => ({
-        ...f,
-        status: getAutomatedStatus(f.data_envio, f.status)
-      }));
-      setFaturas(processadas);
+      if (!error && data) {
+        const processadas = data.map(f => ({
+          ...f,
+          status: getAutomatedStatus(f.data_envio, f.status)
+        }));
+        setFaturas(processadas);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar faturas:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const enviarFatura = async (dados: any) => {
