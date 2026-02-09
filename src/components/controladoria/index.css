@@ -3,7 +3,49 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Salomão Design System Colors */
+    --salomao-navy: #0a192f;
+    --salomao-gold: #b45309;
+    --salomao-gold-light: #fbbf24;
+  }
+
   body {
-    @apply antialiased text-gray-800;
+    @apply antialiased text-gray-800 bg-gray-50;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer components {
+  /* Estilização de Scrollbar Customizada para o Manager */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors;
+  }
+
+  /* Efeito de vidro sutil para modais e cards */
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-md border border-white/20;
+  }
+}
+
+@layer utilities {
+  /* Animações de entrada para Modais e Dashboards */
+  .animate-in {
+    animation-duration: 300ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Tipografia densa característica do design Manager */
+  .text-dense {
+    @apply font-black uppercase tracking-widest;
   }
 }

@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { Plus, X, Settings, AlertTriangle, AlertCircle } from 'lucide-react';
-import { Contract } from '../../../types';
-import { CustomSelect } from '../../ui/CustomSelect';
+import { Contract } from '../types'; // Caminho corrigido
+import { CustomSelect } from '../ui/CustomSelect'; // Caminho corrigido
 import { FinancialInputWithInstallments } from './FinancialInputWithInstallments';
-import { maskMoney, parseCurrency } from '../../../utils/masks';
+import { maskMoney, parseCurrency } from '../utils/masks'; // Caminho corrigido
 import { addMonths } from 'date-fns';
 
 interface StatusAndDatesSectionProps {
@@ -147,20 +147,20 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
     const hasError = diff > 0.1;
 
     return (
-        <div className="mt-3 bg-gray-50/80 border border-gray-200 rounded-lg p-3 animate-in fade-in slide-in-from-top-2 shadow-sm">
-            <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
-                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Parcelamento - {label}</h4>
-                <span className="text-[10px] font-medium text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200">Total: {totalValueStr}</span>
+        <div className="mt-3 bg-gray-50/80 border border-gray-200 rounded-xl p-4 animate-in fade-in slide-in-from-top-2 shadow-sm">
+            <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-2">
+                <h4 className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest">Parcelamento - {label}</h4>
+                <span className="text-[10px] font-bold text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200 uppercase tracking-tighter">Total: {totalValueStr}</span>
             </div>
             
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                 {breakdown.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-3 text-xs mb-1">
-                        <span className="w-6 font-bold text-gray-500 text-right">{idx + 1}x</span>
+                    <div key={idx} className="flex items-center gap-3 mb-1">
+                        <span className="w-6 font-black text-gray-400 text-[10px] text-right">{idx + 1}x</span>
                         <div className="flex-1">
                             <input 
                                 type="date" 
-                                className="w-full border border-gray-300 rounded px-2 py-1.5 focus:border-salomao-blue outline-none text-gray-600 bg-white"
+                                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 focus:border-[#0a192f] outline-none text-xs font-medium text-gray-600 bg-white"
                                 value={item.date}
                                 onChange={(e) => {
                                     const newBreakdown = [...breakdown];
@@ -172,7 +172,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                         <div className="flex-1">
                             <input 
                                 type="text" 
-                                className={`w-full border rounded px-2 py-1.5 outline-none font-medium text-right ${hasError ? 'border-red-300 text-red-600 bg-red-50' : 'border-gray-300 text-gray-700 bg-white focus:border-salomao-blue'}`}
+                                className={`w-full border rounded-lg px-2 py-1.5 outline-none text-xs font-bold text-right ${hasError ? 'border-red-300 text-red-600 bg-red-50' : 'border-gray-200 text-[#0a192f] bg-white focus:border-[#0a192f]'}`}
                                 value={item.value}
                                 onChange={(e) => {
                                     const newBreakdown = [...breakdown];
@@ -187,8 +187,8 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
             </div>
 
             {hasError && (
-                <div className="mt-3 flex items-start gap-2 text-[11px] text-red-600 bg-red-50 p-2 rounded border border-red-100">
-                    <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                <div className="mt-3 flex items-start gap-2 text-[10px] font-bold text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 uppercase tracking-tight">
+                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>Soma das parcelas difere do total. Diferença: R$ {diff.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
                 </div>
             )}
@@ -211,20 +211,20 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
     const hasError = diff > 0.1;
 
     return (
-        <div className="mt-3 bg-orange-50/50 border border-orange-200 rounded-lg p-3 animate-in fade-in slide-in-from-top-2 shadow-sm">
-             <div className="flex items-center justify-between mb-3 border-b border-orange-200 pb-2">
-                <h4 className="text-xs font-bold text-orange-800 uppercase tracking-wide">Parcelamento (Novo)</h4>
-                <span className="text-[10px] font-medium text-orange-600 bg-white px-2 py-0.5 rounded border border-orange-200">Total: {totalValueStr}</span>
+        <div className="mt-3 bg-amber-50/30 border border-amber-200 rounded-xl p-4 animate-in fade-in slide-in-from-top-2 shadow-sm">
+             <div className="flex items-center justify-between mb-3 border-b border-amber-100 pb-2">
+                <h4 className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Parcelamento (Novo)</h4>
+                <span className="text-[10px] font-bold text-amber-600 bg-white px-2 py-0.5 rounded border border-amber-200 uppercase tracking-tighter">Total: {totalValueStr}</span>
             </div>
              
-             <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+             <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                 {breakdown.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-3 text-xs mb-1">
-                        <span className="w-6 font-bold text-gray-500 text-right">{idx + 1}x</span>
+                    <div key={idx} className="flex items-center gap-3 mb-1">
+                        <span className="w-6 font-black text-amber-400 text-[10px] text-right">{idx + 1}x</span>
                         <div className="flex-1">
                              <input 
                                 type="date" 
-                                className="w-full border border-gray-300 rounded px-2 py-1.5 focus:border-orange-500 outline-none text-gray-600 bg-white" 
+                                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 focus:border-amber-500 outline-none text-xs font-medium text-gray-600 bg-white" 
                                 value={item.date} 
                                 onChange={(e) => {
                                     const newBreakdown = [...breakdown];
@@ -236,7 +236,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                         <div className="flex-1">
                              <input 
                                 type="text" 
-                                className={`w-full border rounded px-2 py-1.5 outline-none font-medium text-right ${hasError ? 'border-red-300 text-red-600 bg-red-50' : 'border-gray-300 text-gray-700 bg-white focus:border-orange-500'}`}
+                                className={`w-full border rounded-lg px-2 py-1.5 outline-none text-xs font-bold text-right ${hasError ? 'border-red-300 text-red-600 bg-red-50' : 'border-gray-200 text-amber-900 bg-white focus:border-amber-500'}`}
                                 value={item.value} 
                                 onChange={(e) => {
                                     const newBreakdown = [...breakdown];
@@ -250,8 +250,8 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                 ))}
              </div>
              {hasError && (
-                <div className="mt-3 flex items-start gap-2 text-[11px] text-red-600 bg-red-50 p-2 rounded border border-red-100">
-                    <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                <div className="mt-3 flex items-start gap-2 text-[10px] font-bold text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 uppercase tracking-tight">
+                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>Soma difere do total. Diferença: R$ {diff.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
                 </div>
             )}
@@ -260,12 +260,12 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
   };
 
   return (
-    <div className="bg-white/60 p-6 rounded-xl border border-white/40 shadow-sm backdrop-blur-sm relative z-40 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm relative z-40 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
           <CustomSelect label="Status Atual do Caso" value={formData.status} onChange={(val: any) => setFormData({...formData, status: val})} options={statusOptions} onAction={handleCreateStatus} actionIcon={Plus} actionLabel="Adicionar Novo Status" />
           {formData.status && (
             <div className="animate-in fade-in slide-in-from-left-2">
-                <label className="text-xs font-medium block mb-1">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">
                       {formData.status === 'analysis' ? 'Data do Prospect' :
                       formData.status === 'proposal' ? 'Data da Proposta' :
                       formData.status === 'active' ? 'Data da Assinatura' :
@@ -274,7 +274,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                 </label>
                 <input 
                     type="date" 
-                    className={`w-full border p-2.5 rounded-lg text-sm bg-white outline-none transition-colors ${dateWarningMessage ? 'border-red-300 bg-red-50 focus:border-red-500' : 'border-gray-300 focus:border-salomao-blue'}`}
+                    className={`w-full border p-2.5 rounded-lg text-sm bg-white outline-none transition-colors font-medium ${dateWarningMessage ? 'border-red-300 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-[#0a192f]'}`}
                     value={ensureDateValue(
                         formData.status === 'analysis' ? formData.prospect_date :
                         formData.status === 'proposal' ? formData.proposal_date :
@@ -292,8 +292,8 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                     }} 
                 />
                 {dateWarningMessage && (
-                    <div className="flex items-center gap-2 mt-1 text-xs text-red-600 animate-in slide-in-from-top-1 font-medium bg-red-100/50 p-1.5 rounded">
-                        <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                    <div className="flex items-center gap-2 mt-1 text-[10px] text-red-600 animate-in slide-in-from-top-1 font-bold uppercase tracking-tight bg-red-50 p-2 rounded-lg border border-red-100">
+                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                         <span>{dateWarningMessage}</span>
                     </div>
                 )}
@@ -302,34 +302,34 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
       </div>
 
       {formData.status === 'analysis' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2">
-            <div><CustomSelect label="Analisado Por" value={formData.analyst_id || ''} onChange={(val: string) => setFormData({...formData, analyst_id: val})} options={analystSelectOptions} onAction={onOpenAnalystManager} actionIcon={Settings} actionLabel="Gerenciar Analistas" /></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2 mb-6">
+            <div><CustomSelect label="Analisado Por" value={formData.analyst_id || ''} onChange={(val: string) => setFormData({...formData, analyst_id: val})} options={analystSelectOptions} onOpenManager={onOpenAnalystManager} actionIcon={Settings} actionLabel="Gerenciar Analistas" /></div>
         </div>
       )}
 
       {formData.status === 'rejected' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 animate-in fade-in slide-in-from-top-2">
-            <div><CustomSelect label="Analisado por" value={formData.analyst_id || ''} onChange={(val: string) => setFormData({...formData, analyst_id: val})} options={analystSelectOptions} onAction={onOpenAnalystManager} actionIcon={Settings} actionLabel="Gerenciar Analistas" /></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 animate-in fade-in slide-in-from-top-2 mb-6">
+            <div><CustomSelect label="Analisado por" value={formData.analyst_id || ''} onChange={(val: string) => setFormData({...formData, analyst_id: val})} options={analystSelectOptions} onOpenManager={onOpenAnalystManager} actionIcon={Settings} actionLabel="Gerenciar Analistas" /></div>
             <div><CustomSelect label="Quem rejeitou" value={formData.rejection_by || ''} onChange={(val: string) => setFormData({...formData, rejection_by: val})} options={rejectionByOptions} /></div>
             <div><CustomSelect label="Motivo da Rejeição" value={formData.rejection_reason || ''} onChange={(val: string) => setFormData({...formData, rejection_reason: val})} options={rejectionReasonOptions} /></div>
         </div>
       )}
 
       {formData.status === 'probono' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2 mb-6">
             <div><CustomSelect label="Enviado Por" value={formData.partner_id || ''} onChange={(val: string) => setFormData({...formData, partner_id: val})} options={partnerSelectOptions} /></div>
         </div>
       )}
 
       {(formData.status === 'proposal' || formData.status === 'active') && (
-      <div className="space-y-6 animate-in slide-in-from-top-2 pt-4 border-t border-gray-100">
+      <div className="space-y-6 animate-in slide-in-from-top-2 pt-6 border-t border-gray-100">
         {formData.status === 'active' && (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end mb-4 animate-in fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end mb-4 animate-in fade-in">
                 <div className="md:col-span-4">
-                    <label className="text-xs font-medium block mb-1 text-green-800">Número HON (Único) <span className="text-red-500">*</span></label>
-                    <input type="text" className={`w-full border-2 p-2.5 rounded-lg font-mono font-bold bg-white outline-none ${duplicateHonCase ? 'border-yellow-400 text-yellow-800 bg-yellow-50' : 'border-green-200 text-green-900 focus:border-green-500'}`} placeholder="00.000.000/000" value={formData.hon_number} onChange={e => setFormData({...formData, hon_number: maskHon(e.target.value)})} />
+                    <label className="text-[10px] font-black text-green-800 uppercase tracking-widest block mb-1">Número HON (Único) <span className="text-red-500">*</span></label>
+                    <input type="text" className={`w-full border-2 p-2.5 rounded-lg text-sm font-mono font-bold bg-white outline-none transition-all ${duplicateHonCase ? 'border-amber-400 text-amber-800 bg-amber-50' : 'border-green-100 text-green-900 focus:border-green-500'}`} placeholder="00.000.000/000" value={formData.hon_number} onChange={e => setFormData({...formData, hon_number: maskHon(e.target.value)})} />
                     {duplicateHonCase && (
-                        <div className="flex items-center gap-1 mt-1 text-xs text-yellow-700 font-medium"><AlertTriangle className="w-3 h-3" /><span>Em uso por: {duplicateHonCase.display_id}</span></div>
+                        <div className="flex items-center gap-1 mt-2 text-[10px] text-amber-700 font-bold uppercase tracking-tight bg-amber-100/50 p-1.5 rounded-lg border border-amber-200"><AlertTriangle className="w-3.5 h-3.5" /><span>Em uso: {duplicateHonCase.display_id}</span></div>
                     )}
                 </div>
                 <div className="md:col-span-4"><CustomSelect label="Local Faturamento *" value={formData.billing_location || ''} onChange={(val: string) => setFormData({...formData, billing_location: val})} options={billingOptions} onAction={() => setActiveManager('location')} actionLabel="Gerenciar Locais" actionIcon={Settings} /></div>
@@ -338,16 +338,16 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
         )}
 
         <div className={`grid grid-cols-1 md:grid-cols-3 gap-5 items-start ${isTimesheet ? 'opacity-40 pointer-events-none filter grayscale' : ''}`}>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <FinancialInputWithInstallments label="Pró-Labore (R$)" value={safeString(formatForInput(formData.pro_labore))} onChangeValue={(v: any) => setFormData({...formData, pro_labore: v})} installments={formData.pro_labore_installments} onChangeInstallments={(v: any) => setFormData({...formData, pro_labore_installments: v})} onAdd={() => handleAddToList('pro_labore_extras', 'pro_labore', 'pro_labore_extras_installments', 'pro_labore_installments')} clause={(formData as any).pro_labore_clause} onChangeClause={(v: any) => setFormData({...formData, pro_labore_clause: v} as any)} />
-              <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
+              <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
                 {(formData as any).pro_labore_extras?.map((val: string, idx: number) => {
                    const clauses = ensureArray((formData as any).pro_labore_extras_clauses);
                    const installments = ensureArray((formData as any).pro_labore_extras_installments);
                    return (
-                      <div key={idx} onClick={() => handleEditExtra('pro_labore_extras', 'pro_labore', 'pro_labore_extras_installments', 'pro_labore_installments', 'pro_labore_extras_clauses', 'pro_labore_clause', idx)} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                          <div className="flex items-center gap-1">{clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}<span className="font-medium">{val}</span>{installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}</div>
-                          <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
+                      <div key={idx} onClick={() => handleEditExtra('pro_labore_extras', 'pro_labore', 'pro_labore_extras_installments', 'pro_labore_installments', 'pro_labore_extras_clauses', 'pro_labore_clause', idx)} className="bg-white border border-gray-100 px-3 py-2 rounded-xl text-[11px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-[#0a192f]/30 hover:bg-blue-50 transition-all group" title="Clique para editar">
+                          <div className="flex items-center gap-2">{clauses[idx] && <span className="text-[#0a192f] font-black text-[9px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold text-[9px] uppercase tracking-tighter">({installments[idx]})</span>}</div>
+                          <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
                       </div>
                    );
                 })}
@@ -355,16 +355,16 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
               {renderInstallmentBreakdown('Pró-Labore', 'pro_labore', 'pro_labore_breakdown', 'pro_labore_installments')}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
                 <FinancialInputWithInstallments label="Outros Honorários (R$)" value={safeString(formatForInput(formData.other_fees))} onChangeValue={(v: any) => setFormData({...formData, other_fees: v})} installments={formData.other_fees_installments} onChangeInstallments={(v: any) => setFormData({...formData, other_fees_installments: v})} onAdd={() => handleAddToList('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments')} clause={(formData as any).other_fees_clause} onChangeClause={(v: any) => setFormData({...formData, other_fees_clause: v} as any)} />
-                <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
+                <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
                     {(formData as any).other_fees_extras?.map((val: string, idx: number) => {
                        const clauses = ensureArray((formData as any).other_fees_extras_clauses);
                        const installments = ensureArray((formData as any).other_fees_extras_installments);
                        return (
-                          <div key={idx} onClick={() => handleEditExtra('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments', 'other_fees_extras_clauses', 'other_fees_clause', idx)} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                              <div className="flex items-center gap-1">{clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}<span className="font-medium">{val}</span>{installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}</div>
-                              <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
+                          <div key={idx} onClick={() => handleEditExtra('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments', 'other_fees_extras_clauses', 'other_fees_clause', idx)} className="bg-white border border-gray-100 px-3 py-2 rounded-xl text-[11px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-[#0a192f]/30 hover:bg-blue-50 transition-all group" title="Clique para editar">
+                              <div className="flex items-center gap-2">{clauses[idx] && <span className="text-[#0a192f] font-black text-[9px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold text-[9px] uppercase tracking-tighter">({installments[idx]})</span>}</div>
+                              <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
                           </div>
                        );
                     })}
@@ -372,16 +372,16 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                   {renderInstallmentBreakdown('Outros', 'other_fees', 'other_fees_breakdown', 'other_fees_installments')}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
                 <FinancialInputWithInstallments label="Fixo Mensal (R$)" value={safeString(formatForInput(formData.fixed_monthly_fee))} onChangeValue={(v: any) => setFormData({...formData, fixed_monthly_fee: v})} installments={formData.fixed_monthly_fee_installments} onChangeInstallments={(v: any) => setFormData({...formData, fixed_monthly_fee_installments: v})} onAdd={() => handleAddToList('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments')} clause={(formData as any).fixed_monthly_fee_clause} onChangeClause={(v: any) => setFormData({...formData, fixed_monthly_fee_clause: v} as any)} />
-                <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
+                <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
                     {(formData as any).fixed_monthly_extras?.map((val: string, idx: number) => {
                        const clauses = ensureArray((formData as any).fixed_monthly_extras_clauses);
                        const installments = ensureArray((formData as any).fixed_monthly_extras_installments);
                        return (
-                          <div key={idx} onClick={() => handleEditExtra('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments', 'fixed_monthly_extras_clauses', 'fixed_monthly_fee_clause', idx)} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                              <div className="flex items-center gap-1">{clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}<span className="font-medium">{val}</span>{installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}</div>
-                              <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
+                          <div key={idx} onClick={() => handleEditExtra('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments', 'fixed_monthly_extras_clauses', 'fixed_monthly_fee_clause', idx)} className="bg-white border border-gray-100 px-3 py-2 rounded-xl text-[11px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-[#0a192f]/30 hover:bg-blue-50 transition-all group" title="Clique para editar">
+                              <div className="flex items-center gap-2">{clauses[idx] && <span className="text-[#0a192f] font-black text-[9px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold text-[9px] uppercase tracking-tighter">({installments[idx]})</span>}</div>
+                              <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
                           </div>
                        );
                     })}
@@ -391,16 +391,16 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
         </div>
 
         <div className={`grid grid-cols-1 md:grid-cols-3 gap-5 items-start ${isTimesheet ? 'opacity-40 pointer-events-none filter grayscale' : ''}`}>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <FinancialInputWithInstallments label="Êxito Intermediário" value={newIntermediateFee} onChangeValue={setNewIntermediateFee} installments={interimInstallments} onChangeInstallments={setInterimInstallments} onAdd={handleAddIntermediateFee} clause={interimClause} onChangeClause={setInterimClause} />
-              <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
+              <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
                 {formData.intermediate_fees?.map((fee: string, idx: number) => {
                   const clauses = ensureArray((formData as any).intermediate_fees_clauses);
                   const installments = ensureArray((formData as any).intermediate_fees_installments);
                   return (
-                      <div key={idx} onClick={() => { setNewIntermediateFee(fee); setInterimInstallments(installments[idx] || '1x'); setInterimClause(clauses[idx] || ''); handleRemoveIntermediateFee(idx); }} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                          <div className="flex items-center gap-1">{clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}<span className="font-medium">{fee}</span>{installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}</div>
-                          <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
+                      <div key={idx} onClick={() => { setNewIntermediateFee(fee); setInterimInstallments(installments[idx] || '1x'); setInterimClause(clauses[idx] || ''); handleRemoveIntermediateFee(idx); }} className="bg-white border border-amber-100 px-3 py-2 rounded-xl text-[11px] text-amber-900 flex items-center justify-between shadow-sm cursor-pointer hover:bg-amber-50 hover:border-amber-300 transition-all group" title="Clique para editar">
+                          <div className="flex items-center gap-2">{clauses[idx] && <span className="text-amber-800 font-black text-[9px] bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{fee}</span>{installments[idx] && <span className="text-amber-500 font-bold text-[9px] uppercase tracking-tighter">({installments[idx]})</span>}</div>
+                          <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
                       </div>
                   );
                 })}
@@ -408,16 +408,16 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
               {renderInterimBreakdownEditable()}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <FinancialInputWithInstallments label="Êxito Final (R$)" value={safeString(formatForInput(formData.final_success_fee))} onChangeValue={(v: any) => setFormData({...formData, final_success_fee: v})} installments={formData.final_success_fee_installments} onChangeInstallments={(v: any) => setFormData({...formData, final_success_fee_installments: v})} onAdd={() => handleAddToList('final_success_extras', 'final_success_fee', 'final_success_extras_installments', 'final_success_fee_installments')} clause={(formData as any).final_success_fee_clause} onChangeClause={(v: any) => setFormData({...formData, final_success_fee_clause: v} as any)} />
-              <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
+              <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
                 {(formData as any).final_success_extras?.map((val: string, idx: number) => {
                    const clauses = ensureArray((formData as any).final_success_extras_clauses);
                    const installments = ensureArray((formData as any).final_success_extras_installments);
                    return (
-                      <div key={idx} onClick={() => handleEditExtra('final_success_extras', 'final_success_fee', 'final_success_extras_installments', 'final_success_fee_installments', 'final_success_extras_clauses', 'final_success_fee_clause', idx)} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                          <div className="flex items-center gap-1">{clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}<span className="font-medium">{val}</span>{installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}</div>
-                          <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
+                      <div key={idx} onClick={() => handleEditExtra('final_success_extras', 'final_success_fee', 'final_success_extras_installments', 'final_success_fee_installments', 'final_success_extras_clauses', 'final_success_fee_clause', idx)} className="bg-white border border-gray-100 px-3 py-2 rounded-xl text-[11px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-[#0a192f]/30 hover:bg-blue-50 transition-all group" title="Clique para editar">
+                          <div className="flex items-center gap-2">{clauses[idx] && <span className="text-[#0a192f] font-black text-[9px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold text-[9px] uppercase tracking-tighter">({installments[idx]})</span>}</div>
+                          <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
                       </div>
                    );
                 })}
@@ -425,20 +425,20 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
               {renderInstallmentBreakdown('Êxito Final', 'final_success_fee', 'final_success_fee_breakdown', 'final_success_fee_installments')}
             </div>
 
-            <div className="space-y-2">
-                <label className="text-xs font-medium block mb-1">Êxito %</label>
-                <div className="flex rounded-lg shadow-sm">
-                  <input type="text" className="w-14 border border-gray-300 rounded-l-lg p-2.5 text-sm bg-gray-50 outline-none border-r-0 text-center" value={(formData as any).final_success_percent_clause || ''} onChange={(e) => setFormData({...formData, final_success_percent_clause: e.target.value} as any)} placeholder="Cl." />
-                  <input type="text" className="flex-1 border border-gray-300 p-2.5 text-sm bg-white outline-none" placeholder="Ex: 20%" value={formData.final_success_percent} onChange={e => setFormData({...formData, final_success_percent: e.target.value})} />
-                  <button className="bg-salomao-blue text-white px-3 rounded-r-lg hover:bg-blue-900" type="button" onClick={() => handleAddToList('percent_extras', 'final_success_percent')}><Plus className="w-4 h-4" /></button>
+            <div className="space-y-3">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Êxito %</label>
+                <div className="flex rounded-lg shadow-sm h-[42px]">
+                  <input type="text" className="w-14 border border-gray-200 rounded-l-lg p-2.5 text-xs font-bold bg-gray-50 outline-none border-r-0 text-center uppercase text-[#0a192f] focus:border-[#0a192f]" value={(formData as any).final_success_percent_clause || ''} onChange={(e) => setFormData({...formData, final_success_percent_clause: e.target.value} as any)} placeholder="Cl." />
+                  <input type="text" className="flex-1 border border-gray-200 p-2.5 text-sm font-bold bg-white outline-none text-[#0a192f] focus:border-[#0a192f]" placeholder="Ex: 20%" value={formData.final_success_percent} onChange={e => setFormData({...formData, final_success_percent: e.target.value})} />
+                  <button className="bg-[#0a192f] text-white px-4 rounded-r-lg hover:bg-slate-800 transition-colors active:scale-95 flex items-center justify-center shadow-md" type="button" onClick={() => handleAddToList('percent_extras', 'final_success_percent')}><Plus className="w-4 h-4" /></button>
                 </div>
-                <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
+                <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
                     {(formData as any).percent_extras?.map((val: string, idx: number) => {
                        const clauses = ensureArray((formData as any).percent_extras_clauses);
                        return (
-                          <div key={idx} onClick={() => { const newList = [...(formData as any).percent_extras]; const newClausesList = [...ensureArray((formData as any).percent_extras_clauses)]; const valToEdit = newList[idx]; const clauseToEdit = newClausesList[idx]; newList.splice(idx, 1); newClausesList.splice(idx, 1); setFormData({...formData, final_success_percent: valToEdit, final_success_percent_clause: clauseToEdit, percent_extras: newList, percent_extras_clauses: newClausesList} as any); }} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                              <div className="flex items-center gap-1">{clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}<span className="font-medium">{val}</span></div>
-                              <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
+                          <div key={idx} onClick={() => { const newList = [...(formData as any).percent_extras]; const newClausesList = [...ensureArray((formData as any).percent_extras_clauses)]; const valToEdit = newList[idx]; const clauseToEdit = newClausesList[idx]; newList.splice(idx, 1); newClausesList.splice(idx, 1); setFormData({...formData, final_success_percent: valToEdit, final_success_percent_clause: clauseToEdit, percent_extras: newList, percent_extras_clauses: newClausesList} as any); }} className="bg-white border border-gray-100 px-3 py-2 rounded-xl text-[11px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-[#0a192f]/30 hover:bg-blue-50 transition-all group" title="Clique para editar">
+                              <div className="flex items-center gap-2">{clauses[idx] && <span className="text-[#0a192f] font-black text-[9px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{val}</span></div>
+                              <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
                           </div>
                        );
                     })}
@@ -446,13 +446,13 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
             </div>
         </div>
           
-        <div>
-              <label className="text-xs font-medium block mb-1">Timesheet</label>
-              <div className="flex items-center h-[42px] border border-gray-300 rounded-lg px-3 bg-white">
-                <input type="checkbox" id="timesheet_check" checked={(formData as any).timesheet || false} onChange={(e) => setFormData({...formData, timesheet: e.target.checked} as any)} className="w-4 h-4 text-salomao-blue rounded cursor-pointer" />
-                <label htmlFor="timesheet_check" className="ml-2 text-sm text-gray-700 cursor-pointer select-none">Utilizar Timesheet</label>
+        <div className="pt-2">
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Timesheet</label>
+              <div className="flex items-center h-[48px] border border-gray-200 rounded-xl px-4 bg-gray-50/30 transition-all hover:bg-white hover:border-[#0a192f]/20">
+                <input type="checkbox" id="timesheet_check" checked={(formData as any).timesheet || false} onChange={(e) => setFormData({...formData, timesheet: e.target.checked} as any)} className="w-4 h-4 text-[#0a192f] rounded focus:ring-[#0a192f] cursor-pointer" />
+                <label htmlFor="timesheet_check" className="ml-3 text-[11px] font-bold text-gray-600 uppercase tracking-wide cursor-pointer select-none">Utilizar Timesheet no Faturamento</label>
               </div>
-              {isTimesheet && <p className="text-[10px] text-orange-600 mt-1 ml-1 animate-in fade-in">* Ao ativar o Timesheet, os honorários fixos serão zerados no salvamento.</p>}
+              {isTimesheet && <p className="text-[10px] font-bold text-amber-600 mt-2 ml-1 animate-in fade-in flex items-center gap-1"><AlertTriangle size={12}/> Ao ativar o Timesheet, honorários fixos/pro-labore manuais serão ignorados no faturamento.</p>}
         </div>
       </div>
       )}

@@ -1,12 +1,12 @@
 import React from 'react';
 import { Plus, ChevronDown } from 'lucide-react';
-import { maskMoney } from '../../../utils/masks';
+import { maskMoney } from '../utils/masks'; // Caminho corrigido para a estrutura da controladoria
 
 const MinimalSelect = ({ value, onChange, options }: { value: string, onChange: (val: string) => void, options: string[] }) => {
     return (
         <div className="relative h-full w-full">
             <select
-                className="w-full h-full appearance-none bg-transparent pl-3 pr-8 text-xs font-medium text-gray-700 outline-none cursor-pointer focus:bg-gray-50 transition-colors"
+                className="w-full h-full appearance-none bg-transparent pl-3 pr-8 text-[10px] font-bold text-gray-700 outline-none cursor-pointer focus:bg-gray-50 transition-colors uppercase"
                 value={value || '1x'}
                 onChange={(e) => onChange(e.target.value)}
             >
@@ -36,21 +36,21 @@ export const FinancialInputWithInstallments = ({
   const installmentOptions = Array.from({ length: 24 }, (_, i) => `${i + 1}x`);
   return (
     <div>
-      <label className="text-xs font-medium block mb-1 text-gray-600">{label}</label>
-      <div className="flex rounded-lg shadow-sm">
+      <label className="text-[10px] font-black block mb-1 text-gray-500 uppercase tracking-widest">{label}</label>
+      <div className="flex rounded-lg shadow-sm h-[42px]">
         {onChangeClause && (
              <input 
                 type="text" 
-                className="w-14 border border-gray-300 rounded-l-lg p-2.5 text-sm bg-gray-50 focus:border-salomao-blue outline-none border-r-0 placeholder-gray-400 text-center"
+                className="w-14 border border-gray-300 rounded-l-lg p-2.5 text-xs font-bold bg-gray-50 focus:border-[#0a192f] outline-none border-r-0 placeholder-gray-400 text-center uppercase"
                 value={clause || ''} 
                 onChange={(e) => onChangeClause(e.target.value)}
-                placeholder="Cl."
+                placeholder="CL."
                 title="Cláusula (ex: 2.1)"
              />
         )}
         <input 
           type="text" 
-          className={`flex-1 border border-gray-300 p-2.5 text-sm bg-white focus:border-salomao-blue outline-none min-w-0 ${!onChangeClause ? 'rounded-l-lg' : ''} ${!onAdd ? 'rounded-r-none border-r-0' : ''}`}
+          className={`flex-1 border border-gray-300 p-2.5 text-sm bg-white focus:border-[#0a192f] outline-none min-w-0 font-medium ${!onChangeClause ? 'rounded-l-lg' : ''} ${!onAdd ? 'rounded-r-none border-r-0' : ''}`}
           value={value || ''} 
           onChange={(e) => onChangeValue(maskMoney(e.target.value))}
           placeholder="R$ 0,00"
@@ -61,7 +61,7 @@ export const FinancialInputWithInstallments = ({
         {onAdd && (
           <button 
             onClick={onAdd}
-            className="bg-salomao-blue text-white px-2 rounded-r-lg hover:bg-blue-900 transition-colors flex items-center justify-center border-l border-blue-800"
+            className="bg-[#0a192f] text-white px-3 rounded-r-lg hover:bg-slate-800 transition-colors flex items-center justify-center border-l border-[#0a192f] active:scale-95"
             type="button"
             title="Adicionar valor"
           >

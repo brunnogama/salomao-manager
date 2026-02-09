@@ -15,7 +15,8 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100'>
           <div className='flex items-center gap-3 mb-2'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
+            {/* CORREÇÃO: Alterado de #112240 para #0a192f para seguir o Manager */}
+            <div className='p-2 rounded-xl bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] text-white shadow-lg'>
               <Briefcase className='w-5 h-5' />
             </div>
             <div>
@@ -153,7 +154,8 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100'>
           <div className='flex items-center gap-3 mb-2'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-lg'>
+            {/* CORREÇÃO: Alterado de amber-500 para Navy #0a192f para uniformidade visual */}
+            <div className='p-2 rounded-xl bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] text-white shadow-lg'>
               <Banknote className='w-5 h-5' />
             </div>
             <div>

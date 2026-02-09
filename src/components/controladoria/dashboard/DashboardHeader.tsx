@@ -31,7 +31,8 @@ export function DashboardHeader({
         {/* Título e Subtítulo */}
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+            {/* Gradiente Navy/Blue padrão do Manager */}
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] text-white shadow-lg">
               <LayoutDashboard className="w-6 h-6" />
             </div>
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight">
@@ -46,13 +47,12 @@ export function DashboardHeader({
         {/* Filtros e Botão de Exportar */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
           
-          {/* Filtro de Sócio */}
           <div className="relative min-w-[200px]" id="dashboard-filters">
             <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
             <select
               value={selectedPartner}
               onChange={(e) => setSelectedPartner(e.target.value)}
-              className="w-full pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer text-gray-700 shadow-sm"
+              className="w-full pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-[#1e3a8a] transition-all cursor-pointer text-gray-700 shadow-sm"
             >
               <option value="">Todos os Sócios</option>
               {partnersList.map((p) => (
@@ -64,13 +64,12 @@ export function DashboardHeader({
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
           </div>
 
-          {/* Filtro de Localização */}
           <div className="relative min-w-[200px]" id="dashboard-filters">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
             <select
               value={selectedLocation}
               onChange={(e) => setSelectedLocation(e.target.value)}
-              className="w-full pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer text-gray-700 shadow-sm"
+              className="w-full pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-[#1e3a8a] transition-all cursor-pointer text-gray-700 shadow-sm"
             >
               <option value="">Todos os Locais</option>
               {locationsList.map((l) => (
@@ -82,12 +81,11 @@ export function DashboardHeader({
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
           </div>
 
-          {/* Botão de Exportar */}
           <div id="export-button-container">
             <button
               onClick={onExport}
               disabled={exporting}
-              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white text-[9px] font-black rounded-xl hover:bg-[#112240] shadow-lg transition-all active:scale-95 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white text-[9px] font-black rounded-xl hover:bg-[#0a192f] shadow-lg transition-all active:scale-95 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {exporting ? (
                 <>

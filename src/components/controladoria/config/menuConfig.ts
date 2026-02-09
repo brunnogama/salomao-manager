@@ -8,7 +8,7 @@ import {
   Users, 
   KanbanSquare, 
   FolderOpen,
-  Share2 // <--- Adicionado
+  Share2 
 } from 'lucide-react';
 
 export const menuItems = [
@@ -16,7 +16,7 @@ export const menuItems = [
   { label: 'Contratos', path: '/contratos', icon: FileSignature },
   { label: 'Propostas', path: '/propostas', icon: FileText },
   { label: 'Financeiro', path: '/financeiro', icon: DollarSign },
-  { label: 'Jurimetria', path: '/jurimetria', icon: Share2 }, // <--- Adicionado
+  { label: 'Jurimetria', path: '/jurimetria', icon: Share2 }, 
   { label: 'Volumetria', path: '/volumetria', icon: BarChart3 },
   { label: 'Compliance', path: '/compliance', icon: ShieldCheck },
   { label: 'Clientes', path: '/clientes', icon: Users },

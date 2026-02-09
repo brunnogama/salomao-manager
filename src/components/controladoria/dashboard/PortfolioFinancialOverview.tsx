@@ -36,7 +36,8 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100'>
           <div className='flex items-center gap-3 mb-2'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
+            {/* CORREÇÃO: Alterado de #112240 para #0a192f */}
+            <div className='p-2 rounded-xl bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] text-white shadow-lg'>
               <Camera className='w-5 h-5' />
             </div>
             <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
@@ -66,9 +67,10 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           </button>
 
           {/* Propostas */}
+          {/* CORREÇÃO: Alterado de #112240 para #0a192f */}
           <button 
             onClick={() => handleDrillDown('proposal')} 
-            className='bg-gradient-to-br from-[#112240] to-[#1e3a8a] p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+            className='bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
           >
             <Briefcase className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
             <p className='text-[24px] font-black text-white tracking-tight'>
@@ -143,7 +145,8 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100'>
           <div className='flex items-center gap-3 mb-2'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
+            {/* CORREÇÃO: Alterado de #112240 para #0a192f */}
+            <div className='p-2 rounded-xl bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] text-white shadow-lg'>
               <Camera className='w-5 h-5' />
             </div>
             <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>

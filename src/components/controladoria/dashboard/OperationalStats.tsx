@@ -24,6 +24,7 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100'>
           <div className='flex items-center gap-3 mb-2'>
+            {/* CORREÇÃO: Alterado de #112240 para #0a192f */}
             <div className='p-2 rounded-xl bg-gradient-to-br from-red-600 to-red-500 text-white shadow-lg'>
               <Ban className='w-5 h-5' />
             </div>
@@ -132,7 +133,8 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100'>
           <div className='flex items-center gap-3 mb-2'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
+            {/* CORREÇÃO: Alterado de #112240 para #0a192f */}
+            <div className='p-2 rounded-xl bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] text-white shadow-lg'>
               <FileSignature className='w-5 h-5' />
             </div>
             <div>

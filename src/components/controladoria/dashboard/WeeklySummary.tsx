@@ -29,7 +29,8 @@ export function WeeklySummary({ metrics }: WeeklySummaryProps) {
       {/* Header */}
       <div className='mb-6 pb-5 border-b border-gray-100'>
         <div className='flex items-center gap-3 mb-2'>
-          <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
+          {/* CORREÇÃO: Alterado de #112240 para #0a192f */}
+          <div className='p-2 rounded-xl bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] text-white shadow-lg'>
             <CalendarDays className='w-5 h-5' />
           </div>
           <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
@@ -45,7 +46,8 @@ export function WeeklySummary({ metrics }: WeeklySummaryProps) {
       <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6'>
         
         {/* Card 1: Geral */}
-        <div className='bg-gradient-to-br from-[#112240] to-[#1e3a8a] p-5 rounded-xl border border-white/10 shadow-lg flex flex-col justify-between transition-all hover:shadow-blue-900/20'>
+        {/* CORREÇÃO: Alterado de #112240 para #0a192f */}
+        <div className='bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] p-5 rounded-xl border border-white/10 shadow-lg flex flex-col justify-between transition-all hover:shadow-blue-900/20'>
           <div>
             <div className='flex justify-between items-start mb-3'>
               <p className='text-[9px] text-white font-black uppercase tracking-widest'>
@@ -191,7 +193,7 @@ export function WeeklySummary({ metrics }: WeeklySummaryProps) {
                     className="w-full bg-gray-300 rounded-t-xl transition-all" 
                     style={{ height: `${valPropSemanaAnt > 0 ? (valPropSemanaAnt / maxSemanaChart) * 100 : 2}%` }}
                   />
-                  <span className="text-[9px] text-gray-500 mt-2 font-black uppercase tracking-wider">
+                  <span className="text-[9px] text-gray-400 mt-2 font-black uppercase tracking-wider">
                     Anterior
                   </span>
                 </div>
@@ -204,8 +206,9 @@ export function WeeklySummary({ metrics }: WeeklySummaryProps) {
                   <span className={`text-[10px] mb-2 font-bold whitespace-nowrap ${deltaPropSemana >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                     {formatMoney(valPropSemana)}
                   </span>
+                  {/* CORREÇÃO: de #112240 para #0a192f */}
                   <div 
-                    className="w-full bg-gradient-to-t from-[#1e3a8a] to-[#112240] rounded-t-xl transition-all shadow-lg" 
+                    className="w-full bg-gradient-to-t from-[#1e3a8a] to-[#0a192f] rounded-t-xl transition-all shadow-lg" 
                     style={{ height: `${valPropSemana > 0 ? (valPropSemana / maxSemanaChart) * 100 : 2}%` }}
                   />
                   <span className="text-[9px] text-blue-600 font-black uppercase tracking-wider mt-2">
@@ -230,7 +233,7 @@ export function WeeklySummary({ metrics }: WeeklySummaryProps) {
                     className="w-full bg-gray-300 rounded-t-xl transition-all" 
                     style={{ height: `${valFechSemanaAnt > 0 ? (valFechSemanaAnt / maxSemanaChart) * 100 : 2}%` }}
                   />
-                  <span className="text-[9px] text-gray-500 mt-2 font-black uppercase tracking-wider">
+                  <span className="text-[9px] text-gray-400 mt-2 font-black uppercase tracking-wider">
                     Anterior
                   </span>
                 </div>
@@ -257,7 +260,8 @@ export function WeeklySummary({ metrics }: WeeklySummaryProps) {
         </div>
 
         {/* Insight Box */}
-        <div className="bg-gradient-to-br from-[#112240] to-[#1e3a8a] p-5 rounded-xl border border-white/10 shadow-lg flex flex-col justify-center w-full lg:w-64 transition-all hover:shadow-blue-900/20">
+        {/* CORREÇÃO: de #112240 para #0a192f */}
+        <div className="bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] p-5 rounded-xl border border-white/10 shadow-lg flex flex-col justify-center w-full lg:w-64 transition-all hover:shadow-blue-900/20">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-1.5 rounded-lg bg-white/20 backdrop-blur-sm">
               <Lightbulb className='w-4 h-4 text-white' />

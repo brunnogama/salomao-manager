@@ -1,4 +1,4 @@
-import { Contract, TimelineEvent } from '../types';
+import { Contract, TimelineEvent } from '../types'; // Ajustado para a pasta pai (controladoria)
 import { addDays, addMonths } from 'date-fns';
 
 export const formatForInput = (val: string | number | undefined) => {
@@ -81,10 +81,10 @@ export const getTotalDuration = (timelineData: TimelineEvent[], formData: Contra
 
 export const getThemeBackground = (status: string) => {
   switch (status) {
-    case 'analysis': return 'bg-yellow-50';
-    case 'proposal': return 'bg-blue-50';
-    case 'active': return 'bg-green-50';
-    case 'rejected': return 'bg-red-50';
-    default: return 'bg-gray-50';
+    case 'analysis': return 'bg-amber-50/30'; // Padronizado para o sistema Manager (Gold sutil)
+    case 'proposal': return 'bg-blue-50/30';
+    case 'active': return 'bg-green-50/30';
+    case 'rejected': return 'bg-red-50/30';
+    default: return 'bg-gray-50/30';
   }
 };

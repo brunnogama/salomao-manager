@@ -79,6 +79,6 @@ export const decodeCNJ = (cnj: string) => {
     tribunal: tribunalInfo,
     ano: ano,
     segmento: JUSTICE_SEGMENTS[j],
-    uf: uf // Nova propriedade
+    uf: uf
   };
 };

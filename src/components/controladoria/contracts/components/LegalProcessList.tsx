@@ -1,6 +1,6 @@
 import React from 'react';
 import { Eye, Edit, Trash2 } from 'lucide-react';
-import { ContractProcess } from '../../../types';
+import { ContractProcess } from '../types'; // Caminho corrigido para a estrutura da controladoria
 
 interface LegalProcessListProps {
   processes: ContractProcess[];
@@ -16,23 +16,51 @@ export function LegalProcessList({ processes, setViewProcess, setViewProcessInde
   return (
     <div className="space-y-2 mt-4">
       {processes.map((p, idx) => (
-        <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:border-blue-200 transition-colors group">
-          <div className="grid grid-cols-3 gap-4 flex-1 text-xs">
+        <div key={idx} className="flex justify-between items-center bg-gray-50/50 p-3 rounded-xl border border-gray-100 shadow-sm hover:border-[#0a192f]/30 hover:bg-white transition-all group">
+          <div className="grid grid-cols-3 gap-4 flex-1 items-center">
             {/* NÚMERO CLICÁVEL */}
-            <span 
+            <button 
+              type="button"
               onClick={() => { setViewProcess(p); setViewProcessIndex(idx); }} 
-              className="font-mono font-medium text-salomao-blue hover:underline cursor-pointer flex items-center"
+              className="font-mono text-[11px] font-bold text-[#0a192f] hover:text-blue-700 flex items-center gap-2 w-fit group/btn"
               title="Clique para ver detalhes do processo"
             >
-              <Eye className="w-3 h-3 mr-1" />
-              {p.process_number}
-            </span>
-            <span className="text-gray-600">{p.court} ({p.uf})</span>
-            <span className="text-gray-500 truncate">{p.opponent}</span>
+              <div className="p-1.5 rounded-lg bg-white border border-gray-200 group-hover/btn:border-[#0a192f] transition-colors">
+                <Eye className="w-3 h-3" />
+              </div>
+              <span className="hover:underline decoration-2 underline-offset-4">
+                {p.process_number}
+              </span>
+            </button>
+            
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Tribunal</span>
+              <span className="text-[11px] font-bold text-gray-700">{p.court} ({p.uf})</span>
+            </div>
+
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Parte Contrária</span>
+              <span className="text-[11px] font-bold text-gray-600 truncate uppercase" title={p.opponent}>
+                {p.opponent || '-'}
+              </span>
+            </div>
           </div>
-          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => editProcess(idx)} className="text-blue-500 hover:bg-blue-50 p-1 rounded"><Edit className="w-4 h-4" /></button>
-            <button onClick={() => removeProcess(idx)} className="text-red-500 hover:bg-red-50 p-1 rounded"><Trash2 className="w-4 h-4" /></button>
+
+          <div className="flex gap-1 ml-4">
+            <button 
+              onClick={() => editProcess(idx)} 
+              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title="Editar"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => removeProcess(idx)} 
+              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Remover"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
       ))}

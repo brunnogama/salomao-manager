@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { Contract, ContractProcess } from '../types';
-import { toTitleCase } from '../utils/masks';
+import { supabase } from '../../../lib/supabase'; // Ajustado para subir 3 níveis: hooks -> controladoria -> components -> src/lib
+import { Contract, ContractProcess } from '../types'; // Ajustado para a pasta pai (controladoria)
+import { toTitleCase } from '../utils/masks'; // Ajustado para a pasta pai (controladoria)
 
 // Defaults
 const DEFAULT_COURTS = ['STF', 'STJ', 'TST', 'TRF1', 'TRF2', 'TRF3', 'TRF4', 'TRF5', 'TJSP', 'TJRJ', 'TJMG', 'TJRS', 'TJPR', 'TJSC', 'TJBA', 'TJDFT', 'TRT1', 'TRT2', 'TRT15'];
@@ -346,7 +346,6 @@ export function useContractOptions({ formData, setFormData, currentProcess, setC
         return true;
   };
 
-  // Lógica de Remover (Apenas visual para maioria)
   const handleGenericRemove = (value: string) => {
       switch(activeManager) {
           case 'area': setLegalAreas(prev => prev.filter(i => i !== value)); break;
