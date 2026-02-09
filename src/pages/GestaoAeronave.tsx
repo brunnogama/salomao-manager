@@ -231,7 +231,7 @@ export function GestaoAeronave({
 
       if (searchTerm && !matchSearch) return false
 
-      // 3. Filtro de Data (ALTERADO: usa data_pagamento para Dados/Comparativo, data_missao para Dashboard)
+      // 3. Filtro de Data (ALTERADO: usa data_pagamento para Dados/Comparativo/Faturas, data_missao para Dashboard)
       const dateRef = activeTab === 'dashboard' ? item.data_missao : item.data_pagamento
       if (startDate && dateRef && dateRef < startDate) return false
       if (endDate && dateRef && dateRef > endDate) return false
@@ -715,35 +715,33 @@ export function GestaoAeronave({
             </div>
           )}
 
-          {/* Filtro de Data (Visível em Dashboard, Dados e Comparativo) */}
-          {activeTab !== 'faturas' && (
-            <div className="flex flex-col gap-1">
-              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                {activeTab === 'dashboard' ? 'Período de Missões' : 'Período de Pagamento'}
-              </span>
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                <input 
-                  type="date" 
-                  className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-                <span className="text-gray-300">|</span>
-                <input 
-                  type="date" 
-                  className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-                {(startDate || endDate) && (
-                  <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
-                    <XCircle className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
+          {/* Filtro de Data (Visível em todas as abas conforme solicitado) */}
+          <div className="flex flex-col gap-1">
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+              {activeTab === 'dashboard' ? 'Período de Missões' : 'Período de Pagamento'}
+            </span>
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <input 
+                type="date" 
+                className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+              <span className="text-gray-300">|</span>
+              <input 
+                type="date" 
+                className="text-xs font-semibold text-gray-700 outline-none bg-transparent"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+              {(startDate || endDate) && (
+                <button onClick={() => { setStartDate(''); setEndDate('') }} className="text-red-400 hover:text-red-600">
+                  <XCircle className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {activeTab === 'dados' && (
@@ -899,4 +897,3 @@ export function GestaoAeronave({
     </div>
   )
 }
-
