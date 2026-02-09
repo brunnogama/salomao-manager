@@ -77,14 +77,14 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
     // Insights
     const economia = mediaComercial - mediaParticular
     const percentual = mediaComercial > 0 ? ((economia / mediaComercial) * 100) : 0
-    const economizando = economia > 0
+    const economizando = economy > 0
 
     return {
       mediaMensalComercial: mediaComercial,
       mediaMensalParticular: mediaParticular,
       insights: {
         economizando,
-        economia: Math.abs(economia),
+        economia: Math.abs(mediaComercial - mediaParticular),
         percentual: Math.abs(percentual)
       }
     }
@@ -115,17 +115,17 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
       </div>
 
       <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-        <div className={`absolute right-0 top-0 h-full w-1 ${insights.economizando ? 'bg-green-600' : 'bg-amber-600'}`}></div>
+        <div className={`absolute right-0 top-0 h-full w-1 ${mediaMensalComercial - mediaMensalParticular > 0 ? 'bg-green-600' : 'bg-amber-600'}`}></div>
         <div>
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            {insights.economizando ? 'Economia (média/mês)' : 'Custo Adicional (média/mês)'}
+            {mediaMensalComercial - mediaMensalParticular > 0 ? 'Economia (média/mês)' : 'Custo Adicional (média/mês)'}
           </p>
-          <p className={`text-2xl font-black mt-1 ${insights.economizando ? 'text-green-900' : 'text-amber-900'}`}>
-            {formatCurrency(insights.economia)}
+          <p className={`text-2xl font-black mt-1 ${mediaMensalComercial - mediaMensalParticular > 0 ? 'text-green-900' : 'text-amber-900'}`}>
+            {formatCurrency(Math.abs(mediaMensalComercial - mediaMensalParticular))}
           </p>
         </div>
-        <div className={`p-3 rounded-xl ${insights.economizando ? 'bg-green-50' : 'bg-amber-50'}`}>
-          {insights.economizando ? <TrendingDown className="h-6 w-6 text-green-600" /> : <TrendingUp className="h-6 w-6 text-amber-600" />}
+        <div className={`p-3 rounded-xl ${mediaMensalComercial - mediaMensalParticular > 0 ? 'bg-green-50' : 'bg-amber-50'}`}>
+          {mediaMensalComercial - mediaMensalParticular > 0 ? <TrendingDown className="h-6 w-6 text-green-600" /> : <TrendingUp className="h-6 w-6 text-amber-600" />}
         </div>
       </div>
     </div>
@@ -231,7 +231,7 @@ export function GestaoAeronave({
 
       if (searchTerm && !matchSearch) return false
 
-      // 3. Filtro de Data (ALTERADO: usa data_pagamento para Dados, data_missao para Dashboard)
+      // 3. Filtro de Data (ALTERADO: usa data_pagamento para Dados/Comparativo, data_missao para Dashboard)
       const dateRef = activeTab === 'dashboard' ? item.data_missao : item.data_pagamento
       if (startDate && dateRef && dateRef < startDate) return false
       if (endDate && dateRef && dateRef > endDate) return false
@@ -564,10 +564,8 @@ export function GestaoAeronave({
 
       {/* 2. Cards de Totais */}
       {activeTab === 'comparativo' ? (
-        // Cards do Comparativo (Agora com tamanho idêntico aos cards normais)
         <ComparativoCards data={filteredData} />
       ) : (
-        // Cards Normais (Dashboard, Faturas, Dados)
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
             <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
@@ -717,8 +715,8 @@ export function GestaoAeronave({
             </div>
           )}
 
-          {/* Filtro de Data */}
-          {activeTab !== 'comparativo' && (
+          {/* Filtro de Data (Visível em Dashboard, Dados e Comparativo) */}
+          {activeTab !== 'faturas' && (
             <div className="flex flex-col gap-1">
               <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
                 {activeTab === 'dashboard' ? 'Período de Missões' : 'Período de Pagamento'}
