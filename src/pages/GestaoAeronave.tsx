@@ -1,40 +1,3 @@
-CONTEXTO: Estou enviando o código oficial e atualizado do arquivo:  
-
-
-Atualize esse e me peça o restante que eu vou enviando, vamos atualizar um arquivo por vez.
-Veja se precisamos criar tabelas no Supabase e quais arquivos precisamos criar.
-SEMPRE DEVOLVA O CODIGO COMPLETO, SEM ALTERAR MAIS NADA. Observa a quantidade de linhas no arquivos que mandei
-ATENÇÃO: Aplique rigorosamente as alterações solicitadas, mantendo a integridade do restante do código e as suas lógicas e design.
-
-
-SUA TAREFA: 
-1. Coloque o filtro Centro de Custo da aba Comparativo, dentro do grupo Comparativo Mensal (do lado direito do titulo), deixando ele universal para a aba
-2. Crie um botao filtrar, quando o filtro estiver sendo usado
-3. Os cards da aba Comparativo nao estao ficando do mesmo tamanho dos das oturas abas por causa do subtitulo 
-Voos Comerciais | Aeronave Particular | Custo Adicional
-Mova todos para titulo e ao lado de cada um escreva (média/mes), exemplo
-Custo Adicional (média/mês)
-Assim eles ficarão do mesmo taamanho dos outros cards
-
-
-
-
-
- 
-
-
-DIRETRIZES DE SEGURANÇA (LEIA COM ATENÇÃO):
-
-PROIBIDO REFATORAR: Não altere absolutamente nada além do que foi pedido. Mantenha nomes de variáveis, estrutura de funções, comentários e indentação idênticos, a menos que a mudança exija alterá-los.
-PRESERVE A UI/UX: Não toque em classes CSS, Tailwind ou estrutura HTML que não façam parte da tarefa.
-ZERO CRIATIVIDADE: Não tente "melhorar" ou "otimizar" o código. Apenas execute a tarefa.
-SAÍDA: Retorne o arquivo INTEIRO (sem abreviações // ...)
-DESIGN: Sempre utilize o Salomão Design System
-
-
-
-CÓDIGO FONTE:
-
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { 
   Plane, 
@@ -57,7 +20,8 @@ import {
   Printer,
   TrendingUp,
   TrendingDown,
-  Building2
+  Building2,
+  Filter
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
@@ -130,9 +94,8 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
       <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
         <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
         <div>
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Média/Mês</p>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Voos Comerciais (média/mês)</p>
           <p className="text-2xl font-black text-blue-900 mt-1">{formatCurrency(mediaMensalComercial)}</p>
-          <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-1">Voos Comerciais</p>
         </div>
         <div className="p-3 bg-blue-50 rounded-xl">
           <Building2 className="h-6 w-6 text-blue-600" />
@@ -142,9 +105,8 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
       <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
         <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
         <div>
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Média/Mês</p>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Aeronave Particular (média/mês)</p>
           <p className="text-2xl font-black text-emerald-900 mt-1">{formatCurrency(mediaMensalParticular)}</p>
-          <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-1">Aeronave Particular</p>
         </div>
         <div className="p-3 bg-emerald-50 rounded-xl">
           <Plane className="h-6 w-6 text-emerald-600" />
@@ -155,7 +117,7 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
         <div className={`absolute right-0 top-0 h-full w-1 ${insights.economizando ? 'bg-green-600' : 'bg-amber-600'}`}></div>
         <div>
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            {insights.economizando ? 'Economia' : 'Custo Adicional'}
+            {insights.economizando ? 'Economia (média/mês)' : 'Custo Adicional (média/mês)'}
           </p>
           <p className={`text-2xl font-black mt-1 ${insights.economizando ? 'text-green-900' : 'text-amber-900'}`}>
             {formatCurrency(insights.economia)}
@@ -187,6 +149,7 @@ export function GestaoAeronave({
   const [activeTab, setActiveTab] = useState<'dashboard' | 'comparativo' | 'faturas' | 'dados'>('dashboard')
   const [filterOrigem, setFilterOrigem] = useState<'todos' | 'missao' | 'fixa'>('todos')
   const [filterCentroCusto, setFilterCentroCusto] = useState<string>('todos')
+  const [appliedCentroCusto, setAppliedCentroCusto] = useState<string>('todos')
   
   // --- Estados de Dados e Filtros ---
   const [data, setData] = useState<AeronaveLancamento[]>([])
@@ -256,8 +219,8 @@ export function GestaoAeronave({
       // 1. Filtro de Origem (não aplicar na aba Faturas e Comparativo)
       if (activeTab !== 'faturas' && activeTab !== 'comparativo' && filterOrigem !== 'todos' && item.origem !== filterOrigem) return false
 
-      // Filtro de Centro de Custo (apenas para Comparativo)
-      if (activeTab === 'comparativo' && filterCentroCusto !== 'todos' && item.centro_custo !== filterCentroCusto) return false
+      // Filtro de Centro de Custo (Universal por causa do state appliedCentroCusto)
+      if (appliedCentroCusto !== 'todos' && item.centro_custo !== appliedCentroCusto) return false
 
       // 2. Filtro de Texto (Busca)
       const searchString = searchTerm.toLowerCase()
@@ -277,7 +240,7 @@ export function GestaoAeronave({
 
       return true
     })
-  }, [data, filterOrigem, searchTerm, startDate, endDate, activeTab, filterCentroCusto])
+  }, [data, filterOrigem, searchTerm, startDate, endDate, activeTab, appliedCentroCusto])
 
   // --- Agrupamento de Faturas (Tarefa 3) ---
   const faturasAgrupadas = useMemo(() => {
@@ -686,7 +649,6 @@ export function GestaoAeronave({
                 setSearchTerm('')
                 setStartDate('')
                 setEndDate('')
-                setFilterCentroCusto('todos')
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                 activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
@@ -755,27 +717,33 @@ export function GestaoAeronave({
             </div>
           )}
 
-          {/* Filtro de Centro de Custo para Comparativo */}
-          {activeTab === 'comparativo' && (
-            <div className="flex flex-col gap-1 min-w-[200px]">
-              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                Centro de Custo
-              </span>
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-                <Building2 className="h-4 w-4 text-gray-400" />
-                <select
-                  value={filterCentroCusto}
-                  onChange={(e) => setFilterCentroCusto(e.target.value)}
-                  className="w-full text-xs font-semibold text-gray-700 outline-none bg-transparent border-none focus:ring-0 cursor-pointer"
+          {/* Filtro de Centro de Custo */}
+          <div className="flex flex-col gap-1 min-w-[200px]">
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+              Centro de Custo
+            </span>
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
+              <Building2 className="h-4 w-4 text-gray-400" />
+              <select
+                value={filterCentroCusto}
+                onChange={(e) => setFilterCentroCusto(e.target.value)}
+                className="w-full text-xs font-semibold text-gray-700 outline-none bg-transparent border-none focus:ring-0 cursor-pointer"
+              >
+                <option value="todos">Todos os Centros</option>
+                {centrosCusto.map(cc => (
+                  <option key={cc} value={cc}>{cc}</option>
+                ))}
+              </select>
+              {filterCentroCusto !== appliedCentroCusto && (
+                <button 
+                  onClick={() => setAppliedCentroCusto(filterCentroCusto)}
+                  className="flex items-center gap-1.5 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-[10px] font-black uppercase"
                 >
-                  <option value="todos">Todos os Centros</option>
-                  {centrosCusto.map(cc => (
-                    <option key={cc} value={cc}>{cc}</option>
-                  ))}
-                </select>
-              </div>
+                  <Filter className="h-3 w-3" /> Filtrar
+                </button>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Esconder filtro de data na aba Comparativo */}
           {activeTab !== 'comparativo' && (
@@ -855,7 +823,17 @@ export function GestaoAeronave({
             filterOrigem={filterOrigem}
           />
         ) : activeTab === 'comparativo' ? (
-          <AeronaveComparativoComercialParticular data={filteredData} />
+          <div className="flex flex-col h-full">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-black text-[#1e3a8a] uppercase tracking-tight">Comparativo Mensal</h3>
+              </div>
+            </div>
+            <AeronaveComparativoComercialParticular data={filteredData} />
+          </div>
         ) : activeTab === 'faturas' ? (
           <div className="overflow-x-auto custom-scrollbar pb-4">
             <table className="w-full text-left border-separate border-spacing-y-2 px-4 table-fixed">
