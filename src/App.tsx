@@ -9,7 +9,7 @@ import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
 import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
 import { SidebarFinanceiro } from './components/finance/SidebarFinanceiro'
 
-// CORREÇÃO: Caminho direto para a Sidebar da Controladoria
+// Sidebar da Controladoria
 import { Sidebar as ControladoriaSidebar } from './components/controladoria/Sidebar'
 
 // Componentes CRM
@@ -54,8 +54,7 @@ import { FinanceDashboard } from './components/finance/pages/FinanceDashboard'
 import { FinanceContasPagar } from './components/finance/pages/FinanceContasPagar'
 import { FinanceContasReceber } from './components/finance/contasareceber/pages/FinanceContasReceber'
 
-// --- NOVOS COMPONENTES CONTROLADORIA ---
-// CORREÇÃO: Certifique-se de que os caminhos /pages/ existam dentro de controladoria
+// --- COMPONENTES CONTROLADORIA (CAMINHOS CORRIGIDOS) ---
 import { Dashboard as ControlDashboard } from './components/controladoria/pages/Dashboard'
 import { Contracts as ControlContracts } from './components/controladoria/pages/Contracts'
 import { Clients as ControlClients } from './components/controladoria/pages/Clients'
@@ -172,7 +171,6 @@ export default function App() {
 
           <div className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100">
             
-            {/* --- MÓDULO CRM --- */}
             {currentModule === 'crm' && (
               <>
                 {activePage === 'dashboard' && (
@@ -217,7 +215,6 @@ export default function App() {
               </>
             )}
 
-            {/* --- MÓDULO RH (COLABORADORES) --- */}
             {currentModule === 'collaborators' && (
               <>
                 {activePage === 'dashboard' && <RHDashboard userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
@@ -232,17 +229,9 @@ export default function App() {
                 {activePage === 'remuneracao' && <RHRemuneracao userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'acoes' && <RHAcoes userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'ged' && <RHGED userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
-                {activePage === 'kanban' && (
-                  <CrmKanban 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
               </>
             )}
 
-            {/* --- MÓDULO FINANCEIRO --- */}
             {currentModule === 'financial' && (
               <>
                 {activePage === 'dashboard' && (
@@ -289,11 +278,9 @@ export default function App() {
                     onLogout={handleLogout} 
                   />
                 )}
-                {activePage === 'historico' && <CrmHistory />}
               </>
             )}
 
-            {/* --- MÓDULO EXECUTIVO --- */}
             {currentModule === 'executive' && (
               <>
                 {activePage === 'dashboard' && <SecretariaExecutivaDashboard userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
