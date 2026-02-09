@@ -796,51 +796,6 @@ export function GestaoAeronave({
           />
         ) : activeTab === 'comparativo' ? (
           <div className="flex flex-col h-full">
-            {/* Filtro de Centro de Custo exclusivo para aba Comparativo - Posicionado no topo */}
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/30">
-              <div className="flex flex-col">
-                <h3 className="text-lg font-black text-[#1e3a8a]">Comparativo Mensal</h3>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Comercial vs Particular</p>
-              </div>
-              <div className="flex flex-col gap-1 min-w-[240px]">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                  Centro de Custo
-                </span>
-                <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
-                  <Building2 className="h-4 w-4 text-[#1e3a8a]" />
-                  <select
-                    value={filterCentroCusto}
-                    onChange={(e) => setFilterCentroCusto(e.target.value)}
-                    className="w-full text-xs font-semibold text-gray-700 outline-none bg-transparent border-none focus:ring-0 cursor-pointer"
-                  >
-                    <option value="todos">Todos os Centros</option>
-                    {centrosCusto.map(cc => (
-                      <option key={cc} value={cc}>{cc}</option>
-                    ))}
-                  </select>
-                  {filterCentroCusto !== appliedCentroCusto ? (
-                    <button 
-                      onClick={() => setAppliedCentroCusto(filterCentroCusto)}
-                      className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all text-[10px] font-black uppercase shadow-sm active:scale-95"
-                    >
-                      <Filter className="h-3 w-3" /> Filtrar
-                    </button>
-                  ) : (
-                    appliedCentroCusto !== 'todos' && (
-                      <button 
-                        onClick={() => {
-                          setFilterCentroCusto('todos')
-                          setAppliedCentroCusto('todos')
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-all text-[10px] font-black uppercase shadow-sm active:scale-95"
-                      >
-                        <X className="h-3 w-3" /> Limpar
-                      </button>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
             <AeronaveComparativoComercialParticular data={filteredData} />
           </div>
         ) : activeTab === 'faturas' ? (
@@ -946,4 +901,3 @@ export function GestaoAeronave({
     </div>
   )
 }
-
