@@ -74,7 +74,7 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
 
     // Insights
     const economia = mediaComercial - mediaParticular
-    const percentual = mediaComercial > 0 ? ((economy / mediaComercial) * 100) : 0
+    const percentual = mediaComercial > 0 ? ((economia / mediaComercial) * 100) : 0
     const economizando = economia > 0
 
     return {
@@ -90,37 +90,46 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
-          <Building2 className="h-5 w-5 text-blue-600" />
-          <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Média/Mês</span>
+      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+        <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
+        <div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Média/Mês</p>
+          <p className="text-2xl font-black text-blue-900 mt-1">{formatCurrency(mediaMensalComercial)}</p>
+          <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-1">Voos Comerciais</p>
         </div>
-        <p className="text-2xl font-black text-blue-900">{formatCurrency(mediaMensalComercial)}</p>
-        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-1">Voos Comerciais</p>
+        <div className="p-3 bg-blue-50 rounded-xl">
+          <Building2 className="h-6 w-6 text-blue-600" />
+        </div>
       </div>
 
-      <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-xl p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
-          <Plane className="h-5 w-5 text-emerald-600" />
-          <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Média/Mês</span>
+      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+        <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
+        <div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Média/Mês</p>
+          <p className="text-2xl font-black text-emerald-900 mt-1">{formatCurrency(mediaMensalParticular)}</p>
+          <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-1">Aeronave Particular</p>
         </div>
-        <p className="text-2xl font-black text-emerald-900">{formatCurrency(mediaMensalParticular)}</p>
-        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-1">Aeronave Particular</p>
+        <div className="p-3 bg-emerald-50 rounded-xl">
+          <Plane className="h-6 w-6 text-emerald-600" />
+        </div>
       </div>
 
-      <div className={`bg-gradient-to-br ${insights.economizando ? 'from-green-50 to-green-100 border-green-200' : 'from-amber-50 to-amber-100 border-amber-200'} border rounded-xl p-5 shadow-sm`}>
-        <div className="flex items-center justify-between mb-2">
-          {insights.economizando ? <TrendingDown className="h-5 w-5 text-green-600" /> : <TrendingUp className="h-5 w-5 text-amber-600" />}
-          <span className={`text-[9px] font-black uppercase tracking-widest ${insights.economizando ? 'text-green-400' : 'text-amber-400'}`}>
+      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+        <div className={`absolute right-0 top-0 h-full w-1 ${insights.economizando ? 'bg-green-600' : 'bg-amber-600'}`}></div>
+        <div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
             {insights.economizando ? 'Economia' : 'Custo Adicional'}
-          </span>
+          </p>
+          <p className={`text-2xl font-black mt-1 ${insights.economizando ? 'text-green-900' : 'text-amber-900'}`}>
+            {formatCurrency(insights.economia)}
+          </p>
+          <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${insights.economizando ? 'text-green-600' : 'text-amber-600'}`}>
+            {insights.percentual.toFixed(1)}% {insights.economizando ? 'de redução' : 'a mais'}
+          </p>
         </div>
-        <p className={`text-2xl font-black ${insights.economizando ? 'text-green-900' : 'text-amber-900'}`}>
-          {formatCurrency(insights.economia)}
-        </p>
-        <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${insights.economizando ? 'text-green-600' : 'text-amber-600'}`}>
-          {insights.percentual.toFixed(1)}% {insights.economizando ? 'de redução' : 'a mais'}
-        </p>
+        <div className={`p-3 rounded-xl ${insights.economizando ? 'bg-green-50' : 'bg-amber-50'}`}>
+          {insights.economizando ? <TrendingDown className="h-6 w-6 text-green-600" /> : <TrendingUp className="h-6 w-6 text-amber-600" />}
+        </div>
       </div>
     </div>
   )
