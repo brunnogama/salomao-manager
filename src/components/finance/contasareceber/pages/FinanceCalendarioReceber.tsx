@@ -122,7 +122,7 @@ export function FinanceCalendarioReceber({ userName = 'Usuário', onModuleHome, 
           <div className={`text-sm font-black ${isToday ? 'text-white' : 'text-[#0a192f]'}`}>{day}</div>
           <div className="space-y-1 mt-1">
             {faturasDoDia.slice(0, 2).map((f) => (
-              <div key={f.id} className={`flex items-center gap-1 px-1.5 py-1 rounded-lg shadow-sm border text-[9px] font-bold truncate ${isToday ? 'bg-white/20 text-white border-white/30' : getStatusStyle(f.status)}`}>
+              <div key={f.id} className={`flex items-center gap-1 bg-white/90 backdrop-blur-sm px-1.5 py-1 rounded-lg shadow-sm border text-[9px] font-bold truncate ${isToday ? 'bg-white/20 text-white border-white/30' : getStatusStyle(f.status)}`}>
                 <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isToday ? 'bg-white' : getStatusDot(f.status)}`} />
                 <span className="truncate">{f.cliente_nome}</span>
               </div>
@@ -142,7 +142,7 @@ export function FinanceCalendarioReceber({ userName = 'Usuário', onModuleHome, 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
       
-      {/* HEADER COMPLETO */}
+      {/* PAGE HEADER COMPLETO */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
