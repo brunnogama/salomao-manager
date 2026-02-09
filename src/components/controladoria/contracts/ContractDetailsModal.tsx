@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Edit, Trash2, Calendar, User, FileText, Briefcase, MapPin, History as HistoryIcon, Hourglass, CalendarCheck, ArrowDown, Calculator, Paperclip, CheckCircle2, ArrowRight, Clock, ChevronsRight, Download } from 'lucide-react';
 import { supabase } from '../../../lib/supabase'; // Caminho corrigido
-import { Contract, ContractProcess, ContractDocument } from '../types'; // Caminho corrigido
+import { Contract, ContractProcess, ContractDocument } from '../../../types/controladoria'; // Caminho corrigido
 import { parseCurrency } from '../utils/masks'; // Caminho corrigido
 
 // Interface interna para os eventos construídos a partir das datas do formulário

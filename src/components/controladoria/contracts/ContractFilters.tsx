@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, FileSpreadsheet, List as ListIcon, LayoutGrid, ArrowDownAZ, Calendar, Filter, User, ChevronDown } from 'lucide-react';
-import { Partner } from '../types'; // Caminho corrigido para a estrutura da controladoria
+import { Partner } from '../../../types/controladoria'; // Caminho corrigido para a estrutura da controladoria
 
 interface Props {
   searchTerm: string;

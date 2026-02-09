@@ -6,7 +6,7 @@ import {
   CalendarDays, Receipt, X, Filter, MapPin, Hash, FileText, 
   AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
 } from 'lucide-react';
-import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../types';
+import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 import { EmptyState } from '../ui/EmptyState';
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
 import * as XLSX from 'xlsx';

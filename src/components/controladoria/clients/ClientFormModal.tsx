@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Search, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
-import { Client, Partner } from '../types';
+import { Client, Partner } from '../../../types/controladoria';
 import { maskCNPJ, toTitleCase } from '../utils/masks';
 import { CustomSelect } from '../ui/CustomSelect';
 

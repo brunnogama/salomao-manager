@@ -16,29 +16,31 @@ import {
   Share2,
   X 
 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase'; // Caminho corrigido para a lib central
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  activePage: string;
+  onNavigate: (page: string) => void;
 }
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProps) {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('Carregando...');
   const [userRole, setUserRole] = useState('');
 
+  // Menu Items mapeados para as chaves de estado do App.tsx
   const menuItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Casos', path: '/contratos', icon: FileSignature },
-    { label: 'Propostas', path: '/propostas', icon: FileText },
-    { label: 'Financeiro', path: '/financeiro', icon: DollarSign },
-    { label: 'Jurimetria', path: '/jurimetria', icon: Share2 },
-    { label: 'Volumetria', path: '/volumetria', icon: BarChart3 },
-    { label: 'Compliance', path: '/compliance', icon: ShieldCheck },
-    { label: 'Clientes', path: '/clientes', icon: Users },
-    { label: 'Kanban', path: '/kanban', icon: KanbanSquare },
-    { label: 'GED', path: '/ged', icon: FolderOpen },
+    { label: 'Dashboard', id: 'dashboard', icon: LayoutDashboard },
+    { label: 'Contratos', id: 'contratos', icon: FileSignature },
+    { label: 'Propostas', id: 'propostas', icon: FileText },
+    { label: 'Financeiro', id: 'financeiro', icon: DollarSign },
+    { label: 'Jurimetria', id: 'jurimetria', icon: Share2 },
+    { label: 'Volumetria', id: 'volumetria', icon: BarChart3 },
+    { label: 'Clientes', id: 'clientes', icon: Users },
+    { label: 'Kanban', id: 'kanban', icon: KanbanSquare },
+    { label: 'GED', id: 'ged', icon: FolderOpen },
   ];
 
   useEffect(() => {
@@ -129,63 +131,51 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
 
-        {/* 2. MENU PRINCIPAL - Estilo Densa */}
+        {/* 2. MENU PRINCIPAL - Estilo Densa baseada em onNavigate */}
         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1 custom-scrollbar">
           {menuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `w-full flex items-center px-4 py-3 rounded-xl transition-all group border-l-4 ${
-                  isActive
+            <button
+              key={item.id}
+              onClick={() => { onNavigate(item.id); onClose(); }}
+              className={`w-full flex items-center px-4 py-3 rounded-xl transition-all group border-l-4 ${
+                  activePage === item.id
                     ? 'bg-white/10 text-white font-bold border-amber-500 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]' 
                     : 'text-gray-400 hover:bg-white/5 hover:text-white border-transparent'
                 }`
               }
             >
-              {({ isActive }) => (
-                <>
-                  <item.icon 
-                    className={`h-4 w-4 mr-3 transition-colors flex-shrink-0 ${
-                      isActive ? 'text-amber-500' : 'text-gray-500 group-hover:text-amber-400'
-                    }`} 
-                  />
-                  <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>
-                </>
-              )}
-            </NavLink>
+              <item.icon 
+                className={`h-4 w-4 mr-3 transition-colors flex-shrink-0 ${
+                  activePage === item.id ? 'text-amber-500' : 'text-gray-500 group-hover:text-amber-400'
+                }`} 
+              />
+              <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>
+            </button>
           ))}
         </nav>
 
         {/* 3. MENU BASE / PROFILE */}
         <div className="pt-4 pb-8 px-4 bg-[#0a192f] flex-shrink-0 mt-auto border-t border-white/5">
           
-          <NavLink 
-            to="/historico" 
-            onClick={onClose}
-            className={({ isActive }) => 
-              `w-full flex items-center px-4 py-2.5 rounded-xl transition-all group mb-1 ${
-                isActive ? 'bg-white/10 text-white font-bold' : 'text-gray-400 hover:text-white'
-              }`
-            }
+          <button 
+            onClick={() => { onNavigate('historico'); onClose(); }}
+            className={`w-full flex items-center px-4 py-2.5 rounded-xl transition-all group mb-1 ${
+                activePage === 'historico' ? 'bg-white/10 text-white font-bold' : 'text-gray-400 hover:text-white'
+            }`}
           >
             <History className="h-4 w-4 mr-3 text-gray-500 group-hover:text-amber-400 flex-shrink-0" />
             <span className="text-[10px] font-black uppercase tracking-widest">Histórico</span>
-          </NavLink>
+          </button>
           
-          <NavLink 
-            to="/configuracoes" 
-            onClick={onClose}
-            className={({ isActive }) => 
-              `w-full flex items-center px-4 py-2.5 rounded-xl transition-all group ${
-                isActive ? 'bg-white/10 text-white font-bold' : 'text-gray-400 hover:text-white'
-              }`
-            }
+          <button 
+            onClick={() => { onNavigate('configuracoes'); onClose(); }}
+            className={`w-full flex items-center px-4 py-2.5 rounded-xl transition-all group ${
+                activePage === 'configuracoes' ? 'bg-white/10 text-white font-bold' : 'text-gray-400 hover:text-white'
+            }`}
           >
             <Settings className="h-4 w-4 mr-3 text-gray-500 group-hover:text-amber-400 flex-shrink-0" />
             <span className="text-[10px] font-black uppercase tracking-widest">Ajustes</span>
-          </NavLink>
+          </button>
 
           {/* User Profile Card */}
           <div className="mt-6 pt-6 border-t border-white/10">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase'; // Caminho centralizado no Manager
 import { Users, Search, Plus, Filter, User, MapPin, Phone, Mail, Edit, Trash2, Building, Briefcase, X, FileText, Shield } from 'lucide-react';
-import { Client, Partner } from '../types'; 
+import { Client, Partner } from '../../../types/controladorias'; 
 import { ClientFormModal } from '../clients/ClientFormModal'; // Rota corrigida para a pasta de componentes clientes
 import { maskCNPJ } from '../utils/masks'; 
 

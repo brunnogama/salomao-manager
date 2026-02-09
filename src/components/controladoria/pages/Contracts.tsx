@@ -9,7 +9,7 @@ import { supabase } from '../../../lib/supabase';
 import * as XLSX from 'xlsx';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner'; 
-import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../types';
+import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../../types/controladoria';
 
 // --- IMPORTAÇÕES DE COMPONENTES (Rotas corrigidas de acordo com o mapeamento) ---
 import { ContractFormModal } from '../contracts/ContractFormModal';

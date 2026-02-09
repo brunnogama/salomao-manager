@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { BarChart3, PieChart, Users, Scale, FileText, TrendingUp, Layers, Shield } from 'lucide-react';
-import { Contract, Partner } from '../types';
+import { Contract, Partner } from '../../../types/controladoria';
 import { ContractFilters } from '../contracts/ContractFilters'; // Rota corrigida para pasta irmã
 import * as XLSX from 'xlsx';
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Edit, Save, Check } from 'lucide-react';
 import { supabase } from '../../../lib/supabase'; // Caminho corrigido
-import { Partner } from '../types'; // Caminho corrigido
+import { Partner } from '../../../types/controladoria'; // Caminho corrigido
 
 interface Props {
   isOpen: boolean;

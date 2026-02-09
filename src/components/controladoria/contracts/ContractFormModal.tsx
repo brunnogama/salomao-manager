@@ -7,7 +7,7 @@ import {
   DollarSign, Tag, Gavel, Eye, AlertTriangle, TrendingUp, TrendingDown, 
   Pencil, Files, User
 } from 'lucide-react';
-import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst, Magistrate } from '../types'; // Caminho corrigido
+import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst, Magistrate } from '../../../types/controladoria'; // Caminho corrigido
 import { maskCNPJ, maskMoney, maskHon, maskCNJ, toTitleCase, parseCurrency } from '../utils/masks'; // Caminho corrigido
 import { decodeCNJ } from '../utils/cnjDecoder'; // Caminho corrigido
 import { addDays, addMonths } from 'date-fns';

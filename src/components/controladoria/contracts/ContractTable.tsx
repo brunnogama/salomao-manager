@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit, Trash2, Users, Briefcase } from 'lucide-react';
 import { supabase } from '../../../lib/supabase'; // Caminho corrigido para a estrutura centralizada
-import { Contract } from '../types'; // Caminho corrigido para a pasta types da controladoria
+import { Contract } from '../../../types/controladoria'; // Caminho corrigido para a pasta types da controladoria
 
 interface Props {
   contracts: Contract[];
