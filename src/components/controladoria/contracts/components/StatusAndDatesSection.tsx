@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { Plus, X, Settings, AlertTriangle, AlertCircle } from 'lucide-react';
-import { Contract } from '../types'; // Caminho corrigido
-import { CustomSelect } from '../ui/CustomSelect'; // Caminho corrigido
+import { Contract } from '../../types'; // Caminho corrigido
+import { CustomSelect } from '../../../ui/CustomSelect'; // Caminho corrigido
 import { FinancialInputWithInstallments } from './FinancialInputWithInstallments';
-import { maskMoney, parseCurrency } from '../utils/masks'; // Caminho corrigido
+import { maskMoney, parseCurrency } from '../../utils/masks'; // Caminho corrigido
 import { addMonths } from 'date-fns';
 
 interface StatusAndDatesSectionProps {
@@ -260,21 +260,22 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm relative z-40 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-          <CustomSelect label="Status Atual do Caso" value={formData.status} onChange={(val: any) => setFormData({...formData, status: val})} options={statusOptions} onAction={handleCreateStatus} actionIcon={Plus} actionLabel="Adicionar Novo Status" />
+    <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm relative z-40 mb-8">
+      <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50 pb-4 mb-6">Ciclo de Vida & Parâmetros Financeiros</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <CustomSelect label="Estado Atual do Caso" value={formData.status} onChange={(val: any) => setFormData({...formData, status: val})} options={statusOptions} onAction={handleCreateStatus} actionIcon={Plus} actionLabel="Novo Status" />
           {formData.status && (
             <div className="animate-in fade-in slide-in-from-left-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2 ml-1">
                       {formData.status === 'analysis' ? 'Data do Prospect' :
                       formData.status === 'proposal' ? 'Data da Proposta' :
                       formData.status === 'active' ? 'Data da Assinatura' :
                       formData.status === 'rejected' ? 'Data da Rejeição' :
-                      formData.status === 'probono' ? 'Data Probono' : 'Data do Status'}
+                      formData.status === 'probono' ? 'Data Probono' : 'Data do Evento'}
                 </label>
                 <input 
                     type="date" 
-                    className={`w-full border p-2.5 rounded-lg text-sm bg-white outline-none transition-colors font-medium ${dateWarningMessage ? 'border-red-300 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-[#0a192f]'}`}
+                    className={`w-full border p-3 rounded-xl text-sm bg-white outline-none transition-all font-bold ${dateWarningMessage ? 'border-red-300 bg-red-50/50 text-red-900' : 'border-gray-200 text-[#0a192f] focus:border-[#0a192f]'}`}
                     value={ensureDateValue(
                         formData.status === 'analysis' ? formData.prospect_date :
                         formData.status === 'proposal' ? formData.proposal_date :
@@ -292,7 +293,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                     }} 
                 />
                 {dateWarningMessage && (
-                    <div className="flex items-center gap-2 mt-1 text-[10px] text-red-600 animate-in slide-in-from-top-1 font-bold uppercase tracking-tight bg-red-50 p-2 rounded-lg border border-red-100">
+                    <div className="flex items-center gap-2 mt-2 text-[9px] text-red-600 animate-in slide-in-from-top-1 font-black uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
                         <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                         <span>{dateWarningMessage}</span>
                     </div>
@@ -302,52 +303,52 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
       </div>
 
       {formData.status === 'analysis' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2 mb-6">
-            <div><CustomSelect label="Analisado Por" value={formData.analyst_id || ''} onChange={(val: string) => setFormData({...formData, analyst_id: val})} options={analystSelectOptions} onOpenManager={onOpenAnalystManager} actionIcon={Settings} actionLabel="Gerenciar Analistas" /></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 mb-8">
+            <div><CustomSelect label="Consultor / Analista" value={formData.analyst_id || ''} onChange={(val: string) => setFormData({...formData, analyst_id: val})} options={analystSelectOptions} onOpenManager={onOpenAnalystManager} actionIcon={Settings} actionLabel="Gerenciar" /></div>
         </div>
       )}
 
       {formData.status === 'rejected' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 animate-in fade-in slide-in-from-top-2 mb-6">
-            <div><CustomSelect label="Analisado por" value={formData.analyst_id || ''} onChange={(val: string) => setFormData({...formData, analyst_id: val})} options={analystSelectOptions} onOpenManager={onOpenAnalystManager} actionIcon={Settings} actionLabel="Gerenciar Analistas" /></div>
-            <div><CustomSelect label="Quem rejeitou" value={formData.rejection_by || ''} onChange={(val: string) => setFormData({...formData, rejection_by: val})} options={rejectionByOptions} /></div>
-            <div><CustomSelect label="Motivo da Rejeição" value={formData.rejection_reason || ''} onChange={(val: string) => setFormData({...formData, rejection_reason: val})} options={rejectionReasonOptions} /></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2 mb-8">
+            <div><CustomSelect label="Responsável Análise" value={formData.analyst_id || ''} onChange={(val: string) => setFormData({...formData, analyst_id: val})} options={analystSelectOptions} onOpenManager={onOpenAnalystManager} actionIcon={Settings} actionLabel="Gerenciar" /></div>
+            <div><CustomSelect label="Instância de Rejeição" value={formData.rejection_by || ''} onChange={(val: string) => setFormData({...formData, rejection_by: val})} options={rejectionByOptions} /></div>
+            <div><CustomSelect label="Motivação" value={formData.rejection_reason || ''} onChange={(val: string) => setFormData({...formData, rejection_reason: val})} options={rejectionReasonOptions} /></div>
         </div>
       )}
 
       {formData.status === 'probono' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-top-2 mb-6">
-            <div><CustomSelect label="Enviado Por" value={formData.partner_id || ''} onChange={(val: string) => setFormData({...formData, partner_id: val})} options={partnerSelectOptions} /></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 mb-8">
+            <div><CustomSelect label="Sócio Proponente" value={formData.partner_id || ''} onChange={(val: string) => setFormData({...formData, partner_id: val})} options={partnerSelectOptions} /></div>
         </div>
       )}
 
       {(formData.status === 'proposal' || formData.status === 'active') && (
-      <div className="space-y-6 animate-in slide-in-from-top-2 pt-6 border-t border-gray-100">
+      <div className="space-y-8 animate-in slide-in-from-top-2 pt-8 border-t border-gray-100">
         {formData.status === 'active' && (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end mb-4 animate-in fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end mb-6 animate-in fade-in">
                 <div className="md:col-span-4">
-                    <label className="text-[10px] font-black text-green-800 uppercase tracking-widest block mb-1">Número HON (Único) <span className="text-red-500">*</span></label>
-                    <input type="text" className={`w-full border-2 p-2.5 rounded-lg text-sm font-mono font-bold bg-white outline-none transition-all ${duplicateHonCase ? 'border-amber-400 text-amber-800 bg-amber-50' : 'border-green-100 text-green-900 focus:border-green-500'}`} placeholder="00.000.000/000" value={formData.hon_number} onChange={e => setFormData({...formData, hon_number: maskHon(e.target.value)})} />
+                    <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-[0.2em] block mb-2 ml-1">Identificador HON <span className="text-red-500">*</span></label>
+                    <input type="text" className={`w-full border-2 p-3 rounded-xl text-sm font-mono font-black bg-white outline-none transition-all ${duplicateHonCase ? 'border-amber-400 text-amber-800 bg-amber-50' : 'border-gray-100 text-[#0a192f] focus:border-[#0a192f]'}`} placeholder="00.000.000/000" value={formData.hon_number} onChange={e => setFormData({...formData, hon_number: maskHon(e.target.value)})} />
                     {duplicateHonCase && (
-                        <div className="flex items-center gap-1 mt-2 text-[10px] text-amber-700 font-bold uppercase tracking-tight bg-amber-100/50 p-1.5 rounded-lg border border-amber-200"><AlertTriangle className="w-3.5 h-3.5" /><span>Em uso: {duplicateHonCase.display_id}</span></div>
+                        <div className="flex items-center gap-2 mt-2 text-[9px] text-amber-700 font-black uppercase tracking-widest bg-amber-100/50 p-2 rounded-lg border border-amber-200"><AlertTriangle className="w-3.5 h-3.5" /><span>CONFLITO COM: {duplicateHonCase.display_id}</span></div>
                     )}
                 </div>
-                <div className="md:col-span-4"><CustomSelect label="Local Faturamento *" value={formData.billing_location || ''} onChange={(val: string) => setFormData({...formData, billing_location: val})} options={billingOptions} onAction={() => setActiveManager('location')} actionLabel="Gerenciar Locais" actionIcon={Settings} /></div>
-                <div className="md:col-span-4"><CustomSelect label="Possui Assinatura Física? *" value={formData.physical_signature === true ? 'true' : formData.physical_signature === false ? 'false' : ''} onChange={(val: string) => { setFormData({...formData, physical_signature: val === 'true' ? true : val === 'false' ? false : undefined}); }} options={signatureOptions} /></div>
+                <div className="md:col-span-4"><CustomSelect label="Domicílio Fiscal *" value={formData.billing_location || ''} onChange={(val: string) => setFormData({...formData, billing_location: val})} options={billingOptions} onAction={() => setActiveManager('location')} actionLabel="Configurar" actionIcon={Settings} /></div>
+                <div className="md:col-span-4"><CustomSelect label="Validação de Assinatura *" value={formData.physical_signature === true ? 'true' : formData.physical_signature === false ? 'false' : ''} onChange={(val: string) => { setFormData({...formData, physical_signature: val === 'true' ? true : val === 'false' ? false : undefined}); }} options={signatureOptions} /></div>
             </div>
         )}
 
-        <div className={`grid grid-cols-1 md:grid-cols-3 gap-5 items-start ${isTimesheet ? 'opacity-40 pointer-events-none filter grayscale' : ''}`}>
-            <div className="space-y-3">
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 items-start ${isTimesheet ? 'opacity-30 pointer-events-none filter grayscale' : ''}`}>
+            <div className="space-y-4">
               <FinancialInputWithInstallments label="Pró-Labore (R$)" value={safeString(formatForInput(formData.pro_labore))} onChangeValue={(v: any) => setFormData({...formData, pro_labore: v})} installments={formData.pro_labore_installments} onChangeInstallments={(v: any) => setFormData({...formData, pro_labore_installments: v})} onAdd={() => handleAddToList('pro_labore_extras', 'pro_labore', 'pro_labore_extras_installments', 'pro_labore_installments')} clause={(formData as any).pro_labore_clause} onChangeClause={(v: any) => setFormData({...formData, pro_labore_clause: v} as any)} />
-              <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
+              <div className="flex flex-col gap-2.5 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                 {(formData as any).pro_labore_extras?.map((val: string, idx: number) => {
                    const clauses = ensureArray((formData as any).pro_labore_extras_clauses);
                    const installments = ensureArray((formData as any).pro_labore_extras_installments);
                    return (
-                      <div key={idx} onClick={() => handleEditExtra('pro_labore_extras', 'pro_labore', 'pro_labore_extras_installments', 'pro_labore_installments', 'pro_labore_extras_clauses', 'pro_labore_clause', idx)} className="bg-white border border-gray-100 px-3 py-2 rounded-xl text-[11px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-[#0a192f]/30 hover:bg-blue-50 transition-all group" title="Clique para editar">
-                          <div className="flex items-center gap-2">{clauses[idx] && <span className="text-[#0a192f] font-black text-[9px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold text-[9px] uppercase tracking-tighter">({installments[idx]})</span>}</div>
-                          <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
+                      <div key={idx} onClick={() => handleEditExtra('pro_labore_extras', 'pro_labore', 'pro_labore_extras_installments', 'pro_labore_installments', 'pro_labore_extras_clauses', 'pro_labore_clause', idx)} className="bg-white border border-gray-100 px-4 py-3 rounded-2xl text-[10px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-amber-200 hover:bg-amber-50 transition-all group" title="Clique para editar">
+                          <div className="flex items-center gap-3">{clauses[idx] && <span className="text-[#0a192f] font-black text-[8px] bg-white px-2 py-0.5 rounded-lg border border-gray-200 uppercase tracking-tighter">CL. {clauses[idx]}</span>}<span className="font-black">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold uppercase tracking-tighter">({installments[idx]})</span>}</div>
+                          <div className="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-red-50 rounded-lg"><X className="w-3.5 h-3.5" /></div>
                       </div>
                    );
                 })}
@@ -355,16 +356,16 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
               {renderInstallmentBreakdown('Pró-Labore', 'pro_labore', 'pro_labore_breakdown', 'pro_labore_installments')}
             </div>
 
-            <div className="space-y-3">
-                <FinancialInputWithInstallments label="Outros Honorários (R$)" value={safeString(formatForInput(formData.other_fees))} onChangeValue={(v: any) => setFormData({...formData, other_fees: v})} installments={formData.other_fees_installments} onChangeInstallments={(v: any) => setFormData({...formData, other_fees_installments: v})} onAdd={() => handleAddToList('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments')} clause={(formData as any).other_fees_clause} onChangeClause={(v: any) => setFormData({...formData, other_fees_clause: v} as any)} />
-                <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
+            <div className="space-y-4">
+                <FinancialInputWithInstallments label="Verbas Assessórias (R$)" value={safeString(formatForInput(formData.other_fees))} onChangeValue={(v: any) => setFormData({...formData, other_fees: v})} installments={formData.other_fees_installments} onChangeInstallments={(v: any) => setFormData({...formData, other_fees_installments: v})} onAdd={() => handleAddToList('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments')} clause={(formData as any).other_fees_clause} onChangeClause={(v: any) => setFormData({...formData, other_fees_clause: v} as any)} />
+                <div className="flex flex-col gap-2.5 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                     {(formData as any).other_fees_extras?.map((val: string, idx: number) => {
                        const clauses = ensureArray((formData as any).other_fees_extras_clauses);
                        const installments = ensureArray((formData as any).other_fees_extras_installments);
                        return (
-                          <div key={idx} onClick={() => handleEditExtra('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments', 'other_fees_extras_clauses', 'other_fees_clause', idx)} className="bg-white border border-gray-100 px-3 py-2 rounded-xl text-[11px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-[#0a192f]/30 hover:bg-blue-50 transition-all group" title="Clique para editar">
-                              <div className="flex items-center gap-2">{clauses[idx] && <span className="text-[#0a192f] font-black text-[9px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold text-[9px] uppercase tracking-tighter">({installments[idx]})</span>}</div>
-                              <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
+                          <div key={idx} onClick={() => handleEditExtra('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments', 'other_fees_extras_clauses', 'other_fees_clause', idx)} className="bg-white border border-gray-100 px-4 py-3 rounded-2xl text-[10px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-amber-200 hover:bg-amber-50 transition-all group" title="Clique para editar">
+                              <div className="flex items-center gap-3">{clauses[idx] && <span className="text-[#0a192f] font-black text-[8px] bg-white px-2 py-0.5 rounded-lg border border-gray-200 uppercase tracking-tighter">CL. {clauses[idx]}</span>}<span className="font-black">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold uppercase tracking-tighter">({installments[idx]})</span>}</div>
+                              <div className="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-red-50 rounded-lg"><X className="w-3.5 h-3.5" /></div>
                           </div>
                        );
                     })}
@@ -372,35 +373,35 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                   {renderInstallmentBreakdown('Outros', 'other_fees', 'other_fees_breakdown', 'other_fees_installments')}
             </div>
 
-            <div className="space-y-3">
-                <FinancialInputWithInstallments label="Fixo Mensal (R$)" value={safeString(formatForInput(formData.fixed_monthly_fee))} onChangeValue={(v: any) => setFormData({...formData, fixed_monthly_fee: v})} installments={formData.fixed_monthly_fee_installments} onChangeInstallments={(v: any) => setFormData({...formData, fixed_monthly_fee_installments: v})} onAdd={() => handleAddToList('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments')} clause={(formData as any).fixed_monthly_fee_clause} onChangeClause={(v: any) => setFormData({...formData, fixed_monthly_fee_clause: v} as any)} />
-                <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
+            <div className="space-y-4">
+                <FinancialInputWithInstallments label="Mensalidade Fixa (R$)" value={safeString(formatForInput(formData.fixed_monthly_fee))} onChangeValue={(v: any) => setFormData({...formData, fixed_monthly_fee: v})} installments={formData.fixed_monthly_fee_installments} onChangeInstallments={(v: any) => setFormData({...formData, fixed_monthly_fee_installments: v})} onAdd={() => handleAddToList('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments')} clause={(formData as any).fixed_monthly_fee_clause} onChangeClause={(v: any) => setFormData({...formData, fixed_monthly_fee_clause: v} as any)} />
+                <div className="flex flex-col gap-2.5 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                     {(formData as any).fixed_monthly_extras?.map((val: string, idx: number) => {
                        const clauses = ensureArray((formData as any).fixed_monthly_extras_clauses);
                        const installments = ensureArray((formData as any).fixed_monthly_extras_installments);
                        return (
-                          <div key={idx} onClick={() => handleEditExtra('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments', 'fixed_monthly_extras_clauses', 'fixed_monthly_fee_clause', idx)} className="bg-white border border-gray-100 px-3 py-2 rounded-xl text-[11px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-[#0a192f]/30 hover:bg-blue-50 transition-all group" title="Clique para editar">
-                              <div className="flex items-center gap-2">{clauses[idx] && <span className="text-[#0a192f] font-black text-[9px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold text-[9px] uppercase tracking-tighter">({installments[idx]})</span>}</div>
-                              <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
+                          <div key={idx} onClick={() => handleEditExtra('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments', 'fixed_monthly_extras_clauses', 'fixed_monthly_fee_clause', idx)} className="bg-white border border-gray-100 px-4 py-3 rounded-2xl text-[10px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-amber-200 hover:bg-amber-50 transition-all group" title="Clique para editar">
+                              <div className="flex items-center gap-3">{clauses[idx] && <span className="text-[#0a192f] font-black text-[8px] bg-white px-2 py-0.5 rounded-lg border border-gray-200 uppercase tracking-tighter">CL. {clauses[idx]}</span>}<span className="font-black">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold uppercase tracking-tighter">({installments[idx]})</span>}</div>
+                              <div className="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-red-50 rounded-lg"><X className="w-3.5 h-3.5" /></div>
                           </div>
                        );
                     })}
                   </div>
-                  {renderInstallmentBreakdown('Fixo Mensal', 'fixed_monthly_fee', 'fixed_monthly_fee_breakdown', 'fixed_monthly_fee_installments')}
+                  {renderInstallmentBreakdown('Mensalidade', 'fixed_monthly_fee', 'fixed_monthly_fee_breakdown', 'fixed_monthly_fee_installments')}
             </div>
         </div>
 
-        <div className={`grid grid-cols-1 md:grid-cols-3 gap-5 items-start ${isTimesheet ? 'opacity-40 pointer-events-none filter grayscale' : ''}`}>
-            <div className="space-y-3">
-              <FinancialInputWithInstallments label="Êxito Intermediário" value={newIntermediateFee} onChangeValue={setNewIntermediateFee} installments={interimInstallments} onChangeInstallments={setInterimInstallments} onAdd={handleAddIntermediateFee} clause={interimClause} onChangeClause={setInterimClause} />
-              <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 items-start ${isTimesheet ? 'opacity-30 pointer-events-none filter grayscale' : ''}`}>
+            <div className="space-y-4">
+              <FinancialInputWithInstallments label="Êxito Intermediário (R$)" value={newIntermediateFee} onChangeValue={setNewIntermediateFee} installments={interimInstallments} onChangeInstallments={setInterimInstallments} onAdd={handleAddIntermediateFee} clause={interimClause} onChangeClause={setInterimClause} />
+              <div className="flex flex-col gap-2.5 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                 {formData.intermediate_fees?.map((fee: string, idx: number) => {
                   const clauses = ensureArray((formData as any).intermediate_fees_clauses);
                   const installments = ensureArray((formData as any).intermediate_fees_installments);
                   return (
-                      <div key={idx} onClick={() => { setNewIntermediateFee(fee); setInterimInstallments(installments[idx] || '1x'); setInterimClause(clauses[idx] || ''); handleRemoveIntermediateFee(idx); }} className="bg-white border border-amber-100 px-3 py-2 rounded-xl text-[11px] text-amber-900 flex items-center justify-between shadow-sm cursor-pointer hover:bg-amber-50 hover:border-amber-300 transition-all group" title="Clique para editar">
-                          <div className="flex items-center gap-2">{clauses[idx] && <span className="text-amber-800 font-black text-[9px] bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{fee}</span>{installments[idx] && <span className="text-amber-500 font-bold text-[9px] uppercase tracking-tighter">({installments[idx]})</span>}</div>
-                          <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
+                      <div key={idx} onClick={() => { setNewIntermediateFee(fee); setInterimInstallments(installments[idx] || '1x'); setInterimClause(clauses[idx] || ''); handleRemoveIntermediateFee(idx); }} className="bg-white border border-amber-100 px-4 py-3 rounded-2xl text-[10px] text-amber-900 flex items-center justify-between shadow-sm cursor-pointer hover:bg-amber-50 hover:border-amber-400 transition-all group" title="Clique para editar">
+                          <div className="flex items-center gap-3">{clauses[idx] && <span className="text-amber-800 font-black text-[8px] bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200 uppercase tracking-tighter">CL. {clauses[idx]}</span>}<span className="font-black">{fee}</span>{installments[idx] && <span className="text-amber-500 font-bold uppercase tracking-tighter">({installments[idx]})</span>}</div>
+                          <div className="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-red-50 rounded-lg"><X className="w-3.5 h-3.5" /></div>
                       </div>
                   );
                 })}
@@ -408,16 +409,16 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
               {renderInterimBreakdownEditable()}
             </div>
 
-            <div className="space-y-3">
-              <FinancialInputWithInstallments label="Êxito Final (R$)" value={safeString(formatForInput(formData.final_success_fee))} onChangeValue={(v: any) => setFormData({...formData, final_success_fee: v})} installments={formData.final_success_fee_installments} onChangeInstallments={(v: any) => setFormData({...formData, final_success_fee_installments: v})} onAdd={() => handleAddToList('final_success_extras', 'final_success_fee', 'final_success_extras_installments', 'final_success_fee_installments')} clause={(formData as any).final_success_fee_clause} onChangeClause={(v: any) => setFormData({...formData, final_success_fee_clause: v} as any)} />
-              <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
+            <div className="space-y-4">
+              <FinancialInputWithInstallments label="Êxito de Encerramento (R$)" value={safeString(formatForInput(formData.final_success_fee))} onChangeValue={(v: any) => setFormData({...formData, final_success_fee: v})} installments={formData.final_success_fee_installments} onChangeInstallments={(v: any) => setFormData({...formData, final_success_fee_installments: v})} onAdd={() => handleAddToList('final_success_extras', 'final_success_fee', 'final_success_extras_installments', 'final_success_fee_installments')} clause={(formData as any).final_success_fee_clause} onChangeClause={(v: any) => setFormData({...formData, final_success_fee_clause: v} as any)} />
+              <div className="flex flex-col gap-2.5 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                 {(formData as any).final_success_extras?.map((val: string, idx: number) => {
                    const clauses = ensureArray((formData as any).final_success_extras_clauses);
                    const installments = ensureArray((formData as any).final_success_extras_installments);
                    return (
-                      <div key={idx} onClick={() => handleEditExtra('final_success_extras', 'final_success_fee', 'final_success_extras_installments', 'final_success_fee_installments', 'final_success_extras_clauses', 'final_success_fee_clause', idx)} className="bg-white border border-gray-100 px-3 py-2 rounded-xl text-[11px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-[#0a192f]/30 hover:bg-blue-50 transition-all group" title="Clique para editar">
-                          <div className="flex items-center gap-2">{clauses[idx] && <span className="text-[#0a192f] font-black text-[9px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold text-[9px] uppercase tracking-tighter">({installments[idx]})</span>}</div>
-                          <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
+                      <div key={idx} onClick={() => handleEditExtra('final_success_extras', 'final_success_fee', 'final_success_extras_installments', 'final_success_fee_installments', 'final_success_extras_clauses', 'final_success_fee_clause', idx)} className="bg-white border border-gray-100 px-4 py-3 rounded-2xl text-[10px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-amber-200 hover:bg-amber-50 transition-all group" title="Clique para editar">
+                          <div className="flex items-center gap-3">{clauses[idx] && <span className="text-[#0a192f] font-black text-[8px] bg-white px-2 py-0.5 rounded-lg border border-gray-200 uppercase tracking-tighter">CL. {clauses[idx]}</span>}<span className="font-black">{val}</span>{installments[idx] && <span className="text-gray-400 font-bold uppercase tracking-tighter">({installments[idx]})</span>}</div>
+                          <div className="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-red-50 rounded-lg"><X className="w-3.5 h-3.5" /></div>
                       </div>
                    );
                 })}
@@ -425,20 +426,20 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
               {renderInstallmentBreakdown('Êxito Final', 'final_success_fee', 'final_success_fee_breakdown', 'final_success_fee_installments')}
             </div>
 
-            <div className="space-y-3">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Êxito %</label>
-                <div className="flex rounded-lg shadow-sm h-[42px]">
-                  <input type="text" className="w-14 border border-gray-200 rounded-l-lg p-2.5 text-xs font-bold bg-gray-50 outline-none border-r-0 text-center uppercase text-[#0a192f] focus:border-[#0a192f]" value={(formData as any).final_success_percent_clause || ''} onChange={(e) => setFormData({...formData, final_success_percent_clause: e.target.value} as any)} placeholder="Cl." />
-                  <input type="text" className="flex-1 border border-gray-200 p-2.5 text-sm font-bold bg-white outline-none text-[#0a192f] focus:border-[#0a192f]" placeholder="Ex: 20%" value={formData.final_success_percent} onChange={e => setFormData({...formData, final_success_percent: e.target.value})} />
-                  <button className="bg-[#0a192f] text-white px-4 rounded-r-lg hover:bg-slate-800 transition-colors active:scale-95 flex items-center justify-center shadow-md" type="button" onClick={() => handleAddToList('percent_extras', 'final_success_percent')}><Plus className="w-4 h-4" /></button>
+            <div className="space-y-4">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Percentual de Êxito (%)</label>
+                <div className="flex rounded-xl shadow-sm h-[44px] border border-gray-200 focus-within:border-[#0a192f] overflow-hidden transition-all bg-white">
+                  <input type="text" className="w-16 border-r border-gray-100 p-2.5 text-[10px] font-black text-[#0a192f] bg-gray-50/50 outline-none text-center uppercase placeholder:text-gray-300" value={(formData as any).final_success_percent_clause || ''} onChange={(e) => setFormData({...formData, final_success_percent_clause: e.target.value} as any)} placeholder="CL." />
+                  <input type="text" className="flex-1 px-4 text-sm font-black text-amber-600 outline-none bg-transparent placeholder:text-gray-300" placeholder="EX: 20%" value={formData.final_success_percent} onChange={e => setFormData({...formData, final_success_percent: e.target.value})} />
+                  <button className="bg-[#0a192f] text-white px-5 hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center border-l border-white/10" type="button" onClick={() => handleAddToList('percent_extras', 'final_success_percent')}><Plus className="w-4 h-4 text-amber-500" /></button>
                 </div>
-                <div className="flex flex-col gap-2 max-h-32 overflow-y-auto custom-scrollbar">
+                <div className="flex flex-col gap-2.5 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                     {(formData as any).percent_extras?.map((val: string, idx: number) => {
                        const clauses = ensureArray((formData as any).percent_extras_clauses);
                        return (
-                          <div key={idx} onClick={() => { const newList = [...(formData as any).percent_extras]; const newClausesList = [...ensureArray((formData as any).percent_extras_clauses)]; const valToEdit = newList[idx]; const clauseToEdit = newClausesList[idx]; newList.splice(idx, 1); newClausesList.splice(idx, 1); setFormData({...formData, final_success_percent: valToEdit, final_success_percent_clause: clauseToEdit, percent_extras: newList, percent_extras_clauses: newClausesList} as any); }} className="bg-white border border-gray-100 px-3 py-2 rounded-xl text-[11px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-[#0a192f]/30 hover:bg-blue-50 transition-all group" title="Clique para editar">
-                              <div className="flex items-center gap-2">{clauses[idx] && <span className="text-[#0a192f] font-black text-[9px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Cl. {clauses[idx]}</span>}<span className="font-bold">{val}</span></div>
-                              <div className="text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"><X className="w-3.5 h-3.5" /></div>
+                          <div key={idx} onClick={() => { const newList = [...(formData as any).percent_extras]; const newClausesList = [...ensureArray((formData as any).percent_extras_clauses)]; const valToEdit = newList[idx]; const clauseToEdit = newClausesList[idx]; newList.splice(idx, 1); newClausesList.splice(idx, 1); setFormData({...formData, final_success_percent: valToEdit, final_success_percent_clause: clauseToEdit, percent_extras: newList, percent_extras_clauses: newClausesList} as any); }} className="bg-white border border-gray-100 px-4 py-3 rounded-2xl text-[10px] text-[#0a192f] flex items-center justify-between shadow-sm cursor-pointer hover:border-amber-200 hover:bg-amber-50 transition-all group" title="Clique para editar">
+                              <div className="flex items-center gap-3">{clauses[idx] && <span className="text-[#0a192f] font-black text-[8px] bg-white px-2 py-0.5 rounded-lg border border-gray-200 uppercase tracking-tighter">CL. {clauses[idx]}</span>}<span className="font-black">{val}</span></div>
+                              <div className="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-red-50 rounded-lg"><X className="w-3.5 h-3.5" /></div>
                           </div>
                        );
                     })}
@@ -446,13 +447,13 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
             </div>
         </div>
           
-        <div className="pt-2">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Timesheet</label>
-              <div className="flex items-center h-[48px] border border-gray-200 rounded-xl px-4 bg-gray-50/30 transition-all hover:bg-white hover:border-[#0a192f]/20">
-                <input type="checkbox" id="timesheet_check" checked={(formData as any).timesheet || false} onChange={(e) => setFormData({...formData, timesheet: e.target.checked} as any)} className="w-4 h-4 text-[#0a192f] rounded focus:ring-[#0a192f] cursor-pointer" />
-                <label htmlFor="timesheet_check" className="ml-3 text-[11px] font-bold text-gray-600 uppercase tracking-wide cursor-pointer select-none">Utilizar Timesheet no Faturamento</label>
+        <div className="pt-4">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3 ml-1">Faturamento Variável</label>
+              <div className="flex items-center h-[54px] border border-gray-200 rounded-[1.5rem] px-6 bg-gray-50/50 transition-all hover:bg-white hover:border-[#0a192f]/20 hover:shadow-sm cursor-pointer group">
+                <input type="checkbox" id="timesheet_check" checked={(formData as any).timesheet || false} onChange={(e) => setFormData({...formData, timesheet: e.target.checked} as any)} className="w-4 h-4 text-[#0a192f] rounded border-gray-300 focus:ring-[#0a192f] cursor-pointer" />
+                <label htmlFor="timesheet_check" className="ml-4 text-[10px] font-black text-[#0a192f] uppercase tracking-widest cursor-pointer select-none group-hover:text-amber-600 transition-colors">Vincular Horas do Timesheet ao Faturamento</label>
               </div>
-              {isTimesheet && <p className="text-[10px] font-bold text-amber-600 mt-2 ml-1 animate-in fade-in flex items-center gap-1"><AlertTriangle size={12}/> Ao ativar o Timesheet, honorários fixos/pro-labore manuais serão ignorados no faturamento.</p>}
+              {isTimesheet && <div className="mt-3 flex items-start gap-2.5 bg-amber-50 border border-amber-200 p-3 rounded-xl animate-in fade-in shadow-sm"><AlertTriangle size={14} className="text-amber-600 flex-shrink-0 mt-0.5"/><p className="text-[10px] font-bold text-amber-700 uppercase tracking-tight leading-relaxed">Configuração Estratégica: Honorários fixos e pro-labore serão substituídos automaticamente pela volumetria de horas registradas.</p></div>}
         </div>
       </div>
       )}

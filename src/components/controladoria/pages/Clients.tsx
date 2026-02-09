@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase'; // Caminho corrigido para o Manager
+import { supabase } from '../../../lib/supabase'; // Caminho centralizado no Manager
 import { Users, Search, Plus, Filter, User, MapPin, Phone, Mail, Edit, Trash2, Building, Briefcase, X, FileText, Shield } from 'lucide-react';
-import { Client, Partner } from '../types'; // Caminho corrigido
-import { ClientFormModal } from './components/ClientFormModal'; // Caminho corrigido para pasta irmã
-import { maskCNPJ } from '../utils/masks'; // Caminho corrigido
+import { Client, Partner } from '../types'; 
+import { ClientFormModal } from '../clients/ClientFormModal'; // Rota corrigida para a pasta de componentes clientes
+import { maskCNPJ } from '../utils/masks'; 
 
 export function Clients() {
   // --- ROLE STATE ---
@@ -156,7 +156,7 @@ export function Clients() {
           />
         </div>
         <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 border-l border-gray-100">
-            Total: <span className="text-[#0a192f]">{filteredClients.length}</span>
+            Total: <span className="text-[#0a192f] font-black">{filteredClients.length}</span>
         </div>
       </div>
 

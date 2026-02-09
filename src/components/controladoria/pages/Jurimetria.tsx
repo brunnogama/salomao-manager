@@ -3,7 +3,7 @@ import ForceGraph2D from 'react-force-graph-2d';
 import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess } from '../types';
 import { Loader2, Share2, Gavel, Scale, FileText, Maximize2, Minimize2, Search, Filter, X, Shield } from 'lucide-react';
-import { EmptyState } from '../components/ui/EmptyState';
+import { EmptyState } from '../ui/EmptyState';
 
 // Interfaces
 interface GraphNode {
@@ -241,7 +241,7 @@ export function Jurimetria() {
     setFilteredGraphData({ nodes, links }); // Inicialmente igual
   };
 
-  // --- Estatísticas (Calculadas sobre o TOTAL, não sobre o filtrado, para servir de menu) ---
+  // --- Estatísticas ---
   const stats = useMemo(() => {
     const counts: StatsCount = { judges: {}, subjects: {}, courts: {} };
     contracts.forEach(c => {
@@ -270,10 +270,10 @@ export function Jurimetria() {
     const fontSize = 12 / globalScale;
     let color = '#ccc';
     switch(node.group) {
-        case 'contract': color = '#0F2C4C'; break;
-        case 'judge': color = '#D4AF37'; break; 
-        case 'subject': color = '#22C55E'; break;
-        case 'court': color = '#64748B'; break;
+        case 'contract': color = '#0a192f'; break; // Manager Navy
+        case 'judge': color = '#b45309'; break;    // Manager Gold
+        case 'subject': color = '#10b981'; break;
+        case 'court': color = '#64748b'; break;
     }
     node.color = color;
     const radius = 5;
@@ -283,11 +283,11 @@ export function Jurimetria() {
     ctx.fill();
 
     if (globalScale > 1.2 || node.group === 'contract' || node.group === 'judge' || node === selectedNode) {
-        ctx.font = `${fontSize}px Sans-Serif`;
+        ctx.font = `bold ${fontSize}px "Inter", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.fillStyle = '#000';
-        ctx.fillText(label, node.x, node.y + radius + 1);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillText(label.toUpperCase(), node.x, node.y + radius + 2);
     }
   }, [selectedNode]);
 
@@ -305,119 +305,124 @@ export function Jurimetria() {
       graphRef.current?.zoomToFit(400);
   };
 
-  if (loading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 text-salomao-gold animate-spin" /></div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center h-full gap-4">
+      <Loader2 className="w-10 h-10 text-[#0a192f] animate-spin" />
+      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sincronizando Rede Neural...</p>
+    </div>
+  );
 
   return (
-    <div className={`p-6 animate-in fade-in duration-500 h-full flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-[#F8FAFC] p-0' : ''}`}>
+    <div className={`p-8 animate-in fade-in duration-500 h-full flex flex-col bg-gray-50/50 min-h-screen ${isFullscreen ? 'fixed inset-0 z-[100] bg-[#F8FAFC] p-0' : ''}`}>
       
-      <div className={`flex justify-between items-start mb-6 ${isFullscreen ? 'p-6 bg-white shadow-sm' : ''}`}>
+      <div className={`flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 ${isFullscreen ? 'p-8 bg-[#0a192f] shadow-2xl' : ''}`}>
         <div>
-          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
-            <Share2 className="w-8 h-8" /> Jurimetria & Conexões
+          <h1 className={`text-sm font-black uppercase tracking-[0.3em] flex items-center gap-3 ${isFullscreen ? 'text-white' : 'text-[#0a192f]'}`}>
+            <Share2 className="w-6 h-6 text-amber-500" /> Jurimetria & Conexões
           </h1>
-          <div className="flex items-center gap-2 mt-1">
-                <p className="text-gray-500">Análise gráfica de correlações entre processos, juízes e assuntos.</p>
-                {/* Badge de Perfil */}
-                {userRole && (
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border flex items-center gap-1 ${
+          <div className="flex items-center gap-3 mt-1">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${isFullscreen ? 'text-gray-400' : 'text-gray-400'}`}>Mapeamento gráfico de correlações judiciais.</p>
+                {userRole && !isFullscreen && (
+                    <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase border flex items-center gap-1.5 ${
                         userRole === 'admin' 
-                            ? 'bg-purple-100 text-purple-700 border-purple-200' 
-                            : userRole === 'editor' 
-                                ? 'bg-blue-100 text-blue-700 border-blue-200'
-                                : 'bg-gray-100 text-gray-600 border-gray-200'
+                            ? 'bg-purple-50 text-purple-700 border-purple-100' 
+                            : 'bg-gray-50 text-gray-500 border-gray-100'
                     }`}>
                         <Shield className="w-3 h-3" />
-                        {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
+                        {userRole === 'admin' ? 'Administrador' : 'Visualizador'}
                     </span>
                 )}
           </div>
         </div>
-        <div className="flex gap-2">
-           {/* Barra de Busca Global */}
-           <div className="relative">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-               <input 
-                   type="text" 
-                   placeholder="Buscar nó..." 
-                   className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm w-64 focus:ring-2 focus:ring-salomao-blue outline-none"
-                   value={searchTerm}
-                   onChange={e => setSearchTerm(e.target.value)}
-               />
-               {(searchTerm || selectedFilters.judge || selectedFilters.subject || selectedFilters.court) && (
-                   <button onClick={clearFilters} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
-               )}
-           </div>
+        <div className="flex gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:flex-none">
+                <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${isFullscreen ? 'text-gray-500' : 'text-gray-300'}`} />
+                <input 
+                    type="text" 
+                    placeholder="BUSCAR NÓ..." 
+                    className={`pl-11 pr-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest w-full md:w-64 outline-none transition-all shadow-sm ${
+                      isFullscreen 
+                        ? 'bg-white/10 border-white/10 text-white focus:bg-white/20' 
+                        : 'bg-white border-gray-200 text-[#0a192f] focus:border-[#0a192f]'
+                    }`}
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                />
+                {(searchTerm || selectedFilters.judge || selectedFilters.subject || selectedFilters.court) && (
+                    <button onClick={clearFilters} className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500 hover:text-red-500 transition-colors"><X className="w-4 h-4" /></button>
+                )}
+            </div>
 
-           <button onClick={() => { setIsFullscreen(!isFullscreen); setTimeout(handleResize, 100); }} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 border border-gray-200 bg-white">
-             {isFullscreen ? <Minimize2 /> : <Maximize2 />}
-           </button>
+            <button onClick={() => { setIsFullscreen(!isFullscreen); setTimeout(handleResize, 100); }} className={`p-2.5 rounded-xl transition-all shadow-lg active:scale-95 ${isFullscreen ? 'bg-amber-500 text-[#0a192f]' : 'bg-[#0a192f] text-white hover:bg-slate-800'}`}>
+              {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+            </button>
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+      <div className={`flex flex-col lg:flex-row gap-8 flex-1 min-h-0 ${isFullscreen ? 'px-8 pb-8' : ''}`}>
         
-        {/* Painel Esquerdo - Estatísticas e Filtros */}
-        <div className="w-full lg:w-80 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
+        {/* Painel Esquerdo - Estatísticas */}
+        <div className="w-full lg:w-80 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
             {/* Card Juízes */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-3"><Gavel className="w-4 h-4 text-salomao-gold" /> Top Magistrados</h3>
-                <div className="space-y-1">
+            <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-5"><Gavel className="w-4 h-4 text-amber-500" /> Top Magistrados</h3>
+                <div className="space-y-2">
                     {stats.topJudges.length > 0 ? stats.topJudges.map(([name, count], i) => (
                         <div 
                             key={i} 
                             onClick={() => toggleFilter('judge', name)}
-                            className={`flex justify-between items-center text-sm p-1.5 rounded cursor-pointer transition-colors ${selectedFilters.judge === name ? 'bg-yellow-100 border border-yellow-300' : 'hover:bg-gray-50'}`}
+                            className={`flex justify-between items-center text-[11px] p-2.5 rounded-xl cursor-pointer transition-all border font-bold uppercase tracking-tight ${selectedFilters.judge === name ? 'bg-amber-50 border-amber-200 text-amber-700 shadow-inner' : 'bg-gray-50/50 border-transparent text-gray-600 hover:bg-gray-100'}`}
                         >
-                            <span className="text-gray-600 truncate flex-1 pr-2" title={name}>{name}</span>
-                            <span className="bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold">{count}</span>
+                            <span className="truncate flex-1 pr-2" title={name}>{name}</span>
+                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black ${selectedFilters.judge === name ? 'bg-amber-500 text-white' : 'bg-white text-gray-400 border border-gray-100'}`}>{count}</span>
                         </div>
-                    )) : <p className="text-xs text-gray-400">Nenhum dado encontrado.</p>}
+                    )) : <p className="text-[10px] font-bold text-gray-300 uppercase italic">Dados insuficientes.</p>}
                 </div>
             </div>
 
             {/* Card Assuntos */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-3"><FileText className="w-4 h-4 text-blue-500" /> Assuntos</h3>
-                <div className="space-y-1">
+            <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-5"><FileText className="w-4 h-4 text-blue-500" /> Assuntos</h3>
+                <div className="space-y-2">
                     {stats.topSubjects.length > 0 ? stats.topSubjects.map(([name, count], i) => (
                         <div 
                             key={i} 
                             onClick={() => toggleFilter('subject', name)}
-                            className={`flex justify-between items-center text-sm p-1.5 rounded cursor-pointer transition-colors ${selectedFilters.subject === name ? 'bg-blue-100 border border-blue-300' : 'hover:bg-gray-50'}`}
+                            className={`flex justify-between items-center text-[11px] p-2.5 rounded-xl cursor-pointer transition-all border font-bold uppercase tracking-tight ${selectedFilters.subject === name ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-inner' : 'bg-gray-50/50 border-transparent text-gray-600 hover:bg-gray-100'}`}
                         >
-                            <span className="text-gray-600 truncate flex-1 pr-2" title={name}>{name}</span>
-                            <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">{count}</span>
+                            <span className="truncate flex-1 pr-2" title={name}>{name}</span>
+                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black ${selectedFilters.subject === name ? 'bg-blue-500 text-white' : 'bg-white text-gray-400 border border-gray-100'}`}>{count}</span>
                         </div>
-                    )) : <p className="text-xs text-gray-400">Nenhum dado encontrado.</p>}
+                    )) : <p className="text-[10px] font-bold text-gray-300 uppercase italic">Dados insuficientes.</p>}
                 </div>
             </div>
 
              {/* Card Tribunais */}
-             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-3"><Scale className="w-4 h-4 text-green-500" /> Tribunais</h3>
-                <div className="space-y-1">
+             <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-5"><Scale className="w-4 h-4 text-emerald-500" /> Tribunais</h3>
+                <div className="space-y-2">
                     {stats.topCourts.length > 0 ? stats.topCourts.map(([name, count], i) => (
                         <div 
                             key={i} 
                             onClick={() => toggleFilter('court', name)}
-                            className={`flex justify-between items-center text-sm p-1.5 rounded cursor-pointer transition-colors ${selectedFilters.court === name ? 'bg-green-100 border border-green-300' : 'hover:bg-gray-50'}`}
+                            className={`flex justify-between items-center text-[11px] p-2.5 rounded-xl cursor-pointer transition-all border font-bold uppercase tracking-tight ${selectedFilters.court === name ? 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-inner' : 'bg-gray-50/50 border-transparent text-gray-600 hover:bg-gray-100'}`}
                         >
-                            <span className="text-gray-600 truncate flex-1 pr-2" title={name}>{name}</span>
-                            <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">{count}</span>
+                            <span className="truncate flex-1 pr-2" title={name}>{name}</span>
+                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black ${selectedFilters.court === name ? 'bg-emerald-500 text-white' : 'bg-white text-gray-400 border border-gray-100'}`}>{count}</span>
                         </div>
-                    )) : <p className="text-xs text-gray-400">Nenhum dado encontrado.</p>}
+                    )) : <p className="text-[10px] font-bold text-gray-300 uppercase italic">Dados insuficientes.</p>}
                 </div>
             </div>
         </div>
 
         {/* Área do Grafo */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 relative overflow-hidden flex flex-col" ref={containerRef}>
+        <div className="flex-1 bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 relative overflow-hidden flex flex-col group/graph" ref={containerRef}>
             
             {/* Legenda Flutuante */}
-            <div className="absolute top-4 left-4 z-10 flex gap-2 pointer-events-none">
-                <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 flex items-center gap-1 shadow-sm"><span className="w-2 h-2 rounded-full bg-salomao-blue"></span> Contrato</span>
-                <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 flex items-center gap-1 shadow-sm"><span className="w-2 h-2 rounded-full bg-salomao-gold"></span> Juiz</span>
-                <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 flex items-center gap-1 shadow-sm"><span className="w-2 h-2 rounded-full bg-green-500"></span> Assunto</span>
+            <div className="absolute top-6 left-6 z-10 flex flex-col gap-2 pointer-events-none opacity-0 group-hover/graph:opacity-100 transition-opacity duration-500">
+                <span className="bg-[#0a192f]/90 backdrop-blur px-4 py-2 rounded-xl text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-3 shadow-2xl border border-white/10"><span className="w-2.5 h-2.5 rounded-full bg-white"></span> Contrato</span>
+                <span className="bg-white/90 backdrop-blur px-4 py-2 rounded-xl text-[9px] font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-3 shadow-2xl border border-gray-100"><span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Juiz</span>
+                <span className="bg-white/90 backdrop-blur px-4 py-2 rounded-xl text-[9px] font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-3 shadow-2xl border border-gray-100"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Assunto</span>
             </div>
 
             {/* Empty State do Grafo */}
@@ -426,8 +431,8 @@ export function Jurimetria() {
                       <EmptyState 
                           icon={Filter} 
                           title="Nenhum dado encontrado" 
-                          description="Tente limpar os filtros ou buscar por outro termo."
-                          actionLabel="Limpar Filtros"
+                          description="Não encontramos conexões para os filtros aplicados."
+                          actionLabel="Limpar Rede"
                           onAction={clearFilters}
                       />
                  </div>
@@ -435,15 +440,21 @@ export function Jurimetria() {
 
             {/* Detalhes do Nó Selecionado */}
             {selectedNode && (
-                <div className="absolute bottom-4 left-4 z-10 bg-white/95 backdrop-blur p-4 rounded-xl border border-gray-200 shadow-lg max-w-sm animate-in slide-in-from-bottom-5">
-                    <button onClick={() => setSelectedNode(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
-                    <h4 className="font-bold text-salomao-blue text-lg mb-1">{selectedNode.label}</h4>
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{selectedNode.group === 'contract' ? 'Contrato' : selectedNode.group === 'judge' ? 'Magistrado' : selectedNode.group === 'subject' ? 'Assunto' : 'Tribunal'}</span>
+                <div className="absolute bottom-8 left-8 z-10 bg-[#0a192f] p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] max-w-sm animate-in slide-in-from-bottom-10 border border-white/10">
+                    <button onClick={() => setSelectedNode(null)} className="absolute top-4 right-4 text-white/30 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+                    <h4 className="font-black text-white text-sm mb-2 uppercase tracking-tight leading-tight">{selectedNode.label}</h4>
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500 bg-white/5 px-3 py-1 rounded-lg border border-amber-500/20">{selectedNode.group === 'contract' ? 'Processo/Contrato' : selectedNode.group === 'judge' ? 'Poder Judiciário' : selectedNode.group === 'subject' ? 'Tese Jurídica' : 'Competência'}</span>
                     
                     {selectedNode.group === 'contract' && selectedNode.fullData && (
-                        <div className="mt-3 text-sm space-y-1">
-                            <p><span className="font-bold">Valor:</span> {selectedNode.fullData.pro_labore ? selectedNode.fullData.pro_labore.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ -'}</p>
-                            <p><span className="font-bold">Status:</span> {selectedNode.fullData.status}</p>
+                        <div className="mt-6 space-y-3 pt-6 border-t border-white/5">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Valor de Causa</span>
+                              <span className="text-xs font-black text-emerald-400">{selectedNode.fullData.pro_labore ? Number(selectedNode.fullData.pro_labore).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00'}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Status Atual</span>
+                              <span className="text-[10px] font-black text-white uppercase bg-white/10 px-2 py-0.5 rounded-lg">{selectedNode.fullData.status}</span>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -456,7 +467,7 @@ export function Jurimetria() {
                 graphData={filteredGraphData}
                 nodeCanvasObject={drawNode}
                 nodeRelSize={6}
-                linkColor={() => '#E2E8F0'}
+                linkColor={() => '#f1f5f9'}
                 onNodeClick={(node) => {
                     setSelectedNode(node);
                     graphRef.current?.centerAt(node.x, node.y, 1000);

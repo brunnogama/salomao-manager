@@ -3,17 +3,17 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase'; // Aponta para o lib central do Manager
-import { useDashboardData } from '../hooks/useDashboardData'; // Ajustado para a pasta pai
+import { useDashboardData } from '../hooks/useDashboardData'; 
 
-// --- COMPONENTES MODULARES (Caminhos corrigidos para pasta irmã) ---
-import { DashboardHeader } from './components/DashboardHeader';
-import { EfficiencyFunnel } from './components/EfficiencyFunnel';
-import { PortfolioFinancialOverview } from './components/PortfolioFinancialOverview';
-import { WeeklySummary } from './components/WeeklySummary';
-import { MonthlySummary } from './components/MonthlySummary';
-import { EvolutionCharts } from './components/EvolutionCharts';
-import { PartnerStats } from './components/PartnerStats';
-import { OperationalStats } from './components/OperationalStats';
+// --- COMPONENTES MODULARES (Caminhos corrigidos para a pasta dashboard) ---
+import { DashboardHeader } from '../dashboard/DashboardHeader';
+import { EfficiencyFunnel } from '../dashboard/EfficiencyFunnel';
+import { PortfolioFinancialOverview } from '../dashboard/PortfolioFinancialOverview';
+import { WeeklySummary } from '../dashboard/WeeklySummary';
+import { MonthlySummary } from '../dashboard/MonthlySummary';
+import { EvolutionCharts } from '../dashboard/EvolutionCharts';
+import { PartnerStats } from '../dashboard/PartnerStats';
+import { OperationalStats } from '../dashboard/OperationalStats';
 
 export function Dashboard() {
   // --- ESTADOS DE FILTROS ---
@@ -127,7 +127,7 @@ export function Dashboard() {
         />
 
         {/* Container do Dashboard - SEM SCROLL HORIZONTAL */}
-        <div ref={dashboardRef} className="w-full space-y-8 bg-[#F8FAFC] rounded-[2rem] p-4 sm:p-8 shadow-sm border border-gray-100">
+        <div ref={dashboardRef} className="w-full space-y-8 bg-[#F8FAFC] rounded-[2rem] p-4 sm:p-10 shadow-sm border border-gray-100">
           
           {/* 1. Funil de Eficiência */}
           <div className="w-full overflow-hidden">

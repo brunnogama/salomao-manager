@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { BarChart3, PieChart, Users, Scale, FileText, TrendingUp, Layers, Shield } from 'lucide-react';
 import { Contract, Partner } from '../types';
-import { ContractFilters } from '../components/contracts/ContractFilters';
+import { ContractFilters } from '../contracts/ContractFilters'; // Rota corrigida para pasta irmã
 import * as XLSX from 'xlsx';
 
 export function Volumetry() {
@@ -18,7 +18,7 @@ export function Volumetry() {
   const [statusFilter, setStatusFilter] = useState('');
   const [partnerFilter, setPartnerFilter] = useState('');
   const [sortOrder, setSortOrder] = useState<'name' | 'date'>('date');
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('card'); // Mantido para compatibilidade com o componente de filtros
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('card'); 
 
   useEffect(() => {
     checkUserRole();
@@ -43,7 +43,6 @@ export function Volumetry() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Busca contratos com os relacionamentos necessários: parceiro e processos
       const { data: contractsData, error: contractsError } = await supabase
         .from('contracts')
         .select(`
@@ -54,7 +53,6 @@ export function Volumetry() {
 
       if (contractsError) throw contractsError;
 
-      // Busca sócios ativos
       const { data: partnersData, error: partnersError } = await supabase
         .from('partners')
         .select('*')
@@ -63,7 +61,6 @@ export function Volumetry() {
       if (partnersError) throw partnersError;
 
       if (contractsData) {
-        // Formata os dados para incluir contagens e nomes
         const formattedContracts = contractsData.map((c: any) => ({
           ...c,
           partner_name: c.partner?.name || 'Sem Sócio',
@@ -81,7 +78,6 @@ export function Volumetry() {
     }
   };
 
-  // Lógica de Filtragem (Idêntica à de Contratos)
   const filteredContracts = contracts.filter(contract => {
     const matchesSearch = 
       contract.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,28 +89,19 @@ export function Volumetry() {
     return matchesSearch && matchesStatus && matchesPartner;
   });
 
-  // Lógica de Agrupamento por Sócio
   const metricsByPartner = partners.map(partner => {
-    // Filtra os contratos (já filtrados pelos inputs) que pertencem a este sócio
     const partnerContracts = filteredContracts.filter(c => c.partner_id === partner.id);
-    
     const contractCount = partnerContracts.length;
-    // Soma a quantidade de processos de todos os contratos desse sócio
     const processCount = partnerContracts.reduce((acc, curr) => acc + (curr.process_count || 0), 0);
-    
-    // Calcula valor total em pró-labore (opcional, mas útil para volumetria financeira)
-    // const totalValue = partnerContracts.reduce((acc, curr) => acc + (curr.pro_labore ? parseFloat(curr.pro_labore.replace(/[^0-9.-]+/g,"")) : 0), 0);
 
     return {
       id: partner.id,
       name: partner.name,
       contractCount,
       processCount,
-      // totalValue
     };
-  }).sort((a, b) => b.contractCount - a.contractCount); // Ordena por quem tem mais contratos
+  }).sort((a, b) => b.contractCount - a.contractCount);
 
-  // Totais Gerais (Baseado nos filtros atuais)
   const totalContracts = filteredContracts.length;
   const totalProcesses = filteredContracts.reduce((acc, c) => acc + (c.process_count || 0), 0);
 
@@ -132,21 +119,18 @@ export function Volumetry() {
   };
 
   return (
-    <div className="p-8 animate-in fade-in duration-500">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
-          <BarChart3 className="w-8 h-8" /> Volumetria
+    <div className="p-8 animate-in fade-in duration-500 bg-gray-50/50 min-h-screen">
+      <div className="mb-10">
+        <h1 className="text-sm font-black text-[#0a192f] uppercase tracking-[0.3em] flex items-center gap-3">
+          <BarChart3 className="w-6 h-6 text-amber-500" /> Métricas de Volumetria
         </h1>
-        <div className="flex items-center gap-2 mt-1">
-            <p className="text-gray-500">Análise quantitativa de contratos e processos por sócio.</p>
-            {/* Badge de Perfil */}
+        <div className="flex items-center gap-3 mt-1">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Análise estatística de produtividade e carga de trabalho por sócio.</p>
             {userRole && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border flex items-center gap-1 ${
+                <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase border flex items-center gap-1.5 ${
                     userRole === 'admin' 
-                        ? 'bg-purple-100 text-purple-700 border-purple-200' 
-                        : userRole === 'editor' 
-                            ? 'bg-blue-100 text-blue-700 border-blue-200'
-                            : 'bg-gray-100 text-gray-600 border-gray-200'
+                        ? 'bg-purple-50 text-purple-700 border-purple-100' 
+                        : 'bg-gray-50 text-gray-500 border-gray-100'
                 }`}>
                     <Shield className="w-3 h-3" />
                     {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
@@ -155,7 +139,7 @@ export function Volumetry() {
         </div>
       </div>
 
-      {/* Filtros Reutilizados */}
+      {/* Filtros Reutilizados com Estilo Manager */}
       <div className="mb-8">
         <ContractFilters
           searchTerm={searchTerm} setSearchTerm={setSearchTerm}
@@ -163,96 +147,103 @@ export function Volumetry() {
           partnerFilter={partnerFilter} setPartnerFilter={setPartnerFilter}
           partners={partners}
           sortOrder={sortOrder} setSortOrder={setSortOrder}
-          viewMode={viewMode} setViewMode={setViewMode} // Apenas visual no filtro, não afeta volumetria
+          viewMode={viewMode} setViewMode={setViewMode} 
           onExport={handleExport}
         />
       </div>
 
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-100 flex items-center justify-between">
+      {/* Cards de Resumo Estilo Manager */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between transition-all hover:shadow-lg">
           <div>
-            <p className="text-sm font-medium text-gray-500 uppercase">Contratos Filtrados</p>
-            <p className="text-3xl font-bold text-salomao-blue mt-1">{totalContracts}</p>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Contratos Filtrados</p>
+            <p className="text-3xl font-black text-[#0a192f] mt-1 tracking-tighter">{totalContracts}</p>
           </div>
-          <div className="bg-blue-50 p-3 rounded-full text-salomao-blue">
+          <div className="bg-blue-50 p-4 rounded-2xl text-[#0a192f] shadow-inner">
             <FileText className="w-6 h-6" />
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-purple-100 flex items-center justify-between">
+        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between transition-all hover:shadow-lg">
           <div>
-            <p className="text-sm font-medium text-gray-500 uppercase">Processos Judiciais</p>
-            <p className="text-3xl font-bold text-purple-700 mt-1">{totalProcesses}</p>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Processos Ativos</p>
+            <p className="text-3xl font-black text-amber-600 mt-1 tracking-tighter">{totalProcesses}</p>
           </div>
-          <div className="bg-purple-50 p-3 rounded-full text-purple-600">
+          <div className="bg-amber-50 p-4 rounded-2xl text-amber-500 shadow-inner">
             <Scale className="w-6 h-6" />
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-green-100 flex items-center justify-between">
+        <div className="bg-[#0a192f] p-8 rounded-[2rem] shadow-xl flex items-center justify-between transition-all">
           <div>
-            <p className="text-sm font-medium text-gray-500 uppercase">Sócios Ativos</p>
-            <p className="text-3xl font-bold text-green-700 mt-1">{partners.length}</p>
+            <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em]">Banca Ativa</p>
+            <p className="text-3xl font-black text-white mt-1 tracking-tighter">{partners.length}</p>
           </div>
-          <div className="bg-green-50 p-3 rounded-full text-green-600">
+          <div className="bg-white/10 p-4 rounded-2xl text-amber-500">
             <Users className="w-6 h-6" />
           </div>
         </div>
       </div>
 
       {/* Lista de Volumetria por Sócio */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <Layers className="w-5 h-5 text-gray-500" /> Distribuição por Sócio
+      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-[#0a192f]">
+          <h2 className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
+            <Layers className="w-5 h-5 text-amber-500" /> Distribuição por Célula / Sócio
           </h2>
         </div>
         
         {loading ? (
-           <div className="p-8 text-center text-gray-500">Carregando dados...</div>
+            <div className="p-20 text-center flex flex-col items-center gap-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a192f]"></div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sincronizando dados...</p>
+            </div>
         ) : metricsByPartner.length === 0 ? (
-           <div className="p-8 text-center text-gray-500">Nenhum dado encontrado para os filtros selecionados.</div>
+            <div className="p-20 text-center bg-gray-50/50">
+              <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Nenhum registro encontrado para os parâmetros informados.</p>
+            </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-500 font-medium text-xs uppercase tracking-wider">
+              <thead className="bg-gray-50 text-gray-400 font-black text-[10px] uppercase tracking-widest">
                 <tr>
-                  <th className="p-4">Sócio Responsável</th>
-                  <th className="p-4 text-center">Contratos</th>
-                  <th className="p-4 text-center">Processos Judiciais</th>
-                  <th className="p-4">Representatividade (Contratos)</th>
+                  <th className="p-6 pl-10">Sócio Responsável</th>
+                  <th className="p-6 text-center">Contratos</th>
+                  <th className="p-6 text-center">Volume Processual</th>
+                  <th className="p-6 pr-10">Representatividade</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
+              <tbody className="divide-y divide-gray-50">
                 {metricsByPartner.map((partner) => {
                   const percentage = totalContracts > 0 ? ((partner.contractCount / totalContracts) * 100).toFixed(1) : "0";
                   
                   return (
-                    <tr key={partner.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="p-4 font-medium text-gray-800 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 text-salomao-blue flex items-center justify-center font-bold text-xs">
-                          {partner.name.charAt(0)}
+                    <tr key={partner.id} className="hover:bg-amber-50/20 transition-colors group">
+                      <td className="p-6 pl-10">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-2xl bg-[#0a192f] text-amber-500 flex items-center justify-center font-black text-xs shadow-lg">
+                            {partner.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{partner.name}</span>
                         </div>
-                        {partner.name}
                       </td>
-                      <td className="p-4 text-center">
-                        <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-bold">
+                      <td className="p-6 text-center">
+                        <span className="bg-[#0a192f] text-white px-3 py-1 rounded-lg text-[10px] font-black border border-[#0a192f] shadow-md">
                           {partner.contractCount}
                         </span>
                       </td>
-                      <td className="p-4 text-center">
-                        <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full font-bold">
+                      <td className="p-6 text-center">
+                        <span className="bg-amber-50 text-amber-700 px-3 py-1 rounded-lg text-[10px] font-black border border-amber-100">
                           {partner.processCount}
                         </span>
                       </td>
-                      <td className="p-4 align-middle">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden max-w-[150px]">
+                      <td className="p-6 pr-10">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden max-w-[200px] shadow-inner">
                             <div 
-                              className="bg-salomao-gold h-full rounded-full" 
+                              className="bg-amber-500 h-full rounded-full transition-all duration-1000 ease-out" 
                               style={{ width: `${percentage}%` }}
                             ></div>
                           </div>
-                          <span className="text-xs font-bold text-gray-500 w-12">{percentage}%</span>
+                          <span className="text-[10px] font-black text-[#0a192f] w-12">{percentage}%</span>
                         </div>
                       </td>
                     </tr>

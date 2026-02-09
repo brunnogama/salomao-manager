@@ -76,10 +76,10 @@ export function ContractFormModal(props: Props) {
   const [activeTab, setActiveTab] = useState(1);
 
   const steps = [
-    { id: 1, label: 'Dados do Cliente', icon: User },
-    { id: 2, label: 'Status & Valores', icon: DollarSign },
-    { id: 3, label: 'Dados do Objeto', icon: Gavel },
-    { id: 4, label: 'GED (Arquivos)', icon: Files }
+    { id: 1, label: 'Cliente', icon: User },
+    { id: 2, label: 'Financeiro', icon: DollarSign },
+    { id: 3, label: 'Objeto', icon: Gavel },
+    { id: 4, label: 'Documentos', icon: Files }
   ];
 
   const options = useContractOptions({ formData, setFormData, currentProcess, setCurrentProcess, activeManager });
@@ -135,9 +135,9 @@ export function ContractFormModal(props: Props) {
     if (formData.status === 'analysis' && !formData.prospect_date) {
         msg = "Data de Prospecção é necessária para o status Análise.";
     } else if (formData.status === 'proposal' && !formData.proposal_date) {
-        msg = "Data da Proposta é necessária para o status Proposta Enviada.";
+        msg = "Data da Proposta é necessária para Proposta Enviada.";
     } else if (formData.status === 'active' && !formData.contract_date) {
-        msg = "Data de Assinatura é necessária para o status Contrato Fechado.";
+        msg = "Data de Assinatura é necessária para Contrato Fechado.";
     }
     setDateWarningMessage(msg);
   }, [formData.status, formData.prospect_date, formData.proposal_date, formData.contract_date]);
@@ -434,7 +434,7 @@ export function ContractFormModal(props: Props) {
 
   const handleSaveWithIntegrations = async () => {
     if (editingProcessIndex !== null) return alert('⚠️ Finalize a edição do processo (clique no check ✔️) antes de salvar o caso.');
-    if (currentProcess.process_number || otherProcessType) return alert('⚠️ Você inseriu dados de um processo mas não o adicionou.\n\nClique no botão Adicionar (+) na aba Dados do Objeto para incluir o processo no caso antes de salvar.');
+    if (currentProcess.process_number || otherProcessType) return alert('⚠️ Você inseriu dados de um processo mas não o adicionou.\n\nClique no botão Adicionar (+) na aba Objeto para incluir o processo no caso antes de salvar.');
 
     if (!formData.client_name) return alert('O "Nome do Cliente" é obrigatório.');
     if (!formData.partner_id) return alert('O "Responsável (Sócio)" é obrigatório.');
@@ -450,7 +450,7 @@ export function ContractFormModal(props: Props) {
     setLocalLoading(true);
     try {
         const clientId = await upsertClient();
-        if (!clientId) throw new Error("Falha ao salvar dados do cliente (CNPJ Duplicado ou Inválido).");
+        if (!clientId) throw new Error("Falha ao salvar dados do cliente.");
         
         const isTimesheet = (formData as any).timesheet === true;
 
@@ -517,9 +517,8 @@ export function ContractFormModal(props: Props) {
         onSave();
         onClose();
     } catch (error: any) {
-        if (error.code === '23505' || error.message?.includes('contracts_hon_number_key')) alert('⚠️ Duplicidade de Caso Detectada\n\nJá existe um contrato cadastrado com este Número HON.');
-        else if (error.code === 'PGRST204') alert(`Erro Técnico: Tentativa de salvar campo inválido.\n\nSOLUÇÃO: Rode o SQL fornecido no Supabase.`);
-        else alert(`Não foi possível salvar as alterações.\n\n${error.message}`);
+        if (error.code === '23505' || error.message?.includes('contracts_hon_number_key')) alert('⚠️ Duplicidade Detectada: Já existe um contrato com este Número HON.');
+        else alert(`Não foi possível salvar.\n\n${error.message}`);
     } finally {
         setLocalLoading(false);
     }
@@ -528,7 +527,7 @@ export function ContractFormModal(props: Props) {
   const handleCNPJSearch = async () => {
     if (!formData.cnpj || formData.has_no_cnpj) return;
     const cnpjLimpo = (formData.cnpj || '').replace(/\D/g, '');
-    if (cnpjLimpo.length !== 14) return alert('CNPJ inválido. Digite 14 dígitos.');
+    if (cnpjLimpo.length !== 14) return alert('CNPJ inválido.');
 
     setLocalLoading(true);
     try {
@@ -540,7 +539,7 @@ export function ContractFormModal(props: Props) {
       
       const { data: existingClient } = await supabase.from('clients').select('id, name').eq('cnpj', cnpjLimpo).maybeSingle();
       if (existingClient) setFormData(prev => ({ ...prev, client_id: existingClient.id }));
-    } catch (error: any) { alert(`❌ ${error.message}\n\n💡 Você pode preencher manualmente.`); } finally { setLocalLoading(false); }
+    } catch (error: any) { alert(`❌ ${error.message}`); } finally { setLocalLoading(false); }
   };
 
   const handlePartyCNPJSearch = async (type: 'author' | 'opponent') => {
@@ -550,7 +549,7 @@ export function ContractFormModal(props: Props) {
     const cnpj = type === 'author' ? (currentProcess as any).author_cnpj : (currentProcess as any).opponent_cnpj;
     if (!cnpj) return;
     const cleanCNPJ = cnpj.replace(/\D/g, '');
-    if (cleanCNPJ.length !== 14) return alert('CNPJ inválido. Digite 14 dígitos.');
+    if (cleanCNPJ.length !== 14) return alert('CNPJ inválido.');
 
     setLocalLoading(true);
     try {
@@ -593,18 +592,18 @@ export function ContractFormModal(props: Props) {
   const handleCNJSearch = async () => {
     if (!currentProcess.process_number) return;
     const numeroLimpo = currentProcess.process_number.replace(/\D/g, '');
-    if (numeroLimpo.length !== 20) return alert('Número de processo inválido. Deve ter 20 dígitos.');
+    if (numeroLimpo.length !== 20) return alert('CNJ deve ter 20 dígitos.');
     setSearchingCNJ(true);
     try {
       const decoded = decodeCNJ(numeroLimpo);
-      if (!decoded) throw new Error('Não foi possível decodificar o número do processo');
+      if (!decoded) throw new Error('Falha ao decodificar CNJ');
       const uf = decoded.tribunal === 'STF' ? 'DF' : decoded.uf;
       if (!options.courtOptions.includes(decoded.tribunal)) {
           await supabase.from('courts').insert({ name: decoded.tribunal }).select();
           options.setCourtOptions([...options.courtOptions, decoded.tribunal].sort((a,b)=>a.localeCompare(b)));
       }
       setCurrentProcess(prev => ({ ...prev, court: decoded.tribunal, uf: uf }));
-    } catch (error: any) { alert(`❌ Erro ao decodificar CNJ: ${error.message}`); } finally { setSearchingCNJ(false); }
+    } catch (error: any) { alert(`❌ Erro decodificação: ${error.message}`); } finally { setSearchingCNJ(false); }
   };
 
   const handleOpenJusbrasil = () => {
@@ -614,7 +613,7 @@ export function ContractFormModal(props: Props) {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!formData.id) return alert("⚠️ Você precisa salvar o contrato pelo menos uma vez antes de anexar arquivos.");
+    if (!formData.id) return alert("⚠️ Salve o contrato antes de anexar arquivos.");
 
     setUploading(true);
     try {
@@ -624,7 +623,7 @@ export function ContractFormModal(props: Props) {
       const { data: docData, error: dbError } = await supabase.from('contract_documents').insert({ contract_id: formData.id, file_name: file.name, file_path: filePath, file_type: type }).select().single();
       if (dbError) throw dbError;
       if (docData) setDocuments(prev => [docData, ...prev]);
-    } catch (error: any) { alert("Erro ao anexar arquivo: " + error.message); } finally { setUploading(false); e.target.value = ''; }
+    } catch (error: any) { alert("Erro anexo: " + error.message); } finally { setUploading(false); e.target.value = ''; }
   };
 
   const handleDownload = async (path: string) => {
@@ -632,19 +631,19 @@ export function ContractFormModal(props: Props) {
       const { data, error } = await supabase.storage.from('contract-documents').download(path);
       if (error) throw error;
       const url = URL.createObjectURL(data), a = document.createElement('a');
-      a.href = url; a.download = path.split('_').slice(1).join('_') || 'documento.pdf';
+      a.href = url; a.download = path.split('_').slice(1).join('_') || 'doc.pdf';
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-    } catch (error: any) { alert("Erro ao baixar arquivo: " + error.message); }
+    } catch (error: any) { alert("Erro download: " + error.message); }
   };
 
   const handleDeleteDocument = async (id: string, path: string) => {
-    if (!confirm("Tem certeza que deseja excluir este documento?")) return;
+    if (!confirm("Excluir documento?")) return;
     try {
       await supabase.storage.from('contract-documents').remove([path]);
       const { error: dbError } = await supabase.from('contract_documents').delete().eq('id', id);
       if (dbError) throw dbError;
       setDocuments(prev => prev.filter(d => d.id !== id));
-    } catch (error: any) { alert("Erro ao excluir documento: " + error.message); }
+    } catch (error: any) { alert("Erro exclusão: " + error.message); }
   };
 
   const handleClientChange = async (name: string) => {
@@ -682,30 +681,30 @@ export function ContractFormModal(props: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm flex items-center justify-center z-[50] p-4">
-      <div className={`w-full max-w-5xl max-h-[90vh] rounded-[2rem] shadow-2xl flex flex-col animate-in fade-in zoom-in duration-200 transition-colors duration-500 ease-in-out border border-white/20 ${getThemeBackground(formData.status)}`}>
-        {/* Header - Navy Estilizado */}
-        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0a192f] rounded-t-[2rem]">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-black text-white uppercase tracking-widest">{isEditing ? 'Editar Caso' : 'Novo Caso'}</h2>
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm flex items-center justify-center z-[50] p-4 animate-in fade-in">
+      <div className={`w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col transition-all duration-500 ease-in-out border border-white/20 animate-in zoom-in-95 ${getThemeBackground(formData.status)}`}>
+        {/* Header Manager Style */}
+        <div className="p-8 border-b border-white/10 flex justify-between items-center bg-[#0a192f] rounded-t-[2.5rem]">
+          <div className="flex items-center gap-6">
+            <h2 className="text-sm font-black text-white uppercase tracking-[0.3em]">Manutenção de Dossiê</h2>
             {(formData as any).display_id && ( 
-              <span className="bg-white/5 text-amber-400 px-3 py-1 rounded-lg text-sm font-mono font-bold border border-white/10 shadow-sm uppercase tracking-tighter">
-                ID: {(formData as any).display_id} 
+              <span className="bg-white/5 text-amber-500 px-4 py-1.5 rounded-xl text-xs font-black border border-amber-500/20 shadow-inner uppercase tracking-widest">
+                CONTROLE: {(formData as any).display_id} 
               </span> 
             )}
           </div>
-          <button onClick={onClose} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+          <button onClick={onClose} className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition-all">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="flex-1 p-8 space-y-8 overflow-y-auto overflow-x-visible custom-scrollbar">
+        <div className="flex-1 p-10 space-y-10 overflow-y-auto overflow-x-visible custom-scrollbar">
             
-            {/* Step Wizard */}
-            <div className="flex items-center justify-between w-full mb-10 px-4 relative">
+            {/* Nav Wizard Manager Style */}
+            <div className="flex items-center justify-between w-full mb-12 px-6 relative">
                 <div className="absolute top-1/2 left-0 w-full h-1 bg-black/5 -z-10 transform -translate-y-1/2 rounded-full"></div>
                 <div 
-                    className="absolute top-1/2 left-0 h-1 bg-[#0a192f] -z-10 transform -translate-y-1/2 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(10,25,47,0.3)]"
+                    className="absolute top-1/2 left-0 h-1 bg-amber-500 -z-10 transform -translate-y-1/2 rounded-full transition-all duration-700 shadow-[0_0_15px_rgba(245,158,11,0.5)]"
                     style={{ width: `${((activeTab - 1) / (steps.length - 1)) * 100}%` }}
                 ></div>
 
@@ -717,15 +716,15 @@ export function ContractFormModal(props: Props) {
                     return (
                         <div key={step.id} className="flex flex-col items-center cursor-pointer group" onClick={() => setActiveTab(step.id)}>
                             <div className={`
-                                w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-300 relative z-10 shadow-sm
-                                ${isActive ? 'bg-[#0a192f] border-[#0a192f] text-white shadow-xl scale-110' : 
+                                w-14 h-14 rounded-[1.25rem] flex items-center justify-center border-2 transition-all duration-500 relative z-10 shadow-xl
+                                ${isActive ? 'bg-amber-500 border-amber-500 text-[#0a192f] scale-110' : 
                                   isCompleted ? 'bg-[#0a192f] border-[#0a192f] text-white' : 
-                                  'bg-white border-gray-200 text-gray-300 group-hover:border-[#0a192f] group-hover:text-[#0a192f]'}
+                                  'bg-white border-gray-100 text-gray-300 group-hover:border-amber-500 group-hover:text-amber-500'}
                             `}>
-                                {isCompleted ? <Check className="w-6 h-6" /> : <Icon className="w-6 h-6" />}
+                                {isCompleted ? <Check className="w-7 h-7" /> : <Icon className="w-7 h-7" />}
                             </div>
                             <span className={`
-                                mt-3 text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300
+                                mt-4 text-[9px] font-black uppercase tracking-[0.2em] transition-colors duration-500
                                 ${isActive ? 'text-[#0a192f]' : isCompleted ? 'text-[#0a192f]/60' : 'text-gray-300'}
                             `}>
                                 {step.label}
@@ -736,7 +735,7 @@ export function ContractFormModal(props: Props) {
             </div>
 
             {activeTab === 1 && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-left-2 duration-200 overflow-visible">
+                <div className="space-y-10 animate-in fade-in slide-in-from-left-4 duration-500 overflow-visible">
                     <ClientFormSection 
                         formData={formData} 
                         setFormData={setFormData} 
@@ -755,7 +754,7 @@ export function ContractFormModal(props: Props) {
             )}
 
             {activeTab === 2 && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-left-2 duration-200 overflow-visible">
+                <div className="space-y-10 animate-in fade-in slide-in-from-left-4 duration-500 overflow-visible">
                     <StatusAndDatesSection 
                         formData={formData} 
                         setFormData={setFormData} 
@@ -787,31 +786,27 @@ export function ContractFormModal(props: Props) {
                         dateWarningMessage={dateWarningMessage}
                     />
                     
-                    {(formData.status === 'analysis' || formData.status === 'proposal' || formData.status === 'active') && (
-                        <div className="pt-6 border-t border-black/5 space-y-6">
-                            {(formData.status === 'proposal' || formData.status === 'active') && ( 
-                                <div className="bg-white/50 p-6 rounded-2xl border border-white/40 shadow-sm"> 
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Referência de Controle Interno</label> 
-                                    <textarea className="w-full border border-gray-200 p-4 rounded-xl text-sm font-medium bg-white focus:border-[#0a192f] outline-none h-24 resize-none shadow-inner" value={(formData as any).reference || ''} onChange={e => setFormData({...formData, reference: e.target.value} as any)} placeholder="Ex: Proposta 123/2025 ou Observação Financeira" /> 
-                                </div> 
-                            )}
-                        </div>
+                    {(formData.status === 'proposal' || formData.status === 'active') && ( 
+                        <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-2"> 
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-4 ml-1">Observações Financeiras & Referências</label> 
+                            <textarea className="w-full border border-gray-200 p-5 rounded-2xl text-[13px] font-medium text-[#0a192f] focus:border-[#0a192f] outline-none h-28 bg-gray-50/50 shadow-inner resize-none transition-all" value={(formData as any).reference || ''} onChange={e => setFormData({...formData, reference: e.target.value} as any)} placeholder="INFORMAÇÕES DE FATURAMENTO, MALA DIRETA OU PROTOCOLOS DE PAGAMENTO..." /> 
+                        </div> 
                     )}
                 </div>
             )}
 
             {activeTab === 3 && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-left-2 duration-200 overflow-visible">
-                    <section className="space-y-6 bg-white/60 p-6 rounded-2xl border border-white/40 shadow-sm backdrop-blur-sm relative z-30 overflow-visible">
-                        <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Gerenciamento de Objeto</h3>
+                <div className="space-y-10 animate-in fade-in slide-in-from-left-4 duration-500 overflow-visible">
+                    <section className="space-y-8 bg-white/40 p-8 rounded-[2.5rem] border border-white/40 shadow-sm backdrop-blur-md relative z-30 overflow-visible">
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6">Especificações do Objeto</h3>
                         
-                        <div className="flex flex-wrap gap-2 mb-6">
+                        <div className="flex flex-wrap gap-3 mb-8">
                             {[
-                                { id: '', label: 'Judiciais' },
-                                { id: 'Processo Administrativo', label: 'Administrativo' },
-                                { id: 'Consultoria', label: 'Consultoria' },
-                                { id: 'Assessoria Jurídica', label: 'Assessoria' },
-                                { id: 'Outros', label: 'Outros' }
+                                { id: '', label: 'CONTENCIOSO' },
+                                { id: 'Processo Administrativo', label: 'ADMINISTRATIVO' },
+                                { id: 'Consultoria', label: 'CONSULTORIA' },
+                                { id: 'Assessoria Jurídica', label: 'ASSESSORIA' },
+                                { id: 'Outros', label: 'DIVERSOS' }
                             ].map((type) => (
                                 <button 
                                     key={type.label}
@@ -819,10 +814,10 @@ export function ContractFormModal(props: Props) {
                                         if(type.id === '') { handleTypeChange(''); setIsStandardCNJ(true); } 
                                         else handleTypeChange(type.id); 
                                     }} 
-                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${
+                                    className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] transition-all shadow-md active:scale-95 ${
                                         otherProcessType === type.id || (!otherProcessType && type.id === '') 
-                                        ? 'bg-[#0a192f] text-white scale-105' 
-                                        : 'bg-white/50 text-gray-500 hover:bg-white hover:text-[#0a192f] border border-gray-100'
+                                        ? 'bg-[#0a192f] text-white ring-4 ring-[#0a192f]/5' 
+                                        : 'bg-white text-gray-400 hover:text-[#0a192f] border border-gray-100'
                                     }`}
                                 >
                                     {type.label}
@@ -881,38 +876,42 @@ export function ContractFormModal(props: Props) {
                         />
                         <LegalProcessList processes={processes} setViewProcess={setViewProcess} setViewProcessIndex={setViewProcessIndex} editProcess={editProcess} removeProcess={removeProcess} />
                     </section>
-                    <div className="bg-white/50 p-6 rounded-2xl border border-white/40 shadow-sm">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Observações do Objeto</label>
-                        <textarea className="w-full border border-gray-200 rounded-xl p-4 text-sm h-24 focus:border-[#0a192f] outline-none bg-white font-medium shadow-inner resize-none" value={formData.observations} onChange={(e) => setFormData({...formData, observations: toTitleCase(e.target.value)})} placeholder="Detalhes específicos sobre o objeto ou andamento..."></textarea>
+                    <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-4 ml-1">Observações Operacionais</label>
+                        <textarea className="w-full border border-gray-200 rounded-2xl p-5 text-[13px] h-32 focus:border-[#0a192f] outline-none bg-gray-50/50 font-medium shadow-inner resize-none transition-all" value={formData.observations} onChange={(e) => setFormData({...formData, observations: toTitleCase(e.target.value)})} placeholder="DETALHES ESPECÍFICOS SOBRE O OBJETO, ANDAMENTOS RELEVANTES OU PARTICULARIDADES DO FEITO..."></textarea>
                     </div>
                 </div>
             )}
 
             {activeTab === 4 && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-left-2 duration-200 overflow-visible">
-                    <ContractDocuments documents={documents} isEditing={isEditing} uploading={uploading} status={formData.status} onUpload={handleFileUpload} onDownload={handleDownload} onDelete={handleDeleteDocument} />
+                <div className="space-y-10 animate-in fade-in slide-in-from-left-4 duration-500 overflow-visible">
+                    <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
+                        <ContractDocuments documents={documents} isEditing={isEditing} uploading={uploading} status={formData.status} onUpload={handleFileUpload} onDownload={handleDownload} onDelete={handleDeleteDocument} />
+                    </div>
                 </div>
             )}
 
         </div>
-        <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-[#0a192f] rounded-b-[2rem]">
-          <button onClick={onClose} className="px-6 py-2.5 text-white/60 hover:text-white font-black uppercase text-[11px] tracking-widest transition-all">Cancelar</button>
-          <button onClick={handleSaveWithIntegrations} disabled={isLoading} className="px-8 py-2.5 bg-white text-[#0a192f] rounded-xl hover:bg-gray-100 shadow-xl flex items-center transition-all transform active:scale-95 font-black uppercase text-[11px] tracking-widest disabled:opacity-50">
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-            {isLoading ? 'Salvando...' : 'Finalizar e Salvar'}
+
+        {/* Footer Actions Manager Style */}
+        <div className="p-8 border-t border-white/10 flex justify-end gap-5 bg-[#0a192f] rounded-b-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.15)] relative z-50">
+          <button onClick={onClose} className="px-8 py-3 text-white/40 hover:text-white font-black uppercase text-[10px] tracking-[0.2em] transition-all active:scale-95">Encerrar Edição</button>
+          <button onClick={handleSaveWithIntegrations} disabled={isLoading} className="px-12 py-3 bg-white text-[#0a192f] rounded-xl hover:bg-amber-500 transition-all transform active:scale-95 font-black uppercase text-[10px] tracking-[0.2em] disabled:opacity-50 shadow-2xl shadow-white/5 flex items-center">
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-3 text-amber-500" /> : <Save className="w-4 h-4 mr-3 text-amber-500" />}
+            {isLoading ? 'Sincronizando...' : 'Efetivar Registro'}
           </button>
         </div>
       </div>
 
        {activeManager && (
          <OptionManager 
-           title={activeManager === 'area' ? "Gerenciar Áreas" : activeManager === 'position' ? "Gerenciar Posições" : activeManager === 'court' ? "Gerenciar Tribunais" : activeManager === 'vara' ? "Gerenciar Varas" : activeManager === 'comarca' ? "Gerenciar Comarcas" : activeManager === 'class' ? "Gerenciar Classes" : activeManager === 'subject' ? "Gerenciar Assuntos" : activeManager === 'justice' ? "Gerenciar Justiças" : activeManager === 'magistrate' ? "Gerenciar Magistrados" : activeManager === 'opponent' ? "Gerenciar Contrário" : activeManager === 'author' ? "Gerenciar Autores" : activeManager === 'location' ? "Gerenciar Locais de Faturamento" : activeManager === 'client' ? "Gerenciar Clientes" : "Gerenciar"}
+           title={activeManager === 'area' ? "Gestão de Áreas Jurídicas" : activeManager === 'position' ? "Gestão de Posições" : activeManager === 'court' ? "Gestão de Tribunais" : activeManager === 'vara' ? "Gestão de Varas" : activeManager === 'comarca' ? "Gestão de Comarcas" : activeManager === 'class' ? "Gestão de Classes" : activeManager === 'subject' ? "Gestão de Assuntos" : activeManager === 'justice' ? "Gestão de Esferas" : activeManager === 'magistrate' ? "Gestão de Magistrados" : activeManager === 'opponent' ? "Gestão de Adversa" : activeManager === 'author' ? "Gestão de Autores" : activeManager === 'location' ? "Domicílios Fiscais" : activeManager === 'client' ? "Gestão de Terceiros" : "Configurador"}
            options={activeManager === 'area' ? options.legalAreas : activeManager === 'position' ? options.positionsList : activeManager === 'court' ? options.courtOptions : activeManager === 'vara' ? options.varaOptions : activeManager === 'comarca' ? options.comarcaOptions : activeManager === 'class' ? options.classOptions : activeManager === 'subject' ? options.subjectOptions : activeManager === 'justice' ? options.justiceOptions : activeManager === 'magistrate' ? options.magistrateOptions : activeManager === 'opponent' ? options.opponentOptions : activeManager === 'author' ? options.authorOptions : activeManager === 'location' ? options.billingLocations : activeManager === 'client' ? options.clientOptions : []}
            onAdd={(v) => options.handleGenericAdd(v, { title: newMagistrateTitle, setNewSubject, setNewMagistrateName })}
            onRemove={options.handleGenericRemove}
            onEdit={options.handleGenericEdit}
            onClose={() => setActiveManager(null)}
-           placeholder={activeManager === 'comarca' && !currentProcess.uf ? "Selecione a UF primeiro" : "Digite o nome"}
+           placeholder={activeManager === 'comarca' && !currentProcess.uf ? "Selecione a UF primeiro" : "Entrada de dados..."}
         />
        )}
        

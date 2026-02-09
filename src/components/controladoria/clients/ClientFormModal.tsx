@@ -130,25 +130,25 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-          <h2 className="text-xl font-bold text-gray-800">{client ? 'Editar Cliente' : 'Novo Cliente'}</h2>
-          <button onClick={onClose}><X className="w-6 h-6 text-gray-400 hover:text-gray-600" /></button>
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in">
+      <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden border border-white/20 animate-in zoom-in-95">
+        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-[#0a192f]">
+          <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">{client ? 'Atualizar Registro' : 'Novo Registro de Terceiro'}</h2>
+          <button onClick={onClose} className="p-2 text-white/40 hover:text-white transition-all"><X className="w-6 h-6" /></button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[80vh]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-8 overflow-y-auto max-h-[75vh] custom-scrollbar bg-gray-50/30">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* CNPJ / Tipo */}
-            <div className="md:col-span-2 flex gap-4 items-start">
-               <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">CPF/CNPJ</label>
+            <div className="md:col-span-2 flex flex-col md:flex-row gap-6 items-start">
+               <div className="flex-1 w-full">
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">CPF ou CNPJ</label>
                   <div className="flex gap-2">
                     <input 
                         type="text" 
                         disabled={formData.is_person}
-                        className="flex-1 border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-salomao-blue disabled:bg-gray-100"
+                        className="flex-1 border border-gray-200 rounded-xl p-4 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white disabled:bg-gray-100/50"
                         value={formData.cnpj || ''}
                         onChange={e => setFormData({...formData, cnpj: maskCNPJ(e.target.value)})}
                         placeholder="00.000.000/0000-00"
@@ -156,53 +156,54 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
                     <button 
                         onClick={handleCNPJSearch}
                         disabled={formData.is_person || !formData.cnpj}
-                        className="p-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                        className="p-4 bg-[#0a192f] text-white rounded-xl hover:bg-slate-800 disabled:opacity-30 transition-all shadow-lg active:scale-95"
                     >
-                        {searching ? <Loader2 className="w-4 h-4 animate-spin"/> : <Search className="w-4 h-4"/>}
+                        {searching ? <Loader2 className="w-5 h-5 animate-spin"/> : <Search className="w-5 h-5 text-amber-500"/>}
                     </button>
                   </div>
-                  <div className="mt-2 flex items-center">
+                  <div className="mt-3 flex items-center ml-1">
                     <input 
                         type="checkbox" 
                         id="is_person" 
                         checked={formData.is_person} 
                         onChange={e => setFormData({...formData, is_person: e.target.checked, cnpj: undefined})}
-                        className="rounded text-salomao-blue"
+                        className="w-4 h-4 rounded border-gray-300 text-[#0a192f] focus:ring-[#0a192f]"
                     />
-                    <label htmlFor="is_person" className="ml-2 text-xs text-gray-500">Pessoa Física (Sem CNPJ)</label>
+                    <label htmlFor="is_person" className="ml-2 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer">Pessoa Física / Sem documento</label>
                   </div>
                </div>
-               <div className="flex-1">
+               <div className="flex-1 w-full">
                   <CustomSelect 
                     label="Sócio Responsável"
                     value={formData.partner_id || ''}
                     onChange={val => setFormData({...formData, partner_id: val})}
-                    options={[{label: 'Selecione', value: ''}, ...partners.map(p => ({label: p.name, value: p.id}))]}
+                    options={[{label: 'NÃO ATRIBUÍDO', value: ''}, ...partners.map(p => ({label: p.name.toUpperCase(), value: p.id}))]}
                   />
                </div>
             </div>
 
             {/* Nome */}
             <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Nome Completo *</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo ou Razão Social *</label>
                 <input 
                     type="text" 
-                    className={`w-full border rounded-lg p-2.5 text-sm outline-none focus:border-salomao-blue ${duplicateClients.length > 0 ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'}`}
+                    className={`w-full border rounded-xl p-4 text-sm font-bold uppercase tracking-tight outline-none transition-all shadow-sm ${duplicateClients.length > 0 ? 'border-amber-400 bg-amber-50/50 text-amber-900' : 'border-gray-200 bg-white text-[#0a192f] focus:border-[#0a192f]'}`}
                     value={formData.name}
                     onChange={e => setFormData({...formData, name: toTitleCase(e.target.value)})}
+                    placeholder="DIGITE O NOME PARA IDENTIFICAÇÃO"
                 />
                 
                 {/* AVISO DE DUPLICIDADE */}
                 {duplicateClients.length > 0 && (
-                    <div className="mt-2 p-2 bg-yellow-100 border border-yellow-200 rounded-lg animate-in fade-in slide-in-from-top-1">
-                        <div className="flex items-center gap-2 mb-1">
-                            <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                            <span className="text-xs font-bold text-yellow-700">Clientes similares encontrados:</span>
+                    <div className="mt-3 p-4 bg-amber-100 border border-amber-200 rounded-2xl animate-in slide-in-from-top-2">
+                        <div className="flex items-center gap-2 mb-2">
+                            <AlertTriangle className="w-4 h-4 text-amber-600" />
+                            <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Alerta de Integridade - Registros Similares:</span>
                         </div>
-                        <ul className="space-y-1">
+                        <ul className="space-y-1.5">
                             {duplicateClients.map(dup => (
-                                <li key={dup.id} className="text-xs text-yellow-800 bg-yellow-50/50 p-1 rounded">
-                                    {dup.name} {dup.cnpj ? ` - ${maskCNPJ(dup.cnpj)}` : ''}
+                                <li key={dup.id} className="text-[10px] font-bold text-amber-800 bg-white/50 px-3 py-1.5 rounded-lg border border-amber-200/50">
+                                    {dup.name.toUpperCase()} {dup.cnpj ? ` • ${maskCNPJ(dup.cnpj)}` : ''}
                                 </li>
                             ))}
                         </ul>
@@ -212,59 +213,65 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
 
             {/* Contato */}
             <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">E-mail</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">E-mail de Contato</label>
                 <input 
                     type="email" 
-                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-salomao-blue"
+                    className="w-full border border-gray-200 rounded-xl p-4 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white"
                     value={formData.email || ''}
-                    onChange={e => setFormData({...formData, email: e.target.value})}
+                    onChange={e => setFormData({...formData, email: e.target.value.toLowerCase()})}
+                    placeholder="exemplo@dominio.com"
                 />
             </div>
             <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Telefone</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Telefone Principal</label>
                 <input 
                     type="text" 
-                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-salomao-blue"
+                    className="w-full border border-gray-200 rounded-xl p-4 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white"
                     value={formData.phone || ''}
                     onChange={e => setFormData({...formData, phone: e.target.value})}
+                    placeholder="(00) 00000-0000"
                 />
             </div>
 
             {/* Endereço */}
             <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Endereço</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Logradouro</label>
                 <input 
                     type="text" 
-                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-salomao-blue"
+                    className="w-full border border-gray-200 rounded-xl p-4 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white"
                     value={formData.address || ''}
                     onChange={e => setFormData({...formData, address: toTitleCase(e.target.value)})}
+                    placeholder="RUA, AVENIDA, ETC"
                 />
             </div>
             <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Número</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Número</label>
                 <input 
                     type="text" 
-                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-salomao-blue"
+                    className="w-full border border-gray-200 rounded-xl p-4 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white"
                     value={formData.number || ''}
                     onChange={e => setFormData({...formData, number: e.target.value})}
+                    placeholder="S/N"
                 />
             </div>
             <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Complemento</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Complemento</label>
                 <input 
                     type="text" 
-                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-salomao-blue"
+                    className="w-full border border-gray-200 rounded-xl p-4 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white"
                     value={formData.complement || ''}
                     onChange={e => setFormData({...formData, complement: toTitleCase(e.target.value)})}
+                    placeholder="SALA, BLOCO, ETC"
                 />
             </div>
             <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Cidade</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cidade</label>
                 <input 
                     type="text" 
-                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-salomao-blue"
+                    className="w-full border border-gray-200 rounded-xl p-4 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white"
                     value={formData.city || ''}
                     onChange={e => setFormData({...formData, city: toTitleCase(e.target.value)})}
+                    placeholder="MUNICÍPIO"
                 />
             </div>
             <div>
@@ -272,21 +279,22 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
                     label="Estado (UF)"
                     value={formData.uf || ''}
                     onChange={val => setFormData({...formData, uf: val})}
-                    options={UFS.map(u => ({label: u.nome, value: u.sigla}))}
+                    options={UFS.map(u => ({label: u.nome.toUpperCase(), value: u.sigla}))}
                 />
             </div>
 
           </div>
         </div>
 
-        <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
-            <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">Cancelar</button>
+        <div className="p-8 border-t border-gray-100 flex justify-end gap-4 bg-white">
+            <button onClick={onClose} className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-all">Descartar</button>
             <button 
                 onClick={handleSave} 
                 disabled={loading}
-                className="px-6 py-2 bg-salomao-blue text-white rounded-lg hover:bg-blue-900 flex items-center shadow-lg transition-transform active:scale-95"
+                className="px-10 py-4 bg-[#0a192f] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center shadow-xl shadow-[#0a192f]/30 transition-all active:scale-95 disabled:opacity-50"
             >
-                {loading ? 'Salvando...' : <><Save className="w-4 h-4 mr-2" /> Salvar Cliente</>}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-3"/> : <Save className="w-4 h-4 mr-3 text-amber-500" />} 
+                Confirmar Registro
             </button>
         </div>
       </div>

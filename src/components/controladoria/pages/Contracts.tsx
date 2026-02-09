@@ -11,13 +11,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner'; 
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../types';
 
-// --- IMPORTAÇÕES DE COMPONENTES (Rotas corrigidas para pastas irmãs dentro de controladoria) ---
-import { ContractFormModal } from './components/ContractFormModal';
-import { ContractDetailsModal } from './components/ContractDetailsModal';
-import { PartnerManagerModal } from './components/PartnerManagerModal';
-import { AnalystManagerModal } from './components/AnalystManagerModal';
-import { ConfirmModal } from '../../ui/ConfirmModal';
-import { EmptyState } from '../../ui/EmptyState';
+// --- IMPORTAÇÕES DE COMPONENTES (Rotas corrigidas de acordo com o mapeamento) ---
+import { ContractFormModal } from '../contracts/ContractFormModal';
+import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
+import { PartnerManagerModal } from '../partners/PartnerManagerModal';
+import { AnalystManagerModal } from '../analysts/AnalystManagerModal';
+import { ConfirmModal } from '../ui/ConfirmModal';
+import { EmptyState } from '../ui/EmptyState';
 import { parseCurrency } from '../utils/masks';
 
 const getStatusColor = (status: string) => {
@@ -934,7 +934,7 @@ export function Contracts() {
         </>
       )}
 
-      {/* --- MODAIS (Caminhos e props mantidos) --- */}
+      {/* --- MODAIS --- */}
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}

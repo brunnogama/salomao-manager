@@ -1,12 +1,12 @@
 import React from 'react';
 import { Plus, ChevronDown } from 'lucide-react';
-import { maskMoney } from '../utils/masks'; // Caminho corrigido para a estrutura da controladoria
+import { maskMoney } from '../../utils/masks'; // Caminho corrigido para subir dois níveis (de components/contracts/components para controladoria/utils)
 
 const MinimalSelect = ({ value, onChange, options }: { value: string, onChange: (val: string) => void, options: string[] }) => {
     return (
         <div className="relative h-full w-full">
             <select
-                className="w-full h-full appearance-none bg-transparent pl-3 pr-8 text-[10px] font-bold text-gray-700 outline-none cursor-pointer focus:bg-gray-50 transition-colors uppercase"
+                className="w-full h-full appearance-none bg-transparent pl-3 pr-8 text-[10px] font-black text-[#0a192f] outline-none cursor-pointer focus:bg-gray-100 transition-colors uppercase tracking-widest"
                 value={value || '1x'}
                 onChange={(e) => onChange(e.target.value)}
             >
@@ -14,7 +14,7 @@ const MinimalSelect = ({ value, onChange, options }: { value: string, onChange: 
                     <option key={opt} value={opt}>{opt}</option>
                 ))}
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 pointer-events-none" />
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-500 pointer-events-none" />
         </div>
     );
 };
@@ -35,37 +35,37 @@ export const FinancialInputWithInstallments = ({
 }: FinancialInputProps) => {
   const installmentOptions = Array.from({ length: 24 }, (_, i) => `${i + 1}x`);
   return (
-    <div>
-      <label className="text-[10px] font-black block mb-1 text-gray-500 uppercase tracking-widest">{label}</label>
-      <div className="flex rounded-lg shadow-sm h-[42px]">
+    <div className="w-full">
+      <label className="text-[10px] font-black block mb-2 text-gray-400 uppercase tracking-[0.15em] ml-1">{label}</label>
+      <div className="flex rounded-xl shadow-sm h-[44px] overflow-hidden border border-gray-200 focus-within:border-[#0a192f] transition-all">
         {onChangeClause && (
              <input 
                 type="text" 
-                className="w-14 border border-gray-300 rounded-l-lg p-2.5 text-xs font-bold bg-gray-50 focus:border-[#0a192f] outline-none border-r-0 placeholder-gray-400 text-center uppercase"
+                className="w-16 border-r border-gray-100 p-2.5 text-[10px] font-black text-[#0a192f] bg-gray-50 focus:bg-white outline-none placeholder:text-gray-300 text-center uppercase tracking-tighter"
                 value={clause || ''} 
                 onChange={(e) => onChangeClause(e.target.value)}
                 placeholder="CL."
-                title="Cláusula (ex: 2.1)"
+                title="Cláusula contratual"
              />
         )}
         <input 
           type="text" 
-          className={`flex-1 border border-gray-300 p-2.5 text-sm bg-white focus:border-[#0a192f] outline-none min-w-0 font-medium ${!onChangeClause ? 'rounded-l-lg' : ''} ${!onAdd ? 'rounded-r-none border-r-0' : ''}`}
+          className="flex-1 p-3 text-sm font-bold text-[#0a192f] bg-white outline-none min-w-0 placeholder:text-gray-300"
           value={value || ''} 
           onChange={(e) => onChangeValue(maskMoney(e.target.value))}
           placeholder="R$ 0,00"
         />
-        <div className={`w-16 border-y border-r border-gray-300 bg-gray-50 ${!onAdd ? 'rounded-r-lg' : ''}`}>
+        <div className="w-20 bg-gray-50 border-l border-gray-100 transition-colors hover:bg-gray-100">
            <MinimalSelect value={installments || '1x'} onChange={onChangeInstallments} options={installmentOptions} />
         </div>
         {onAdd && (
           <button 
             onClick={onAdd}
-            className="bg-[#0a192f] text-white px-3 rounded-r-lg hover:bg-slate-800 transition-colors flex items-center justify-center border-l border-[#0a192f] active:scale-95"
+            className="bg-[#0a192f] text-white px-4 hover:bg-slate-800 transition-all flex items-center justify-center border-l border-white/10 active:scale-95"
             type="button"
-            title="Adicionar valor"
+            title="Adicionar valor ao contrato"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-amber-500" />
           </button>
         )}
       </div>
