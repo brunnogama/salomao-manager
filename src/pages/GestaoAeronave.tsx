@@ -74,7 +74,7 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
 
     // Insights
     const economia = mediaComercial - mediaParticular
-    const percentual = mediaComercial > 0 ? ((economia / mediaComercial) * 100) : 0
+    const percentual = mediaComercial > 0 ? ((economy / mediaComercial) * 100) : 0
     const economizando = economia > 0
 
     return {
@@ -140,6 +140,7 @@ export function GestaoAeronave({
   // --- Estados de Controle ---
   const [activeTab, setActiveTab] = useState<'dashboard' | 'comparativo' | 'faturas' | 'dados'>('dashboard')
   const [filterOrigem, setFilterOrigem] = useState<'todos' | 'missao' | 'fixa'>('todos')
+  const [filterCentroCusto, setFilterCentroCusto] = useState<string>('todos')
   
   // --- Estados de Dados e Filtros ---
   const [data, setData] = useState<AeronaveLancamento[]>([])
@@ -183,6 +184,12 @@ export function GestaoAeronave({
     fetchDados()
   }, [])
 
+  // Lista de Centros de Custo únicos para o filtro
+  const centrosCusto = useMemo(() => {
+    const unique = new Set(data.map(item => item.centro_custo).filter(Boolean))
+    return Array.from(unique).sort()
+  }, [data])
+
   // --- Filtragem no Front-end ---
   const filteredData = useMemo(() => {
     return data.filter(item => {
@@ -203,6 +210,9 @@ export function GestaoAeronave({
       // 1. Filtro de Origem (não aplicar na aba Faturas e Comparativo)
       if (activeTab !== 'faturas' && activeTab !== 'comparativo' && filterOrigem !== 'todos' && item.origem !== filterOrigem) return false
 
+      // Filtro de Centro de Custo (apenas para Comparativo)
+      if (activeTab === 'comparativo' && filterCentroCusto !== 'todos' && item.centro_custo !== filterCentroCusto) return false
+
       // 2. Filtro de Texto (Busca)
       const searchString = searchTerm.toLowerCase()
       const matchSearch = 
@@ -221,7 +231,7 @@ export function GestaoAeronave({
 
       return true
     })
-  }, [data, filterOrigem, searchTerm, startDate, endDate, activeTab])
+  }, [data, filterOrigem, searchTerm, startDate, endDate, activeTab, filterCentroCusto])
 
   // --- Agrupamento de Faturas (Tarefa 3) ---
   const faturasAgrupadas = useMemo(() => {
@@ -548,7 +558,7 @@ export function GestaoAeronave({
       {/* 2. Cards de Totais */}
       {activeTab === 'comparativo' ? (
         // Cards do Comparativo
-        <ComparativoCards data={data} />
+        <ComparativoCards data={filteredData} />
       ) : (
         // Cards Normais (Dashboard, Faturas, Dados)
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -622,7 +632,7 @@ export function GestaoAeronave({
       {/* 3. Toolbar Principal */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
         <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex gap-2 bg-gray-100/50 p-1 rounded-xl w-fit">
+          <div className="flex gap-2 bg-gray-100/50 p-1 rounded-xl">
             <button
               onClick={() => {
                 setActiveTab('dashboard')
@@ -630,6 +640,7 @@ export function GestaoAeronave({
                 setSearchTerm('')
                 setStartDate('')
                 setEndDate('')
+                setFilterCentroCusto('todos')
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
                 activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
@@ -695,6 +706,28 @@ export function GestaoAeronave({
               >
                 Despesas Fixas
               </button>
+            </div>
+          )}
+
+          {/* Filtro de Centro de Custo para Comparativo */}
+          {activeTab === 'comparativo' && (
+            <div className="flex flex-col gap-1 min-w-[200px]">
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                Centro de Custo
+              </span>
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
+                <Building2 className="h-4 w-4 text-gray-400" />
+                <select
+                  value={filterCentroCusto}
+                  onChange={(e) => setFilterCentroCusto(e.target.value)}
+                  className="w-full text-xs font-semibold text-gray-700 outline-none bg-transparent border-none focus:ring-0 cursor-pointer"
+                >
+                  <option value="todos">Todos os Centros</option>
+                  {centrosCusto.map(cc => (
+                    <option key={cc} value={cc}>{cc}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
 
@@ -776,7 +809,7 @@ export function GestaoAeronave({
             filterOrigem={filterOrigem}
           />
         ) : activeTab === 'comparativo' ? (
-          <AeronaveComparativoComercialParticular data={data} />
+          <AeronaveComparativoComercialParticular data={filteredData} />
         ) : activeTab === 'faturas' ? (
           <div className="overflow-x-auto custom-scrollbar pb-4">
             <table className="w-full text-left border-separate border-spacing-y-2 px-4 table-fixed">
