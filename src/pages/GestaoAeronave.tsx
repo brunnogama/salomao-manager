@@ -186,8 +186,8 @@ export function GestaoAeronave({
   // --- Filtragem no Front-end ---
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      // 0. FILTRO ESPECIAL PARA DASHBOARD: Excluir Voos Comerciais
-      if (activeTab === 'dashboard') {
+      // 0. FILTRO ESPECIAL PARA DASHBOARD E FATURAS: Excluir Voos Comerciais e Agência
+      if (activeTab === 'dashboard' || activeTab === 'faturas') {
         const aeronave = (item.aeronave || '').toLowerCase().trim()
         const despesa = (item.despesa || '').toLowerCase().trim()
         const tipo = (item.tipo || '').toLowerCase().trim()
@@ -196,7 +196,7 @@ export function GestaoAeronave({
         const isAgencia = despesa.includes('agência') || despesa.includes('agencia')
         const isPassagem = tipo.includes('passagem')
         
-        // Se for comercial/agência/passagem, excluir do dashboard
+        // Se for comercial/agência/passagem, excluir do dashboard e das faturas
         if (isComercial || isAgencia || isPassagem) return false
       }
       
