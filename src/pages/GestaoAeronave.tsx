@@ -566,7 +566,7 @@ export function GestaoAeronave({
       {activeTab === 'comparativo' ? (
         <ComparativoCards data={filteredData} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className={`grid grid-cols-1 ${activeTab === 'dashboard' ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4`}>
           <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
             <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
             <div>
@@ -616,21 +616,23 @@ export function GestaoAeronave({
             </div>
           </div>
 
-          {/* Card Cinza para Agência/Passagem */}
-          <div className="bg-gray-100 p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
-            <div className="absolute right-0 top-0 h-full w-1 bg-gray-400"></div>
-            <div>
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                Agência / Passagem
-              </p>
-              <p className="text-2xl font-black text-gray-700 mt-1">
-                {handleFormatCurrency(totalAgenciaPassagem)}
-              </p>
+          {/* Card Cinza para Agência/Passagem - Escondido apenas na aba Dashboard */}
+          {activeTab !== 'dashboard' && (
+            <div className="bg-gray-100 p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+              <div className="absolute right-0 top-0 h-full w-1 bg-gray-400"></div>
+              <div>
+                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                  Agência / Passagem
+                </p>
+                <p className="text-2xl font-black text-gray-700 mt-1">
+                  {handleFormatCurrency(totalAgenciaPassagem)}
+                </p>
+              </div>
+              <div className="p-3 bg-gray-200 rounded-xl">
+                <Plane className="h-6 w-6 text-gray-500" />
+              </div>
             </div>
-            <div className="p-3 bg-gray-200 rounded-xl">
-              <Plane className="h-6 w-6 text-gray-500" />
-            </div>
-          </div>
+          )}
         </div>
       )}
 
