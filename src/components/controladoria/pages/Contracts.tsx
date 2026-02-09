@@ -10,22 +10,24 @@ import * as XLSX from 'xlsx';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner'; 
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../types';
-import { ContractFormModal } from '../components/contracts/ContractFormModal';
-import { ContractDetailsModal } from '../components/contracts/ContractDetailsModal';
-import { PartnerManagerModal } from '../components/partners/PartnerManagerModal';
-import { AnalystManagerModal } from '../components/analysts/AnalystManagerModal';
-import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { EmptyState } from '../components/ui/EmptyState';
+
+// --- IMPORTAÇÕES DE COMPONENTES (Rotas corrigidas para pastas irmãs dentro de controladoria) ---
+import { ContractFormModal } from './components/ContractFormModal';
+import { ContractDetailsModal } from './components/ContractDetailsModal';
+import { PartnerManagerModal } from './components/PartnerManagerModal';
+import { AnalystManagerModal } from './components/AnalystManagerModal';
+import { ConfirmModal } from '../../ui/ConfirmModal';
+import { EmptyState } from '../../ui/EmptyState';
 import { parseCurrency } from '../utils/masks';
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'active': return 'bg-green-100 text-green-800 border-green-200';
-    case 'analysis': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'proposal': return 'bg-blue-100 text-blue-800 border-blue-200';
-    case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
-    case 'probono': return 'bg-purple-100 text-purple-800 border-purple-200';
-    default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'active': return 'bg-green-50 text-green-700 border-green-100';
+    case 'analysis': return 'bg-amber-50 text-amber-700 border-amber-100';
+    case 'proposal': return 'bg-blue-50 text-blue-700 border-blue-100';
+    case 'rejected': return 'bg-red-50 text-red-700 border-red-100';
+    case 'probono': return 'bg-purple-50 text-purple-700 border-purple-100';
+    default: return 'bg-gray-50 text-gray-700 border-gray-100';
   }
 };
 
@@ -59,7 +61,7 @@ const calculateTotalSuccess = (c: Contract) => {
   return total;
 };
 
-// Componente Local de Filtro Padronizado
+// Componente Local de Filtro Padronizado - Estilo Manager
 const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { icon?: React.ElementType, value: string, onChange: (val: string) => void, options: { label: string, value: string }[], placeholder: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -79,20 +81,20 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   return (
     <div className="relative min-w-[180px]" ref={wrapperRef}>
       <div
-        className="flex items-center bg-white px-3 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors select-none shadow-sm"
+        className="flex items-center bg-white px-4 py-2.5 rounded-xl border border-gray-200 cursor-pointer hover:border-[#0a192f] transition-all select-none shadow-sm"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {Icon && <Icon className="w-4 h-4 text-gray-500 mr-2 shrink-0" />}
-        <span className="text-sm text-gray-700 flex-1 truncate">{displayValue}</span>
-        <ChevronDown className={`w-3 h-3 text-gray-500 ml-2 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        {Icon && <Icon className="w-4 h-4 text-[#0a192f] mr-2 shrink-0" />}
+        <span className="text-[11px] font-black uppercase tracking-widest text-gray-700 flex-1 truncate">{displayValue}</span>
+        <ChevronDown className={`w-3 h-3 text-gray-400 ml-2 shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#0a192f]' : ''}`} />
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto flex flex-col animate-in fade-in zoom-in-95">
+        <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-100 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto flex flex-col animate-in fade-in zoom-in-95 overflow-hidden">
           {options.map((opt) => (
             <div
               key={opt.value}
-              className={`px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer ${value === opt.value ? 'bg-blue-50 font-medium' : ''}`}
+              className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${value === opt.value ? 'bg-amber-50 text-[#0a192f] border-amber-500' : 'border-transparent'}`}
               onClick={() => {
                 onChange(opt.value);
                 setIsOpen(false);
@@ -123,8 +125,8 @@ export function Contracts() {
 
   // Filtros e Ordenação
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false); // Estado para animação da busca
-  const searchRef = useRef<HTMLDivElement>(null); // Ref para fechar ao clicar fora
+  const [isSearchOpen, setIsSearchOpen] = useState(false); 
+  const searchRef = useRef<HTMLDivElement>(null); 
 
   const [statusFilter, setStatusFilter] = useState('all');
   const [partnerFilter, setPartnerFilter] = useState('');
@@ -594,20 +596,18 @@ export function Contracts() {
   ];
 
   return (
-    <div className="p-8 animate-in fade-in duration-500">
+    <div className="p-8 animate-in fade-in duration-500 bg-gray-50/50 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         {/* Esquerda: Título */}
         <div>
-          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
-            <FileSignature className="w-8 h-8" /> Casos
+          <h1 className="text-sm font-black text-[#0a192f] uppercase tracking-[0.3em] flex items-center gap-3">
+            <FileSignature className="w-6 h-6 text-amber-500" /> Casos & Propostas
           </h1>
-          <div className="flex items-center mt-1">
-            <p className="text-gray-500 mr-3">Gestão completa de casos e propostas.</p>
-          </div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Gestão centralizada de faturamento e contratos.</p>
         </div>
 
         {/* Direita: Filtros de Status/Sócio, Botão Novo, Notificações */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
            <FilterSelect
               icon={Filter}
               value={statusFilter}
@@ -626,8 +626,8 @@ export function Contracts() {
 
           {/* Botão Novo Caso */}
           {userRole !== 'viewer' && (
-            <button onClick={handleNew} className="bg-salomao-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold h-[40px] whitespace-nowrap">
-                <Plus className="w-5 h-5 mr-2" /> Novo Caso
+            <button onClick={handleNew} className="bg-[#0a192f] hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl shadow-lg transition-all flex items-center text-[10px] font-black uppercase tracking-widest h-[44px] active:scale-95">
+                <Plus className="w-4 h-4 mr-2 text-amber-500" /> Novo Caso
             </button>
           )}
 
@@ -635,37 +635,37 @@ export function Contracts() {
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className={`p-2 rounded-full relative transition-all h-[40px] w-[40px] flex items-center justify-center ${
+              className={`p-2 rounded-xl border relative transition-all h-[44px] w-[44px] flex items-center justify-center ${
                 notifications.length > 0
-                  ? 'bg-red-50 text-red-500 hover:bg-red-100'
-                  : 'bg-white border border-gray-200 text-gray-400 hover:bg-gray-100'
+                  ? 'bg-red-50 text-red-500 border-red-100 hover:bg-red-100'
+                  : 'bg-white border-gray-200 text-gray-400 hover:border-[#0a192f]'
               }`}
             >
               <Bell className={`w-5 h-5 ${notifications.length > 0 ? 'animate-pulse' : ''}`} />
               {notifications.length > 0 && (
-                <span className="absolute top-0 right-0 w-3 h-3 bg-red-600 border-2 border-white rounded-full"></span>
+                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-600 border-2 border-white rounded-full"></span>
               )}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95">
-                <div className="p-3 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
-                  <h4 className="text-xs font-bold text-gray-700 uppercase">Tarefas de Assinatura</h4>
-                  <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[10px] font-bold">{notifications.length}</span>
+              <div className="absolute right-0 mt-3 w-80 bg-white rounded-[1.5rem] shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95">
+                <div className="p-4 border-b border-gray-50 bg-[#0a192f] flex justify-between items-center">
+                  <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Pendências de Assinatura</h4>
+                  <span className="bg-amber-500 text-[#0a192f] px-2 py-0.5 rounded-full text-[10px] font-black">{notifications.length}</span>
                 </div>
-                <div className="max-h-64 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto custom-scrollbar">
                   {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-gray-400">Nenhuma pendência.</div>
+                    <div className="p-6 text-center text-[10px] font-bold text-gray-300 uppercase tracking-widest">Nenhuma pendência.</div>
                   ) : (
                     notifications.map(notif => (
                       <div
                         key={notif.id}
                         onClick={() => handleNotificationClick(notif.id)}
-                        className="p-3 border-b border-gray-50 last:border-0 hover:bg-blue-50 cursor-pointer transition-colors"
+                        className="p-4 border-b border-gray-50 last:border-0 hover:bg-amber-50 cursor-pointer transition-colors"
                       >
-                        <p className="text-sm font-medium text-gray-800 line-clamp-1">{notif.title}</p>
-                        <p className="text-xs text-gray-500 flex items-center mt-1">
-                          <Calendar className="w-3 h-3 mr-1" />
+                        <p className="text-xs font-black text-[#0a192f] line-clamp-1 uppercase tracking-tight">{notif.title}</p>
+                        <p className="text-[9px] font-bold text-gray-400 flex items-center mt-1.5 uppercase">
+                          <Calendar className="w-3 h-3 mr-1.5 text-amber-500" />
                           Vence: {new Date(notif.due_date).toLocaleDateString()}
                         </p>
                       </div>
@@ -679,38 +679,38 @@ export function Contracts() {
       </div>
 
       {/* Barra de Controles Inferior (Card Total + Ferramentas) */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm items-center justify-between">
+      <div className="flex flex-col md:flex-row gap-4 mb-8 bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm items-center justify-between">
         
         {/* Esquerda: Card de Total (FIXO) */}
-        <div className="flex items-center gap-3 pr-4 border-r border-gray-100 mr-2 min-w-[200px]">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                <Briefcase className="w-5 h-5" />
+        <div className="flex items-center gap-4 pr-6 border-r border-gray-100 mr-2 min-w-[220px]">
+            <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
+                <Briefcase className="w-6 h-6" />
             </div>
             <div>
-                <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Total de Casos</p>
-                <p className="text-xl font-bold text-gray-800 leading-none">{contracts.length}</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">Total de Casos</p>
+                <p className="text-2xl font-black text-[#0a192f] leading-none mt-1">{contracts.length}</p>
             </div>
         </div>
 
         {/* Grupo da Direita: Busca Animada, Datas, Ações */}
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end flex-1">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end flex-1">
             
             {/* Busca Animada Expandível */}
             <div 
               ref={searchRef}
               className={`
-                flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-white
-                ${isSearchOpen ? 'w-64 border border-gray-200 shadow-sm px-3 rounded-lg' : 'w-10 border border-transparent justify-center cursor-pointer hover:bg-gray-50 rounded-lg'}
-                h-[42px]
+                flex items-center overflow-hidden transition-all duration-500 ease-in-out bg-white
+                ${isSearchOpen ? 'w-72 border-[#0a192f] shadow-xl px-4 rounded-xl' : 'w-11 border-transparent justify-center cursor-pointer hover:bg-gray-100 rounded-xl'}
+                h-[44px] border
               `}
               onClick={() => !isSearchOpen && setIsSearchOpen(true)}
             >
-                <Search className={`w-5 h-5 text-gray-400 shrink-0 ${!isSearchOpen && 'cursor-pointer'}`} />
+                <Search className={`w-5 h-5 text-gray-400 shrink-0 ${isSearchOpen ? 'text-[#0a192f]' : ''}`} />
                 
                 <input
                     type="text"
-                    placeholder="Buscar..."
-                    className={`ml-2 bg-transparent outline-none text-sm w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
+                    placeholder="BUSCAR CASO OU CLIENTE..."
+                    className={`ml-3 bg-transparent outline-none text-[10px] font-bold uppercase tracking-widest w-full text-[#0a192f] placeholder:text-gray-300 ${!isSearchOpen && 'hidden'}`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     autoFocus={isSearchOpen}
@@ -719,7 +719,7 @@ export function Contracts() {
                 {isSearchOpen && searchTerm && (
                     <button 
                         onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }}
-                        className="ml-1 text-gray-400 hover:text-red-500"
+                        className="ml-2 text-gray-300 hover:text-red-500 transition-colors"
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -727,58 +727,58 @@ export function Contracts() {
             </div>
 
             {/* Separador Visual */}
-            <div className="h-6 w-px bg-gray-200 mx-1 hidden md:block"></div>
+            <div className="h-6 w-px bg-gray-200 mx-2 hidden md:block"></div>
 
             {/* Filtros de Data */}
             <div className="flex items-center gap-2">
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
-                 <span className="text-xs text-gray-400 mr-2">De</span>
+              <div className="flex items-center bg-gray-50/50 px-3 py-2 rounded-xl border border-gray-200 h-[44px]">
+                 <span className="text-[9px] font-black text-gray-400 uppercase mr-2">De</span>
                  <input 
                    type="date" 
                    value={startDate} 
                    onChange={(e) => setStartDate(e.target.value)}
-                   className="bg-transparent text-sm text-gray-700 outline-none w-[110px]"
+                   className="bg-transparent text-[11px] font-bold text-[#0a192f] outline-none w-[115px] cursor-pointer"
                  />
               </div>
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
-                 <span className="text-xs text-gray-400 mr-2">Até</span>
+              <div className="flex items-center bg-gray-50/50 px-3 py-2 rounded-xl border border-gray-200 h-[44px]">
+                 <span className="text-[9px] font-black text-gray-400 uppercase mr-2">Até</span>
                  <input 
                    type="date" 
                    value={endDate} 
                    onChange={(e) => setEndDate(e.target.value)}
-                   className="bg-transparent text-sm text-gray-700 outline-none w-[110px]"
+                   className="bg-transparent text-[11px] font-bold text-[#0a192f] outline-none w-[115px] cursor-pointer"
                  />
               </div>
             </div>
 
             {/* Ordenação */}
-            <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200 h-[42px] items-center">
+            <div className="flex bg-gray-50/50 rounded-xl p-1 border border-gray-200 h-[44px] items-center">
                 <button
                   onClick={() => { if(sortBy !== 'name') { setSortBy('name'); setSortOrder('asc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-                  className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all h-full ${sortBy === 'name' ? 'bg-white shadow text-salomao-blue' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex items-center px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-full ${sortBy === 'name' ? 'bg-white shadow-md text-[#0a192f]' : 'text-gray-400 hover:text-gray-600'}`}
                   title="Ordenar por Nome"
                 >
                   Nome
-                  {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowDownAZ className="w-3 h-3 ml-1" /> : <ArrowUpAZ className="w-3 h-3 ml-1" />)}
+                  {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowDownAZ className="w-3.5 h-3.5 ml-1.5" /> : <ArrowUpAZ className="w-3.5 h-3.5 ml-1.5" />)}
                 </button>
                 <button
                   onClick={() => { if(sortBy !== 'date') { setSortBy('date'); setSortOrder('desc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-                  className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all h-full ${sortBy === 'date' ? 'bg-white shadow text-salomao-blue' : 'text-gray-500 hover:text-gray-700'}`}
-                  title="Ordenar por Data do Status Atual"
+                  className={`flex items-center px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-full ${sortBy === 'date' ? 'bg-white shadow-md text-[#0a192f]' : 'text-gray-400 hover:text-gray-600'}`}
+                  title="Ordenar por Data"
                 >
                   Data
-                  {sortBy === 'date' && <ArrowUpDown className="w-3 h-3 ml-1" />}
+                  {sortBy === 'date' && <ArrowUpDown className="w-3.5 h-3.5 ml-1.5" />}
                 </button>
             </div>
 
             {/* Visualização */}
-            <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200 h-[42px] items-center">
-                <button onClick={() => setViewMode('grid')} className={`p-1.5 h-full flex items-center rounded ${viewMode === 'grid' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
-                <button onClick={() => setViewMode('list')} className={`p-1.5 h-full flex items-center rounded ${viewMode === 'list' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
+            <div className="flex bg-gray-50/50 rounded-xl p-1 border border-gray-200 h-[44px] items-center">
+                <button onClick={() => setViewMode('grid')} className={`p-2 h-full flex items-center rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-md text-[#0a192f]' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
+                <button onClick={() => setViewMode('list')} className={`p-2 h-full flex items-center rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-md text-[#0a192f]' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
             </div>
 
              {/* Exportar */}
-             <button onClick={exportToExcel} className="flex items-center px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium whitespace-nowrap h-[42px]">
+             <button onClick={exportToExcel} className="flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl hover:bg-emerald-100 transition-all text-[10px] font-black uppercase tracking-widest h-[44px] shadow-sm">
                 <Download className="w-4 h-4 mr-2" /> XLS
               </button>
 
@@ -786,84 +786,87 @@ export function Contracts() {
              {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="flex items-center px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors h-[42px]"
+                  className="flex items-center px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl border border-red-100 transition-all h-[44px]"
                   title="Limpar todos os filtros"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               )}
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-salomao-gold animate-spin" /></div>
+        <div className="flex flex-col justify-center items-center p-20 gap-4">
+          <Loader2 className="w-10 h-10 text-[#0a192f] animate-spin" />
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sincronizando registros...</p>
+        </div>
       ) : filteredContracts.length === 0 ? (
-         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-              <EmptyState
+          <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+               <EmptyState
                 icon={FileSearch}
                 title="Nenhum caso encontrado"
                 description={
                     searchTerm || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '' 
-                    ? "Não encontramos nenhum contrato com os filtros atuais. Tente limpar a busca."
-                    : "Você ainda não possui casos cadastrados. Comece criando um novo."
+                    ? "Não encontramos nenhum contrato com os filtros atuais. Verifique os critérios aplicados."
+                    : "A base de dados de controladoria está vazia. Inicie o registro de um novo caso."
                 }
-                actionLabel={searchTerm || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '' ? "Limpar Filtros" : "Novo Caso"}
+                actionLabel={searchTerm || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '' ? "Limpar Filtros" : "Novo Registro"}
                 onAction={searchTerm || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '' ? clearFilters : handleNew}
               />
-         </div>
+          </div>
       ) : (
         <>
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredContracts.map((contract) => {
                 const totalExito = calculateTotalSuccess(contract);
                 return (
-                  <div key={contract.id} onClick={() => handleView(contract)} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer group relative">
-                    <div className="flex justify-between items-start mb-3">
+                  <div key={contract.id} onClick={() => handleView(contract)} className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 hover:border-amber-200 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-4">
                       <div className="flex-1 min-w-0 pr-8">
-                        <span className="text-xs text-gray-400 font-mono mb-1 block">{contract.display_id}</span>
-                        <h3 className="font-bold text-gray-800 text-sm truncate" title={contract.client_name}>{contract.client_name}</h3>
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase mt-1 border ${getStatusColor(contract.status)}`}>
+                        <span className="text-[9px] text-gray-300 font-black tracking-widest mb-1.5 block uppercase">{contract.display_id}</span>
+                        <h3 className="font-black text-[#0a192f] text-sm truncate uppercase tracking-tight" title={contract.client_name}>{contract.client_name}</h3>
+                        <div className={`inline-flex px-2 py-0.5 rounded-lg text-[9px] font-black uppercase mt-2 border ${getStatusColor(contract.status)}`}>
                           {getStatusLabel(contract.status)}
-                        </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-1.5 text-xs text-gray-600">
+                    <div className="space-y-2.5 text-[11px] font-bold text-gray-500 uppercase tracking-tighter">
                       <div className="flex items-center">
-                        <Scale className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                        <Scale className="w-3.5 h-3.5 mr-2.5 text-amber-500" />
                         <span className="truncate">
                           {contract.processes && contract.processes.length > 0
                             ? contract.processes.map((p) => p.process_number).join(', ')
-                            : 'Sem processos'}
+                            : 'Sem processos vinculados'}
                         </span>
                       </div>
                       <div className="flex items-center">
-                        <User className="w-3.5 h-3.5 mr-2 text-salomao-gold" />
-                        <span className="truncate">{contract.partner_name || 'Sem sócio'}</span>
+                        <User className="w-3.5 h-3.5 mr-2.5 text-[#0a192f]" />
+                        <span className="truncate text-[#0a192f]">{contract.partner_name || 'Não atribuído'}</span>
                       </div>
                       {contract.status === 'active' && contract.hon_number && (
                         <div className="flex items-center">
-                          <Tag className="w-3.5 h-3.5 mr-2 text-gray-400" />
-                          <span className="font-mono bg-gray-100 px-1 rounded text-[10px]">{contract.hon_number}</span>
+                          <Tag className="w-3.5 h-3.5 mr-2.5 text-gray-300" />
+                          <span className="font-black bg-gray-50 text-gray-400 px-2 py-0.5 rounded-lg text-[9px] tracking-widest">{contract.hon_number}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="mt-3 pt-2 border-t border-gray-50 flex justify-between items-end">
-                      <div className="text-[10px] text-gray-400">
+                    <div className="mt-5 pt-4 border-t border-gray-50 flex justify-between items-end">
+                      <div className="text-[9px] font-black text-gray-300 uppercase tracking-widest">
                         <div className="flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
+                          <Clock className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
                           {new Date(getRelevantDate(contract) || '').toLocaleDateString()}
                         </div>
                       </div>
                       {contract.status === 'active' && (
                         <div className="text-right">
                           {contract.pro_labore && parseCurrency(contract.pro_labore) > 0 && (
-                            <div className="text-xs font-bold text-green-700">{formatMoney(contract.pro_labore)}</div>
+                            <div className="text-xs font-black text-emerald-600">{formatMoney(contract.pro_labore)}</div>
                           )}
                           {totalExito > 0 && (
-                            <div className="text-[10px] text-gray-500">+ {formatMoney(totalExito)} êxito (Total)</div>
+                            <div className="text-[8px] font-black text-gray-400 uppercase tracking-tighter mt-0.5">+ {formatMoney(totalExito)} Êxito</div>
                           )}
                         </div>
                       )}
@@ -873,55 +876,52 @@ export function Contracts() {
               })}
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-[#0a192f] text-white">
                   <tr>
-                    <th className="p-3">ID</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Cliente</th>
-                    <th className="p-3">Processos</th>
-                    <th className="p-3">Sócio</th>
-                    <th className="p-3">HON</th>
-                    <th className="p-3 text-right">Data Relevante</th>
-                    <th className="p-3 text-center">Arquivo</th>
-                    <th className="p-3 text-right">Ações</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest pl-8">ID</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">Status</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">Cliente</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">Processos</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">Sócio Responsável</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">HON</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-right">Data</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-center">Docs</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-right pr-8">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredContracts.map(contract => (
-                    <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-gray-50 cursor-pointer group">
-                      <td className="p-3 font-mono text-gray-500">{contract.display_id}</td>
-                      <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(contract.status)}`}>{getStatusLabel(contract.status)}</span></td>
-                      <td className="p-3 font-medium text-gray-800">{contract.client_name}</td>
-                      <td className="p-3 text-gray-600 max-w-[200px] truncate" title={contract.processes?.map(p => p.process_number).join(', ')}>
+                    <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-amber-50/30 cursor-pointer group transition-colors">
+                      <td className="p-4 pl-8 font-black text-[10px] text-gray-300 tracking-widest">{contract.display_id}</td>
+                      <td className="p-4"><span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border ${getStatusColor(contract.status)}`}>{getStatusLabel(contract.status)}</span></td>
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
+                      <td className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-tighter max-w-[200px] truncate" title={contract.processes?.map(p => p.process_number).join(', ')}>
                         {contract.processes && contract.processes.length > 0
                           ? contract.processes.map(p => p.process_number).join(', ')
                           : '-'}
                       </td>
-                      <td className="p-3 text-gray-600">{contract.partner_name}</td>
-                      <td className="p-3 font-mono text-gray-500">{contract.hon_number || '-'}</td>
-                      <td className="p-3 text-right text-gray-500">{new Date(getRelevantDate(contract) || '').toLocaleDateString()}</td>
-                      <td className="p-3 text-center">
+                      <td className="p-4 text-[11px] font-bold text-[#0a192f] uppercase">{contract.partner_name || '-'}</td>
+                      <td className="p-4 font-black text-[10px] text-gray-400 tracking-widest">{contract.hon_number || '-'}</td>
+                      <td className="p-4 text-right text-[10px] font-bold text-gray-500">{new Date(getRelevantDate(contract) || '').toLocaleDateString()}</td>
+                      <td className="p-4 text-center">
                         {(contract as any).documents?.length > 0 && (
                           <div className="flex justify-center">
-                            <Paperclip className="w-4 h-4 text-gray-500" />
+                            <Paperclip className="w-4 h-4 text-amber-500" />
                           </div>
                         )}
                       </td>
-                      <td className="p-3 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {/* Visualizar: Todos */}
-                            <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="text-gray-500 hover:bg-gray-100 p-1 rounded"><Eye className="w-4 h-4" /></button>
+                      <td className="p-4 text-right pr-8">
+                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                            <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="text-gray-400 hover:text-[#0a192f] p-2 hover:bg-white rounded-xl transition-all shadow-sm"><Eye className="w-4 h-4" /></button>
                             
-                            {/* Editar: Admin ou Editor */}
                             {userRole !== 'viewer' && (
-                                <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Edit className="w-4 h-4" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="text-blue-500 hover:text-blue-700 p-2 hover:bg-white rounded-xl transition-all shadow-sm"><Edit className="w-4 h-4" /></button>
                             )}
                             
-                            {/* Excluir: Apenas Admin */}
                             {userRole === 'admin' && (
-                                <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 className="w-4 h-4" /></button>
+                                <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="text-red-400 hover:text-red-600 p-2 hover:bg-white rounded-xl transition-all shadow-sm"><Trash2 className="w-4 h-4" /></button>
                             )}
                         </div>
                       </td>
@@ -934,13 +934,13 @@ export function Contracts() {
         </>
       )}
 
-      {/* --- CONFIRMATION MODAL --- */}
+      {/* --- MODAIS (Caminhos e props mantidos) --- */}
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={confirmDelete}
-        title="Excluir Contrato"
-        description="Tem certeza que deseja excluir este contrato? Esta ação não pode ser desfeita."
+        title="Remover Registro"
+        description="Esta ação excluirá permanentemente o caso e todo o histórico financeiro vinculado. Confirmar?"
       />
 
       <ContractDetailsModal
@@ -951,7 +951,6 @@ export function Contracts() {
         onDelete={handleDelete}
         processes={processes}
         documents={(formData as any).documents}
-        // Novo: Prop para controlar se botões de ação aparecem no modal
         canEdit={userRole !== 'viewer'}
         canDelete={userRole === 'admin'}
       />
