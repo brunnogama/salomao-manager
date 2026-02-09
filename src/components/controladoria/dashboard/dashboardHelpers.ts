@@ -1,6 +1,6 @@
 /**
- * Dashboard Helper Functions
- * Funções auxiliares para formatação e cálculos do dashboard
+ * Dashboard Helper Functions - Manager Design System
+ * Funções auxiliares para formatação e cálculos estratégicos do Business Intelligence
  */
 
 /**
@@ -17,22 +17,25 @@ export const formatMoney = (val: number): string =>
   }).format(val || 0);
 
 /**
- * Formata valor monetário de forma compacta (sem centavos)
- * Útil para gráficos e valores grandes
+ * Formata valor monetário de forma compacta (notação Enterprise)
+ * Útil para dashboards executivos e labels de gráficos
  * @param val - Valor numérico a ser formatado
- * @returns String formatada como moeda sem centavos (ex: R$ 1.234)
+ * @returns String formatada (ex: R$ 1.2M ou R$ 10K)
  */
 export const formatCompact = (val: number): string => {
   const absVal = Math.abs(val || 0);
   
-  // Para valores muito grandes, usar notação K/M
+  // Notação para Escala de Milhões
   if (absVal >= 1000000) {
     return `R$ ${(val / 1000000).toFixed(1)}M`;
-  } else if (absVal >= 10000) {
+  } 
+  
+  // Notação para Escala de Milhares
+  if (absVal >= 10000) {
     return `R$ ${(val / 1000).toFixed(0)}K`;
   }
   
-  // Para valores menores, formato normal sem centavos
+  // Formato padrão para valores menores sem casas decimais
   return new Intl.NumberFormat('pt-BR', { 
     style: 'currency', 
     currency: 'BRL', 
@@ -42,10 +45,10 @@ export const formatCompact = (val: number): string => {
 };
 
 /**
- * Calcula a variação percentual entre dois valores
- * @param atual - Valor atual
- * @param anterior - Valor anterior para comparação
- * @returns Percentual de variação (positivo = crescimento, negativo = redução)
+ * Calcula a variação percentual (Delta) entre dois períodos
+ * @param atual - Valor do período atual
+ * @param anterior - Valor do período anterior para benchmark
+ * @returns Percentual de variação
  */
 export const calcDelta = (atual: number, anterior: number): number => {
   if (anterior === 0) return atual > 0 ? 100 : 0;
@@ -53,27 +56,28 @@ export const calcDelta = (atual: number, anterior: number): number => {
 };
 
 /**
- * Gera texto descritivo de tendência baseado no delta percentual
+ * Gera texto descritivo de performance baseado na tipografia Manager
  * @param delta - Percentual de variação
- * @param context - Contexto da métrica (ex: "vendas", "conversões")
- * @returns String descritiva da tendência
+ * @param context - Contexto da métrica
+ * @returns String em caixa alta para labels de tendência
  */
 export const getTrendText = (delta: number, context: string): string => {
   const displayDelta = Math.abs(delta) > 999 ? '>999' : Math.abs(delta).toFixed(0);
+  const contextUpper = context.toUpperCase();
   
   if (delta > 0) {
-    return `Crescimento de ${displayDelta}% em ${context}`;
+    return `EXPANSÃO DE ${displayDelta}% EM ${contextUpper}`;
   }
   
   if (delta < 0) {
-    return `Redução de ${displayDelta}% em ${context}`;
+    return `REDUÇÃO DE ${displayDelta}% EM ${contextUpper}`;
   }
   
-  return `Estabilidade em ${context}`;
+  return `ESTABILIDADE EM ${contextUpper}`;
 };
 
 /**
- * Formata número sem notação monetária (apenas número)
+ * Formata número cardinal puro (padrão métrico)
  * @param val - Valor numérico
  * @returns String formatada (ex: 1.234)
  */
@@ -84,9 +88,9 @@ export const formatNumber = (val: number): string =>
   }).format(val || 0);
 
 /**
- * Calcula percentual entre dois valores
- * @param parte - Valor da parte
- * @param total - Valor total
+ * Calcula representatividade percentual
+ * @param parte - Valor do segmento
+ * @param total - Valor do universo total
  * @returns Percentual (0-100)
  */
 export const calcPercent = (parte: number, total: number): number => {
@@ -95,10 +99,10 @@ export const calcPercent = (parte: number, total: number): number => {
 };
 
 /**
- * Formata percentual com casas decimais
- * @param val - Valor do percentual (0-100)
- * @param decimals - Número de casas decimais (padrão: 1)
+ * Formata percentual com precisão customizada para o Manager UI
+ * @param val - Valor do percentual
+ * @param decimals - Casas decimais (padrão: 1)
  * @returns String formatada (ex: 45,5%)
  */
 export const formatPercent = (val: number, decimals: number = 1): string => 
-  `${val.toFixed(decimals)}%`;
+  `${val.toFixed(decimals).replace('.', ',')}%`;

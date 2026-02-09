@@ -1,7 +1,7 @@
 import React from 'react';
 import { BarChart3, BarChart4, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { formatMoney, formatCompact } from './dashboardHelpers';
-import { EmptyState } from '../components/ui/EmptyState';
+import { EmptyState } from '../ui/EmptyState';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,

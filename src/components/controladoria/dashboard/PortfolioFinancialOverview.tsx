@@ -13,10 +13,10 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
   const navigate = useNavigate();
 
   const handleDrillDown = (status: string) => {
-    navigate('/contratos', { state: { status } });
+    navigate('/controladoria/contracts', { state: { status } });
   };
 
-  // Cálculos protegidos
+  // Cálculos protegidos mantidos integralmente
   const totalCarteira = (metrics?.geral?.totalFechadoPL || 0) + 
                         (metrics?.geral?.totalFechadoExito || 0) + 
                         (metrics?.geral?.receitaRecorrenteAtiva || 0) + 
@@ -31,52 +31,50 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
       {/* Esquerda: Fotografia da Carteira Atual (Cards) */}
-      <div className='lg:col-span-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 h-full flex flex-col'>
+      <div className='lg:col-span-5 bg-white border border-gray-100 rounded-[2rem] shadow-sm hover:shadow-md transition-all p-8 h-full flex flex-col'>
         
-        {/* Header */}
-        <div className='mb-6 pb-5 border-b border-gray-100'>
-          <div className='flex items-center gap-3 mb-2'>
-            {/* CORREÇÃO: Alterado de #112240 para #0a192f */}
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] text-white shadow-lg'>
-              <Camera className='w-5 h-5' />
+        {/* Header Manager Style */}
+        <div className='mb-8 pb-6 border-b border-gray-50'>
+          <div className='flex items-center gap-4 mb-2'>
+            <div className='p-3 rounded-2xl bg-[#0a192f] text-white shadow-xl'>
+              <Camera className='w-6 h-6 text-amber-500' />
             </div>
-            <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
-              Fotografia da Carteira Atual
+            <h2 className='text-sm font-black text-[#0a192f] uppercase tracking-[0.3em]'>
+              Status do Portfólio
             </h2>
           </div>
-          <p className='text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-[48px]'>
-            Quantidade atual por status
+          <p className='text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-[60px]'>
+            Quantidade de registros ativos por estágio
           </p>
         </div>
 
-        {/* Cards Clicáveis para Drill-Down */}
-        <div className='grid grid-cols-2 gap-3 flex-1'>
+        {/* Cards Clicáveis para Drill-Down - Tipografia Densa */}
+        <div className='grid grid-cols-2 gap-4 flex-1'>
           
           {/* Sob Análise */}
           <button 
             onClick={() => handleDrillDown('analysis')} 
-            className='bg-gradient-to-br from-amber-600 to-amber-500 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-amber-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+            className='bg-amber-500 p-5 rounded-[1.5rem] shadow-xl text-center cursor-pointer hover:bg-amber-600 transition-all hover:scale-[1.03] active:scale-95 group'
           >
-            <Clock className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
+            <Clock className='mx-auto text-[#0a192f] mb-3 group-hover:rotate-12 transition-transform' size={24} />
+            <p className='text-3xl font-black text-white tracking-tighter'>
               {metrics.geral.emAnalise}
             </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
-              Sob Análise
+            <p className='text-[10px] text-white font-black uppercase tracking-[0.2em] mt-2 opacity-80'>
+              Análise
             </p>
           </button>
 
           {/* Propostas */}
-          {/* CORREÇÃO: Alterado de #112240 para #0a192f */}
           <button 
             onClick={() => handleDrillDown('proposal')} 
-            className='bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+            className='bg-[#0a192f] p-5 rounded-[1.5rem] shadow-xl text-center cursor-pointer hover:bg-slate-800 transition-all hover:scale-[1.03] active:scale-95 group border border-white/10'
           >
-            <Briefcase className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
+            <Briefcase className='mx-auto text-amber-500 mb-3 group-hover:rotate-12 transition-transform' size={24} />
+            <p className='text-3xl font-black text-white tracking-tighter'>
               {metrics.geral.propostasAtivas}
             </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
+            <p className='text-[10px] text-white font-black uppercase tracking-[0.2em] mt-2 opacity-80'>
               Propostas
             </p>
           </button>
@@ -84,13 +82,13 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           {/* Fechados */}
           <button 
             onClick={() => handleDrillDown('active')} 
-            className='bg-gradient-to-br from-green-700 to-green-600 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-green-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+            className='bg-emerald-600 p-5 rounded-[1.5rem] shadow-xl text-center cursor-pointer hover:bg-emerald-700 transition-all hover:scale-[1.03] active:scale-95 group'
           >
-            <CheckCircle2 className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
+            <CheckCircle2 className='mx-auto text-white mb-3 group-hover:rotate-12 transition-transform' size={24} />
+            <p className='text-3xl font-black text-white tracking-tighter'>
               {metrics.geral.fechados}
             </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
+            <p className='text-[10px] text-white font-black uppercase tracking-[0.2em] mt-2 opacity-80'>
               Fechados
             </p>
           </button>
@@ -98,196 +96,135 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           {/* Rejeitados */}
           <button 
             onClick={() => handleDrillDown('rejected')} 
-            className='bg-gradient-to-br from-red-600 to-red-500 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-red-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+            className='bg-red-600 p-5 rounded-[1.5rem] shadow-xl text-center cursor-pointer hover:bg-red-700 transition-all hover:scale-[1.03] active:scale-95 group'
           >
-            <XCircle className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
+            <XCircle className='mx-auto text-white mb-3 group-hover:rotate-12 transition-transform' size={24} />
+            <p className='text-3xl font-black text-white tracking-tighter'>
               {metrics.geral.rejeitados}
             </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
-              Rejeitados
+            <p className='text-[10px] text-white font-black uppercase tracking-[0.2em] mt-2 opacity-80'>
+              Retidos
             </p>
           </button>
 
           {/* Probono */}
-          <button 
-            onClick={() => handleDrillDown('probono')} 
-            className='bg-gradient-to-br from-purple-700 to-purple-600 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-purple-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
-          >
-            <HeartHandshake className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
-              {metrics.geral.probono}
-            </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
-              Probono
-            </p>
-          </button>
+          <div className='col-span-2 grid grid-cols-2 gap-4 mt-2'>
+              <button 
+                onClick={() => handleDrillDown('probono')} 
+                className='bg-purple-700 p-5 rounded-[1.5rem] shadow-xl text-center cursor-pointer hover:bg-purple-800 transition-all hover:scale-[1.03] active:scale-95 group'
+              >
+                <HeartHandshake className='mx-auto text-white mb-3' size={24} />
+                <p className='text-3xl font-black text-white tracking-tighter'>{metrics.geral.probono}</p>
+                <p className='text-[10px] text-white font-black uppercase tracking-[0.2em] mt-2'>Social</p>
+              </button>
 
-          {/* Total Geral */}
-          <button 
-            onClick={() => handleDrillDown('all')} 
-            className='bg-gradient-to-br from-[#1a2c4e] to-[#112240] p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
-          >
-            <Layers className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
-              {metrics.geral.totalCasos}
-            </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
-              Total Geral
-            </p>
-          </button>
+              <button 
+                onClick={() => handleDrillDown('all')} 
+                className='bg-gray-100 p-5 rounded-[1.5rem] border border-gray-200 text-center cursor-pointer hover:bg-white hover:shadow-xl transition-all hover:scale-[1.03] active:scale-95 group'
+              >
+                <Layers className='mx-auto text-[#0a192f] mb-3' size={24} />
+                <p className='text-3xl font-black text-[#0a192f] tracking-tighter'>{metrics.geral.totalCasos}</p>
+                <p className='text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2'>Universo</p>
+              </button>
+          </div>
         </div>
       </div>
 
       {/* Direita: Fotografia Financeira Total */}
-      <div className='lg:col-span-7 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 h-full flex flex-col'>
+      <div className='lg:col-span-7 bg-white border border-gray-100 rounded-[2rem] shadow-sm hover:shadow-md transition-all p-8 h-full flex flex-col'>
         
         {/* Header */}
-        <div className='mb-6 pb-5 border-b border-gray-100'>
-          <div className='flex items-center gap-3 mb-2'>
-            {/* CORREÇÃO: Alterado de #112240 para #0a192f */}
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] text-white shadow-lg'>
-              <Camera className='w-5 h-5' />
+        <div className='mb-8 pb-6 border-b border-gray-50'>
+          <div className='flex items-center gap-4 mb-2'>
+            <div className='p-3 rounded-2xl bg-[#0a192f] text-white shadow-xl'>
+              <Camera className='w-6 h-6 text-amber-500' />
             </div>
-            <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
-              Fotografia Financeira Total
+            <h2 className='text-sm font-black text-[#0a192f] uppercase tracking-[0.3em]'>
+              Consolidado Financeiro
             </h2>
           </div>
-          <p className='text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-[48px]'>
-            Visão consolidada de oportunidades e receita garantida
+          <p className='text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-[60px]'>
+            Valuation de propostas e receita bruta garantida
           </p>
         </div>
         
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-8 flex-1'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-10 flex-1'>
           
           {/* Coluna Propostas Enviadas */}
-          <div className="flex flex-col justify-between h-full">
+          <div className="flex flex-col justify-between h-full bg-gray-50/50 p-6 rounded-[1.5rem] border border-gray-100">
             <div>
-              <p className='text-[9px] font-black text-blue-600 uppercase tracking-widest mb-4'>
-                Valores das Propostas Enviadas
+              <p className='text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-6 flex items-center gap-2'>
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-600" /> Pipeline em Negociação
               </p>
-              <div className='space-y-3'>
-                {/* Items */}
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Pró-labore</span>
-                  <span className='text-[20px] font-black text-gray-700 tracking-tight'>
-                    {formatMoney(metrics.geral.valorEmNegociacaoPL)}
-                  </span>
+              <div className='space-y-4'>
+                <div className="flex justify-between items-baseline border-b border-gray-100 pb-2">
+                  <span className='text-[10px] font-black text-gray-400 uppercase tracking-widest'>Pró-labore</span>
+                  <span className='text-lg font-black text-[#0a192f] tracking-tighter'>{formatMoney(metrics.geral.valorEmNegociacaoPL)}</span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Êxito Total</span>
-                  <span className='text-[20px] font-black text-gray-700 tracking-tight'>
-                    {formatMoney(metrics.geral.valorEmNegociacaoExito)}
-                  </span>
+                <div className="flex justify-between items-baseline border-b border-gray-100 pb-2">
+                  <span className='text-[10px] font-black text-gray-400 uppercase tracking-widest'>Êxitos</span>
+                  <span className='text-lg font-black text-[#0a192f] tracking-tighter'>{formatMoney(metrics.geral.valorEmNegociacaoExito)}</span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Fixo Mensal</span>
-                  <span className='text-[20px] font-black text-gray-700 tracking-tight'>
-                    {formatMoney((metrics.geral as any).valorEmNegociacaoMensal || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Outros Honorários</span>
-                  <span className='text-[20px] font-black text-gray-700 tracking-tight'>
-                    {formatMoney((metrics.geral as any).valorEmNegociacaoOutros || 0)}
-                  </span>
+                <div className="flex justify-between items-baseline border-b border-gray-100 pb-2">
+                  <span className='text-[10px] font-black text-gray-400 uppercase tracking-widest'>Fixos</span>
+                  <span className='text-lg font-black text-[#0a192f] tracking-tighter'>{formatMoney((metrics.geral as any).valorEmNegociacaoMensal || 0)}</span>
                 </div>
                 
-                {/* Total */}
-                <div className='flex justify-between items-end border-t border-gray-200 pt-3 mt-4'>
-                  <span className='text-[9px] font-black text-gray-500 uppercase tracking-widest'>
-                    Total Geral
-                  </span>
-                  <span className='text-[24px] font-black text-[#1e3a8a] tracking-tight'>
-                    {formatMoney(totalNegociacao)}
-                  </span>
+                <div className='flex flex-col items-end pt-4'>
+                  <span className='text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1'>Potencial Estimado</span>
+                  <span className='text-3xl font-black text-blue-600 tracking-tighter'>{formatMoney(totalNegociacao)}</span>
                 </div>
               </div>
             </div>
             
-            {/* Médias */}
-            <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+            <div className="mt-8 pt-6 border-t border-gray-200 space-y-3">
               <div className="flex justify-between items-center">
-                <span className='text-[9px] font-black text-gray-400 uppercase tracking-wider'>
-                  Média Pró-labore (12m)
-                </span>
-                <span className="text-sm font-bold text-blue-600">
-                  {formatMoney(metrics.geral.mediaMensalNegociacaoPL)}
-                </span>
+                <span className='text-[9px] font-black text-gray-400 uppercase tracking-wider'>Ticket Médio PL</span>
+                <span className="text-[11px] font-black text-blue-600 tracking-tight">{formatMoney(metrics.geral.mediaMensalNegociacaoPL)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className='text-[9px] font-black text-gray-400 uppercase tracking-wider'>
-                  Média Êxito (12m)
-                </span>
-                <span className="text-sm font-bold text-blue-600">
-                  {formatMoney(metrics.geral.mediaMensalNegociacaoExito)}
-                </span>
+                <span className='text-[9px] font-black text-gray-400 uppercase tracking-wider'>Ticket Médio Êxito</span>
+                <span className="text-[11px] font-black text-blue-600 tracking-tight">{formatMoney(metrics.geral.mediaMensalNegociacaoExito)}</span>
               </div>
             </div>
           </div>
 
           {/* Coluna Contratos Fechados */}
-          <div className='md:border-l md:pl-8 border-gray-100 flex flex-col justify-between h-full'>
+          <div className='flex flex-col justify-between h-full bg-[#0a192f] p-6 rounded-[1.5rem] border border-white/10 shadow-2xl relative overflow-hidden'>
+            <div className="absolute top-0 right-0 -mt-6 -mr-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl"></div>
             <div>
-              <p className='text-[9px] font-black text-green-600 uppercase tracking-widest mb-4'>
-                Valores dos Contratos Fechados
+              <p className='text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2'>
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Receita Bruta Contratada
               </p>
-              <div className='space-y-3'>
-                {/* Items */}
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Pró-labore</span>
-                  <span className='text-[20px] font-black text-green-700 tracking-tight'>
-                    {formatMoney(metrics.geral.totalFechadoPL)}
-                  </span>
+              <div className='space-y-4'>
+                <div className="flex justify-between items-baseline border-b border-white/5 pb-2">
+                  <span className='text-[10px] font-black text-white/40 uppercase tracking-widest'>Pró-labore</span>
+                  <span className='text-lg font-black text-white tracking-tighter'>{formatMoney(metrics.geral.totalFechadoPL)}</span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Êxito Total</span>
-                  <span className='text-[20px] font-black text-green-700 tracking-tight'>
-                    {formatMoney(metrics.geral.totalFechadoExito)}
-                  </span>
+                <div className="flex justify-between items-baseline border-b border-white/5 pb-2">
+                  <span className='text-[10px] font-black text-white/40 uppercase tracking-widest'>Êxitos</span>
+                  <span className='text-lg font-black text-white tracking-tighter'>{formatMoney(metrics.geral.totalFechadoExito)}</span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Fixo Mensal</span>
-                  <span className='text-[20px] font-black text-green-700 tracking-tight'>
-                    {formatMoney(metrics.geral.receitaRecorrenteAtiva)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Outros Honorários</span>
-                  <span className='text-[20px] font-black text-green-700 tracking-tight'>
-                    {formatMoney((metrics.geral as any).totalFechadoOutros || 0)}
-                  </span>
+                <div className="flex justify-between items-baseline border-b border-white/5 pb-2">
+                  <span className='text-[10px] font-black text-white/40 uppercase tracking-widest'>Recorrência</span>
+                  <span className='text-lg font-black text-white tracking-tighter'>{formatMoney(metrics.geral.receitaRecorrenteAtiva)}</span>
                 </div>
 
-                {/* Total */}
-                <div className='flex justify-between items-end border-t border-gray-200 pt-3 mt-4'>
-                  <span className='text-[9px] font-black text-gray-500 uppercase tracking-widest'>
-                    Total Geral
-                  </span>
-                  <span className='text-[24px] font-black text-green-700 tracking-tight'>
-                    {formatMoney(totalCarteira)}
-                  </span>
+                <div className='flex flex-col items-end pt-4'>
+                  <span className='text-[8px] font-black text-white/30 uppercase tracking-widest mb-1'>Patrimônio Sob Gestão</span>
+                  <span className='text-3xl font-black text-emerald-500 tracking-tighter'>{formatMoney(totalCarteira)}</span>
                 </div>
               </div>
             </div>
             
-            {/* Médias */}
-            <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+            <div className="mt-8 pt-6 border-t border-white/5 space-y-3">
               <div className="flex justify-between items-center">
-                <span className='text-[9px] font-black text-gray-400 uppercase tracking-wider'>
-                  Média Pró-labore (12m)
-                </span>
-                <span className="text-sm font-bold text-green-600">
-                  {formatMoney(metrics.geral.mediaMensalCarteiraPL)}
-                </span>
+                <span className='text-[9px] font-black text-white/30 uppercase tracking-wider'>Benchmark PL</span>
+                <span className="text-[11px] font-black text-emerald-400 tracking-tight">{formatMoney(metrics.geral.mediaMensalCarteiraPL)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className='text-[9px] font-black text-gray-400 uppercase tracking-wider'>
-                  Média Êxito (12m)
-                </span>
-                <span className="text-sm font-bold text-green-600">
-                  {formatMoney(metrics.geral.mediaMensalCarteiraExito)}
-                </span>
+                <span className='text-[9px] font-black text-white/30 uppercase tracking-wider'>Benchmark Êxito</span>
+                <span className="text-[11px] font-black text-emerald-400 tracking-tight">{formatMoney(metrics.geral.mediaMensalCarteiraExito)}</span>
               </div>
             </div>
           </div>

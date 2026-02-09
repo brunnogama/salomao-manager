@@ -25,77 +25,78 @@ export function DashboardHeader({
   onExport
 }: DashboardHeaderProps) {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+    <div className="bg-white border border-gray-100 rounded-[2rem] shadow-sm hover:shadow-md transition-all p-8">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
         
-        {/* Título e Subtítulo */}
+        {/* Título e Subtítulo - Manager Style */}
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            {/* Gradiente Navy/Blue padrão do Manager */}
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#0a192f] to-[#1e3a8a] text-white shadow-lg">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="p-3 rounded-2xl bg-[#0a192f] text-amber-500 shadow-xl shadow-[#0a192f]/20">
               <LayoutDashboard className="w-6 h-6" />
             </div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight">
-              Controladoria Jurídica
-            </h1>
+            <div>
+              <h1 className="text-sm font-black text-[#0a192f] uppercase tracking-[0.3em]">
+                Business Intelligence
+              </h1>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                Controladoria Jurídica • Ecossistema Salomão
+              </p>
+            </div>
           </div>
-          <p className="text-sm font-semibold text-gray-500 ml-[52px]">
-            Visão estratégica de contratos e resultados
-          </p>
         </div>
 
-        {/* Filtros e Botão de Exportar */}
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+        {/* Filtros e Botão de Exportar - Tipografia Densa */}
+        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
           
-          <div className="relative min-w-[200px]" id="dashboard-filters">
-            <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
+          <div className="relative min-w-[220px]" id="dashboard-filters">
+            <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#0a192f] pointer-events-none transition-colors" />
             <select
               value={selectedPartner}
               onChange={(e) => setSelectedPartner(e.target.value)}
-              className="w-full pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-[#1e3a8a] transition-all cursor-pointer text-gray-700 shadow-sm"
+              className="w-full pl-11 pr-10 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#0a192f] outline-none appearance-none focus:bg-white focus:border-[#0a192f] transition-all cursor-pointer shadow-inner"
             >
-              <option value="">Todos os Sócios</option>
+              <option value="">TODOS OS SÓCIOS</option>
               {partnersList.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name}
+                  {p.name.toUpperCase()}
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-500 pointer-events-none" />
           </div>
 
-          <div className="relative min-w-[200px]" id="dashboard-filters">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
+          <div className="relative min-w-[220px]" id="dashboard-filters">
+            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none transition-colors" />
             <select
               value={selectedLocation}
               onChange={(e) => setSelectedLocation(e.target.value)}
-              className="w-full pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-[#1e3a8a] transition-all cursor-pointer text-gray-700 shadow-sm"
+              className="w-full pl-11 pr-10 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#0a192f] outline-none appearance-none focus:bg-white focus:border-[#0a192f] transition-all cursor-pointer shadow-inner"
             >
-              <option value="">Todos os Locais</option>
+              <option value="">TODAS AS UNIDADES</option>
               {locationsList.map((l) => (
                 <option key={l} value={l}>
-                  {l}
+                  {l.toUpperCase()}
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-500 pointer-events-none" />
           </div>
 
           <div id="export-button-container">
             <button
               onClick={onExport}
               disabled={exporting}
-              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white text-[9px] font-black rounded-xl hover:bg-[#0a192f] shadow-lg transition-all active:scale-95 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-3 px-8 py-3 bg-[#0a192f] text-white text-[10px] font-black rounded-xl hover:bg-slate-800 shadow-xl shadow-[#0a192f]/20 transition-all active:scale-95 uppercase tracking-[0.2em] disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
             >
               {exporting ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Exportando...
+                  <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                  Sincronizando...
                 </>
               ) : (
                 <>
-                  <Mail className="w-3.5 h-3.5" />
-                  Enviar E-mail
+                  <Mail className="w-4 h-4 text-amber-500" />
+                  Relatório via E-mail
                 </>
               )}
             </button>

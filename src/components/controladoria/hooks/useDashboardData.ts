@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { contractService } from '../services/contractService';
 import { partnerService } from '../services/partnerService';
 import { Contract, Partner, ContractCase } from '../types';
-import { supabase } from '../../../lib/supabase'; // Ajuste de rota para o Manager
+import { supabase } from '../../../lib/supabase'; // Ajuste de rota para a estrutura centralizada
 
 // --- Funções Auxiliares de Parsing e Data ---
 
