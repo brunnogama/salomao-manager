@@ -1,3 +1,4 @@
+// src/components/finance/SidebarFinanceiro.tsx
 import { useState, useEffect } from 'react'
 import { 
   LayoutDashboard, 
@@ -21,8 +22,10 @@ interface SidebarProps {
 
 export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: SidebarProps) {
   const [vencidosCount, setVencidosCount] = useState(0)
+  const [radarCount, setRadarCount] = useState(0)
 
   useEffect(() => {
+    // 1. Busca Vencidos OAB
     const fetchVencidosOAB = async () => {
       try {
         const { data } = await supabase.from('colaboradores').select('cargo, data_admissao')
@@ -57,7 +60,26 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
       }
     }
 
+    // 2. Busca Faturas no Radar (Contas a Receber)
+    const fetchRadarCount = async () => {
+      try {
+        // Nota: A lógica de tempo 2d+2d é processada no Hook, 
+        // mas aqui buscamos os que já foram marcados ou processados como radar/contato_direto
+        const { count, error } = await supabase
+          .from('finance_faturas')
+          .select('*', { count: 'exact', head: true })
+          .or('status.eq.radar,status.eq.contato_direto')
+
+        if (!error && count !== null) {
+          setRadarCount(count)
+        }
+      } catch (error) {
+        console.error('Erro ao contar faturas no radar:', error)
+      }
+    }
+
     fetchVencidosOAB()
+    fetchRadarCount()
   }, [])
 
   const mainItems = [
@@ -66,7 +88,7 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
     { id: 'contas-pagar', label: 'Contas a Pagar', icon: ArrowUpCircle },
     { id: 'oab', label: 'OAB', icon: GraduationCap },
     { id: 'contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle },
-    { id: 'gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane }, // Item adicionado
+    { id: 'gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane },
     { id: 'ged', label: 'GED', icon: Folder },
   ]
 
@@ -131,9 +153,17 @@ export function SidebarFinanceiro({ activePage, onNavigate, isOpen, onClose }: S
                 <span className="text-sm">{item.label}</span>
               </div>
 
+              {/* Badge OAB Vencida */}
               {item.id === 'oab' && vencidosCount > 0 && (
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white animate-pulse shadow-lg shadow-red-900/20">
                   {vencidosCount}
+                </span>
+              )}
+
+              {/* Badge Contas a Receber (Radar/Atenção) */}
+              {item.id === 'contas-receber' && radarCount > 0 && (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white shadow-lg shadow-amber-900/20">
+                  {radarCount}
                 </span>
               )}
             </button>

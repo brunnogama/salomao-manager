@@ -1,3 +1,4 @@
+//src/App.tsx
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Login from './Login'
@@ -48,7 +49,7 @@ import { Calendario as CalendarioFinanceiro } from './components/finance/pages/C
 import { ListaOAB } from './components/finance/pages/ListaOAB'
 import { FinanceDashboard } from './components/finance/pages/FinanceDashboard'
 import { FinanceContasPagar } from './components/finance/pages/FinanceContasPagar'
-import { FinanceContasReceber } from './components/finance/pages/FinanceContasReceber'
+import { FinanceContasReceber } from './components/finance/contasareceber/pages/FinanceContasReceber'
 
 import { Menu, LogOut, Grid } from 'lucide-react'
 
@@ -241,6 +242,7 @@ export default function App() {
                 {activePage === 'contas-receber' && (
                   <FinanceContasReceber 
                     userName={getUserDisplayName()} 
+                    userEmail={session?.user?.email}
                     onModuleHome={() => setCurrentModule('home')} 
                     onLogout={handleLogout} 
                   />
