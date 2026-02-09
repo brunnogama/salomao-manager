@@ -42,7 +42,6 @@ export function FinanceContasReceber({
   const [currentDate, setCurrentDate] = useState(new Date())
   const { faturas, loading, confirmarPagamento } = useFinanceContasReceber()
 
-  // --- LÓGICA DE CALENDÁRIO ---
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay()
   const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))
@@ -93,13 +92,13 @@ export function FinanceContasReceber({
       const faturasDoDia = faturas.filter(f => new Date(f.data_envio).toLocaleDateString('pt-BR') === dateStr)
 
       days.push(
-        <div key={day} className="h-28 bg-white border border-gray-100 p-1.5 hover:bg-gray-50 transition-colors overflow-hidden">
+        <div key={day} className="h-28 bg-white border border-gray-100 p-1.5 hover:bg-gray-50 transition-colors overflow-hidden text-ellipsis">
           <span className="text-[10px] font-black text-gray-300">{day}</span>
           <div className="mt-1 space-y-1">
             {faturasDoDia.map(f => {
               const style = getStatusStyles(f.status)
               return (
-                <div key={f.id} className={`text-[9px] px-1.5 py-0.5 rounded-md text-white font-bold truncate ${style.dot.replace('bg-', 'bg-')}`} title={f.cliente_nome}>
+                <div key={f.id} className={`text-[9px] px-1.5 py-0.5 rounded-md text-white font-bold truncate ${style.dot}`} title={f.cliente_nome}>
                   {f.cliente_nome}
                 </div>
               )
@@ -200,7 +199,7 @@ export function FinanceContasReceber({
           </div>
         </div>
 
-        {/* CONTEÚDO DINÂMICO (LISTA OU CALENDÁRIO) */}
+        {/* CONTEÚDO DINÂMICO */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden min-h-[450px]">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-32 text-gray-400">
@@ -208,7 +207,6 @@ export function FinanceContasReceber({
               <p className="font-bold text-[10px] uppercase tracking-[0.3em]">Processando dados...</p>
             </div>
           ) : activeTab === 'lista' ? (
-            /* VISUALIZAÇÃO EM LISTA */
             filteredFaturas.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -263,7 +261,6 @@ export function FinanceContasReceber({
               </div>
             )
           ) : (
-            /* VISUALIZAÇÃO EM CALENDÁRIO */
             <div className="flex flex-col h-full">
               <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-100">
                 {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
