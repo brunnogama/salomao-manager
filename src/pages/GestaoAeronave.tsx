@@ -77,7 +77,7 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
     // Insights
     const economia = mediaComercial - mediaParticular
     const percentual = mediaComercial > 0 ? ((economia / mediaComercial) * 100) : 0
-    const economizando = economy > 0
+    const economizando = economia > 0
 
     return {
       mediaMensalComercial: mediaComercial,
@@ -946,3 +946,4 @@ export function GestaoAeronave({
     </div>
   )
 }
+
