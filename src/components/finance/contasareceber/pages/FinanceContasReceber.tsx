@@ -30,6 +30,13 @@ interface FinanceContasReceberProps {
   onLogout?: () => void;
 }
 
+const MESES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+]
+
+const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+
 export function FinanceContasReceber({ 
   userName = 'Usuário', 
   userEmail = '',
@@ -84,21 +91,21 @@ export function FinanceContasReceber({
     const offset = firstDayOfMonth(year, month)
 
     for (let i = 0; i < offset; i++) {
-      days.push(<div key={`empty-${i}`} className="h-28 bg-gray-50/30 border border-gray-100"></div>)
+      days.push(<div key={`empty-${i}`} className="h-32 bg-gray-50/50 border border-gray-100"></div>)
     }
 
     for (let day = 1; day <= totalDays; day++) {
-      const dateStr = new Date(year, month, day).toLocaleDateString('pt-BR')
-      const faturasDoDia = faturas.filter(f => new Date(f.data_envio).toLocaleDateString('pt-BR') === dateStr)
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      const faturasDoDia = faturas.filter(f => f.data_envio.startsWith(dateStr))
 
       days.push(
-        <div key={day} className="h-28 bg-white border border-gray-100 p-1.5 hover:bg-gray-50 transition-colors overflow-hidden text-ellipsis">
-          <span className="text-[10px] font-black text-gray-300">{day}</span>
-          <div className="mt-1 space-y-1">
+        <div key={day} className="h-32 bg-white border border-gray-100 p-2 hover:bg-gray-50 transition-colors flex flex-col">
+          <span className="text-xs font-bold text-gray-400">{day}</span>
+          <div className="mt-1 space-y-1 overflow-y-auto max-h-24 custom-scrollbar">
             {faturasDoDia.map(f => {
               const style = getStatusStyles(f.status)
               return (
-                <div key={f.id} className={`text-[9px] px-1.5 py-0.5 rounded-md text-white font-bold truncate ${style.dot}`} title={f.cliente_nome}>
+                <div key={f.id} className={`text-[10px] p-1 rounded text-white font-bold truncate flex items-center gap-1 ${style.dot}`} title={f.cliente_nome}>
                   {f.cliente_nome}
                 </div>
               )
@@ -179,8 +186,8 @@ export function FinanceContasReceber({
           ) : (
             <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
               <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg transition-all text-[#1e3a8a]"><ChevronLeft className="h-5 w-5" /></button>
-              <span className="text-sm font-black text-[#0a192f] uppercase tracking-widest min-w-[140px] text-center">
-                {currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
+              <span className="text-lg font-black text-[#0a192f] min-w-[180px] text-center uppercase tracking-widest">
+                {MESES[currentDate.getMonth()]} {currentDate.getFullYear()}
               </span>
               <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-lg transition-all text-[#1e3a8a]"><ChevronRight className="h-5 w-5" /></button>
             </div>
@@ -198,6 +205,24 @@ export function FinanceContasReceber({
             </button>
           </div>
         </div>
+
+        {/* LEGENDA (Sempre visível se no Calendário) */}
+        {activeTab === 'calendario' && (
+          <div className="flex gap-4 px-2">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-500">
+              <div className="w-3 h-3 rounded bg-blue-500"></div> Aguardando
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-500">
+              <div className="w-3 h-3 rounded bg-amber-500"></div> Radar
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-500">
+              <div className="w-3 h-3 rounded bg-red-500"></div> Contato Direto
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-500">
+              <div className="w-3 h-3 rounded bg-emerald-500"></div> Recebido
+            </div>
+          </div>
+        )}
 
         {/* CONTEÚDO DINÂMICO */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden min-h-[450px]">
@@ -263,23 +288,12 @@ export function FinanceContasReceber({
           ) : (
             <div className="flex flex-col h-full">
               <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-100">
-                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
+                {DIAS_SEMANA.map(d => (
                   <div key={d} className="py-3 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">{d}</div>
                 ))}
               </div>
               <div className="grid grid-cols-7 flex-1">
                 {renderCalendarDays()}
-              </div>
-              <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex gap-4 justify-center">
-                {['aguardando_resposta', 'radar', 'contato_direto', 'pago'].map(s => {
-                  const st = getStatusStyles(s as FaturaStatus)
-                  return (
-                    <div key={s} className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${st.dot}`} />
-                      <span className="text-[9px] font-black text-gray-500 uppercase tracking-wider">{st.label}</span>
-                    </div>
-                  )
-                })}
               </div>
             </div>
           )}
