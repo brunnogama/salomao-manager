@@ -4,8 +4,13 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import { supabase } from '../../../lib/supabase'; // Rota corrigida para o Manager central
 import { ProposalDocument } from '../proposals/ProposalDocument'; // Rota ajustada para pasta irmã
 
-export function Proposals() {
-  // --- ROLE STATE ---
+interface ProposalsProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Proposals ({ userName, onModuleHome, onLogout }: ProposalsProps) {
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
   const [formData, setFormData] = useState({

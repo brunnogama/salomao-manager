@@ -37,7 +37,13 @@ interface StatsCount {
   courts: Record<string, number>;
 }
 
-export function Jurimetria() {
+interface JurimetriaProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Jurimetria({ userName, onModuleHome, onLogout }: JurimetriaProps) {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 

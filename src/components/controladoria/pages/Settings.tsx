@@ -76,7 +76,13 @@ const INITIAL_CHANGELOG: ChangeLogItem[] = [
   }
 ];
 
-export function Settings() {
+interface SettingsProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Settings({ userName, onModuleHome, onLogout }: SettingsProps) {
   const [activeTab, setActiveTab] = useState<'users' | 'about' | 'changelog' | 'system'>('users');
   const [loading, setLoading] = useState(false);
 

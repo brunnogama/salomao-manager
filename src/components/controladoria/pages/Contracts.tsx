@@ -108,9 +108,14 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   );
 };
 
-export function Contracts() {
+interface ContractsProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Contracts({ userName, onModuleHome, onLogout }: ContractsProps) {
   
-  // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
   const [contracts, setContracts] = useState<Contract[]>([]);

@@ -24,7 +24,13 @@ interface GEDDocument {
   client_name: string;
 }
 
-export function GED() {
+interface GEDProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function GED({ userName, onModuleHome, onLogout }: GEDProps) {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 

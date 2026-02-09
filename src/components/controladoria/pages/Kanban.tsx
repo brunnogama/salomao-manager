@@ -22,7 +22,13 @@ const columns: Record<string, { id: string; title: string; color: string; dot: s
   done: { id: 'done', title: 'Concluído', color: 'bg-emerald-50', dot: 'bg-emerald-500' }
 };
 
-export function Kanban() {
+interface KanbanProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Kanban({ userName, onModuleHome, onLogout }: KanbanProps) {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 

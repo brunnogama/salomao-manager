@@ -60,8 +60,14 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   );
 };
 
-export function Finance() {
-  const navigate = useNavigate();
+interface FinanceProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Finance({ userName, onModuleHome, onLogout }: FinanceProps) {
+  // REMOVER: const navigate = useNavigate();  const navigate = useNavigate();
   
   // --- STATES ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);

@@ -5,8 +5,13 @@ import { Client, Partner } from '../../../types/controladoria';
 import { ClientFormModal } from '../clients/ClientFormModal'; // Rota corrigida para a pasta de componentes clientes
 import { maskCNPJ } from '../utils/masks'; 
 
-export function Clients() {
-  // --- ROLE STATE ---
+interface ClientsProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Clients({ userName, onModuleHome, onLogout }: ClientsProps) {  // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
   const [clients, setClients] = useState<Client[]>([]);

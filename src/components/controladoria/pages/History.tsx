@@ -28,7 +28,13 @@ interface LogItem {
   user_email?: string;
 }
 
-export function History() {
+interface HistoryProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function History({ userName, onModuleHome, onLogout }: HistoryProps) {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 

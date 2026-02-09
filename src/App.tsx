@@ -298,24 +298,84 @@ export default function App() {
             )}
 
             {/* --- MÓDULO CONTROLADORIA JURÍDICA --- */}
-            {currentModule === 'legal-control' && (
-              <>
-                {activePage === 'dashboard' && <ControlDashboard />}
-                {activePage === 'contratos' && <ControlContracts />}
-                {activePage === 'clientes' && <ControlClients />}
-                {activePage === 'kanban' && <ControlKanban />}
-                {activePage === 'financeiro' && <ControlFinance />}
-                {activePage === 'ged' && <ControlGED />}
-                {activePage === 'propostas' && <ControlProposals />}
-                {activePage === 'jurimetria' && <ControlJurimetria />}
-                {activePage === 'volumetria' && <ControlVolumetry />}
-                {activePage === 'historico' && <ControlHistory />}
-                {activePage === 'configuracoes' && <ControlSettings />}
-              </>
-            )}
-          </div>
-        </main>
-      </div>
-    </>
-  )
-}
+{currentModule === 'legal-control' && (
+  <>
+    {activePage === 'dashboard' && (
+      <ControlDashboard 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+    {activePage === 'contratos' && (
+      <ControlContracts 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+    {activePage === 'clientes' && (
+      <ControlClients 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+    {activePage === 'kanban' && (
+      <ControlKanban 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+    {activePage === 'financeiro' && (
+      <ControlFinance 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+    {activePage === 'ged' && (
+      <ControlGED 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+    {activePage === 'propostas' && (
+      <ControlProposals 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+    {activePage === 'jurimetria' && (
+      <ControlJurimetria 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+    {activePage === 'volumetria' && (
+      <ControlVolumetry 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+    {activePage === 'historico' && (
+      <ControlHistory 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+    {activePage === 'configuracoes' && (
+      <ControlSettings 
+        userName={getUserDisplayName()} 
+        onModuleHome={() => setCurrentModule('home')} 
+        onLogout={handleLogout} 
+      />
+    )}
+  </>
+)}

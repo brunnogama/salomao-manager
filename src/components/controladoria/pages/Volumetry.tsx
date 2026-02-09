@@ -5,7 +5,13 @@ import { Contract, Partner } from '../../../types/controladoria';
 import { ContractFilters } from '../contracts/ContractFilters'; // Rota corrigida para pasta irmã
 import * as XLSX from 'xlsx';
 
-export function Volumetry() {
+interface VolumetriaProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Volumetria({ userName, onModuleHome, onLogout }: VolumetriaProps) {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
