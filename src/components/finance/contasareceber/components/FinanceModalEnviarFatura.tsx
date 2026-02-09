@@ -9,7 +9,8 @@ import {
   Loader2,
   Info
 } from 'lucide-react';
-import { SearchableSelect } from '../../crm/SearchableSelect';
+import { SearchableSelect } from '../../../SearchableSelect';
+import { useFinanceContasReceber } from '../hooks/useFinanceContasReceber';
 
 interface FinanceModalEnviarFaturaProps {
   isOpen: boolean;
@@ -20,10 +21,12 @@ interface FinanceModalEnviarFaturaProps {
 export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: FinanceModalEnviarFaturaProps) {
   const [loading, setLoading] = useState(false);
   const [cliente, setCliente] = useState('');
+  const [valor, setValor] = useState('');
   const [remetente, setRemetente] = useState(userEmail);
   const [assunto, setAssunto] = useState('');
   const [corpo, setCorpo] = useState('');
   const [arquivos, setArquivos] = useState<File[]>([]);
+  const { enviarFatura } = useFinanceContasReceber();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -51,12 +54,21 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     }
 
     setLoading(true);
-    // Simulação de envio e registro no fluxo 2d+2d
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await enviarFatura({
+        cliente,
+        valor: parseFloat(valor.replace(',', '.')),
+        remetente,
+        assunto,
+        corpo
+      });
       alert("Fatura enviada com sucesso! O acompanhamento de 2d + 2d foi iniciado.");
       onClose();
-    }, 1500);
+    } catch (error: any) {
+      alert("Erro ao processar envio: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -93,24 +105,39 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
             />
           </div>
 
-          {/* DESTINATÁRIO - Utilizando o SearchableSelect conforme diretriz */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Selecionar Cliente</label>
-            <SearchableSelect
-              value={cliente}
-              onChange={setCliente}
-              placeholder="Pesquisar cliente cadastrado..."
-              table="finance_clientes" // Futura integração com controladoria
-              className="w-full"
-            />
-            {isExternalDomain(cliente) && (
-              <div className="flex items-center gap-2 mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
-                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-                <p className="text-[11px] text-amber-800 font-bold italic">
-                  Atenção: Este e-mail pertence a um domínio externo à organização.
-                </p>
-              </div>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* DESTINATÁRIO */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Selecionar Cliente</label>
+              <SearchableSelect
+                value={cliente}
+                onChange={setCliente}
+                placeholder="Pesquisar cliente..."
+                table="finance_faturas" 
+                className="w-full"
+              />
+              {isExternalDomain(cliente) && (
+                <div className="flex items-center gap-2 mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                  <p className="text-[11px] text-amber-800 font-bold italic">
+                    Domínio externo detectado.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* VALOR */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Valor da Fatura (R$)</label>
+              <input 
+                type="text"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                placeholder="0,00"
+                className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
+                required
+              />
+            </div>
           </div>
 
           {/* ASSUNTO */}
@@ -132,7 +159,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
             <textarea 
               value={corpo}
               onChange={(e) => setCorpo(e.target.value)}
-              rows={5}
+              rows={4}
               className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium resize-none"
               placeholder="Escreva a mensagem padrão para o cliente..."
             />
@@ -179,7 +206,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           </button>
           <button
             onClick={handleSubmit}
-            disabled={loading || !cliente || !assunto}
+            disabled={loading || !cliente || !assunto || !valor}
             className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
