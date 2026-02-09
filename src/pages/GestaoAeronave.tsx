@@ -75,7 +75,7 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
     // Insights
     const economia = mediaComercial - mediaParticular
     const percentual = mediaComercial > 0 ? ((economia / mediaComercial) * 100) : 0
-    const economizando = economia > 0
+    const economizando = economy > 0
 
     return {
       mediaMensalComercial: mediaComercial,
@@ -255,6 +255,18 @@ export function GestaoAeronave({
     }, { totalGeral: 0, custoMissoes: 0, despesasFixas: 0 })
   }, [filteredData])
 
+  // --- Total Agência/Passagem para Card Cinza (Guia Dados) ---
+  const totalAgenciaPassagem = useMemo(() => {
+    return filteredData.reduce((acc, item) => {
+      const despesa = (item.despesa || '').toLowerCase().trim()
+      const tipo = (item.tipo || '').toLowerCase().trim()
+      if ((despesa.includes('agência') || despesa.includes('agencia')) && tipo.includes('passagem')) {
+        return acc + (Number(item.valor_pago) || 0)
+      }
+      return acc
+    }, 0)
+  }, [filteredData])
+
   // --- Totais do Ano Corrente ---
   const currentYear = new Date().getFullYear()
   const yearTotals = useMemo(() => {
@@ -336,7 +348,36 @@ export function GestaoAeronave({
   }
 
   const handleExportExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(filteredData)
+    const dataToExport = filteredData.map(item => {
+      const formattedDate = item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : ''
+      const formattedID = item.id ? String(item.id).padStart(7, '0') : ''
+
+      return {
+        'ID': formattedID,
+        'Origem': item.origem === 'missao' ? 'Missão' : 'Fixa',
+        'Tripulação': item.tripulacao || '',
+        'Aeronave': item.aeronave || '',
+        'Data Missão': item.data_missao ? new Date(item.data_missao).toLocaleDateString('pt-BR') : '',
+        'ID Missão': item.id_missao || '',
+        'Nome Missão': item.nome_missao || '',
+        'Despesa': item.despesa || '',
+        'Tipo': item.tipo || '',
+        'Descrição': item.descricao || '',
+        'Fornecedor': item.fornecedor || '',
+        'Vencimento': item.vencimento ? new Date(item.vencimento).toLocaleDateString('pt-BR') : '',
+        'Valor Previsto': item.valor_previsto || 0,
+        'Data Pagamento': item.data_pagamento ? new Date(item.data_pagamento).toLocaleDateString('pt-BR') : '',
+        'Valor Pago': item.valor_pago || 0,
+        'Centro de Custo': item.centro_custo || '',
+        'Doc Fiscal': item.doc_fiscal || '',
+        'Número Doc': item.numero_doc || '',
+        'Valor Total Doc': item.valor_total_doc || 0,
+        'Observação': item.observacao || '',
+        'Criado em': formattedDate
+      }
+    })
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, "Lancamentos")
     XLSX.writeFile(wb, `Aeronave_Export_${new Date().toISOString().split('T')[0]}.xlsx`)
@@ -510,7 +551,7 @@ export function GestaoAeronave({
         <ComparativoCards data={data} />
       ) : (
         // Cards Normais (Dashboard, Faturas, Dados)
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
             <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
             <div>
@@ -557,6 +598,22 @@ export function GestaoAeronave({
             </div>
             <div className="p-3 bg-emerald-50 rounded-xl">
               <DollarSign className="h-6 w-6 text-emerald-600" />
+            </div>
+          </div>
+
+          {/* Card Cinza para Agência/Passagem */}
+          <div className="bg-gray-100 p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+            <div className="absolute right-0 top-0 h-full w-1 bg-gray-400"></div>
+            <div>
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                Agência / Passagem
+              </p>
+              <p className="text-2xl font-black text-gray-700 mt-1">
+                {handleFormatCurrency(totalAgenciaPassagem)}
+              </p>
+            </div>
+            <div className="p-3 bg-gray-200 rounded-xl">
+              <Plane className="h-6 w-6 text-gray-500" />
             </div>
           </div>
         </div>
