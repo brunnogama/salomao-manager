@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { useNavigate } from 'react-router-dom';
 import { 
   DollarSign, Search, Download, CheckCircle2, Circle, Clock, Loader2, 
   CalendarDays, Receipt, X, Filter, MapPin, Hash, FileText, 
@@ -650,10 +649,10 @@ export function Finance() {
             setSelectedContractId(null);
           }}
           contract={selectedContractData}
-          onEdit={() => {
-            // Redirecionar para edição do contrato
-            navigate(`/contracts/edit/${selectedContractId}`);
-          }}
+           onEdit={() => {
+    toast.info('Para editar este contrato, acesse o módulo Contratos');
+    setIsContractModalOpen(false);
+  }}
           onDelete={() => {
             // Função de deletar (se necessário)
             toast.info('Função de exclusão não implementada');

@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import * as XLSX from 'xlsx';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner'; 
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../../types/controladoria';
 
@@ -110,8 +109,6 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
 };
 
 export function Contracts() {
-  const navigate = useNavigate();
-  const location = useLocation();
   
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
@@ -159,10 +156,7 @@ export function Contracts() {
 
   useEffect(() => {
     checkUserRole();
-    if (location.state && location.state.status) {
-      setStatusFilter(location.state.status);
-    }
-  }, [location.state]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -252,10 +246,6 @@ export function Contracts() {
       .eq('status', 'signature')
       .order('due_date', { ascending: true });
     if (data) setNotifications(data);
-  };
-
-  const handleNotificationClick = (taskId: string) => {
-    navigate('/kanban', { state: { openTaskId: taskId } });
   };
 
   const handleNew = () => {
@@ -660,7 +650,6 @@ export function Contracts() {
                     notifications.map(notif => (
                       <div
                         key={notif.id}
-                        onClick={() => handleNotificationClick(notif.id)}
                         className="p-4 border-b border-gray-50 last:border-0 hover:bg-amber-50 cursor-pointer transition-colors"
                       >
                         <p className="text-xs font-black text-[#0a192f] line-clamp-1 uppercase tracking-tight">{notif.title}</p>
