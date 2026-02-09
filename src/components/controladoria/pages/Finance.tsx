@@ -7,7 +7,7 @@ import {
   AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
 } from 'lucide-react';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../types';
-import { EmptyState } from '../components/ui/EmptyState';
+import { EmptyState } from '../components/ui/EmptyState'
 import { ContractDetailsModal } from '../components/contracts/ContractDetailsModal';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
