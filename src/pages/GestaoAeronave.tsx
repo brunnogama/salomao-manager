@@ -349,17 +349,28 @@ export function GestaoAeronave({
     })
   }
 
-  const handleSaveLancamento = async (formData: Partial<AeronaveLancamento>) => {
-    if (formData.id) {
+   const handleSaveLancamento = async (formData: Partial<AeronaveLancamento>) => {
+    // Limpa strings vazias e converte para null
+    const cleanData = Object.entries(formData).reduce((acc, [key, value]) => {
+      // Se o valor for string vazia, converte para null
+      if (value === '' || value === undefined) {
+        acc[key] = null
+      } else {
+        acc[key] = value
+      }
+      return acc
+    }, {} as any)
+
+    if (cleanData.id) {
       const { error } = await supabase
         .from('aeronave_lancamentos')
-        .update(formData)
-        .eq('id', formData.id)
+        .update(cleanData)
+        .eq('id', cleanData.id)
       if (error) throw error
     } else {
       const { error } = await supabase
         .from('aeronave_lancamentos')
-        .insert(formData)
+        .insert(cleanData)
       if (error) throw error
     }
   }
