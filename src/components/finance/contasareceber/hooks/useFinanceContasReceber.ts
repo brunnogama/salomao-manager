@@ -1,6 +1,6 @@
 // src/components/finance/contasareceber/hooks/useFinanceContasReceber.ts
 import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '../../../../lib/supabase'; // Ajustado de ../../../ para ../../../../
+import { supabase } from '../../../../lib/supabase';
 
 export type FaturaStatus = 'enviado' | 'aguardando_resposta' | 'radar' | 'contato_direto' | 'pago';
 
@@ -28,7 +28,13 @@ export function useFinanceContasReceber() {
     return date;
   };
 
-  const getAutomatedStatus = useCallback((dataEnvioStr: string, statusAtual: FaturaStatus): FaturaStatus => {
+  // Função para simular o disparo de notificação (Pode ser conectada a uma Edge Function)
+  const dispararNotificacaoRadar = async (fatura: any) => {
+    console.log(`[NOTIFICAÇÃO] Fatura de ${fatura.cliente_nome} entrou no RADAR.`);
+    // Futuro: supabase.functions.invoke('send-radar-email', { body: { faturaId: fatura.id } })
+  };
+
+  const getAutomatedStatus = useCallback((dataEnvioStr: string, statusAtual: FaturaStatus, faturaOriginal: any): FaturaStatus => {
     if (statusAtual === 'pago') return 'pago';
 
     const hoje = new Date();
@@ -39,10 +45,17 @@ export function useFinanceContasReceber() {
     const limiteAguardando = addBusinessDays(dataEnvio, 2);
     const limiteRadar = addBusinessDays(dataEnvio, 4);
 
-    if (hoje > limiteRadar) return 'contato_direto';
-    if (hoje > limiteAguardando) return 'radar';
+    let novoStatus: FaturaStatus = 'aguardando_resposta';
+
+    if (hoje > limiteRadar) novoStatus = 'contato_direto';
+    else if (hoje > limiteAguardando) novoStatus = 'radar';
+
+    // Se o status mudou para radar agora, disparar gatilho
+    if (novoStatus === 'radar' && statusAtual !== 'radar') {
+      dispararNotificacaoRadar(faturaOriginal);
+    }
     
-    return 'aguardando_resposta';
+    return novoStatus;
   }, []);
 
   const fetchFaturas = async () => {
@@ -56,7 +69,7 @@ export function useFinanceContasReceber() {
       if (!error && data) {
         const processadas = data.map(f => ({
           ...f,
-          status: getAutomatedStatus(f.data_envio, f.status)
+          status: getAutomatedStatus(f.data_envio, f.status, f)
         }));
         setFaturas(processadas);
       }
@@ -76,7 +89,8 @@ export function useFinanceContasReceber() {
         email_remetente: dados.remetente,
         assunto: dados.assunto,
         corpo: dados.corpo,
-        status: 'aguardando_resposta'
+        status: 'aguardando_resposta',
+        data_envio: new Date().toISOString()
       }]);
 
     if (error) throw error;
