@@ -3,17 +3,17 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase'; // Aponta para o lib central do Manager
-import { useDashboardData } from '../hooks/useDashboardData'; // Mantém relativo se a pasta hooks foi movida junto
+import { useDashboardData } from '../hooks/useDashboardData'; // Ajustado para a pasta pai
 
-// --- COMPONENTES MODULARES ---
-import { DashboardHeader } from '../components/dashboard/DashboardHeader';
-import { EfficiencyFunnel } from '../components/dashboard/EfficiencyFunnel';
-import { PortfolioFinancialOverview } from '../components/dashboard/PortfolioFinancialOverview';
-import { WeeklySummary } from '../components/dashboard/WeeklySummary';
-import { MonthlySummary } from '../components/dashboard/MonthlySummary';
-import { EvolutionCharts } from '../components/dashboard/EvolutionCharts';
-import { PartnerStats } from '../components/dashboard/PartnerStats';
-import { OperationalStats } from '../components/dashboard/OperationalStats';
+// --- COMPONENTES MODULARES (Caminhos corrigidos para pasta irmã) ---
+import { DashboardHeader } from './components/DashboardHeader';
+import { EfficiencyFunnel } from './components/EfficiencyFunnel';
+import { PortfolioFinancialOverview } from './components/PortfolioFinancialOverview';
+import { WeeklySummary } from './components/WeeklySummary';
+import { MonthlySummary } from './components/MonthlySummary';
+import { EvolutionCharts } from './components/EvolutionCharts';
+import { PartnerStats } from './components/PartnerStats';
+import { OperationalStats } from './components/OperationalStats';
 
 export function Dashboard() {
   // --- ESTADOS DE FILTROS ---
@@ -103,14 +103,14 @@ export function Dashboard() {
   if (loading || !metrics || metrics.geral.totalCasos === 0) {
     return (
       <div className="flex flex-col justify-center items-center h-full gap-4">
-        <Loader2 className="w-10 h-10 text-[#1e3a8a] animate-spin" />
-        <p className="text-sm font-semibold text-gray-500">Carregando dashboard...</p>
+        <Loader2 className="w-10 h-10 text-[#0a192f] animate-spin" />
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Sincronizando Dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className='w-full min-h-screen overflow-x-hidden'>
+    <div className='w-full min-h-screen overflow-x-hidden bg-gray-50/50'>
       <div className='max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 pb-16'>
         
         {/* Header com Filtros */}
@@ -127,7 +127,7 @@ export function Dashboard() {
         />
 
         {/* Container do Dashboard - SEM SCROLL HORIZONTAL */}
-        <div ref={dashboardRef} className="w-full space-y-6 bg-[#F8FAFC] rounded-2xl p-4 sm:p-6">
+        <div ref={dashboardRef} className="w-full space-y-8 bg-[#F8FAFC] rounded-[2rem] p-4 sm:p-8 shadow-sm border border-gray-100">
           
           {/* 1. Funil de Eficiência */}
           <div className="w-full overflow-hidden">
@@ -150,7 +150,7 @@ export function Dashboard() {
           </div>
 
           {/* 5. Gráficos de Evolução (Entrada + Financeiro 12m) */}
-          <div className="w-full space-y-6 overflow-hidden">
+          <div className="w-full space-y-8 overflow-hidden">
             <EvolutionCharts 
               evolucaoMensal={evolucaoMensal}
               propostas12Meses={propostas12Meses}
@@ -163,12 +163,12 @@ export function Dashboard() {
           </div>
 
           {/* 6. Sócios (Contratos + Financeiro) */}
-          <div className="w-full space-y-6 overflow-hidden">
+          <div className="w-full space-y-8 overflow-hidden">
             <PartnerStats contractsByPartner={contractsByPartner} />
           </div>
 
           {/* 7. Operacional (Rejeições e Assinaturas) */}
-          <div className="w-full space-y-6 overflow-hidden">
+          <div className="w-full space-y-8 overflow-hidden">
             <OperationalStats 
               rejectionData={rejectionData} 
               metrics={metrics} 
