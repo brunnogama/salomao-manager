@@ -77,12 +77,12 @@ export function FinanceCalendarioReceber({ userName = 'Usuário', onModuleHome, 
     const firstDayOffset = getFirstDayOfMonth(selectedMonth, selectedYear)
     const days = []
 
-    // Dias vazios do mês anterior
+    // Dias vazios do mês anterior - bg-gray-50/50 conforme solicitado
     for (let i = 0; i < firstDayOffset; i++) {
       days.push(<div key={`empty-${i}`} className="h-32 bg-gray-50/50 border border-gray-100" />)
     }
 
-    // Dias do mês atual
+    // Dias do mês atual - h-32 e transição de cores
     for (let day = 1; day <= totalDays; day++) {
       const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const faturasDoDia = faturas.filter(f => f.data_envio.startsWith(dateStr))
@@ -113,7 +113,7 @@ export function FinanceCalendarioReceber({ userName = 'Usuário', onModuleHome, 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
       
-      {/* HEADER */}
+      {/* HEADER - Estilizado conforme item 2 */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
@@ -148,7 +148,7 @@ export function FinanceCalendarioReceber({ userName = 'Usuário', onModuleHome, 
         </div>
       </div>
 
-      {/* LEGENDA */}
+      {/* LEGENDA - Conforme item 3 */}
       <div className="flex gap-4 px-2">
         <div className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-500">
           <div className="w-3 h-3 rounded bg-blue-500"></div> Aguardando
@@ -164,7 +164,7 @@ export function FinanceCalendarioReceber({ userName = 'Usuário', onModuleHome, 
         </div>
       </div>
 
-      {/* CALENDÁRIO GRID */}
+      {/* CALENDÁRIO GRID - Conforme item 4 */}
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         {/* Header Dias da Semana */}
         <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-100">
