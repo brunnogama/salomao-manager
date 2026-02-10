@@ -8,12 +8,10 @@ import {
 } from 'lucide-react';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 
-// Rota corrigida: EmptyState está em src/components/ui/
-import { EmptyState } from '../../../components/ui/EmptyState';
+// Rota corrigida para localizar o EmptyState corretamente
+import { EmptyState } from '../../ui/EmptyState';
 
-// Rota corrigida: ContractDetailsModal é um componente irmão em src/components/controladoria/contracts/
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
-
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
