@@ -8,10 +8,11 @@ import {
   Send, 
   Loader2,
   Info,
-  Settings,
-  Save,
   Plus,
-  Users
+  Save,
+  Users,
+  Building2,
+  DollarSign
 } from 'lucide-react';
 import { SearchableSelect } from '../../../SearchableSelect';
 import { useFinanceContasReceber } from '../hooks/useFinanceContasReceber';
@@ -32,7 +33,8 @@ interface Cliente {
 
 export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: FinanceModalEnviarFaturaProps) {
   const [loading, setLoading] = useState(false);
-  const [cliente, setCliente] = useState('');
+  const [clienteNome, setClienteNome] = useState('');
+  const [clienteEmail, setClienteEmail] = useState('');
   const [valor, setValor] = useState('');
   const [remetente, setRemetente] = useState(userEmail);
   const [assunto, setAssunto] = useState('');
@@ -41,14 +43,14 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const { enviarFatura } = useFinanceContasReceber();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Estados para gerenciamento de clientes
-  const [showGerenciar, setShowGerenciar] = useState(false);
+  // Estados para adicionar cliente
+  const [showAdicionar, setShowAdicionar] = useState(false);
   const [clienteCNPJ, setClienteCNPJ] = useState('');
-  const [clienteNome, setClienteNome] = useState('');
-  const [clienteEmail, setClienteEmail] = useState('');
+  const [novoClienteNome, setNovoClienteNome] = useState('');
+  const [novoClienteEmail, setNovoClienteEmail] = useState('');
   const [savingCliente, setSavingCliente] = useState(false);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [searchingCNPJ, setSearchingCNPJ] = useState(false);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -88,24 +90,24 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     if (cleaned.length === 14) {
       setSearchingCNPJ(true);
       
-      // Buscar no banco
-      const { data } = await supabase
+      // Buscar no banco primeiro
+      const { data: existing } = await supabase
         .from('finance_clientes')
         .select('*')
         .eq('cnpj', formatted)
         .single();
 
-      if (data) {
-        setClienteNome(data.nome);
-        setClienteEmail(data.email);
+      if (existing) {
+        setNovoClienteNome(existing.nome);
+        setNovoClienteEmail(existing.email);
+        alert('Cliente já cadastrado! Carregando dados...');
       } else {
-        // Buscar em API externa (exemplo: ReceitaWS)
+        // Buscar em API externa
         try {
           const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleaned}`);
           if (response.ok) {
             const empresa = await response.json();
-            setClienteNome(empresa.razao_social || empresa.nome_fantasia || '');
-            setClienteEmail(''); // Limpa email para preenchimento manual
+            setNovoClienteNome(empresa.razao_social || empresa.nome_fantasia || '');
           }
         } catch (error) {
           console.error('Erro ao buscar CNPJ:', error);
@@ -117,7 +119,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   };
 
   const handleSaveCliente = async () => {
-    if (!clienteCNPJ || !clienteNome || !clienteEmail) {
+    if (!clienteCNPJ || !novoClienteNome || !novoClienteEmail) {
       alert('Preencha todos os campos do cliente');
       return;
     }
@@ -129,8 +131,8 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
         .from('finance_clientes')
         .upsert({
           cnpj: clienteCNPJ,
-          nome: clienteNome,
-          email: clienteEmail
+          nome: novoClienteNome,
+          email: novoClienteEmail
         }, {
           onConflict: 'cnpj'
         })
@@ -143,19 +145,29 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       await loadClientes();
       
       // Selecionar o cliente recém-criado
-      setCliente(clienteEmail);
+      setClienteNome(novoClienteNome);
+      setClienteEmail(novoClienteEmail);
       
-      // Limpar campos e fechar gerenciar
+      // Limpar campos e fechar painel
       setClienteCNPJ('');
-      setClienteNome('');
-      setClienteEmail('');
-      setShowGerenciar(false);
+      setNovoClienteNome('');
+      setNovoClienteEmail('');
+      setShowAdicionar(false);
       
       alert('Cliente salvo com sucesso!');
     } catch (error: any) {
       alert('Erro ao salvar cliente: ' + error.message);
     } finally {
       setSavingCliente(false);
+    }
+  };
+
+  const handleClienteChange = (nome: string) => {
+    setClienteNome(nome);
+    // Buscar email do cliente selecionado
+    const cliente = clientes.find(c => c.nome === nome);
+    if (cliente) {
+      setClienteEmail(cliente.email);
     }
   };
 
@@ -185,7 +197,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     setLoading(true);
     try {
       await enviarFatura({
-        cliente,
+        cliente: clienteEmail,
         valor: parseFloat(valor.replace(',', '.')),
         remetente,
         assunto,
@@ -234,65 +246,41 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* DESTINATÁRIO COM GERENCIAR */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1 flex items-center justify-between">
-                Selecionar Cliente
-                <button
-                  type="button"
-                  onClick={() => setShowGerenciar(!showGerenciar)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
-                    showGerenciar 
-                      ? 'bg-[#1e3a8a] text-white shadow-md' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <Settings className="h-3 w-3" /> Gerenciar
-                </button>
-              </label>
-              <SearchableSelect
-                value={cliente}
-                onChange={(value) => {
-                  setCliente(value);
-                  // Buscar dados do cliente selecionado
-                  const selectedCliente = clientes.find(c => c.email === value);
-                  if (selectedCliente) {
-                    setClienteCNPJ(selectedCliente.cnpj);
-                    setClienteNome(selectedCliente.nome);
-                    setClienteEmail(selectedCliente.email);
-                  }
-                }}
-                placeholder="Pesquisar cliente..."
-                table="finance_clientes" 
-                className="w-full"
-              />
-              {isExternalDomain(cliente) && (
-                <div className="flex items-center gap-2 mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
-                  <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-                  <p className="text-[11px] text-amber-800 font-bold italic">
-                    Domínio externo detectado.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* VALOR */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Valor da Fatura (R$)</label>
-              <input 
-                type="text"
-                value={valor}
-                onChange={(e) => setValor(e.target.value)}
-                placeholder="0,00"
-                className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
-                required
-              />
-            </div>
+          {/* SELECIONAR CLIENTE COM BOTÃO ADICIONAR */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1 flex items-center justify-between">
+              Selecionar Cliente
+              <button
+                type="button"
+                onClick={() => setShowAdicionar(!showAdicionar)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                  showAdicionar 
+                    ? 'bg-[#1e3a8a] text-white shadow-md' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </button>
+            </label>
+            <SearchableSelect
+              value={clienteNome}
+              onChange={handleClienteChange}
+              placeholder="Pesquisar cliente..."
+              table="finance_clientes" 
+              className="w-full"
+            />
+            {isExternalDomain(clienteEmail) && (
+              <div className="flex items-center gap-2 mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                <p className="text-[11px] text-amber-800 font-bold italic">
+                  Domínio externo detectado.
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* PAINEL DE GERENCIAMENTO DE CLIENTE */}
-          {showGerenciar && (
+          {/* PAINEL DE ADICIONAR CLIENTE */}
+          {showAdicionar && (
             <div className="bg-blue-50 border-2 border-[#1e3a8a] rounded-xl p-5 space-y-4 animate-in slide-in-from-top duration-200">
               <div className="flex items-center gap-2 mb-3">
                 <Users className="h-5 w-5 text-[#1e3a8a]" />
@@ -305,7 +293,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                 {/* CNPJ */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
-                    CNPJ
+                    CNPJ *
                   </label>
                   <div className="relative">
                     <input 
@@ -327,12 +315,12 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                 {/* NOME */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
-                    Nome/Razão Social
+                    Nome/Razão Social *
                   </label>
                   <input 
                     type="text"
-                    value={clienteNome}
-                    onChange={(e) => setClienteNome(e.target.value)}
+                    value={novoClienteNome}
+                    onChange={(e) => setNovoClienteNome(e.target.value)}
                     placeholder="Nome do cliente"
                     className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
                   />
@@ -341,12 +329,12 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                 {/* E-MAIL */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
-                    E-mail
+                    E-mail *
                   </label>
                   <input 
                     type="email"
-                    value={clienteEmail}
-                    onChange={(e) => setClienteEmail(e.target.value)}
+                    value={novoClienteEmail}
+                    onChange={(e) => setNovoClienteEmail(e.target.value)}
                     placeholder="cliente@empresa.com.br"
                     className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
                   />
@@ -358,8 +346,8 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                   type="button"
                   onClick={() => {
                     setClienteCNPJ('');
-                    setClienteNome('');
-                    setClienteEmail('');
+                    setNovoClienteNome('');
+                    setNovoClienteEmail('');
                   }}
                   className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 transition-colors"
                 >
@@ -368,7 +356,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                 <button
                   type="button"
                   onClick={handleSaveCliente}
-                  disabled={savingCliente || !clienteCNPJ || !clienteNome || !clienteEmail}
+                  disabled={savingCliente || !clienteCNPJ || !novoClienteNome || !novoClienteEmail}
                   className="flex items-center gap-2 px-5 py-2 bg-[#1e3a8a] text-white rounded-lg font-black text-[10px] uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {savingCliente ? (
@@ -381,6 +369,41 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               </div>
             </div>
           )}
+
+          {/* E-MAIL CLIENTE E VALOR - LADO A LADO */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* E-MAIL DO CLIENTE */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">E-mail Cliente</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input 
+                  type="email"
+                  value={clienteEmail}
+                  onChange={(e) => setClienteEmail(e.target.value)}
+                  placeholder="cliente@empresa.com"
+                  className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* VALOR DA FATURA */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Valor da Fatura (R$)</label>
+              <div className="relative">
+                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input 
+                  type="text"
+                  value={valor}
+                  onChange={(e) => setValor(e.target.value)}
+                  placeholder="0,00"
+                  className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
+                  required
+                />
+              </div>
+            </div>
+          </div>
 
           {/* ASSUNTO */}
           <div className="space-y-1.5">
@@ -448,7 +471,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           </button>
           <button
             onClick={handleSubmit}
-            disabled={loading || !cliente || !assunto || !valor}
+            disabled={loading || !clienteEmail || !assunto || !valor}
             className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
