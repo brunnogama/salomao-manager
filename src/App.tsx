@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Login from './Login'
@@ -55,7 +54,7 @@ import { FinanceDashboard } from './components/finance/pages/FinanceDashboard'
 import { FinanceContasPagar } from './components/finance/pages/FinanceContasPagar'
 import { FinanceContasReceber } from './components/finance/contasareceber/pages/FinanceContasReceber'
 
-// --- PÁGINAS DA CONTROLADORIA (CAMINHO CORRIGIDO CONFORME PRINT: /src/components/controladoria/pages) ---
+// --- PÁGINAS DA CONTROLADORIA ---
 import { Dashboard as ControlDashboard } from './components/controladoria/pages/Dashboard'
 import { Contracts as ControlContracts } from './components/controladoria/pages/Contracts'
 import { Clients as ControlClients } from './components/controladoria/pages/Clients'
@@ -67,6 +66,9 @@ import { Jurimetria as ControlJurimetria } from './components/controladoria/page
 import { Volumetry as ControlVolumetry } from './components/controladoria/pages/Volumetry'
 import { History as ControlHistory } from './components/controladoria/pages/History'
 import { Settings as ControlSettings } from './components/controladoria/pages/Settings'
+
+// --- UTILITÁRIOS E UI DA CONTROLADORIA (Caminhos ajustados para o local correto) ---
+import { parseCurrency } from './components/controladoria/utils/masks';
 
 import { Menu, LogOut, Grid } from 'lucide-react'
 import { Toaster } from 'sonner'
