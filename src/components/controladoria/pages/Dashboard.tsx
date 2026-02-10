@@ -37,13 +37,17 @@ export function Dashboard() {
   // --- EFEITOS DE CARREGAMENTO (SÓCIOS, LOCAIS, ROLE) ---
   useEffect(() => {
     const fetchFilterOptions = async () => {
-        const { data: partners } = await supabase.from('partners').select('id, name').eq('active', true).order('name');
-        if (partners) setPartnersList(partners);
+        try {
+            const { data: partners } = await supabase.from('partners').select('id, name').eq('active', true).order('name');
+            if (partners) setPartnersList(partners);
 
-        const { data: contracts } = await supabase.from('contracts').select('billing_location');
-        if (contracts) {
-            const uniqueLocations = Array.from(new Set(contracts.map(c => c.billing_location).filter(Boolean)));
-            setLocationsList(uniqueLocations.sort());
+            const { data: contracts } = await supabase.from('contracts').select('billing_location');
+            if (contracts) {
+                const uniqueLocations = Array.from(new Set(contracts.map(c => c.billing_location).filter(Boolean)));
+                setLocationsList(uniqueLocations.sort() as string[]);
+            }
+        } catch (err) {
+            console.error("Erro ao carregar filtros:", err);
         }
     };
     fetchFilterOptions();
@@ -51,10 +55,22 @@ export function Dashboard() {
 
   useEffect(() => {
     const checkUserRole = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data: profile } = await supabase.from('user_profiles').select('role').eq('id', user.id).single();
-            if (profile) setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                // CORREÇÃO: maybeSingle() evita erro fatal caso o perfil não exista
+                const { data: profile, error } = await supabase
+                    .from('user_profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                
+                if (profile && !error) {
+                    setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
+                }
+            }
+        } catch (err) {
+            console.error("Erro ao validar permissões:", err);
         }
     };
     checkUserRole();
@@ -99,12 +115,12 @@ export function Dashboard() {
     }
   };
 
-  // Loading State
-  if (loading || !metrics || metrics.geral.totalCasos === 0) {
+  // Loading State - CORREÇÃO: Verificação nula mais segura para metrics
+  if (loading || !metrics || !metrics.geral || metrics.geral.totalCasos === 0) {
     return (
-      <div className="flex flex-col justify-center items-center h-full gap-4">
+      <div className="flex flex-col justify-center items-center h-full gap-4 min-h-[400px]">
         <Loader2 className="w-10 h-10 text-[#1e3a8a] animate-spin" />
-        <p className="text-sm font-semibold text-gray-500">Carregando dashboard...</p>
+        <p className="text-sm font-semibold text-gray-500">Carregando indicadores...</p>
       </div>
     );
   }
