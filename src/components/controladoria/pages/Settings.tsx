@@ -4,7 +4,7 @@ import {
   XCircle, Shield, Code2, Database, Layout, Search, Lock, Mail, AlertTriangle, Settings as SettingsIcon,
   DollarSign, Briefcase, User, Ban, LogOut
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 
 // --- TIPOS ---
 interface UserProfile {
