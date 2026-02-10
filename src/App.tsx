@@ -63,7 +63,7 @@ import { Finance as ControlFinance } from './components/controladoria/pages/Fina
 import { GED as ControlGED } from './components/controladoria/pages/GED'
 import { Proposals as ControlProposals } from './components/controladoria/pages/Proposals'
 import { Jurimetria as ControlJurimetria } from './components/controladoria/pages/Jurimetria'
-import { Volumetria as ControlVolumetry } from './components/controladoria/pages/Volumetry'
+import { Volumetry as ControlVolumetry } from './components/controladoria/pages/Volumetry'
 import { History as ControlHistory } from './components/controladoria/pages/History'
 import { Settings as ControlSettings } from './components/controladoria/pages/Settings'
 
