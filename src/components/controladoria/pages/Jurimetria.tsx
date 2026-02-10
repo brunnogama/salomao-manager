@@ -2,7 +2,10 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import ForceGraph2D from 'react-force-graph-2d';
 import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess } from '../../../types/controladoria';
-import { Loader2, Share2, Gavel, Scale, FileText, Maximize2, Minimize2, Search, Filter, X, Shield } from 'lucide-react';
+import { 
+  Loader2, Share2, Gavel, Scale, FileText, Maximize2, 
+  Minimize2, Search, Filter, X, Shield 
+} from 'lucide-react';
 import { EmptyState } from '../../../components/ui/EmptyState';
 
 // Interfaces
@@ -16,14 +19,14 @@ interface GraphNode {
   x?: number;
   y?: number;
   color?: string;
-  hidden?: boolean; // Para filtro
+  hidden?: boolean; 
 }
 
 interface GraphLink {
   source: string | GraphNode;
   target: string | GraphNode;
   type: string;
-  hidden?: boolean; // Para filtro
+  hidden?: boolean; 
 }
 
 interface GraphData {
@@ -69,7 +72,7 @@ export function Jurimetria() {
 
   useEffect(() => {
     setTimeout(handleResize, 500);
-  }, [containerRef.current, isFullscreen]);
+  }, [isFullscreen]);
 
   // --- ROLE CHECK ---
   const checkUserRole = async () => {
@@ -96,12 +99,10 @@ export function Jurimetria() {
     // Filtro de Texto Global (Busca)
     if (searchTerm) {
         const lowerSearch = searchTerm.toLowerCase();
-        // Encontra nós que dão match
         const matchingNodes = new Set(
             nodes.filter(n => n.label.toLowerCase().includes(lowerSearch)).map(n => n.id)
         );
         
-        // Se encontrou algo, mostra esses nós e seus vizinhos diretos
         if (matchingNodes.size > 0) {
             const connectedNodes = new Set(matchingNodes);
             const visibleLinks = links.filter(l => {
@@ -125,15 +126,12 @@ export function Jurimetria() {
     if (selectedFilters.judge || selectedFilters.subject || selectedFilters.court) {
         const filterNodes = new Set<string>();
         
-        // Identificar IDs dos filtros selecionados
         if (selectedFilters.judge) filterNodes.add(`J-${selectedFilters.judge}`);
         if (selectedFilters.subject) filterNodes.add(`S-${selectedFilters.subject}`);
         if (selectedFilters.court) filterNodes.add(`T-${selectedFilters.court}`);
 
-        // Encontrar vizinhos (contratos) e vizinhos dos vizinhos
         const relevantNodes = new Set(filterNodes);
         
-        // Passo 1: Links diretos dos filtros (Filtro -> Contrato)
         const directLinks = links.filter(l => {
             const s = typeof l.source === 'object' ? (l.source as any).id : l.source;
             const t = typeof l.target === 'object' ? (l.target as any).id : l.target;
@@ -147,14 +145,12 @@ export function Jurimetria() {
              relevantNodes.add(t);
         });
 
-        // Filtrar
         nodes = nodes.filter(n => relevantNodes.has(n.id));
         links = directLinks;
     }
 
     setFilteredGraphData({ nodes, links });
     
-    // Auto-zoom se filtrou
     if ((searchTerm || selectedFilters.judge || selectedFilters.subject || selectedFilters.court) && graphRef.current) {
         setTimeout(() => graphRef.current.zoomToFit(400, 50), 200);
     }
@@ -238,10 +234,9 @@ export function Jurimetria() {
     });
 
     setFullGraphData({ nodes, links });
-    setFilteredGraphData({ nodes, links }); // Inicialmente igual
+    setFilteredGraphData({ nodes, links });
   };
 
-  // --- Estatísticas (Calculadas sobre o TOTAL, não sobre o filtrado, para servir de menu) ---
   const stats = useMemo(() => {
     const counts: StatsCount = { judges: {}, subjects: {}, courts: {} };
     contracts.forEach(c => {
@@ -291,11 +286,10 @@ export function Jurimetria() {
     }
   }, [selectedNode]);
 
-  // Handler para toggles de filtro
   const toggleFilter = (type: 'judge' | 'subject' | 'court', value: string) => {
       setSelectedFilters(prev => ({
           ...prev,
-          [type]: prev[type] === value ? null : value // Toggle
+          [type]: prev[type] === value ? null : value 
       }));
   };
 
@@ -317,7 +311,6 @@ export function Jurimetria() {
           </h1>
           <div className="flex items-center gap-2 mt-1">
                 <p className="text-gray-500">Análise gráfica de correlações entre processos, juízes e assuntos.</p>
-                {/* Badge de Perfil */}
                 {userRole && (
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border flex items-center gap-1 ${
                         userRole === 'admin' 
@@ -333,7 +326,6 @@ export function Jurimetria() {
           </div>
         </div>
         <div className="flex gap-2">
-           {/* Barra de Busca Global */}
            <div className="relative">
                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                <input 
@@ -356,9 +348,7 @@ export function Jurimetria() {
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
         
-        {/* Painel Esquerdo - Estatísticas e Filtros */}
         <div className="w-full lg:w-80 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
-            {/* Card Juízes */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-3"><Gavel className="w-4 h-4 text-salomao-gold" /> Top Magistrados</h3>
                 <div className="space-y-1">
@@ -375,7 +365,6 @@ export function Jurimetria() {
                 </div>
             </div>
 
-            {/* Card Assuntos */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-3"><FileText className="w-4 h-4 text-blue-500" /> Assuntos</h3>
                 <div className="space-y-1">
@@ -392,7 +381,6 @@ export function Jurimetria() {
                 </div>
             </div>
 
-             {/* Card Tribunais */}
              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-3"><Scale className="w-4 h-4 text-green-500" /> Tribunais</h3>
                 <div className="space-y-1">
@@ -410,17 +398,14 @@ export function Jurimetria() {
             </div>
         </div>
 
-        {/* Área do Grafo */}
         <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 relative overflow-hidden flex flex-col" ref={containerRef}>
             
-            {/* Legenda Flutuante */}
             <div className="absolute top-4 left-4 z-10 flex gap-2 pointer-events-none">
                 <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 flex items-center gap-1 shadow-sm"><span className="w-2 h-2 rounded-full bg-salomao-blue"></span> Contrato</span>
                 <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 flex items-center gap-1 shadow-sm"><span className="w-2 h-2 rounded-full bg-salomao-gold"></span> Juiz</span>
                 <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 flex items-center gap-1 shadow-sm"><span className="w-2 h-2 rounded-full bg-green-500"></span> Assunto</span>
             </div>
 
-            {/* Empty State do Grafo */}
             {filteredGraphData.nodes.length === 0 && !loading && (
                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-sm">
                       <EmptyState 
@@ -433,7 +418,6 @@ export function Jurimetria() {
                  </div>
             )}
 
-            {/* Detalhes do Nó Selecionado */}
             {selectedNode && (
                 <div className="absolute bottom-4 left-4 z-10 bg-white/95 backdrop-blur p-4 rounded-xl border border-gray-200 shadow-lg max-w-sm animate-in slide-in-from-bottom-5">
                     <button onClick={() => setSelectedNode(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
@@ -470,7 +454,6 @@ export function Jurimetria() {
                 }}
             />
         </div>
-
       </div>
     </div>
   );
