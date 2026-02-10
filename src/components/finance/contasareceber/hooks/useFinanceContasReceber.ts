@@ -45,7 +45,7 @@ export function useFinanceContasReceber() {
       const { data, error } = await supabase
         .from('finance_faturas')
         .select('*')
-        .order('data_envio', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setFaturas(data || []);
@@ -83,16 +83,18 @@ export function useFinanceContasReceber() {
   // Enviar fatura
   const enviarFatura = async (params: EnviarFaturaParams) => {
     try {
-      // 1. Buscar ID do cliente se existir
+      // 1. Buscar ID do cliente se existir (Proteção contra undefined para evitar erro 406)
       let cliente_id = null;
-      const { data: clienteData } = await supabase
-        .from('finance_clientes')
-        .select('id')
-        .eq('email', params.cliente_email)
-        .single();
+      if (params.cliente_email) {
+        const { data: clienteData } = await supabase
+          .from('finance_clientes')
+          .select('id')
+          .eq('email', params.cliente_email)
+          .maybeSingle();
 
-      if (clienteData) {
-        cliente_id = clienteData.id;
+        if (clienteData) {
+          cliente_id = clienteData.id;
+        }
       }
 
       // 2. Upload de arquivos (se houver)
@@ -129,6 +131,7 @@ export function useFinanceContasReceber() {
           assunto: params.assunto,
           corpo: params.corpo || '',
           status: 'aguardando_resposta',
+          data_envio: new Date().toISOString(),
           arquivos_urls: arquivos_urls.length > 0 ? arquivos_urls : null
         })
         .select()
@@ -137,21 +140,21 @@ export function useFinanceContasReceber() {
       if (faturaError) throw faturaError;
 
       // 4. Enviar e-mail (usando função edge do Supabase ou serviço externo)
-      // OPÇÃO 1: Usando Supabase Edge Function
       try {
-        await supabase.functions.invoke('enviar-email-fatura', {
-          body: {
-            destinatario: params.cliente_email,
-            remetente: params.remetente,
-            assunto: params.assunto,
-            corpo: params.corpo,
-            arquivos_urls,
-            fatura_id: faturaData.id
-          }
-        });
+        if (params.cliente_email) {
+          await supabase.functions.invoke('enviar-email-fatura', {
+            body: {
+              destinatario: params.cliente_email,
+              remetente: params.remetente,
+              assunto: params.assunto,
+              corpo: params.corpo,
+              arquivos_urls,
+              fatura_id: faturaData.id
+            }
+          });
+        }
       } catch (emailError) {
         console.warn('Erro ao enviar e-mail (função edge):', emailError);
-        // Não bloqueia o fluxo se o e-mail falhar
       }
 
       // 5. Recarregar lista
@@ -187,7 +190,7 @@ export function useFinanceContasReceber() {
   // Atualizar status (automático via cron job ou manual)
   const atualizarStatus = async (id: string, novoStatus: FaturaStatus) => {
     try {
-      const updates: any = { status: novoStatus };
+      const updates: any = { status: novoStatus, updated_at: new Date().toISOString() };
 
       if (novoStatus === 'radar') {
         updates.data_radar = new Date().toISOString();
