@@ -10,7 +10,8 @@ import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
 import { SidebarFinanceiro } from './components/finance/SidebarFinanceiro'
 
 // Sidebar da Controladoria (Componente de Layout)
-import { Sidebar as ControladoriaSidebar } from './components/layout/Sidebar'
+import { Sidebar as ControladoriaSidebar } from './components/layout/Sidebar.tsx'
+
 
 // Componentes CRM
 import { Clients } from './components/crm/Clients'
