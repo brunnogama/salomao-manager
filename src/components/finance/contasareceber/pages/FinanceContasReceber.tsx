@@ -1,4 +1,3 @@
-//src/components/finance/contasareceber/pages/FinanceContasReceber.tsx
 import { useState } from 'react'
 import { 
   ArrowDownCircle, 

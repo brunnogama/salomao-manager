@@ -11,7 +11,6 @@ import {
   Plus,
   Save,
   Users,
-  Building2,
   DollarSign,
   FileText,
   Trash2
@@ -45,7 +44,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const { enviarFatura } = useFinanceContasReceber();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Estados para adicionar cliente
   const [showAdicionar, setShowAdicionar] = useState(false);
   const [clienteCNPJ, setClienteCNPJ] = useState('');
   const [novoClienteNome, setNovoClienteNome] = useState('');
@@ -57,7 +55,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   useEffect(() => {
     if (isOpen) {
       loadClientes();
-      // Reset nos estados quando abre
       setClienteNome('');
       setClienteEmail('');
       setValor('');
@@ -95,12 +92,10 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     const formatted = formatCNPJ(value);
     setClienteCNPJ(formatted);
 
-    // Busca automática se CNPJ estiver completo
     const cleaned = formatted.replace(/\D/g, '');
     if (cleaned.length === 14) {
       setSearchingCNPJ(true);
       
-      // Buscar no banco primeiro - SEM formatação na query
       const { data: existing } = await supabase
         .from('finance_clientes')
         .select('*')
@@ -112,19 +107,17 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
         setNovoClienteEmail(existing.email);
         alert('Cliente já cadastrado! Carregando dados...');
       } else {
-        // Buscar em API externa
         try {
           const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleaned}`);
           if (response.ok) {
             const empresa = await response.json();
             setNovoClienteNome(empresa.razao_social || empresa.nome_fantasia || '');
-            setNovoClienteEmail(''); // Limpa para preenchimento manual
+            setNovoClienteEmail(''); 
           }
         } catch (error) {
           console.error('Erro ao buscar CNPJ:', error);
         }
       }
-      
       setSearchingCNPJ(false);
     }
   };
@@ -152,14 +145,11 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
       if (error) throw error;
 
-      // Atualizar lista de clientes
       await loadClientes();
       
-      // Selecionar o cliente recém-criado
       setClienteNome(novoClienteNome);
       setClienteEmail(novoClienteEmail);
       
-      // Limpar campos e fechar painel
       setClienteCNPJ('');
       setNovoClienteNome('');
       setNovoClienteEmail('');
@@ -175,7 +165,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
   const handleClienteChange = (nome: string) => {
     setClienteNome(nome);
-    // Buscar email do cliente selecionado
     const cliente = clientes.find(c => c.nome === nome);
     if (cliente) {
       setClienteEmail(cliente.email);
@@ -202,8 +191,14 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!clienteNome || !clienteEmail) {
-      alert('Por favor, selecione um cliente e preencha o e-mail');
+    // CORREÇÃO: Validação rigorosa do nome para evitar erro 23502
+    if (!clienteNome || clienteNome.trim() === '') {
+      alert('Por favor, selecione um cliente válido na lista.');
+      return;
+    }
+
+    if (!clienteEmail) {
+      alert('O e-mail do cliente é obrigatório.');
       return;
     }
 
@@ -214,10 +209,15 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
     setLoading(true);
     try {
+      // CORREÇÃO: Tratamento do valor para garantir float correto
+      const valorNumerico = typeof valor === 'string' 
+        ? parseFloat(valor.replace(/\./g, '').replace(',', '.')) 
+        : valor;
+
       await enviarFatura({
         cliente_nome: clienteNome,
         cliente_email: clienteEmail,
-        valor: parseFloat(valor.replace(',', '.')),
+        valor: valorNumerico,
         remetente,
         assunto,
         corpo,
@@ -226,18 +226,16 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       
       alert("✅ Fatura enviada com sucesso! O acompanhamento de 2d + 2d foi iniciado.");
       
-      // Limpar todos os campos após sucesso
       setClienteNome('');
       setClienteEmail('');
       setValor('');
       setAssunto('');
       setCorpo('');
       setArquivos([]);
-      
       onClose();
     } catch (error: any) {
       console.error('Erro ao enviar fatura:', error);
-      alert("❌ Erro ao processar envio: " + error.message);
+      alert("❌ Erro ao processar envio: " + (error.message || "Tente novamente."));
     } finally {
       setLoading(false);
     }
@@ -249,7 +247,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-gray-200 max-h-[90vh]">
         
-        {/* HEADER */}
         <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-[#1e3a8a] rounded-lg">
@@ -266,8 +263,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
-          
-          {/* REMETENTE */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Remetente (Cópia Automática)</label>
             <input 
@@ -279,7 +274,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
             />
           </div>
 
-          {/* SELECIONAR CLIENTE COM BOTÃO ADICIONAR */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1 flex items-center justify-between">
               Selecionar Cliente
@@ -312,7 +306,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
             )}
           </div>
 
-          {/* PAINEL DE ADICIONAR CLIENTE */}
           {showAdicionar && (
             <div className="bg-blue-50 border-2 border-[#1e3a8a] rounded-xl p-5 space-y-4 animate-in slide-in-from-top duration-200">
               <div className="flex items-center gap-2 mb-3">
@@ -323,7 +316,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* CNPJ */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
                     CNPJ *
@@ -345,7 +337,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                   </div>
                 </div>
 
-                {/* NOME */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
                     Nome/Razão Social *
@@ -359,7 +350,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                   />
                 </div>
 
-                {/* E-MAIL */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
                     E-mail *
@@ -392,20 +382,14 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                   disabled={savingCliente || !clienteCNPJ || !novoClienteNome || !novoClienteEmail}
                   className="flex items-center gap-2 px-5 py-2 bg-[#1e3a8a] text-white rounded-lg font-black text-[10px] uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {savingCliente ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Save className="h-3 w-3" />
-                  )}
+                  {savingCliente ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
                   Salvar Cliente
                 </button>
               </div>
             </div>
           )}
 
-          {/* E-MAIL CLIENTE E VALOR - LADO A LADO */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* E-MAIL DO CLIENTE */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">E-mail Cliente</label>
               <div className="relative">
@@ -421,7 +405,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               </div>
             </div>
 
-            {/* VALOR DA FATURA */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Valor da Fatura (R$)</label>
               <div className="relative">
@@ -438,7 +421,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
             </div>
           </div>
 
-          {/* ASSUNTO */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Assunto</label>
             <input 
@@ -451,7 +433,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
             />
           </div>
 
-          {/* CORPO DO E-MAIL */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Corpo do E-mail</label>
             <textarea 
@@ -463,11 +444,9 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
             />
           </div>
 
-          {/* ANEXOS */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Anexos (PDF)</label>
             
-            {/* LISTA DE ARQUIVOS ANEXADOS */}
             {arquivos.length > 0 && (
               <div className="space-y-2 mb-3">
                 {arquivos.map((arquivo, index) => (
@@ -485,7 +464,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                       type="button"
                       onClick={() => removeArquivo(index)}
                       className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                      title="Remover arquivo"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -494,7 +472,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               </div>
             )}
 
-            {/* ÁREA DE DROP */}
             <div 
               onClick={() => fileInputRef.current?.click()}
               className="border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center bg-gray-50 hover:bg-white hover:border-[#1e3a8a] cursor-pointer transition-all group"
@@ -509,15 +486,11 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               />
               <Paperclip className="h-6 w-6 text-gray-400 group-hover:text-[#1e3a8a] mb-2" />
               <span className="text-xs font-bold text-gray-500">
-                {arquivos.length > 0 
-                  ? `Clique para adicionar mais arquivos` 
-                  : 'Clique para selecionar a fatura ou arraste aqui'
-                }
+                {arquivos.length > 0 ? `Clique para adicionar mais arquivos` : 'Clique para selecionar a fatura ou arraste aqui'}
               </span>
             </div>
           </div>
 
-          {/* INFO BOX FLUXO */}
           <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-3">
             <Info className="h-5 w-5 text-[#1e3a8a] shrink-0" />
             <p className="text-[11px] text-blue-900 leading-relaxed font-medium">
@@ -526,7 +499,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           </div>
         </form>
 
-        {/* FOOTER */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
           <button
             type="button"
