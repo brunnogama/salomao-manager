@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { BarChart3, PieChart, Users, Scale, FileText, TrendingUp, Layers, Shield } from 'lucide-react';
-import { Contract, Partner } from '../../../types/controladoria';
-import { ContractFilters } from '../contracts/ContractFilters'; // Rota corrigida para pasta irmã
+import { BarChart3, Users, Scale, FileText, Layers, Shield } from 'lucide-react';
+import { Contract, Partner } from '../types'; // Rota corrigida para a pasta pages
+import { ContractFilters } from '../contracts/ContractFilters'; 
 import * as XLSX from 'xlsx';
 
-interface VolumetriaProps {
+interface VolumetryProps {
   userName?: string;
   onModuleHome?: () => void;
   onLogout?: () => void;
 }
 
-export function Volumetria({ userName, onModuleHome, onLogout }: VolumetriaProps) {
+// CORREÇÃO: Nome da função alterado de Volumetria para Volumetry para bater com o import do App.tsx
+export function Volumetry({ userName, onModuleHome, onLogout }: VolumetryProps) {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
@@ -19,7 +20,7 @@ export function Volumetria({ userName, onModuleHome, onLogout }: VolumetriaProps
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados dos Filtros (Iguais aos de Contratos)
+  // Estados dos Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [partnerFilter, setPartnerFilter] = useState('');
@@ -121,17 +122,20 @@ export function Volumetria({ userName, onModuleHome, onLogout }: VolumetriaProps
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Volumetria");
-    XLSX.writeFile(wb, "Volumetria_Socios.xlsx");
+    XLSX.writeFile(wb, `Volumetria_Banca_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
   };
 
   return (
-    <div className="p-8 animate-in fade-in duration-500 bg-gray-50/50 min-h-screen">
+    <div className="p-8 animate-in fade-in duration-500 bg-[#f8fafc] min-h-screen">
       <div className="mb-10">
-        <h1 className="text-sm font-black text-[#0a192f] uppercase tracking-[0.3em] flex items-center gap-3">
-          <BarChart3 className="w-6 h-6 text-amber-500" /> Métricas de Volumetria
+        <h1 className="text-sm font-black text-[#0a192f] uppercase tracking-[0.4em] flex items-center gap-4">
+          <div className="p-2.5 rounded-xl bg-[#0a192f] text-white shadow-lg">
+            <BarChart3 className="w-6 h-6 text-amber-500" />
+          </div>
+          Métricas de Volumetria
         </h1>
-        <div className="flex items-center gap-3 mt-1">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Análise estatística de produtividade e carga de trabalho por sócio.</p>
+        <div className="flex items-center gap-3 mt-4 ml-[60px]">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Análise de ocupação e densidade processual por unidade de negócio.</p>
             {userRole && (
                 <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase border flex items-center gap-1.5 ${
                     userRole === 'admin' 
@@ -145,7 +149,6 @@ export function Volumetria({ userName, onModuleHome, onLogout }: VolumetriaProps
         </div>
       </div>
 
-      {/* Filtros Reutilizados com Estilo Manager */}
       <div className="mb-8">
         <ContractFilters
           searchTerm={searchTerm} setSearchTerm={setSearchTerm}
@@ -158,63 +161,61 @@ export function Volumetria({ userName, onModuleHome, onLogout }: VolumetriaProps
         />
       </div>
 
-      {/* Cards de Resumo Estilo Manager */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between transition-all hover:shadow-lg">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 flex items-center justify-between transition-all hover:shadow-xl">
           <div>
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Contratos Filtrados</p>
-            <p className="text-3xl font-black text-[#0a192f] mt-1 tracking-tighter">{totalContracts}</p>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Escopo de Contratos</p>
+            <p className="text-4xl font-black text-[#0a192f] mt-2 tracking-tighter">{totalContracts}</p>
           </div>
-          <div className="bg-blue-50 p-4 rounded-2xl text-[#0a192f] shadow-inner">
-            <FileText className="w-6 h-6" />
+          <div className="bg-blue-50 p-5 rounded-2xl text-blue-600 shadow-inner">
+            <FileText className="w-7 h-7" />
           </div>
         </div>
-        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between transition-all hover:shadow-lg">
+        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 flex items-center justify-between transition-all hover:shadow-xl">
           <div>
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Processos Ativos</p>
-            <p className="text-3xl font-black text-amber-600 mt-1 tracking-tighter">{totalProcesses}</p>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Massa Processual</p>
+            <p className="text-4xl font-black text-amber-600 mt-2 tracking-tighter">{totalProcesses}</p>
           </div>
-          <div className="bg-amber-50 p-4 rounded-2xl text-amber-500 shadow-inner">
-            <Scale className="w-6 h-6" />
+          <div className="bg-amber-50 p-5 rounded-2xl text-amber-500 shadow-inner">
+            <Scale className="w-7 h-7" />
           </div>
         </div>
-        <div className="bg-[#0a192f] p-8 rounded-[2rem] shadow-xl flex items-center justify-between transition-all">
+        <div className="bg-[#0a192f] p-8 rounded-[2.5rem] shadow-2xl flex items-center justify-between transition-all border border-white/10">
           <div>
-            <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em]">Banca Ativa</p>
-            <p className="text-3xl font-black text-white mt-1 tracking-tighter">{partners.length}</p>
+            <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Células Estratégicas</p>
+            <p className="text-4xl font-black text-white mt-2 tracking-tighter">{partners.length}</p>
           </div>
-          <div className="bg-white/10 p-4 rounded-2xl text-amber-500">
-            <Users className="w-6 h-6" />
+          <div className="bg-white/10 p-5 rounded-2xl text-amber-500">
+            <Users className="w-7 h-7" />
           </div>
         </div>
       </div>
 
-      {/* Lista de Volumetria por Sócio */}
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-[#0a192f]">
-          <h2 className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
-            <Layers className="w-5 h-5 text-amber-500" /> Distribuição por Célula / Sócio
+        <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#0a192f]">
+          <h2 className="text-[11px] font-black text-white uppercase tracking-[0.3em] flex items-center gap-4">
+            <Layers className="w-5 h-5 text-amber-500" /> Matriz de Distribuição por Sócio
           </h2>
         </div>
         
         {loading ? (
-            <div className="p-20 text-center flex flex-col items-center gap-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a192f]"></div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sincronizando dados...</p>
+            <div className="p-32 text-center flex flex-col items-center gap-6">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500"></div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Sincronizando BI...</p>
             </div>
         ) : metricsByPartner.length === 0 ? (
-            <div className="p-20 text-center bg-gray-50/50">
-              <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Nenhum registro encontrado para os parâmetros informados.</p>
+            <div className="p-32 text-center bg-gray-50/50">
+              <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Nenhum registro para os filtros aplicados.</p>
             </div>
         ) : (
           <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-400 font-black text-[10px] uppercase tracking-widest">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-50 text-gray-400 font-black text-[10px] uppercase tracking-widest border-b border-gray-100">
                 <tr>
-                  <th className="p-6 pl-10">Sócio Responsável</th>
-                  <th className="p-6 text-center">Contratos</th>
-                  <th className="p-6 text-center">Volume Processual</th>
-                  <th className="p-6 pr-10">Representatividade</th>
+                  <th className="p-8 pl-10">Unidade de Negócio</th>
+                  <th className="p-8 text-center">Portfolio</th>
+                  <th className="p-8 text-center">Densidade</th>
+                  <th className="p-8 pr-10">Market Share Interno</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -222,34 +223,34 @@ export function Volumetria({ userName, onModuleHome, onLogout }: VolumetriaProps
                   const percentage = totalContracts > 0 ? ((partner.contractCount / totalContracts) * 100).toFixed(1) : "0";
                   
                   return (
-                    <tr key={partner.id} className="hover:bg-amber-50/20 transition-colors group">
-                      <td className="p-6 pl-10">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-2xl bg-[#0a192f] text-amber-500 flex items-center justify-center font-black text-xs shadow-lg">
+                    <tr key={partner.id} className="hover:bg-amber-50/20 transition-all group">
+                      <td className="p-8 pl-10">
+                        <div className="flex items-center gap-5">
+                          <div className="w-12 h-12 rounded-2xl bg-[#0a192f] text-amber-500 flex items-center justify-center font-black text-sm shadow-xl border border-white/10 group-hover:scale-110 transition-transform">
                             {partner.name.charAt(0).toUpperCase()}
                           </div>
-                          <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{partner.name}</span>
+                          <span className="text-xs font-black text-[#0a192f] uppercase tracking-tighter">{partner.name}</span>
                         </div>
                       </td>
-                      <td className="p-6 text-center">
-                        <span className="bg-[#0a192f] text-white px-3 py-1 rounded-lg text-[10px] font-black border border-[#0a192f] shadow-md">
+                      <td className="p-8 text-center">
+                        <span className="bg-[#0a192f] text-white px-4 py-1.5 rounded-xl text-[11px] font-black border border-[#0a192f] shadow-lg">
                           {partner.contractCount}
                         </span>
                       </td>
-                      <td className="p-6 text-center">
-                        <span className="bg-amber-50 text-amber-700 px-3 py-1 rounded-lg text-[10px] font-black border border-amber-100">
-                          {partner.processCount}
+                      <td className="p-8 text-center">
+                        <span className="bg-amber-50 text-amber-700 px-4 py-1.5 rounded-xl text-[11px] font-black border border-amber-200">
+                          {partner.processCount} <span className="text-[8px] opacity-50 ml-1">ITENS</span>
                         </span>
                       </td>
-                      <td className="p-6 pr-10">
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden max-w-[200px] shadow-inner">
+                      <td className="p-8 pr-10">
+                        <div className="flex items-center gap-6">
+                          <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden max-w-[250px] shadow-inner">
                             <div 
-                              className="bg-amber-500 h-full rounded-full transition-all duration-1000 ease-out" 
+                              className="bg-gradient-to-r from-amber-400 to-amber-600 h-full rounded-full transition-all duration-1000 ease-out" 
                               style={{ width: `${percentage}%` }}
                             ></div>
                           </div>
-                          <span className="text-[10px] font-black text-[#0a192f] w-12">{percentage}%</span>
+                          <span className="text-[11px] font-black text-[#0a192f] w-14">{percentage}%</span>
                         </div>
                       </td>
                     </tr>
