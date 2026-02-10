@@ -5,6 +5,7 @@ import { FolderOpen, FileText, Download, Search, HardDrive, Clock, FileCheck, Ha
 // ROTA CORRIGIDA: Saindo de /pages e entrando em /utils (dentro de controladoria)
 import { maskHon } from '../utils/masks';
 
+// ROTA CORRIGIDA: Saindo de controladoria/pages e subindo até src/components/ui/
 import { EmptyState } from '../../../components/ui/EmptyState';
 
 interface GEDDocument {
