@@ -237,6 +237,7 @@ export function Jurimetria() {
     setFilteredGraphData({ nodes, links });
   };
 
+  // --- Estatísticas (Calculadas sobre o TOTAL, não sobre o filtrado, para servir de menu) ---
   const stats = useMemo(() => {
     const counts: StatsCount = { judges: {}, subjects: {}, courts: {} };
     contracts.forEach(c => {
