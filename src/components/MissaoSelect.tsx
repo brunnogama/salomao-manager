@@ -57,6 +57,15 @@ export function MissaoSelect({ value, onSelect, disabled = false }: MissaoSelect
     if (isOpen || isManaging) fetchMissoes()
   }, [isOpen, isManaging])
 
+  // Auto-preencher próximo ID quando abrir modal de gerenciamento
+  useEffect(() => {
+    if (isManaging && missoes.length > 0) {
+      const maxId = Math.max(...missoes.map(m => m.id_missao))
+      const nextId = maxId + 1
+      setNewMissao(prev => ({ ...prev, id_missao: String(nextId) }))
+    }
+  }, [isManaging, missoes])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (isManaging && managingRef.current?.contains(event.target as Node)) return
