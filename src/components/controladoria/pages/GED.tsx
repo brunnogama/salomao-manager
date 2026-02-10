@@ -55,7 +55,7 @@ export function GED() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         const { data: profile } = await supabase
-            .from('profiles')
+            .from('user_profiles') // Corrigido para user_profiles para consistência
             .select('role')
             .eq('id', user.id)
             .single();
@@ -94,19 +94,15 @@ export function GED() {
       }));
 
       // 2. Recuperar metadados (tamanho) do Storage se não existir no banco
-      // Agrupamos por contract_id (pasta no storage) para evitar chamadas excessivas
       const uniqueContractIds = Array.from(new Set(formattedDocs.map(d => d.contract?.id).filter(Boolean)));
       
       const sizesMap = new Map<string, number>();
 
-      // Buscamos a lista de arquivos de cada pasta de contrato para pegar o metadata.size
       await Promise.all(uniqueContractIds.map(async (contractId) => {
-        // Assume bucket 'contract-documents' baseado na lógica de upload
         const { data: files } = await supabase.storage.from('contract-documents').list(contractId);
         
         if (files) {
             files.forEach(f => {
-                // O path no banco é "contract_id/nome_do_arquivo"
                 const fullPath = `${contractId}/${f.name}`;
                 if (f.metadata && f.metadata.size) {
                     sizesMap.set(fullPath, f.metadata.size);
@@ -131,11 +127,9 @@ export function GED() {
   };
 
   const handleDownload = async (path: string) => {
-    // Tenta baixar do bucket correto. Se 'ged' falhar, tenta 'contract-documents'
     let { data } = await supabase.storage.from('contract-documents').createSignedUrl(path, 60);
     
     if (!data?.signedUrl) {
-         // Fallback para bucket 'ged' caso seja legado
          const res = await supabase.storage.from('ged').createSignedUrl(path, 60);
          data = res.data;
     }
@@ -147,7 +141,6 @@ export function GED() {
     }
   };
 
-  // Função para formatar bytes
   const formatBytes = (bytes: number, decimals = 2) => {
     if (!bytes || bytes === 0) return '0 B';
     const k = 1024;
@@ -157,7 +150,6 @@ export function GED() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
-  // Filtragem
   const filteredDocs = documents.filter(doc => {
     const matchesFolder = selectedFolder ? doc.client_name === selectedFolder : true;
     const matchesSearch = searchTerm 
@@ -168,7 +160,6 @@ export function GED() {
     return matchesFolder && matchesSearch;
   });
 
-  // Cálculo do tamanho total
   const totalSize = filteredDocs.reduce((acc, doc) => acc + (doc.file_size || 0), 0);
 
   return (
@@ -180,7 +171,6 @@ export function GED() {
           </h1>
           <div className="flex items-center gap-2 mt-1">
             <p className="text-gray-500">Repositório centralizado de contratos e propostas.</p>
-            {/* Badge de Perfil */}
             {userRole && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border flex items-center gap-1 ${
                     userRole === 'admin' 
@@ -199,7 +189,6 @@ export function GED() {
 
       <div className="flex flex-1 gap-6 overflow-hidden">
         
-        {/* SIDEBAR: DIRETÓRIOS (CLIENTES) */}
         <div className="w-64 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50">
             <h2 className="text-xs font-bold text-gray-500 uppercase flex items-center">
@@ -211,7 +200,6 @@ export function GED() {
               onClick={() => setSelectedFolder(null)}
               className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${!selectedFolder ? 'bg-salomao-blue text-white' : 'text-gray-600 hover:bg-gray-100'}`}
             >
-              {/* Ícone fixo com shrink-0 para não deformar */}
               <FolderOpen className="w-4 h-4 mr-2 shrink-0" />
               Todos os Arquivos
             </button>
@@ -221,7 +209,6 @@ export function GED() {
                 onClick={() => setSelectedFolder(folder)}
                 className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${selectedFolder === folder ? 'bg-salomao-blue text-white' : 'text-gray-600 hover:bg-gray-100'}`}
               >
-                {/* Ícone fixo com shrink-0 */}
                 <FolderOpen className={`w-4 h-4 mr-2 shrink-0 ${selectedFolder === folder ? 'text-white' : 'text-salomao-gold'}`} />
                 <span className="truncate text-left">{folder}</span>
               </button>
@@ -229,14 +216,11 @@ export function GED() {
           </div>
         </div>
 
-        {/* MAIN: ARQUIVOS */}
         <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* Toolbar */}
           <div className="p-4 border-b border-gray-100 flex justify-between items-center">
             <h3 className="font-bold text-gray-700 flex items-center">
               {selectedFolder ? <><FolderOpen className="w-5 h-5 mr-2 text-salomao-gold shrink-0" /> {selectedFolder}</> : 'Todos os Documentos'}
               <span className="ml-2 bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">{filteredDocs.length}</span>
-              {/* Exibição do tamanho total formatado */}
               <span className="ml-2 text-xs text-gray-400 font-normal">({formatBytes(totalSize)})</span>
             </h3>
             <div className="relative w-64">
@@ -251,12 +235,10 @@ export function GED() {
             </div>
           </div>
 
-          {/* File Grid */}
           <div ref={mainContentRef} className="flex-1 overflow-y-auto p-6">
             {loading ? (
               <div className="text-center py-10 text-gray-400">Carregando documentos...</div>
             ) : filteredDocs.length === 0 ? (
-                // --- INICIO DO EMPTY STATE ---
                 <EmptyState 
                    icon={FolderOpen}
                    title="Nenhum arquivo encontrado"
@@ -269,13 +251,11 @@ export function GED() {
                    }
                    className="h-full justify-center"
                 />
-                // --- FIM DO EMPTY STATE ---
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredDocs.map((doc) => (
                   <div key={doc.id} className="group relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition-all">
                     
-                    {/* Header: Icon & Type */}
                     <div className="flex justify-between items-start mb-3">
                       <div className="bg-red-50 text-red-600 p-2.5 rounded-lg">
                         <FileText className="w-6 h-6" />
@@ -293,7 +273,6 @@ export function GED() {
                       </div>
                     </div>
 
-                    {/* Content */}
                     <div className="mb-4">
                       <h4 className="text-sm font-bold text-gray-800 truncate mb-1" title={doc.file_name}>
                         {doc.file_name}
@@ -301,18 +280,16 @@ export function GED() {
                       <p className="text-xs text-gray-500 truncate">{doc.client_name}</p>
                     </div>
 
-                    {/* Footer Info */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-[10px] text-gray-400">
                         <span className="flex items-center"><Clock className="w-3 h-3 mr-1" /> {new Date(doc.uploaded_at).toLocaleDateString('pt-BR')}</span>
-                        {/* Exibe o tamanho individual do arquivo */}
                         <span>{formatBytes(doc.file_size || 0)}</span>
                       </div>
                       
                       <div className="flex gap-2">
                         {doc.contract?.display_id && (
                              <div className="bg-blue-50 border border-blue-100 rounded px-2 py-1 text-[10px] font-mono text-blue-600 truncate flex items-center">
-                                <Hash className="w-3 h-3 mr-1" /> {doc.contract.display_id}
+                               <Hash className="w-3 h-3 mr-1" /> {doc.contract.display_id}
                              </div>
                         )}
                         {doc.hon_number_ref && (
@@ -323,7 +300,6 @@ export function GED() {
                       </div>
                     </div>
 
-                    {/* Action: Download (Overlay) */}
                     <div className="absolute inset-0 bg-salomao-blue/90 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[1px]">
                       <button 
                         onClick={() => handleDownload(doc.file_path)}
