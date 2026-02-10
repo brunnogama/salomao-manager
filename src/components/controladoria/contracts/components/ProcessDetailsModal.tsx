@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Gavel, Edit } from 'lucide-center';
+import { X, Gavel, Edit } from 'lucide-react';
 import { ContractProcess } from '../../../../types/controladoria';
 
 interface ProcessDetailsModalProps {
