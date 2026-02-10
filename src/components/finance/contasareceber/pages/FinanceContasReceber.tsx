@@ -51,21 +51,29 @@ export function FinanceContasReceber({
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay()
-  const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))
-  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))
+  
+  const prevMonth = () => {
+    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
+    setCurrentDate(newDate)
+  }
+  
+  const nextMonth = () => {
+    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1)
+    setCurrentDate(newDate)
+  }
 
   const getStatusStyles = (status: FaturaStatus) => {
     switch (status) {
       case 'aguardando_resposta':
-        return { bg: 'bg-blue-50', dot: 'bg-blue-500', text: 'text-blue-700', border: 'border-blue-100', icon: <Clock className="h-3 w-3" />, label: 'Aguardando (2d)' }
+        return { bg: 'bg-blue-500', dot: 'bg-blue-500', text: 'text-blue-700', border: 'border-blue-100', icon: <Clock className="h-3 w-3" />, label: 'Aguardando (2d)' }
       case 'radar':
-        return { bg: 'bg-amber-50', dot: 'bg-amber-500', text: 'text-amber-700', border: 'border-amber-100', icon: <AlertCircle className="h-3 w-3" />, label: 'No Radar (+2d)' }
+        return { bg: 'bg-amber-500', dot: 'bg-amber-500', text: 'text-amber-700', border: 'border-amber-100', icon: <AlertCircle className="h-3 w-3" />, label: 'No Radar (+2d)' }
       case 'contato_direto':
-        return { bg: 'bg-red-50', dot: 'bg-red-500', text: 'text-red-700', border: 'border-red-100', icon: <Phone className="h-3 w-3" />, label: 'Contato Direto' }
+        return { bg: 'bg-red-500', dot: 'bg-red-500', text: 'text-red-700', border: 'border-red-100', icon: <Phone className="h-3 w-3" />, label: 'Contato Direto' }
       case 'pago':
-        return { bg: 'bg-emerald-50', dot: 'bg-emerald-500', text: 'text-emerald-700', border: 'border-emerald-100', icon: <CheckCircle2 className="h-3 w-3" />, label: 'Recebido' }
+        return { bg: 'bg-emerald-500', dot: 'bg-emerald-500', text: 'text-emerald-700', border: 'border-emerald-100', icon: <CheckCircle2 className="h-3 w-3" />, label: 'Recebido' }
       default:
-        return { bg: 'bg-gray-50', dot: 'bg-gray-400', text: 'text-gray-700', border: 'border-gray-100', icon: <Clock className="h-3 w-3" />, label: 'Enviado' }
+        return { bg: 'bg-gray-400', dot: 'bg-gray-400', text: 'text-gray-700', border: 'border-gray-100', icon: <Clock className="h-3 w-3" />, label: 'Enviado' }
     }
   }
 
@@ -87,16 +95,16 @@ export function FinanceContasReceber({
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
     const days = []
-    const totalDays = daysInMonth(year, month)
+    const totalDaysCount = daysInMonth(year, month)
     const offset = firstDayOfMonth(year, month)
 
     for (let i = 0; i < offset; i++) {
       days.push(<div key={`empty-${i}`} className="h-32 bg-gray-50/50 border border-gray-100"></div>)
     }
 
-    for (let day = 1; day <= totalDays; day++) {
+    for (let day = 1; day <= totalDaysCount; day++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      const faturasDoDia = faturas.filter(f => f.data_envio.startsWith(dateStr))
+      const faturasDoDia = faturas.filter(f => f.data_envio?.startsWith(dateStr))
 
       days.push(
         <div key={day} className="h-32 bg-white border border-gray-100 p-2 hover:bg-gray-50 transition-colors flex flex-col">
@@ -105,7 +113,7 @@ export function FinanceContasReceber({
             {faturasDoDia.map(f => {
               const style = getStatusStyles(f.status)
               return (
-                <div key={f.id} className={`text-[10px] p-1 rounded text-white font-bold truncate flex items-center gap-1 ${style.dot}`} title={f.cliente_nome}>
+                <div key={f.id} className={`text-[10px] p-1 rounded text-white font-bold truncate flex items-center gap-1 ${style.bg}`} title={f.cliente_nome}>
                   {f.cliente_nome}
                 </div>
               )
@@ -213,7 +221,7 @@ export function FinanceContasReceber({
           </div>
         </div>
 
-        {/* LEGENDA (Sempre visível se no Calendário) */}
+        {/* LEGENDA */}
         {activeTab === 'calendario' && (
           <div className="flex gap-4 px-2">
             <div className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-500">
