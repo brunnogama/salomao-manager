@@ -2,7 +2,9 @@ import { supabase } from '../../../lib/supabase';
 import { Contract } from '../../../types/controladoria';
 import { addMonths } from 'date-fns';
 import { safeParseFloat, ensureArray } from '../utils/contractHelpers';
-import { parseCurrency } from '../../../utils/masks'; // Import necessário para ler o valor formatado do breakdown
+
+// ROTA CORRIGIDA: Sobe 2 níveis para sair de /services e /contracts, entrando em /utils
+import { parseCurrency } from '../../utils/masks';
 
 export const generateFinancialInstallments = async (contractId: string, sourceData: Contract) => {
     if (sourceData.status !== 'active') return;
