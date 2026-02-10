@@ -1,5 +1,5 @@
 // src/components/finance/contasareceber/components/FinanceModalEnviarFatura.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, 
   Mail, 
@@ -7,15 +7,27 @@ import {
   AlertTriangle, 
   Send, 
   Loader2,
-  Info
+  Info,
+  Settings,
+  Save,
+  Plus,
+  Users
 } from 'lucide-react';
 import { SearchableSelect } from '../../../SearchableSelect';
 import { useFinanceContasReceber } from '../hooks/useFinanceContasReceber';
+import { supabase } from '../../../../lib/supabase';
 
 interface FinanceModalEnviarFaturaProps {
   isOpen: boolean;
   onClose: () => void;
   userEmail: string;
+}
+
+interface Cliente {
+  id: string;
+  cnpj: string;
+  nome: string;
+  email: string;
 }
 
 export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: FinanceModalEnviarFaturaProps) {
@@ -29,13 +41,130 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const { enviarFatura } = useFinanceContasReceber();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Estados para gerenciamento de clientes
+  const [showGerenciar, setShowGerenciar] = useState(false);
+  const [clienteCNPJ, setClienteCNPJ] = useState('');
+  const [clienteNome, setClienteNome] = useState('');
+  const [clienteEmail, setClienteEmail] = useState('');
+  const [savingCliente, setSavingCliente] = useState(false);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [searchingCNPJ, setSearchingCNPJ] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadClientes();
+    }
+  }, [isOpen]);
+
+  const loadClientes = async () => {
+    const { data } = await supabase
+      .from('finance_clientes')
+      .select('*')
+      .order('nome');
+    
+    if (data) {
+      setClientes(data);
+    }
+  };
+
+  const formatCNPJ = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length <= 14) {
+      return cleaned
+        .replace(/^(\d{2})(\d)/, '$1.$2')
+        .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+        .replace(/\.(\d{3})(\d)/, '.$1/$2')
+        .replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    return value;
+  };
+
+  const handleCNPJChange = async (value: string) => {
+    const formatted = formatCNPJ(value);
+    setClienteCNPJ(formatted);
+
+    // Busca automática se CNPJ estiver completo
+    const cleaned = formatted.replace(/\D/g, '');
+    if (cleaned.length === 14) {
+      setSearchingCNPJ(true);
+      
+      // Buscar no banco
+      const { data } = await supabase
+        .from('finance_clientes')
+        .select('*')
+        .eq('cnpj', formatted)
+        .single();
+
+      if (data) {
+        setClienteNome(data.nome);
+        setClienteEmail(data.email);
+      } else {
+        // Buscar em API externa (exemplo: ReceitaWS)
+        try {
+          const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleaned}`);
+          if (response.ok) {
+            const empresa = await response.json();
+            setClienteNome(empresa.razao_social || empresa.nome_fantasia || '');
+            setClienteEmail(''); // Limpa email para preenchimento manual
+          }
+        } catch (error) {
+          console.error('Erro ao buscar CNPJ:', error);
+        }
+      }
+      
+      setSearchingCNPJ(false);
+    }
+  };
+
+  const handleSaveCliente = async () => {
+    if (!clienteCNPJ || !clienteNome || !clienteEmail) {
+      alert('Preencha todos os campos do cliente');
+      return;
+    }
+
+    setSavingCliente(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('finance_clientes')
+        .upsert({
+          cnpj: clienteCNPJ,
+          nome: clienteNome,
+          email: clienteEmail
+        }, {
+          onConflict: 'cnpj'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Atualizar lista de clientes
+      await loadClientes();
+      
+      // Selecionar o cliente recém-criado
+      setCliente(clienteEmail);
+      
+      // Limpar campos e fechar gerenciar
+      setClienteCNPJ('');
+      setClienteNome('');
+      setClienteEmail('');
+      setShowGerenciar(false);
+      
+      alert('Cliente salvo com sucesso!');
+    } catch (error: any) {
+      alert('Erro ao salvar cliente: ' + error.message);
+    } finally {
+      setSavingCliente(false);
+    }
+  };
+
   if (!isOpen) return null;
 
-  // Lógica para verificar se o domínio é externo à organização
   const isExternalDomain = (email: string) => {
     if (!email || !email.includes('@')) return false;
     const domain = email.split('@')[1].toLowerCase();
-    const orgDomain = "salomao.com"; // Domínio base da organização
+    const orgDomain = "salomao.com";
     return domain !== orgDomain;
   };
 
@@ -73,7 +202,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
   return (
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-gray-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-gray-200">
         
         {/* HEADER */}
         <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50/50">
@@ -106,14 +235,36 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* DESTINATÁRIO */}
+            {/* DESTINATÁRIO COM GERENCIAR */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Selecionar Cliente</label>
+              <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1 flex items-center justify-between">
+                Selecionar Cliente
+                <button
+                  type="button"
+                  onClick={() => setShowGerenciar(!showGerenciar)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                    showGerenciar 
+                      ? 'bg-[#1e3a8a] text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <Settings className="h-3 w-3" /> Gerenciar
+                </button>
+              </label>
               <SearchableSelect
                 value={cliente}
-                onChange={setCliente}
+                onChange={(value) => {
+                  setCliente(value);
+                  // Buscar dados do cliente selecionado
+                  const selectedCliente = clientes.find(c => c.email === value);
+                  if (selectedCliente) {
+                    setClienteCNPJ(selectedCliente.cnpj);
+                    setClienteNome(selectedCliente.nome);
+                    setClienteEmail(selectedCliente.email);
+                  }
+                }}
                 placeholder="Pesquisar cliente..."
-                table="finance_faturas" 
+                table="finance_clientes" 
                 className="w-full"
               />
               {isExternalDomain(cliente) && (
@@ -139,6 +290,97 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               />
             </div>
           </div>
+
+          {/* PAINEL DE GERENCIAMENTO DE CLIENTE */}
+          {showGerenciar && (
+            <div className="bg-blue-50 border-2 border-[#1e3a8a] rounded-xl p-5 space-y-4 animate-in slide-in-from-top duration-200">
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="h-5 w-5 text-[#1e3a8a]" />
+                <h4 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">
+                  Cadastro de Cliente
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* CNPJ */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
+                    CNPJ
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={clienteCNPJ}
+                      onChange={(e) => handleCNPJChange(e.target.value)}
+                      placeholder="00.000.000/0000-00"
+                      maxLength={18}
+                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
+                    />
+                    {searchingCNPJ && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="h-4 w-4 animate-spin text-[#1e3a8a]" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* NOME */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
+                    Nome/Razão Social
+                  </label>
+                  <input 
+                    type="text"
+                    value={clienteNome}
+                    onChange={(e) => setClienteNome(e.target.value)}
+                    placeholder="Nome do cliente"
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
+                  />
+                </div>
+
+                {/* E-MAIL */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
+                    E-mail
+                  </label>
+                  <input 
+                    type="email"
+                    value={clienteEmail}
+                    onChange={(e) => setClienteEmail(e.target.value)}
+                    placeholder="cliente@empresa.com.br"
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setClienteCNPJ('');
+                    setClienteNome('');
+                    setClienteEmail('');
+                  }}
+                  className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Limpar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveCliente}
+                  disabled={savingCliente || !clienteCNPJ || !clienteNome || !clienteEmail}
+                  className="flex items-center gap-2 px-5 py-2 bg-[#1e3a8a] text-white rounded-lg font-black text-[10px] uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {savingCliente ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Save className="h-3 w-3" />
+                  )}
+                  Salvar Cliente
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* ASSUNTO */}
           <div className="space-y-1.5">

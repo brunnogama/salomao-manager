@@ -130,24 +130,7 @@ export function FinanceContasReceber({
             <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
               Contas a Receber
             </h1>
-            <div className="flex items-center gap-4 mt-1">
-              <p className="text-sm font-semibold text-gray-500">Gestão de entradas e fluxo 2d + 2d</p>
-              <div className="h-4 w-[1px] bg-gray-300" />
-              <div className="flex bg-gray-100 p-1 rounded-lg">
-                <button 
-                  onClick={() => setActiveTab('lista')}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'lista' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <List className="h-3 w-3" /> Lista
-                </button>
-                <button 
-                  onClick={() => setActiveTab('calendario')}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'calendario' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <CalendarIcon className="h-3 w-3" /> Calendário
-                </button>
-              </div>
-            </div>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão de entradas e fluxo 2d + 2d</p>
           </div>
         </div>
 
@@ -170,6 +153,30 @@ export function FinanceContasReceber({
 
       <div className="max-w-7xl mx-auto space-y-6 w-full">
         
+        {/* BOTÕES DE VISUALIZAÇÃO - LINHA PRÓPRIA */}
+        <div className="flex bg-gray-100 p-1.5 rounded-xl w-fit shadow-sm">
+          <button 
+            onClick={() => setActiveTab('lista')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
+              activeTab === 'lista' 
+                ? 'bg-white text-[#1e3a8a] shadow-md' 
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <List className="h-4 w-4" /> Lista
+          </button>
+          <button 
+            onClick={() => setActiveTab('calendario')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
+              activeTab === 'calendario' 
+                ? 'bg-white text-[#1e3a8a] shadow-md' 
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <CalendarIcon className="h-4 w-4" /> Calendário
+          </button>
+        </div>
+
         {/* TOOLBAR */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           {activeTab === 'lista' ? (
