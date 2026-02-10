@@ -188,7 +188,7 @@ export function SearchableSelect({
 
       {/* DROPDOWN MENU */}
       {isOpen && !isManaging && (
-        <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100 z-[9999]">
+        <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100 z-[99999]">
           
           <div className="p-2 border-b border-gray-100 bg-gray-50 shrink-0">
             <div className="relative">
@@ -259,10 +259,10 @@ export function SearchableSelect({
         </div>
       )}
 
-      {/* MODAL DE GERENCIAMENTO (Add/Edit/Delete) */}
+       {/* MODAL DE GERENCIAMENTO (Add/Edit/Delete) */}
       {isManaging && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100000] flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setIsManaging(false)}
         >
           <div 

@@ -215,7 +215,7 @@ export function AeronaveFormModal({
   const emptyForm: Partial<AeronaveLancamento> = {
     origem: origem,
     tripulacao: '',
-    aeronave: '', 
+    aeronave: 'PR WBW',  // ALTERADO: define padrão
     data_missao: '',
     id_missao: undefined,
     nome_missao: '',
@@ -262,7 +262,7 @@ export function AeronaveFormModal({
     }
   }
 
-  useEffect(() => {
+   useEffect(() => {
     if (isOpen) {
       fetchListas()
       if (initialData) {
@@ -271,7 +271,8 @@ export function AeronaveFormModal({
         setFormData({ 
           ...emptyForm, 
           origem: origem,
-          despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa' 
+          despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
+          aeronave: 'PR WBW'  // ADICIONE AQUI também
         })
       }
     }
@@ -306,9 +307,13 @@ export function AeronaveFormModal({
       await onSave(formData)
       if (onSuccess) onSuccess()
       
-      if (saveAndNew) {
-        setFormData({ ...emptyForm, origem: origem, despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa' })
-        if (frotaOpcoes.length > 0) setFormData(prev => ({ ...prev, aeronave: frotaOpcoes[0] }))
+       if (saveAndNew) {
+        setFormData({ 
+          ...emptyForm, 
+          origem: origem, 
+          despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
+          aeronave: 'PR WBW'  // ADICIONE AQUI
+        })
       } else {
         onClose()
       }
@@ -324,7 +329,7 @@ export function AeronaveFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+      <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
         
         {/* Header */}
         <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-100 ${origem === 'missao' ? 'bg-blue-50/50' : 'bg-emerald-50/50'}`}>
@@ -349,7 +354,7 @@ export function AeronaveFormModal({
         </div>
 
         {/* Form Body */}
-        <div className="flex-1 p-6 bg-white">
+        <div className="flex-1 p-6 bg-white max-h-[70vh] overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6">
 
             {/* COLUNA 1: Dados Principais e Operacionais */}
