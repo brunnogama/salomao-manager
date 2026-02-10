@@ -7,8 +7,13 @@ import {
   AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
 } from 'lucide-react';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
+
+// Rota corrigida: EmptyState está em src/components/ui/
 import { EmptyState } from '../../../components/ui/EmptyState';
+
+// Rota corrigida: ContractDetailsModal é um componente irmão em src/components/controladoria/contracts/
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
+
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
@@ -119,7 +124,7 @@ export function Finance() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         const { data: profile } = await supabase
-            .from('profiles')
+            .from('user_profiles') // Correção: utilizando tabela correta conforme builds anteriores
             .select('role')
             .eq('id', user.id)
             .single();
@@ -137,7 +142,7 @@ export function Finance() {
       .from('financial_installments')
       .select(`
         *,
-        contracts (
+        contract:contracts (
           id, seq_id, hon_number, client_name, partner_id, billing_location, status,
           partners (name)
         )
@@ -145,14 +150,14 @@ export function Finance() {
       .order('due_date', { ascending: true });
 
     if (installmentsData) {
-      const activeInstallments = installmentsData.filter((i: any) => i.contracts?.status === 'active');
+      const activeInstallments = installmentsData.filter((i: any) => i.contract?.status === 'active');
 
       const formatted = activeInstallments.map((i: any) => ({
         ...i,
         contract: {
-          ...i.contracts,
-          partner_name: i.contracts?.partners?.name,
-          display_id: i.contracts?.seq_id ? String(i.contracts.seq_id).padStart(6, '0') : '-'
+          ...i.contract,
+          partner_name: i.contract?.partners?.name,
+          display_id: i.contract?.seq_id ? String(i.contract.seq_id).padStart(6, '0') : '-'
         }
       }));
       setInstallments(formatted);
@@ -233,7 +238,7 @@ export function Finance() {
       let analyzedByName = null;
       if (contractData.analyzed_by) {
         const { data: profileData } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .select('name')
           .eq('id', contractData.analyzed_by)
           .single();
@@ -372,12 +377,12 @@ export function Finance() {
     } catch (error: any) {
       console.error('Erro ao baixar PDF:', error);
       toast.dismiss(loadingToast);
-      toast.error('Erro ao baixar documento: ' + (error.message || 'Erro desconhecido'));
+      toast.error('Erro ao baixar documento');
     }
   };
 
   const handleNewInvoice = () => {
-     alert("Abrir modal de Cadastro de Casos / Faturamento avulso");
+      alert("Abrir modal de Cadastro de Casos / Faturamento avulso");
   };
 
   const exportToExcel = () => {
@@ -538,12 +543,15 @@ export function Finance() {
          </div>
 
          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end flex-1">
+            
+            {/* Busca Animada Expandível */}
             <div 
               ref={searchRef}
               className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-white ${isSearchOpen ? 'w-64 border border-gray-200 shadow-sm px-3 rounded-lg' : 'w-10 border border-transparent justify-center cursor-pointer hover:bg-gray-50 rounded-lg'} h-[42px]`}
               onClick={() => !isSearchOpen && setIsSearchOpen(true)}
             >
                 <Search className={`w-5 h-5 text-gray-400 shrink-0 ${!isSearchOpen && 'cursor-pointer'}`} />
+                
                 <input
                     type="text"
                     placeholder="Buscar..."
@@ -552,8 +560,14 @@ export function Finance() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     autoFocus={isSearchOpen}
                 />
+
                 {isSearchOpen && searchTerm && (
-                    <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-1 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }}
+                        className="ml-1 text-gray-400 hover:text-red-500"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
                 )}
             </div>
 
@@ -679,16 +693,13 @@ export function Finance() {
           }}
           contract={selectedContractData}
           onEdit={() => {
-            // Redirecionar para edição do contrato
             navigate(`/contracts/edit/${selectedContractId}`);
           }}
           onDelete={() => {
-            // Função de deletar (se necessário)
             toast.info('Função de exclusão não implementada');
           }}
           processes={contractProcesses}
           documents={contractDocuments}
-          // Novo: Prop para controlar se botões de ação aparecem no modal
           canEdit={userRole === 'admin' || userRole === 'editor'}
           canDelete={userRole === 'admin'}
         />
