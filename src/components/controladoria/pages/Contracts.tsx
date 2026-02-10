@@ -19,12 +19,12 @@ import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
 import { PartnerManagerModal } from '../partners/PartnerManagerModal';
 import { AnalystManagerModal } from '../analysts/AnalystManagerModal';
 
-// Subir 1 nível para sair de /pages e entrar em /ui (dentro de controladoria)
+// ROTA CORRIGIDA: Subir 1 nível para sair de /pages e entrar em /ui (dentro de controladoria)
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { EmptyState } from '../ui/EmptyState';
 
-// Subir 3 níveis para chegar em /src e entrar em /utils
-import { parseCurrency } from '../ui/EmptyState';
+// ROTA CORRIGIDA: Subir 1 nível para sair de /pages e entrar em /utils (dentro de controladoria)
+import { parseCurrency } from '../utils/masks';
 
 const getStatusColor = (status: string) => {
   switch (status) {
