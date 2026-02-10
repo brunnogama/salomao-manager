@@ -1,5 +1,5 @@
-import { supabase } from '../../../lib/supabase'; // Ajustado para subir 3 níveis (services -> controladoria -> components -> src/lib)
-import { Partner } from '../types'; // Ajustado para a pasta pai (controladoria)
+import { supabase } from '../lib/supabase';
+import { Partner } from '../types';
 
 export const partnerService = {
   async getAll(): Promise<Partner[]> {

@@ -1,5 +1,5 @@
-import { supabase } from '../../../lib/supabase'; // Ajustado para subir 3 níveis (services -> controladoria -> components -> src/lib)
-import { Contract } from '../types'; // Ajustado para a pasta pai (controladoria)
+import { supabase } from '../lib/supabase';
+import { Contract } from '../types';
 
 export const contractService = {
   async getAll(): Promise<Contract[]> {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Settings, AlertCircle, Link as LinkIcon } from 'lucide-react';
-import { Contract } from '../../../../types/controladoria';
-import { CustomSelect } from '../../ui/CustomSelect';
+import { Contract } from '../../../types'; 
+import { CustomSelect } from '../../ui/CustomSelect'; 
 
 interface ClientFormSectionProps {
   formData: Contract;
@@ -27,16 +27,16 @@ export function ClientFormSection(props: ClientFormSectionProps) {
   } = props;
 
   return (
-    <section className="space-y-6">
-        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100 pb-3">Identificação do Cliente</h3>
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+    <section className="space-y-5">
+        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider border-b border-black/5 pb-2">Dados do Cliente</h3>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
           <div className="md:col-span-3">
-            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">CNPJ / CPF</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">CNPJ/CPF</label>
             <div className="flex gap-2 items-center">
               <input 
                 type="text" 
                 disabled={formData.has_no_cnpj} 
-                className="flex-1 border border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0a192f] bg-white focus:border-[#0a192f] outline-none shadow-sm transition-all disabled:bg-gray-100/50" 
+                className="flex-1 border border-gray-300 rounded-lg p-2.5 text-sm bg-white focus:border-salomao-blue outline-none min-w-0" 
                 placeholder="00.000.000/0000-00" 
                 value={formData.cnpj || ''} 
                 onChange={(e) => setFormData({...formData, cnpj: maskCNPJ(e.target.value)})}
@@ -45,48 +45,42 @@ export function ClientFormSection(props: ClientFormSectionProps) {
                 type="button" 
                 onClick={handleCNPJSearch} 
                 disabled={formData.has_no_cnpj || !formData.cnpj} 
-                className="bg-[#0a192f] hover:bg-slate-800 text-white p-3 rounded-xl shadow-lg disabled:opacity-30 shrink-0 transition-all active:scale-95"
+                className="bg-white hover:bg-gray-50 text-gray-600 p-2.5 rounded-lg border border-gray-300 disabled:opacity-50 shrink-0"
               >
-                <Search className="w-4 h-4 text-amber-500" />
+                <Search className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex items-center mt-3 ml-1">
+            <div className="flex items-center mt-2">
               <input 
                 type="checkbox" 
                 id="no_cnpj" 
-                className="w-4 h-4 rounded border-gray-300 text-[#0a192f] focus:ring-[#0a192f]" 
+                className="rounded text-salomao-blue focus:ring-salomao-blue" 
                 checked={formData.has_no_cnpj || false} 
                 onChange={(e) => setFormData({...formData, has_no_cnpj: e.target.checked, cnpj: ''})}
               />
-              <label htmlFor="no_cnpj" className="ml-2 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer">PF / Sem documento</label>
+              <label htmlFor="no_cnpj" className="ml-2 text-xs text-gray-500">Sem CNPJ (Pessoa Física)</label>
             </div>
           </div>
           <div className="md:col-span-9">
             <CustomSelect 
-                label="Nome do Cliente / Terceiro *" 
+                label="Nome do Cliente *" 
                 value={formData.client_name} 
                 onChange={handleClientChange} 
                 options={clientSelectOptions}
                 onAction={() => setActiveManager('client')}
                 actionIcon={Settings}
-                actionLabel="Configurar Clientes"
-                placeholder="SELECIONE OU DIGITE O NOME"
+                actionLabel="Gerenciar Clientes"
+                placeholder="Selecione ou digite o nome"
             />
             {duplicateClientCases.length > 0 && (
-                <div className="mt-3 bg-amber-50 border border-amber-100 rounded-2xl p-4 flex flex-col gap-3 animate-in slide-in-from-top-2">
-                    <span className="text-[10px] text-amber-700 font-black uppercase flex items-center tracking-widest">
-                        <AlertCircle className="w-3.5 h-3.5 mr-2" /> Registros de Casos Existentes:
+                <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5 flex flex-col gap-1">
+                    <span className="text-xs text-blue-700 font-bold flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" /> Já há casos para este cliente:
                     </span>
                     <div className="flex flex-wrap gap-2">
                         {duplicateClientCases.map(c => (
-                            <a 
-                              key={c.id} 
-                              href={`/controladoria/contracts?id=${c.id}`}
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-[9px] font-black text-[#0a192f] uppercase tracking-widest hover:bg-amber-500 hover:text-white bg-white px-3 py-1.5 rounded-lg border border-amber-200 flex items-center transition-all shadow-sm"
-                            >
-                                <LinkIcon className="w-2.5 h-2.5 mr-2"/> {c.hon_number || 'SEM HON'} • {getStatusLabel(c.status).toUpperCase()}
+                            <a key={c.id} href={`/contracts/${c.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline bg-white px-2 py-0.5 rounded border border-blue-100 flex items-center">
+                                <LinkIcon className="w-2.5 h-2.5 mr-1"/> {c.hon_number || 'Sem HON'} ({getStatusLabel(c.status)})
                             </a>
                         ))}
                     </div>
@@ -94,22 +88,22 @@ export function ClientFormSection(props: ClientFormSectionProps) {
             )}
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <CustomSelect 
-              label="Área de Atuação Jurídica" 
+              label="Área do Direito" 
               value={formData.area || ''} 
               onChange={(val: string) => setFormData({...formData, area: val})} 
               options={areaOptions} 
               onAction={() => setActiveManager('area')} 
               actionIcon={Settings} 
               actionLabel="Gerenciar Áreas" 
-              placeholder="SELECIONE A ÁREA" 
+              placeholder="Selecione" 
             />
           </div>
           <div>
             <CustomSelect 
-              label="Sócio Responsável (Banca) *" 
+              label="Responsável (Sócio) *" 
               value={formData.partner_id || ''} 
               onChange={(val: string) => setFormData({...formData, partner_id: val})} 
               options={partnerSelectOptions} 

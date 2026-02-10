@@ -1,29 +1,21 @@
-// 1️⃣ IMPORTS PRIMEIRO
 import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { useDashboardData } from '../hooks/useDashboardData';
 
-import { DashboardHeader } from '../dashboard/DashboardHeader';
-import { EfficiencyFunnel } from '../dashboard/EfficiencyFunnel';
-import { PortfolioFinancialOverview } from '../dashboard/PortfolioFinancialOverview';
-import { WeeklySummary } from '../dashboard/WeeklySummary';
-import { MonthlySummary } from '../dashboard/MonthlySummary';
-import { EvolutionCharts } from '../dashboard/EvolutionCharts';
-import { PartnerStats } from '../dashboard/PartnerStats';
-import { OperationalStats } from '../dashboard/OperationalStats';
+// --- COMPONENTES MODULARES ---
+import { DashboardHeader } from '../components/dashboard/DashboardHeader';
+import { EfficiencyFunnel } from '../components/dashboard/EfficiencyFunnel';
+import { PortfolioFinancialOverview } from '../components/dashboard/PortfolioFinancialOverview';
+import { WeeklySummary } from '../components/dashboard/WeeklySummary';
+import { MonthlySummary } from '../components/dashboard/MonthlySummary';
+import { EvolutionCharts } from '../components/dashboard/EvolutionCharts';
+import { PartnerStats } from '../components/dashboard/PartnerStats';
+import { OperationalStats } from '../components/dashboard/OperationalStats';
 
-// 2️⃣ INTERFACE DEPOIS DOS IMPORTS
-interface DashboardProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
-}
-
-// 3️⃣ FUNÇÃO COM AS PROPS (SUBSTITUI A ANTIGA)
-export function Dashboard({ userName, onModuleHome, onLogout }: DashboardProps) {
+export function Dashboard() {
   // --- ESTADOS DE FILTROS ---
   const [selectedPartner, setSelectedPartner] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
@@ -31,6 +23,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: DashboardProps) 
   const [partnersList, setPartnersList] = useState<{id: string, name: string}[]>([]);
   const [locationsList, setLocationsList] = useState<string[]>([]);
 
+  // Hook de Dados
   const {
     loading, metrics, funil, evolucaoMensal, financeiro12Meses, statsFinanceiro,
     propostas12Meses, statsPropostas, mediasFinanceiras, mediasPropostas,
@@ -41,7 +34,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: DashboardProps) 
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
 
-  // --- CARREGAMENTO DE OPÇÕES DOS FILTROS ---
+  // --- EFEITOS DE CARREGAMENTO (SÓCIOS, LOCAIS, ROLE) ---
   useEffect(() => {
     const fetchFilterOptions = async () => {
         const { data: partners } = await supabase.from('partners').select('id, name').eq('active', true).order('name');
@@ -56,7 +49,6 @@ export function Dashboard({ userName, onModuleHome, onLogout }: DashboardProps) 
     fetchFilterOptions();
   }, []);
 
-  // --- VERIFICAÇÃO DE PERMISSÕES ---
   useEffect(() => {
     const checkUserRole = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -68,7 +60,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: DashboardProps) 
     checkUserRole();
   }, []);
 
-  // --- ENGINE DE EXPORTAÇÃO (PNG/PDF) ---
+  // --- FUNÇÃO EXPORTAR ---
   const handleExportAndEmail = async () => {
     if (!dashboardRef.current) return;
     setExporting(true);
@@ -85,7 +77,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: DashboardProps) 
 
         const linkPng = document.createElement('a');
         linkPng.href = imgData;
-        linkPng.download = `Relatorio_BI_Salomao_${dateStr}.png`;
+        linkPng.download = `Relatorio_Dashboard_${dateStr}.png`;
         linkPng.click();
 
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -93,10 +85,10 @@ export function Dashboard({ userName, onModuleHome, onLogout }: DashboardProps) 
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
         
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`Relatorio_BI_Salomao_${dateStr}.pdf`);
+        pdf.save(`Relatorio_Dashboard_${dateStr}.pdf`);
 
-        const subject = encodeURIComponent(`Dashboard Controladoria - Panorama ${dateStr}`);
-        const body = encodeURIComponent(`Prezados,\n\nSegue em anexo o Panorama Estratégico de Contratos (BI) atualizado em ${new Date().toLocaleDateString()}.\n\nAtenciosamente,\nControladoria - Salomão Advogados.`);
+        const subject = encodeURIComponent(`Panorama dos Contratos atualizado - ${dateStr}`);
+        const body = encodeURIComponent(`Caros,\n\nSegue em anexo o panorama atualizado dos contratos.\n\nAtenciosamente,\nMarcio Gama - Controladoria.`);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
 
     } catch (error) {
@@ -107,22 +99,21 @@ export function Dashboard({ userName, onModuleHome, onLogout }: DashboardProps) 
     }
   };
 
+  // Loading State
   if (loading || !metrics || metrics.geral.totalCasos === 0) {
     return (
-      <div className="flex flex-col justify-center items-center h-full gap-6 bg-white rounded-[2rem] border border-gray-100 p-20 shadow-inner">
-        <Loader2 className="w-12 h-12 text-[#0a192f] animate-spin" />
-        <div className="text-center">
-          <p className="text-[11px] font-black text-[#0a192f] uppercase tracking-[0.3em]">Business Intelligence</p>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-2">Sincronizando base de dados estratégica...</p>
-        </div>
+      <div className="flex flex-col justify-center items-center h-full gap-4">
+        <Loader2 className="w-10 h-10 text-[#1e3a8a] animate-spin" />
+        <p className="text-sm font-semibold text-gray-500">Carregando dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className='w-full min-h-screen overflow-x-hidden bg-[#f8fafc]'>
-      <div className='max-w-[1920px] mx-auto px-4 sm:px-8 py-8 space-y-10 pb-20'>
+    <div className='w-full min-h-screen overflow-x-hidden'>
+      <div className='max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 pb-16'>
         
+        {/* Header com Filtros */}
         <DashboardHeader 
           userRole={userRole}
           selectedPartner={selectedPartner}
@@ -135,22 +126,31 @@ export function Dashboard({ userName, onModuleHome, onLogout }: DashboardProps) 
           onExport={handleExportAndEmail}
         />
 
-        <div ref={dashboardRef} className="w-full space-y-10 bg-transparent rounded-[2.5rem]">
+        {/* Container do Dashboard - SEM SCROLL HORIZONTAL */}
+        <div ref={dashboardRef} className="w-full space-y-6 bg-[#F8FAFC] rounded-2xl p-4 sm:p-6">
           
-          <div className="w-full">
+          {/* 1. Funil de Eficiência */}
+          <div className="w-full overflow-hidden">
             <EfficiencyFunnel funil={funil} />
           </div>
 
-          <div className="w-full">
+          {/* 2. Snapshots (Carteira + Financeiro) */}
+          <div className="w-full overflow-hidden">
             <PortfolioFinancialOverview metrics={metrics} />
           </div>
 
-          <div className="grid grid-cols-1 gap-10">
+          {/* 3. Resumo Semanal */}
+          <div className="w-full overflow-hidden">
             <WeeklySummary metrics={metrics} />
+          </div>
+
+          {/* 4. Resumo Mensal */}
+          <div className="w-full overflow-hidden">
             <MonthlySummary metrics={metrics} />
           </div>
 
-          <div className="w-full space-y-10">
+          {/* 5. Gráficos de Evolução (Entrada + Financeiro 12m) */}
+          <div className="w-full space-y-6 overflow-hidden">
             <EvolutionCharts 
               evolucaoMensal={evolucaoMensal}
               propostas12Meses={propostas12Meses}
@@ -162,11 +162,13 @@ export function Dashboard({ userName, onModuleHome, onLogout }: DashboardProps) 
             />
           </div>
 
-          <div className="w-full">
+          {/* 6. Sócios (Contratos + Financeiro) */}
+          <div className="w-full space-y-6 overflow-hidden">
             <PartnerStats contractsByPartner={contractsByPartner} />
           </div>
 
-          <div className="w-full pb-10">
+          {/* 7. Operacional (Rejeições e Assinaturas) */}
+          <div className="w-full space-y-6 overflow-hidden">
             <OperationalStats 
               rejectionData={rejectionData} 
               metrics={metrics} 

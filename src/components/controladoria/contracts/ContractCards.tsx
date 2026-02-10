@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, Users, Briefcase } from 'lucide-react';
-import { supabase } from '../../../lib/supabase'; // Caminho corrigido para a estrutura centralizada
-import { Contract } from '../../../types/controladoria'; // Caminho corrigido para a pasta types da controladoria
+import { Edit, Trash2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { Contract } from '../../types';
 
 interface Props {
   contracts: Contract[];
@@ -34,21 +34,17 @@ export function ContractCards({ contracts, onEdit, onDelete, getStatusColor, get
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {contracts.map(c => (
-         <div 
-          key={c.id} 
-          onClick={() => onEdit(c)} 
-          className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-xl hover:border-amber-200 transition-all cursor-pointer relative group overflow-hidden"
-         >
+         <div key={c.id} onClick={() => onEdit(c)} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer relative group">
             
             {/* Ações: Escondidas para Viewer */}
             {userRole !== 'viewer' && (
-                <div className="absolute top-4 right-6 flex gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 z-10">
+                <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button 
                     onClick={(e) => { e.stopPropagation(); onEdit(c); }} 
-                    className="p-2 bg-white text-blue-500 hover:bg-blue-50 rounded-xl border border-gray-100 shadow-sm transition-all"
-                    title="Editar Caso"
+                    className="text-gray-400 hover:text-blue-500 p-1 hover:bg-blue-50 rounded"
+                    title="Editar"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
@@ -57,8 +53,8 @@ export function ContractCards({ contracts, onEdit, onDelete, getStatusColor, get
                   {userRole === 'admin' && (
                       <button 
                         onClick={(e) => onDelete(e, c.id!)} 
-                        className="p-2 bg-white text-red-500 hover:bg-red-50 rounded-xl border border-gray-100 shadow-sm transition-all"
-                        title="Remover Registro"
+                        className="text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded"
+                        title="Excluir"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -66,41 +62,14 @@ export function ContractCards({ contracts, onEdit, onDelete, getStatusColor, get
                 </div>
             )}
 
-            <div className="flex justify-between items-start mb-5">
-              <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm ${getStatusColor(c.status)}`}>
-                {getStatusLabel(c.status)}
-              </span>
-              <span className="text-[9px] text-gray-300 font-black tracking-widest uppercase">
-                {String(c.seq_id || 0).padStart(6, '0')}
-              </span>
+            <div className="flex justify-between items-start mb-4">
+              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(c.status)}`}>{getStatusLabel(c.status)}</span>
             </div>
-
-            <div className="mb-6">
-              <h3 className="font-black text-[#0a192f] text-sm mb-2 line-clamp-2 leading-tight uppercase tracking-tight" title={c.client_name}>
-                {c.client_name}
-              </h3>
-              <div className="flex items-center gap-2 text-gray-400">
-                <Users size={12} className="shrink-0 text-amber-500" />
-                <p className="text-[9px] font-bold uppercase tracking-widest truncate">
-                  {c.client_position || 'AUTOR'}
-                </p>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-50 pt-5 flex justify-between items-end">
-               <div className="flex flex-col">
-                 <span className="text-[8px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1">Volumetria</span>
-                 <span className="text-[10px] font-black text-[#0a192f] uppercase">{c.process_count || 0} Processos</span>
-               </div>
-               <div className="flex flex-col items-end text-right max-w-[60%]">
-                 <span className="text-[8px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1">Responsável</span>
-                 <div className="flex items-center gap-1.5 font-black text-[#0a192f] text-[10px]">
-                   <Briefcase size={12} className="text-amber-500" />
-                   <span className="truncate uppercase tracking-tighter" title={c.partner_name || 'NÃO ATRIBUÍDO'}>
-                     {c.partner_name || 'PENDENTE'}
-                   </span>
-                 </div>
-               </div>
+            <h3 className="font-bold text-gray-800 text-lg mb-1 line-clamp-1" title={c.client_name}>{c.client_name}</h3>
+            <p className="text-sm text-gray-500 mb-4">{c.client_position}</p>
+            <div className="border-t pt-4 flex justify-between items-center text-xs text-gray-500">
+               <span>{c.process_count} Processos</span>
+               <span className="font-semibold text-salomao-blue truncate max-w-[120px]" title={c.partner_name}>{c.partner_name}</span>
             </div>
          </div>
       ))}

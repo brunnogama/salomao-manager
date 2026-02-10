@@ -16,31 +16,29 @@ import {
   Share2,
   X 
 } from 'lucide-react';
-import { supabase } from '../../lib/supabase'; // Caminho corrigido para a lib central
+import { supabase } from '../lib/supabase';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  activePage: string;
-  onNavigate: (page: string) => void;
 }
 
-export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProps) {
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('Carregando...');
   const [userRole, setUserRole] = useState('');
 
-  // Menu Items mapeados para as chaves de estado do App.tsx
   const menuItems = [
-    { label: 'Dashboard', id: 'dashboard', icon: LayoutDashboard },
-    { label: 'Contratos', id: 'contratos', icon: FileSignature },
-    { label: 'Propostas', id: 'propostas', icon: FileText },
-    { label: 'Financeiro', id: 'financeiro', icon: DollarSign },
-    { label: 'Jurimetria', id: 'jurimetria', icon: Share2 },
-    { label: 'Volumetria', id: 'volumetria', icon: BarChart3 },
-    { label: 'Clientes', id: 'clientes', icon: Users },
-    { label: 'Kanban', id: 'kanban', icon: KanbanSquare },
-    { label: 'GED', id: 'ged', icon: FolderOpen },
+    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { label: 'Casos', path: '/contratos', icon: FileSignature },
+    { label: 'Propostas', path: '/propostas', icon: FileText },
+    { label: 'Financeiro', path: '/financeiro', icon: DollarSign },
+    { label: 'Jurimetria', path: '/jurimetria', icon: Share2 },
+    { label: 'Volumetria', path: '/volumetria', icon: BarChart3 },
+    { label: 'Compliance', path: '/compliance', icon: ShieldCheck },
+    { label: 'Clientes', path: '/clientes', icon: Users },
+    { label: 'Kanban', path: '/kanban', icon: KanbanSquare },
+    { label: 'GED', path: '/ged', icon: FolderOpen },
   ];
 
   useEffect(() => {
@@ -94,14 +92,14 @@ export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProp
       {/* Backdrop Escuro (Apenas Mobile) */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-[#0a192f]/60 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar - Estilo Manager Navy */}
+      {/* Sidebar - Cores do Design System */}
       <aside className={`
-        fixed top-0 left-0 z-50 h-screen w-64 bg-[#0a192f] text-gray-100 flex flex-col font-sans border-r border-white/10 shadow-2xl
+        fixed top-0 left-0 z-50 h-screen w-64 bg-[#112240] text-gray-100 flex flex-col font-sans border-r border-[#0a192f] shadow-2xl
         transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
         md:translate-x-0
@@ -110,101 +108,121 @@ export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProp
         {/* Botão Fechar (Apenas Mobile) */}
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-white/40 hover:text-white transition-colors md:hidden rounded-lg hover:bg-white/5"
+          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors md:hidden rounded-lg hover:bg-white/5"
         >
           <X className="w-6 h-6" />
         </button>
 
-        {/* 1. HEADER LOGO - Padronizado Gold */}
-        <div className="flex flex-col flex-shrink-0 relative pt-8 pb-6 px-6 border-b border-white/5">
-          <div className="flex flex-col items-center w-full gap-5">
+        {/* 1. HEADER LOGO */}
+        <div className="flex flex-col flex-shrink-0 relative bg-gradient-to-b from-[#0a192f] to-[#112240] pt-6 pb-4 px-6 border-b border-white/5">
+          <div className="flex flex-col items-center w-full gap-4">
             <img 
               src="/logo-branca.png" 
               alt="Salomão Advogados" 
-              className="h-10 w-auto object-contain block"
+              className="h-11 w-auto object-contain block"
             />
-            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 w-full backdrop-blur-sm">
-              <span className="text-[9px] text-amber-500 font-black tracking-[0.3em] uppercase leading-none whitespace-nowrap block text-center">
+            <div className="bg-[#1e3a8a]/30 border border-[#1e3a8a]/50 rounded-xl px-4 py-2 w-full backdrop-blur-sm">
+              <span className="text-[9px] text-white font-black tracking-[0.25em] uppercase leading-none whitespace-nowrap block text-center">
                 Módulo Controladoria
               </span>
             </div>
           </div>
         </div>
 
-        {/* 2. MENU PRINCIPAL - Estilo Densa baseada em onNavigate */}
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1 custom-scrollbar">
+        {/* 2. MENU PRINCIPAL */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
           {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => { onNavigate(item.id); onClose(); }}
-              className={`w-full flex items-center px-4 py-3 rounded-xl transition-all group border-l-4 ${
-                  activePage === item.id
-                    ? 'bg-white/10 text-white font-bold border-amber-500 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]' 
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white border-transparent'
+            <NavLink
+              key={item.path}
+              to={item.path}
+              onClick={onClose}
+              className={({ isActive }) =>
+                `w-full flex items-center px-4 py-3 rounded-xl transition-all group ${
+                  isActive
+                    ? 'bg-[#1e3a8a] text-white font-bold shadow-lg border-l-4 border-[#d4af37]' 
+                    : 'text-gray-300 hover:bg-white/5 hover:text-white border-l-4 border-transparent hover:border-[#1e3a8a]/50'
                 }`
               }
             >
-              <item.icon 
-                className={`h-4 w-4 mr-3 transition-colors flex-shrink-0 ${
-                  activePage === item.id ? 'text-amber-500' : 'text-gray-500 group-hover:text-amber-400'
-                }`} 
-              />
-              <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>
-            </button>
+              {({ isActive }) => (
+                <>
+                  <item.icon 
+                    className={`h-5 w-5 mr-3 transition-colors flex-shrink-0 ${
+                      isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                    }`} 
+                  />
+                  <span className="text-sm font-semibold tracking-tight">{item.label}</span>
+                </>
+              )}
+            </NavLink>
           ))}
         </nav>
 
-        {/* 3. MENU BASE / PROFILE */}
-        <div className="pt-4 pb-8 px-4 bg-[#0a192f] flex-shrink-0 mt-auto border-t border-white/5">
+        {/* 3. MENU BASE */}
+        <div className="pt-4 pb-6 px-3 bg-gradient-to-t from-[#0a192f] to-[#112240] flex-shrink-0 mt-auto border-t border-white/5">
           
-          <button 
-            onClick={() => { onNavigate('historico'); onClose(); }}
-            className={`w-full flex items-center px-4 py-2.5 rounded-xl transition-all group mb-1 ${
-                activePage === 'historico' ? 'bg-white/10 text-white font-bold' : 'text-gray-400 hover:text-white'
-            }`}
+          <NavLink 
+            to="/historico" 
+            onClick={onClose}
+            className={({ isActive }) => 
+              `w-full flex items-center px-4 py-3 rounded-xl transition-all group mb-2 ${
+                isActive 
+                  ? 'bg-[#1e3a8a] text-white font-bold' 
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`
+            }
           >
-            <History className="h-4 w-4 mr-3 text-gray-500 group-hover:text-amber-400 flex-shrink-0" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Histórico</span>
-          </button>
+            <History className="h-5 w-5 mr-3 text-gray-400 group-hover:text-white flex-shrink-0 transition-colors" />
+            <span className="text-sm font-semibold tracking-tight">Histórico</span>
+          </NavLink>
           
-          <button 
-            onClick={() => { onNavigate('configuracoes'); onClose(); }}
-            className={`w-full flex items-center px-4 py-2.5 rounded-xl transition-all group ${
-                activePage === 'configuracoes' ? 'bg-white/10 text-white font-bold' : 'text-gray-400 hover:text-white'
-            }`}
+          <NavLink 
+            to="/configuracoes" 
+            onClick={onClose}
+            className={({ isActive }) => 
+              `w-full flex items-center px-4 py-3 rounded-xl transition-all group ${
+                isActive 
+                  ? 'bg-[#1e3a8a] text-white font-bold' 
+                  : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              }`
+            }
           >
-            <Settings className="h-4 w-4 mr-3 text-gray-500 group-hover:text-amber-400 flex-shrink-0" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Ajustes</span>
-          </button>
+            <Settings className="h-5 w-5 mr-3 text-gray-400 group-hover:text-white flex-shrink-0 transition-colors" />
+            <span className="text-sm font-semibold tracking-tight">Configurações</span>
+          </NavLink>
 
-          {/* User Profile Card */}
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 group transition-all">
+          {/* User Profile - Redesenhado */}
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all group cursor-pointer">
               <div className="flex items-center gap-3 flex-1 min-w-0">
+                {/* Avatar com gradiente gold */}
                 <div className="relative flex-shrink-0">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 p-[2px]">
-                    <div className="w-full h-full rounded-[10px] bg-[#0a192f] flex items-center justify-center">
-                      <span className="text-xs font-black text-white">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 p-[2px]">
+                    <div className="w-full h-full rounded-[10px] bg-[#112240] flex items-center justify-center">
+                      <span className="text-sm font-black text-white">
                         {userName.charAt(0).toUpperCase()}
                       </span>
                     </div>
                   </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-[#112240] rounded-full"></div>
                 </div>
                 
+                {/* User Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-black text-white truncate uppercase tracking-tighter" title={userName}>
+                  <p className="text-sm font-bold text-white group-hover:text-white transition-colors truncate" title={userName}>
                     {userName}
                   </p>
-                  <p className="text-[8px] text-amber-500/70 uppercase tracking-[0.2em] font-black">
+                  <p className="text-[9px] text-gray-400 uppercase tracking-[0.15em] font-black">
                     {userRole}
                   </p>
                 </div>
               </div>
               
+              {/* Logout Button */}
               <button 
                 onClick={handleLogout}
-                className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all flex-shrink-0 ml-2"
-                title="Sair"
+                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all flex-shrink-0"
+                title="Sair do Sistema"
               >
                 <LogOut className="w-4 h-4" />
               </button>

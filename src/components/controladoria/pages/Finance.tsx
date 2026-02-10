@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../lib/supabase';
+import { useNavigate } from 'react-router-dom';
 import { 
   DollarSign, Search, Download, CheckCircle2, Circle, Clock, Loader2, 
   CalendarDays, Receipt, X, Filter, MapPin, Hash, FileText, 
   AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
 } from 'lucide-react';
-import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
-import { EmptyState } from '../ui/EmptyState';
-import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
+import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../types';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ContractDetailsModal } from '../components/contracts/ContractDetailsModal';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
@@ -32,20 +33,20 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   return (
     <div className="relative min-w-[160px]" ref={wrapperRef}>
       <div
-        className="flex items-center bg-white px-4 py-2 rounded-xl border border-gray-200 cursor-pointer hover:border-[#0a192f] transition-all select-none shadow-sm h-[44px]"
+        className="flex items-center bg-white px-3 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors select-none shadow-sm h-[40px]"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {Icon && <Icon className="w-4 h-4 text-[#0a192f] mr-2 shrink-0" />}
-        <span className="text-[11px] font-black uppercase tracking-widest text-gray-700 flex-1 truncate">{displayValue}</span>
-        <ChevronDown className={`w-3 h-3 text-gray-400 ml-2 shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#0a192f]' : ''}`} />
+        {Icon && <Icon className="w-4 h-4 text-gray-500 mr-2 shrink-0" />}
+        <span className="text-sm text-gray-700 flex-1 truncate">{displayValue}</span>
+        <ChevronDown className={`w-3 h-3 text-gray-500 ml-2 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-100 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto flex flex-col animate-in fade-in zoom-in-95 overflow-hidden">
+        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto flex flex-col animate-in fade-in zoom-in-95">
           {options.map((opt) => (
             <div
               key={opt.value}
-              className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${value === opt.value ? 'bg-amber-50 text-[#0a192f] border-amber-500' : 'border-transparent'}`}
+              className={`px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer ${value === opt.value ? 'bg-blue-50 font-medium' : ''}`}
               onClick={() => {
                 onChange(opt.value);
                 setIsOpen(false);
@@ -60,14 +61,8 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   );
 };
 
-interface FinanceProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
-}
-
-export function Finance({ userName, onModuleHome, onLogout }: FinanceProps) {
-  // REMOVER: const navigate = useNavigate();  const navigate = useNavigate();
+export function Finance() {
+  const navigate = useNavigate();
   
   // --- STATES ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
@@ -427,131 +422,161 @@ export function Finance({ userName, onModuleHome, onLogout }: FinanceProps) {
   const partnerOptions = [{ label: 'Todos Sócios', value: '' }, ...partners.map(p => ({ label: p.name, value: p.id }))];
 
   return (
-    <div className="p-8 animate-in fade-in duration-500 bg-gray-50/50 min-h-screen">
+    <div className="p-8 animate-in fade-in duration-500">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-sm font-black text-[#0a192f] uppercase tracking-[0.3em] flex items-center gap-3">
-            <DollarSign className="w-6 h-6 text-amber-500" /> Fluxo Financeiro
+          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
+            <DollarSign className="w-8 h-8" /> Controle Financeiro
           </h1>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Gestão centralizada de recebíveis e faturamento.</p>
+          <div className="flex items-center mt-1">
+             <p className="text-gray-500 mr-3">Gestão de faturamento, recebíveis e fluxo de caixa.</p>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
             <FilterSelect icon={Filter} value={statusFilter} onChange={setStatusFilter} options={statusOptions} placeholder="Status" />
             <FilterSelect icon={MapPin} value={selectedLocation} onChange={setSelectedLocation} options={locationOptions} placeholder="Locais" />
             <FilterSelect icon={Briefcase} value={selectedPartner} onChange={setSelectedPartner} options={partnerOptions} placeholder="Sócios" />
             
             {userRole !== 'viewer' && (
-                <button onClick={handleNewInvoice} className="bg-[#0a192f] hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl shadow-lg transition-all flex items-center text-[10px] font-black uppercase tracking-widest h-[44px] active:scale-95">
-                    <Plus className="w-4 h-4 mr-2 text-amber-500" /> Novo Registro
+                <button onClick={handleNewInvoice} className="bg-salomao-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold h-[40px] whitespace-nowrap">
+                    <Plus className="w-5 h-5 mr-2" /> Novo Faturamento
                 </button>
             )}
         </div>
       </div>
 
       {/* CARDS DE TOTAIS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div 
           onClick={totalOverdueCount > 0 ? handleFilterOverdue : undefined}
-          className={`p-6 rounded-[2rem] border transition-all duration-500 ${
+          className={`p-6 rounded-2xl shadow-sm border flex flex-col justify-center transition-all duration-300 ${
             totalOverdueCount > 0 
-              ? 'bg-red-50/50 border-red-100 cursor-pointer hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]' 
-              : 'bg-white border-gray-100 shadow-sm'
+              ? 'bg-gradient-to-br from-red-50 to-orange-50 border-red-200 cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]' 
+              : 'bg-white border-gray-100'
           }`}
+          title={totalOverdueCount > 0 ? `Clique para filtrar ${totalOverdueCount} parcela${totalOverdueCount !== 1 ? 's' : ''} vencida${totalOverdueCount !== 1 ? 's' : ''}` : ''}
         >
           <div className="flex items-center justify-between">
-            <div>
-                <p className={`text-[9px] font-black uppercase tracking-[0.2em] mb-2 ${totalOverdueCount > 0 ? 'text-red-500' : 'text-gray-400'}`}>
-                    Parcelas a Receber
+            <div className="flex-1">
+                <p className={`text-[11px] font-bold uppercase tracking-wider mb-2 ${totalOverdueCount > 0 ? 'text-gray-500' : 'text-gray-400'}`}>
+                    A Receber
                 </p>
-                <div className="flex items-baseline gap-2">
-                    <h3 className="text-3xl font-black text-[#0a192f]">{totalPendingCount}</h3>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lançamentos</span>
+                
+                {/* Total Pendente */}
+                <div className="flex items-baseline gap-2 mb-3">
+                    <h3 className="text-3xl font-bold text-gray-800">
+                        {totalPendingCount}
+                    </h3>
+                    <span className="text-sm font-medium text-gray-500">
+                        {totalPendingCount === 1 ? 'parcela' : 'parcelas'}
+                    </span>
                 </div>
+
+                {/* Alerta de Atrasados */}
                 {totalOverdueCount > 0 && (
-                    <div className="mt-4 flex items-center gap-2 text-red-600 bg-red-100/50 px-3 py-1.5 rounded-lg border border-red-200 animate-pulse">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        <span className="text-[9px] font-black uppercase tracking-widest">{totalOverdueCount} em atraso</span>
+                    <div className="flex items-center gap-2 bg-red-100 border border-red-300 rounded-lg px-3 py-2 animate-pulse">
+                        <div className="p-1 bg-red-600 rounded-full">
+                            <AlertTriangle className="w-3 h-3 text-white" />
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-xs font-bold text-red-700 leading-tight">
+                                {totalOverdueCount} {totalOverdueCount === 1 ? 'parcela vencida' : 'parcelas vencidas'}
+                            </p>
+                            <p className="text-[10px] text-red-600">
+                                Clique para visualizar
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>
-            <div className={`p-4 rounded-2xl ${totalOverdueCount > 0 ? 'bg-red-500 text-white shadow-lg shadow-red-200' : 'bg-gray-50 text-gray-300'}`}>
-                <Hash className="w-6 h-6" />
+            
+            {/* Ícone */}
+            <div className={`p-3 rounded-full transition-all ${
+              totalOverdueCount > 0 
+                ? 'bg-red-600 text-white shadow-lg shadow-red-200' 
+                : 'bg-blue-50 text-blue-500'
+            }`}>
+                {totalOverdueCount > 0 ? <AlertTriangle className="w-6 h-6" /> : <Hash className="w-6 h-6" />}
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between">
-          <div>
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Pendente Global</p>
-              <h3 className="text-3xl font-black text-[#0a192f]">{totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</h3>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center">
+          <div className="flex items-center justify-between">
+            <div>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">Pendente (R$)</p>
+                <h3 className="text-3xl font-bold text-gray-800 mt-1">{totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</h3>
+            </div>
+            <div className="bg-orange-50 p-3 rounded-full text-orange-500"><Clock className="w-6 h-6" /></div>
           </div>
-          <div className="p-4 bg-amber-50 text-amber-500 rounded-2xl"><Clock className="w-6 h-6" /></div>
         </div>
 
-        <div className="bg-[#0a192f] p-6 rounded-[2rem] border border-white/5 shadow-2xl flex items-center justify-between">
-          <div>
-              <p className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-2">Total Faturado</p>
-              <h3 className="text-3xl font-black text-white">{totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</h3>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center">
+          <div className="flex items-center justify-between">
+            <div>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">Faturado (R$)</p>
+                <h3 className="text-3xl font-bold text-green-600 mt-1">{totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</h3>
+            </div>
+            <div className="bg-green-50 p-3 rounded-full text-green-500"><CheckCircle2 className="w-6 h-6" /></div>
           </div>
-          <div className="p-4 bg-white/10 text-amber-500 rounded-2xl"><CheckCircle2 className="w-6 h-6" /></div>
         </div>
       </div>
 
       {/* BARRA DE CONTROLES */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8 bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm items-center justify-between">
-         <div className="flex items-center gap-4 pr-6 border-r border-gray-100 mr-2 min-w-[220px]">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
-                <Receipt className="w-6 h-6" />
+      <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm items-center justify-between">
+         <div className="flex items-center gap-3 pr-4 border-r border-gray-100 mr-2 min-w-[200px]">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <Receipt className="w-5 h-5" />
             </div>
             <div>
-                <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">Total Lançamentos</p>
-                <p className="text-2xl font-black text-[#0a192f] leading-none mt-1">{filteredInstallments.length}</p>
+                <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Total Lançamentos</p>
+                <p className="text-xl font-bold text-gray-800 leading-none">{filteredInstallments.length}</p>
             </div>
          </div>
 
-         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end flex-1">
+         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end flex-1">
             <div 
               ref={searchRef}
-              className={`flex items-center overflow-hidden transition-all duration-500 ease-in-out bg-white ${isSearchOpen ? 'w-72 border-[#0a192f] shadow-xl px-4 rounded-xl' : 'w-11 border-transparent justify-center cursor-pointer hover:bg-gray-100 rounded-xl'} h-[44px] border`}
+              className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-white ${isSearchOpen ? 'w-64 border border-gray-200 shadow-sm px-3 rounded-lg' : 'w-10 border border-transparent justify-center cursor-pointer hover:bg-gray-50 rounded-lg'} h-[42px]`}
               onClick={() => !isSearchOpen && setIsSearchOpen(true)}
             >
-                <Search className={`w-5 h-5 text-gray-400 shrink-0 ${isSearchOpen ? 'text-[#0a192f]' : ''}`} />
+                <Search className={`w-5 h-5 text-gray-400 shrink-0 ${!isSearchOpen && 'cursor-pointer'}`} />
                 <input
                     type="text"
-                    placeholder="BUSCAR CLIENTE OU ID..."
-                    className={`ml-3 bg-transparent outline-none text-[10px] font-bold uppercase tracking-widest w-full text-[#0a192f] placeholder:text-gray-300 ${!isSearchOpen && 'hidden'}`}
+                    placeholder="Buscar..."
+                    className={`ml-2 bg-transparent outline-none text-sm w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     autoFocus={isSearchOpen}
                 />
                 {isSearchOpen && searchTerm && (
-                    <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-2 text-gray-300 hover:text-red-500 transition-colors"><X className="w-4 h-4" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-1 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
                 )}
             </div>
 
-            <div className="h-6 w-px bg-gray-200 mx-2 hidden md:block"></div>
+            <div className="h-6 w-px bg-gray-200 mx-1 hidden md:block"></div>
 
             <div className="flex items-center gap-2">
-              <div className="flex items-center bg-gray-50/50 px-3 py-2 rounded-xl border border-gray-200 h-[44px]">
-                 <span className="text-[9px] font-black text-gray-400 uppercase mr-2">De</span>
-                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-[11px] font-bold text-[#0a192f] outline-none w-[115px] cursor-pointer" />
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
+                 <span className="text-xs text-gray-400 mr-2">De</span>
+                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-sm text-gray-700 outline-none w-[110px]" />
               </div>
-              <div className="flex items-center bg-gray-50/50 px-3 py-2 rounded-xl border border-gray-200 h-[44px]">
-                 <span className="text-[9px] font-black text-gray-400 uppercase mr-2">Até</span>
-                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-[11px] font-bold text-[#0a192f] outline-none w-[115px] cursor-pointer" />
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
+                 <span className="text-xs text-gray-400 mr-2">Até</span>
+                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-sm text-gray-700 outline-none w-[110px]" />
               </div>
             </div>
 
-            <button onClick={exportToExcel} className="flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl hover:bg-emerald-100 transition-all text-[10px] font-black uppercase tracking-widest h-[44px] shadow-sm">
+            <button onClick={exportToExcel} className="flex items-center px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium whitespace-nowrap h-[42px]">
                 <Download className="w-4 h-4 mr-2" /> XLS
             </button>
 
             {hasActiveFilters && (
-                <button onClick={clearFilters} className="flex items-center px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl border border-red-100 transition-all h-[44px]" title="Limpar Filtros">
-                    <X className="w-5 h-5" />
+                <button onClick={clearFilters} className="flex items-center px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors h-[42px]" title="Limpar Filtros">
+                    <X className="w-4 h-4" />
                 </button>
             )}
          </div>
@@ -559,81 +584,79 @@ export function Finance({ userName, onModuleHome, onLogout }: FinanceProps) {
 
       {/* LISTAGEM */}
       {loading ? (
-        <div className="flex flex-col justify-center items-center p-20 gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a192f]"></div>
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sincronizando dados...</p>
-        </div>
+        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 text-salomao-gold animate-spin" /></div>
       ) : filteredInstallments.length === 0 ? (
-          <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 min-h-[400px] flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-96">
                <EmptyState
                   icon={Receipt}
-                  title="Lançamentos inexistentes"
-                  description={hasActiveFilters ? "Nenhum resultado para os parâmetros aplicados." : "O módulo financeiro está sincronizado, porém não há lançamentos cadastrados para os filtros atuais."}
+                  title="Nenhum lançamento encontrado"
+                  description={hasActiveFilters ? "Nenhum resultado para os filtros aplicados." : "Ainda não existem lançamentos financeiros cadastrados."}
                   actionLabel={hasActiveFilters ? "Limpar Filtros" : undefined}
                   onAction={hasActiveFilters ? clearFilters : undefined}
+                  className="h-full justify-center"
                />
           </div>
       ) : (
-        <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left">
-              <thead className="bg-[#0a192f] text-white">
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
                 <tr>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest pl-8">ID</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">Status</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">Vencimento</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">Cliente</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">Contrato / Base</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">Tipo / Parcela</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest">Sócio Resp.</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-right">Valor</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-right pr-8">Ação</th>
+                    <th className="p-3">ID</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3">Vencimento</th>
+                    <th className="p-3">Cliente</th>
+                    <th className="p-3">HON / Cláusula</th>
+                    <th className="p-3">Tipo / Parcela</th>
+                    <th className="p-3">Sócio / Local</th>
+                    <th className="p-3 text-right">Valor</th>
+                    <th className="p-3 text-right">Ação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-100">
                 {filteredInstallments.map((item) => (
                   <tr 
                     key={item.id} 
-                    className="hover:bg-amber-50/30 transition-colors cursor-pointer group"
+                    className="hover:bg-gray-50 transition-colors cursor-pointer group"
                     onClick={() => handleOpenContractModal(item.contract!.id)}
                   >
-                    <td className="p-4 pl-8 font-black text-[10px] text-gray-300 tracking-widest">{(item.contract as any)?.display_id}</td>
-                    <td className="p-4">
+                    <td className="p-3 font-mono text-gray-500">{(item.contract as any)?.display_id}</td>
+                    <td className="p-3">
                       {item.status === 'paid' 
-                        ? <span className="flex items-center text-emerald-600 font-black text-[9px] uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100"><CheckCircle2 className="w-3 h-3 mr-1.5" /> Faturado</span> 
-                        : <span className="flex items-center text-amber-600 font-black text-[9px] uppercase tracking-widest bg-amber-50 px-2 py-1 rounded-lg border border-amber-100"><Circle className="w-3 h-3 mr-1.5" /> Pendente</span>
+                        ? <span className="flex items-center text-green-600 font-bold uppercase"><CheckCircle2 className="w-3 h-3 mr-1" /> Faturado</span> 
+                        : <span className="flex items-center text-orange-500 font-bold uppercase"><Circle className="w-3 h-3 mr-1" /> Pendente</span>
                       }
                     </td>
-                    <td className="p-4">
+                    <td className="p-3">
                       {item.paid_at ? (
-                        <span className="text-emerald-600 font-bold text-[10px]">PAG: {new Date(item.paid_at).toLocaleDateString()}</span>
+                        <span className="text-green-600 font-medium">Pago: {new Date(item.paid_at).toLocaleDateString()}</span>
                       ) : (
-                        <span className={`text-[10px] font-black tracking-widest uppercase ${isOverdue(item) ? "text-red-600 flex items-center" : "text-gray-700"}`}>
-                          {isOverdue(item) && <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />}
+                        <span className={`font-medium ${isOverdue(item) ? "text-red-600 flex items-center" : "text-gray-700"}`}>
+                          {isOverdue(item) && <AlertTriangle className="w-3 h-3 mr-1" />}
                           {item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}
                         </span>
                       )}
                     </td>
-                    <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{item.contract?.client_name}</td>
-                    <td className="p-4">
-                        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">HON: {item.contract?.hon_number || '-'}</div>
-                        <div className="text-[9px] text-gray-400 truncate max-w-[150px] uppercase font-bold">{(item as any).clause}</div>
+                    <td className="p-3 font-medium text-gray-800">{item.contract?.client_name}</td>
+                    <td className="p-3 text-gray-600">
+                        <div>HON: {item.contract?.hon_number || '-'}</div>
+                        <div className="text-[10px] text-gray-400 truncate max-w-[150px]">{(item as any).clause}</div>
                     </td>
-                    <td className="p-4">
-                        <div className="text-[10px] font-black text-[#0a192f] uppercase tracking-tight">{getTypeLabel(item.type)}</div>
-                        <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Parc. {item.installment_number}/{item.total_installments}</div>
+                    <td className="p-3">
+                        <div className="text-gray-700">{getTypeLabel(item.type)}</div>
+                        <div className="text-[10px] text-gray-400">Parcela {item.installment_number}/{item.total_installments}</div>
                     </td>
-                    <td className="p-4">
-                        <div className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest">{item.contract?.partner_name || '-'}</div>
-                        <div className="text-[9px] font-bold text-amber-600 uppercase tracking-widest mt-0.5">{item.contract?.billing_location || '-'}</div>
+                    <td className="p-3">
+                        <div className="text-salomao-blue font-medium">{item.contract?.partner_name || '-'}</div>
+                        <div className="text-[10px] text-gray-400">{item.contract?.billing_location || '-'}</div>
                     </td>
-                    <td className="p-4 text-right font-black text-[#0a192f] text-xs">{item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td className="p-4 text-right pr-8">
+                    <td className="p-3 text-right font-bold text-gray-800">{item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                    <td className="p-3 text-right">
                       {item.status === 'pending' && userRole !== 'viewer' && (
-                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="p-2 text-blue-500 hover:bg-white hover:shadow-sm rounded-xl transition-all" title="Ajustar Vencimento"><CalendarDays className="w-4 h-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="p-2 text-gray-400 hover:text-[#0a192f] hover:bg-white hover:shadow-sm rounded-xl transition-all" title="Baixar Contrato"><FileDown className="w-4 h-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-md">Confirmar</button>
+                        <div className="flex justify-end gap-2 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="text-blue-600 hover:bg-blue-50 p-1 rounded" title="Alterar Vencimento"><CalendarDays className="w-4 h-4" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="text-gray-500 hover:bg-gray-100 p-1 rounded" title="Baixar Documento do Contrato"><FileDown className="w-4 h-4" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded hover:bg-green-100 text-[10px] font-bold uppercase flex items-center"><DollarSign className="w-3 h-3 mr-1" /> Faturar</button>
                         </div>
                       )}
                     </td>
@@ -655,10 +678,10 @@ export function Finance({ userName, onModuleHome, onLogout }: FinanceProps) {
             setSelectedContractId(null);
           }}
           contract={selectedContractData}
-           onEdit={() => {
-    toast.info('Para editar este contrato, acesse o módulo Contratos');
-    setIsContractModalOpen(false);
-  }}
+          onEdit={() => {
+            // Redirecionar para edição do contrato
+            navigate(`/contracts/edit/${selectedContractId}`);
+          }}
           onDelete={() => {
             // Função de deletar (se necessário)
             toast.info('Função de exclusão não implementada');
@@ -672,19 +695,15 @@ export function Finance({ userName, onModuleHome, onLogout }: FinanceProps) {
 
       {/* MODAL: DATA DE FATURAMENTO */}
       {isDateModalOpen && (
-        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4 animate-in fade-in">
-          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden border border-white/20 animate-in zoom-in-95">
-            <div className="p-8 border-b border-gray-100 bg-[#0a192f]">
-               <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Confirmar Recebimento</h3>
-            </div>
-            <div className="p-8 bg-gray-50/50">
-              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-6">Confirma o recebimento desta parcela?</p>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Data do Recebimento</label>
-              <input type="date" className="w-full border border-gray-200 rounded-xl p-4 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white" value={billingDate} onChange={(e) => setBillingDate(e.target.value)}/>
-            </div>
-            <div className="p-6 bg-white flex justify-end gap-3 border-t border-gray-100">
-              <button onClick={() => setIsDateModalOpen(false)} className="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-all">Cancelar</button>
-              <button onClick={confirmPayment} className="px-6 py-2.5 bg-emerald-500 text-white rounded-xl shadow-lg font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all">Confirmar</button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-sm animate-in zoom-in-95">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Confirmar Faturamento</h3>
+            <p className="text-sm text-gray-500 mb-4">Confirma o recebimento desta parcela?</p>
+            <label className="block text-sm font-medium text-gray-600 mb-2">Data do Recebimento</label>
+            <input type="date" className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-salomao-blue outline-none mb-6" value={billingDate} onChange={(e) => setBillingDate(e.target.value)}/>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setIsDateModalOpen(false)} className="text-gray-500 hover:text-gray-800 font-medium text-sm">Cancelar</button>
+              <button onClick={confirmPayment} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 shadow-lg font-bold text-sm">Confirmar</button>
             </div>
           </div>
         </div>
@@ -692,18 +711,14 @@ export function Finance({ userName, onModuleHome, onLogout }: FinanceProps) {
 
       {/* MODAL: ALTERAR VENCIMENTO */}
       {isDueDateModalOpen && (
-        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4 animate-in fade-in">
-          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden border border-white/20 animate-in zoom-in-95">
-            <div className="p-8 border-b border-gray-100 bg-[#0a192f]">
-               <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Ajustar Vencimento</h3>
-            </div>
-            <div className="p-8 bg-gray-50/50">
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nova Data de Vencimento</label>
-              <input type="date" className="w-full border border-gray-200 rounded-xl p-4 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)}/>
-            </div>
-            <div className="p-6 bg-white flex justify-end gap-3 border-t border-gray-100">
-              <button onClick={() => setIsDueDateModalOpen(false)} className="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-all">Cancelar</button>
-              <button onClick={confirmDueDateChange} className="px-6 py-2.5 bg-[#0a192f] text-white rounded-xl shadow-lg font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 active:scale-95 transition-all">Salvar</button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-sm animate-in zoom-in-95">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Alterar Vencimento</h3>
+            <label className="block text-sm font-medium text-gray-600 mb-2">Nova Data de Vencimento</label>
+            <input type="date" className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-salomao-blue outline-none mb-6" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)}/>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setIsDueDateModalOpen(false)} className="text-gray-500 hover:text-gray-800 font-medium text-sm">Cancelar</button>
+              <button onClick={confirmDueDateChange} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-lg font-bold text-sm">Salvar</button>
             </div>
           </div>
         </div>

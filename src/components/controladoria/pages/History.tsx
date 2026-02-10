@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { 
   History as HistoryIcon, 
   Search, 
@@ -28,13 +28,7 @@ interface LogItem {
   user_email?: string;
 }
 
-interface HistoryProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
-}
-
-export function History({ userName, onModuleHome, onLogout }: HistoryProps) {
+export function History() {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
@@ -100,21 +94,21 @@ export function History({ userName, onModuleHome, onLogout }: HistoryProps) {
 
   const getActionStyle = (action: string) => {
     switch (action) {
-      case 'INSERT': return { color: 'text-emerald-600', bg: 'bg-emerald-50', icon: PlusCircle, label: 'Criação' };
-      case 'DELETE': return { color: 'text-red-600', bg: 'bg-red-50', icon: Trash2, label: 'Exclusão' };
-      case 'UPDATE': return { color: 'text-blue-600', bg: 'bg-blue-50', icon: Edit3, label: 'Edição' };
-      default: return { color: 'text-gray-600', bg: 'bg-gray-50', icon: Database, label: 'Sistema' };
+      case 'INSERT': return { color: 'text-green-600', bg: 'bg-green-100', icon: PlusCircle, label: 'Criação' };
+      case 'DELETE': return { color: 'text-red-600', bg: 'bg-red-100', icon: Trash2, label: 'Exclusão' };
+      case 'UPDATE': return { color: 'text-blue-600', bg: 'bg-blue-100', icon: Edit3, label: 'Edição' };
+      default: return { color: 'text-gray-600', bg: 'bg-gray-100', icon: Database, label: 'Sistema' };
     }
   };
 
   const formatDiff = (log: LogItem) => {
     if (log.action === 'DELETE') {
-      return <span className="text-gray-400 italic uppercase text-[10px] font-bold">Registro removido definitivamente.</span>;
+      return <span className="text-gray-500 italic">Item excluído permanentemente.</span>;
     }
     
     if (log.action === 'INSERT') {
       const name = log.new_data?.client_name || log.new_data?.title || log.new_data?.name || 'Novo Registro';
-      return <span className="font-bold text-[#0a192f] uppercase text-[11px] tracking-tight">Nova entrada: "{name}"</span>;
+      return <span className="font-medium text-gray-700">Novo item criado: "{name}"</span>;
     }
 
     if (log.action === 'UPDATE' && log.old_data && log.new_data) {
@@ -126,17 +120,17 @@ export function History({ userName, onModuleHome, onLogout }: HistoryProps) {
         }
       });
 
-      if (changes.length === 0) return <span className="text-gray-300 uppercase text-[10px] font-black">Sincronização de metadados.</span>;
+      if (changes.length === 0) return <span className="text-gray-400">Atualização interna do sistema.</span>;
 
       return (
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alterou:</span>
+        <div className="flex flex-wrap gap-2">
+          <span className="text-gray-500 mr-1">Alterou:</span>
           {changes.slice(0, 3).map(key => (
-            <span key={key} className="px-2 py-1 bg-white text-[#0a192f] text-[9px] font-black rounded-lg border border-gray-100 uppercase tracking-tighter shadow-sm">
+            <span key={key} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded border border-gray-200 font-mono">
               {key}
             </span>
           ))}
-          {changes.length > 3 && <span className="text-[9px] font-black text-amber-600 uppercase">+{changes.length - 3} campos</span>}
+          {changes.length > 3 && <span className="text-xs text-gray-400">+{changes.length - 3} outros</span>}
         </div>
       );
     }
@@ -152,23 +146,25 @@ export function History({ userName, onModuleHome, onLogout }: HistoryProps) {
   });
 
   return (
-    <div className="p-8 animate-in fade-in duration-500 h-full flex flex-col bg-gray-50/50 min-h-screen">
+    <div className="p-8 animate-in fade-in duration-500 h-full flex flex-col">
       <div className="flex justify-between items-center mb-8">
         <div>
-            <h1 className="text-sm font-black text-[#0a192f] uppercase tracking-[0.3em] flex items-center gap-3">
-              <HistoryIcon className="w-6 h-6 text-amber-500" /> Audit Log & Rastreabilidade
+            <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
+            <HistoryIcon className="w-8 h-8" /> Histórico de Atividades
             </h1>
-            <div className="flex items-center gap-3 mt-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Monitoramento integral de transações em banco de dados.</p>
+            <div className="flex items-center gap-2 mt-1">
+                <p className="text-gray-500">Monitoramento completo de alterações no sistema (Audit Log).</p>
                 {/* Badge de Perfil */}
                 {userRole && (
-                    <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase border flex items-center gap-1.5 ${
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border flex items-center gap-1 ${
                         userRole === 'admin' 
-                            ? 'bg-purple-50 text-purple-700 border-purple-100' 
-                            : 'bg-gray-50 text-gray-500 border-gray-100'
+                            ? 'bg-purple-100 text-purple-700 border-purple-200' 
+                            : userRole === 'editor' 
+                                ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                : 'bg-gray-100 text-gray-600 border-gray-200'
                     }`}>
                         <Shield className="w-3 h-3" />
-                        {userRole === 'admin' ? 'Administrador' : 'Acesso Negado'}
+                        {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
                     </span>
                 )}
             </div>
@@ -179,45 +175,43 @@ export function History({ userName, onModuleHome, onLogout }: HistoryProps) {
       {userRole === 'admin' ? (
         <>
             {/* Filtros */}
-            <div className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row gap-4 justify-between items-center">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
                 <div className="relative w-full md:w-96">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-                  <input 
-                      type="text" 
-                      placeholder="BUSCAR POR MÓDULO OU ID..." 
-                      className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-[10px] font-bold uppercase tracking-widest outline-none focus:border-[#0a192f] transition-all text-[#0a192f] placeholder:text-gray-300"
-                      value={searchTerm}
-                      onChange={e => setSearchTerm(e.target.value)}
-                  />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input 
+                    type="text" 
+                    placeholder="Buscar por módulo ou ID..." 
+                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-salomao-blue"
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                />
                 </div>
-                <div className="flex gap-2 w-full md:w-auto overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+                <div className="flex gap-2 w-full md:w-auto overflow-x-auto">
                 {['ALL', 'INSERT', 'UPDATE', 'DELETE'].map(type => (
                     <button
                     key={type}
                     onClick={() => setFilterAction(type)}
-                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap active:scale-95 ${
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
                         filterAction === type 
-                        ? 'bg-[#0a192f] text-white shadow-xl shadow-[#0a192f]/20' 
-                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                        ? 'bg-salomao-blue text-white shadow-md' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                     >
-                    {type === 'ALL' ? 'Geral' : type === 'INSERT' ? 'Entradas' : type === 'UPDATE' ? 'Edições' : 'Remoções'}
+                    {type === 'ALL' ? 'Todos' : type === 'INSERT' ? 'Criações' : type === 'UPDATE' ? 'Edições' : 'Exclusões'}
                     </button>
                 ))}
                 </div>
             </div>
 
             {/* Timeline */}
-            <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-2">
+            <div className="space-y-6 flex-1 overflow-y-auto">
                 {loading ? (
-                <div className="flex flex-col justify-center items-center py-20 gap-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a192f]"></div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sincronizando logs...</p>
-                </div>
+                <div className="text-center py-12 text-gray-400">Carregando histórico...</div>
                 ) : filteredLogs.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-[2rem] border border-dashed border-gray-200">
-                    <Ban className="w-12 h-12 text-gray-100 mx-auto mb-4" />
-                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Nenhum evento registrado no período.</p>
+                <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+                    <HistoryIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">Nenhum registro encontrado.</p>
+                    <p className="text-xs text-gray-400 mt-1">Realize alterações no sistema para gerar logs.</p>
                 </div>
                 ) : (
                 filteredLogs.map((log) => {
@@ -225,39 +219,41 @@ export function History({ userName, onModuleHome, onLogout }: HistoryProps) {
                     const date = new Date(log.changed_at);
                     
                     return (
-                    <div key={log.id} className="bg-white rounded-[1.5rem] border border-gray-100 p-6 shadow-sm hover:border-amber-200 transition-all relative overflow-hidden group">
-                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${style.bg.replace('bg-', 'bg-').replace('50', '500')}`}></div>
+                    <div key={log.id} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${style.bg.replace('bg-', 'bg-').replace('100', '500')}`}></div>
                         
-                        <div className="flex flex-col md:flex-row gap-6 items-center">
-                        <div className="flex-shrink-0 flex flex-col items-center min-w-[120px] border-r border-gray-50 pr-6">
-                            <div className={`w-12 h-12 rounded-2xl ${style.bg} flex items-center justify-center mb-3 shadow-inner`}>
-                              <style.icon className={`w-6 h-6 ${style.color}`} />
+                        <div className="flex flex-col md:flex-row gap-4 items-start">
+                        <div className="flex-shrink-0 flex flex-col items-center min-w-[100px]">
+                            <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center mb-2`}>
+                            <style.icon className={`w-5 h-5 ${style.color}`} />
                             </div>
                             <div className="text-center">
-                              <p className="text-[10px] font-black text-[#0a192f] uppercase">{date.toLocaleDateString()}</p>
-                              <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">{date.toLocaleTimeString()}</p>
+                            <p className="text-xs font-bold text-gray-700">{date.toLocaleDateString()}</p>
+                            <p className="text--[10px] text-gray-400">{date.toLocaleTimeString()}</p>
                             </div>
                         </div>
 
                         <div className="flex-1 w-full">
-                            <div className="flex flex-wrap justify-between items-center mb-4 gap-4">
-                              <div className="flex items-center gap-3">
-                                <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest border ${style.bg} ${style.color}`}>
+                            <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <span className={`text-xs px-2 py-0.5 rounded uppercase tracking-wider ${style.bg} ${style.color}`}>
                                     {style.label}
                                 </span>
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">no módulo</span>
-                                <span className="text-[11px] font-black text-[#0a192f] uppercase tracking-widest">{formatTableName(log.table_name)}</span>
-                              </div>
-                              <div className="flex items-center text-[9px] font-black text-gray-400 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100 uppercase tracking-widest">
-                                  <User className="w-3.5 h-3.5 mr-2 text-amber-500" />
-                                  <span className="truncate max-w-[200px]" title={log.user_id}>
-                                  {log.user_email || 'System_Core'}
-                                  </span>
-                              </div>
+                                <span className="text-sm font-medium text-gray-600">em</span>
+                                <span className="text-sm font-bold text-salomao-blue uppercase">{formatTableName(log.table_name)}</span>
+                                </h3>
+                            </div>
+                            <div className="flex items-center text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
+                                <User className="w-3 h-3 mr-1" />
+                                <span className="truncate max-w-[150px]" title={log.user_id}>
+                                {log.user_email || 'Usuário do Sistema'}
+                                </span>
+                            </div>
                             </div>
 
-                            <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100">
-                              {formatDiff(log)}
+                            <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 text-sm">
+                            {formatDiff(log)}
                             </div>
                         </div>
                         </div>
@@ -268,20 +264,17 @@ export function History({ userName, onModuleHome, onLogout }: HistoryProps) {
             </div>
         </>
       ) : (
-        // TELA DE ACESSO RESTRITO - Estilo Manager
-        <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-[3rem] border border-gray-100 p-12 text-center animate-in fade-in zoom-in duration-500 shadow-sm">
-            <div className="bg-red-50 p-6 rounded-[2rem] mb-6 shadow-inner">
-                <Ban className="w-16 h-16 text-red-500" />
+        // TELA DE ACESSO RESTRITO
+        <div className="flex-1 flex flex-col items-center justify-center bg-red-50/50 rounded-xl border border-red-100 p-8 text-center animate-in fade-in zoom-in duration-300">
+            <div className="bg-red-100 p-4 rounded-full mb-4">
+                <Ban className="w-12 h-12 text-red-500" />
             </div>
-            <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-[0.2em] mb-3">Protocolo de Segurança Ativo</h3>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest max-w-sm mx-auto leading-relaxed">
-                O acesso aos registros de auditoria é exclusivo para a <span className="text-red-500">Administração Central</span> do Ecossistema Salomão.
+            <h3 className="text-2xl font-bold text-red-700 mb-2">Acesso Restrito</h3>
+            <p className="text-gray-600 max-w-md mx-auto">
+                O histórico de auditoria contém informações sensíveis do sistema e é restrito apenas a <strong>Administradores</strong>.
             </p>
-            <div className="mt-10 pt-10 border-t border-gray-50 w-full max-w-xs">
-                <div className="text-[9px] font-black text-gray-300 uppercase tracking-[0.3em] mb-2">Seu Perfil Autenticado</div>
-                <div className="bg-[#0a192f] text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest inline-block shadow-xl">
-                  {userRole || 'Anônimo'}
-                </div>
+            <div className="mt-6 text-sm text-gray-500 bg-white px-4 py-2 rounded-lg border border-gray-200">
+                Seu perfil atual: <strong className="uppercase">{userRole || 'Verificando...'}</strong>
             </div>
         </div>
       )}

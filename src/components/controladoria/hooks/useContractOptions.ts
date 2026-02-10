@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase'; // Caminho corrigido
-import { Contract, ContractProcess } from '../types'; // Caminho corrigido
-import { toTitleCase } from '../utils/masks'; // Caminho corrigido
+import { supabase } from '../lib/supabase';
+import { Contract, ContractProcess } from '../types';
+import { toTitleCase } from '../utils/masks';
+
 // Defaults
 const DEFAULT_COURTS = ['STF', 'STJ', 'TST', 'TRF1', 'TRF2', 'TRF3', 'TRF4', 'TRF5', 'TJSP', 'TJRJ', 'TJMG', 'TJRS', 'TJPR', 'TJSC', 'TJBA', 'TJDFT', 'TRT1', 'TRT2', 'TRT15'];
 const DEFAULT_CLASSES = ['Procedimento Comum', 'Execução de Título Extrajudicial', 'Monitória', 'Mandado de Segurança', 'Ação Trabalhista - Rito Ordinário', 'Ação Trabalhista - Rito Sumaríssimo', 'Recurso Ordinário', 'Agravo de Instrumento', 'Apelação'];
@@ -345,6 +346,7 @@ export function useContractOptions({ formData, setFormData, currentProcess, setC
         return true;
   };
 
+  // Lógica de Remover (Apenas visual para maioria)
   const handleGenericRemove = (value: string) => {
       switch(activeManager) {
           case 'area': setLegalAreas(prev => prev.filter(i => i !== value)); break;

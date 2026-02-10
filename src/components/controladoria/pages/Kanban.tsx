@@ -9,26 +9,20 @@ import {
   DraggableStateSnapshot 
 } from '@hello-pangea/dnd';
 import { Plus, MoreHorizontal, Calendar, User, Search, Filter, Loader2, AlertCircle, Trash2, Edit2, KanbanSquare, Shield } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
-import { KanbanTask, Contract } from '../../../types/controladoria';
-import { KanbanTaskModal } from '../kanban/KanbanTaskModal';
+import { supabase } from '../lib/supabase';
+import { KanbanTask, Contract } from '../types';
+import { KanbanTaskModal } from '../components/kanban/KanbanTaskModal';
 import { toast } from 'sonner';
 
-// Configuração de Colunas com Cores do Design System Manager
-const columns: Record<string, { id: string; title: string; color: string; dot: string }> = {
-  todo: { id: 'todo', title: 'A Fazer', color: 'bg-slate-100', dot: 'bg-slate-400' },
-  doing: { id: 'doing', title: 'Em Andamento', color: 'bg-blue-50', dot: 'bg-blue-500' },
-  signature: { id: 'signature', title: 'Assinatura', color: 'bg-amber-50', dot: 'bg-amber-500' },
-  done: { id: 'done', title: 'Concluído', color: 'bg-emerald-50', dot: 'bg-emerald-500' }
+// REMOVIDOS: billing e review
+const columns: Record<string, { id: string; title: string; color: string }> = {
+  todo: { id: 'todo', title: 'A Fazer', color: 'bg-gray-100' },
+  doing: { id: 'doing', title: 'Em Andamento', color: 'bg-blue-50' },
+  signature: { id: 'signature', title: 'Assinatura', color: 'bg-orange-50' },
+  done: { id: 'done', title: 'Concluído', color: 'bg-green-50' }
 };
 
-interface KanbanProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
-}
-
-export function Kanban({ userName, onModuleHome, onLogout }: KanbanProps) {
+export function Kanban() {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
@@ -82,6 +76,7 @@ export function Kanban({ userName, onModuleHome, onLogout }: KanbanProps) {
       console.error('Erro ao buscar contratos:', error);
     }
     if (data) {
+      console.log('Contratos carregados:', data.length);
       setContracts(data);
     }
   };
@@ -126,7 +121,7 @@ export function Kanban({ userName, onModuleHome, onLogout }: KanbanProps) {
   };
 
   const handleEditTask = (task: KanbanTask) => {
-    if (userRole === 'viewer') return; 
+    if (userRole === 'viewer') return; // Apenas ignora o clique
     setEditingTask(task);
     setIsModalOpen(true);
   };
@@ -147,10 +142,12 @@ export function Kanban({ userName, onModuleHome, onLogout }: KanbanProps) {
 
     const cleanData = { ...taskData };
     
+    // Remove contract_id se for vazio
     if (!cleanData.contract_id || cleanData.contract_id === '') {
       delete cleanData.contract_id;
     }
 
+    // Tratamento para data vazia ser salva como NULL
     if (!cleanData.due_date || cleanData.due_date === '') {
       cleanData.due_date = null as any; 
     }
@@ -184,10 +181,10 @@ export function Kanban({ userName, onModuleHome, onLogout }: KanbanProps) {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Alta': return 'bg-red-50 text-red-600 border-red-100';
-      case 'Média': return 'bg-amber-50 text-amber-600 border-amber-100';
-      case 'Baixa': return 'bg-blue-50 text-blue-600 border-blue-100';
-      default: return 'bg-slate-50 text-slate-600 border-slate-100';
+      case 'Alta': return 'bg-red-100 text-red-700';
+      case 'Média': return 'bg-yellow-100 text-yellow-700';
+      case 'Baixa': return 'bg-blue-100 text-blue-700';
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -198,17 +195,22 @@ export function Kanban({ userName, onModuleHome, onLogout }: KanbanProps) {
   );
 
   return (
-    <div className="p-8 h-full flex flex-col animate-in fade-in duration-500 bg-gray-50/50 min-h-screen">
+    <div className="p-8 h-full flex flex-col animate-in fade-in duration-500">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-sm font-black text-[#0a192f] uppercase tracking-[0.3em] flex items-center gap-3">
-            <KanbanSquare className="w-6 h-6 text-amber-500" /> Fluxo Operacional
+          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
+            <KanbanSquare className="w-8 h-8" /> Kanban de Tarefas
           </h1>
-          <div className="flex items-center gap-3 mt-1">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gestão tática de prazos e diligências.</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-gray-500">Gerencie fluxo de trabalho e pendências.</p>
+            {/* Badge de Perfil */}
             {userRole && (
-                <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase border flex items-center gap-1.5 ${
-                    userRole === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-gray-50 text-gray-500'
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border flex items-center gap-1 ${
+                    userRole === 'admin' 
+                        ? 'bg-purple-100 text-purple-700 border-purple-200' 
+                        : userRole === 'editor' 
+                            ? 'bg-blue-100 text-blue-700 border-blue-200'
+                            : 'bg-gray-100 text-gray-600 border-gray-200'
                 }`}>
                     <Shield className="w-3 h-3" />
                     {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
@@ -217,44 +219,39 @@ export function Kanban({ userName, onModuleHome, onLogout }: KanbanProps) {
           </div>
         </div>
         
+        {/* Botão Nova Tarefa - Escondido para Viewer */}
         {userRole !== 'viewer' && (
-            <button onClick={handleAddTask} className="bg-[#0a192f] hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl shadow-lg transition-all flex items-center text-[10px] font-black uppercase tracking-widest active:scale-95">
-              <Plus className="w-4 h-4 mr-2 text-amber-500" /> Nova Tarefa
+            <button onClick={handleAddTask} className="bg-salomao-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold">
+            <Plus className="w-5 h-5 mr-2" /> Nova Tarefa
             </button>
         )}
       </div>
 
-      <div className="flex items-center mb-8 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm w-full max-w-md focus-within:border-[#0a192f] transition-all">
-        <Search className="w-5 h-5 text-gray-300 ml-3" />
+      <div className="flex items-center mb-6 bg-white p-2 rounded-xl border border-gray-100 shadow-sm w-full max-w-md">
+        <Search className="w-5 h-5 text-gray-400 ml-2" />
         <input 
           type="text" 
-          placeholder="BUSCAR TAREFA OU CLIENTE..." 
-          className="flex-1 p-2.5 outline-none text-[10px] font-bold uppercase tracking-widest text-[#0a192f] placeholder:text-gray-300 bg-transparent"
+          placeholder="Filtrar tarefas..." 
+          className="flex-1 p-2 outline-none text-sm"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
       {loading ? (
-        <div className="flex-1 flex flex-col justify-center items-center gap-4">
-          <Loader2 className="w-10 h-10 text-[#0a192f] animate-spin" />
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sincronizando Workflow...</p>
-        </div>
+        <div className="flex-1 flex justify-center items-center"><Loader2 className="w-8 h-8 text-salomao-gold animate-spin" /></div>
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="flex-1 overflow-x-auto overflow-y-hidden pb-6 custom-scrollbar">
+          <div className="flex-1 overflow-x-auto overflow-y-hidden pb-4">
             <div className="flex gap-6 h-full min-w-max">
               {Object.entries(columns).map(([columnId, column]) => {
                 const columnTasks = filteredTasks.filter(t => t.status === columnId);
                 
                 return (
-                  <div key={columnId} className="w-80 flex flex-col bg-gray-100/30 rounded-[2rem] border border-gray-200/50 max-h-full overflow-hidden">
-                    <div className={`p-5 border-b border-gray-100 flex justify-between items-center ${column.color}`}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${column.dot}`}></div>
-                        <h3 className="text-[11px] font-black text-[#0a192f] uppercase tracking-[0.15em]">{column.title}</h3>
-                      </div>
-                      <span className="bg-white/60 text-[#0a192f] px-2.5 py-0.5 rounded-lg text-[10px] font-black border border-white">{columnTasks.length}</span>
+                  <div key={columnId} className="w-80 flex flex-col bg-gray-50/50 rounded-xl border border-gray-200/60 max-h-full">
+                    <div className={`p-4 border-b border-gray-100 rounded-t-xl flex justify-between items-center ${column.color}`}>
+                      <h3 className="font-bold text-gray-700">{column.title}</h3>
+                      <span className="bg-white/50 px-2 py-0.5 rounded text-xs font-bold text-gray-600">{columnTasks.length}</span>
                     </div>
                     
                     <Droppable droppableId={columnId} isDropDisabled={userRole === 'viewer'}>
@@ -262,7 +259,7 @@ export function Kanban({ userName, onModuleHome, onLogout }: KanbanProps) {
                         <div
                           {...provided.droppableProps}
                           ref={provided.innerRef}
-                          className={`flex-1 p-4 overflow-y-auto min-h-[200px] transition-colors custom-scrollbar ${snapshot.isDraggingOver ? 'bg-amber-50/30' : ''}`}
+                          className={`flex-1 p-3 overflow-y-auto min-h-[150px] transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50/30' : ''}`}
                         >
                           {columnTasks.map((task, index) => (
                             <Draggable key={task.id} draggableId={task.id} index={index} isDragDisabled={userRole === 'viewer'}>
@@ -272,49 +269,47 @@ export function Kanban({ userName, onModuleHome, onLogout }: KanbanProps) {
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                   onClick={() => handleEditTask(task)}
-                                  className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4 group hover:border-amber-200 hover:shadow-xl transition-all relative overflow-hidden
-                                    ${snapshot.isDragging ? 'rotate-2 shadow-2xl ring-2 ring-amber-400 z-50' : ''}
+                                  className={`bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-3 group hover:shadow-md hover:border-salomao-blue/30 transition-all relative 
+                                    ${snapshot.isDragging ? 'rotate-2 shadow-lg ring-2 ring-salomao-blue ring-opacity-50' : ''}
                                     ${userRole === 'viewer' ? 'cursor-default' : 'cursor-pointer'}
                                   `}
                                 >
+                                  {/* Botões de Ação Rápida (Hover) - Apenas se não for Viewer */}
                                   {userRole !== 'viewer' && (
-                                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all flex gap-1 transform translate-x-2 group-hover:translate-x-0">
+                                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/90 rounded p-1 shadow-sm">
                                         <button 
                                           onClick={(e) => { e.stopPropagation(); handleEditTask(task); }} 
-                                          className="p-1.5 hover:bg-gray-50 rounded-lg text-blue-500 transition-colors" 
+                                          className="p-1 hover:bg-blue-50 rounded text-blue-600" 
                                           title="Editar"
                                         >
-                                          <Edit2 className="w-3.5 h-3.5" />
+                                          <Edit2 className="w-3 h-3" />
                                         </button>
                                         <button 
                                           onClick={(e) => handleDeleteTask(task.id, e)} 
-                                          className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 transition-colors" 
+                                          className="p-1 hover:bg-red-50 rounded text-red-600" 
                                           title="Excluir"
                                         >
-                                          <Trash2 className="w-3.5 h-3.5" />
+                                          <Trash2 className="w-3 h-3" />
                                         </button>
                                       </div>
                                   )}
 
-                                  <div className="flex flex-col gap-3 mb-3">
-                                    <div className="flex justify-between items-start pr-6">
-                                      <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getPriorityColor(task.priority)}`}>
-                                        {task.priority}
-                                      </span>
-                                    </div>
-                                    <h4 className="text-xs font-black text-[#0a192f] uppercase tracking-tight leading-snug">{task.title}</h4>
-                                  </div>
-
-                                  <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-gray-50">
+                                  <div className="flex justify-between items-start mb-2 pr-6">
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getPriorityColor(task.priority)}`}>
+                                      {task.priority}
+                                    </span>
                                     {task.contract?.client_name && (
-                                      <div className="flex items-center text-[9px] font-bold text-gray-400 uppercase tracking-tighter">
-                                        <User className="w-3 h-3 mr-1.5 text-amber-500" />
-                                        <span className="truncate">{task.contract.client_name}</span>
-                                      </div>
+                                      <span className="text-[10px] text-gray-400 truncate max-w-[100px]" title={task.contract.client_name}>
+                                        {task.contract.client_name}
+                                      </span>
                                     )}
-                                    <div className="flex items-center text-[9px] font-black text-gray-300 uppercase tracking-widest">
-                                      <Calendar className="w-3 h-3 mr-1.5 text-slate-300" />
-                                      {task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR') : 'SEM PRAZO'}
+                                  </div>
+                                  <h4 className="text-sm font-bold text-gray-800 mb-2 leading-tight">{task.title}</h4>
+                                  
+                                  <div className="flex items-center justify-between text-xs text-gray-400 mt-3 pt-3 border-t border-gray-50">
+                                    <div className="flex items-center">
+                                      <Calendar className="w-3 h-3 mr-1" />
+                                      {task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR') : '-'}
                                     </div>
                                   </div>
                                 </div>

@@ -1,26 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Download, Printer, Loader2, Shield } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
-import { supabase } from '../../../lib/supabase'; // Rota corrigida para o Manager central
-import { ProposalDocument } from '../proposals/ProposalDocument'; // Rota ajustada para a estrutura modular
+import { supabase } from '../lib/supabase';
+import { ProposalDocument } from '../components/proposals/ProposalDocument';
 
-interface ProposalsProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
-}
-
-// CORREÇÃO: Nome da função exportada definido como Proposals para alinhar com o App.tsx
-export function Proposals({ userName, onModuleHome, onLogout }: ProposalsProps) {
+export function Proposals() {
+  // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
   const [formData, setFormData] = useState({
     clientName: '',
-    partners: '', 
+    partners: '', // Novo campo: Sócios
     object: '',
     value: '',
     date: new Date().toLocaleDateString('pt-BR'),
-    template: '' 
+    template: '' // Novo campo: Texto Padrão para mala direta
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -51,24 +45,25 @@ export function Proposals({ userName, onModuleHome, onLogout }: ProposalsProps) 
   const isViewer = userRole === 'viewer';
 
   return (
-    <div className="p-8 animate-in fade-in duration-500 bg-[#f8fafc] min-h-screen">
+    // Container principal padronizado com as outras páginas (Volumetria, etc)
+    <div className="p-8 animate-in fade-in duration-500">
       
-      {/* Cabeçalho Padronizado Manager */}
-      <div className="flex justify-between items-center mb-10">
+      {/* Cabeçalho padronizado */}
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-sm font-black text-[#0a192f] uppercase tracking-[0.4em] flex items-center gap-4">
-            <div className="p-2.5 rounded-xl bg-[#0a192f] text-white shadow-lg">
-                <FileText className="w-6 h-6 text-amber-500" />
-            </div>
-            Propostas & Minutas
+          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
+            <FileText className="w-8 h-8" /> Propostas
           </h1>
-          <div className="flex items-center gap-3 mt-4 ml-[60px]">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Motor de automação documental para contratos e propostas comerciais.</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-gray-500">Gerador de propostas e minutas contratuais (Mala Direta).</p>
+            {/* Badge de Perfil */}
             {userRole && (
-                <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black uppercase border flex items-center gap-1.5 ${
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border flex items-center gap-1 ${
                     userRole === 'admin' 
-                        ? 'bg-purple-50 text-purple-700 border-purple-100' 
-                        : 'bg-blue-50 text-blue-700 border-blue-100'
+                        ? 'bg-purple-100 text-purple-700 border-purple-200' 
+                        : userRole === 'editor' 
+                            ? 'bg-blue-100 text-blue-700 border-blue-200'
+                            : 'bg-gray-100 text-gray-600 border-gray-200'
                 }`}>
                     <Shield className="w-3 h-3" />
                     {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
@@ -78,68 +73,70 @@ export function Proposals({ userName, onModuleHome, onLogout }: ProposalsProps) 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Formulário Estilo Manager */}
-        <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100 h-fit">
-          <h2 className="text-[11px] font-black text-[#0a192f] uppercase tracking-[0.3em] mb-8 border-b border-gray-50 pb-6">Configuração da Minuta</h2>
-          <div className="space-y-8">
+      {/* Conteúdo da página */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Formulário */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
+          <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Dados da Proposta</h2>
+          <div className="space-y-4">
             
             {/* Campo para Texto Padrão (Template) */}
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">Cópia da Cláusula / Texto Padrão</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Modelo / Texto Padrão</label>
               <textarea 
                 name="template"
                 value={formData.template}
                 onChange={handleChange}
                 disabled={isViewer}
-                rows={5}
-                placeholder={isViewer ? "CONTEÚDO RESTRITO" : "INSIRA O TEXTO BASE DA MINUTA PARA PROCESSAMENTO..."}
-                className="w-full border border-gray-100 rounded-2xl p-5 text-[12px] font-medium text-[#0a192f] focus:border-amber-500 outline-none shadow-inner transition-all bg-gray-50/50 placeholder:text-gray-300 resize-none disabled:opacity-60"
+                rows={6}
+                placeholder={isViewer ? "Visualização apenas" : "Cole aqui o texto padrão da sua minuta..."}
+                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none resize-none bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">Destinatário Principal</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cliente</label>
               <input 
                 type="text" 
                 name="clientName"
                 value={formData.clientName}
                 onChange={handleChange}
                 disabled={isViewer}
-                placeholder="RAZÃO SOCIAL OU NOME COMPLETO"
-                className="w-full border-b-2 border-gray-100 py-3 text-sm font-black text-[#0a192f] focus:border-[#0a192f] outline-none transition-all bg-transparent placeholder:text-gray-200 uppercase tracking-tighter"
+                placeholder="Nome do Cliente ou Empresa"
+                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
 
+            {/* Novo Campo: Sócios */}
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">Representantes (A/C)</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Sócios / Representantes</label>
               <input 
                 type="text" 
                 name="partners"
                 value={formData.partners}
                 onChange={handleChange}
                 disabled={isViewer}
-                placeholder="SÓCIOS E GESTORES"
-                className="w-full border-b-2 border-gray-100 py-3 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none transition-all bg-transparent placeholder:text-gray-200 uppercase"
+                placeholder="Nome dos Sócios"
+                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
             
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">Escopo da Prestação</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Objeto do Contrato</label>
               <textarea 
                 name="object"
                 value={formData.object}
                 onChange={handleChange}
                 disabled={isViewer}
-                rows={3}
-                placeholder="DETALHAMENTO DO OBJETO JURÍDICO..."
-                className="w-full border border-gray-100 rounded-2xl p-5 text-sm font-bold text-[#0a192f] focus:border-[#0a192f] outline-none shadow-sm transition-all bg-white resize-none disabled:opacity-60"
+                rows={4}
+                placeholder="Descreva o serviço jurídico..."
+                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none resize-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-8">
-              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Valuation Estimado</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Honorários (R$)</label>
                 <input 
                   type="text" 
                   name="value"
@@ -147,92 +144,83 @@ export function Proposals({ userName, onModuleHome, onLogout }: ProposalsProps) 
                   onChange={handleChange}
                   disabled={isViewer}
                   placeholder="R$ 0,00"
-                  className="w-full bg-transparent border-none p-0 text-md font-black text-emerald-600 focus:ring-0 outline-none"
+                  className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
                 />
               </div>
-              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Data do Documento</label>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Data</label>
                 <input 
                   type="text" 
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
                   disabled={isViewer}
-                  className="w-full bg-transparent border-none p-0 text-md font-black text-[#0a192f] focus:ring-0 outline-none"
+                  className="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-gray-50 focus:ring-2 focus:ring-salomao-blue outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-gray-50 flex justify-end">
+          <div className="mt-8 pt-4 border-t border-gray-100 flex justify-end">
             {isViewer ? (
-                <button disabled className="bg-gray-100 text-gray-400 px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center border border-gray-200 shadow-inner">
-                    <Shield className="w-4 h-4 mr-3" /> Modo Somente Leitura
+                <button disabled className="bg-gray-200 text-gray-500 px-6 py-3 rounded-lg font-bold flex items-center cursor-not-allowed text-xs uppercase">
+                    <Shield className="w-4 h-4 mr-2" /> Sem Permissão
                 </button>
             ) : formData.clientName && formData.object ? (
               <PDFDownloadLink
                 document={<ProposalDocument data={formData} />}
-                fileName={`PROPOSTA_SALOMAO_${formData.clientName.replace(/\s+/g, '_').toUpperCase()}.pdf`}
-                className="bg-[#0a192f] hover:bg-slate-800 text-white px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-[#0a192f]/30 flex items-center transition-all active:scale-95 no-underline border border-white/10"
+                fileName={`Proposta_${formData.clientName.replace(/\s+/g, '_')}.pdf`}
+                className="bg-salomao-blue hover:bg-blue-900 text-white px-6 py-3 rounded-lg font-bold shadow-lg flex items-center transition-all active:scale-95 no-underline"
               >
-                {({ loading }) => (
-                  <div className="flex items-center">
-                      {loading ? <Loader2 className="w-4 h-4 mr-3 animate-spin" /> : <Download className="w-4 h-4 mr-3 text-amber-500" />} 
-                      Compilar e Baixar PDF
-                  </div>
-                )}
+                <div className="flex items-center">
+                    <Download className="w-5 h-5 mr-2" /> 
+                    Baixar Proposta PDF
+                </div>
               </PDFDownloadLink>
             ) : (
-              <button disabled className="bg-gray-50 text-gray-300 px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center cursor-not-allowed border border-gray-100">
-                <Printer className="w-4 h-4 mr-3" /> Validar Campos para PDF
+              <button disabled className="bg-gray-200 text-gray-400 px-6 py-3 rounded-lg font-bold flex items-center cursor-not-allowed">
+                <Printer className="w-5 h-5 mr-2" /> Preencha para Gerar
               </button>
             )}
           </div>
         </div>
 
-        {/* Preview Visual Manager */}
-        <div className="bg-[#0a192f] p-12 rounded-[2.5rem] border border-white/5 flex flex-col items-center justify-center text-center h-[800px] shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[100px] -mt-20 -mr-20" />
-            
-            <div className="w-full max-w-sm bg-white shadow-[0_50px_100px_rgba(0,0,0,0.4)] p-12 text-left text-[9px] text-gray-400 h-full overflow-hidden relative z-10 border border-gray-100">
-              <div className="absolute top-0 left-0 right-0 h-2 bg-amber-500"></div>
+        {/* Preview Visual (Simulação) */}
+        <div className="bg-gray-50 p-8 rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center text-center h-[600px]">
+           <div className="w-full max-w-sm bg-white shadow-2xl p-8 text-left text-[10px] text-gray-400 opacity-80 scale-90 origin-top h-full overflow-hidden relative">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-salomao-blue"></div>
               
-              <div className="flex justify-between items-start mb-10">
-                <p className="font-black text-[#0a192f] text-[11px] tracking-tighter uppercase">Salomão Advogados</p>
-                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100">
-                  <FileText className="w-5 h-5 text-amber-600" />
-                </div>
+              {/* Logo / Header Simulado */}
+              <div className="flex justify-between items-start mb-4">
+                <p className="font-bold text-salomao-blue text-sm">SALOMÃO ADVOGADOS</p>
+                {/* Espaço reservado para o Logo se necessário no futuro */}
               </div>
 
-              <p className="text-center font-black text-[#0a192f] text-[10px] uppercase tracking-[0.4em] my-10 border-y-2 border-gray-50 py-3">Proposta Estratégica</p>
+              <p className="text-center font-bold text-black text-xs my-4">PROPOSTA DE HONORÁRIOS</p>
               
-              <div className="space-y-6">
-                <div className="flex justify-between border-b border-gray-50 pb-2">
-                  <span className="font-black uppercase tracking-tighter text-[7px] text-gray-300">Emissão:</span>
-                  <span className="text-[#0a192f] font-black">{formData.date}</span>
-                </div>
-                <div className="flex flex-col gap-2 border-b border-gray-50 pb-2">
-                  <span className="font-black uppercase tracking-tighter text-[7px] text-gray-300">Cliente:</span>
-                  <span className="text-[#0a192f] font-black text-[12px] uppercase tracking-tighter leading-none">{formData.clientName || 'NOME DO DESTINATÁRIO'}</span>
-                </div>
+              <div className="space-y-2">
+                <p>Data: <span className="text-black">{formData.date}</span></p>
+                <p>Para: <span className="text-black font-bold">{formData.clientName || 'Nome do Cliente'}</span></p>
                 
-                <div className="flex flex-col gap-2 border-b border-gray-50 pb-2">
-                  <span className="font-black uppercase tracking-tighter text-[7px] text-gray-300">Atenção:</span>
-                  <span className="text-[#0a192f] font-bold italic text-[9px]">{formData.partners || 'Representantes...'}</span>
-                </div>
+                {/* Visualização dos Sócios no Preview */}
+                <p>A/C Sócios: <span className="text-black">{formData.partners || 'Nome dos Sócios...'}</span></p>
                 
-                <div className="mt-10">
-                  <span className="font-black uppercase tracking-widest text-[8px] text-amber-600 block mb-3">Objeto do Contrato:</span>
-                  <p className="text-[#0a192f] font-medium leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100 line-clamp-5 shadow-inner italic">{formData.object || 'Descrição do escopo jurídico...'}</p>
-                </div>
+                <p className="mt-4 border-t pt-2">Objeto:</p>
+                <p className="text-black mb-2">{formData.object || 'Descrição do serviço...'}</p>
                 
-                <div className="mt-8 p-5 bg-[#0a192f] rounded-2xl shadow-xl">
-                  <span className="font-black uppercase tracking-widest text-[7px] text-white/30 block mb-1">Totalização de Honorários:</span>
-                  <p className="text-amber-500 font-black text-lg tracking-tighter">{formData.value || 'R$ 0,00'}</p>
-                </div>
+                <p>Valor:</p>
+                <p className="text-black font-bold text-sm">{formData.value || 'R$ 0,00'}</p>
+
+                {/* Exibição condicional do Texto Padrão no preview para conferência */}
+                {formData.template && (
+                  <div className="mt-4 pt-2 border-t border-gray-100">
+                    <p className="italic text-[8px] text-gray-300">Minuta anexada:</p>
+                    <p className="text-gray-400 line-clamp-6">{formData.template}</p>
+                  </div>
+                )}
               </div>
-            </div>
-            <p className="mt-8 text-[10px] font-black text-white/20 uppercase tracking-[0.4em] relative z-10">Live Document Processor</p>
+           </div>
+           <p className="mt-4 text-sm text-gray-500 font-medium">Pré-visualização simplificada</p>
         </div>
       </div>
     </div>

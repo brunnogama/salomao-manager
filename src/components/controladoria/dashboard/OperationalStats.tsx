@@ -10,7 +10,7 @@ interface OperationalStatsProps {
 }
 
 export function OperationalStats({ rejectionData, metrics }: OperationalStatsProps) {
-  // Cálculo de Assinatura mantido integralmente
+  // Cálculo de Assinatura
   const totalAssinaturasCalculo = (metrics?.geral?.assinados || 0) + (metrics?.geral?.naoAssinados || 0);
   const percentualSemAssinatura = totalAssinaturasCalculo > 0 
     ? ((metrics?.geral?.naoAssinados || 0) / totalAssinaturasCalculo) * 100 
@@ -19,60 +19,60 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
   return (
     <>
       {/* --- ANÁLISE DE REJEIÇÕES --- */}
-      <div className='bg-white border border-gray-100 rounded-[2rem] shadow-sm hover:shadow-md transition-all p-8'>
+      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
         
-        {/* Header Manager Style */}
-        <div className='mb-8 pb-6 border-b border-gray-50'>
-          <div className='flex items-center gap-4 mb-2'>
-            <div className='p-3 rounded-2xl bg-[#0a192f] text-white shadow-xl'>
-              <Ban className='w-6 h-6 text-red-500' />
+        {/* Header */}
+        <div className='mb-6 pb-5 border-b border-gray-100'>
+          <div className='flex items-center gap-3 mb-2'>
+            <div className='p-2 rounded-xl bg-gradient-to-br from-red-600 to-red-500 text-white shadow-lg'>
+              <Ban className='w-5 h-5' />
             </div>
             <div>
-              <h2 className='text-sm font-black text-[#0a192f] uppercase tracking-[0.3em]'>
-                Inteligência de Rejeições
+              <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
+                Análise de Rejeições
               </h2>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">
-                Mapeamento de perdas e origens de declínio comercial
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                Motivos e origens dos casos declinados
               </p>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* Por Motivo */}
-          <div className="bg-gray-50/50 rounded-[1.5rem] p-6 border border-gray-100 transition-all hover:bg-white hover:shadow-sm">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+          <div className="bg-gradient-to-br from-red-50/50 to-white rounded-xl p-5 border border-red-100">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-red-100">
               <TrendingDown className="w-4 h-4 text-red-600" />
-              <h4 className="text-[10px] font-black text-[#0a192f] uppercase tracking-[0.2em]">
-                Segmentação por Causa
+              <h4 className="text-[11px] font-black text-red-600 uppercase tracking-[0.15em]">
+                Por Motivo
               </h4>
             </div>
             
-            <div className="space-y-5">
+            <div className="space-y-4">
               {rejectionData.reasons.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Base de dados vazia</p>
+                <div className="text-center py-8">
+                  <p className="text-sm font-semibold text-gray-400">Nenhum dado disponível</p>
                 </div>
               ) : (
                 rejectionData.reasons.map((item, idx) => (
                   <div key={idx} className="group">
                     <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-[11px] font-black text-[#0a192f] uppercase tracking-tighter truncate flex-1" title={item.label}>
+                      <span className="text-xs font-bold text-gray-700 flex-1 truncate" title={item.label}>
                         {item.label}
                       </span>
-                      <div className="flex items-baseline gap-2 ml-4">
-                        <span className="text-xs font-black text-red-600 tracking-tighter">
+                      <div className="flex items-baseline gap-2 ml-2">
+                        <span className="text-sm font-black text-red-600">
                           {item.value}
                         </span>
-                        <span className="text-[9px] font-bold text-gray-400 uppercase">
+                        <span className="text-[9px] font-bold text-gray-400">
                           {item.percent.toFixed(1)}%
                         </span>
                       </div>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden shadow-inner">
+                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                       <div 
-                        className="bg-red-500 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(239,68,68,0.3)]" 
+                        className="bg-gradient-to-r from-red-500 to-red-400 h-full rounded-full transition-all duration-300 group-hover:from-red-600 group-hover:to-red-500" 
                         style={{ width: `${item.percent}%` }}
                       />
                     </div>
@@ -83,38 +83,38 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
           </div>
 
           {/* Quem Rejeitou */}
-          <div className="bg-gray-50/50 rounded-[1.5rem] p-6 border border-gray-100 transition-all hover:bg-white hover:shadow-sm">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-              <AlertCircle className="w-4 h-4 text-amber-500" />
-              <h4 className="text-[10px] font-black text-[#0a192f] uppercase tracking-[0.2em]">
-                Origem da Decisão
+          <div className="bg-gradient-to-br from-gray-50/50 to-white rounded-xl p-5 border border-gray-200">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+              <AlertCircle className="w-4 h-4 text-gray-600" />
+              <h4 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.15em]">
+                Quem Rejeitou
               </h4>
             </div>
             
-            <div className="space-y-5">
+            <div className="space-y-4">
               {rejectionData.sources.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Base de dados vazia</p>
+                <div className="text-center py-8">
+                  <p className="text-sm font-semibold text-gray-400">Nenhum dado disponível</p>
                 </div>
               ) : (
                 rejectionData.sources.map((item, idx) => (
                   <div key={idx} className="group">
                     <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-[11px] font-black text-[#0a192f] uppercase tracking-tighter truncate flex-1" title={item.label}>
+                      <span className="text-xs font-bold text-gray-700 flex-1 truncate" title={item.label}>
                         {item.label}
                       </span>
-                      <div className="flex items-baseline gap-2 ml-4">
-                        <span className="text-xs font-black text-[#0a192f] tracking-tighter">
+                      <div className="flex items-baseline gap-2 ml-2">
+                        <span className="text-sm font-black text-gray-700">
                           {item.value}
                         </span>
-                        <span className="text-[9px] font-bold text-gray-400 uppercase">
+                        <span className="text-[9px] font-bold text-gray-400">
                           {item.percent.toFixed(1)}%
                         </span>
                       </div>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden shadow-inner">
+                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                       <div 
-                        className="bg-[#0a192f] h-full rounded-full transition-all duration-1000 ease-out" 
+                        className="bg-gradient-to-r from-gray-500 to-gray-400 h-full rounded-full transition-all duration-300 group-hover:from-gray-600 group-hover:to-gray-500" 
                         style={{ width: `${item.percent}%` }}
                       />
                     </div>
@@ -127,91 +127,89 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
       </div>
 
       {/* --- STATUS DE ASSINATURA --- */}
-      <div className='bg-white border border-gray-100 rounded-[2rem] shadow-sm hover:shadow-md transition-all p-8'>
+      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
         
-        {/* Header Manager Style */}
-        <div className='mb-8 pb-6 border-b border-gray-50'>
-          <div className='flex items-center gap-4 mb-2'>
-            <div className='p-3 rounded-2xl bg-[#0a192f] text-white shadow-xl'>
-              <FileSignature className='w-6 h-6 text-amber-500' />
+        {/* Header */}
+        <div className='mb-6 pb-5 border-b border-gray-100'>
+          <div className='flex items-center gap-3 mb-2'>
+            <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
+              <FileSignature className='w-5 h-5' />
             </div>
             <div>
-              <h2 className='text-sm font-black text-[#0a192f] uppercase tracking-[0.3em]'>
-                Rastreamento de Assinaturas
+              <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
+                Status de Assinatura
               </h2>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">
-                Controle de integridade física dos instrumentos contratuais
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                Contratos fechados
               </p>
             </div>
           </div>
         </div>
 
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
           
           {/* Card 1: Assinados */}
-          <div className='bg-emerald-600 p-6 rounded-[1.5rem] border border-white/10 shadow-xl hover:scale-[1.02] transition-all group overflow-hidden relative'>
-            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-20 h-20 bg-white/10 rounded-full blur-2xl"></div>
-            <div className='flex items-start justify-between mb-6 relative z-10'>
+          <div className='bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-5 border border-green-500 shadow-lg hover:shadow-green-900/20 transition-all'>
+            <div className='flex items-start justify-between mb-4'>
               <div className='flex-1'>
-                <p className='text-[9px] text-emerald-100 font-black uppercase tracking-[0.2em] mb-4 opacity-80'>
-                  Liquidados
+                <p className='text-[9px] text-white/80 font-black uppercase tracking-widest mb-3'>
+                  Contratos Assinados
                 </p>
-                <p className='text-4xl font-black text-white tracking-tighter leading-none'>
+                <p className='text-[30px] font-black text-white tracking-tight leading-none'>
                   {metrics.geral.assinados}
                 </p>
               </div>
-              <div className='p-3 bg-white/20 backdrop-blur-md rounded-2xl shadow-inner'>
+              <div className='p-2.5 bg-white/20 backdrop-blur-sm rounded-xl'>
                 <CheckCircle2 className='w-6 h-6 text-white' />
               </div>
             </div>
-            <div className='pt-4 border-t border-white/10 relative z-10'>
-              <p className='text-[9px] text-white font-black uppercase tracking-widest leading-tight'>
-                Documentação Confirmada
+            <div className='pt-3 border-t border-white/20'>
+              <p className='text-[9px] text-white/90 font-semibold leading-tight'>
+                Assinatura física confirmada
               </p>
             </div>
           </div>
           
           {/* Card 2: Pendentes */}
-          <div className='bg-[#0a192f] p-6 rounded-[1.5rem] border border-white/10 shadow-xl hover:scale-[1.02] transition-all group overflow-hidden relative'>
-            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-20 h-20 bg-amber-500/10 rounded-full blur-2xl"></div>
-            <div className='flex items-start justify-between mb-6 relative z-10'>
+          <div className='bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-5 border border-orange-400 shadow-lg hover:shadow-orange-900/20 transition-all'>
+            <div className='flex items-start justify-between mb-4'>
               <div className='flex-1'>
-                <p className='text-[9px] text-amber-500 font-black uppercase tracking-[0.2em] mb-4'>
-                  Fluxo Pendente
+                <p className='text-[9px] text-white/80 font-black uppercase tracking-widest mb-3'>
+                  Pendentes
                 </p>
-                <p className='text-4xl font-black text-white tracking-tighter leading-none'>
+                <p className='text-[30px] font-black text-white tracking-tight leading-none'>
                   {metrics.geral.naoAssinados}
                 </p>
               </div>
-              <div className='p-3 bg-amber-500/20 backdrop-blur-md rounded-2xl shadow-inner border border-amber-500/20'>
-                <AlertCircle className='w-6 h-6 text-amber-500' />
+              <div className='p-2.5 bg-white/20 backdrop-blur-sm rounded-xl'>
+                <AlertCircle className='w-6 h-6 text-white' />
               </div>
             </div>
-            <div className='pt-4 border-t border-white/5 relative z-10'>
-              <p className='text-[9px] text-gray-400 font-black uppercase tracking-widest leading-tight'>
-                Aguardando Protocolo Físico
+            <div className='pt-3 border-t border-white/20'>
+              <p className='text-[9px] text-white/90 font-semibold leading-tight'>
+                Aguardando assinatura física
               </p>
             </div>
           </div>
 
           {/* Card 3: Percentual */}
-          <div className='bg-gray-100 p-6 rounded-[1.5rem] border border-gray-200 shadow-sm hover:scale-[1.02] transition-all group overflow-hidden relative'>
-            <div className='flex items-start justify-between mb-6 relative z-10'>
+          <div className='bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl p-5 border border-gray-600 shadow-lg hover:shadow-gray-900/20 transition-all'>
+            <div className='flex items-start justify-between mb-4'>
               <div className='flex-1'>
-                <p className='text-[9px] text-gray-400 font-black uppercase tracking-[0.2em] mb-4'>
-                  Exposure Rate
+                <p className='text-[9px] text-white/80 font-black uppercase tracking-widest mb-3'>
+                  % Pendente
                 </p>
-                <p className='text-4xl font-black text-[#0a192f] tracking-tighter leading-none'>
+                <p className='text-[30px] font-black text-white tracking-tight leading-none'>
                   {percentualSemAssinatura.toFixed(1)}%
                 </p>
               </div>
-              <div className='p-3 bg-white rounded-2xl shadow-sm border border-gray-200'>
-                <Percent className='w-6 h-6 text-[#0a192f]' />
+              <div className='p-2.5 bg-white/20 backdrop-blur-sm rounded-xl'>
+                <Percent className='w-6 h-6 text-white' />
               </div>
             </div>
-            <div className='pt-4 border-t border-gray-200 relative z-10'>
-              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest leading-tight'>
-                Sobre o Portfólio Ativo
+            <div className='pt-3 border-t border-white/20'>
+              <p className='text-[9px] text-white/90 font-semibold leading-tight'>
+                Do total de contratos fechados
               </p>
             </div>
           </div>
