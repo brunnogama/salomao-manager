@@ -19,10 +19,10 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         
         if (user) {
           const { data, error } = await supabase
-            .from('user_profiles') // Alterado de 'user_profiles' para 'profiles' para consistência com o restante do sistema
+            .from('user_profiles') // Tabela correta
             .select('allowed_modules, role')
             .eq('id', user.id)
-            .single()
+            .maybeSingle() // CORREÇÃO: maybeSingle evita o erro "Uncaught Error" se o perfil for nulo
 
           if (data && !error) {
             const userRole = data.role || ''
@@ -81,6 +81,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
     return (
       <div 
+        key={key}
         onClick={() => allowed && onSelect(key)}
         className={`relative overflow-hidden rounded-xl border transition-all duration-300 h-64 flex flex-col items-center text-center justify-center group
           ${allowed 
