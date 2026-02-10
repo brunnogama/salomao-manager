@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import { 
   Plus, X, Save, Settings, Check, ChevronDown, Clock, History as HistoryIcon, 
   ArrowRight, Edit, Trash2, CalendarCheck, Hourglass, Upload, FileText, 
@@ -7,9 +7,9 @@ import {
   DollarSign, Tag, Gavel, Eye, AlertTriangle, TrendingUp, TrendingDown, 
   Pencil, Files, User
 } from 'lucide-react';
-import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst, Magistrate } from '../../types';
-import { maskCNPJ, maskMoney, maskHon, maskCNJ, toTitleCase, parseCurrency } from '../../utils/masks';
-import { decodeCNJ } from '../../utils/cnjDecoder';
+import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst, Magistrate } from '../../../types/controladoria';
+import { maskCNPJ, maskMoney, maskHon, maskCNJ, toTitleCase, parseCurrency } from '../utils/masks';
+import { decodeCNJ } from '../utils/cnjDecoder';
 import { addDays, addMonths } from 'date-fns';
 
 // Componentes Modularizados
@@ -22,9 +22,9 @@ import { LegalProcessForm } from './components/LegalProcessForm';
 import { LegalProcessList } from './components/LegalProcessList';
 
 // Utilitários e Hooks
-import { formatForInput, ensureDateValue, localMaskCNJ, safeParseFloat, ensureArray, getThemeBackground } from '../../utils/contractHelpers';
-import { generateFinancialInstallments, forceUpdateFinancials } from '../../services/contractFinancialService';
-import { useContractOptions } from '../../hooks/useContractOptions';
+import { formatForInput, ensureDateValue, localMaskCNJ, safeParseFloat, ensureArray, getThemeBackground } from '../utils/contractHelpers';
+import { generateFinancialInstallments, forceUpdateFinancials } from '../services/contractFinancialService';
+import { useContractOptions } from '../hooks/useContractOptions';
 
 const UFS = [ { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' }, { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' }, { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' }, { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' }, { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' }, { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' }, { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' }, { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' }, { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' } ];
 
@@ -398,7 +398,7 @@ export function ContractFormModal(props: Props) {
   };
     
   const handleRemoveIntermediateFee = (idx: number) => {
-      removeIntermediateFee(idx);
+      handleRemoveIntermediateFee(idx);
       const currentClauses = [...ensureArray((formData as any).intermediate_fees_clauses)]; currentClauses.splice(idx, 1);
       const currentInst = [...ensureArray((formData as any).intermediate_fees_installments)]; currentInst.splice(idx, 1);
       setFormData(prev => ({ ...prev, intermediate_fees_clauses: currentClauses, intermediate_fees_installments: currentInst } as any));

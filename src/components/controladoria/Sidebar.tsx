@@ -16,7 +16,7 @@ import {
   Share2,
   X 
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -48,7 +48,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         
         if (user) {
           const { data: profile } = await supabase
-            .from('profiles')
+            .from('user_profiles')
             .select('name, role')
             .eq('id', user.id)
             .single();

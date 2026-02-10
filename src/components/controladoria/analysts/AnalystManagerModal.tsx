@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import { X, Plus, Edit, Trash2, Save } from 'lucide-react';
-import { Analyst } from '../../types';
+import { Analyst } from '../../../types/controladoria';
 
 interface Props {
   isOpen: boolean;

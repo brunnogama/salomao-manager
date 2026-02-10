@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { FolderOpen, FileText, Download, Search, HardDrive, Clock, FileCheck, Hash, Shield } from 'lucide-react';
-import { maskHon } from '../utils/masks';
-import { EmptyState } from '../components/ui/EmptyState';
+import { maskHon } from '../../utils/masks';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface GEDDocument {
   id: string;
@@ -256,20 +256,20 @@ export function GED() {
             {loading ? (
               <div className="text-center py-10 text-gray-400">Carregando documentos...</div>
             ) : filteredDocs.length === 0 ? (
-               // --- INICIO DO EMPTY STATE ---
-               <EmptyState 
-                  icon={FolderOpen}
-                  title="Nenhum arquivo encontrado"
-                  description={
-                      searchTerm 
-                      ? "Não encontramos arquivos com este nome. Tente outra busca." 
-                      : selectedFolder 
-                        ? "Esta pasta está vazia." 
-                        : "O GED ainda não possui documentos. Adicione contratos para vê-los aqui."
-                  }
-                  className="h-full justify-center"
-               />
-               // --- FIM DO EMPTY STATE ---
+                // --- INICIO DO EMPTY STATE ---
+                <EmptyState 
+                   icon={FolderOpen}
+                   title="Nenhum arquivo encontrado"
+                   description={
+                       searchTerm 
+                       ? "Não encontramos arquivos com este nome. Tente outra busca." 
+                       : selectedFolder 
+                         ? "Esta pasta está vazia." 
+                         : "O GED ainda não possui documentos. Adicione contratos para vê-los aqui."
+                   }
+                   className="h-full justify-center"
+                />
+                // --- FIM DO EMPTY STATE ---
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredDocs.map((doc) => (

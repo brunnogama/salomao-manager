@@ -1,5 +1,5 @@
-import { supabase } from '../lib/supabase';
-import { Contract } from '../types';
+import { supabase } from '../../../lib/supabase';
+import { Contract } from '../../../types/controladoria';
 
 export const contractService = {
   async getAll(): Promise<Contract[]> {

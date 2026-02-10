@@ -2,18 +2,18 @@ import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { useDashboardData } from '../hooks/useDashboardData';
+import { supabase } from '../../lib/supabase';
+import { useDashboardData } from '../../components/controladoria/hooks/useDashboardData';
 
 // --- COMPONENTES MODULARES ---
-import { DashboardHeader } from '../components/dashboard/DashboardHeader';
-import { EfficiencyFunnel } from '../components/dashboard/EfficiencyFunnel';
-import { PortfolioFinancialOverview } from '../components/dashboard/PortfolioFinancialOverview';
-import { WeeklySummary } from '../components/dashboard/WeeklySummary';
-import { MonthlySummary } from '../components/dashboard/MonthlySummary';
-import { EvolutionCharts } from '../components/dashboard/EvolutionCharts';
-import { PartnerStats } from '../components/dashboard/PartnerStats';
-import { OperationalStats } from '../components/dashboard/OperationalStats';
+import { DashboardHeader } from '../../components/controladoria/dashboard/DashboardHeader';
+import { EfficiencyFunnel } from '../../components/controladoria/dashboard/EfficiencyFunnel';
+import { PortfolioFinancialOverview } from '../../components/controladoria/dashboard/PortfolioFinancialOverview';
+import { WeeklySummary } from '../../components/controladoria/dashboard/WeeklySummary';
+import { MonthlySummary } from '../../components/controladoria/dashboard/MonthlySummary';
+import { EvolutionCharts } from '../../components/controladoria/dashboard/EvolutionCharts';
+import { PartnerStats } from '../../components/controladoria/dashboard/PartnerStats';
+import { OperationalStats } from '../../components/controladoria/dashboard/OperationalStats';
 
 export function Dashboard() {
   // --- ESTADOS DE FILTROS ---

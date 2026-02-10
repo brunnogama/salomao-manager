@@ -120,7 +120,6 @@ export function Settings() {
   // --- LÓGICA DE USUÁRIOS (SUPABASE) ---
   const fetchUsers = async () => {
     try {
-      // Busca todos os usuários (permitido via RLS para autenticados)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -133,7 +132,6 @@ export function Settings() {
     }
   };
 
-  // Busca usuários sempre que a aba mudar para users
   useEffect(() => {
     if (activeTab === 'users') {
         fetchUsers();
@@ -141,7 +139,6 @@ export function Settings() {
   }, [activeTab]);
 
   const handleSaveUser = async () => {
-    // Permite Admin e Editor
     if (!['admin', 'editor'].includes(currentUserRole || '')) {
         return alert("Permissão negada. Você não tem permissão para gerenciar usuários.");
     }
@@ -164,7 +161,6 @@ export function Settings() {
         
         if (error) throw error;
       } else {
-        // Gera ID manual para evitar erro de null value
         const newId = crypto.randomUUID();
         const { error } = await supabase
           .from('profiles')
@@ -184,7 +180,6 @@ export function Settings() {
   };
 
   const openUserModal = (user?: UserProfile) => {
-      // Permite Admin e Editor
       if (!['admin', 'editor'].includes(currentUserRole || '')) {
           return alert("Apenas Administradores e Editores podem gerenciar usuários.");
       }
@@ -200,7 +195,6 @@ export function Settings() {
   };
 
   const handleDeleteUser = async (id: string) => {
-      // Apenas Admin pode excluir
       if (currentUserRole !== 'admin') return alert("Permissão negada. Apenas Administradores podem excluir usuários.");
 
       if(confirm("Tem certeza que deseja remover este usuário?")) {
@@ -284,7 +278,7 @@ export function Settings() {
     } catch (error: any) {
         alert("Erro ao resetar: " + error.message);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -303,7 +297,6 @@ export function Settings() {
         {/* SIDEBAR DE NAVEGAÇÃO */}
         <div className="w-full lg:w-64 flex-shrink-0 flex flex-col">
           <nav className="space-y-1 flex-1 overflow-y-auto">
-            {/* O menu sempre aparece para todos */}
             <button 
                 onClick={() => setActiveTab('users')}
                 className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === 'users' ? 'bg-salomao-blue text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
@@ -324,7 +317,6 @@ export function Settings() {
               <Info className="mr-3 h-5 w-5" /> Sobre o Sistema
             </button>
             
-            {/* Botão de Sistema apenas para Admin */}
             {currentUserRole === 'admin' && (
                 <div className="pt-4 mt-4 border-t border-gray-200">
                     <button 
@@ -354,7 +346,6 @@ export function Settings() {
         {/* CONTEÚDO PRINCIPAL */}
         <div className="flex-1 overflow-y-auto pr-2 pb-10">
           
-          {/* --- ABA USUÁRIOS --- */}
           {activeTab === 'users' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="p-6 border-b border-gray-200 flex justify-between items-center">
@@ -364,7 +355,6 @@ export function Settings() {
                             Visualize e gerencie a equipe cadastrada.
                         </p>
                     </div>
-                    {/* Botão NOVO USUÁRIO: Admin e Editor */}
                     {['admin', 'editor'].includes(currentUserRole || '') && (
                         <button onClick={() => openUserModal()} className="bg-salomao-blue hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors">
                             <Plus className="w-4 h-4 mr-2" /> Novo Usuário
@@ -380,7 +370,6 @@ export function Settings() {
                         <th className="p-4">Email</th>
                         <th className="p-4">Perfil</th>
                         <th className="p-4">Status</th>
-                        {/* Coluna Ações: Admin e Editor */}
                         {['admin', 'editor'].includes(currentUserRole || '') && <th className="p-4 text-right">Ações</th>}
                         </tr>
                     </thead>
@@ -412,13 +401,10 @@ export function Settings() {
                                     <span className="flex items-center text-gray-400 text-xs font-bold"><XCircle className="w-3 h-3 mr-1" /> Inativo</span>
                                 )}
                             </td>
-                            {/* Ações */}
                             {['admin', 'editor'].includes(currentUserRole || '') && (
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-2">
                                         <button onClick={() => openUserModal(user)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Editar"><Edit className="w-4 h-4" /></button>
-                                        
-                                        {/* Excluir: Apenas Admin */}
                                         {currentUserRole === 'admin' && (
                                             <button onClick={() => handleDeleteUser(user.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Excluir"><Trash2 className="w-4 h-4" /></button>
                                         )}
@@ -433,7 +419,6 @@ export function Settings() {
             </div>
           )}
 
-          {/* --- ABA SOBRE --- */}
           {activeTab === 'about' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 col-span-2 text-center">
@@ -476,7 +461,6 @@ export function Settings() {
             </div>
           )}
 
-          {/* --- ABA CHANGELOG --- */}
           {activeTab === 'changelog' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
                 <div className="border-l-2 border-gray-100 ml-3 space-y-10">
@@ -511,12 +495,9 @@ export function Settings() {
             </div>
           )}
 
-          {/* --- ABA SISTEMA (RESET) - ADMIN ONLY --- */}
           {activeTab === 'system' && (
             currentUserRole === 'admin' ? (
                 <div className="space-y-6">
-                    
-                    {/* RESET MODULAR */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="p-6 border-b border-gray-100">
                             <h2 className="text-lg font-bold text-gray-800">Reset Modular</h2>
@@ -557,7 +538,6 @@ export function Settings() {
                         </div>
                     </div>
 
-                    {/* ZONA DE PERIGO */}
                     <div className="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
                         <div className="p-6 bg-red-50 border-b border-red-100 flex items-start gap-4">
                             <div className="p-3 bg-red-100 rounded-full text-red-600">

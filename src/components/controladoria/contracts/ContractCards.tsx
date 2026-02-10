@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { Contract } from '../../types';
+import { supabase } from '../../../lib/supabase';
+import { Contract } from '../../../types/controladoria';
 
 interface Props {
   contracts: Contract[];

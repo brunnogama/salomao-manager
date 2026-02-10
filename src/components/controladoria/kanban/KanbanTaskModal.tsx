@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Trash2, Calendar, User, AlignLeft, Flag, Link as LinkIcon, FileText } from 'lucide-react';
-import { KanbanTask, Contract } from '../../types';
+import { KanbanTask, Contract } from '../../../types/controladoria';
 
 interface Props {
   isOpen: boolean;

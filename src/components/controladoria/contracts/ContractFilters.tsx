@@ -1,5 +1,5 @@
 import { Search, FileSpreadsheet, List as ListIcon, LayoutGrid, ArrowDownAZ, Calendar, Filter, User } from 'lucide-react';
-import { Partner } from '../../types';
+import { Partner } from '../../../types/controladoria';
 
 interface Props {
   searchTerm: string;

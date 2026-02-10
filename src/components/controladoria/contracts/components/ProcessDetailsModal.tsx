@@ -1,6 +1,6 @@
 import React from 'react';
-import { X, Gavel, Edit } from 'lucide-react';
-import { ContractProcess } from '../../../types';
+import { X, Gavel, Edit } from 'lucide-center';
+import { ContractProcess } from '../../../../types/controladoria';
 
 interface ProcessDetailsModalProps {
   process: ContractProcess | null;

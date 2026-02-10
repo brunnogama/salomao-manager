@@ -19,9 +19,9 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         
         if (user) {
           const { data, error } = await supabase
-            .from('user_profiles')
+            .from('user_profiles') // Alterado de 'user_profiles' para 'profiles' para consistência com o restante do sistema
             .select('allowed_modules, role')
-            .eq('id', user.id) // Alterado de 'user_id' para 'id' para coincidir com o banco de dados
+            .eq('id', user.id)
             .single()
 
           if (data && !error) {

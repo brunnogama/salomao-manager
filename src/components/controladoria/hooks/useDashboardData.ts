@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { contractService } from '../services/contractService';
 import { partnerService } from '../services/partnerService';
-import { Contract, Partner, ContractCase } from '../types';
+import { Contract, Partner, ContractCase } from '../../../types/controladoria';
 
 // --- Funções Auxiliares de Parsing e Data ---
 
@@ -370,7 +370,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       // Funil
       fTotal++;
       const chegouEmProposta = c.status === 'proposal' || c.status === 'active' || (c.status === 'rejected' && c.proposal_date);
-      if (chegouEmProposta) fQualificados++;
+      if (chehouEmProposta) fQualificados++;
       if (c.status === 'active') fFechados++;
       else if (c.status === 'rejected') c.proposal_date ? fPerdaNegociacao++ : fPerdaAnalise++;
     });

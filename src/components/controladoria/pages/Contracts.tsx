@@ -5,18 +5,18 @@ import {
   LayoutGrid, List, Download, ArrowUpDown, Edit, Trash2, Bell, ArrowDownAZ, ArrowUpAZ,
   FileSignature, ChevronDown, X, FileSearch, Paperclip, Eye
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import * as XLSX from 'xlsx';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner'; 
-import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../types';
-import { ContractFormModal } from '../components/contracts/ContractFormModal';
-import { ContractDetailsModal } from '../components/contracts/ContractDetailsModal';
-import { PartnerManagerModal } from '../components/partners/PartnerManagerModal';
-import { AnalystManagerModal } from '../components/analysts/AnalystManagerModal';
-import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { EmptyState } from '../components/ui/EmptyState';
-import { parseCurrency } from '../utils/masks';
+import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../types/controladoria';
+import { ContractFormModal } from '../../components/controladoria/contracts/ContractFormModal';
+import { ContractDetailsModal } from '../../components/controladoria/contracts/ContractDetailsModal';
+import { PartnerManagerModal } from '../../components/controladoria/partners/PartnerManagerModal';
+import { AnalystManagerModal } from '../../components/controladoria/analysts/AnalystManagerModal';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { parseCurrency } from '../../utils/masks';
 
 const getStatusColor = (status: string) => {
   switch (status) {

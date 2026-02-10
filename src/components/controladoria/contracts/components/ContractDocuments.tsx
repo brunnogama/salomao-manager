@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText, AlertCircle, Upload, Download, Trash2 } from 'lucide-react';
-import { ContractDocument } from '../../../types';
-import { maskHon } from '../../../utils/masks';
+import { ContractDocument } from '../../../../types/controladoria';
+import { maskHon } from '../../../../utils/masks';
 
 interface ContractDocumentsProps {
   documents: ContractDocument[];
@@ -25,10 +25,10 @@ export function ContractDocuments({
   return (
     <div className="mb-8 mt-6">
       <div className="flex items-center justify-between mb-4">
-        <label className="text-xs font-bold text-gray-500 uppercase flex items-center">
+        <h3 className="text-xs font-bold text-gray-500 uppercase flex items-center">
           <FileText className="w-4 h-4 mr-2" />
           Arquivos & Documentos
-        </label>
+        </h3>
         {!isEditing ? (
           <span className="text-xs text-orange-500 flex items-center">
             <AlertCircle className="w-3 h-3 mr-1" /> Salve o caso para anexar arquivos

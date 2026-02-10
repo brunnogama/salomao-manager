@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, Settings, AlertCircle, Link as LinkIcon } from 'lucide-react';
-import { Contract } from '../../../types'; 
+import { Contract } from '../../../../types/controladoria'; 
 import { CustomSelect } from '../../ui/CustomSelect'; 
 
 interface ClientFormSectionProps {

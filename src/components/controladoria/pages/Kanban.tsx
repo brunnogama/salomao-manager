@@ -9,9 +9,9 @@ import {
   DraggableStateSnapshot 
 } from '@hello-pangea/dnd';
 import { Plus, MoreHorizontal, Calendar, User, Search, Filter, Loader2, AlertCircle, Trash2, Edit2, KanbanSquare, Shield } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { KanbanTask, Contract } from '../types';
-import { KanbanTaskModal } from '../components/kanban/KanbanTaskModal';
+import { supabase } from '../../lib/supabase';
+import { KanbanTask, Contract } from '../../types/controladoria';
+import { KanbanTaskModal } from '../../components/controladoria/kanban/KanbanTaskModal';
 import { toast } from 'sonner';
 
 // REMOVIDOS: billing e review

@@ -1,8 +1,8 @@
 import React from 'react';
 import { X, Edit, Trash2, Calendar, User, FileText, Briefcase, MapPin, History as HistoryIcon, Hourglass, CalendarCheck, ArrowDown, Calculator, Paperclip, CheckCircle2, ArrowRight, Clock, ChevronsRight, Download } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { Contract, ContractProcess, ContractDocument } from '../../types';
-import { parseCurrency } from '../../utils/masks'; 
+import { supabase } from '../../../lib/supabase';
+import { Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
+import { parseCurrency } from '../../../utils/masks'; 
 
 // Interface interna para os eventos construídos a partir das datas do formulário
 interface InternalTimelineEvent {

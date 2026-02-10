@@ -1,8 +1,8 @@
 import React from 'react';
 import { Settings, Check, Plus, Search, Loader2, Link as LinkIcon, AlertTriangle, Gavel, X } from 'lucide-react';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { Contract, ContractProcess, Magistrate } from '../../../types';
-import { maskMoney, maskCNPJ } from '../../../utils/masks';
+import { Contract, ContractProcess, Magistrate } from '../../../../types/controladoria';
+import { maskMoney, maskCNPJ } from '../../../../utils/masks';
 
 interface LegalProcessFormProps {
   formData: Contract;

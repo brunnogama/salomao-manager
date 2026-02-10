@@ -1,8 +1,8 @@
-import { supabase } from '../lib/supabase';
-import { Contract } from '../types';
+import { supabase } from '../../../lib/supabase';
+import { Contract } from '../../../types/controladoria';
 import { addMonths } from 'date-fns';
 import { safeParseFloat, ensureArray } from '../utils/contractHelpers';
-import { parseCurrency } from '../utils/masks'; // Import necessário para ler o valor formatado do breakdown
+import { parseCurrency } from '../../../utils/masks'; // Import necessário para ler o valor formatado do breakdown
 
 export const generateFinancialInstallments = async (contractId: string, sourceData: Contract) => {
     if (sourceData.status !== 'active') return;

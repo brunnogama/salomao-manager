@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from '../components/Sidebar';
+import { Sidebar } from '../../layout/Sidebar';
 import { Menu } from 'lucide-react';
 
 export function DashboardLayout() {

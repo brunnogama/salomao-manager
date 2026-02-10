@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { 
   DollarSign, Search, Download, CheckCircle2, Circle, Clock, Loader2, 
   CalendarDays, Receipt, X, Filter, MapPin, Hash, FileText, 
   AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
 } from 'lucide-react';
-import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../types';
-import { EmptyState } from '../components/ui/EmptyState';
-import { ContractDetailsModal } from '../components/contracts/ContractDetailsModal';
+import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../types/controladoria';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { ContractDetailsModal } from '../../components/controladoria/contracts/ContractDetailsModal';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
@@ -688,6 +688,7 @@ export function Finance() {
           }}
           processes={contractProcesses}
           documents={contractDocuments}
+          // Novo: Prop para controlar se botões de ação aparecem no modal
           canEdit={userRole === 'admin' || userRole === 'editor'}
           canDelete={userRole === 'admin'}
         />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { Contract, ContractProcess } from '../types';
+import { supabase } from '../../../lib/supabase';
+import { Contract, ContractProcess } from '../../../types/controladoria';
 import { toTitleCase } from '../utils/masks';
 
 // Defaults
