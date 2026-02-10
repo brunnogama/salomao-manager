@@ -1,18 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import React, { useRef, useState, useEffect } from 'react';
-import html2canvas from html2canvas;
 import jsPDF from 'jspdf';
 import { Loader2 } from 'lucide-react';
-
-// Subir 3 níveis para chegar em /src e entrar em /lib
 import { supabase } from '../../../lib/supabase';
-
-// Subir 1 nível para sair de /pages e entrar em /hooks (dentro de controladoria)
 import { useDashboardData } from '../hooks/useDashboardData';
 
 // --- COMPONENTES MODULARES ---
-// Subir 1 nível para sair de /pages e entrar em /dashboard (dentro de controladoria)
 import { DashboardHeader } from '../dashboard/DashboardHeader';
 import { EfficiencyFunnel } from '../dashboard/EfficiencyFunnel';
 import { PortfolioFinancialOverview } from '../dashboard/PortfolioFinancialOverview';
@@ -21,6 +14,7 @@ import { MonthlySummary } from '../dashboard/MonthlySummary';
 import { EvolutionCharts } from '../dashboard/EvolutionCharts';
 import { PartnerStats } from '../dashboard/PartnerStats';
 import { OperationalStats } from '../dashboard/OperationalStats';
+
 export function Dashboard() {
   // --- ESTADOS DE FILTROS ---
   const [selectedPartner, setSelectedPartner] = useState('');
@@ -59,7 +53,7 @@ export function Dashboard() {
     const checkUserRole = async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+            const { data: profile } = await supabase.from('user_profiles').select('role').eq('id', user.id).single();
             if (profile) setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
         }
     };
