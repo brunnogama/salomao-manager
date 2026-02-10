@@ -82,6 +82,11 @@ export function useFinanceContasReceber() {
 
   // Enviar fatura
   const enviarFatura = async (params: EnviarFaturaParams) => {
+    // VALIDAÇÃO DE SEGURANÇA: Impede o envio se o nome estiver nulo ou vazio
+    if (!params.cliente_nome || params.cliente_nome.trim() === '') {
+      throw new Error("O nome do cliente é obrigatório e não foi identificado.");
+    }
+
     try {
       // 1. Buscar ID do cliente se existir (Proteção contra undefined para evitar erro 406)
       let cliente_id = null;
@@ -123,7 +128,7 @@ export function useFinanceContasReceber() {
       const { data: faturaData, error: faturaError } = await supabase
         .from('finance_faturas')
         .insert({
-          cliente_nome: params.cliente_nome,
+          cliente_nome: params.cliente_nome, // Garantido pela validação no topo
           cliente_email: params.cliente_email,
           cliente_id,
           valor: params.valor,

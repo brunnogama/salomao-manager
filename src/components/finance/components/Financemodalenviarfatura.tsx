@@ -1,3 +1,4 @@
+// src/components/finance/contasareceber/components/FinanceModalEnviarFatura.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, 
@@ -190,9 +191,10 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // VALIDAÇÃO CORRIGIDA: Garante que clienteNome não seja nulo antes do envio
+    // VALIDAÇÃO CRÍTICA: Se clienteNome estiver vazio aqui, o erro 23502 ocorrerá no banco.
+    // Verificamos se houve seleção ou cadastro manual.
     if (!clienteNome || clienteNome.trim() === '') {
-      alert('Por favor, selecione um cliente na lista ou realize o cadastro.');
+      alert('Por favor, selecione um cliente na lista ou realize o cadastro de um novo antes de enviar.');
       return;
     }
 
@@ -256,7 +258,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Início do Fluxo de Recebimento</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-xl hover:bg-white shadow-sm border border-transparent hover:border-gray-100">
+          <button onClick={onClose} type="button" className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-xl hover:bg-white shadow-sm border border-transparent hover:border-gray-100">
             <X className="h-6 w-6" />
           </button>
         </div>
