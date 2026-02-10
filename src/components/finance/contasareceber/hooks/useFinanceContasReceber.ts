@@ -1,121 +1,220 @@
 // src/components/finance/contasareceber/hooks/useFinanceContasReceber.ts
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../../../lib/supabase';
 
-export type FaturaStatus = 'enviado' | 'aguardando_resposta' | 'radar' | 'contato_direto' | 'pago';
+export type FaturaStatus = 'aguardando_resposta' | 'radar' | 'contato_direto' | 'pago';
 
-interface Fatura {
+export interface Fatura {
   id: string;
   cliente_nome: string;
+  cliente_email: string;
+  cliente_id?: string;
   valor: number;
+  remetente: string;
+  assunto: string;
+  corpo?: string;
   data_envio: string;
   status: FaturaStatus;
+  data_resposta?: string;
+  data_radar?: string;
+  data_contato_direto?: string;
+  data_pagamento?: string;
+  arquivos_urls?: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface EnviarFaturaParams {
+  cliente_nome: string;
+  cliente_email: string;
+  valor: number;
+  remetente: string;
+  assunto: string;
+  corpo?: string;
+  arquivos?: File[];
 }
 
 export function useFinanceContasReceber() {
   const [faturas, setFaturas] = useState<Fatura[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const addBusinessDays = (startDate: Date, days: number) => {
-    let date = new Date(startDate);
-    let count = 0;
-    while (count < days) {
-      date.setDate(date.getDate() + 1);
-      if (date.getDay() !== 0 && date.getDay() !== 6) {
-        count++;
-      }
-    }
-    return date;
-  };
-
-  // Função para simular o disparo de notificação (Pode ser conectada a uma Edge Function)
-  const dispararNotificacaoRadar = async (fatura: any) => {
-    console.log(`[NOTIFICAÇÃO] Fatura de ${fatura.cliente_nome} entrou no RADAR.`);
-    // Futuro: supabase.functions.invoke('send-radar-email', { body: { faturaId: fatura.id } })
-  };
-
-  const getAutomatedStatus = useCallback((dataEnvioStr: string, statusAtual: FaturaStatus, faturaOriginal: any): FaturaStatus => {
-    if (statusAtual === 'pago') return 'pago';
-
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const dataEnvio = new Date(dataEnvioStr);
-    dataEnvio.setHours(0, 0, 0, 0);
-
-    const limiteAguardando = addBusinessDays(dataEnvio, 2);
-    const limiteRadar = addBusinessDays(dataEnvio, 4);
-
-    let novoStatus: FaturaStatus = 'aguardando_resposta';
-
-    if (hoje > limiteRadar) novoStatus = 'contato_direto';
-    else if (hoje > limiteAguardando) novoStatus = 'radar';
-
-    // Se o status mudou para radar agora, disparar gatilho
-    if (novoStatus === 'radar' && statusAtual !== 'radar') {
-      dispararNotificacaoRadar(faturaOriginal);
-    }
-    
-    return novoStatus;
-  }, []);
-
-  const fetchFaturas = async () => {
+  // Carregar faturas
+  const loadFaturas = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('finance_faturas')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('data_envio', { ascending: false });
 
-      if (!error && data) {
-        const processadas = data.map(f => ({
-          ...f,
-          status: getAutomatedStatus(f.data_envio, f.status, f)
-        }));
-        setFaturas(processadas);
-      }
-    } catch (err) {
-      console.error('Erro ao buscar faturas:', err);
+      if (error) throw error;
+      setFaturas(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar faturas:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const enviarFatura = async (dados: any) => {
-    const { error } = await supabase
-      .from('finance_faturas')
-      .insert([{
-        cliente_nome: dados.cliente,
-        valor: dados.valor || 0,
-        email_remetente: dados.remetente,
-        assunto: dados.assunto,
-        corpo: dados.corpo,
-        status: 'aguardando_resposta',
-        data_envio: new Date().toISOString()
-      }]);
-
-    if (error) throw error;
-    await fetchFaturas();
-  };
-
-  const confirmarPagamento = async (id: string) => {
-    const { error } = await supabase
-      .from('finance_faturas')
-      .update({ status: 'pago' })
-      .eq('id', id);
-
-    if (error) throw error;
-    await fetchFaturas();
-  };
-
   useEffect(() => {
-    fetchFaturas();
-  }, [getAutomatedStatus]);
+    loadFaturas();
+
+    // Configurar realtime para atualizações automáticas
+    const channel = supabase
+      .channel('finance_faturas_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'finance_faturas'
+        },
+        () => {
+          loadFaturas();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Enviar fatura
+  const enviarFatura = async (params: EnviarFaturaParams) => {
+    try {
+      // 1. Buscar ID do cliente se existir
+      let cliente_id = null;
+      const { data: clienteData } = await supabase
+        .from('finance_clientes')
+        .select('id')
+        .eq('email', params.cliente_email)
+        .single();
+
+      if (clienteData) {
+        cliente_id = clienteData.id;
+      }
+
+      // 2. Upload de arquivos (se houver)
+      let arquivos_urls: string[] = [];
+      if (params.arquivos && params.arquivos.length > 0) {
+        for (const arquivo of params.arquivos) {
+          const fileExt = arquivo.name.split('.').pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `faturas/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('finance-documents')
+            .upload(filePath, arquivo);
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from('finance-documents')
+              .getPublicUrl(filePath);
+            
+            arquivos_urls.push(urlData.publicUrl);
+          }
+        }
+      }
+
+      // 3. Inserir fatura no banco
+      const { data: faturaData, error: faturaError } = await supabase
+        .from('finance_faturas')
+        .insert({
+          cliente_nome: params.cliente_nome,
+          cliente_email: params.cliente_email,
+          cliente_id,
+          valor: params.valor,
+          remetente: params.remetente,
+          assunto: params.assunto,
+          corpo: params.corpo || '',
+          status: 'aguardando_resposta',
+          arquivos_urls: arquivos_urls.length > 0 ? arquivos_urls : null
+        })
+        .select()
+        .single();
+
+      if (faturaError) throw faturaError;
+
+      // 4. Enviar e-mail (usando função edge do Supabase ou serviço externo)
+      // OPÇÃO 1: Usando Supabase Edge Function
+      try {
+        await supabase.functions.invoke('enviar-email-fatura', {
+          body: {
+            destinatario: params.cliente_email,
+            remetente: params.remetente,
+            assunto: params.assunto,
+            corpo: params.corpo,
+            arquivos_urls,
+            fatura_id: faturaData.id
+          }
+        });
+      } catch (emailError) {
+        console.warn('Erro ao enviar e-mail (função edge):', emailError);
+        // Não bloqueia o fluxo se o e-mail falhar
+      }
+
+      // 5. Recarregar lista
+      await loadFaturas();
+
+      return faturaData;
+    } catch (error) {
+      console.error('Erro ao enviar fatura:', error);
+      throw error;
+    }
+  };
+
+  // Confirmar pagamento
+  const confirmarPagamento = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('finance_faturas')
+        .update({
+          status: 'pago',
+          data_pagamento: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await loadFaturas();
+    } catch (error) {
+      console.error('Erro ao confirmar pagamento:', error);
+      throw error;
+    }
+  };
+
+  // Atualizar status (automático via cron job ou manual)
+  const atualizarStatus = async (id: string, novoStatus: FaturaStatus) => {
+    try {
+      const updates: any = { status: novoStatus };
+
+      if (novoStatus === 'radar') {
+        updates.data_radar = new Date().toISOString();
+      } else if (novoStatus === 'contato_direto') {
+        updates.data_contato_direto = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('finance_faturas')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await loadFaturas();
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      throw error;
+    }
+  };
 
   return {
     faturas,
     loading,
     enviarFatura,
     confirmarPagamento,
-    refresh: fetchFaturas
+    atualizarStatus,
+    recarregar: loadFaturas
   };
 }
