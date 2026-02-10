@@ -1,20 +1,26 @@
 import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
+import React, { useRef, useState, useEffect } from 'react';
+import html2canvas from html2canvas;
 import jsPDF from 'jspdf';
 import { Loader2 } from 'lucide-react';
+
+// Subir 3 níveis para chegar em /src e entrar em /lib
 import { supabase } from '../../../lib/supabase';
-import { useDashboardData } from '../../components/controladoria/hooks/useDashboardData';
+
+// Subir 1 nível para sair de /pages e entrar em /hooks (dentro de controladoria)
+import { useDashboardData } from '../hooks/useDashboardData';
 
 // --- COMPONENTES MODULARES ---
-import { DashboardHeader } from '../../components/controladoria/dashboard/DashboardHeader';
-import { EfficiencyFunnel } from '../../components/controladoria/dashboard/EfficiencyFunnel';
-import { PortfolioFinancialOverview } from '../../components/controladoria/dashboard/PortfolioFinancialOverview';
-import { WeeklySummary } from '../../components/controladoria/dashboard/WeeklySummary';
-import { MonthlySummary } from '../../components/controladoria/dashboard/MonthlySummary';
-import { EvolutionCharts } from '../../components/controladoria/dashboard/EvolutionCharts';
-import { PartnerStats } from '../../components/controladoria/dashboard/PartnerStats';
-import { OperationalStats } from '../../components/controladoria/dashboard/OperationalStats';
-
+// Subir 1 nível para sair de /pages e entrar em /dashboard (dentro de controladoria)
+import { DashboardHeader } from '../dashboard/DashboardHeader';
+import { EfficiencyFunnel } from '../dashboard/EfficiencyFunnel';
+import { PortfolioFinancialOverview } from '../dashboard/PortfolioFinancialOverview';
+import { WeeklySummary } from '../dashboard/WeeklySummary';
+import { MonthlySummary } from '../dashboard/MonthlySummary';
+import { EvolutionCharts } from '../dashboard/EvolutionCharts';
+import { PartnerStats } from '../dashboard/PartnerStats';
+import { OperationalStats } from '../dashboard/OperationalStats';
 export function Dashboard() {
   // --- ESTADOS DE FILTROS ---
   const [selectedPartner, setSelectedPartner] = useState('');

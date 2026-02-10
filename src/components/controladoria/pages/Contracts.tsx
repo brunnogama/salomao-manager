@@ -9,14 +9,22 @@ import { supabase } from '../../../lib/supabase';
 import * as XLSX from 'xlsx';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner'; 
-import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../types/controladoria';
-import { ContractFormModal } from '../../components/controladoria/contracts/ContractFormModal';
-import { ContractDetailsModal } from '../../components/controladoria/contracts/ContractDetailsModal';
-import { PartnerManagerModal } from '../../components/controladoria/partners/PartnerManagerModal';
-import { AnalystManagerModal } from '../../components/controladoria/analysts/AnalystManagerModal';
-import { ConfirmModal } from '../../components/ui/ConfirmModal';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { parseCurrency } from '../../utils/masks';
+
+// Subir 3 níveis para chegar em /src e entrar em /types
+import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../../types/controladoria';
+
+// Referências para componentes irmãos (subir 1 nível para /controladoria e entrar nas pastas)
+import { ContractFormModal } from '../contracts/ContractFormModal';
+import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
+import { PartnerManagerModal } from '../partners/PartnerManagerModal';
+import { AnalystManagerModal } from '../analysts/AnalystManagerModal';
+
+// Subir 3 níveis para chegar em /src e entrar em /components/ui
+import { ConfirmModal } from '../../../components/ui/ConfirmModal';
+import { EmptyState } from '../../../components/ui/EmptyState';
+
+// Subir 3 níveis para chegar em /src e entrar em /utils
+import { parseCurrency } from '../../../utils/masks';
 
 const getStatusColor = (status: string) => {
   switch (status) {

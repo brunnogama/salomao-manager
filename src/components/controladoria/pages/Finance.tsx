@@ -6,9 +6,9 @@ import {
   CalendarDays, Receipt, X, Filter, MapPin, Hash, FileText, 
   AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
 } from 'lucide-react';
-import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../types/controladoria';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { ContractDetailsModal } from '../../components/controladoria/contracts/ContractDetailsModal';
+import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
