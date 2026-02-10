@@ -24,7 +24,7 @@ import { ConfirmModal } from '../ui/ConfirmModal';
 import { EmptyState } from '../ui/EmptyState';
 
 // Subir 3 níveis para chegar em /src e entrar em /utils
-import { parseCurrency } from '../../../utils/masks';
+import { parseCurrency } from '../ui/EmptyState';
 
 const getStatusColor = (status: string) => {
   switch (status) {
