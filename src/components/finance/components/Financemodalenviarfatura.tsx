@@ -96,29 +96,31 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     if (cleaned.length === 14) {
       setSearchingCNPJ(true);
       
-      const { data: existing } = await supabase
-        .from('finance_clientes')
-        .select('*')
-        .eq('cnpj', formatted)
-        .single();
+      try {
+        // CORREÇÃO: Usando maybeSingle para evitar erro 406/404 em buscas vazias
+        const { data: existing } = await supabase
+          .from('finance_clientes')
+          .select('*')
+          .eq('cnpj', formatted)
+          .maybeSingle();
 
-      if (existing) {
-        setNovoClienteNome(existing.nome);
-        setNovoClienteEmail(existing.email);
-        alert('Cliente já cadastrado! Carregando dados...');
-      } else {
-        try {
+        if (existing) {
+          setNovoClienteNome(existing.nome);
+          setNovoClienteEmail(existing.email);
+          alert('Cliente já cadastrado! Carregando dados...');
+        } else {
           const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleaned}`);
           if (response.ok) {
             const empresa = await response.json();
             setNovoClienteNome(empresa.razao_social || empresa.nome_fantasia || '');
             setNovoClienteEmail(''); 
           }
-        } catch (error) {
-          console.error('Erro ao buscar CNPJ:', error);
         }
+      } catch (error) {
+        console.error('Erro ao buscar CNPJ:', error);
+      } finally {
+        setSearchingCNPJ(false);
       }
-      setSearchingCNPJ(false);
     }
   };
 
@@ -147,8 +149,9 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
       await loadClientes();
       
-      setClienteNome(novoClienteNome);
-      setClienteEmail(novoClienteEmail);
+      // Sincroniza estados globais do modal com o novo cliente
+      setClienteNome(data.nome);
+      setClienteEmail(data.email);
       
       setClienteCNPJ('');
       setNovoClienteNome('');
@@ -191,8 +194,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // VALIDAÇÃO CRÍTICA: Se clienteNome estiver vazio aqui, o erro 23502 ocorrerá no banco.
-    // Verificamos se houve seleção ou cadastro manual.
+    // VALIDAÇÃO: Garante que o nome não seja nulo para evitar erro 23502 no Postgres
     if (!clienteNome || clienteNome.trim() === '') {
       alert('Por favor, selecione um cliente na lista ou realize o cadastro de um novo antes de enviar.');
       return;
@@ -210,7 +212,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
     setLoading(true);
     try {
-      // TRATAMENTO DE VALOR: Converte string monetária brasileira para float
       const valorLimpo = typeof valor === 'string' 
         ? parseFloat(valor.replace(/\./g, '').replace(',', '.')) 
         : valor;
