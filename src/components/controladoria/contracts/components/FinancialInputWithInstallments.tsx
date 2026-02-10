@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus, ChevronDown } from 'lucide-react';
-import { maskMoney } from '../../../../utils/masks';
+import { maskMoney } from '../../utils/masks';
 
 const MinimalSelect = ({ value, onChange, options }: { value: string, onChange: (val: string) => void, options: string[] }) => {
     return (

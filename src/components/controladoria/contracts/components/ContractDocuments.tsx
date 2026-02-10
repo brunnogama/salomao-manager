@@ -1,7 +1,9 @@
 import React from 'react';
 import { FileText, AlertCircle, Upload, Download, Trash2 } from 'lucide-react';
 import { ContractDocument } from '../../../../types/controladoria';
-import { maskHon } from '../../../../utils/masks';
+
+// ROTA CORRIGIDA: Sobe 2 níveis para sair de /components/contracts e entrar em /utils
+import { maskHon } from '../../utils/masks';
 
 interface ContractDocumentsProps {
   documents: ContractDocument[];
