@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Download, Printer, Loader2, Shield } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import { ProposalDocument } from '../../components/controladoria/proposals/ProposalDocument';
 
 export function Proposals() {

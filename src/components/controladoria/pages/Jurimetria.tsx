@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess } from '../../types/controladoria';
 import { Loader2, Share2, Gavel, Scale, FileText, Maximize2, Minimize2, Search, Filter, X, Shield } from 'lucide-react';
 import { EmptyState } from '../../components/ui/EmptyState';

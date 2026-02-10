@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import { useDashboardData } from '../../components/controladoria/hooks/useDashboardData';
 
 // --- COMPONENTES MODULARES ---

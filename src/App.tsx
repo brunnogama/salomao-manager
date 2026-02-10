@@ -55,7 +55,7 @@ import { FinanceDashboard } from './components/finance/pages/FinanceDashboard'
 import { FinanceContasPagar } from './components/finance/pages/FinanceContasPagar'
 import { FinanceContasReceber } from './components/finance/contasareceber/pages/FinanceContasReceber'
 
-// --- PÁGINAS DA CONTROLADORIA (IMPORTADAS DE /src/components/controladoria/pages) ---
+// --- PÁGINAS DA CONTROLADORIA (CAMINHO CORRIGIDO CONFORME PRINT: /src/components/controladoria/pages) ---
 import { Dashboard as ControlDashboard } from './components/controladoria/pages/Dashboard'
 import { Contracts as ControlContracts } from './components/controladoria/pages/Contracts'
 import { Clients as ControlClients } from './components/controladoria/pages/Clients'

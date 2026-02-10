@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import { FolderOpen, FileText, Download, Search, HardDrive, Clock, FileCheck, Hash, Shield } from 'lucide-react';
 import { maskHon } from '../../utils/masks';
 import { EmptyState } from '../../components/ui/EmptyState';

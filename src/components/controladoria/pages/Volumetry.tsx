@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 import { BarChart3, PieChart, Users, Scale, FileText, TrendingUp, Layers, Shield } from 'lucide-react';
 import { Contract, Partner } from '../../types/controladoria';
 import { ContractFilters } from '../../components/controladoria/contracts/ContractFilters';
