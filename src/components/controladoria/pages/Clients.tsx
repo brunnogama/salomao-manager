@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Users, Search, Plus, Filter, User, MapPin, Phone, Mail, Edit, Trash2, Building, Briefcase, X, FileText, Shield } from 'lucide-react';
 import { Client, Partner } from '../../../types/controladoria';
-import { ClientFormModal } from '../../../components/controladoria/clients/ClientFormModal';
+import { ClientFormModal } from '../clients/ClientFormModal';
 import { maskCNPJ } from '../../../utils/masks';
 
 export function Clients() {
@@ -30,7 +30,7 @@ export function Clients() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         const { data: profile } = await supabase
-            .from('profiles')
+            .from('user_profiles')
             .select('role')
             .eq('id', user.id)
             .single();
@@ -70,7 +70,7 @@ export function Clients() {
     if (userRole === 'viewer') return;
     setClientToEdit(client);
     setIsModalOpen(true);
-    setViewingClient(null); // Fecha o modal de visualização se estiver aberto
+    setViewingClient(null); 
   };
 
   const handleNew = () => {
@@ -86,16 +86,15 @@ export function Clients() {
     const { error } = await supabase.from('clients').delete().eq('id', id);
     if (!error) {
         fetchData();
-        setViewingClient(null); // Fecha o modal de visualização se estiver aberto
+        setViewingClient(null);
     }
     else alert('Erro ao excluir: ' + error.message);
   };
 
   const handleViewClient = async (client: Client) => {
     setViewingClient(client);
-    setViewingContracts([]); // Reseta contratos enquanto carrega
+    setViewingContracts([]); 
     
-    // Busca os contratos completos deste cliente
     const { data } = await supabase
         .from('contracts')
         .select('*')
@@ -120,7 +119,6 @@ export function Clients() {
           </h1>
           <div className="flex items-center gap-2 mt-1">
             <p className="text-gray-500">Gestão da base de clientes do escritório.</p>
-            {/* Badge de Perfil */}
             {userRole && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border flex items-center gap-1 ${
                     userRole === 'admin' 
@@ -136,7 +134,6 @@ export function Clients() {
           </div>
         </div>
         
-        {/* Botão Novo Cliente - Apenas Admin e Editor */}
         {userRole !== 'viewer' && (
             <button onClick={handleNew} className="bg-salomao-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold">
             <Plus className="w-5 h-5 mr-2" /> Novo Cliente
@@ -181,7 +178,6 @@ export function Clients() {
                     </div>
                 </div>
                 
-                {/* Ações Rápidas - Condicionais */}
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                     {userRole !== 'viewer' && (
                         <button onClick={(e) => { e.stopPropagation(); handleEdit(client); }} className="p-1.5 hover:bg-gray-100 rounded text-blue-600" title="Editar"><Edit className="w-4 h-4" /></button>
@@ -231,7 +227,6 @@ export function Clients() {
         onSave={fetchData}
       />
 
-      {/* Modal de Detalhes do Cliente */}
       {viewingClient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -297,7 +292,6 @@ export function Clients() {
                 </div>
 
                 <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-                    {/* Botões do Modal - Condicionais */}
                     {userRole !== 'viewer' && (
                         <button 
                             onClick={() => handleEdit(viewingClient)}
