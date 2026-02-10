@@ -1,7 +1,6 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 
-// Estilos do PDF
 const styles = StyleSheet.create({
   page: {
     padding: 40,
@@ -21,7 +20,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0F2C4C' // Salomão Blue
+    color: '#0F2C4C'
   },
   title: {
     fontSize: 16,
@@ -59,32 +58,36 @@ const styles = StyleSheet.create({
 
 interface ProposalData {
   clientName: string;
+  partners: string;
   object: string;
   value: string;
   date: string;
+  template?: string;
 }
 
 export const ProposalDocument = ({ data }: { data: ProposalData }) => (
   <Document>
     <Page size="A4" style={styles.page}>
-      {/* Cabeçalho */}
       <View style={styles.header}>
         <Text style={styles.logoText}>SALOMÃO ADVOGADOS</Text>
         <Text style={{ fontSize: 10 }}>{data.date}</Text>
       </View>
 
-      {/* Título */}
       <Text style={styles.title}>Proposta de Honorários</Text>
 
-      {/* Corpo */}
       <View style={styles.section}>
-        <Text>
-          Prezados Senhores,
-        </Text>
+        <Text>Prezados Senhores,</Text>
         <Text style={{ marginTop: 10 }}>
           Apresentamos a presente proposta de prestação de serviços jurídicos para {data.clientName}, conforme detalhado abaixo:
         </Text>
       </View>
+
+      {data.partners && (
+        <View style={styles.section}>
+          <Text style={styles.label}>A/C SÓCIOS:</Text>
+          <Text style={styles.value}>{data.partners}</Text>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.label}>OBJETO DA PRESTAÇÃO DE SERVIÇOS:</Text>
@@ -96,6 +99,13 @@ export const ProposalDocument = ({ data }: { data: ProposalData }) => (
         <Text style={styles.value}>{data.value}</Text>
       </View>
 
+      {data.template && (
+        <View style={{ marginTop: 20, ...styles.section }}>
+          <Text style={styles.label}>MINUTA CONTRATUAL:</Text>
+          <Text style={{ ...styles.value, marginTop: 10 }}>{data.template}</Text>
+        </View>
+      )}
+
       <View style={{ marginTop: 30 }}>
         <Text>
           Colocamo-nos à inteira disposição para quaisquer esclarecimentos que se façam necessários.
@@ -106,7 +116,6 @@ export const ProposalDocument = ({ data }: { data: ProposalData }) => (
         </Text>
       </View>
 
-      {/* Rodapé */}
       <Text style={styles.footer}>
         Rua Exemplo, 123 - Centro, Rio de Janeiro - RJ | (21) 0000-0000 | contato@salomao.adv.br
       </Text>
