@@ -3,6 +3,7 @@ import { X, Save, Plus, DollarSign, FileText, Plane, Settings, Search, ChevronDo
 import { supabase } from '../lib/supabase'
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
 import { GerenciadorOpcoesModal } from './GerenciadorOpcoesModal'
+import { MissaoSelect } from './MissaoSelect'
 
 interface AeronaveFormModalProps {
   isOpen: boolean;
@@ -59,7 +60,7 @@ function SearchableSelect({ value, onChange, options, placeholder = 'Selecione..
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top">
+        <div className="absolute z-[99999] mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top">
           {/* Barra de Busca Fixa */}
           <div className="p-2 border-b border-gray-100 bg-gray-50/50">
             <div className="relative">
@@ -215,7 +216,7 @@ export function AeronaveFormModal({
   const emptyForm: Partial<AeronaveLancamento> = {
     origem: origem,
     tripulacao: '',
-    aeronave: 'PR WBW',  // ALTERADO: define padrão
+    aeronave: 'PR WBW',
     data_missao: '',
     id_missao: undefined,
     nome_missao: '',
@@ -256,13 +257,9 @@ export function AeronaveFormModal({
     setFornecedoresOpcoes(forns)
     setDocFiscalOpcoes(docs)
     setFrotaOpcoes(frota)
-
-    if (!formData.aeronave && frota.length > 0) {
-      setFormData(prev => ({ ...prev, aeronave: frota[0] }))
-    }
   }
 
-   useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       fetchListas()
       if (initialData) {
@@ -272,7 +269,7 @@ export function AeronaveFormModal({
           ...emptyForm, 
           origem: origem,
           despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
-          aeronave: 'PR WBW'  // ADICIONE AQUI também
+          aeronave: 'PR WBW'
         })
       }
     }
@@ -307,12 +304,12 @@ export function AeronaveFormModal({
       await onSave(formData)
       if (onSuccess) onSuccess()
       
-       if (saveAndNew) {
+      if (saveAndNew) {
         setFormData({ 
           ...emptyForm, 
           origem: origem, 
           despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
-          aeronave: 'PR WBW'  // ADICIONE AQUI
+          aeronave: 'PR WBW'
         })
       } else {
         onClose()
@@ -397,30 +394,22 @@ export function AeronaveFormModal({
                         placeholder="Ex: Cmte. Silva, Cop. João"
                       />
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Data Missão</label>
-                      <input 
-                        type="date" className="input-base"
-                        value={formData.data_missao || ''}
-                        onChange={e => handleChange('data_missao', e.target.value)}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">ID Missão</label>
-                      <input 
-                        type="number" className="input-base"
-                        value={formData.id_missao || ''}
-                        onChange={e => handleChange('id_missao', parseInt(e.target.value))}
-                        placeholder="000000"
-                      />
-                    </div>
+
                     <div className="col-span-2 flex flex-col gap-1">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Nome da Missão</label>
-                      <input 
-                        type="text" className="input-base"
-                        value={formData.nome_missao || ''}
-                        onChange={e => handleChange('nome_missao', e.target.value)}
-                        placeholder="Ex: Viagem São Paulo"
+                      <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Missão</label>
+                      <MissaoSelect 
+                        value={formData.id_missao}
+                        onSelect={(missao) => {
+                          if (missao) {
+                            handleChange('id_missao', missao.id_missao)
+                            handleChange('nome_missao', missao.nome_missao)
+                            handleChange('data_missao', missao.data_inicio || '')
+                          } else {
+                            handleChange('id_missao', undefined)
+                            handleChange('nome_missao', '')
+                            handleChange('data_missao', '')
+                          }
+                        }}
                       />
                     </div>
                   </>
