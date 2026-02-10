@@ -1,6 +1,6 @@
 import React from 'react';
 import { Eye, Edit, Trash2 } from 'lucide-react';
-import { ContractProcess } from '../types'; // Caminho corrigido
+import { ContractProcess } from '../../../../types/controladoria';
 
 interface LegalProcessListProps {
   processes: ContractProcess[];

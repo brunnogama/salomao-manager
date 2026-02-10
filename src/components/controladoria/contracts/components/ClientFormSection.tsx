@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Settings, AlertCircle, Link as LinkIcon } from 'lucide-react';
-import { Contract } from '../types'; // Caminho corrigido
-import { CustomSelect } from '../../ui/CustomSelect'; // Caminho corrigido para subir dois níveis (ui fica em controladoria/ui)
+import { Contract } from '../../../../types/controladoria';
+import { CustomSelect } from '../../ui/CustomSelect';
 
 interface ClientFormSectionProps {
   formData: Contract;
@@ -81,7 +81,7 @@ export function ClientFormSection(props: ClientFormSectionProps) {
                         {duplicateClientCases.map(c => (
                             <a 
                               key={c.id} 
-                              href={`/controladoria/contracts?id=${c.id}`} // Rota corrigida para a estrutura modular do Manager
+                              href={`/controladoria/contracts?id=${c.id}`}
                               target="_blank" 
                               rel="noopener noreferrer" 
                               className="text-[9px] font-black text-[#0a192f] uppercase tracking-widest hover:bg-amber-500 hover:text-white bg-white px-3 py-1.5 rounded-lg border border-amber-200 flex items-center transition-all shadow-sm"

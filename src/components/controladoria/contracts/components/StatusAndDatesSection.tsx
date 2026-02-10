@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Plus, X, Settings, AlertTriangle, AlertCircle } from 'lucide-react';
-import { Contract } from '../../types'; // Caminho corrigido
+import { Contract } from '../../../../types/controladoria';
 import { CustomSelect } from '../../ui/CustomSelect'; // Caminho corrigido
 import { FinancialInputWithInstallments } from './FinancialInputWithInstallments';
 import { maskMoney, parseCurrency } from '../../utils/masks'; // Caminho corrigido

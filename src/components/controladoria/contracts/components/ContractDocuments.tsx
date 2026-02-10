@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText, AlertCircle, Upload, Download, Trash2 } from 'lucide-react';
-import { ContractDocument } from '../types'; // Caminho corrigido
-import { maskHon } from '../../utils/masks'; // Caminho corrigido para subir dois níveis
+import { ContractDocument } from '../../../../types/controladoria';
+import { maskHon } from '../../utils/masks';
 
 interface ContractDocumentsProps {
   documents: ContractDocument[];
