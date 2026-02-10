@@ -1,4 +1,3 @@
-// src/components/finance/contasareceber/components/FinanceModalEnviarFatura.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, 
@@ -191,14 +190,14 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // CORREÇÃO: Validação rigorosa do nome para evitar erro 23502
+    // VALIDAÇÃO CORRIGIDA: Garante que clienteNome não seja nulo antes do envio
     if (!clienteNome || clienteNome.trim() === '') {
-      alert('Por favor, selecione um cliente válido na lista.');
+      alert('Por favor, selecione um cliente na lista ou realize o cadastro.');
       return;
     }
 
     if (!clienteEmail) {
-      alert('O e-mail do cliente é obrigatório.');
+      alert('Por favor, preencha o e-mail do cliente.');
       return;
     }
 
@@ -209,15 +208,15 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
     setLoading(true);
     try {
-      // CORREÇÃO: Tratamento do valor para garantir float correto
-      const valorNumerico = typeof valor === 'string' 
+      // TRATAMENTO DE VALOR: Converte string monetária brasileira para float
+      const valorLimpo = typeof valor === 'string' 
         ? parseFloat(valor.replace(/\./g, '').replace(',', '.')) 
         : valor;
 
       await enviarFatura({
         cliente_nome: clienteNome,
         cliente_email: clienteEmail,
-        valor: valorNumerico,
+        valor: valorLimpo,
         remetente,
         assunto,
         corpo,
@@ -235,7 +234,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       onClose();
     } catch (error: any) {
       console.error('Erro ao enviar fatura:', error);
-      alert("❌ Erro ao processar envio: " + (error.message || "Tente novamente."));
+      alert("❌ Erro ao processar envio: " + (error.message || "Verifique os dados e tente novamente."));
     } finally {
       setLoading(false);
     }
