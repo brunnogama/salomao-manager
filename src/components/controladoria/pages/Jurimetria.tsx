@@ -6,7 +6,8 @@ import {
   Loader2, Share2, Gavel, Scale, FileText, Maximize2, 
   Minimize2, Search, Filter, X, Shield 
 } from 'lucide-react';
-import { EmptyState } from '../../../components/ui/EmptyState';
+// Sobe um nível para sair de /pages e entra em /ui (ambos dentro de controladoria)
+import { EmptyState } from '../ui/EmptyState';
 
 // Interfaces
 interface GraphNode {

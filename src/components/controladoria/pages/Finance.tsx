@@ -9,7 +9,7 @@ import {
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 
 // Rota corrigida para localizar o EmptyState corretamente
-import { EmptyState } from '../../ui/EmptyState';
+import { EmptyState } from '../ui/EmptyState';
 
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
 import * as XLSX from 'xlsx';
