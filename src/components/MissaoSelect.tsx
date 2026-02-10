@@ -246,7 +246,7 @@ export function MissaoSelect({ value, onSelect, disabled = false }: MissaoSelect
         >
           <div
             ref={managingRef}
-            className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-5 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50">

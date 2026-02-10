@@ -267,7 +267,7 @@ export function SearchableSelect({
         >
           <div 
             ref={managingRef} // REF AQUI para controlar cliques
-            className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 border border-gray-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-5 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50">
