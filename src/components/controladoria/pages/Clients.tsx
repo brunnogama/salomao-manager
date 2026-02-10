@@ -3,7 +3,9 @@ import { supabase } from '../../../lib/supabase';
 import { Users, Search, Plus, Filter, User, MapPin, Phone, Mail, Edit, Trash2, Building, Briefcase, X, FileText, Shield } from 'lucide-react';
 import { Client, Partner } from '../../../types/controladoria';
 import { ClientFormModal } from '../clients/ClientFormModal';
-import { maskCNPJ } from '../../../utils/masks';
+
+// CAMINHO CORRIGIDO: saindo de /pages e entrando em /utils (dentro de controladoria)
+import { maskCNPJ } from '../utils/masks';
 
 export function Clients() {
   // --- ROLE STATE ---
