@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { FolderOpen, FileText, Download, Search, HardDrive, Clock, FileCheck, Hash, Shield } from 'lucide-react';
-import { maskHon } from '../../../utils/masks';
+
+// ROTA CORRIGIDA: Saindo de /pages e entrando em /utils (dentro de controladoria)
+import { maskHon } from '../utils/masks';
+
 import { EmptyState } from '../../../components/ui/EmptyState';
 
 interface GEDDocument {
