@@ -14,9 +14,10 @@ interface MissaoSelectProps {
   value: number | null | undefined;
   onSelect: (missao: Missao | null) => void;
   disabled?: boolean;
+  showManageButton?: boolean;
 }
 
-export function MissaoSelect({ value, onSelect, disabled = false }: MissaoSelectProps) {
+export function MissaoSelect({ value, onSelect, disabled = false, showManageButton = true }: MissaoSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isManaging, setIsManaging] = useState(false)
   const [missoes, setMissoes] = useState<Missao[]>([])
@@ -141,111 +142,112 @@ export function MissaoSelect({ value, onSelect, disabled = false }: MissaoSelect
   }
 
   return (
-    <div ref={dropdownRef} className="relative w-full">
-      {/* TRIGGER */}
-      <div
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`
-          w-full px-3 py-2 bg-[#f9fafb] border border-gray-200 rounded-xl text-xs font-semibold 
-          flex items-center justify-between transition-all outline-none
-          ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-blue-300'}
-          ${isOpen ? 'border-blue-500 ring-2 ring-blue-500/10' : ''}
-        `}
-      >
-        <span className={value ? 'text-gray-700' : 'text-gray-400'}>
-          {selectedMissao ? `#${String(selectedMissao.id_missao).padStart(6, '0')} - ${selectedMissao.nome_missao}` : 'Selecione a missão...'}
-        </span>
-        <div className="flex items-center gap-1">
-          {value && !disabled && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onSelect(null)
-              }}
-              className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-          <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </div>
-      </div>
-
-      {/* DROPDOWN */}
-      {isOpen && !isManaging && (
-        <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[99999]">
-          <div className="p-2 border-b border-gray-100 bg-gray-50">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-              <input
-                autoFocus
-                type="text"
-                placeholder="Buscar ID ou Nome..."
-                className="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium outline-none focus:border-blue-500 transition-all"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-              />
+    <>
+      <div className="flex gap-2 w-full">
+        <div ref={dropdownRef} className="relative flex-1">
+          {/* TRIGGER */}
+          <div
+            onClick={() => !disabled && setIsOpen(!isOpen)}
+            className={`
+              w-full px-3 py-2 bg-[#f9fafb] border border-gray-200 rounded-xl text-xs font-semibold 
+              flex items-center justify-between transition-all outline-none
+              ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-blue-300'}
+              ${isOpen ? 'border-blue-500 ring-2 ring-blue-500/10' : ''}
+            `}
+          >
+            <span className={value ? 'text-gray-700' : 'text-gray-400'}>
+              {selectedMissao ? `#${String(selectedMissao.id_missao).padStart(6, '0')} - ${selectedMissao.nome_missao}` : 'Selecione a missão...'}
+            </span>
+            <div className="flex items-center gap-1">
+              {value && !disabled && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onSelect(null)
+                  }}
+                  className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+              <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
           </div>
 
-          <div className="max-h-60 overflow-y-auto custom-scrollbar">
-            {loading ? (
-              <div className="p-4 text-center text-xs text-gray-400">Carregando...</div>
-            ) : filteredMissoes.length > 0 ? (
-              <div className="p-1.5 space-y-1">
-                {filteredMissoes.map((missao) => (
-                  <button
-                    key={missao.id}
-                    onClick={() => {
-                      onSelect(missao)
-                      setIsOpen(false)
-                      setSearchTerm('')
-                    }}
-                    className={`
-                      w-full text-left px-3 py-2 rounded-lg transition-all
-                      ${value === missao.id_missao ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50 border border-transparent'}
-                    `}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-[10px] font-black text-blue-600/70 uppercase tracking-widest">
-                            #{String(missao.id_missao).padStart(6, '0')}
-                          </span>
-                          <span className="text-xs font-bold text-gray-800 truncate">
-                            {missao.nome_missao}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 text-[9px] text-gray-500">
-                          <Calendar className="h-2.5 w-2.5" />
-                          {formatPeriod(missao.data_inicio, missao.data_fim)}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                ))}
+          {/* DROPDOWN */}
+          {isOpen && (
+            <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[99999]">
+              <div className="p-2 border-b border-gray-100 bg-gray-50">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="Buscar ID ou Nome..."
+                    className="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium outline-none focus:border-blue-500 transition-all"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
               </div>
-            ) : (
-              <div className="p-4 text-center text-xs text-gray-400 italic">Nenhuma missão encontrada</div>
-            )}
-          </div>
 
-          <div className="border-t border-gray-200 bg-gray-50 p-1.5">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setIsManaging(true)
-                setSearchTerm('')
-              }}
-              className="w-full px-3 py-2 text-center text-xs font-bold text-[#112240] bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-md flex items-center justify-center gap-2 transition-all uppercase tracking-wide"
-            >
-              <Settings className="h-3.5 w-3.5" />
-              Gerenciar Missões
-            </button>
-          </div>
+              <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                {loading ? (
+                  <div className="p-4 text-center text-xs text-gray-400">Carregando...</div>
+                ) : filteredMissoes.length > 0 ? (
+                  <div className="p-1.5 space-y-1">
+                    {filteredMissoes.map((missao) => (
+                      <button
+                        key={missao.id}
+                        onClick={() => {
+                          onSelect(missao)
+                          setIsOpen(false)
+                          setSearchTerm('')
+                        }}
+                        className={`
+                          w-full text-left px-3 py-2 rounded-lg transition-all
+                          ${value === missao.id_missao ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50 border border-transparent'}
+                        `}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[10px] font-black text-blue-600/70 uppercase tracking-widest">
+                                #{String(missao.id_missao).padStart(6, '0')}
+                              </span>
+                              <span className="text-xs font-bold text-gray-800 truncate">
+                                {missao.nome_missao}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[9px] text-gray-500">
+                              <Calendar className="h-2.5 w-2.5" />
+                              {formatPeriod(missao.data_inicio, missao.data_fim)}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-xs text-gray-400 italic">Nenhuma missão encontrada</div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* BOTÃO GERENCIAR - Agora ao lado */}
+        {showManageButton && (
+          <button 
+            onClick={() => setIsManaging(true)}
+            className="px-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-xl transition-all border border-gray-200 flex items-center justify-center shadow-sm"
+            title="Gerenciar Missões"
+          >
+            <Settings className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
 
       {/* MODAL GERENCIAMENTO */}
       {isManaging && (
@@ -258,7 +260,7 @@ export function MissaoSelect({ value, onSelect, disabled = false }: MissaoSelect
             className="bg-white rounded-xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-5 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50">
+            <div className="px-5 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50 rounded-t-xl">
               <h3 className="font-bold text-base text-gray-800 flex items-center gap-2">
                 <Settings className="h-4 w-4 text-gray-500" />
                 Gerenciar Missões
@@ -275,7 +277,7 @@ export function MissaoSelect({ value, onSelect, disabled = false }: MissaoSelect
               </button>
             </div>
 
-            <div className="p-5">
+            <div className="p-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
               {/* FORM ADICIONAR */}
               <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="grid grid-cols-4 gap-2">
@@ -318,7 +320,7 @@ export function MissaoSelect({ value, onSelect, disabled = false }: MissaoSelect
               </div>
 
               {/* LISTA */}
-              <div className="max-h-96 overflow-y-auto space-y-2 custom-scrollbar">
+              <div className="space-y-2">
                 {missoes.map((missao) => (
                   <div
                     key={missao.id}
@@ -411,6 +413,6 @@ export function MissaoSelect({ value, onSelect, disabled = false }: MissaoSelect
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
