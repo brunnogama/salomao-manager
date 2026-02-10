@@ -3,8 +3,8 @@ import { Contract } from '../../../types/controladoria';
 import { addMonths } from 'date-fns';
 import { safeParseFloat, ensureArray } from '../utils/contractHelpers';
 
-// ROTA CORRIGIDA: Sobe 2 níveis para sair de /services e /contracts, entrando em /utils
-import { parseCurrency } from '../../utils/masks';
+// ROTA CORRIGIDA: Sobe 1 nível para sair de /services e entrar em /utils (dentro de controladoria)
+import { parseCurrency } from '../utils/masks';
 
 export const generateFinancialInstallments = async (contractId: string, sourceData: Contract) => {
     if (sourceData.status !== 'active') return;
