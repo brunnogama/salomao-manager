@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Settings2, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Collaborator, Partner } from '../../types/controladoria';
-import { SearchableSelect } from '../crm/SearchableSelect';
+import { SearchableSelect } from '../SearchableSelect'; // Ajustado para o caminho correto do componente
 import { PartnerManagerModal } from './modals/PartnerManagerModal';
 import { CollaboratorManagerModal } from './modals/CollaboratorManagerModal';
 
@@ -36,7 +36,6 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
       if (collaborator) {
         setFormData({
           ...collaborator,
-          // Garante que valores nulos sejam strings vazias para o SearchableSelect
           partner_id: collaborator.partner_id || '',
           leader_id: collaborator.leader_id || ''
         });
@@ -49,7 +48,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
 
   const fetchData = async () => {
     try {
-      // Busca apenas ativos para o preenchimento dos campos de seleção
+      // Busca dados de Sócios e Colaboradores (Líderes) simultaneamente
       const [partnersRes, leadersRes] = await Promise.all([
         supabase.from('partners').select('id, name').eq('status', 'active').order('name'),
         supabase.from('collaborators').select('id, name').eq('status', 'active').order('name')
@@ -58,7 +57,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
       if (partnersRes.data) setPartners(partnersRes.data);
       if (leadersRes.data) setLeaders(leadersRes.data);
     } catch (error) {
-      console.error("Erro ao carregar dados auxiliares:", error);
+      console.error("Erro ao carregar dados:", error);
     }
   };
 
@@ -67,7 +66,6 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
     
     setLoading(true);
     try {
-      // Limpeza de payloads: converte strings vazias de UUIDs opcionais em null
       const payload = {
         ...formData,
         partner_id: formData.partner_id || null,
@@ -84,7 +82,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
       onSave();
       onClose();
     } catch (error: any) {
-      alert('Erro ao salvar colaborador: ' + error.message);
+      alert('Erro ao salvar: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -93,7 +91,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         
         <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
@@ -106,24 +104,26 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
         </div>
 
         <div className="p-8 space-y-6">
+          {/* Nome */}
           <div>
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
             <input 
               type="text"
-              className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+              className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a]"
               value={formData.name || ''}
               onChange={e => setFormData({...formData, name: e.target.value})}
-              placeholder="Digite o nome completo"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Sócio Responsável */}
             <div className="flex flex-col">
               <div className="flex items-center justify-between mb-2 ml-1">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sócio Responsável</label>
                 <button 
+                  type="button"
                   onClick={() => setIsPartnerModalOpen(true)}
-                  className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-tighter flex items-center gap-1 hover:text-blue-800 transition-colors"
+                  className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-tighter flex items-center gap-1 hover:underline"
                 >
                   <Settings2 className="w-3 h-3" /> Gerenciar
                 </button>
@@ -136,12 +136,14 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
               />
             </div>
 
+            {/* Líder Direto */}
             <div className="flex flex-col">
               <div className="flex items-center justify-between mb-2 ml-1">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Líder Direto</label>
                 <button 
+                  type="button"
                   onClick={() => setIsLeaderModalOpen(true)}
-                  className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-tighter flex items-center gap-1 hover:text-blue-800 transition-colors"
+                  className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-tighter flex items-center gap-1 hover:underline"
                 >
                   <Settings2 className="w-3 h-3" /> Gerenciar
                 </button>
@@ -158,11 +160,12 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
             </div>
           </div>
 
+          {/* Cargo */}
           <div>
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cargo / Função</label>
             <input 
               type="text"
-              className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+              className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a]"
               value={formData.role || ''}
               onChange={e => setFormData({...formData, role: e.target.value})}
               placeholder="Ex: Advogado Pleno"
@@ -171,13 +174,11 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
         </div>
 
         <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
-          <button onClick={onClose} className="px-6 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">
-            Cancelar
-          </button>
+          <button onClick={onClose} className="px-6 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cancelar</button>
           <button 
             onClick={handleSave} 
             disabled={loading}
-            className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 disabled:opacity-50"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Salvar Registro
