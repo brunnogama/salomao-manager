@@ -130,17 +130,25 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const fetchColaboradores = async () => {
     setLoading(true)
-    // Busca incluindo os joins para trazer nomes de sócios e líderes reais via UUID
-    const { data } = await supabase
-      .from('collaborators')
-      .select(`
-        *,
-        partner:partners(id, name),
-        leader:collaborators!collaborators_leader_id_fkey(id, name)
-      `)
-      .order('name')
-    if (data) setColaboradores(data)
-    setLoading(false)
+    try {
+      // Query simplificada para evitar erro 400 de autorreferência ambígua
+      const { data, error } = await supabase
+        .from('collaborators')
+        .select(`
+          *,
+          partner:partners(id, name),
+          leader:leader_id(id, name)
+        `)
+        .order('name')
+      
+      if (error) throw error
+      if (data) setColaboradores(data)
+    } catch (error: any) {
+      console.error("Erro ao buscar colaboradores:", error.message)
+      setColaboradores([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const fetchPartners = async () => {
