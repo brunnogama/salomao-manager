@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { SearchableSelect } from '../../crm/SearchableSelect'
-import { Collaborator } from '../../../types/controladoria'
+import { Collaborator, Partner } from '../../../types/controladoria'
 
 // Importar componentes modulares
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
@@ -45,6 +45,7 @@ interface ColaboradoresProps {
 
 export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }: ColaboradoresProps) {
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
+  const [partners, setPartners] = useState<Partner[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
@@ -52,6 +53,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLider, setFilterLider] = useState('')
+  const [filterPartner, setFilterPartner] = useState('') // Novo filtro
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
 
@@ -68,7 +70,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const photoInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { fetchColaboradores() }, [])
+  useEffect(() => { 
+    fetchColaboradores()
+    fetchPartners()
+  }, [])
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -125,9 +130,22 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const fetchColaboradores = async () => {
     setLoading(true)
-    const { data } = await supabase.from('collaborators').select('*').order('name')
+    // Busca incluindo os joins para trazer nomes de sócios e líderes reais via UUID
+    const { data } = await supabase
+      .from('collaborators')
+      .select(`
+        *,
+        partner:partners(id, name),
+        leader:collaborators!collaborators_leader_id_fkey(id, name)
+      `)
+      .order('name')
     if (data) setColaboradores(data)
     setLoading(false)
+  }
+
+  const fetchPartners = async () => {
+    const { data } = await supabase.from('partners').select('id, name').order('name')
+    if (data) setPartners(data)
   }
 
   const fetchGedDocs = async (colabId: string) => {
@@ -208,10 +226,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const handleSave = async () => {
     if (!formData.name) return alert('Nome obrigatório')
     
-    // Função para converter DD/MM/AAAA para YYYY-MM-DD
     const toISO = (s?: string) => {
       if (!s || s.length !== 10) return null
-      if (!s.includes('/')) return s // Já está no formato ISO
+      if (!s.includes('/')) return s 
       const [d, m, y] = s.split('/')
       return `${y}-${m}-${d}`
     }
@@ -219,7 +236,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     let photoUrl = formData.photo_url
     if (photoInputRef.current?.files?.[0]) {
       if (formData.id && formData.photo_url) await deleteFoto(formData.photo_url)
-      fotoUrl = await uploadPhoto(photoInputRef.current.files[0], formData.id || 'temp_' + Date.now()) || photoUrl
+      photoUrl = await uploadPhoto(photoInputRef.current.files[0], formData.id || 'temp_' + Date.now()) || photoUrl
     }
 
     const payload = {
@@ -230,13 +247,15 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       address_complement: toTitleCase(formData.address_complement || ''),
       neighborhood: toTitleCase(formData.neighborhood || ''),
       city: toTitleCase(formData.city || ''),
-      lider_equipe: toTitleCase(formData.lider_equipe || ''),
       role: toTitleCase(formData.role || ''),
       birthday: toISO(formData.birthday),
       hire_date: toISO(formData.hire_date),
       termination_date: toISO(formData.termination_date),
       oab_expiration: toISO(formData.oab_expiration),
-      photo_url: photoUrl
+      photo_url: photoUrl,
+      // Garante que campos de UUID sejam null se não preenchidos
+      partner_id: formData.partner_id || null,
+      leader_id: formData.leader_id || null
     }
 
     const { error } = formData.id 
@@ -281,7 +300,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const filtered = colaboradores.filter(c => 
     (c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || c.cpf?.includes(searchTerm)) &&
-    (!filterLider || c.lider_equipe === filterLider) &&
+    (!filterLider || c.leader_id === filterLider) &&
+    (!filterPartner || c.partner_id === filterPartner) &&
     (!filterLocal || c.local === filterLocal) &&
     (!filterCargo || c.role === filterCargo)
   )
@@ -291,7 +311,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       
       {/* PAGE HEADER COMPLETO - Título + User Info */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        {/* Left: Título e Ícone */}
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
             <Users className="h-7 w-7 text-white" />
@@ -306,7 +325,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           </div>
         </div>
 
-        {/* Right: User Info & Actions */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="hidden md:flex flex-col items-end">
             <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
@@ -352,11 +370,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               <input type="text" placeholder="Buscar..." className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <div className="w-44"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={Array.from(new Set(colaboradores.map(c => c.lider_equipe).filter(Boolean))).map(n => ({ name: toTitleCase(n!) }))} /></div>
+            <div className="w-44"><SearchableSelect placeholder="Sócios" value={filterPartner} onChange={setFilterPartner} options={partners.map(p => ({ id: p.id, name: p.name }))} /></div>
+            <div className="w-44"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={colaboradores.filter(c => c.status === 'active').map(c => ({ id: c.id, name: c.name }))} /></div>
             <div className="w-44"><SearchableSelect placeholder="Cargos" value={filterCargo} onChange={setFilterCargo} options={Array.from(new Set(colaboradores.map(c => c.role).filter(Boolean))).map(n => ({ name: toTitleCase(n!) }))} /></div>
-            <div className="w-44"><SearchableSelect placeholder="Locais" value={filterLocal} onChange={setFilterLocal} options={Array.from(new Set(colaboradores.map(c => c.local).filter(Boolean))).map(n => ({ name: toTitleCase(n!) }))} /></div>
           </div>
-          {/* BOTÃO NOVO */}
           <button 
             onClick={handleOpenNewForm} 
             className="flex items-center gap-2 px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
@@ -372,7 +389,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               <tr>
                 <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Colaborador</th>
                 <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cargo</th>
-                <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Equipe</th>
+                <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Sócio Resp.</th>
                 <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Líder</th>
                 <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
                 <th className="px-6 py-4 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
@@ -391,10 +408,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                     <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase(c.role || '')}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-gray-700">{toTitleCase(c.equipe || '')}</p>
+                    <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-gray-700">{toTitleCase(c.lider_equipe || '')}</p>
+                    <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
@@ -551,10 +568,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                     <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Corporativo</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
-                      <DetailRow label="Equipe" value={selectedColaborador.equipe} />
+                      <DetailRow label="Sócio Resp." value={(selectedColaborador as any).partner?.name} />
                       <DetailRow label="Cargo" value={selectedColaborador.role} />
                       <DetailRow label="Local" value={selectedColaborador.local} icon={Building2} />
-                      <DetailRow label="Líder" value={selectedColaborador.lider_equipe} />
+                      <DetailRow label="Líder" value={(selectedColaborador as any).leader?.name} />
                       <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.hire_date)} icon={Calendar} />
                       <DetailRow label="Desligamento" value={formatDateDisplay(selectedColaborador.termination_date)} icon={Calendar} />
                     </div>
