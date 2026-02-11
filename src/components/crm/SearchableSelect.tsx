@@ -21,6 +21,7 @@ interface SearchableSelectProps {
   options?: Option[]; // Opções estáticas
   disabled?: boolean;
   className?: string;
+  onRefresh?: () => void;
 }
 
 export function SearchableSelect({
@@ -32,7 +33,8 @@ export function SearchableSelect({
   nameField = 'name',
   options: externalOptions = [],
   disabled = false,
-  className = ""
+  className = "",
+  onRefresh
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,8 +65,17 @@ export function SearchableSelect({
     if (!table) return;
     setLoading(true);
     try {
-      const { data } = await supabase.from(table).select('*').order(nameField);
-      if (data) setOptions(data);
+      // Ajustado de '*' para colunas específicas para evitar erro 400 por RLS ou ambiguidade
+      const { data, error } = await supabase
+        .from(table)
+        .select(`id, ${nameField}`)
+        .order(nameField);
+      
+      if (error) throw error;
+      if (data) {
+        setOptions(data);
+        if (onRefresh) onRefresh();
+      }
     } catch (error) {
       console.error('Erro ao buscar opções:', error);
     } finally {
