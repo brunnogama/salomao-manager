@@ -1,5 +1,6 @@
-// src/components/SearchableSelect.tsx
+// src/components/crm/SearchableSelect.tsx
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, ChevronDown, X, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -40,6 +41,7 @@ export function SearchableSelect({
   const [searchTerm, setSearchTerm] = useState('');
   const [options, setOptions] = useState<Option[]>([]);
   const [loading, setLoading] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isFetchedRef = useRef(false);
@@ -58,7 +60,6 @@ export function SearchableSelect({
         fetchOptions();
       }
     } else {
-      // Para opções externas, só atualizamos se o tamanho mudar para evitar loop
       if (JSON.stringify(externalOptions) !== JSON.stringify(options)) {
         setOptions(externalOptions);
       }
@@ -77,7 +78,7 @@ export function SearchableSelect({
       if (error) throw error;
       if (data) {
         setOptions(data);
-        isFetchedRef.current = true; // Marca como buscado para evitar loop
+        isFetchedRef.current = true;
         if (onRefresh) onRefresh();
       }
     } catch (error) {
@@ -87,15 +88,28 @@ export function SearchableSelect({
     }
   };
 
-  // Reseta o cache de busca se a tabela mudar
+  // Calcula a posição do menu em relação à janela global
+  useEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     isFetchedRef.current = false;
   }, [table]);
 
-  // Fecha dropdown ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      // Verifica se o clique não foi no trigger nem no menu renderizado via portal
+      const menuPortal = document.getElementById('select-portal-root');
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) && 
+          (!menuPortal || !menuPortal.contains(event.target as Node))) {
         setIsOpen(false);
         setSearchTerm('');
       }
@@ -111,7 +125,6 @@ export function SearchableSelect({
     getName(opt).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Encontra o item selecionado para exibição no trigger
   const selectedOption = options.find(opt => 
     (opt.id?.toString() === value) || (getName(opt).toLowerCase() === value.toLowerCase())
   );
@@ -122,11 +135,76 @@ export function SearchableSelect({
     setIsOpen(false);
   };
 
+  const DropdownMenu = (
+    <div 
+      id="select-portal-root"
+      className="fixed bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[10000]"
+      style={{
+        top: `${coords.top + 8}px`,
+        left: `${coords.left}px`,
+        width: `${coords.width}px`,
+        maxHeight: '300px'
+      }}
+    >
+      <div className="p-3 border-b border-gray-50 bg-gray-50/50">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Filtrar opções..."
+            className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:border-[#1e3a8a] outline-none transition-all"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            autoFocus
+          />
+        </div>
+      </div>
+
+      <div className="overflow-y-auto p-2 custom-scrollbar" style={{ maxHeight: '220px' }}>
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-5 w-5 text-[#1e3a8a] animate-spin" />
+          </div>
+        ) : filteredOptions.length > 0 ? (
+          <div className="space-y-1">
+            {filteredOptions.map((opt) => {
+              const isSelected = (opt.id?.toString() === value) || (getName(opt).toLowerCase() === value.toLowerCase());
+              return (
+                <button
+                  key={getId(opt)}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.id?.toString() || getName(opt));
+                    setIsOpen(false);
+                    setSearchTerm('');
+                  }}
+                  className={`
+                    w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all
+                    ${isSelected 
+                      ? 'bg-[#1e3a8a] text-white' 
+                      : 'text-gray-600 hover:bg-blue-50 hover:text-[#1e3a8a]'
+                    }
+                  `}
+                >
+                  {toTitleCase(getName(opt))}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="py-8 text-center">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nenhum resultado</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div ref={dropdownRef} className={`relative w-full ${className}`}>
       {label && <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{label}</label>}
       
-      {/* TRIGGER */}
       <div 
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`
@@ -152,64 +230,8 @@ export function SearchableSelect({
         </div>
       </div>
 
-      {/* DROPDOWN MENU */}
-      {isOpen && (
-        <div className="absolute left-0 top-full mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[9999]">
-          
-          <div className="p-3 border-b border-gray-50 bg-gray-50/50">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Filtrar opções..."
-                className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:border-[#1e3a8a] outline-none transition-all"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                autoFocus
-              />
-            </div>
-          </div>
-
-          <div className="max-h-60 overflow-y-auto p-2 custom-scrollbar">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-5 w-5 text-[#1e3a8a] animate-spin" />
-              </div>
-            ) : filteredOptions.length > 0 ? (
-              <div className="space-y-1">
-                {filteredOptions.map((opt) => {
-                  const isSelected = (opt.id?.toString() === value) || (getName(opt).toLowerCase() === value.toLowerCase());
-                  return (
-                    <button
-                      key={getId(opt)}
-                      type="button"
-                      onClick={() => {
-                        onChange(opt.id?.toString() || getName(opt));
-                        setIsOpen(false);
-                        setSearchTerm('');
-                      }}
-                      className={`
-                        w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all
-                        ${isSelected 
-                          ? 'bg-[#1e3a8a] text-white' 
-                          : 'text-gray-600 hover:bg-blue-50 hover:text-[#1e3a8a]'
-                        }
-                      `}
-                    >
-                      {toTitleCase(getName(opt))}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="py-8 text-center">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nenhum resultado</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Renders the menu outside the DOM hierarchy of the modal */}
+      {isOpen && createPortal(DropdownMenu, document.body)}
     </div>
   );
 }
