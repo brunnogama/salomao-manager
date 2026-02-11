@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { 
-  LayoutDashboard, 
-  MapPin, 
-  KanbanSquare, 
+import { Link, useLocation } from 'react-router-dom'
+import {
+  LayoutDashboard,
+  MapPin,
+  KanbanSquare,
   X,
   Users,
   TrendingUp,
@@ -18,20 +19,20 @@ import {
 import { supabase } from '../../lib/supabase'
 
 interface SidebarProps {
-  activePage: string;
-  onNavigate: (page: string) => void;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [userName, setUserName] = useState('Carregando...')
   const [userRole, setUserRole] = useState('')
+  const location = useLocation()
+  const activePage = location.pathname
 
   const fetchUserProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       if (user) {
         const { data: profile } = await supabase
           .from('usuarios_permitidos')
@@ -63,28 +64,30 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
   useEffect(() => {
     fetchUserProfile()
   }, [])
-  
+
   const mainItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'calendario', label: 'Calendário', icon: Calendar },
-    { id: 'presencial', label: 'Presencial', icon: MapPin },
-    { id: 'colaboradores', label: 'Colaboradores', icon: Users },
-    { id: 'evolucao', label: 'Evolução de Pessoal', icon: TrendingUp },
-    { id: 'tempo-casa', label: 'Tempo de casa', icon: Clock },
-    { id: 'headcount', label: 'Headcount', icon: BarChart3 },
-    { id: 'turnover', label: 'Turnover', icon: RefreshCw },
-    { id: 'vagas', label: 'Vagas', icon: Briefcase },
-    { id: 'remuneracao', label: 'Remuneração', icon: Banknote },
-    { id: 'acoes', label: 'Ações', icon: Megaphone },
-    { id: 'kanban', label: 'Kanban', icon: KanbanSquare },
-    { id: 'ged', label: 'GED', icon: Folder },
+    { path: '/rh/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/rh/calendario', label: 'Calendário', icon: Calendar },
+    { path: '/rh/presencial', label: 'Presencial', icon: MapPin },
+    { path: '/rh/colaboradores', label: 'Colaboradores', icon: Users },
+    { path: '/rh/evolucao', label: 'Evolução de Pessoal', icon: TrendingUp },
+    { path: '/rh/tempo-casa', label: 'Tempo de casa', icon: Clock },
+    { path: '/rh/headcount', label: 'Headcount', icon: BarChart3 },
+    { path: '/rh/turnover', label: 'Turnover', icon: RefreshCw },
+    { path: '/rh/vagas', label: 'Vagas', icon: Briefcase },
+    { path: '/rh/remuneracao', label: 'Remuneração', icon: Banknote },
+    { path: '/rh/acoes', label: 'Ações', icon: Megaphone },
+    { path: '/rh/kanban', label: 'Kanban', icon: KanbanSquare },
+    { path: '/rh/ged', label: 'GED', icon: Folder },
   ]
+
+  const isActive = (path: string) => activePage === path
 
   return (
     <>
       {/* Backdrop Escuro (Apenas Mobile) */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
           onClick={onClose}
         />
@@ -97,9 +100,9 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
         md:translate-x-0
       `}>
-        
+
         {/* Botão Fechar (Apenas Mobile) */}
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white md:hidden z-10"
         >
@@ -109,9 +112,9 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
         {/* 1. HEADER LOGO */}
         <div className="flex flex-col flex-shrink-0 relative bg-[#112240] pt-8 pb-4 px-6">
           <div className="flex flex-col items-center w-full">
-            <img 
-              src="/logo-branca.png" 
-              alt="Salomão Advogados" 
+            <img
+              src="/logo-branca.png"
+              alt="Salomão Advogados"
               className="h-12 w-auto object-contain block"
             />
           </div>
@@ -120,24 +123,23 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
         {/* 2. MENU PRINCIPAL */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
           {mainItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => { onNavigate(item.id); onClose(); }}
-              className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all group ${
-                activePage === item.id
-                  ? 'bg-[#1e3a8a] text-white font-medium shadow-md border-l-4 border-salomao-gold' 
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={onClose}
+              className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all group ${isActive(item.path)
+                  ? 'bg-[#1e3a8a] text-white font-medium shadow-md border-l-4 border-salomao-gold'
                   : 'hover:bg-white/5 hover:text-white border-l-4 border-transparent'
-              }`}
+                }`}
             >
               <div className="flex items-center">
-                <item.icon 
-                  className={`h-5 w-5 mr-3 transition-colors ${
-                    activePage === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                  }`} 
+                <item.icon
+                  className={`h-5 w-5 mr-3 transition-colors ${isActive(item.path) ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                    }`}
                 />
                 <span className="text-sm">{item.label}</span>
               </div>
-            </button>
+            </Link>
           ))}
         </nav>
 

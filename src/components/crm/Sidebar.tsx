@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { 
-  LayoutDashboard, 
-  Users, 
-  KanbanSquare, 
+import { Link, useLocation } from 'react-router-dom'
+import {
+  LayoutDashboard,
+  Users,
+  KanbanSquare,
   FileWarning,
   X,
   Gavel,
@@ -12,14 +13,14 @@ import {
 import { supabase } from '../../lib/supabase'
 
 interface SidebarProps {
-  activePage: string;
-  onNavigate: (page: string) => void;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [incompleteCount, setIncompleteCount] = useState(0)
+  const location = useLocation()
+  const activePage = location.pathname
 
   const fetchCount = async () => {
     const { data } = await supabase.from('clientes').select('*')
@@ -51,19 +52,21 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
   }, [])
 
   const mainItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'clientes', label: 'Clientes', icon: Users },
-    { id: 'magistrados', label: 'Autoridades', icon: Gavel }, 
-    { id: 'incompletos', label: 'Incompletos', icon: FileWarning, badge: incompleteCount },
-    { id: 'logistica', label: 'Logística', icon: Truck },
-    { id: 'kanban', label: 'Kanban', icon: KanbanSquare },
+    { path: '/crm/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/crm/clientes', label: 'Clientes', icon: Users },
+    { path: '/crm/magistrados', label: 'Autoridades', icon: Gavel },
+    { path: '/crm/incompletos', label: 'Incompletos', icon: FileWarning, badge: incompleteCount },
+    { path: '/crm/logistica', label: 'Logística', icon: Truck },
+    { path: '/crm/kanban', label: 'Kanban', icon: KanbanSquare },
   ]
+
+  const isActive = (path: string) => activePage === path
 
   return (
     <>
       {/* Backdrop Escuro (Apenas Mobile) */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
           onClick={onClose}
         />
@@ -76,9 +79,9 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
         md:translate-x-0
       `}>
-        
+
         {/* Botão Fechar (Apenas Mobile) */}
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white md:hidden z-10"
         >
@@ -88,9 +91,9 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
         {/* 1. HEADER LOGO */}
         <div className="flex flex-col flex-shrink-0 relative bg-[#112240] pt-8 pb-4 px-6">
           <div className="flex flex-col items-center w-full">
-            <img 
-              src="/logo-branca.png" 
-              alt="Salomão Advogados" 
+            <img
+              src="/logo-branca.png"
+              alt="Salomão Advogados"
               className="h-12 w-auto object-contain block"
             />
           </div>
@@ -99,20 +102,19 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
         {/* 2. MENU PRINCIPAL */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
           {mainItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => { onNavigate(item.id); onClose(); }}
-              className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all group ${
-                activePage === item.id
-                  ? 'bg-[#1e3a8a] text-white font-medium shadow-md border-l-4 border-salomao-gold' 
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={onClose}
+              className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all group ${isActive(item.path)
+                  ? 'bg-[#1e3a8a] text-white font-medium shadow-md border-l-4 border-salomao-gold'
                   : 'hover:bg-white/5 hover:text-white border-l-4 border-transparent'
-              }`}
+                }`}
             >
               <div className="flex items-center">
-                <item.icon 
-                  className={`h-5 w-5 mr-3 transition-colors ${
-                    activePage === item.id ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                  }`} 
+                <item.icon
+                  className={`h-5 w-5 mr-3 transition-colors ${isActive(item.path) ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                    }`}
                 />
                 <span className="text-sm">{item.label}</span>
               </div>
@@ -123,7 +125,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
                   {item.badge}
                 </span>
               )}
-            </button>
+            </Link>
           ))}
         </nav>
 
