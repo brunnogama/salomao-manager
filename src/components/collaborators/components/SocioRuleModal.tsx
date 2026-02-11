@@ -75,7 +75,7 @@ export function SocioRuleModal({
             </label>
             <input 
               type="number" 
-              制 "0"
+              min="0"
               max="7"
               className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
               value={editingRule.weekly_goal || editingRule.meta_semanal || 0} 
@@ -102,5 +102,5 @@ export function SocioRuleModal({
         </div>
       </div>
     </div>
-  );
+  )
 }
