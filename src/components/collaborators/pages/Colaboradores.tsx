@@ -131,7 +131,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const fetchColaboradores = async () => {
     setLoading(true)
     try {
-      // Query simplificada para evitar erro 400 de autorreferência ambígua
+      // Query corrigida: simplificando join para evitar erro 400 em autorreferência de líder
       const { data, error } = await supabase
         .from('collaborators')
         .select(`
@@ -380,7 +380,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             </div>
             <div className="w-44"><SearchableSelect placeholder="Sócios" value={filterPartner} onChange={setFilterPartner} options={partners.map(p => ({ id: p.id, name: p.name }))} /></div>
             <div className="w-44"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={colaboradores.filter(c => c.status === 'active').map(c => ({ id: c.id, name: c.name }))} /></div>
-            <div className="w-44"><SearchableSelect placeholder="Cargos" value={filterCargo} onChange={setFilterCargo} options={Array.from(new Set(colaboradores.map(c => c.role).filter(Boolean))).map(n => ({ name: toTitleCase(n!) }))} /></div>
+            <div className="w-44"><SearchableSelect placeholder="Cargos" value={filterCargo} onChange={setFilterCargo} table="opcoes_cargos" nameField="nome" /></div>
+            <div className="w-44"><SearchableSelect placeholder="Locais" value={filterLocal} onChange={setFilterLocal} table="opcoes_locais" nameField="nome" /></div>
           </div>
           <button 
             onClick={handleOpenNewForm} 
