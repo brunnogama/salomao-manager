@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Login from './Login'
@@ -10,9 +9,13 @@ import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
 import { Sidebar as ExecutiveSidebar } from './components/secretaria/Sidebar'
 import { SidebarFinanceiro } from './components/finance/SidebarFinanceiro'
 
+// ============================================
+// 🔍 SISTEMA DE DEBUG
+// ============================================
+console.log('📦 App.tsx - Arquivo carregado');
+
 // Sidebar da Controladoria (Componente de Layout)
 import { Sidebar as ControladoriaSidebar } from './components/layout/Sidebar.tsx'
-
 
 // Componentes CRM
 import { Clients } from './components/crm/Clients'
@@ -69,13 +72,14 @@ import { Volumetry as ControlVolumetry } from './components/controladoria/pages/
 import { History as ControlHistory } from './components/controladoria/pages/History'
 import { Settings as ControlSettings } from './components/controladoria/pages/Settings'
 
-// --- UTILITÁRIOS E UI DA CONTROLADORIA (Caminhos ajustados para o local correto) ---
-import { parseCurrency } from './components/controladoria/utils/masks';
-
 import { Menu, LogOut, Grid } from 'lucide-react'
 import { Toaster } from 'sonner'
 
+console.log('✅ Todos os componentes importados');
+
 export default function App() {
+  console.log('🔄 App - Renderizando');
+  
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -85,12 +89,17 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({})
 
+  console.log('📊 Estado atual:', { currentModule, activePage, isSidebarOpen });
+
   useEffect(() => {
+    console.log('🔐 Verificando sessão...');
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('✅ Sessão obtida:', !!session);
       setSession(session); setLoading(false);
     })
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 Auth state changed:', event);
       setSession(session)
       if (event === 'PASSWORD_RECOVERY') {
         setIsResettingPassword(true)
@@ -101,13 +110,17 @@ export default function App() {
   }, [])
 
   const handleLogout = async () => {
+    console.log('🚪 Logout iniciado');
     setLoggingOut(true)
     try {
       const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
       localStorage.clear(); sessionStorage.clear()
       if (hasSeenWelcome) localStorage.setItem('hasSeenWelcomeModal', hasSeenWelcome)
       await supabase.auth.signOut(); window.location.reload()
-    } catch (error) { window.location.reload() }
+    } catch (error) { 
+      console.error('❌ Erro no logout:', error);
+      window.location.reload() 
+    }
   }
 
   const getUserDisplayName = () => {
@@ -115,14 +128,32 @@ export default function App() {
     return session.user.email.split('@')[0].split('.').map((p: any) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
   }
 
-  if (loading || loggingOut) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
+  if (loading || loggingOut) {
+    console.log('⏳ Carregando...');
+    return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>
+  }
   
-  if (isResettingPassword) return <ResetPassword />
-  if (!session) return <Login />
+  if (isResettingPassword) {
+    console.log('🔑 Resetando senha');
+    return <ResetPassword />
+  }
   
-  if (currentModule === 'home') return <ModuleSelector onSelect={(m:any) => { setCurrentModule(m); setActivePage('dashboard') }} userName={getUserDisplayName()} />
+  if (!session) {
+    console.log('🔓 Sem sessão - Mostrando login');
+    return <Login />
+  }
+  
+  if (currentModule === 'home') {
+    console.log('🏠 Mostrando seletor de módulos');
+    return <ModuleSelector onSelect={(m:any) => { 
+      console.log('📌 Módulo selecionado:', m);
+      setCurrentModule(m); 
+      setActivePage('dashboard') 
+    }} userName={getUserDisplayName()} />
+  }
   
   if (currentModule === 'settings') {
+    console.log('⚙️ Mostrando configurações');
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-[#112240] h-20 flex items-center justify-between px-8 shadow-md text-white">
@@ -149,11 +180,14 @@ export default function App() {
   }
 
   if (['family', 'operational'].includes(currentModule)) {
+    console.log('🚧 Módulo em construção:', currentModule);
     return <UnderConstruction moduleName={currentModule} onBack={() => setCurrentModule('home')} />
   }
 
+  console.log('✅ Renderizando módulo:', currentModule);
+
   return (
-    <>
+    <ErrorBoundary>
       <Toaster position="top-right" richColors closeButton />
       <WelcomeModal />
       <div className="flex h-screen bg-gray-100 overflow-hidden w-full">
@@ -164,7 +198,27 @@ export default function App() {
         ) : currentModule === 'executive' ? (
           <ExecutiveSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         ) : currentModule === 'legal-control' ? (
-          <ControladoriaSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+          <ErrorBoundary>
+            {console.log('🔍 Renderizando ControladoriaSidebar')}
+            <ControladoriaSidebar 
+              activePage={activePage} 
+              onNavigate={(page) => {
+                console.log('🧭 ControladoriaSidebar - Navegação solicitada:', page);
+                console.log('🧭 Página anterior:', activePage);
+                try {
+                  setActivePage(page);
+                  console.log('✅ setActivePage executado');
+                } catch (error) {
+                  console.error('❌ ERRO ao mudar página:', error);
+                }
+              }} 
+              isOpen={isSidebarOpen} 
+              onClose={() => {
+                console.log('🚪 Fechando sidebar');
+                setIsSidebarOpen(false);
+              }} 
+            />
+          </ErrorBoundary>
         ) : (
           <CrmSidebar activePage={activePage} onNavigate={setActivePage} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         )}
@@ -178,44 +232,12 @@ export default function App() {
             
             {currentModule === 'crm' && (
               <>
-                {activePage === 'dashboard' && (
-                  <CrmDashboard 
-                    userName={getUserDisplayName()}
-                    onModuleHome={() => setCurrentModule('home')}
-                    onLogout={handleLogout}
-                    onNavigateWithFilter={(p:any, f:any) => { setClientFilters(f); setActivePage(p); }} 
-                  />
-                )}
-                {activePage === 'clientes' && (
-                  <Clients 
-                    initialFilters={clientFilters} 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                    />
-                )}
-                {activePage === 'magistrados' && (
-                  <Magistrados 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'incompletos' && (
-                  <IncompleteClients 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
+                {activePage === 'dashboard' && (<CrmDashboard userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} onNavigateWithFilter={(p:any, f:any) => { setClientFilters(f); setActivePage(p); }} />)}
+                {activePage === 'clientes' && (<Clients initialFilters={clientFilters} userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
+                {activePage === 'magistrados' && (<Magistrados userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
+                {activePage === 'incompletos' && (<IncompleteClients userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
                 {activePage === 'manual' && <Manual />}
-                {activePage === 'kanban' && (
-                  <CrmKanban 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
+                {activePage === 'kanban' && (<CrmKanban userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
                 {activePage === 'historico' && <CrmHistory />}
               </>
             )}
@@ -239,50 +261,13 @@ export default function App() {
 
             {currentModule === 'financial' && (
               <>
-                {activePage === 'dashboard' && (
-                  <FinanceDashboard 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
+                {activePage === 'dashboard' && (<FinanceDashboard userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
                 {activePage === 'calendario' && <CalendarioFinanceiro userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
-                {activePage === 'contas-pagar' && (
-                  <FinanceContasPagar 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'contas-receber' && (
-                  <FinanceContasReceber 
-                    userName={getUserDisplayName()} 
-                    userEmail={session?.user?.email}
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'oab' && (
-                  <ListaOAB 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'gestao-aeronave' && (
-                  <GestaoAeronave 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'ged' && (
-                  <FinanceGED 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
+                {activePage === 'contas-pagar' && (<FinanceContasPagar userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
+                {activePage === 'contas-receber' && (<FinanceContasReceber userName={getUserDisplayName()} userEmail={session?.user?.email} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
+                {activePage === 'oab' && (<ListaOAB userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
+                {activePage === 'gestao-aeronave' && (<GestaoAeronave userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
+                {activePage === 'ged' && (<FinanceGED userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
               </>
             )}
 
@@ -292,101 +277,32 @@ export default function App() {
                 {(activePage === 'agenda' || activePage === 'calendario') && <SecretariaExecutivaCalendario userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'despesas' && <SecretariaExecutivaDespesas userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
                 {activePage === 'ged' && <SecretariaExecutivaGED userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />}
-                {activePage === 'gestao-familia' && (
-                  <GestaoFamilia 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
+                {activePage === 'gestao-familia' && (<GestaoFamilia userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} />)}
               </>
             )}
 
             {/* --- MÓDULO CONTROLADORIA JURÍDICA --- */}
             {currentModule === 'legal-control' && (
-              <>
-                {activePage === 'dashboard' && (
-                  <ControlDashboard 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'contratos' && (
-                  <ControlContracts 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'clientes' && (
-                  <ControlClients 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'kanban' && (
-                  <ControlKanban 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'financeiro' && (
-                  <ControlFinance 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'ged' && (
-                  <ControlGED 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'propostas' && (
-                  <ControlProposals 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'jurimetria' && (
-                  <ControlJurimetria 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'volumetria' && (
-                  <ControlVolumetry 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'historico' && (
-                  <ControlHistory 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-                {activePage === 'configuracoes' && (
-                  <ControlSettings 
-                    userName={getUserDisplayName()} 
-                    onModuleHome={() => setCurrentModule('home')} 
-                    onLogout={handleLogout} 
-                  />
-                )}
-              </>
+              <ErrorBoundary>
+                {console.log('🎬 Renderizando página da Controladoria:', activePage)}
+                {activePage === 'dashboard' && (<ErrorBoundary><ControlDashboard userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+                {activePage === 'contratos' && (<ErrorBoundary><ControlContracts userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+                {activePage === 'clientes' && (<ErrorBoundary><ControlClients userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+                {activePage === 'kanban' && (<ErrorBoundary><ControlKanban userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+                {activePage === 'financeiro' && (<ErrorBoundary><ControlFinance userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+                {activePage === 'ged' && (<ErrorBoundary><ControlGED userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+                {activePage === 'propostas' && (<ErrorBoundary><ControlProposals userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+                {activePage === 'jurimetria' && (<ErrorBoundary><ControlJurimetria userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+                {activePage === 'volumetria' && (<ErrorBoundary><ControlVolumetry userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+                {activePage === 'historico' && (<ErrorBoundary><ControlHistory userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+                {activePage === 'configuracoes' && (<ErrorBoundary><ControlSettings userName={getUserDisplayName()} onModuleHome={() => setCurrentModule('home')} onLogout={handleLogout} /></ErrorBoundary>)}
+              </ErrorBoundary>
             )}
           </div>
         </main>
       </div>
-    </>
+    </ErrorBoundary>
   )
 }
+
+console.log('✅ App.tsx - Arquivo completamente carregado');
