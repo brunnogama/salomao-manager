@@ -6,6 +6,7 @@ import { IMaskInput } from 'react-imask'
 import { supabase } from '../../lib/supabase'
 import { logAction } from '../../lib/logger'
 import { ClientData, GiftHistoryItem } from '../../types/client'
+import { SearchableSelect } from './SearchableSelect'
 
 interface NewClientModalProps {
   isOpen: boolean;
@@ -66,8 +67,8 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
 
   const fetchSocios = async () => {
     setLoadingSocios(true)
-    const { data } = await supabase.from('socios').select('*').order('nome')
-    if (data) setSociosList(data)
+    const { data } = await supabase.from('partners').select('*').order('name')
+    if (data) setSociosList(data.map((s: any) => ({ id: s.id, nome: s.name })))
     setLoadingSocios(false)
   }
 
@@ -199,32 +200,13 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                         placeholder="email@exemplo.com"
                       />
                       
-                      <div className="relative" ref={socioMenuRef}>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                          <UserCircle className="h-3.5 w-3.5" />
-                          Sócio Responsável
-                        </label>
-                        <button 
-                          onClick={() => setIsSocioMenuOpen(!isSocioMenuOpen)} 
-                          className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-2.5 text-sm flex justify-between items-center hover:border-[#1e3a8a]/30 transition-all"
-                        >
-                          <span className={formData.socio ? "text-[#0a192f] font-bold" : "text-gray-400"}>{formData.socio || "Selecione um sócio..."}</span>
-                          <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isSocioMenuOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        {isSocioMenuOpen && (
-                          <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
-                            {sociosList.map(s => (
-                              <button 
-                                key={s.id} 
-                                onClick={() => { setFormData({...formData, socio: s.nome}); setIsSocioMenuOpen(false) }} 
-                                className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors font-bold text-[#0a192f]"
-                              >
-                                {s.nome}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <SearchableSelect 
+                        label="Sócio Responsável"
+                        value={formData.socio}
+                        onChange={v => setFormData({...formData, socio: v})}
+                        table="partners"
+                        placeholder="Selecione um sócio..."
+                      />
 
                       <div>
                         <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
@@ -379,11 +361,11 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
   )
 }
 
-function FormInput({ label, value, onChange, type = "text", icon, placeholder }: any) {
+function FormInput({ label, value, onChange, type = "text", icon: Icon, placeholder }: any) {
   return (
     <div>
       <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-        {icon && <icon className="h-3.5 w-3.5" />}
+        {Icon && <Icon className="h-3.5 w-3.5" />}
         {label}
       </label>
       <input 
