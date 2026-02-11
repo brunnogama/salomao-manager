@@ -61,30 +61,33 @@ export function DadosCorporativosSection({
           onRefresh={handleRefresh} 
         />
 
-        {/* Equipe */}
+        {/* Equipe - Mapeado para coluna 'nome' para evitar erro 400 */}
         <SearchableSelect 
           label="Equipe" 
           value={formData.equipe || ''} 
           onChange={v => setFormData({ ...formData, equipe: v })} 
           table="opcoes_equipes" 
+          nameField="nome"
           onRefresh={handleRefresh} 
         />
 
-        {/* Cargo */}
+        {/* Cargo - Mapeado para coluna 'nome' para evitar erro 400 */}
         <SearchableSelect 
           label="Cargo" 
           value={formData.role || ''} 
           onChange={v => setFormData({ ...formData, role: v })} 
           table="opcoes_cargos" 
+          nameField="nome"
           onRefresh={handleRefresh} 
         />
 
-        {/* Local */}
+        {/* Local - Mapeado para coluna 'nome' para evitar erro 400 */}
         <SearchableSelect 
           label="Local" 
           value={formData.local || ''} 
           onChange={v => setFormData({ ...formData, local: v })} 
           table="opcoes_locais" 
+          nameField="nome"
           onRefresh={handleRefresh} 
         />
 
