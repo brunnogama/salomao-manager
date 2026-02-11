@@ -137,7 +137,8 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
   const fetchData = async () => {
     setLoading(true);
     
-    const { data: partnersData } = await supabase.from('partners').select('*').order('name');
+    // Atualizado para buscar parceiros ativos com base no novo campo 'status'
+    const { data: partnersData } = await supabase.from('partners').select('*').eq('status', 'active').order('name');
     if (partnersData) setPartners(partnersData);
 
     const { data: installmentsData } = await supabase

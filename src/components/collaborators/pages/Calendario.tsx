@@ -34,10 +34,10 @@ interface CalendarioProps {
 
 interface Colaborador {
   id: number;
-  nome: string;
-  data_nascimento: string;
-  cargo: string;
-  foto_url?: string;
+  name: string; // Atualizado de nome
+  birthday: string; // Atualizado de data_nascimento
+  role: string; // Atualizado de cargo
+  photo_url?: string;
 }
 
 interface Evento {
@@ -67,7 +67,7 @@ const MESES = [
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: CalendarioProps) {
-  const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
+  const [collaborators, setcollaborators] = useState<Colaborador[]>([])
   const [eventos, setEventos] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -96,19 +96,20 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
   const fetchData = async () => {
     setLoading(true)
+    // Atualizado para a tabela 'collaborators' e campos traduzidos
     const { data: colabs } = await supabase
-      .from('colaboradores')
-      .select('id, nome, data_nascimento, cargo, foto_url')
-      .not('data_nascimento', 'is', null)
-      .eq('status', 'Ativo')
-      .order('nome')
+      .from('collaborators')
+      .select('id, name, birthday, role, photo_url')
+      .not('birthday', 'is', null)
+      .eq('status', 'active') // Status agora em inglês
+      .order('name')
     
     const { data: evs } = await supabase
       .from('eventos')
       .select('*')
       .order('data_evento')
     
-    if (colabs) setColaboradores(colabs)
+    if (colabs) setcollaborators(colabs)
     if (evs) setEventos(evs)
     setLoading(false)
   }
@@ -190,9 +191,9 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     }).join(' ');
   }
 
-  const formatName = (nome: string) => {
-    if (!nome) return ''
-    const cleanName = nome.trim()
+  const formatName = (name: string) => {
+    if (!name) return ''
+    const cleanName = name.trim()
     const parts = cleanName.split(/\s+/)
     
     if (parts.length === 1) {
@@ -219,9 +220,9 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     const hoje = new Date()
     const aniversarios: AniversarioData[] = []
 
-    colaboradores.forEach(colab => {
-      if (colab.data_nascimento) {
-        const nascimento = new Date(colab.data_nascimento)
+    collaborators.forEach(colab => {
+      if (colab.birthday) {
+        const nascimento = new Date(colab.birthday)
         const nascimentoCorrigido = new Date(nascimento.valueOf() + nascimento.getTimezoneOffset() * 60000)
         
         const dia = nascimentoCorrigido.getDate()
@@ -326,7 +327,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                     <CalendarEventIcon className="h-3 w-3 text-green-600 flex-shrink-0" />
                   )}
                   <span className="text-[9px] font-bold text-gray-700 truncate w-full leading-tight">
-                    {'colaborador' in item ? formatName(item.colaborador.nome) : item.titulo}
+                    {'colaborador' in item ? formatName(item.colaborador.name) : item.titulo}
                   </span>
                 </div>
               ))}
@@ -397,7 +398,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
               Calendário
             </h1>
             <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              Acompanhe os aniversários dos colaboradores, reuniões e eventos
+              Acompanhe os aniversários dos collaborators, reuniões e eventos
             </p>
           </div>
         </div>
@@ -472,7 +473,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
             </div>
             <div>
               <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Total</p>
-              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{colaboradores.length}</p>
+              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{collaborators.length}</p>
             </div>
           </div>
         </div>
@@ -532,20 +533,20 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                 className="bg-white rounded-xl p-5 shadow-lg border-2 border-[#d4af37]/50 hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-[#d4af37]"
               >
                 <div className="flex items-center gap-3">
-                  {aniv.colaborador.foto_url ? (
+                  {aniv.colaborador.photo_url ? (
                     <img
-                      src={aniv.colaborador.foto_url}
-                      alt={aniv.colaborador.nome}
+                      src={aniv.colaborador.photo_url}
+                      alt={aniv.colaborador.name}
                       className="w-16 h-16 rounded-xl object-cover border-4 border-[#d4af37] shadow-lg"
                     />
                   ) : (
                     <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-2xl font-black border-4 border-[#d4af37]/30 shadow-lg">
-                      {aniv.colaborador.nome.charAt(0).toUpperCase()}
+                      {aniv.colaborador.name.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="font-black text-[#0a192f]">{formatName(aniv.colaborador.nome)}</p>
-                    <p className="text-xs font-semibold text-gray-600">{toTitleCase(aniv.colaborador.cargo)}</p>
+                    <p className="font-black text-[#0a192f]">{formatName(aniv.colaborador.name)}</p>
+                    <p className="text-xs font-semibold text-gray-600">{toTitleCase(aniv.colaborador.role)}</p>
                   </div>
                 </div>
               </div>
@@ -616,7 +617,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                             <CalendarEventIcon className="h-3.5 w-3.5 text-green-600 shrink-0" />
                           )}
                           <p className="text-xs font-bold text-[#0a192f] truncate">
-                            {'colaborador' in item ? `Aniversário: ${formatName(item.colaborador.nome)}` : item.titulo}
+                            {'colaborador' in item ? `Aniversário: ${formatName(item.colaborador.name)}` : item.titulo}
                           </p>
                         </div>
                         
@@ -690,20 +691,20 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  {aniv.colaborador.foto_url ? (
+                  {aniv.colaborador.photo_url ? (
                     <img
-                      src={aniv.colaborador.foto_url}
-                      alt={aniv.colaborador.nome}
+                      src={aniv.colaborador.photo_url}
+                      alt={aniv.colaborador.name}
                       className="w-14 h-14 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md"
                     />
                   ) : (
                     <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white text-xl font-black border-2 border-[#1e3a8a]/30 shadow-md">
-                      {aniv.colaborador.nome.charAt(0).toUpperCase()}
+                      {aniv.colaborador.name.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div>
-                    <p className="font-black text-[#0a192f] text-base">{formatName(aniv.colaborador.nome)}</p>
-                    <p className="text-xs font-semibold text-gray-600">{toTitleCase(aniv.colaborador.cargo)}</p>
+                    <p className="font-black text-[#0a192f] text-base">{formatName(aniv.colaborador.name)}</p>
+                    <p className="text-xs font-semibold text-gray-600">{toTitleCase(aniv.colaborador.role)}</p>
                   </div>
                 </div>
 

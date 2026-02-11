@@ -46,7 +46,13 @@ export function SocioRulesTable({ filteredRules, onEdit, onDelete }: SocioRulesT
         {/* TBODY - Design System */}
         <tbody className="divide-y divide-gray-100">
           {filteredRules.map((rule) => {
-            const displayName = toTitleCase(rule.nome_colaborador)
+            // Ajustado para refletir o padrão 'name' com fallback para o legado
+            const collaboratorName = rule.name || rule.nome_colaborador || 'Sem Nome';
+            const displayName = toTitleCase(collaboratorName);
+            
+            // Ajustado para refletir 'partner_id' (ou o nome do sócio vindo da query)
+            const socioName = rule.partner_name || rule.socio_responsavel || '-';
+            
             return (
               <tr key={rule.id} className="hover:bg-blue-50/30 transition-colors group">
                 
@@ -63,14 +69,14 @@ export function SocioRulesTable({ filteredRules, onEdit, onDelete }: SocioRulesT
                 {/* Sócio Responsável */}
                 <td className="px-6 py-4">
                   <span className="text-gray-700 font-semibold text-sm">
-                    {toTitleCase(rule.socio_responsavel)}
+                    {toTitleCase(socioName)}
                   </span>
                 </td>
                 
                 {/* Meta Semanal - Navy Badge */}
                 <td className="px-6 py-4 text-center">
                   <span className="inline-flex items-center justify-center bg-[#1e3a8a]/10 text-[#1e3a8a] px-4 py-2 rounded-xl border border-[#1e3a8a]/30 font-black text-sm min-w-[60px] shadow-sm">
-                    {rule.meta_semanal}x
+                    {rule.weekly_goal || rule.meta_semanal || 0}x
                   </span>
                 </td>
                 

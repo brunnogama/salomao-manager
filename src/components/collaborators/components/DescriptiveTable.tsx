@@ -47,11 +47,17 @@ export function DescriptiveTable({ descriptiveData, socioMap }: DescriptiveTable
         {/* TBODY - Design System */}
         <tbody className="divide-y divide-gray-100">
           {descriptiveData.map((record, idx) => {
-            const normName = normalizeKey(record.nome_colaborador)
+            // Ajustado para refletir os campos se a interface PresenceRecord for atualizada
+            // Caso contrário, mantemos record.nome_colaborador se ele vier de uma View específica
+            const collaboratorName = record.nome_colaborador || record.name; 
+            const normName = normalizeKey(collaboratorName)
             const socioRaw = socioMap.get(normName) || '-'
             const socioFormatted = toTitleCase(socioRaw)
-            const dateObj = new Date(record.data_hora)
-            const displayName = toTitleCase(record.nome_colaborador)
+            
+            // Tratamento para data_hora ou created_at
+            const dateValue = record.data_hora || record.created_at;
+            const dateObj = new Date(dateValue)
+            const displayName = toTitleCase(collaboratorName)
 
             return (
               <tr key={record.id || idx} className="hover:bg-blue-50/40 transition-colors">

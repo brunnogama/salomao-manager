@@ -1,32 +1,37 @@
+// src/hooks/useColaboradores.ts
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
-import { Colaborador, GEDDocument } from '../../../types/colaborador'
+import { Collaborator, GEDDocument } from '../../../types/controladoria'
 
 export function useColaboradores() {
-  const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
+  const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
   const [loading, setLoading] = useState(false)
   const [gedDocs, setGedDocs] = useState<GEDDocument[]>([])
   const [uploadingGed, setUploadingGed] = useState(false)
 
   const fetchColaboradores = async () => {
     setLoading(true)
-    const { data } = await supabase.from('colaboradores').select('*').order('nome')
+    // Atualizado para a nova tabela 'collaborators' e ordenação por 'name'
+    const { data } = await supabase.from('collaborators').select('*').order('name')
     if (data) setColaboradores(data)
     setLoading(false)
   }
 
-  const fetchGedDocs = async (colabId: number) => {
+  const fetchGedDocs = async (colabId: string) => {
     const { data } = await supabase.from('ged_colaboradores').select('*').eq('colaborador_id', colabId).order('created_at', { ascending: false })
     if (data) setGedDocs(data)
   }
 
-  const deleteColaborador = async (id: number, fotoUrl?: string) => {
+  const deleteColaborador = async (id: string, photoUrl?: string) => {
     if (!confirm('Excluir este colaborador?')) return false
-    if (fotoUrl) {
-      const path = fotoUrl.split('/fotos-colaboradores/')[1]
+    
+    if (photoUrl) {
+      const path = photoUrl.split('/fotos-colaboradores/')[1]
       if (path) await supabase.storage.from('fotos-colaboradores').remove([`colaboradores/${path}`])
     }
-    await supabase.from('colaboradores').delete().eq('id', id)
+    
+    // Atualizado para a nova tabela 'collaborators'
+    await supabase.from('collaborators').delete().eq('id', id)
     await fetchColaboradores()
     return true
   }

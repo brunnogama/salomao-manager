@@ -1,6 +1,6 @@
 // src/components/collaborators/components/InformacoesProfissionaisSection.tsx
 import { GraduationCap } from 'lucide-react'
-import { Colaborador } from '../../../types/colaborador'
+import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 
 const ESTADOS_BRASIL_UF = [
@@ -10,8 +10,8 @@ const ESTADOS_BRASIL_UF = [
 ]
 
 interface InformacoesProfissionaisSectionProps {
-  formData: Partial<Colaborador>
-  setFormData: (data: Partial<Colaborador>) => void
+  formData: Partial<Collaborator>
+  setFormData: (data: Partial<Collaborator>) => void
   maskDate: (value: string) => string
 }
 
@@ -33,16 +33,16 @@ export function InformacoesProfissionaisSection({
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.oab_numero || ''} 
-            onChange={e => setFormData({ ...formData, oab_numero: e.target.value })} 
+            value={formData.oab_number || ''} 
+            onChange={e => setFormData({ ...formData, oab_number: e.target.value })} 
             placeholder="Ex: 123456"
           />
         </div>
 
         <SearchableSelect 
           label="UF OAB" 
-          value={formData.oab_uf || ''} 
-          onChange={v => setFormData({ ...formData, oab_uf: v.toUpperCase() })} 
+          value={formData.oab_state || ''} 
+          onChange={v => setFormData({ ...formData, oab_state: v.toUpperCase() })} 
           options={ESTADOS_BRASIL_UF.map(uf => ({ name: uf }))} 
           placeholder="Selecione..."
         />
@@ -53,8 +53,8 @@ export function InformacoesProfissionaisSection({
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.oab_vencimento || ''} 
-            onChange={e => setFormData({ ...formData, oab_vencimento: maskDate(e.target.value) })} 
+            value={formData.oab_expiration || ''} 
+            onChange={e => setFormData({ ...formData, oab_expiration: maskDate(e.target.value) })} 
             maxLength={10} 
             placeholder="DD/MM/AAAA" 
           />

@@ -33,7 +33,12 @@ export interface RegistroDiario {
 
 export interface SocioRule {
   id?: string
-  socio_responsavel: string
+  partner_id?: string // Vínculo com a tabela partners
+  partner_name?: string // Fallback para exibição (socio_responsavel)
+  name?: string // Atualizado de nome_colaborador
+  weekly_goal?: number // Atualizado de meta_semanal
+  // Mantidos campos antigos para compatibilidade com funções de utility legadas
+  socio_responsavel: string 
   nome_colaborador: string
   meta_semanal?: number
 }
@@ -43,5 +48,5 @@ export interface ReportItem {
   socio: string
   diasPresentes: number
   diasSemana: { [key: string]: number }
-  datas: string[]
+  datas: string[] // Ajustado para refletir o array de strings das datas
 }

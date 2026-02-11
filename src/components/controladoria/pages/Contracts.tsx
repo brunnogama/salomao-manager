@@ -202,10 +202,11 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
 
   const fetchData = async () => {
     setLoading(true);
+    // Ajustado: Busca na tabela partners filtrando por status 'active'
     const [contractsRes, partnersRes, analystsRes] = await Promise.all([
       supabase.from('contracts').select(`*, partner:partners(name), processes:contract_processes(*), documents:contract_documents(id, file_name, file_path, uploaded_at)`).order('created_at', { ascending: false }),
-      supabase.from('partners').select('*').eq('active', true).order('name'),
-      supabase.from('partners').select('*').eq('active', true).order('name')
+      supabase.from('partners').select('*').eq('status', 'active').order('name'),
+      supabase.from('analysts').select('*').eq('active', true).order('name')
     ]);
 
     if (contractsRes.data) {

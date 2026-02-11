@@ -26,7 +26,14 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
   const fetchPartners = async () => {
     setLoading(true);
     const { data } = await supabase.from('partners').select('*').order('name');
-    if (data) setPartners(data);
+    if (data) {
+      // Mapeia o status do banco para a propriedade 'active' da interface para manter compatibilidade com a UI
+      const mappedPartners = data.map((p: any) => ({
+        ...p,
+        active: p.status === 'active'
+      }));
+      setPartners(mappedPartners);
+    }
     setLoading(false);
   };
 
@@ -94,8 +101,11 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
 
   const handleToggleActive = async (partner: Partner) => {
     try {
+        // Inverte o status baseado na propriedade virtual 'active'
         const newStatus = partner.active ? 'inactive' : 'active';
-        await supabase.from('partners').update({ status: newStatus }).eq('id', partner.id);
+        const { error } = await supabase.from('partners').update({ status: newStatus }).eq('id', partner.id);
+        if (error) throw error;
+        
         fetchPartners();
         if (onUpdate) onUpdate();
     } catch (error) {

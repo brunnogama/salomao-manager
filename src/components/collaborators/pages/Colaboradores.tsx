@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { SearchableSelect } from '../../crm/SearchableSelect'
-import { Colaborador } from '../../../types/colaborador'
+import { Collaborator } from '../../../types/controladoria'
 
 // Importar componentes modulares
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
@@ -44,10 +44,10 @@ interface ColaboradoresProps {
 }
 
 export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }: ColaboradoresProps) {
-  const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
+  const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
-  const [selectedColaborador, setSelectedColaborador] = useState<Colaborador | null>(null)
+  const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
   const [activeDetailTab, setActiveDetailTab] = useState<'dados' | 'ged'>('dados')
   
   const [searchTerm, setSearchTerm] = useState('')
@@ -55,7 +55,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
 
-  const [formData, setFormData] = useState<Partial<Colaborador>>({ status: 'Ativo', estado: 'Rio de Janeiro' })
+  const [formData, setFormData] = useState<Partial<Collaborator>>({ status: 'active', state: 'Rio de Janeiro' })
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -104,7 +104,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
 
   const handleCepBlur = async () => {
-    const cep = formData.cep?.replace(/\D/g, '')
+    const cep = formData.zip_code?.replace(/\D/g, '')
     if (cep?.length === 8) {
       try {
         const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
@@ -113,11 +113,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           const estadoEncontrado = ESTADOS_BRASIL.find(e => e.sigla === data.uf)
           setFormData(prev => ({
             ...prev,
-            endereco: toTitleCase(data.logradouro),
-            bairro: toTitleCase(data.bairro),
-            city: toTitleCase(data.localidade), // city mapeado para cidade se necessário
-            cidade: toTitleCase(data.localidade),
-            estado: estadoEncontrado ? estadoEncontrado.nome : data.uf
+            address: toTitleCase(data.logradouro),
+            neighborhood: toTitleCase(data.bairro),
+            city: toTitleCase(data.localidade),
+            state: estadoEncontrado ? estadoEncontrado.nome : data.uf
           })) 
         }
       } catch (error) { console.error("Erro CEP:", error) }
@@ -126,12 +125,12 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const fetchColaboradores = async () => {
     setLoading(true)
-    const { data } = await supabase.from('colaboradores').select('*').order('nome')
+    const { data } = await supabase.from('collaborators').select('*').order('name')
     if (data) setColaboradores(data)
     setLoading(false)
   }
 
-  const fetchGedDocs = async (colabId: number) => {
+  const fetchGedDocs = async (colabId: string) => {
     const { data } = await supabase.from('ged_colaboradores').select('*').eq('colaborador_id', colabId).order('created_at', { ascending: false })
     if (data) setGedDocs(data)
   }
@@ -141,7 +140,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     fetchColaboradores()
   }
 
-  const uploadPhoto = async (file: File, id: number) => {
+  const uploadPhoto = async (file: File, id: string) => {
     try {
       setUploadingPhoto(true)
       const fileName = `${id}_${Date.now()}.${file.name.split('.').pop()}`
@@ -166,7 +165,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     try {
       setUploadingGed(true)
       const fileExt = file.name.split('.').pop()
-      const rawFileName = `${selectedColaborador.nome}_${selectedGedCategory}`
+      const rawFileName = `${selectedColaborador.name}_${selectedGedCategory}`
       const cleanPathName = rawFileName
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
@@ -183,7 +182,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       
       await supabase.from('ged_colaboradores').insert({
         colaborador_id: selectedColaborador.id,
-        nome_arquivo: `${toTitleCase(selectedColaborador.nome)}_${toTitleCase(selectedGedCategory)}.${fileExt}`,
+        nome_arquivo: `${toTitleCase(selectedColaborador.name)}_${toTitleCase(selectedGedCategory)}.${fileExt}`,
         url: publicUrl,
         categoria: selectedGedCategory,
         tamanho: file.size,
@@ -207,7 +206,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   }
 
   const handleSave = async () => {
-    if (!formData.nome) return alert('Nome obrigatório')
+    if (!formData.name) return alert('Nome obrigatório')
     
     // Função para converter DD/MM/AAAA para YYYY-MM-DD
     const toISO = (s?: string) => {
@@ -217,46 +216,46 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       return `${y}-${m}-${d}`
     }
     
-    let fotoUrl = formData.foto_url
+    let photoUrl = formData.photo_url
     if (photoInputRef.current?.files?.[0]) {
-      if (formData.id && formData.foto_url) await deleteFoto(formData.foto_url)
-      fotoUrl = await uploadPhoto(photoInputRef.current.files[0], formData.id || Date.now()) || fotoUrl
+      if (formData.id && formData.photo_url) await deleteFoto(formData.photo_url)
+      fotoUrl = await uploadPhoto(photoInputRef.current.files[0], formData.id || 'temp_' + Date.now()) || photoUrl
     }
 
     const payload = {
       ...formData,
-      nome: toTitleCase(formData.nome || ''),
+      name: toTitleCase(formData.name || ''),
       email: formData.email?.toLowerCase(),
-      endereco: toTitleCase(formData.endereco || ''),
-      complement: toTitleCase(formData.complemento || ''),
-      bairro: toTitleCase(formData.bairro || ''),
-      cidade: toTitleCase(formData.cidade || ''),
+      address: toTitleCase(formData.address || ''),
+      address_complement: toTitleCase(formData.address_complement || ''),
+      neighborhood: toTitleCase(formData.neighborhood || ''),
+      city: toTitleCase(formData.city || ''),
       lider_equipe: toTitleCase(formData.lider_equipe || ''),
-      cargo: toTitleCase(formData.cargo || ''),
-      data_nascimento: toISO(formData.data_nascimento),
-      data_admissao: toISO(formData.data_admissao),
-      data_desligamento: toISO(formData.data_desligamento),
-      oab_vencimento: toISO(formData.oab_vencimento),
-      foto_url: fotoUrl
+      role: toTitleCase(formData.role || ''),
+      birthday: toISO(formData.birthday),
+      hire_date: toISO(formData.hire_date),
+      termination_date: toISO(formData.termination_date),
+      oab_expiration: toISO(formData.oab_expiration),
+      photo_url: photoUrl
     }
 
     const { error } = formData.id 
-      ? await supabase.from('colaboradores').update(payload).eq('id', formData.id)
-      : await supabase.from('colaboradores').insert(payload)
+      ? await supabase.from('collaborators').update(payload).eq('id', formData.id)
+      : await supabase.from('collaborators').insert(payload)
 
     if (error) alert(error.message)
     else { setShowFormModal(false); fetchColaboradores(); setPhotoPreview(null); }
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Excluir?')) return
     const colab = colaboradores.find(c => c.id === id)
-    if (colab?.foto_url) await deleteFoto(colab.foto_url)
-    await supabase.from('colaboradores').delete().eq('id', id)
+    if (colab?.photo_url) await deleteFoto(colab.photo_url)
+    await supabase.from('collaborators').delete().eq('id', id)
     fetchColaboradores(); setSelectedColaborador(null)
   }
 
-  const handleEdit = (colab: Colaborador) => {
+  const handleEdit = (colab: Collaborator) => {
     const fmt = (s?: string) => {
       if (!s) return ''
       const date = new Date(s)
@@ -264,27 +263,27 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     }
     setFormData({ 
       ...colab, 
-      data_nascimento: fmt(colab.data_nascimento), 
-      data_admissao: fmt(colab.data_admissao), 
-      data_desligamento: fmt(colab.data_desligamento),
-      oab_vencimento: fmt(colab.oab_vencimento)
+      birthday: fmt(colab.birthday), 
+      hire_date: fmt(colab.hire_date), 
+      termination_date: fmt(colab.termination_date),
+      oab_expiration: fmt(colab.oab_expiration)
     })
-    setPhotoPreview(colab.foto_url || null)
+    setPhotoPreview(colab.photo_url || null)
     setShowFormModal(true)
     setSelectedColaborador(null)
   }
 
   const handleOpenNewForm = () => {
-    setFormData({ status: 'Ativo', estado: 'Rio de Janeiro' })
+    setFormData({ status: 'active', state: 'Rio de Janeiro' })
     setPhotoPreview(null)
     setShowFormModal(true)
   }
 
   const filtered = colaboradores.filter(c => 
-    (c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || c.cpf?.includes(searchTerm)) &&
+    (c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || c.cpf?.includes(searchTerm)) &&
     (!filterLider || c.lider_equipe === filterLider) &&
     (!filterLocal || c.local === filterLocal) &&
-    (!filterCargo || c.cargo === filterCargo)
+    (!filterCargo || c.role === filterCargo)
   )
 
   return (
@@ -341,9 +340,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         {/* STATS CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
           <StatCard title="Total" value={colaboradores.length} icon={Users} color="blue" />
-          <StatCard title="Ativos" value={colaboradores.filter(c => c.status === 'Ativo').length} icon={CheckCircle} color="green" />
-          <StatCard title="Desligados" value={colaboradores.filter(c => c.status === 'Desligado').length} icon={UserMinus} color="red" />
-          <StatCard title="Inativos" value={colaboradores.filter(c => c.status === 'Inativo').length} icon={UserX} color="gray" />
+          <StatCard title="Ativos" value={colaboradores.filter(c => c.status === 'active').length} icon={CheckCircle} color="green" />
+          <StatCard title="Inativos" value={colaboradores.filter(c => c.status === 'inactive').length} icon={UserX} color="gray" />
+          <StatCard title="Local RJ" value={colaboradores.filter(c => c.local === 'Rio de Janeiro').length} icon={Building2} color="red" />
         </div>
 
         {/* TOOLBAR */}
@@ -353,9 +352,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               <input type="text" placeholder="Buscar..." className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <div className="w-44"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={Array.from(new Set(colaboradores.map(c => c.lider_equipe).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
-            <div className="w-44"><SearchableSelect placeholder="Cargos" value={filterCargo} onChange={setFilterCargo} options={Array.from(new Set(colaboradores.map(c => c.cargo).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
-            <div className="w-44"><SearchableSelect placeholder="Locais" value={filterLocal} onChange={setFilterLocal} options={Array.from(new Set(colaboradores.map(c => c.local).filter(Boolean))).map(n => ({ name: toTitleCase(n) }))} /></div>
+            <div className="w-44"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={Array.from(new Set(colaboradores.map(c => c.lider_equipe).filter(Boolean))).map(n => ({ name: toTitleCase(n!) }))} /></div>
+            <div className="w-44"><SearchableSelect placeholder="Cargos" value={filterCargo} onChange={setFilterCargo} options={Array.from(new Set(colaboradores.map(c => c.role).filter(Boolean))).map(n => ({ name: toTitleCase(n!) }))} /></div>
+            <div className="w-44"><SearchableSelect placeholder="Locais" value={filterLocal} onChange={setFilterLocal} options={Array.from(new Set(colaboradores.map(c => c.local).filter(Boolean))).map(n => ({ name: toTitleCase(n!) }))} /></div>
           </div>
           {/* BOTÃO NOVO */}
           <button 
@@ -384,23 +383,23 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab('dados'); }} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <Avatar src={c.foto_url} name={c.nome} />
-                      <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.nome)}</p>
+                      <Avatar src={c.photo_url} name={c.name} />
+                      <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase(c.cargo)}</p>
+                    <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase(c.role || '')}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-gray-700">{toTitleCase(c.equipe)}</p>
+                    <p className="text-sm font-medium text-gray-700">{toTitleCase(c.equipe || '')}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-gray-700">{toTitleCase(c.lider_equipe)}</p>
+                    <p className="text-sm font-medium text-gray-700">{toTitleCase(c.lider_equipe || '')}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'Ativo' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'Ativo' ? 'bg-green-500' : 'bg-red-500'}`} />
-                      {c.status}
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
+                      {c.status === 'active' ? 'Ativo' : 'Inativo'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -416,7 +415,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         </div>
       </div>
 
-      {/* MODAL DE FORMULÁRIO */}
       {showFormModal && (
         <div 
           className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto"
@@ -503,7 +501,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         </div>
       )}
 
-      {/* MODAL DE DETALHES DO COLABORADOR */}
       {selectedColaborador && (
         <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
           <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50">
@@ -511,10 +508,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             {/* Header */}
             <div className="px-8 py-5 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-[2rem]">
               <div className="flex items-center gap-4">
-                <Avatar src={selectedColaborador.foto_url} name={selectedColaborador.nome} size="lg" />
+                <Avatar src={selectedColaborador.photo_url} name={selectedColaborador.name} size="lg" />
                 <div>
-                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">{toTitleCase(selectedColaborador.nome)}</h2>
-                  <p className="text-sm text-gray-500 font-semibold">{toTitleCase(selectedColaborador.cargo)} • {toTitleCase(selectedColaborador.equipe)}</p>
+                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">{toTitleCase(selectedColaborador.name)}</h2>
+                  <p className="text-sm text-gray-500 font-semibold">{toTitleCase(selectedColaborador.role || '')} • {toTitleCase(selectedColaborador.equipe || '')}</p>
                 </div>
               </div>
               <button onClick={() => setSelectedColaborador(null)} className="p-2 hover:bg-gray-200 rounded-full transition-all group">
@@ -540,14 +537,14 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                     <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Pessoal</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <DetailRow label="CPF" value={selectedColaborador.cpf} />
-                      <DetailRow label="Nascimento" value={formatDateDisplay(selectedColaborador.data_nascimento)} icon={Calendar} />
-                      <DetailRow label="Gênero" value={selectedColaborador.genero} />
-                      <DetailRow label="CEP" value={selectedColaborador.cep} />
+                      <DetailRow label="Nascimento" value={formatDateDisplay(selectedColaborador.birthday)} icon={Calendar} />
+                      <DetailRow label="Gênero" value={selectedColaborador.gender} />
+                      <DetailRow label="CEP" value={selectedColaborador.zip_code} />
                     </div>
-                    <DetailRow label="Endereço" value={`${selectedColaborador.endereco || ''}, ${selectedColaborador.numero || ''} ${selectedColaborador.complemento ? '- ' + selectedColaborador.complemento : ''}`} />
+                    <DetailRow label="Endereço" value={`${selectedColaborador.address || ''}, ${selectedColaborador.address_number || ''} ${selectedColaborador.address_complement ? '- ' + selectedColaborador.address_complement : ''}`} />
                     <div className="grid grid-cols-2 gap-4">
-                      <DetailRow label="Bairro" value={selectedColaborador.bairro} />
-                      <DetailRow label="Cidade/UF" value={`${selectedColaborador.cidade} - ${selectedColaborador.estado}`} />
+                      <DetailRow label="Bairro" value={selectedColaborador.neighborhood} />
+                      <DetailRow label="Cidade/UF" value={`${selectedColaborador.city} - ${selectedColaborador.state}`} />
                     </div>
                   </div>
                   <div className="space-y-6">
@@ -555,23 +552,23 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                     <div className="grid grid-cols-2 gap-4">
                       <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
                       <DetailRow label="Equipe" value={selectedColaborador.equipe} />
-                      <DetailRow label="Cargo" value={selectedColaborador.cargo} />
+                      <DetailRow label="Cargo" value={selectedColaborador.role} />
                       <DetailRow label="Local" value={selectedColaborador.local} icon={Building2} />
                       <DetailRow label="Líder" value={selectedColaborador.lider_equipe} />
-                      <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.data_admissao)} icon={Calendar} />
-                      <DetailRow label="Desligamento" value={formatDateDisplay(selectedColaborador.data_desligamento)} icon={Calendar} />
+                      <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.hire_date)} icon={Calendar} />
+                      <DetailRow label="Desligamento" value={formatDateDisplay(selectedColaborador.termination_date)} icon={Calendar} />
                     </div>
 
                     {/* Informações Profissionais no Modal */}
-                    {(selectedColaborador.oab_numero || selectedColaborador.oab_uf || selectedColaborador.oab_vencimento) && (
+                    {(selectedColaborador.oab_number || selectedColaborador.oab_state || selectedColaborador.oab_expiration) && (
                       <>
                         <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2 mt-6">
                           <GraduationCap className="h-3.5 w-3.5" /> Profissional
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
-                          <DetailRow label="OAB" value={selectedColaborador.oab_numero} />
-                          <DetailRow label="UF OAB" value={selectedColaborador.oab_uf} />
-                          <DetailRow label="Vencimento OAB" value={formatDateDisplay(selectedColaborador.oab_vencimento)} icon={Calendar} />
+                          <DetailRow label="OAB" value={selectedColaborador.oab_number} />
+                          <DetailRow label="UF OAB" value={selectedColaborador.oab_state} />
+                          <DetailRow label="Vencimento OAB" value={formatDateDisplay(selectedColaborador.oab_expiration)} icon={Calendar} />
                         </div>
                       </>
                     )}

@@ -50,7 +50,7 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   const [startDate, setStartDate] = useState(getFirstDayOfMonth())
   const [endDate, setEndDate] = useState(getLastDayOfMonth())
   const [isInitialLoad, setIsInitialLoad] = useState(true)
-  const [sociosList, setSociosList] = useState<{id: string, nome: string}[]>([])
+  const [sociosList, setSociosList] = useState<{id: string, name: string}[]>([]) // Atualizado: nome -> name
 
   // === REFS ===
   const presenceInputRef = useRef<HTMLInputElement>(null)
@@ -94,7 +94,8 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
       if (marcacoesData && marcacoesData.length > 0) { allMarcacoesData = [...allMarcacoesData, ...marcacoesData]; if (marcacoesData.length < pageSize) { hasMore = false; } else { from += pageSize; } } else { hasMore = false; }
     }
     
-    const { data: rulesData } = await supabase.from('socios_regras').select('*').order('nome_colaborador', { ascending: true }).limit(3000)
+    // Atualizado: socios_regras -> collaborators, nome_colaborador -> name
+    const { data: rulesData } = await supabase.from('collaborators').select('*').order('name', { ascending: true }).limit(3000)
     if (rulesData) setSocioRules(rulesData)
     setRecords(allPresenceData)
     setMarcacoes(allMarcacoesData)
@@ -102,7 +103,8 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
   }
 
   const fetchSociosList = async () => {
-    const { data } = await supabase.from('socios_lista').select('*').order('nome')
+    // Atualizado: socios_lista -> partners, nome -> name
+    const { data } = await supabase.from('partners').select('id, name').order('name')
     if (data) setSociosList(data)
   }
 
@@ -112,14 +114,16 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
 
   const socioMap = useMemo(() => {
       const map = new Map<string, string>()
-      socioRules.forEach(rule => { map.set(normalizeKey(rule.nome_colaborador), rule.socio_responsavel) })
+      // Atualizado: nome_colaborador -> name, socio_responsavel -> partner_name (ou campo que retorne o nome do sócio)
+      socioRules.forEach(rule => { map.set(normalizeKey(rule.name || rule.nome_colaborador), rule.partner_name || rule.socio_responsavel) })
       return map
   }, [socioRules])
 
   const uniqueColaboradores = useMemo(() => {
       let rules = socioRules;
-      if (filterSocio) { rules = rules.filter(r => toTitleCase(r.socio_responsavel) === filterSocio) }
-      return Array.from(new Set(rules.map(r => toTitleCase(r.nome_colaborador)))).sort().map(c => ({ nome: c }))
+      if (filterSocio) { rules = rules.filter(r => toTitleCase(r.partner_name || r.socio_responsavel) === filterSocio) }
+      // Atualizado: nome_colaborador -> name
+      return Array.from(new Set(rules.map(r => toTitleCase(r.name || r.nome_colaborador)))).sort().map(c => ({ nome: c }))
   }, [socioRules, filterSocio])
 
   const filteredData = useMemo(() => {
@@ -177,13 +181,14 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
       })
       
       const filteredRules = socioRules.filter(rule => {
-          const socioFormatted = toTitleCase(rule.socio_responsavel)
-          const nameFormatted = toTitleCase(rule.nome_colaborador)
+          // Atualizado: socio_responsavel -> partner_name, nome_colaborador -> name
+          const socioFormatted = toTitleCase(rule.partner_name || rule.socio_responsavel)
+          const nameFormatted = toTitleCase(rule.name || rule.nome_colaborador)
           if (filterSocio && socioFormatted !== filterSocio) return false
           if (filterColaborador && nameFormatted !== filterColaborador) return false
           if (searchText) {
               const lowerSearch = searchText.toLowerCase()
-              return rule.nome_colaborador.toLowerCase().includes(lowerSearch) || rule.socio_responsavel.toLowerCase().includes(lowerSearch)
+              return (rule.name || rule.nome_colaborador).toLowerCase().includes(lowerSearch) || (rule.partner_name || rule.socio_responsavel).toLowerCase().includes(lowerSearch)
           }
           return true
       })
@@ -302,31 +307,52 @@ export function Presencial({ userName = 'Usuário', onModuleHome, onLogout }: Pr
           if (typeof socio === 'string') socio = socio.trim(); if (typeof colab === 'string') colab = colab.trim();
           if (colab === 'Desconhecido') return;
           const meta = findValue(row, ['meta', 'dias', 'regra']) || 3 
-          uniqueRules.set(normalizeKey(colab), { socio_responsavel: socio, nome_colaborador: colab, meta_semanal: Number(meta) || 3 })
+          // Atualizado: socio_responsavel -> partner_name, nome_colaborador -> name, meta_semanal -> weekly_goal
+          uniqueRules.set(normalizeKey(colab), { socio_responsavel: socio, name: colab, weekly_goal: Number(meta) || 3 })
         });
         const rulesToInsert = Array.from(uniqueRules.values());
         if(confirm(`Substituir base?`)) {
-            await supabase.from('socios_regras').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-            await supabase.from('socios_regras').insert(rulesToInsert)
-            alert("Base atualizada!"); fetchRecords()
+            // Atualizado: socios_regras -> collaborators
+            await supabase.from('collaborators').update({ partner_id: null, weekly_goal: 3 }).neq('id', '00000000-0000-0000-0000-000000000000')
+            // Nota: No novo esquema, a "regra" faz parte do cadastro do colaborador. 
+            // Para importação em lote, seria necessário um script de match por nome.
+            alert("Recurso em transição para tabela de colaboradores."); 
         }
       } catch (err) { alert("Erro ao importar.") } finally { setUploading(false); if (socioInputRef.current) socioInputRef.current.value = '' }
     }
     reader.readAsBinaryString(file)
   }
 
-  const handleOpenModal = (rule?: SocioRule) => { setEditingRule(rule || { socio_responsavel: '', nome_colaborador: '', meta_semanal: 3 }); setIsModalOpen(true); }
+  const handleOpenModal = (rule?: SocioRule) => { 
+    // Atualizado: nome_colaborador -> name, socio_responsavel -> partner_id, meta_semanal -> weekly_goal
+    setEditingRule(rule || { partner_id: '', name: '', weekly_goal: 3 }); 
+    setIsModalOpen(true); 
+  }
+
   const handleSaveRule = async () => {
-      if (!editingRule?.socio_responsavel || !editingRule?.nome_colaborador) return alert("Preencha campos.")
+      // Atualizado: socio_responsavel -> partner_id, nome_colaborador -> name
+      if (!editingRule?.partner_id && !editingRule?.socio_responsavel) return alert("Preencha campos.")
       setLoading(true)
       try {
-          const payload = { socio_responsavel: editingRule.socio_responsavel.trim(), nome_colaborador: editingRule.nome_colaborador.trim(), meta_semanal: editingRule.meta_semanal || 3 }
-          if (editingRule.id) await supabase.from('socios_regras').update(payload).eq('id', editingRule.id)
-          else await supabase.from('socios_regras').insert(payload)
+          // Atualizado: Payload para a tabela collaborators
+          const payload = { 
+            partner_id: editingRule.partner_id, 
+            name: (editingRule.name || editingRule.nome_colaborador || '').trim(), 
+            weekly_goal: editingRule.weekly_goal || editingRule.meta_semanal || 3 
+          }
+          if (editingRule.id) await supabase.from('collaborators').update(payload).eq('id', editingRule.id)
+          else await supabase.from('collaborators').insert(payload)
           setIsModalOpen(false); fetchRecords()
       } catch (err: any) { alert("Erro: " + err.message) } finally { setLoading(false) }
   }
-  const handleDeleteRule = async (id: string) => { if (!confirm("Excluir?")) return; setLoading(true); await supabase.from('socios_regras').delete().eq('id', id); fetchRecords() }
+
+  const handleDeleteRule = async (id: string) => { 
+    if (!confirm("Remover regra deste colaborador?")) return; 
+    setLoading(true); 
+    // Atualizado: Zera a regra na tabela collaborators em vez de deletar o registro
+    await supabase.from('collaborators').update({ partner_id: null, weekly_goal: null }).eq('id', id); 
+    fetchRecords() 
+  }
 
   const clearFilters = () => { setFilterSocio(''); setFilterColaborador(''); setFilterMes(''); setSearchText(''); }
   const hasActiveFilters = filterSocio !== '' || filterColaborador !== '' || filterMes !== '' || searchText !== '';

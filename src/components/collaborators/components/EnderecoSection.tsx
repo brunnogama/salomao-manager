@@ -1,6 +1,6 @@
 // src/components/collaborators/components/EnderecoSection.tsx
 import { MapPin } from 'lucide-react'
-import { Colaborador } from '../../../types/colaborador'
+import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 
 const ESTADOS_BRASIL = [
@@ -16,8 +16,8 @@ const ESTADOS_BRASIL = [
 ]
 
 interface EnderecoSectionProps {
-  formData: Partial<Colaborador>
-  setFormData: (data: Partial<Colaborador>) => void
+  formData: Partial<Collaborator>
+  setFormData: (data: Partial<Collaborator>) => void
   maskCEP: (value: string) => string
   handleCepBlur: () => void
 }
@@ -35,85 +35,85 @@ export function EnderecoSection({
       </h3>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* CEP */}
+        {/* CEP - Mapeado para zip_code */}
         <div>
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             CEP
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.cep || ''} 
-            onChange={e => setFormData({ ...formData, cep: maskCEP(e.target.value) })} 
+            value={formData.zip_code || ''} 
+            onChange={e => setFormData({ ...formData, zip_code: maskCEP(e.target.value) })} 
             onBlur={handleCepBlur} 
             maxLength={9} 
           />
         </div>
 
-        {/* Logradouro */}
+        {/* Logradouro - Mapeado para address */}
         <div className="md:col-span-3">
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Logradouro
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.endereco || ''} 
-            onChange={e => setFormData({ ...formData, endereco: e.target.value })} 
+            value={formData.address || ''} 
+            onChange={e => setFormData({ ...formData, address: e.target.value })} 
           />
         </div>
 
-        {/* Número */}
+        {/* Número - Mapeado para address_number */}
         <div>
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Número
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.numero || ''} 
-            onChange={e => setFormData({ ...formData, numero: e.target.value })} 
+            value={formData.address_number || ''} 
+            onChange={e => setFormData({ ...formData, address_number: e.target.value })} 
           />
         </div>
 
-        {/* Complemento */}
+        {/* Complemento - Mapeado para address_complement */}
         <div>
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Complemento
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.complemento || ''} 
-            onChange={e => setFormData({ ...formData, complemento: e.target.value })} 
+            value={formData.address_complement || ''} 
+            onChange={e => setFormData({ ...formData, address_complement: e.target.value })} 
           />
         </div>
 
-        {/* Bairro */}
+        {/* Bairro - Mapeado para neighborhood */}
         <div>
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Bairro
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.bairro || ''} 
-            onChange={e => setFormData({ ...formData, bairro: e.target.value })} 
+            value={formData.neighborhood || ''} 
+            onChange={e => setFormData({ ...formData, neighborhood: e.target.value })} 
           />
         </div>
 
-        {/* Cidade */}
+        {/* Cidade - Mapeado para city */}
         <div>
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Cidade
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.cidade || ''} 
-            onChange={e => setFormData({ ...formData, cidade: e.target.value })} 
+            value={formData.city || ''} 
+            onChange={e => setFormData({ ...formData, city: e.target.value })} 
           />
         </div>
 
-        {/* Estado */}
+        {/* Estado - Mapeado para state */}
         <SearchableSelect 
           label="Estado" 
-          value={formData.estado || ''} 
-          onChange={v => setFormData({ ...formData, estado: v })} 
+          value={formData.state || ''} 
+          onChange={v => setFormData({ ...formData, state: v })} 
           options={ESTADOS_BRASIL.map(e => ({ name: e.nome }))} 
         />
       </div>

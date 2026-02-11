@@ -86,7 +86,8 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
 
   // Busca de opções para os novos filtros
   const fetchFilterOptions = async () => {
-    const { data: partners } = await supabase.from('partners').select('id, name').eq('active', true).order('name');
+    // Ajustado: Filtrando parceiros por status 'active' em vez do campo booleano antigo
+    const { data: partners } = await supabase.from('partners').select('id, name').eq('status', 'active').order('name');
     if (partners) setPartnersList(partners);
 
     const { data: contracts } = await supabase.from('contracts').select('billing_location');

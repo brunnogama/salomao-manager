@@ -40,7 +40,7 @@ export function SocioRuleModal({
         {/* Body */}
         <div className="px-8 py-6 space-y-5">
           
-          {/* Colaborador */}
+          {/* Colaborador - Mapeado para 'name' conforme a tabela collaborators */}
           <div>
             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
               Colaborador
@@ -49,12 +49,12 @@ export function SocioRuleModal({
               type="text" 
               className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium placeholder:text-gray-400" 
               placeholder="Nome do colaborador"
-              value={editingRule.nome_colaborador || ''} 
-              onChange={e => setEditingRule({...editingRule, nome_colaborador: e.target.value})} 
+              value={editingRule.name || editingRule.nome_colaborador || ''} 
+              onChange={e => setEditingRule({...editingRule, name: e.target.value})} 
             />
           </div>
           
-          {/* Sócio Responsável */}
+          {/* Sócio Responsável - Mapeado para 'partner_id' (vínculo com tabela partners) */}
           <div>
             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
               Sócio Responsável
@@ -63,23 +63,23 @@ export function SocioRuleModal({
               type="text" 
               className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium placeholder:text-gray-400" 
               placeholder="Nome do sócio"
-              value={editingRule.socio_responsavel || ''} 
-              onChange={e => setEditingRule({...editingRule, socio_responsavel: e.target.value})} 
+              value={editingRule.partner_id || editingRule.socio_responsavel || ''} 
+              onChange={e => setEditingRule({...editingRule, partner_id: e.target.value})} 
             />
           </div>
           
-          {/* Meta Semanal */}
+          {/* Meta Semanal - Mapeado para 'weekly_goal' */}
           <div>
             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
               Meta Semanal (dias)
             </label>
             <input 
               type="number" 
-              min="0"
+              制 "0"
               max="7"
               className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-              value={editingRule.meta_semanal || 0} 
-              onChange={e => setEditingRule({...editingRule, meta_semanal: Number(e.target.value)})} 
+              value={editingRule.weekly_goal || editingRule.meta_semanal || 0} 
+              onChange={e => setEditingRule({...editingRule, weekly_goal: Number(e.target.value)})} 
             />
           </div>
         </div>

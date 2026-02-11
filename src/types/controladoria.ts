@@ -33,6 +33,37 @@ export interface Partner {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface Collaborator {
+  id: string;
+  name: string;
+  partner_id?: string; // Vínculo com o Sócio Responsável (tabela partners)
+  email?: string;
+  phone?: string;
+  status: 'active' | 'inactive';
+  cpf?: string;
+  birthday?: string;
+  gender?: string;
+  photo_url?: string;
+
+  // Endereço
+  zip_code?: string;
+  address?: string;
+  address_number?: string;
+  address_complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+
+  // Profissional
+  role?: string;
+  hire_date?: string;
+  termination_date?: string;
+
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Analyst {
   id: string;
   name: string;

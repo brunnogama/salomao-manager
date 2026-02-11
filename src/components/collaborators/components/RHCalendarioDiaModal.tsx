@@ -1,3 +1,4 @@
+// src/components/collaborators/components/RHCalendarioDiaModal.tsx
 import { X, Edit2, Trash2, Cake, Calendar as CalendarIcon } from 'lucide-react'
 
 interface RHCalendarioDiaModalProps {
@@ -56,7 +57,8 @@ export function RHCalendarioDiaModal({
                   </div>
                   <div>
                     <p className="text-sm font-black text-[#0a192f]">
-                      {'colaborador' in ev ? formatName(ev.colaborador.nome) : ev.titulo}
+                      {/* Ajustado para usar name com fallback para nome */}
+                      {'colaborador' in ev ? formatName(ev.colaborador.name || ev.colaborador.nome) : ev.titulo}
                     </p>
                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
                       {'colaborador' in ev ? 'Aniversariante' : ev.tipo}
