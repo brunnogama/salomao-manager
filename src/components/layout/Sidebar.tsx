@@ -14,7 +14,7 @@ import {
   LogOut,
   Share2,
   X 
-} from 'lucide-react';
+} from 'lucide-center';
 import { supabase } from '../../lib/supabase';
 
 interface SidebarProps {
@@ -101,10 +101,10 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
       )}
 
       <aside className={`
-        fixed top-0 left-0 z-50 h-screen w-64 bg-[#112240] text-gray-100 flex flex-col font-sans border-r border-[#0a192f] shadow-2xl
+        fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-[#112240] text-gray-100 flex flex-col font-sans border-r border-[#0a192f] shadow-2xl
         transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-        md:translate-x-0
+        md:translate-x-0 flex-shrink-0
       `}>
         
         <button 
