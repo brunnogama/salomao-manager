@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import { 
   DollarSign, Search, Download, CheckCircle2, Circle, Clock, Loader2, 
   CalendarDays, Receipt, X, Filter, MapPin, Hash, FileText, 
-  AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
+  AlertTriangle, Plus, ChevronDown, FileDown, Briefcase, Plane, UserCircle, LogOut, Grid
 } from 'lucide-react';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 
@@ -38,17 +38,17 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
         className="flex items-center bg-white px-3 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors select-none shadow-sm h-[40px]"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {Icon && <Icon className="w-4 h-4 text-gray-500 mr-2 shrink-0" />}
-        <span className="text-sm text-gray-700 flex-1 truncate">{displayValue}</span>
-        <ChevronDown className={`w-3 h-3 text-gray-500 ml-2 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        {Icon && <Icon className="w-4 h-4 text-gray-400 mr-2 shrink-0" />}
+        <span className="text-xs font-bold text-gray-600 flex-1 truncate uppercase tracking-wider">{displayValue}</span>
+        <ChevronDown className={`w-3 h-3 text-gray-400 ml-2 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto flex flex-col animate-in fade-in zoom-in-95">
+        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto flex flex-col animate-in fade-in zoom-in-95">
           {options.map((opt) => (
             <div
               key={opt.value}
-              className={`px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer ${value === opt.value ? 'bg-blue-50 font-medium' : ''}`}
+              className={`px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-blue-50 cursor-pointer ${value === opt.value ? 'bg-blue-50 text-[#1e3a8a]' : ''}`}
               onClick={() => {
                 onChange(opt.value);
                 setIsOpen(false);
@@ -99,7 +99,7 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
   const [installmentToEdit, setInstallmentToEdit] = useState<FinancialInstallment | null>(null);
   const [newDueDate, setNewDueDate] = useState('');
 
-  // NOVO: Modal de Detalhes do Contrato (usando o modal existente do sistema)
+  // Modal de Detalhes do Contrato
   const [isContractModalOpen, setIsContractModalOpen] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
   const [selectedContractData, setSelectedContractData] = useState<Contract | null>(null);
@@ -126,7 +126,7 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         const { data: profile } = await supabase
-            .from('user_profiles') // Correção: utilizando tabela correta conforme builds anteriores
+            .from('user_profiles')
             .select('role')
             .eq('id', user.id)
             .single();
@@ -208,10 +208,8 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
     });
   };
 
-  // NOVA FUNÇÃO: Buscar dados completos do contrato e abrir modal (Simplificada sem navegação)
   const handleOpenContractModal = async (contractId: string) => {
     try {
-      // Buscar contrato completo (SEM analyzed_by para evitar erro de relacionamento)
       const { data: contractData, error: contractError } = await supabase
         .from('contracts')
         .select(`
@@ -223,20 +221,17 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
 
       if (contractError) throw contractError;
 
-      // Buscar processos do contrato
       const { data: processesData } = await supabase
         .from('contract_processes')
         .select('*')
         .eq('contract_id', contractId);
 
-      // Buscar documentos do contrato
       const { data: documentsData } = await supabase
         .from('contract_documents')
         .select('*')
         .eq('contract_id', contractId)
         .order('uploaded_at', { ascending: false });
 
-      // Buscar nome do analista separadamente (se existir analyzed_by)
       let analyzedByName = null;
       if (contractData.analyzed_by) {
         const { data: profileData } = await supabase
@@ -248,7 +243,6 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
         analyzedByName = profileData?.name;
       }
 
-      // Formatar dados do contrato
       const formattedContract: Contract = {
         ...contractData,
         partner_name: contractData.partners?.name,
@@ -267,7 +261,6 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
     }
   };
 
-  // --- FILTROS ---
   const filteredInstallments = installments.filter(i => {
     const term = searchTerm.toLowerCase();
     const matchesSearch = i.contract?.client_name?.toLowerCase().includes(term) || 
@@ -300,13 +293,11 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
     return matchesSearch && matchesPartner && matchesLocation && matchesStatus && matchesDate;
   });
 
-  // --- TOTAIS E CÁLCULOS ---
   const totalPending = filteredInstallments.filter(i => i.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
   const totalPaid = filteredInstallments.filter(i => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0);
   const totalPendingCount = filteredInstallments.filter(i => i.status === 'pending').length;
   const totalOverdueCount = installments.filter(i => isOverdue(i)).length;
 
-  // --- AÇÕES ---
   const handleMarkAsPaid = (installment: FinancialInstallment) => {
     setSelectedInstallment(installment);
     setBillingDate(todayStr);
@@ -339,7 +330,6 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
     const loadingToast = toast.loading('Buscando documento do contrato...');
     
     try {
-      // Buscar documentos do contrato
       const { data: documents, error } = await supabase
         .from('contract_documents')
         .select('*')
@@ -354,17 +344,14 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
         return;
       }
 
-      // Pegar o primeiro documento (mais recente)
       const doc = documents[0];
 
-      // Download do arquivo do Supabase Storage
       const { data: fileData, error: downloadError } = await supabase.storage
         .from('contract-documents')
         .download(doc.file_path);
 
       if (downloadError) throw downloadError;
 
-      // Criar URL e fazer download
       const url = URL.createObjectURL(fileData);
       const a = document.createElement('a');
       a.href = url;
@@ -429,260 +416,260 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
   const partnerOptions = [{ label: 'Todos Sócios', value: '' }, ...partners.map(p => ({ label: p.name, value: p.id }))];
 
   return (
-    <div className="p-8 animate-in fade-in duration-500">
+    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
       
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
-            <DollarSign className="w-8 h-8" /> Controle Financeiro
-          </h1>
-          <div className="flex items-center mt-1">
-             <p className="text-gray-500 mr-3">Gestão de faturamento, recebíveis e fluxo de caixa.</p>
+      {/* 1. Header - Salomão Design System */}
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
+            <DollarSign className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Controle Financeiro</h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão de faturamento e recebíveis</p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex flex-col items-end mr-2">
+            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
+              {userRole && (
+                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
+                  • {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
+            <UserCircle className="h-5 w-5" />
+          </div>
+          {onModuleHome && (
+            <button onClick={onModuleHome} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors">
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          {onLogout && (
+            <button onClick={onLogout} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 2. Cards de Totais - Salomão Design System */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div 
+          onClick={totalOverdueCount > 0 ? handleFilterOverdue : undefined}
+          className={`p-5 rounded-2xl border shadow-sm flex items-center justify-between relative overflow-hidden group transition-all ${
+            totalOverdueCount > 0 
+              ? 'bg-red-50 border-red-100 cursor-pointer hover:shadow-md' 
+              : 'bg-white border-gray-100'
+          }`}
+        >
+          <div className={`absolute right-0 top-0 h-full w-1 ${totalOverdueCount > 0 ? 'bg-red-600' : 'bg-blue-600'}`}></div>
+          <div>
+            <p className={`text-[10px] font-black uppercase tracking-widest ${totalOverdueCount > 0 ? 'text-red-400' : 'text-gray-400'}`}>A Receber</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <p className={`text-2xl font-black ${totalOverdueCount > 0 ? 'text-red-900' : 'text-blue-900'}`}>{totalPendingCount}</p>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{totalPendingCount === 1 ? 'parcela' : 'parcelas'}</span>
+            </div>
+            {totalOverdueCount > 0 && (
+              <p className="text-[10px] font-black text-red-600 mt-1 uppercase tracking-widest animate-pulse">
+                {totalOverdueCount} {totalOverdueCount === 1 ? 'vencida' : 'vencidas'}
+              </p>
+            )}
+          </div>
+          <div className={`p-3 rounded-xl ${totalOverdueCount > 0 ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+            {totalOverdueCount > 0 ? <AlertTriangle className="h-6 w-6" /> : <Hash className="h-6 w-6" />}
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-amber-600"></div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pendente (R$)</p>
+            <p className="text-2xl font-black text-amber-900 mt-1">{totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+          </div>
+          <div className="p-3 bg-amber-50 rounded-xl text-amber-600">
+            <Clock className="h-6 w-6" />
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Faturado (R$)</p>
+            <p className="text-2xl font-black text-emerald-900 mt-1">{totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+          </div>
+          <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600">
+            <CheckCircle2 className="h-6 w-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Toolbar Principal - Salomão Design System */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+        <div className="flex flex-col lg:flex-row justify-between gap-4">
+          <div className="flex flex-wrap gap-2">
             <FilterSelect icon={Filter} value={statusFilter} onChange={setStatusFilter} options={statusOptions} placeholder="Status" />
             <FilterSelect icon={MapPin} value={selectedLocation} onChange={setSelectedLocation} options={locationOptions} placeholder="Locais" />
             <FilterSelect icon={Briefcase} value={selectedPartner} onChange={setSelectedPartner} options={partnerOptions} placeholder="Sócios" />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <div className="px-4 py-2 bg-gray-100/50 rounded-lg text-[10px] font-black text-gray-500 uppercase tracking-widest border border-gray-200 h-[40px] flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-[#1e3a8a]" /> Total: {filteredInstallments.length}
+            </div>
             
             {userRole !== 'viewer' && (
-                <button onClick={handleNewInvoice} className="bg-salomao-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold h-[40px] whitespace-nowrap">
-                    <Plus className="w-5 h-5 mr-2" /> Novo Faturamento
-                </button>
+              <button
+                onClick={handleNewInvoice}
+                className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest h-[40px]"
+              >
+                <Plus className="h-4 w-4" /> Novo Lançamento
+              </button>
             )}
+          </div>
         </div>
-      </div>
 
-      {/* CARDS DE TOTAIS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div 
-          onClick={totalOverdueCount > 0 ? handleFilterOverdue : undefined}
-          className={`p-6 rounded-2xl shadow-sm border flex flex-col justify-center transition-all duration-300 ${
-            totalOverdueCount > 0 
-              ? 'bg-gradient-to-br from-red-50 to-orange-50 border-red-200 cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]' 
-              : 'bg-white border-gray-100'
-          }`}
-          title={totalOverdueCount > 0 ? `Clique para filtrar ${totalOverdueCount} parcela${totalOverdueCount !== 1 ? 's' : ''} vencida${totalOverdueCount !== 1 ? 's' : ''}` : ''}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-                <p className={`text-[11px] font-bold uppercase tracking-wider mb-2 ${totalOverdueCount > 0 ? 'text-gray-500' : 'text-gray-400'}`}>
-                    A Receber
-                </p>
-                
-                {/* Total Pendente */}
-                <div className="flex items-baseline gap-2 mb-3">
-                    <h3 className="text-3xl font-bold text-gray-800">
-                        {totalPendingCount}
-                    </h3>
-                    <span className="text-sm font-medium text-gray-500">
-                        {totalPendingCount === 1 ? 'parcela' : 'parcelas'}
-                    </span>
+        <div className="h-px bg-gray-100 w-full my-2"></div>
+
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+                <div 
+                  ref={searchRef}
+                  className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 border border-gray-200 ${isSearchOpen ? 'w-64 px-3 rounded-lg shadow-inner' : 'w-10 justify-center cursor-pointer hover:bg-gray-100 rounded-lg'} h-[40px]`}
+                  onClick={() => !isSearchOpen && setIsSearchOpen(true)}
+                >
+                    <Search className={`w-4 h-4 text-gray-400 shrink-0`} />
+                    <input
+                        type="text"
+                        placeholder="Buscar cliente, HON, ID..."
+                        className={`ml-2 bg-transparent outline-none text-xs font-semibold w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        autoFocus={isSearchOpen}
+                    />
+                    {isSearchOpen && searchTerm && (
+                        <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-1 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+                    )}
                 </div>
 
-                {/* Alerta de Atrasados */}
-                {totalOverdueCount > 0 && (
-                    <div className="flex items-center gap-2 bg-red-100 border border-red-300 rounded-lg px-3 py-2 animate-pulse">
-                        <div className="p-1 bg-red-600 rounded-full">
-                            <AlertTriangle className="w-3 h-3 text-white" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-xs font-bold text-red-700 leading-tight">
-                                {totalOverdueCount} {totalOverdueCount === 1 ? 'parcela vencida' : 'parcelas vencidas'}
-                            </p>
-                            <p className="text-[10px] text-red-600">
-                                Clique para visualizar
-                            </p>
-                        </div>
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
+                         <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
                     </div>
-                )}
+                    <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
+                         <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
+                    </div>
+                </div>
             </div>
-            
-            {/* Ícone */}
-            <div className={`p-3 rounded-full transition-all ${
-              totalOverdueCount > 0 
-                ? 'bg-red-600 text-white shadow-lg shadow-red-200' 
-                : 'bg-blue-50 text-blue-500'
-            }`}>
-                {totalOverdueCount > 0 ? <AlertTriangle className="w-6 h-6" /> : <Hash className="w-6 h-6" />}
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center">
-          <div className="flex items-center justify-between">
-            <div>
-                <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">Pendente (R$)</p>
-                <h3 className="text-3xl font-bold text-gray-800 mt-1">{totalPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</h3>
-            </div>
-            <div className="bg-orange-50 p-3 rounded-full text-orange-500"><Clock className="w-6 h-6" /></div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center">
-          <div className="flex items-center justify-between">
-            <div>
-                <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">Faturado (R$)</p>
-                <h3 className="text-3xl font-bold text-green-600 mt-1">{totalPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</h3>
-            </div>
-            <div className="bg-green-50 p-3 rounded-full text-green-500"><CheckCircle2 className="w-6 h-6" /></div>
-          </div>
-        </div>
-      </div>
-
-      {/* BARRA DE CONTROLES */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm items-center justify-between">
-         <div className="flex items-center gap-3 pr-4 border-r border-gray-100 mr-2 min-w-[200px]">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                <Receipt className="w-5 h-5" />
-            </div>
-            <div>
-                <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Total Lançamentos</p>
-                <p className="text-xl font-bold text-gray-800 leading-none">{filteredInstallments.length}</p>
-            </div>
-         </div>
-
-         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end flex-1">
-            
-            {/* Busca Animada Expandível */}
-            <div 
-              ref={searchRef}
-              className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-white ${isSearchOpen ? 'w-64 border border-gray-200 shadow-sm px-3 rounded-lg' : 'w-10 border border-transparent justify-center cursor-pointer hover:bg-gray-50 rounded-lg'} h-[42px]`}
-              onClick={() => !isSearchOpen && setIsSearchOpen(true)}
-            >
-                <Search className={`w-5 h-5 text-gray-400 shrink-0 ${!isSearchOpen && 'cursor-pointer'}`} />
-                
-                <input
-                    type="text"
-                    placeholder="Buscar..."
-                    className={`ml-2 bg-transparent outline-none text-sm w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    autoFocus={isSearchOpen}
-                />
-
-                {isSearchOpen && searchTerm && (
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }}
-                        className="ml-1 text-gray-400 hover:text-red-500"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                )}
-            </div>
-
-            <div className="h-6 w-px bg-gray-200 mx-1 hidden md:block"></div>
 
             <div className="flex items-center gap-2">
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
-                 <span className="text-xs text-gray-400 mr-2">De</span>
-                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-sm text-gray-700 outline-none w-[110px]" />
-              </div>
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
-                 <span className="text-xs text-gray-400 mr-2">Até</span>
-                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-sm text-gray-700 outline-none w-[110px]" />
-              </div>
-            </div>
-
-            <button onClick={exportToExcel} className="flex items-center px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium whitespace-nowrap h-[42px]">
-                <Download className="w-4 h-4 mr-2" /> XLS
-            </button>
-
-            {hasActiveFilters && (
-                <button onClick={clearFilters} className="flex items-center px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors h-[42px]" title="Limpar Filtros">
-                    <X className="w-4 h-4" />
+                <button onClick={exportToExcel} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-green-400 transition-all text-xs font-black uppercase tracking-widest h-[40px]">
+                    <Download className="w-4 h-4" /> Exportar XLS
                 </button>
-            )}
-         </div>
+
+                {hasActiveFilters && (
+                    <button onClick={clearFilters} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"><X className="w-5 h-5" /></button>
+                )}
+            </div>
+        </div>
       </div>
 
-      {/* LISTAGEM */}
-      {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 text-salomao-gold animate-spin" /></div>
-      ) : filteredInstallments.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-96">
-               <EmptyState
-                  icon={Receipt}
-                  title="Nenhum lançamento encontrado"
-                  description={hasActiveFilters ? "Nenhum resultado para os filtros aplicados." : "Ainda não existem lançamentos financeiros cadastrados."}
-                  actionLabel={hasActiveFilters ? "Limpar Filtros" : undefined}
-                  onAction={hasActiveFilters ? clearFilters : undefined}
-                  className="h-full justify-center"
-               />
+      {/* 4. Área de Conteúdo */}
+      <div className="flex-1">
+        {loading ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
+              Carregando dados financeiros...
           </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
-                <tr>
-                    <th className="p-3">ID</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Vencimento</th>
-                    <th className="p-3">Cliente</th>
-                    <th className="p-3">HON / Cláusula</th>
-                    <th className="p-3">Tipo / Parcela</th>
-                    <th className="p-3">Sócio / Local</th>
-                    <th className="p-3 text-right">Valor</th>
-                    <th className="p-3 text-right">Ação</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredInstallments.map((item) => (
-                  <tr 
-                    key={item.id} 
-                    className="hover:bg-gray-50 transition-colors cursor-pointer group"
-                    onClick={() => handleOpenContractModal(item.contract!.id)}
-                  >
-                    <td className="p-3 font-mono text-gray-500">{(item.contract as any)?.display_id}</td>
-                    <td className="p-3">
-                      {item.status === 'paid' 
-                        ? <span className="flex items-center text-green-600 font-bold uppercase"><CheckCircle2 className="w-3 h-3 mr-1" /> Faturado</span> 
-                        : <span className="flex items-center text-orange-500 font-bold uppercase"><Circle className="w-3 h-3 mr-1" /> Pendente</span>
-                      }
-                    </td>
-                    <td className="p-3">
-                      {item.paid_at ? (
-                        <span className="text-green-600 font-medium">Pago: {new Date(item.paid_at).toLocaleDateString()}</span>
-                      ) : (
-                        <span className={`font-medium ${isOverdue(item) ? "text-red-600 flex items-center" : "text-gray-700"}`}>
-                          {isOverdue(item) && <AlertTriangle className="w-3 h-3 mr-1" />}
-                          {item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3 font-medium text-gray-800">{item.contract?.client_name}</td>
-                    <td className="p-3 text-gray-600">
-                        <div>HON: {item.contract?.hon_number || '-'}</div>
-                        <div className="text-[10px] text-gray-400 truncate max-w-[150px]">{(item as any).clause}</div>
-                    </td>
-                    <td className="p-3">
-                        <div className="text-gray-700">{getTypeLabel(item.type)}</div>
-                        <div className="text-[10px] text-gray-400">Parcela {item.installment_number}/{item.total_installments}</div>
-                    </td>
-                    <td className="p-3">
-                        <div className="text-salomao-blue font-medium">{item.contract?.partner_name || '-'}</div>
-                        <div className="text-[10px] text-gray-400">{item.contract?.billing_location || '-'}</div>
-                    </td>
-                    <td className="p-3 text-right font-bold text-gray-800">{item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td className="p-3 text-right">
-                      {item.status === 'pending' && userRole !== 'viewer' && (
-                        <div className="flex justify-end gap-2 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="text-blue-600 hover:bg-blue-50 p-1 rounded" title="Alterar Vencimento"><CalendarDays className="w-4 h-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="text-gray-500 hover:bg-gray-100 p-1 rounded" title="Baixar Documento do Contrato"><FileDown className="w-4 h-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded hover:bg-green-100 text-[10px] font-bold uppercase flex items-center"><DollarSign className="w-3 h-3 mr-1" /> Faturar</button>
-                        </div>
-                      )}
-                    </td>
+        ) : filteredInstallments.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 min-h-[400px]">
+              <EmptyState
+                icon={Receipt}
+                title="Nenhum lançamento encontrado"
+                description={hasActiveFilters ? "Não encontramos resultados para os filtros atuais." : "Ainda não existem lançamentos financeiros cadastrados."}
+                actionLabel={hasActiveFilters ? "Limpar Filtros" : undefined}
+                onAction={hasActiveFilters ? clearFilters : undefined}
+                className="h-full justify-center"
+              />
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-100">
+                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID</th>
+                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
+                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
+                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Detalhamento</th>
+                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Origem</th>
+                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Valor</th>
+                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredInstallments.map((item) => (
+                    <tr 
+                      key={item.id} 
+                      className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
+                      onClick={() => handleOpenContractModal(item.contract!.id)}
+                    >
+                      <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{(item.contract as any)?.display_id}</td>
+                      <td className="p-4">
+                        {item.status === 'paid' 
+                          ? <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> Faturado</span> 
+                          : <span className="flex items-center text-amber-500 text-[9px] font-black uppercase tracking-widest"><Circle className="w-3 h-3 mr-1" /> Pendente</span>
+                        }
+                      </td>
+                      <td className="p-4 text-[11px] font-semibold">
+                        {item.paid_at ? (
+                          <span className="text-emerald-600 font-black uppercase tracking-tighter">Pago em {new Date(item.paid_at).toLocaleDateString()}</span>
+                        ) : (
+                          <span className={`flex items-center ${isOverdue(item) ? "text-red-600 font-black uppercase tracking-tighter" : "text-gray-700"}`}>
+                            {isOverdue(item) && <AlertTriangle className="w-3 h-3 mr-1 animate-pulse" />}
+                            {item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{item.contract?.client_name}</td>
+                      <td className="p-4 text-[10px] font-semibold text-gray-500 uppercase">
+                          <div className="font-bold">HON: {item.contract?.hon_number || '-'}</div>
+                          <div className="text-[9px] text-gray-400 truncate max-w-[150px] lowercase tracking-normal">{(item as any).clause}</div>
+                      </td>
+                      <td className="p-4">
+                          <div className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest">{getTypeLabel(item.type)}</div>
+                          <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Parcela {item.installment_number}/{item.total_installments}</div>
+                      </td>
+                      <td className="p-4 text-right font-black text-[#0a192f] text-xs">
+                        {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </td>
+                      <td className="p-4 text-right">
+                        {item.status === 'pending' && userRole !== 'viewer' && (
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                            <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-all" title="Alterar Vencimento"><CalendarDays className="w-4 h-4" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-all" title="Baixar Contrato"><FileDown className="w-4 h-4" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-lg hover:bg-emerald-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
+                              <DollarSign className="w-3 h-3 mr-1" /> Faturar
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* MODAL: DETALHES DO CONTRATO */}
       {selectedContractData && (
@@ -710,15 +697,21 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
 
       {/* MODAL: DATA DE FATURAMENTO */}
       {isDateModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-sm animate-in zoom-in-95">
-            <h3 className="text-lg font-bold text-gray-800 mb-2">Confirmar Faturamento</h3>
-            <p className="text-sm text-gray-500 mb-4">Confirma o recebimento desta parcela?</p>
-            <label className="block text-sm font-medium text-gray-600 mb-2">Data do Recebimento</label>
-            <input type="date" className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-salomao-blue outline-none mb-6" value={billingDate} onChange={(e) => setBillingDate(e.target.value)}/>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setIsDateModalOpen(false)} className="text-gray-500 hover:text-gray-800 font-medium text-sm">Cancelar</button>
-              <button onClick={confirmPayment} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 shadow-lg font-bold text-sm">Confirmar</button>
+        <div className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm animate-in zoom-in-95 border border-gray-100">
+            <h3 className="text-lg font-black text-[#0a192f] mb-2 uppercase tracking-tight">Confirmar Faturamento</h3>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Confirma o recebimento desta parcela?</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Data do Recebimento</label>
+                <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={billingDate} onChange={(e) => setBillingDate(e.target.value)}/>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-8">
+              <button onClick={() => setIsDateModalOpen(false)} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
+              <button onClick={confirmPayment} className="bg-emerald-600 text-white px-6 py-2 rounded-xl hover:bg-emerald-700 shadow-md font-black text-[10px] uppercase tracking-widest transition-all">Confirmar Pagamento</button>
             </div>
           </div>
         </div>
@@ -726,14 +719,20 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
 
       {/* MODAL: ALTERAR VENCIMENTO */}
       {isDueDateModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-sm animate-in zoom-in-95">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Alterar Vencimento</h3>
-            <label className="block text-sm font-medium text-gray-600 mb-2">Nova Data de Vencimento</label>
-            <input type="date" className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-salomao-blue outline-none mb-6" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)}/>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setIsDueDateModalOpen(false)} className="text-gray-500 hover:text-gray-800 font-medium text-sm">Cancelar</button>
-              <button onClick={confirmDueDateChange} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-lg font-bold text-sm">Salvar</button>
+        <div className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm animate-in zoom-in-95 border border-gray-100">
+            <h3 className="text-lg font-black text-[#0a192f] mb-4 uppercase tracking-tight">Alterar Vencimento</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Nova Data de Vencimento</label>
+                <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)}/>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-8">
+              <button onClick={() => setIsDueDateModalOpen(false)} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
+              <button onClick={confirmDueDateChange} className="bg-[#1e3a8a] text-white px-6 py-2 rounded-xl hover:bg-[#112240] shadow-md font-black text-[10px] uppercase tracking-widest transition-all">Salvar Alteração</button>
             </div>
           </div>
         </div>

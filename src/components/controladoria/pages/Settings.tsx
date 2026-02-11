@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, Info, History, Save, Plus, Trash2, Edit, CheckCircle2, 
   XCircle, Shield, Code2, Database, Layout, Search, Lock, Mail, AlertTriangle, Settings as SettingsIcon,
-  DollarSign, Briefcase, User, Ban, LogOut
+  DollarSign, Briefcase, User, Ban, LogOut, Plane, UserCircle, Grid
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
@@ -22,6 +22,12 @@ interface ChangeLogItem {
   type: 'radical' | 'feature' | 'fix';
   title: string;
   changes: string[];
+}
+
+interface SettingsProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
 }
 
 // --- DADOS MOCK ---
@@ -76,7 +82,11 @@ const INITIAL_CHANGELOG: ChangeLogItem[] = [
   }
 ];
 
-export function Settings() {
+export function Settings({ 
+  userName = 'Usuário', 
+  onModuleHome, 
+  onLogout 
+}: SettingsProps) {
   const [activeTab, setActiveTab] = useState<'users' | 'about' | 'changelog' | 'system'>('users');
   const [loading, setLoading] = useState(false);
 
@@ -100,15 +110,13 @@ export function Settings() {
         if (user) {
             setCurrentUserEmail(user.email || '');
             
-            // Busca o perfil para saber a role
             const { data: profile } = await supabase
-                .from('profiles')
+                .from('user_profiles')
                 .select('role')
                 .eq('id', user.id)
                 .single();
             
             if (profile) {
-                console.log("Permissão detectada:", profile.role); 
                 setCurrentUserRole(profile.role as 'admin' | 'editor' | 'viewer');
             }
         }
@@ -117,11 +125,10 @@ export function Settings() {
     }
   };
 
-  // --- LÓGICA DE USUÁRIOS (SUPABASE) ---
   const fetchUsers = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('user_profiles')
         .select('*')
         .order('name');
       
@@ -155,7 +162,7 @@ export function Settings() {
 
       if (editingUser) {
         const { error } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .update(userData)
           .eq('id', editingUser.id);
         
@@ -163,7 +170,7 @@ export function Settings() {
       } else {
         const newId = crypto.randomUUID();
         const { error } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .insert([{ ...userData, id: newId }]);
         
         if (error) throw error;
@@ -199,7 +206,7 @@ export function Settings() {
 
       if(confirm("Tem certeza que deseja remover este usuário?")) {
         try {
-          const { error } = await supabase.from('profiles').delete().eq('id', id);
+          const { error } = await supabase.from('user_profiles').delete().eq('id', id);
           if (error) throw error;
           await fetchUsers();
         } catch (error: any) {
@@ -208,7 +215,6 @@ export function Settings() {
       }
   };
 
-  // --- LÓGICA DE RESET POR MÓDULO ---
   const handleModuleReset = async (module: 'contracts' | 'clients' | 'financial' | 'kanban') => {
     if (currentUserRole !== 'admin') return alert("Permissão negada.");
 
@@ -254,7 +260,6 @@ export function Settings() {
     }
   };
 
-  // --- LÓGICA DE RESET GLOBAL ---
   const handleFactoryReset = async () => {
     if (currentUserRole !== 'admin') return alert("Permissão negada.");
 
@@ -278,142 +283,175 @@ export function Settings() {
     } catch (error: any) {
         alert("Erro ao resetar: " + error.message);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
   return (
-    <div className="p-8 animate-in fade-in duration-500 h-full flex flex-col">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-            <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
-            <SettingsIcon className="w-8 h-8" /> Configurações
-            </h1>
-            <p className="text-gray-500 mt-1">Gerenciamento do sistema e informações.</p>
+    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
+      
+      {/* 1. Header - Salomão Design System */}
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
+            <SettingsIcon className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Configurações</h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gerenciamento e Sistema</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex flex-col items-end mr-2">
+            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
+              {currentUserRole && (
+                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">• {currentUserRole}</span>
+              )}
+            </div>
+          </div>
+          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
+            <UserCircle className="h-5 w-5" />
+          </div>
+          {onModuleHome && (
+            <button onClick={onModuleHome} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors">
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          {onLogout && (
+            <button onClick={onLogout} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 flex-1 overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
+        
         {/* SIDEBAR DE NAVEGAÇÃO */}
-        <div className="w-full lg:w-64 flex-shrink-0 flex flex-col">
-          <nav className="space-y-1 flex-1 overflow-y-auto">
+        <div className="w-full lg:w-64 flex-shrink-0 flex flex-col space-y-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-col space-y-1">
             <button 
                 onClick={() => setActiveTab('users')}
-                className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === 'users' ? 'bg-salomao-blue text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'users' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
-                <Users className="mr-3 h-5 w-5" /> Gerenciar Usuários
+                <Users className="mr-3 h-4 w-4" /> Usuários
             </button>
 
             <button 
               onClick={() => setActiveTab('changelog')}
-              className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === 'changelog' ? 'bg-salomao-blue text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+              className={`w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'changelog' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
-              <History className="mr-3 h-5 w-5" /> Histórico de Versões
+              <History className="mr-3 h-4 w-4" /> Versões
             </button>
+
             <button 
               onClick={() => setActiveTab('about')}
-              className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === 'about' ? 'bg-salomao-blue text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+              className={`w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'about' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
-              <Info className="mr-3 h-5 w-5" /> Sobre o Sistema
+              <Info className="mr-3 h-4 w-4" /> Sobre
             </button>
             
             {currentUserRole === 'admin' && (
-                <div className="pt-4 mt-4 border-t border-gray-200">
+                <div className="pt-2 mt-2 border-t border-gray-100">
                     <button 
                     onClick={() => setActiveTab('system')}
-                    className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === 'system' ? 'bg-red-50 text-red-600 shadow-sm border border-red-100' : 'text-gray-500 hover:bg-gray-100'}`}
+                    className={`w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'system' ? 'bg-red-50 text-red-600 border border-red-100' : 'text-gray-400 hover:bg-gray-50'}`}
                     >
-                    <SettingsIcon className="mr-3 h-5 w-5" /> Sistema
+                    <SettingsIcon className="mr-3 h-4 w-4" /> Sistema
                     </button>
                 </div>
             )}
-          </nav>
+          </div>
 
-          {/* DIAGNÓSTICO DE USUÁRIO */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-xs text-gray-500">
-            <p className="font-bold text-gray-700 mb-1">Status da Conta</p>
-            <div className="flex items-center gap-2 mb-1 overflow-hidden text-ellipsis">
-                <User className="w-3 h-3" /> 
-                <span className="truncate">{currentUserEmail || 'Não identificado'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <Shield className="w-3 h-3" /> 
-                <span className="capitalize">{currentUserRole || 'Verificando...'}</span>
+          <div className="p-4 bg-white rounded-2xl border border-gray-100 text-[9px] font-black uppercase tracking-widest text-gray-400 shadow-sm">
+            <p className="text-[#0a192f] mb-3 border-b border-gray-50 pb-2">Diagnóstico</p>
+            <div className="space-y-2">
+                <div className="flex items-center gap-2 overflow-hidden">
+                    <Mail className="w-3 h-3 text-[#1e3a8a]" /> 
+                    <span className="truncate">{currentUserEmail || 'N/A'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Shield className="w-3 h-3 text-[#1e3a8a]" /> 
+                    <span>Nível: {currentUserRole || '...'}</span>
+                </div>
             </div>
           </div>
         </div>
 
         {/* CONTEÚDO PRINCIPAL */}
-        <div className="flex-1 overflow-y-auto pr-2 pb-10">
+        <div className="flex-1 overflow-y-auto custom-scrollbar pb-10">
           
           {activeTab === 'users' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-800">Usuários do Sistema</h2>
-                        <p className="text-sm text-gray-500">
-                            Visualize e gerencie a equipe cadastrada.
-                        </p>
+                        <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest">Usuários do Sistema</h2>
+                        <p className="text-xs font-semibold text-gray-500 mt-1">Gerenciamento de equipe e permissões</p>
                     </div>
                     {['admin', 'editor'].includes(currentUserRole || '') && (
-                        <button onClick={() => openUserModal()} className="bg-salomao-blue hover:bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors">
+                        <button onClick={() => openUserModal()} className="bg-[#1e3a8a] hover:bg-[#112240] text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center transition-all shadow-md active:scale-95">
                             <Plus className="w-4 h-4 mr-2" /> Novo Usuário
                         </button>
                     )}
                 </div>
                 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-50 text-gray-500 font-medium">
-                        <tr>
-                        <th className="p-4">Nome</th>
-                        <th className="p-4">Email</th>
-                        <th className="p-4">Perfil</th>
-                        <th className="p-4">Status</th>
-                        {['admin', 'editor'].includes(currentUserRole || '') && <th className="p-4 text-right">Ações</th>}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {users.map(user => (
-                        <tr key={user.id} className="hover:bg-gray-50">
-                            <td className="p-4 font-medium text-gray-800 flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                                    {(user.name || user.email || '?').charAt(0).toUpperCase()}
-                                </div>
-                                {user.name || 'Sem nome'}
-                            </td>
-                            <td className="p-4 text-gray-600">{user.email}</td>
-                            <td className="p-4">
-                                <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase border ${
-                                    user.role === 'admin' 
-                                        ? 'bg-purple-100 text-purple-700 border-purple-200' 
-                                        : user.role === 'editor' 
-                                            ? 'bg-blue-100 text-blue-700 border-blue-200'
-                                            : 'bg-gray-100 text-gray-600 border-gray-200'
-                                }`}>
-                                    {user.role === 'admin' ? 'Administrador' : user.role === 'editor' ? 'Editor' : 'Visualizador'}
-                                </span>
-                            </td>
-                            <td className="p-4">
-                                {user.active ? (
-                                    <span className="flex items-center text-green-600 text-xs font-bold"><CheckCircle2 className="w-3 h-3 mr-1" /> Ativo</span>
-                                ) : (
-                                    <span className="flex items-center text-gray-400 text-xs font-bold"><XCircle className="w-3 h-3 mr-1" /> Inativo</span>
-                                )}
-                            </td>
-                            {['admin', 'editor'].includes(currentUserRole || '') && (
-                                <td className="p-4 text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <button onClick={() => openUserModal(user)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Editar"><Edit className="w-4 h-4" /></button>
-                                        {currentUserRole === 'admin' && (
-                                            <button onClick={() => handleDeleteUser(user.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Excluir"><Trash2 className="w-4 h-4" /></button>
-                                        )}
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50/50 border-b border-gray-100">
+                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Membro</th>
+                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</th>
+                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Perfil</th>
+                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                {['admin', 'editor'].includes(currentUserRole || '') && <th className="p-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Ações</th>}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {users.map(user => (
+                            <tr key={user.id} className="hover:bg-blue-50/30 transition-colors">
+                                <td className="p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-blue-100 shadow-sm">
+                                            {(user.name || user.email || '?').charAt(0).toUpperCase()}
+                                        </div>
+                                        <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{user.name || 'Sem nome'}</span>
                                     </div>
                                 </td>
-                            )}
-                        </tr>
-                        ))}
-                    </tbody>
+                                <td className="p-4 text-xs font-semibold text-gray-500">{user.email}</td>
+                                <td className="p-4">
+                                    <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                                        user.role === 'admin' 
+                                            ? 'bg-purple-50 text-purple-700 border-purple-100' 
+                                            : user.role === 'editor' 
+                                                ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                                : 'bg-gray-50 text-gray-600 border-gray-100'
+                                    }`}>
+                                        {user.role}
+                                    </span>
+                                </td>
+                                <td className="p-4">
+                                    {user.active ? (
+                                        <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Ativo</span>
+                                    ) : (
+                                        <span className="flex items-center text-gray-400 text-[9px] font-black uppercase tracking-widest"><XCircle className="w-3.5 h-3.5 mr-1.5" /> Inativo</span>
+                                    )}
+                                </td>
+                                {['admin', 'editor'].includes(currentUserRole || '') && (
+                                    <td className="p-4 text-right">
+                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => openUserModal(user)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="Editar"><Edit className="w-4 h-4" /></button>
+                                            {currentUserRole === 'admin' && (
+                                                <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-all" title="Excluir"><Trash2 className="w-4 h-4" /></button>
+                                            )}
+                                        </div>
+                                    </td>
+                                )}
+                            </tr>
+                            ))}
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -421,70 +459,74 @@ export function Settings() {
 
           {activeTab === 'about' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 col-span-2 text-center">
-                    <div className="mx-auto flex items-center justify-center mb-4">
-                        <img src="/logo.fm.png" alt="FlowMetrics" className="h-24 w-auto" />
-                    </div>
-                    <p className="text-gray-500 mt-2">Versão 1.2.0 (Build 2026.01)</p>
-                    <div className="mt-8 flex justify-center gap-8">
-                        <div className="text-center">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Desenvolvido por</p>
-                            <p className="text-lg font-bold text-salomao-blue">Marcio Gama</p>
+                <div className="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 col-span-2 text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-[#1e3a8a]"></div>
+                    <div className="mx-auto flex items-center justify-center mb-6">
+                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 shadow-inner">
+                            <Layout className="h-16 w-16 text-[#0a192f]" />
                         </div>
-                        <div className="w-px bg-gray-200"></div>
+                    </div>
+                    <h2 className="text-xl font-black text-[#0a192f] uppercase tracking-[0.2em]">FlowMetrics</h2>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Versão 1.2.0 • Build 2026.01</p>
+                    
+                    <div className="mt-10 flex justify-center gap-12 border-t border-gray-50 pt-10">
                         <div className="text-center">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Todos os direitos reservados</p>
-                            <p className="text-lg font-bold text-salomao-gold">Copyright © 2026</p>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Engenharia</p>
+                            <p className="text-sm font-black text-[#1e3a8a] uppercase">Marcio Gama</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Licenciamento</p>
+                            <p className="text-sm font-black text-[#0a192f] uppercase">Copyright © 2026</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Code2 className="w-5 h-5 text-blue-500" /> Tecnologias Frontend</h3>
-                    <ul className="space-y-3">
-                        <li className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded"><span className="w-2 h-2 bg-blue-400 rounded-full mr-3"></span>React.js (v18)</li>
-                        <li className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded"><span className="w-2 h-2 bg-blue-600 rounded-full mr-3"></span>TypeScript</li>
-                        <li className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded"><span className="w-2 h-2 bg-teal-400 rounded-full mr-3"></span>Tailwind CSS</li>
-                        <li className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded"><span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>Vite Build Tool</li>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+                    <div className="absolute left-0 top-0 h-full w-1 bg-blue-500"></div>
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-5 flex items-center gap-2"><Code2 className="w-4 h-4 text-[#1e3a8a]" /> Frontend Stack</h3>
+                    <ul className="space-y-2">
+                        {['React.js (v18)', 'TypeScript', 'Tailwind CSS', 'Vite Engine'].map(tech => (
+                            <li key={tech} className="flex items-center text-[11px] font-bold text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-100 uppercase tracking-tight">{tech}</li>
+                        ))}
                     </ul>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Database className="w-5 h-5 text-green-500" /> Backend & Infra</h3>
-                    <ul className="space-y-3">
-                        <li className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded"><span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>Supabase (PostgreSQL)</li>
-                        <li className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded"><span className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></span>Row Level Security (RLS)</li>
-                        <li className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded"><span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>Supabase Auth</li>
-                        <li className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded"><span className="w-2 h-2 bg-gray-500 rounded-full mr-3"></span>Storage Buckets</li>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+                    <div className="absolute left-0 top-0 h-full w-1 bg-emerald-500"></div>
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-5 flex items-center gap-2"><Database className="w-4 h-4 text-emerald-600" /> Infrastructure</h3>
+                    <ul className="space-y-2">
+                        {['Supabase (PostgreSQL)', 'Row Level Security', 'Edge Functions', 'Storage Buckets'].map(tech => (
+                            <li key={tech} className="flex items-center text-[11px] font-bold text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-100 uppercase tracking-tight">{tech}</li>
+                        ))}
                     </ul>
                 </div>
             </div>
           )}
 
           {activeTab === 'changelog' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                <div className="border-l-2 border-gray-100 ml-3 space-y-10">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <div className="border-l-2 border-gray-100 ml-4 space-y-12">
                     {INITIAL_CHANGELOG.map((log, idx) => (
-                        <div key={idx} className="relative pl-8">
-                            <div className={`absolute -left-[11px] top-0 w-6 h-6 rounded-full border-4 border-white shadow-sm flex items-center justify-center
-                                ${log.type === 'radical' ? 'bg-red-500' : log.type === 'feature' ? 'bg-blue-500' : 'bg-green-500'}
+                        <div key={idx} className="relative pl-10">
+                            <div className={`absolute -left-[11px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-md
+                                ${log.type === 'radical' ? 'bg-red-500' : log.type === 'feature' ? 'bg-[#1e3a8a]' : 'bg-emerald-500'}
                             `}></div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
-                                <h3 className="text-xl font-bold text-gray-800">{log.version}</h3>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border
-                                    ${log.type === 'radical' ? 'bg-red-50 text-red-700 border-red-200' : 
-                                      log.type === 'feature' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
-                                      'bg-green-50 text-green-700 border-green-200'}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                                <h3 className="text-lg font-black text-[#0a192f] uppercase tracking-tighter">{log.version}</h3>
+                                <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border
+                                    ${log.type === 'radical' ? 'bg-red-50 text-red-700 border-red-100' : 
+                                      log.type === 'feature' ? 'bg-blue-50 text-blue-700 border-blue-100' : 
+                                      'bg-emerald-50 text-emerald-700 border-emerald-100'}
                                 `}>
-                                    {log.type === 'radical' ? 'Mudança Radical' : log.type === 'feature' ? 'Nova Funcionalidade' : 'Correção de Bugs'}
+                                    {log.type === 'radical' ? 'Major' : log.type === 'feature' ? 'New' : 'Patch'}
                                 </span>
-                                <span className="text-sm text-gray-400">{log.date}</span>
+                                <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{log.date}</span>
                             </div>
-                            <h4 className="text-md font-semibold text-gray-700 mb-3">{log.title}</h4>
-                            <ul className="space-y-2">
+                            <h4 className="text-xs font-black text-gray-700 mb-4 uppercase tracking-widest">{log.title}</h4>
+                            <ul className="space-y-3">
                                 {log.changes.map((change, cIdx) => (
-                                    <li key={cIdx} className="text-sm text-gray-600 flex items-start">
-                                        <span className="mr-2 text-gray-400">•</span>
+                                    <li key={cIdx} className="text-[11px] font-semibold text-gray-500 flex items-start leading-relaxed bg-gray-50/50 p-2 rounded-lg">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-gray-200 mt-1 mr-3 shrink-0"></div>
                                         {change}
                                     </li>
                                 ))}
@@ -498,87 +540,69 @@ export function Settings() {
           {activeTab === 'system' && (
             currentUserRole === 'admin' ? (
                 <div className="space-y-6">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="p-6 border-b border-gray-100">
-                            <h2 className="text-lg font-bold text-gray-800">Reset Modular</h2>
-                            <p className="text-sm text-gray-500">Limpeza seletiva de dados por módulo.</p>
+                            <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest">Reset Modular</h2>
+                            <p className="text-xs font-semibold text-gray-500 mt-1">Limpeza seletiva de bancos de dados.</p>
                         </div>
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <button onClick={() => handleModuleReset('financial')} className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-red-200 hover:bg-red-50 transition-colors group">
-                                <div className="p-3 bg-gray-100 rounded-full text-gray-500 group-hover:text-red-500 group-hover:bg-white mb-3">
-                                    <DollarSign className="w-6 h-6" />
-                                </div>
-                                <span className="text-sm font-bold text-gray-700 group-hover:text-red-700">Limpar Financeiro</span>
-                                <span className="text-xs text-gray-400 mt-1">Apenas parcelas</span>
-                            </button>
-
-                            <button onClick={() => handleModuleReset('kanban')} className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-red-200 hover:bg-red-50 transition-colors group">
-                                <div className="p-3 bg-gray-100 rounded-full text-gray-500 group-hover:text-red-500 group-hover:bg-white mb-3">
-                                    <Layout className="w-6 h-6" />
-                                </div>
-                                <span className="text-sm font-bold text-gray-700 group-hover:text-red-700">Limpar Tarefas</span>
-                                <span className="text-xs text-gray-400 mt-1">Todas do Kanban</span>
-                            </button>
-
-                            <button onClick={() => handleModuleReset('contracts')} className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-red-200 hover:bg-red-50 transition-colors group">
-                                <div className="p-3 bg-gray-100 rounded-full text-gray-500 group-hover:text-red-500 group-hover:bg-white mb-3">
-                                    <Briefcase className="w-6 h-6" />
-                                </div>
-                                <span className="text-sm font-bold text-gray-700 group-hover:text-red-700">Limpar Contratos</span>
-                                <span className="text-xs text-center text-gray-400 mt-1">+ Docs, Timeline e Parcelas</span>
-                            </button>
-
-                            <button onClick={() => handleModuleReset('clients')} className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-red-200 hover:bg-red-50 transition-colors group">
-                                <div className="p-3 bg-gray-100 rounded-full text-gray-500 group-hover:text-red-500 group-hover:bg-white mb-3">
-                                    <Users className="w-6 h-6" />
-                                </div>
-                                <span className="text-sm font-bold text-gray-700 group-hover:text-red-700">Limpar Clientes</span>
-                                <span className="text-xs text-center text-gray-400 mt-1">Apenas sem vínculo</span>
-                            </button>
+                            {[
+                                { id: 'financial', label: 'Financeiro', icon: DollarSign, sub: 'Apenas parcelas' },
+                                { id: 'kanban', label: 'Tarefas', icon: Layout, sub: 'Quadro completo' },
+                                { id: 'contracts', label: 'Contratos', icon: Briefcase, sub: 'Docs e Histórico' },
+                                { id: 'clients', label: 'Clientes', icon: Users, sub: 'Somente órfãos' }
+                            ].map(mod => (
+                                <button key={mod.id} onClick={() => handleModuleReset(mod.id as any)} className="flex flex-col items-center justify-center p-6 border border-gray-100 rounded-2xl hover:border-red-200 hover:bg-red-50 transition-all group shadow-sm bg-gray-50/50">
+                                    <div className="p-3 bg-white rounded-xl text-gray-400 group-hover:text-red-500 shadow-sm mb-3 transition-colors">
+                                        <mod.icon className="w-6 h-6" />
+                                    </div>
+                                    <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest group-hover:text-red-700">{mod.label}</span>
+                                    <span className="text-[8px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">{mod.sub}</span>
+                                </button>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden relative">
+                        <div className="absolute top-0 right-0 p-3 opacity-10">
+                            <AlertTriangle className="w-20 h-20 text-red-600" />
+                        </div>
                         <div className="p-6 bg-red-50 border-b border-red-100 flex items-start gap-4">
-                            <div className="p-3 bg-red-100 rounded-full text-red-600">
-                                <AlertTriangle className="w-8 h-8" />
+                            <div className="p-2.5 bg-red-600 rounded-xl text-white shadow-lg shadow-red-200">
+                                <AlertTriangle className="w-6 h-6" />
                             </div>
                             <div>
-                                <h2 className="text-lg font-bold text-red-800">Zona de Perigo</h2>
-                                <p className="text-sm text-red-600 mt-1">
-                                    Ações nesta área são destrutivas e irreversíveis. Prossiga com extrema cautela.
+                                <h2 className="text-sm font-black text-red-800 uppercase tracking-widest">Zona de Perigo</h2>
+                                <p className="text-[10px] font-black text-red-600 mt-1 uppercase tracking-widest">
+                                    Ações destrutivas e irreversíveis.
                                 </p>
                             </div>
                         </div>
                         <div className="p-8">
-                            <div className="border border-red-100 rounded-lg p-6 flex flex-col sm:flex-row justify-between items-center gap-6 bg-white hover:bg-red-50/30 transition-colors">
+                            <div className="border border-red-100 rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-center gap-6 bg-white hover:bg-red-50/30 transition-colors group">
                                 <div>
-                                    <h3 className="font-bold text-gray-800">Reset de Fábrica (Wipe Data)</h3>
-                                    <p className="text-sm text-gray-500 mt-1 max-w-xl">
-                                        Esta ação irá <strong>excluir permanentemente</strong> todos os contratos, clientes, sócios, analistas, arquivos e dados financeiros do banco de dados. 
-                                        O sistema retornará ao estado de instalação inicial (vazio).
+                                    <h3 className="text-xs font-black text-gray-800 uppercase tracking-widest">Reset de Fábrica (Wipe Data)</h3>
+                                    <p className="text-[11px] font-semibold text-gray-500 mt-2 max-w-xl">
+                                        Esta ação irá <strong className="text-red-600">excluir permanentemente</strong> todos os dados. O sistema retornará ao estado inicial vazio.
                                     </p>
                                 </div>
                                 <button 
                                     onClick={handleFactoryReset}
                                     disabled={loading}
-                                    className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg font-bold shadow-lg flex items-center whitespace-nowrap transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] shadow-lg shadow-red-100 transition-all active:scale-95 disabled:opacity-50"
                                 >
-                                    {loading ? <SettingsIcon className="w-5 h-5 animate-spin mr-2" /> : <Trash2 className="w-5 h-5 mr-2" />}
-                                    RESETAR TUDO
+                                    {loading ? 'Processando...' : 'RESETAR TUDO'}
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             ) : (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center animate-in fade-in zoom-in duration-300">
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-12 text-center shadow-sm">
                     <Ban className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-red-700">Acesso Restrito</h3>
-                    <p className="text-red-600 mt-2 max-w-md mx-auto">
-                        Esta área contém funções críticas do sistema e é restrita a Administradores.
-                    </p>
-               </div>
+                    <h3 className="text-xs font-black text-red-700 uppercase tracking-widest">Acesso Restrito</h3>
+                    <p className="text-[10px] font-black text-red-600 mt-2 uppercase tracking-widest">Área exclusiva para Administradores.</p>
+                </div>
             )
           )}
 
@@ -587,61 +611,55 @@ export function Settings() {
 
       {/* MODAL DE USUÁRIO */}
       {isUserModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="font-bold text-gray-800">{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</h3>
-                    <button onClick={() => setIsUserModalOpen(false)}><XCircle className="w-6 h-6 text-gray-400" /></button>
+        <div className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 border border-gray-100">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h3 className="text-xs font-black text-[#0a192f] uppercase tracking-widest">{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</h3>
+                    <button onClick={() => setIsUserModalOpen(false)} className="p-1 hover:bg-gray-200 rounded-lg transition-colors"><XCircle className="w-5 h-5 text-gray-400" /></button>
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-5">
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Nome Completo</label>
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <input type="text" className="w-full pl-9 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none" value={userForm.name} onChange={e => setUserForm({...userForm, name: e.target.value})} />
+                            <input type="text" className="w-full pl-10 border border-gray-200 rounded-xl p-3 text-sm font-semibold text-gray-700 outline-none focus:border-[#1e3a8a] bg-gray-50/50" value={userForm.name} onChange={e => setUserForm({...userForm, name: e.target.value})} />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email de Acesso</label>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Email Corporativo</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <input type="email" className="w-full pl-9 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} />
+                            <input type="email" className="w-full pl-10 border border-gray-200 rounded-xl p-3 text-sm font-semibold text-gray-700 outline-none focus:border-[#1e3a8a] bg-gray-50/50" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nível de Acesso</label>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Nível de Acesso</label>
                             <div className="relative">
                                 <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <select className="w-full pl-9 border border-gray-300 rounded-lg p-2.5 text-sm bg-white outline-none" value={userForm.role} onChange={e => setUserForm({...userForm, role: e.target.value})}>
-                                    <option value="admin">Administrador</option>
+                                <select className="w-full pl-10 border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 outline-none bg-gray-50/50 appearance-none" value={userForm.role} onChange={e => setUserForm({...userForm, role: e.target.value as any})}>
+                                    <option value="admin">Admin</option>
                                     <option value="editor">Editor</option>
-                                    <option value="viewer">Visualizador</option>
+                                    <option value="viewer">Viewer</option>
                                 </select>
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
-                            <div className="flex items-center h-[42px]">
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
+                            <div className="flex items-center h-[46px] px-3 bg-gray-50/50 border border-gray-200 rounded-xl">
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" className="sr-only peer" checked={userForm.active} onChange={e => setUserForm({...userForm, active: e.target.checked})} />
-                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-salomao-blue"></div>
-                                    <span className="ml-3 text-sm font-medium text-gray-700">{userForm.active ? 'Ativo' : 'Inativo'}</span>
+                                    <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#1e3a8a]"></div>
+                                    <span className="ml-3 text-[10px] font-black uppercase tracking-widest text-gray-500">{userForm.active ? 'On' : 'Off'}</span>
                                 </label>
                             </div>
                         </div>
                     </div>
-                    {!editingUser && (
-                        <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 flex gap-2">
-                            <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-yellow-700">O usuário receberá um email para definir a senha no primeiro acesso.</p>
-                        </div>
-                    )}
                 </div>
-                <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
-                    <button onClick={() => setIsUserModalOpen(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium">Cancelar</button>
-                    <button onClick={handleSaveUser} disabled={loading} className="px-4 py-2 bg-salomao-blue text-white rounded-lg hover:bg-blue-900 text-sm font-medium flex items-center shadow-md">
-                        {loading ? 'Salvando...' : <><Save className="w-4 h-4 mr-2" /> Salvar Usuário</>}
+                <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+                    <button onClick={() => setIsUserModalOpen(false)} className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">Cancelar</button>
+                    <button onClick={handleSaveUser} disabled={loading} className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-[#112240] transition-all flex items-center active:scale-95">
+                        {loading ? 'Aguarde...' : <><Save className="w-4 h-4 mr-2" /> Salvar</>}
                     </button>
                 </div>
             </div>

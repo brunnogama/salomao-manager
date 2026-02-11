@@ -1,11 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { BarChart3, PieChart, Users, Scale, FileText, TrendingUp, Layers, Shield } from 'lucide-react';
+import { 
+  BarChart3, 
+  PieChart, 
+  Users, 
+  Scale, 
+  FileText, 
+  TrendingUp, 
+  Layers, 
+  Shield,
+  Plane,
+  UserCircle,
+  LogOut,
+  Grid
+} from 'lucide-react';
 import { Contract, Partner } from '../../../types/controladoria';
 import { ContractFilters } from '../contracts/ContractFilters';
 import * as XLSX from 'xlsx';
 
-export function Volumetry() {
+interface VolumetryProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Volumetry({ 
+  userName = 'Usuário', 
+  onModuleHome, 
+  onLogout 
+}: VolumetryProps) {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
@@ -18,7 +41,7 @@ export function Volumetry() {
   const [statusFilter, setStatusFilter] = useState('');
   const [partnerFilter, setPartnerFilter] = useState('');
   const [sortOrder, setSortOrder] = useState<'name' | 'date'>('date');
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('card'); // Mantido para compatibilidade com o componente de filtros
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('card'); 
 
   useEffect(() => {
     checkUserRole();
@@ -30,7 +53,7 @@ export function Volumetry() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         const { data: profile } = await supabase
-            .from('profiles')
+            .from('user_profiles')
             .select('role')
             .eq('id', user.id)
             .single();
@@ -102,15 +125,11 @@ export function Volumetry() {
     // Soma a quantidade de processos de todos os contratos desse sócio
     const processCount = partnerContracts.reduce((acc, curr) => acc + (curr.process_count || 0), 0);
     
-    // Calcula valor total em pró-labore (opcional, mas útil para volumetria financeira)
-    // const totalValue = partnerContracts.reduce((acc, curr) => acc + (curr.pro_labore ? parseFloat(curr.pro_labore.replace(/[^0-9.-]+/g,"")) : 0), 0);
-
     return {
       id: partner.id,
       name: partner.name,
       contractCount,
       processCount,
-      // totalValue
     };
   }).sort((a, b) => b.contractCount - a.contractCount); // Ordena por quem tem mais contratos
 
@@ -132,127 +151,162 @@ export function Volumetry() {
   };
 
   return (
-    <div className="p-8 animate-in fade-in duration-500">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
-          <BarChart3 className="w-8 h-8" /> Volumetria
-        </h1>
-        <div className="flex items-center gap-2 mt-1">
-            <p className="text-gray-500">Análise quantitativa de contratos e processos por sócio.</p>
-            {/* Badge de Perfil */}
-            {userRole && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border flex items-center gap-1 ${
-                    userRole === 'admin' 
-                        ? 'bg-purple-100 text-purple-700 border-purple-200' 
-                        : userRole === 'editor' 
-                            ? 'bg-blue-100 text-blue-700 border-blue-200'
-                            : 'bg-gray-100 text-gray-600 border-gray-200'
-                }`}>
-                    <Shield className="w-3 h-3" />
-                    {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
+    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
+      
+      {/* 1. Header - Salomão Design System */}
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
+            <BarChart3 className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Volumetria</h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">Análise Quantitativa por Sócio</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex flex-col items-end mr-2">
+            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
+              {userRole && (
+                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
+                  • {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
                 </span>
-            )}
+              )}
+            </div>
+          </div>
+          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
+            <UserCircle className="h-5 w-5" />
+          </div>
+          {onModuleHome && (
+            <button onClick={onModuleHome} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors">
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          {onLogout && (
+            <button onClick={onLogout} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Filtros Reutilizados */}
-      <div className="mb-8">
+      {/* 2. Filtros Reutilizados */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <ContractFilters
           searchTerm={searchTerm} setSearchTerm={setSearchTerm}
           statusFilter={statusFilter} setStatusFilter={setStatusFilter}
           partnerFilter={partnerFilter} setPartnerFilter={setPartnerFilter}
           partners={partners}
           sortOrder={sortOrder} setSortOrder={setSortOrder}
-          viewMode={viewMode} setViewMode={setViewMode} // Apenas visual no filtro, não afeta volumetria
+          viewMode={viewMode} setViewMode={setViewMode} 
           onExport={handleExport}
         />
       </div>
 
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-100 flex items-center justify-between">
+      {/* 3. Cards de Resumo - Salomão Design System */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
           <div>
-            <p className="text-sm font-medium text-gray-500 uppercase">Contratos Filtrados</p>
-            <p className="text-3xl font-bold text-salomao-blue mt-1">{totalContracts}</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contratos Filtrados</p>
+            <p className="text-2xl font-black text-blue-900 mt-1">{totalContracts}</p>
           </div>
-          <div className="bg-blue-50 p-3 rounded-full text-salomao-blue">
-            <FileText className="w-6 h-6" />
+          <div className="p-3 bg-blue-50 rounded-xl">
+            <FileText className="h-6 w-6 text-blue-600" />
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-purple-100 flex items-center justify-between">
+
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
           <div>
-            <p className="text-sm font-medium text-gray-500 uppercase">Processos Judiciais</p>
-            <p className="text-3xl font-bold text-purple-700 mt-1">{totalProcesses}</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos Judiciais</p>
+            <p className="text-2xl font-black text-indigo-900 mt-1">{totalProcesses}</p>
           </div>
-          <div className="bg-purple-50 p-3 rounded-full text-purple-600">
-            <Scale className="w-6 h-6" />
+          <div className="p-3 bg-indigo-50 rounded-xl">
+            <Scale className="h-6 w-6 text-indigo-600" />
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-green-100 flex items-center justify-between">
+
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
           <div>
-            <p className="text-sm font-medium text-gray-500 uppercase">Sócios Ativos</p>
-            <p className="text-3xl font-bold text-green-700 mt-1">{partners.length}</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sócios Ativos</p>
+            <p className="text-2xl font-black text-emerald-900 mt-1">{partners.length}</p>
           </div>
-          <div className="bg-green-50 p-3 rounded-full text-green-600">
-            <Users className="w-6 h-6" />
+          <div className="p-3 bg-emerald-50 rounded-xl">
+            <Users className="h-6 w-6 text-emerald-600" />
           </div>
         </div>
       </div>
 
-      {/* Lista de Volumetria por Sócio */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <Layers className="w-5 h-5 text-gray-500" /> Distribuição por Sócio
+      {/* 4. Lista de Volumetria por Sócio */}
+      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+          <h2 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
+            <Layers className="w-4 h-4 text-[#1e3a8a]" /> Distribuição por Sócio
           </h2>
         </div>
         
         {loading ? (
-           <div className="p-8 text-center text-gray-500">Carregando dados...</div>
+           <div className="p-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
+              Processando métricas...
+           </div>
         ) : metricsByPartner.length === 0 ? (
-           <div className="p-8 text-center text-gray-500">Nenhum dado encontrado para os filtros selecionados.</div>
+           <div className="p-20 text-center">
+              <EmptyState 
+                icon={BarChart3}
+                title="Sem dados para os filtros"
+                description="Ajuste os filtros de busca para visualizar a volumetria."
+              />
+           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-500 font-medium text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="p-4">Sócio Responsável</th>
-                  <th className="p-4 text-center">Contratos</th>
-                  <th className="p-4 text-center">Processos Judiciais</th>
-                  <th className="p-4">Representatividade (Contratos)</th>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-100">
+                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Sócio Responsável</th>
+                  <th className="p-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Contratos</th>
+                  <th className="p-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos</th>
+                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Representatividade</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
+              <tbody className="divide-y divide-gray-50">
                 {metricsByPartner.map((partner) => {
                   const percentage = totalContracts > 0 ? ((partner.contractCount / totalContracts) * 100).toFixed(1) : "0";
                   
                   return (
-                    <tr key={partner.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="p-4 font-medium text-gray-800 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 text-salomao-blue flex items-center justify-center font-bold text-xs">
-                          {partner.name.charAt(0)}
+                    <tr key={partner.id} className="hover:bg-blue-50/30 transition-colors group">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-blue-100">
+                            {partner.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{partner.name}</span>
                         </div>
-                        {partner.name}
                       </td>
                       <td className="p-4 text-center">
-                        <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-bold">
+                        <span className="bg-blue-50 text-[#1e3a8a] px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-100">
                           {partner.contractCount}
                         </span>
                       </td>
                       <td className="p-4 text-center">
-                        <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full font-bold">
+                        <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-purple-100">
                           {partner.processCount}
                         </span>
                       </td>
                       <td className="p-4 align-middle">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden max-w-[150px]">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden max-w-[200px] border border-gray-200/50 shadow-inner">
                             <div 
-                              className="bg-salomao-gold h-full rounded-full" 
+                              className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] h-full rounded-full transition-all duration-500" 
                               style={{ width: `${percentage}%` }}
                             ></div>
                           </div>
-                          <span className="text-xs font-bold text-gray-500 w-12">{percentage}%</span>
+                          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest w-12">{percentage}%</span>
                         </div>
                       </td>
                     </tr>
@@ -263,6 +317,23 @@ export function Volumetry() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+const Loader2 = ({ className }: { className?: string }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+);
+
+// Rota para o componente EmptyState se necessário (mock para manter o arquivo completo)
+function EmptyState({ icon: Icon, title, description }: any) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center p-10">
+      <div className="bg-gray-100 p-4 rounded-full mb-4">
+        <Icon className="w-8 h-8 text-gray-400" />
+      </div>
+      <h3 className="text-sm font-black text-gray-700 uppercase tracking-widest mb-1">{title}</h3>
+      <p className="text-xs text-gray-400 uppercase font-bold">{description}</p>
     </div>
   );
 }

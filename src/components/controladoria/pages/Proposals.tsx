@@ -1,10 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Plus, Download, Printer, Loader2, Shield } from 'lucide-react';
+import { 
+  FileText, 
+  Plus, 
+  Download, 
+  Printer, 
+  Loader2, 
+  Shield,
+  Plane,
+  UserCircle,
+  LogOut,
+  Grid
+} from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { supabase } from '../../../lib/supabase';
 import { ProposalDocument } from '../proposals/ProposalDocument';
 
-export function Proposals() {
+interface ProposalsProps {
+  userName?: string;
+  onModuleHome?: () => void;
+  onLogout?: () => void;
+}
+
+export function Proposals({ 
+  userName = 'Usuário', 
+  onModuleHome, 
+  onLogout 
+}: ProposalsProps) {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
@@ -28,7 +49,7 @@ export function Proposals() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         const { data: profile } = await supabase
-            .from('profiles')
+            .from('user_profiles')
             .select('role')
             .eq('id', user.id)
             .single();
@@ -45,98 +66,116 @@ export function Proposals() {
   const isViewer = userRole === 'viewer';
 
   return (
-    // Container principal padronizado com as outras páginas (Volumetria, etc)
-    <div className="p-8 animate-in fade-in duration-500">
+    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
       
-      {/* Cabeçalho padronizado */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
-            <FileText className="w-8 h-8" /> Propostas
-          </h1>
-          <div className="flex items-center gap-2 mt-1">
-            <p className="text-gray-500">Gerador de propostas e minutas contratuais (Mala Direta).</p>
-            {/* Badge de Perfil */}
-            {userRole && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border flex items-center gap-1 ${
-                    userRole === 'admin' 
-                        ? 'bg-purple-100 text-purple-700 border-purple-200' 
-                        : userRole === 'editor' 
-                            ? 'bg-blue-100 text-blue-700 border-blue-200'
-                            : 'bg-gray-100 text-gray-600 border-gray-200'
-                }`}>
-                    <Shield className="w-3 h-3" />
-                    {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
-                </span>
-            )}
+      {/* 1. Header - Salomão Design System */}
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
+            <FileText className="h-7 w-7 text-white" />
           </div>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Propostas</h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">Mala Direta & Minutas</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex flex-col items-end mr-2">
+            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
+              {userRole && (
+                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
+                  • {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
+            <UserCircle className="h-5 w-5" />
+          </div>
+          {onModuleHome && (
+            <button onClick={onModuleHome} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors">
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          {onLogout && (
+            <button onClick={onLogout} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Conteúdo da página */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
         {/* Formulário */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Dados da Proposta</h2>
-          <div className="space-y-4">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-fit relative overflow-hidden">
+          <div className="absolute right-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
+          
+          <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[#1e3a8a]" /> Dados da Proposta
+          </h2>
+
+          <div className="space-y-5">
             
             {/* Campo para Texto Padrão (Template) */}
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Modelo / Texto Padrão</label>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Modelo / Texto Padrão</label>
               <textarea 
                 name="template"
                 value={formData.template}
                 onChange={handleChange}
                 disabled={isViewer}
-                rows={6}
-                placeholder={isViewer ? "Visualização apenas" : "Cole aqui o texto padrão da sua minuta..."}
-                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none resize-none bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                rows={5}
+                placeholder={isViewer ? "Visualização restrita" : "Insira aqui o texto base da sua minuta jurídica..."}
+                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none resize-none bg-gray-50/50 transition-all disabled:opacity-60"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cliente</label>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cliente Final</label>
               <input 
                 type="text" 
                 name="clientName"
                 value={formData.clientName}
                 onChange={handleChange}
                 disabled={isViewer}
-                placeholder="Nome do Cliente ou Empresa"
-                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
+                placeholder="Razão Social ou Nome Completo"
+                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all disabled:opacity-60"
               />
             </div>
 
-            {/* Novo Campo: Sócios */}
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Sócios / Representantes</label>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócios / Representantes</label>
               <input 
                 type="text" 
                 name="partners"
                 value={formData.partners}
                 onChange={handleChange}
                 disabled={isViewer}
-                placeholder="Nome dos Sócios"
-                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
+                placeholder="Representantes legais para a mala direta"
+                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all disabled:opacity-60"
               />
             </div>
             
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Objeto do Contrato</label>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Objeto da Prestação de Serviço</label>
               <textarea 
                 name="object"
                 value={formData.object}
                 onChange={handleChange}
                 disabled={isViewer}
-                rows={4}
-                placeholder="Descreva o serviço jurídico..."
-                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none resize-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
+                rows={3}
+                placeholder="Descreva detalhadamente o serviço jurídico..."
+                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none resize-none bg-gray-50/50 transition-all disabled:opacity-60"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Honorários (R$)</label>
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Honorários Sugeridos</label>
                 <input 
                   type="text" 
                   name="value"
@@ -144,83 +183,103 @@ export function Proposals() {
                   onChange={handleChange}
                   disabled={isViewer}
                   placeholder="R$ 0,00"
-                  className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-salomao-blue outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
+                  className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-bold text-[#0a192f] focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Data</label>
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Data de Emissão</label>
                 <input 
                   type="text" 
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
                   disabled={isViewer}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-gray-50 focus:ring-2 focus:ring-salomao-blue outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-600 outline-none bg-gray-50/50 transition-all"
                 />
               </div>
             </div>
           </div>
 
-          <div className="mt-8 pt-4 border-t border-gray-100 flex justify-end">
+          <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
             {isViewer ? (
-                <button disabled className="bg-gray-200 text-gray-500 px-6 py-3 rounded-lg font-bold flex items-center cursor-not-allowed text-xs uppercase">
-                    <Shield className="w-4 h-4 mr-2" /> Sem Permissão
-                </button>
+                <div className="bg-gray-100 text-gray-400 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center border border-gray-200">
+                    <Shield className="w-4 h-4 mr-2" /> Acesso de Visualização
+                </div>
             ) : formData.clientName && formData.object ? (
               <PDFDownloadLink
                 document={<ProposalDocument data={formData} />}
                 fileName={`Proposta_${formData.clientName.replace(/\s+/g, '_')}.pdf`}
-                className="bg-salomao-blue hover:bg-blue-900 text-white px-6 py-3 rounded-lg font-bold shadow-lg flex items-center transition-all active:scale-95 no-underline"
+                className="bg-[#1e3a8a] hover:bg-[#112240] text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md flex items-center transition-all active:scale-95 no-underline"
               >
-                <div className="flex items-center">
-                    <Download className="w-5 h-5 mr-2" /> 
-                    Baixar Proposta PDF
-                </div>
+                {({ loading }) => (
+                  <div className="flex items-center">
+                    {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />} 
+                    Gerar PDF
+                  </div>
+                )}
               </PDFDownloadLink>
             ) : (
-              <button disabled className="bg-gray-200 text-gray-400 px-6 py-3 rounded-lg font-bold flex items-center cursor-not-allowed">
-                <Printer className="w-5 h-5 mr-2" /> Preencha para Gerar
+              <button disabled className="bg-gray-100 text-gray-400 px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center border border-gray-200 opacity-60">
+                <Printer className="w-4 h-4 mr-2" /> Aguardando Dados
               </button>
             )}
           </div>
         </div>
 
-        {/* Preview Visual (Simulação) */}
-        <div className="bg-gray-50 p-8 rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center text-center h-[600px]">
-           <div className="w-full max-w-sm bg-white shadow-2xl p-8 text-left text-[10px] text-gray-400 opacity-80 scale-90 origin-top h-full overflow-hidden relative">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-salomao-blue"></div>
-              
-              {/* Logo / Header Simulado */}
-              <div className="flex justify-between items-start mb-4">
-                <p className="font-bold text-salomao-blue text-sm">SALOMÃO ADVOGADOS</p>
-                {/* Espaço reservado para o Logo se necessário no futuro */}
+        {/* Preview Visual */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center relative overflow-hidden h-[750px]">
+           <div className="absolute top-0 left-0 w-full h-1 bg-[#0a192f] opacity-20"></div>
+           
+           <div className="w-full max-w-[420px] bg-white shadow-2xl p-10 text-left border border-gray-100 h-full overflow-hidden relative transform scale-[0.9] origin-center">
+              {/* Header Simulado do Escritório */}
+              <div className="flex justify-between items-start mb-10 border-b border-gray-100 pb-4">
+                <p className="font-black text-[#0a192f] text-sm uppercase tracking-tighter">SALOMÃO<span className="text-[#1e3a8a]">ADVOGADOS</span></p>
+                <div className="text-[8px] font-bold text-gray-400 text-right uppercase tracking-widest">Controladoria<br/>Jurídica</div>
               </div>
 
-              <p className="text-center font-bold text-black text-xs my-4">PROPOSTA DE HONORÁRIOS</p>
+              <h3 className="text-center font-black text-[#0a192f] text-xs mb-8 uppercase tracking-[0.2em] border-y border-gray-50 py-2">Proposta de Honorários</h3>
               
-              <div className="space-y-2">
-                <p>Data: <span className="text-black">{formData.date}</span></p>
-                <p>Para: <span className="text-black font-bold">{formData.clientName || 'Nome do Cliente'}</span></p>
+              <div className="space-y-4 text-[10px] leading-relaxed">
+                <div className="flex justify-between">
+                  <span className="text-gray-400 font-bold uppercase tracking-widest text-[8px]">Data de Emissão</span>
+                  <span className="text-[#0a192f] font-bold">{formData.date}</span>
+                </div>
                 
-                {/* Visualização dos Sócios no Preview */}
-                <p>A/C Sócios: <span className="text-black">{formData.partners || 'Nome dos Sócios...'}</span></p>
+                <div className="space-y-1">
+                  <span className="text-gray-400 font-bold uppercase tracking-widest text-[8px]">Destinatário</span>
+                  <p className="text-[#0a192f] font-black text-sm uppercase tracking-tight">{formData.clientName || 'NOME DO CLIENTE'}</p>
+                </div>
                 
-                <p className="mt-4 border-t pt-2">Objeto:</p>
-                <p className="text-black mb-2">{formData.object || 'Descrição do serviço...'}</p>
+                <div className="space-y-1">
+                  <span className="text-gray-400 font-bold uppercase tracking-widest text-[8px]">A/C Sócios</span>
+                  <p className="text-gray-700 font-semibold">{formData.partners || 'Representantes...'}</p>
+                </div>
                 
-                <p>Valor:</p>
-                <p className="text-black font-bold text-sm">{formData.value || 'R$ 0,00'}</p>
+                <div className="mt-8 space-y-1 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <span className="text-gray-400 font-bold uppercase tracking-widest text-[8px]">Objeto</span>
+                  <p className="text-gray-600 font-medium line-clamp-4 italic">"{formData.object || 'Descrição dos serviços prestados...'}"</p>
+                </div>
+                
+                <div className="mt-6 flex justify-between items-end border-t border-gray-100 pt-6">
+                  <div>
+                    <span className="text-gray-400 font-bold uppercase tracking-widest text-[8px]">Total de Honorários</span>
+                    <p className="text-lg font-black text-emerald-600">{formData.value || 'R$ 0,00'}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="w-24 h-px bg-gray-200 mb-2"></div>
+                    <span className="text-[7px] font-black text-gray-300 uppercase tracking-widest">Assinatura Digital</span>
+                  </div>
+                </div>
 
-                {/* Exibição condicional do Texto Padrão no preview para conferência */}
                 {formData.template && (
-                  <div className="mt-4 pt-2 border-t border-gray-100">
-                    <p className="italic text-[8px] text-gray-300">Minuta anexada:</p>
-                    <p className="text-gray-400 line-clamp-6">{formData.template}</p>
+                  <div className="mt-6 opacity-30">
+                    <span className="text-[7px] font-black text-gray-300 uppercase tracking-widest block mb-2">Trecho da Minuta:</span>
+                    <p className="text-[8px] text-gray-400 line-clamp-3">{formData.template}</p>
                   </div>
                 )}
               </div>
            </div>
-           <p className="mt-4 text-sm text-gray-500 font-medium">Pré-visualização simplificada</p>
+           <p className="mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Visualização em Tempo Real</p>
         </div>
       </div>
     </div>

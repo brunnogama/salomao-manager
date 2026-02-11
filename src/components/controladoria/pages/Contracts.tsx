@@ -3,7 +3,7 @@ import {
   Plus, Search, Filter, Calendar, DollarSign, User, Briefcase,
   CheckCircle2, Clock, Scale, Tag, Loader2,
   LayoutGrid, List, Download, ArrowUpDown, Edit, Trash2, Bell, ArrowDownAZ, ArrowUpAZ,
-  FileSignature, ChevronDown, X, FileSearch, Paperclip, Eye
+  FileSignature, ChevronDown, X, FileSearch, Paperclip, Eye, Plane, UserCircle, LogOut, Grid
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import * as XLSX from 'xlsx';
@@ -20,12 +20,12 @@ import { parseCurrency } from '../utils/masks';
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'active': return 'bg-green-100 text-green-800 border-green-200';
-    case 'analysis': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'proposal': return 'bg-blue-100 text-blue-800 border-blue-200';
-    case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
-    case 'probono': return 'bg-purple-100 text-purple-800 border-purple-200';
-    default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'active': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+    case 'analysis': return 'bg-amber-50 text-amber-700 border-amber-100';
+    case 'proposal': return 'bg-blue-50 text-blue-700 border-blue-100';
+    case 'rejected': return 'bg-red-50 text-red-700 border-red-100';
+    case 'probono': return 'bg-purple-50 text-purple-700 border-purple-100';
+    default: return 'bg-gray-50 text-gray-700 border-gray-100';
   }
 };
 
@@ -78,20 +78,20 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   return (
     <div className="relative min-w-[180px]" ref={wrapperRef}>
       <div
-        className="flex items-center bg-white px-3 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors select-none shadow-sm"
+        className="flex items-center bg-white px-3 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors select-none shadow-sm h-[40px]"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {Icon && <Icon className="w-4 h-4 text-gray-500 mr-2 shrink-0" />}
-        <span className="text-sm text-gray-700 flex-1 truncate">{displayValue}</span>
-        <ChevronDown className={`w-3 h-3 text-gray-500 ml-2 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        {Icon && <Icon className="w-4 h-4 text-gray-400 mr-2 shrink-0" />}
+        <span className="text-xs font-bold text-gray-600 flex-1 truncate uppercase tracking-wider">{displayValue}</span>
+        <ChevronDown className={`w-3 h-3 text-gray-400 ml-2 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto flex flex-col animate-in fade-in zoom-in-95">
+        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto flex flex-col animate-in fade-in zoom-in-95">
           {options.map((opt) => (
             <div
               key={opt.value}
-              className={`px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer ${value === opt.value ? 'bg-blue-50 font-medium' : ''}`}
+              className={`px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-blue-50 cursor-pointer ${value === opt.value ? 'bg-blue-50 text-[#1e3a8a]' : ''}`}
               onClick={() => {
                 onChange(opt.value);
                 setIsOpen(false);
@@ -575,64 +575,56 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
   ];
 
   return (
-    <div className="p-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
-            <FileSignature className="w-8 h-8" /> Casos
-          </h1>
-          <div className="flex items-center mt-1">
-            <p className="text-gray-500 mr-3">Gestão completa de casos e propostas.</p>
+    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
+      
+      {/* 1. Header - Salomão Design System */}
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
+            <FileSignature className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Casos</h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão completa de casos e propostas</p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-           <FilterSelect
-              icon={Filter}
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={statusOptions}
-              placeholder="Status"
-            />
-
-            <FilterSelect
-              icon={User}
-              value={partnerFilter}
-              onChange={setPartnerFilter}
-              options={partnerOptions}
-              placeholder="Sócios"
-            />
-
-          {userRole !== 'viewer' && (
-            <button onClick={handleNew} className="bg-salomao-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold h-[40px] whitespace-nowrap">
-                <Plus className="w-5 h-5 mr-2" /> Novo Caso
-            </button>
-          )}
-
-          <div className="relative">
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex flex-col items-end mr-2">
+            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
+              {userRole && (
+                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
+                  • {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
+                </span>
+              )}
+            </div>
+          </div>
+          
+          <div className="relative mr-2">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className={`p-2 rounded-full relative transition-all h-[40px] w-[40px] flex items-center justify-center ${
+              className={`p-2 rounded-full relative transition-all h-9 w-9 flex items-center justify-center ${
                 notifications.length > 0
                   ? 'bg-red-50 text-red-500 hover:bg-red-100'
-                  : 'bg-white border border-gray-200 text-gray-400 hover:bg-gray-100'
+                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
               }`}
             >
               <Bell className={`w-5 h-5 ${notifications.length > 0 ? 'animate-pulse' : ''}`} />
               {notifications.length > 0 && (
-                <span className="absolute top-0 right-0 w-3 h-3 bg-red-600 border-2 border-white rounded-full"></span>
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-600 border-2 border-white rounded-full"></span>
               )}
             </button>
-
             {showNotifications && (
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95">
                 <div className="p-3 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
-                  <h4 className="text-xs font-bold text-gray-700 uppercase">Tarefas de Assinatura</h4>
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pendências de Assinatura</h4>
                   <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[10px] font-bold">{notifications.length}</span>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
                   {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-gray-400">Nenhuma pendência.</div>
+                    <div className="p-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Nenhuma pendência</div>
                   ) : (
                     notifications.map(notif => (
                       <div
@@ -640,10 +632,9 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
                         onClick={() => handleNotificationClick(notif.id)}
                         className="p-3 border-b border-gray-50 last:border-0 hover:bg-blue-50 cursor-pointer transition-colors"
                       >
-                        <p className="text-sm font-medium text-gray-800 line-clamp-1">{notif.title}</p>
-                        <p className="text-xs text-gray-500 flex items-center mt-1">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          Vence: {new Date(notif.due_date).toLocaleDateString()}
+                        <p className="text-xs font-bold text-gray-700 truncate">{notif.title}</p>
+                        <p className="text-[9px] font-black text-gray-400 flex items-center mt-1 uppercase tracking-wider">
+                          <Calendar className="w-3 h-3 mr-1" /> Vence: {new Date(notif.due_date).toLocaleDateString()}
                         </p>
                       </div>
                     ))
@@ -652,251 +643,261 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
               </div>
             )}
           </div>
+
+          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
+            <UserCircle className="h-5 w-5" />
+          </div>
+          {onModuleHome && (
+            <button onClick={onModuleHome} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors">
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          {onLogout && (
+            <button onClick={onLogout} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm items-center justify-between">
-        
-        <div className="flex items-center gap-3 pr-4 border-r border-gray-100 mr-2 min-w-[200px]">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                <Briefcase className="w-5 h-5" />
-            </div>
-            <div>
-                <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Total de Casos</p>
-                <p className="text-xl font-bold text-gray-800 leading-none">{contracts.length}</p>
-            </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end flex-1">
-            
-            <div 
-              ref={searchRef}
-              className={`
-                flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-white
-                ${isSearchOpen ? 'w-64 border border-gray-200 shadow-sm px-3 rounded-lg' : 'w-10 border border-transparent justify-center cursor-pointer hover:bg-gray-50 rounded-lg'}
-                h-[42px]
-              `}
-              onClick={() => !isSearchOpen && setIsSearchOpen(true)}
-            >
-                <Search className={`w-5 h-5 text-gray-400 shrink-0 ${!isSearchOpen && 'cursor-pointer'}`} />
-                
-                <input
-                    type="text"
-                    placeholder="Buscar..."
-                    className={`ml-2 bg-transparent outline-none text-sm w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    autoFocus={isSearchOpen}
-                />
-
-                {isSearchOpen && searchTerm && (
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }}
-                        className="ml-1 text-gray-400 hover:text-red-500"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                )}
-            </div>
-
-            <div className="h-6 w-px bg-gray-200 mx-1 hidden md:block"></div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
-                 <span className="text-xs text-gray-400 mr-2">De</span>
-                 <input 
-                   type="date" 
-                   value={startDate} 
-                   onChange={(e) => setStartDate(e.target.value)}
-                   className="bg-transparent text-sm text-gray-700 outline-none w-[110px]"
-                 />
-              </div>
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
-                 <span className="text-xs text-gray-400 mr-2">Até</span>
-                 <input 
-                   type="date" 
-                   value={endDate} 
-                   onChange={(e) => setEndDate(e.target.value)}
-                   className="bg-transparent text-sm text-gray-700 outline-none w-[110px]"
-                 />
-              </div>
-            </div>
-
-            <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200 h-[42px] items-center">
+      {/* 2. Toolbar Principais Filtros - Salomão Design System */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+        <div className="flex flex-col lg:flex-row justify-between gap-4">
+          <div className="flex flex-wrap gap-2">
+            <FilterSelect
+              icon={Filter}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={statusOptions}
+              placeholder="Status"
+            />
+            <FilterSelect
+              icon={User}
+              value={partnerFilter}
+              onChange={setPartnerFilter}
+              options={partnerOptions}
+              placeholder="Sócios"
+            />
+            <div className="flex bg-gray-100/50 rounded-lg p-1 border border-gray-200 h-[40px] items-center">
                 <button
                   onClick={() => { if(sortBy !== 'name') { setSortBy('name'); setSortOrder('asc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-                  className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all h-full ${sortBy === 'name' ? 'bg-white shadow text-salomao-blue' : 'text-gray-500 hover:text-gray-700'}`}
-                  title="Ordenar por Nome"
+                  className={`flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-full ${sortBy === 'name' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                   Nome
                   {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowDownAZ className="w-3 h-3 ml-1" /> : <ArrowUpAZ className="w-3 h-3 ml-1" />)}
                 </button>
                 <button
                   onClick={() => { if(sortBy !== 'date') { setSortBy('date'); setSortOrder('desc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-                  className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all h-full ${sortBy === 'date' ? 'bg-white shadow text-salomao-blue' : 'text-gray-500 hover:text-gray-700'}`}
-                  title="Ordenar por Data do Status Atual"
+                  className={`flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-full ${sortBy === 'date' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                   Data
                   {sortBy === 'date' && <ArrowUpDown className="w-3 h-3 ml-1" />}
                 </button>
             </div>
+          </div>
 
-            <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200 h-[42px] items-center">
-                <button onClick={() => setViewMode('grid')} className={`p-1.5 h-full flex items-center rounded ${viewMode === 'grid' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
-                <button onClick={() => setViewMode('list')} className={`p-1.5 h-full flex items-center rounded ${viewMode === 'list' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
+          <div className="flex items-center gap-2">
+            <div className="bg-gray-100 p-4 rounded-xl flex items-center gap-3 h-[40px]">
+                <Briefcase className="w-4 h-4 text-[#1e3a8a]" />
+                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total: {contracts.length}</span>
+            </div>
+            
+            {userRole !== 'viewer' && (
+              <button
+                onClick={handleNew}
+                className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest h-[40px]"
+              >
+                <Plus className="h-4 w-4" /> Novo Caso
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="h-px bg-gray-100 w-full my-2"></div>
+
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+                <div 
+                  ref={searchRef}
+                  className={`
+                    flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 border border-gray-200
+                    ${isSearchOpen ? 'w-64 px-3 rounded-lg shadow-inner' : 'w-10 justify-center cursor-pointer hover:bg-gray-100 rounded-lg'}
+                    h-[40px]
+                  `}
+                  onClick={() => !isSearchOpen && setIsSearchOpen(true)}
+                >
+                    <Search className={`w-4 h-4 text-gray-400 shrink-0`} />
+                    <input
+                        type="text"
+                        placeholder="Buscar por cliente, HON, processo..."
+                        className={`ml-2 bg-transparent outline-none text-xs font-semibold w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        autoFocus={isSearchOpen}
+                    />
+                    {isSearchOpen && searchTerm && (
+                        <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-1 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
+                         <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"/>
+                    </div>
+                    <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
+                         <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"/>
+                    </div>
+                </div>
             </div>
 
-             <button onClick={exportToExcel} className="flex items-center px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium whitespace-nowrap h-[42px]">
-                <Download className="w-4 h-4 mr-2" /> XLS
-              </button>
+            <div className="flex items-center gap-2">
+                <div className="flex bg-gray-100/50 rounded-lg p-1 border border-gray-200 h-[40px] items-center">
+                    <button onClick={() => setViewMode('grid')} className={`p-1.5 h-full flex items-center rounded-md ${viewMode === 'grid' ? 'bg-white shadow text-[#1e3a8a]' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
+                    <button onClick={() => setViewMode('list')} className={`p-1.5 h-full flex items-center rounded-md ${viewMode === 'list' ? 'bg-white shadow text-[#1e3a8a]' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
+                </div>
 
-             {hasActiveFilters && (
-                <button
-                  onClick={clearFilters}
-                  className="flex items-center px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors h-[42px]"
-                  title="Limpar todos os filtros"
-                >
-                  <X className="w-4 h-4" />
+                <button onClick={exportToExcel} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-green-400 transition-all text-xs font-black uppercase tracking-widest h-[40px]">
+                    <Download className="w-4 h-4" /> Exportar XLS
                 </button>
-              )}
+
+                {hasActiveFilters && (
+                    <button onClick={clearFilters} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"><X className="w-5 h-5" /></button>
+                )}
+            </div>
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-salomao-gold animate-spin" /></div>
-      ) : filteredContracts.length === 0 ? (
-         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      {/* 3. Área de Conteúdo */}
+      <div className="flex-1">
+        {loading ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
+              Carregando base de dados...
+          </div>
+        ) : filteredContracts.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <EmptyState
                 icon={FileSearch}
                 title="Nenhum caso encontrado"
-                description={
-                    searchTerm || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '' 
-                    ? "Não encontramos nenhum contrato com os filtros atuais. Tente limpar a busca."
-                    : "Você ainda não possui casos cadastrados. Comece criando um novo."
-                }
-                actionLabel={searchTerm || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '' ? "Limpar Filtros" : "Novo Caso"}
-                onAction={searchTerm || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '' ? clearFilters : handleNew}
+                description={hasActiveFilters ? "Não encontramos nenhum contrato com os filtros atuais." : "Você ainda não possui casos cadastrados."}
+                actionLabel={hasActiveFilters ? "Limpar Filtros" : "Novo Caso"}
+                onAction={hasActiveFilters ? clearFilters : handleNew}
               />
-         </div>
-      ) : (
-        <>
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredContracts.map((contract) => {
-                const totalExito = calculateTotalSuccess(contract);
-                return (
-                  <div key={contract.id} onClick={() => handleView(contract)} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer group relative">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1 min-w-0 pr-8">
-                        <span className="text-xs text-gray-400 font-mono mb-1 block">{contract.display_id}</span>
-                        <h3 className="font-bold text-gray-800 text-sm truncate" title={contract.client_name}>{contract.client_name}</h3>
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase mt-1 border ${getStatusColor(contract.status)}`}>
-                          {getStatusLabel(contract.status)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5 text-xs text-gray-600">
-                      <div className="flex items-center">
-                        <Scale className="w-3.5 h-3.5 mr-2 text-gray-400" />
-                        <span className="truncate">
-                          {contract.processes && contract.processes.length > 0
-                            ? contract.processes.map((p) => p.process_number).join(', ')
-                            : 'Sem processos'}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <User className="w-3.5 h-3.5 mr-2 text-salomao-gold" />
-                        <span className="truncate">{contract.partner_name || 'Sem sócio'}</span>
-                      </div>
-                      {contract.status === 'active' && contract.hon_number && (
-                        <div className="flex items-center">
-                          <Tag className="w-3.5 h-3.5 mr-2 text-gray-400" />
-                          <span className="font-mono bg-gray-100 px-1 rounded text-[10px]">{contract.hon_number}</span>
+          </div>
+        ) : (
+          <>
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredContracts.map((contract) => {
+                  const totalExito = calculateTotalSuccess(contract);
+                  return (
+                    <div key={contract.id} onClick={() => handleView(contract)} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group relative overflow-hidden">
+                      <div className={`absolute right-0 top-0 h-full w-1 ${getStatusColor(contract.status).split(' ')[0].replace('bg-', 'bg-').replace('-50', '-500')}`}></div>
+                      
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1 min-w-0 pr-8">
+                          <span className="text-[10px] font-black text-gray-400 font-mono mb-1 block uppercase tracking-widest">{contract.display_id}</span>
+                          <h3 className="font-black text-[#0a192f] text-sm truncate uppercase tracking-tight" title={contract.client_name}>{contract.client_name}</h3>
+                          <span className={`inline-block px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest mt-2 border ${getStatusColor(contract.status)}`}>
+                            {getStatusLabel(contract.status)}
+                          </span>
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    <div className="mt-3 pt-2 border-t border-gray-50 flex justify-between items-end">
-                      <div className="text-[10px] text-gray-400">
-                        <div className="flex items-center">
+                      <div className="space-y-2 mt-4">
+                        <div className="flex items-center text-[11px] font-semibold text-gray-600">
+                          <Scale className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                          <span className="truncate">
+                            {contract.processes && contract.processes.length > 0
+                              ? contract.processes.map((p) => p.process_number).join(', ')
+                              : 'Sem processos'}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-[11px] font-semibold text-gray-600">
+                          <User className="w-3.5 h-3.5 mr-2 text-[#1e3a8a]" />
+                          <span className="truncate">{contract.partner_name || 'Sem sócio'}</span>
+                        </div>
+                        {contract.status === 'active' && contract.hon_number && (
+                          <div className="flex items-center text-[11px] font-semibold text-gray-600">
+                            <Tag className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                            <span className="font-mono bg-gray-50 px-1.5 py-0.5 rounded text-[10px] border border-gray-100">{contract.hon_number}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-5 pt-3 border-t border-gray-50 flex justify-between items-center">
+                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center">
                           <Clock className="w-3 h-3 mr-1" />
                           {new Date(getRelevantDate(contract) || '').toLocaleDateString()}
                         </div>
-                      </div>
-                      {contract.status === 'active' && (
-                        <div className="text-right">
-                          {contract.pro_labore && parseCurrency(contract.pro_labore) > 0 && (
-                            <div className="text-xs font-bold text-green-700">{formatMoney(contract.pro_labore)}</div>
-                          )}
-                          {totalExito > 0 && (
-                            <div className="text-[10px] text-gray-500">+ {formatMoney(totalExito)} êxito (Total)</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
-                  <tr>
-                    <th className="p-3">ID</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Cliente</th>
-                    <th className="p-3">Processos</th>
-                    <th className="p-3">Sócio</th>
-                    <th className="p-3">HON</th>
-                    <th className="p-3 text-right">Data Relevante</th>
-                    <th className="p-3 text-center">Arquivo</th>
-                    <th className="p-3 text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredContracts.map(contract => (
-                    <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-gray-50 cursor-pointer group">
-                      <td className="p-3 font-mono text-gray-500">{contract.display_id}</td>
-                      <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(contract.status)}`}>{getStatusLabel(contract.status)}</span></td>
-                      <td className="p-3 font-medium text-gray-800">{contract.client_name}</td>
-                      <td className="p-3 text-gray-600 max-w-[200px] truncate" title={contract.processes?.map(p => p.process_number).join(', ')}>
-                        {contract.processes && contract.processes.length > 0
-                          ? contract.processes.map(p => p.process_number).join(', ')
-                          : '-'}
-                      </td>
-                      <td className="p-3 text-gray-600">{contract.partner_name}</td>
-                      <td className="p-3 font-mono text-gray-500">{contract.hon_number || '-'}</td>
-                      <td className="p-3 text-right text-gray-500">{new Date(getRelevantDate(contract) || '').toLocaleDateString()}</td>
-                      <td className="p-3 text-center">
-                        {(contract as any).documents?.length > 0 && (
-                          <div className="flex justify-center">
-                            <Paperclip className="w-4 h-4 text-gray-500" />
+                        {contract.status === 'active' && (
+                          <div className="text-right">
+                            {contract.pro_labore && parseCurrency(contract.pro_labore) > 0 && (
+                              <div className="text-xs font-black text-emerald-700">{formatMoney(contract.pro_labore)}</div>
+                            )}
+                            {totalExito > 0 && (
+                              <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider">+ {formatMoney(totalExito)} êxito</div>
+                            )}
                           </div>
                         )}
-                      </td>
-                      <td className="p-3 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="text-gray-500 hover:bg-gray-100 p-1 rounded"><Eye className="w-4 h-4" /></button>
-                            
-                            {userRole !== 'viewer' && (
-                                <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Edit className="w-4 h-4" /></button>
-                            )}
-                            
-                            {userRole === 'admin' && (
-                                <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 className="w-4 h-4" /></button>
-                            )}
-                        </div>
-                      </td>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50/50 border-b border-gray-100">
+                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID</th>
+                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
+                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos</th>
+                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Sócio</th>
+                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">HON</th>
+                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Data</th>
+                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      )}
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {filteredContracts.map(contract => (
+                      <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
+                        <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{contract.display_id}</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
+                            {getStatusLabel(contract.status)}
+                          </span>
+                        </td>
+                        <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
+                        <td className="p-4 text-[11px] font-semibold text-gray-500 max-w-[180px] truncate">
+                          {contract.processes && contract.processes.length > 0 ? contract.processes.map(p => p.process_number).join(', ') : '-'}
+                        </td>
+                        <td className="p-4 text-[11px] font-semibold text-gray-600">{contract.partner_name || '-'}</td>
+                        <td className="p-4 font-mono text-[10px] font-bold text-gray-400">{contract.hon_number || '-'}</td>
+                        <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{new Date(getRelevantDate(contract) || '').toLocaleDateString()}</td>
+                        <td className="p-4">
+                          <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>
+                              {userRole !== 'viewer' && (
+                                  <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"><Edit className="w-4 h-4" /></button>
+                              )}
+                              {userRole === 'admin' && (
+                                  <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
+                              )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       <ConfirmModal
         isOpen={isConfirmModalOpen}
