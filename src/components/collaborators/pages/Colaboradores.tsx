@@ -371,9 +371,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           <StatCard title="Local RJ" value={colaboradores.filter(c => c.local === 'Rio de Janeiro').length} icon={Building2} color="red" />
         </div>
 
-        {/* TOOLBAR */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3">
-          <div className="flex flex-1 gap-3">
+        {/* TOOLBAR - Ajustado overflow para permitir dropdowns transbordarem */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 overflow-visible">
+          <div className="flex flex-1 gap-3 overflow-visible">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               <input type="text" placeholder="Buscar..." className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
@@ -405,8 +405,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           </button>
         </div>
 
-        {/* TABLE */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {/* TABLE - Removido overflow-hidden para permitir dropdowns */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible">
           <table className="w-full text-left">
             <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
               <tr>
@@ -462,7 +462,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             if (e.target === e.currentTarget) setShowFormModal(false)
           }}
         >
-          <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50">
+          {/* Removido overflow-hidden para permitir dropdowns externos */}
+          <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50 overflow-visible">
             
             {/* Header */}
             <div className="px-8 py-5 border-b flex justify-between items-center bg-gray-50 shrink-0 rounded-t-[2rem]">
@@ -478,8 +479,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               </button>
             </div>
 
-            {/* Body com Scroll */}
-            <div className="px-8 py-6 max-h-[calc(90vh-200px)] overflow-y-auto custom-scrollbar">
+            {/* Body - Alterado overflow para visible para o SearchableSelect transbordar */}
+            <div className="px-8 py-6 max-h-[calc(90vh-200px)] overflow-y-visible custom-scrollbar">
               <div className="space-y-8">
                 {/* Photo Upload */}
                 <PhotoUploadSection 
@@ -603,7 +604,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                     {(selectedColaborador.oab_number || selectedColaborador.oab_state || selectedColaborador.oab_expiration) && (
                       <>
                         <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2 mt-6">
-                          <GraduationCap className="h-3.5 w-3.5" /> Profissional
+                          < GraduationCap className="h-3.5 w-3.5" /> Profissional
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
                           <DetailRow label="OAB" value={selectedColaborador.oab_number} />
