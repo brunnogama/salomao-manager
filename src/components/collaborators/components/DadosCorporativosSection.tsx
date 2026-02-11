@@ -52,7 +52,7 @@ export function DadosCorporativosSection({
           onRefresh={handleRefresh} 
         />
 
-        {/* Líder Direto - Atualizado para buscar da tabela de colaboradores */}
+        {/* Líder Direto */}
         <SearchableSelect 
           label="Líder Direto" 
           value={formData.leader_id || ''} 
@@ -61,33 +61,30 @@ export function DadosCorporativosSection({
           onRefresh={handleRefresh} 
         />
 
-        {/* Equipe - Mapeado para coluna 'nome' para evitar erro 400 */}
+        {/* Equipe - Atualizado para tabela 'teams' */}
         <SearchableSelect 
           label="Equipe" 
           value={formData.equipe || ''} 
           onChange={v => setFormData({ ...formData, equipe: v })} 
-          table="opcoes_equipes" 
-          nameField="nome"
+          table="teams" 
           onRefresh={handleRefresh} 
         />
 
-        {/* Cargo - Mapeado para coluna 'nome' para evitar erro 400 */}
+        {/* Cargo - Atualizado para tabela 'roles' */}
         <SearchableSelect 
           label="Cargo" 
           value={formData.role || ''} 
           onChange={v => setFormData({ ...formData, role: v })} 
-          table="opcoes_cargos" 
-          nameField="nome"
+          table="roles" 
           onRefresh={handleRefresh} 
         />
 
-        {/* Local - Mapeado para coluna 'nome' para evitar erro 400 */}
+        {/* Local - Atualizado para tabela 'locations' */}
         <SearchableSelect 
           label="Local" 
           value={formData.local || ''} 
           onChange={v => setFormData({ ...formData, local: v })} 
-          table="opcoes_locais" 
-          nameField="nome"
+          table="locations" 
           onRefresh={handleRefresh} 
         />
 
