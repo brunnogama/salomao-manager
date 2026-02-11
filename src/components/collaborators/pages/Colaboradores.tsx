@@ -131,12 +131,12 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const fetchColaboradores = async () => {
     setLoading(true)
     try {
-      // Query corrigida: simplificando join para evitar erro 400 em autorreferência de líder
+      // Query corrigida: usa explicitamente os IDs das colunas para os joins
       const { data, error } = await supabase
         .from('collaborators')
         .select(`
           *,
-          partner:partners(id, name),
+          partner:partner_id(id, name),
           leader:leader_id(id, name)
         `)
         .order('name')
@@ -371,7 +371,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           <StatCard title="Local RJ" value={colaboradores.filter(c => c.local === 'Rio de Janeiro').length} icon={Building2} color="red" />
         </div>
 
-        {/* TOOLBAR - Ajustado overflow para permitir dropdowns transbordarem */}
+        {/* TOOLBAR */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 overflow-visible">
           <div className="flex flex-1 gap-3 overflow-visible">
             <div className="relative flex-1">
@@ -405,7 +405,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           </button>
         </div>
 
-        {/* TABLE - Removido overflow-hidden para permitir dropdowns */}
+        {/* TABLE */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible">
           <table className="w-full text-left">
             <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
@@ -462,7 +462,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             if (e.target === e.currentTarget) setShowFormModal(false)
           }}
         >
-          {/* Removido overflow-hidden para permitir dropdowns externos */}
           <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50 overflow-visible">
             
             {/* Header */}
@@ -479,7 +478,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               </button>
             </div>
 
-            {/* Body - Alterado overflow para visible para o SearchableSelect transbordar */}
+            {/* Body */}
             <div className="px-8 py-6 max-h-[calc(90vh-200px)] overflow-y-visible custom-scrollbar">
               <div className="space-y-8">
                 {/* Photo Upload */}
