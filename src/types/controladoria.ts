@@ -146,6 +146,18 @@ export interface Contract {
   documents?: ContractDocument[];
 }
 
+export interface ClientContact {
+  id?: string;
+  client_id?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  is_main_contact?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Client {
   id?: string;
   name: string;
@@ -158,8 +170,17 @@ export interface Client {
   partner_id?: string;
   partner_name?: string;
   active_contracts_count?: number;
+  contacts?: ClientContact[];
   created_at?: string;
   updated_at?: string;
+  
+  // Campos unificados para Brindes/CRM
+  company?: string;
+  gift_type?: string;
+  gift_other?: string;
+  quantity?: number;
+  gift_history?: any;
+  notes?: string;
 }
 
 export interface FinancialInstallment {
