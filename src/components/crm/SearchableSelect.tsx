@@ -42,6 +42,7 @@ export function SearchableSelect({
   const [loading, setLoading] = useState(false);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isFetchedRef = useRef(false);
 
   const toTitleCase = (str: string) => {
     if (!str) return '';
@@ -50,14 +51,17 @@ export function SearchableSelect({
     }).join(' ');
   };
 
-  // Carrega opções dinâmicas ou estáticas
+  // Carrega opções dinâmicas apenas quando abrir e se ainda não buscou
   useEffect(() => {
     if (table) {
-      if (isOpen) {
+      if (isOpen && !isFetchedRef.current) {
         fetchOptions();
       }
     } else {
-      setOptions(externalOptions);
+      // Para opções externas, só atualizamos se o tamanho mudar para evitar loop
+      if (JSON.stringify(externalOptions) !== JSON.stringify(options)) {
+        setOptions(externalOptions);
+      }
     }
   }, [table, isOpen, externalOptions]);
 
@@ -65,7 +69,6 @@ export function SearchableSelect({
     if (!table) return;
     setLoading(true);
     try {
-      // Ajustado de '*' para colunas específicas para evitar erro 400 por RLS ou ambiguidade
       const { data, error } = await supabase
         .from(table)
         .select(`id, ${nameField}`)
@@ -74,6 +77,7 @@ export function SearchableSelect({
       if (error) throw error;
       if (data) {
         setOptions(data);
+        isFetchedRef.current = true; // Marca como buscado para evitar loop
         if (onRefresh) onRefresh();
       }
     } catch (error) {
@@ -82,6 +86,11 @@ export function SearchableSelect({
       setLoading(false);
     }
   };
+
+  // Reseta o cache de busca se a tabela mudar
+  useEffect(() => {
+    isFetchedRef.current = false;
+  }, [table]);
 
   // Fecha dropdown ao clicar fora
   useEffect(() => {
