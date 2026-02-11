@@ -1,7 +1,9 @@
+
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Login from './Login'
 import ResetPassword from './ResetPassword'
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ModuleSelector } from './components/ModuleSelector'
 import { Sidebar as CrmSidebar } from './components/crm/Sidebar'
 import { Sidebar as RhSidebar } from './components/collaborators/Sidebar'
