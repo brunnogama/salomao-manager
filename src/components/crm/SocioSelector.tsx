@@ -11,9 +11,9 @@ interface SocioSelectorProps {
 }
 
 interface Socio {
-  id: number
-  nome: string
-  ativo: boolean
+  id: string // Alterado para string para suportar UUID da tabela partners
+  name: string // Alterado de nome para name
+  status: string // Mapeado para a nova coluna status
   created_at: string
 }
 
@@ -25,14 +25,14 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
   const [socioToEdit, setSocioToEdit] = useState<Socio | null>(null)
   const [socioName, setSocioName] = useState('')
 
-  // Buscar sócios do banco
+  // Buscar sócios da nova tabela partners
   const fetchSocios = async () => {
     setLoading(true)
     const { data, error } = await supabase
-      .from('socios')
+      .from('partners')
       .select('*')
-      .eq('ativo', true)
-      .order('nome', { ascending: true })
+      .eq('status', 'active') // Utilizando a nova coluna status
+      .order('name', { ascending: true }) // Ordenando pela nova coluna name
     
     if (!error && data) {
       setSocios(data)
@@ -57,12 +57,12 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
     e.preventDefault()
     e.stopPropagation()
     setModalMode('edit')
-    setSocioName(socio.nome)
+    setSocioName(socio.name)
     setSocioToEdit(socio)
     setIsModalOpen(true)
   }
 
-  // Salvar (adicionar ou editar)
+  // Salvar (adicionar ou editar) na tabela partners
   const handleSave = async () => {
     if (!socioName.trim()) {
       alert('Por favor, digite o nome do sócio.')
@@ -71,36 +71,36 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
 
     try {
       if (modalMode === 'add') {
-        // Adicionar novo sócio
+        // Adicionar novo sócio na tabela partners
         const { data, error } = await supabase
-          .from('socios')
-          .insert([{ nome: socioName.trim(), ativo: true }])
+          .from('partners')
+          .insert([{ name: socioName.trim(), status: 'active' }])
           .select()
         
         if (error) throw error
         
         if (data && data[0]) {
           await fetchSocios()
-          onChange(data[0].nome)
+          onChange(data[0].name)
           alert('✅ Sócio adicionado com sucesso!')
         }
       } else if (modalMode === 'edit' && socioToEdit) {
-        // Editar sócio existente
+        // Editar sócio existente na tabela partners
         const { error } = await supabase
-          .from('socios')
-          .update({ nome: socioName.trim() })
+          .from('partners')
+          .update({ name: socioName.trim() })
           .eq('id', socioToEdit.id)
         
         if (error) throw error
         
-        // Atualizar clientes e magistrados que usam este sócio
-        await supabase.from('clientes').update({ socio: socioName.trim() }).eq('socio', socioToEdit.nome)
-        await supabase.from('magistrados').update({ socio: socioName.trim() }).eq('socio', socioToEdit.nome)
+        // Atualizar clientes e magistrados que usam este sócio (mantendo referências legadas por nome se necessário)
+        await supabase.from('clientes').update({ socio: socioName.trim() }).eq('socio', socioToEdit.name)
+        await supabase.from('magistrados').update({ socio: socioName.trim() }).eq('socio', socioToEdit.name)
         
         await fetchSocios()
         
         // Se o sócio selecionado é o que foi editado, atualizar o valor
-        if (value === socioToEdit.nome) {
+        if (value === socioToEdit.name) {
           onChange(socioName.trim())
         }
         
@@ -115,19 +115,19 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
     }
   }
 
-  // Excluir sócio (marcar como inativo)
+  // Excluir sócio (marcar como inativo na nova estrutura)
   const handleDelete = async (socio: Socio, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     
-    if (!confirm(`Tem certeza que deseja excluir o sócio "${socio.nome}"?\n\nOs clientes já vinculados não serão afetados.`)) {
+    if (!confirm(`Tem certeza que deseja excluir o sócio "${socio.name}"?\n\nOs clientes já vinculados não serão afetados.`)) {
       return
     }
 
     try {
       const { error } = await supabase
-        .from('socios')
-        .update({ ativo: false })
+        .from('partners')
+        .update({ status: 'inactive' }) // Atualizado para usar status string
         .eq('id', socio.id)
       
       if (error) throw error
@@ -191,12 +191,12 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
                       >
                         <button
                           onClick={() => {
-                            onChange(socio.nome)
+                            onChange(socio.name)
                           }}
                           className="flex-1 text-left flex items-center"
                         >
-                          <span className="text-gray-700">{socio.nome}</span>
-                          {value === socio.nome && (
+                          <span className="text-gray-700">{socio.name}</span>
+                          {value === socio.name && (
                             <Check className="h-4 w-4 ml-2 text-blue-600" />
                           )}
                         </button>
@@ -281,8 +281,7 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
 
                   <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
                     <button
-                      onClick={() => setIsModalOpen(fals
-                        e)}
+                      onClick={() => setIsModalOpen(false)}
                       className="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
                     >
                       Cancelar
