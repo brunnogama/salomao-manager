@@ -53,7 +53,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLider, setFilterLider] = useState('')
-  const [filterPartner, setFilterPartner] = useState('') // Novo filtro
+  const [filterPartner, setFilterPartner] = useState('') 
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
 
@@ -131,7 +131,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const fetchColaboradores = async () => {
     setLoading(true)
     try {
-      // Query corrigida: usa explicitamente os IDs das colunas para os joins
+      // Query padronizada para evitar erros de cache de esquema
       const { data, error } = await supabase
         .from('collaborators')
         .select(`
@@ -261,7 +261,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       termination_date: toISO(formData.termination_date),
       oab_expiration: toISO(formData.oab_expiration),
       photo_url: photoUrl,
-      // Garante que campos de UUID sejam null se não preenchidos
       partner_id: formData.partner_id || null,
       leader_id: formData.leader_id || null
     }
@@ -317,7 +316,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
       
-      {/* PAGE HEADER COMPLETO - Título + User Info */}
+      {/* PAGE HEADER COMPLETO */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
@@ -600,15 +599,15 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                     </div>
 
                     {/* Informações Profissionais no Modal */}
-                    {(selectedColaborador.oab_number || selectedColaborador.oab_state || selectedColaborador.oab_expiration) && (
+                    {(selectedColaborador.oab_number || selectedColaborador.oab_state || selectedColaborador.oab_vencimento) && (
                       <>
                         <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2 mt-6">
                           < GraduationCap className="h-3.5 w-3.5" /> Profissional
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
-                          <DetailRow label="OAB" value={selectedColaborador.oab_number} />
-                          <DetailRow label="UF OAB" value={selectedColaborador.oab_state} />
-                          <DetailRow label="Vencimento OAB" value={formatDateDisplay(selectedColaborador.oab_expiration)} icon={Calendar} />
+                          <DetailRow label="OAB" value={selectedColaborador.oab_numero} />
+                          <DetailRow label="UF OAB" value={selectedColaborador.oab_uf} />
+                          <DetailRow label="Vencimento OAB" value={formatDateDisplay(selectedColaborador.oab_vencimento)} icon={Calendar} />
                         </div>
                       </>
                     )}

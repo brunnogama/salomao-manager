@@ -41,8 +41,8 @@ export function InformacoesProfissionaisSection({
 
         <SearchableSelect 
           label="UF OAB" 
-          value={formData.oab_state || ''} 
-          onChange={v => setFormData({ ...formData, oab_state: v.toUpperCase() })} 
+          value={formData.oab_uf || ''} 
+          onChange={v => setFormData({ ...formData, oab_uf: v.toUpperCase() })} 
           options={ESTADOS_BRASIL_UF.map(uf => ({ name: uf }))} 
           placeholder="Selecione..."
         />
@@ -53,8 +53,8 @@ export function InformacoesProfissionaisSection({
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.oab_validade || ''} 
-            onChange={e => setFormData({ ...formData, oab_validade: maskDate(e.target.value) })} 
+            value={formData.oab_vencimento || ''} 
+            onChange={e => setFormData({ ...formData, oab_vencimento: maskDate(e.target.value) })} 
             maxLength={10} 
             placeholder="DD/MM/AAAA" 
           />
