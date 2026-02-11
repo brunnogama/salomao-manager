@@ -46,12 +46,12 @@ export function SocioRulesTable({ filteredRules, onEdit, onDelete }: SocioRulesT
         {/* TBODY - Design System */}
         <tbody className="divide-y divide-gray-100">
           {filteredRules.map((rule) => {
-            // Ajustado para refletir o padrão 'name' com fallback para o legado
-            const collaboratorName = rule.name || rule.nome_colaborador || 'Sem Nome';
+            // Ajustado para refletir o padrão 'name' vindo do join da tabela collaborators
+            const collaboratorName = (rule as any).collaborator?.name || rule.nome_colaborador || 'Sem Nome';
             const displayName = toTitleCase(collaboratorName);
             
-            // Ajustado para refletir 'partner_id' (ou o nome do sócio vindo da query)
-            const socioName = rule.partner_name || rule.socio_responsavel || '-';
+            // Ajustado para refletir o nome do sócio vindo do join da tabela partners
+            const socioName = (rule as any).partner?.name || rule.socio_responsavel || '-';
             
             return (
               <tr key={rule.id} className="hover:bg-blue-50/30 transition-colors group">

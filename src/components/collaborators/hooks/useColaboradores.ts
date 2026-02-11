@@ -1,7 +1,7 @@
 // src/hooks/useColaboradores.ts
 import { useState, useEffect } from 'react'
-import { supabase } from '../../../lib/supabase'
-import { Collaborator, GEDDocument } from '../../../types/controladoria'
+import { supabase } from '../lib/supabase' // Caminho de importação ajustado para o padrão do projeto
+import { Collaborator, GEDDocument } from '../types/controladoria' // Caminho de importação ajustado
 
 export function useColaboradores() {
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
@@ -11,14 +11,26 @@ export function useColaboradores() {
 
   const fetchColaboradores = async () => {
     setLoading(true)
-    // Atualizado para a nova tabela 'collaborators' e ordenação por 'name'
-    const { data } = await supabase.from('collaborators').select('*').order('name')
+    // Atualizado para realizar join com sócios e líderes usando UUID
+    const { data } = await supabase
+      .from('collaborators')
+      .select(`
+        *,
+        partner:partners(id, name),
+        leader:collaborators!collaborators_leader_id_fkey(id, name)
+      `)
+      .order('name')
+    
     if (data) setColaboradores(data)
     setLoading(false)
   }
 
   const fetchGedDocs = async (colabId: string) => {
-    const { data } = await supabase.from('ged_colaboradores').select('*').eq('colaborador_id', colabId).order('created_at', { ascending: false })
+    const { data } = await supabase
+      .from('ged_colaboradores')
+      .select('*')
+      .eq('colaborador_id', colabId)
+      .order('created_at', { ascending: false })
     if (data) setGedDocs(data)
   }
 
@@ -30,7 +42,6 @@ export function useColaboradores() {
       if (path) await supabase.storage.from('fotos-colaboradores').remove([`colaboradores/${path}`])
     }
     
-    // Atualizado para a nova tabela 'collaborators'
     await supabase.from('collaborators').delete().eq('id', id)
     await fetchColaboradores()
     return true

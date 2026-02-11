@@ -33,8 +33,8 @@ export function InformacoesProfissionaisSection({
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.oab_number || ''} 
-            onChange={e => setFormData({ ...formData, oab_number: e.target.value })} 
+            value={formData.oab_numero || ''} 
+            onChange={e => setFormData({ ...formData, oab_numero: e.target.value })} 
             placeholder="Ex: 123456"
           />
         </div>
@@ -53,8 +53,8 @@ export function InformacoesProfissionaisSection({
           </label>
           <input 
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.oab_expiration || ''} 
-            onChange={e => setFormData({ ...formData, oab_expiration: maskDate(e.target.value) })} 
+            value={formData.oab_validade || ''} 
+            onChange={e => setFormData({ ...formData, oab_validade: maskDate(e.target.value) })} 
             maxLength={10} 
             placeholder="DD/MM/AAAA" 
           />

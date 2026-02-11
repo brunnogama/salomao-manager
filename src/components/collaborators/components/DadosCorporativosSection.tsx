@@ -1,10 +1,10 @@
 // src/components/collaborators/components/DadosCorporativosSection.tsx
 import { Briefcase } from 'lucide-react'
-import { Collaborator } from '../../../types/controladoria' // Importação atualizada
+import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 
 interface DadosCorporativosSectionProps {
-  formData: Partial<Collaborator> // Interface atualizada
+  formData: Partial<Collaborator>
   setFormData: (data: Partial<Collaborator>) => void
   maskDate: (value: string) => string
   handleRefresh: () => void
@@ -35,7 +35,7 @@ export function DadosCorporativosSection({
           />
         </div>
 
-        {/* Status - Atualizado para os valores em inglês do banco */}
+        {/* Status */}
         <SearchableSelect 
           label="Status" 
           value={formData.status || ''} 
@@ -43,25 +43,34 @@ export function DadosCorporativosSection({
           options={[{ name: 'Ativo', id: 'active' }, { name: 'Inativo', id: 'inactive' }]} 
         />
 
-        {/* Sócio Responsável - NOVO CAMPO */}
+        {/* Sócio Responsável */}
         <SearchableSelect 
           label="Sócio Responsável" 
           value={formData.partner_id || ''} 
           onChange={v => setFormData({ ...formData, partner_id: v })} 
-          table="partners" // Busca direto da nova tabela de sócios
+          table="partners" 
+          onRefresh={handleRefresh} 
+        />
+
+        {/* Líder Direto - Atualizado para buscar da tabela de colaboradores */}
+        <SearchableSelect 
+          label="Líder Direto" 
+          value={formData.leader_id || ''} 
+          onChange={v => setFormData({ ...formData, leader_id: v })} 
+          table="collaborators" 
           onRefresh={handleRefresh} 
         />
 
         {/* Equipe */}
         <SearchableSelect 
           label="Equipe" 
-          value={formData.equipe || ''} // Manter conforme sua tabela de opções
+          value={formData.equipe || ''} 
           onChange={v => setFormData({ ...formData, equipe: v })} 
           table="opcoes_equipes" 
           onRefresh={handleRefresh} 
         />
 
-        {/* Cargo - Mapeado para 'role' */}
+        {/* Cargo */}
         <SearchableSelect 
           label="Cargo" 
           value={formData.role || ''} 
@@ -79,16 +88,7 @@ export function DadosCorporativosSection({
           onRefresh={handleRefresh} 
         />
 
-        {/* Líder */}
-        <SearchableSelect 
-          label="Líder" 
-          value={formData.lider_equipe || ''} 
-          onChange={v => setFormData({ ...formData, lider_equipe: v })} 
-          table="opcoes_lideres" 
-          onRefresh={handleRefresh} 
-        />
-
-        {/* Data de Admissão - Mapeado para 'hire_date' */}
+        {/* Data de Admissão */}
         <div>
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Admissão
@@ -102,7 +102,7 @@ export function DadosCorporativosSection({
           />
         </div>
 
-        {/* Data de Desligamento - Mapeado para 'termination_date' */}
+        {/* Data de Desligamento */}
         <div>
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Desligamento

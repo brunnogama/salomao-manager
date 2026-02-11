@@ -1,38 +1,46 @@
 // src/types/colaborador.ts
 
 export interface Colaborador {
-  id: string // Alterado para string para suportar UUID do Supabase
-  name: string // Atualizado de nome
+  id: string // Suporta UUID do Supabase
+  name: string 
   cpf?: string
-  birthday?: string // Atualizado de data_nascimento
-  gender?: string // Atualizado de genero
+  birthday?: string 
+  gender?: string 
   
   // Endereço
-  zip_code?: string // Atualizado de cep
-  address?: string // Atualizado de endereco
-  address_number?: string // Atualizado de numero
-  address_complement?: string // Atualizado de complemento
-  neighborhood?: string // Atualizado de bairro
-  city?: string // Atualizado de cidade
-  state?: string // Atualizado de estado
+  zip_code?: string 
+  address?: string 
+  address_number?: string 
+  address_complement?: string 
+  neighborhood?: string 
+  city?: string 
+  state?: string 
   
   // Dados Corporativos
   email?: string
   status?: string
   equipe?: string
-  role?: string // Atualizado de cargo
+  role?: string 
   local?: string
-  lider_equipe?: string
-  hire_date?: string // Atualizado de data_admissao
-  termination_date?: string // Atualizado de data_desligamento
   
-  // Informações Profissionais (OAB)
-  oab_number?: string // Atualizado de oab_numero
-  oab_state?: string // Atualizado de oab_uf
-  oab_expiration?: string // Atualizado de oab_vencimento
+  // Hierarquia (UUIDs)
+  partner_id?: string // UUID do sócio
+  leader_id?: string // UUID do líder direto
+  
+  // Relacionamentos (Retornados via Join)
+  partner?: { id: string; name: string }
+  leader?: { id: string; name: string }
+
+  hire_date?: string 
+  termination_date?: string 
+  
+  // Informações Profissionais (OAB) - Mapeado conforme banco de dados
+  oab_numero?: string 
+  oab_state?: string 
+  oab_validade?: string 
   
   // Outros
-  photo_url?: string // Atualizado de foto_url
+  photo_url?: string 
   created_at?: string
   updated_at?: string
 }
