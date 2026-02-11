@@ -110,7 +110,7 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
             <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100">
-              <Dialog.Panel className="w-full max-w-3xl bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-200/50">
+              <Dialog.Panel className="w-full max-w-3xl bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] border border-gray-200/50">
                 
                 {/* HEADER - Navy Gradient */}
                 <header className="bg-gradient-to-r from-[#0a192f] to-[#112240] px-8 py-5 flex justify-between items-center text-white rounded-t-[2rem]">
@@ -147,8 +147,8 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                   ))}
                 </nav>
 
-                {/* BODY */}
-                <div className="p-8 overflow-y-auto flex-1 custom-scrollbar bg-white">
+                {/* BODY - Ajustado overflow para permitir dropdown transbordar */}
+                <div className="p-8 overflow-y-visible flex-1 bg-white">
                   {activeTab === 'geral' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="md:col-span-2">
