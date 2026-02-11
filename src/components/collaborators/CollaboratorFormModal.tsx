@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { Collaborator, Partner } from '../../types/controladoria';
 import { SearchableSelect } from '../crm/SearchableSelect';
 import { PartnerManagerModal } from './modals/PartnerManagerModal';
-import { Partner as PartnerType } from '../../types/controladoria';
+import { CollaboratorManagerModal } from './modals/CollaboratorManagerModal';
 
 interface Props {
   isOpen: boolean;
@@ -17,10 +17,9 @@ interface Props {
 
 export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }: Props) {
   const [loading, setLoading] = useState(false);
-  const [partners, setPartners] = useState<PartnerType[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const [leaders, setLeaders] = useState<Collaborator[]>([]);
   
-  // Estados dos Modais de Gerenciamento
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const [isLeaderModalOpen, setIsLeaderModalOpen] = useState(false);
 
@@ -34,32 +33,58 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
 
   useEffect(() => {
     if (isOpen) {
-      if (collaborator) setFormData(collaborator);
+      if (collaborator) {
+        setFormData({
+          ...collaborator,
+          // Garante que valores nulos sejam strings vazias para o SearchableSelect
+          partner_id: collaborator.partner_id || '',
+          leader_id: collaborator.leader_id || ''
+        });
+      } else {
+        setFormData({ name: '', partner_id: '', leader_id: '', status: 'active', role: '' });
+      }
       fetchData();
     }
   }, [isOpen, collaborator]);
 
   const fetchData = async () => {
-    const { data: partnersData } = await supabase.from('partners').select('*').eq('status', 'active').order('name');
-    const { data: leadersData } = await supabase.from('collaborators').select('*').eq('status', 'active').order('name');
-    
-    if (partnersData) setPartners(partnersData);
-    if (leadersData) setLeaders(leadersData);
+    try {
+      // Busca apenas ativos para o preenchimento dos campos de seleção
+      const [partnersRes, leadersRes] = await Promise.all([
+        supabase.from('partners').select('id, name').eq('status', 'active').order('name'),
+        supabase.from('collaborators').select('id, name').eq('status', 'active').order('name')
+      ]);
+      
+      if (partnersRes.data) setPartners(partnersRes.data);
+      if (leadersRes.data) setLeaders(leadersRes.data);
+    } catch (error) {
+      console.error("Erro ao carregar dados auxiliares:", error);
+    }
   };
 
   const handleSave = async () => {
+    if (!formData.name) return alert("Nome é obrigatório");
+    
     setLoading(true);
     try {
-      const payload = { ...formData };
+      // Limpeza de payloads: converte strings vazias de UUIDs opcionais em null
+      const payload = {
+        ...formData,
+        partner_id: formData.partner_id || null,
+        leader_id: formData.leader_id || null
+      };
+
       if (collaborator?.id) {
-        await supabase.from('collaborators').update(payload).eq('id', collaborator.id);
+        const { error } = await supabase.from('collaborators').update(payload).eq('id', collaborator.id);
+        if (error) throw error;
       } else {
-        await supabase.from('collaborators').insert([payload]);
+        const { error } = await supabase.from('collaborators').insert([payload]);
+        if (error) throw error;
       }
       onSave();
       onClose();
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
+    } catch (error: any) {
+      alert('Erro ao salvar colaborador: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -71,7 +96,6 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         
-        {/* Header */}
         <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
             {collaborator ? 'Editar Colaborador' : 'Novo Colaborador'}
@@ -82,21 +106,18 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
         </div>
 
         <div className="p-8 space-y-6">
-          {/* Nome */}
           <div>
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
             <input 
               type="text"
               className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-              value={formData.name}
+              value={formData.name || ''}
               onChange={e => setFormData({...formData, name: e.target.value})}
               placeholder="Digite o nome completo"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Campo Sócio Responsável */}
             <div className="flex flex-col">
               <div className="flex items-center justify-between mb-2 ml-1">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sócio Responsável</label>
@@ -115,7 +136,6 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
               />
             </div>
 
-            {/* Campo Líder */}
             <div className="flex flex-col">
               <div className="flex items-center justify-between mb-2 ml-1">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Líder Direto</label>
@@ -130,14 +150,26 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
                 placeholder="Selecione o Líder"
                 value={formData.leader_id || ''}
                 onChange={(val) => setFormData({...formData, leader_id: val})}
-                options={leaders.filter(l => l.id !== collaborator?.id).map(l => ({ id: l.id, name: l.name }))}
+                options={leaders
+                  .filter(l => l.id !== collaborator?.id)
+                  .map(l => ({ id: l.id, name: l.name }))
+                }
               />
             </div>
+          </div>
 
+          <div>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cargo / Função</label>
+            <input 
+              type="text"
+              className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+              value={formData.role || ''}
+              onChange={e => setFormData({...formData, role: e.target.value})}
+              placeholder="Ex: Advogado Pleno"
+            />
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
           <button onClick={onClose} className="px-6 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">
             Cancelar
@@ -148,18 +180,22 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
             className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95 disabled:opacity-50"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Salvar Colaborador
+            Salvar Registro
           </button>
         </div>
       </div>
 
-      {/* Modais de Gerenciamento Auxiliares */}
       <PartnerManagerModal 
         isOpen={isPartnerModalOpen} 
         onClose={() => setIsPartnerModalOpen(false)} 
         onUpdate={fetchData} 
       />
-      {/* Aqui entraria o CollaboratorManagerModal se necessário, ou redirecionamento */}
+
+      <CollaboratorManagerModal 
+        isOpen={isLeaderModalOpen} 
+        onClose={() => setIsLeaderModalOpen(false)} 
+        onUpdate={fetchData} 
+      />
     </div>
   );
 }
