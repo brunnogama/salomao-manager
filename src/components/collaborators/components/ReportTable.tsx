@@ -28,7 +28,7 @@ export function ReportTable({ reportData, reportRef, startDate, endDate }: Repor
         <div className="mb-4 text-center block md:hidden pb-4 border-b border-gray-100">
           <h3 className="text-[20px] font-black text-[#0a192f] tracking-tight">Relatório de Presença</h3>
           <p className="text-xs font-semibold text-gray-500 mt-1">
-            Período: {new Date(startDate).toLocaleDateString()} a {new Date(endDate).toLocaleDateString()}
+            Período: {new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR')} a {new Date(endDate + 'T12:00:00').toLocaleDateString('pt-BR')}
           </p>
         </div>
 
@@ -114,7 +114,7 @@ export function ReportTable({ reportData, reportRef, startDate, endDate }: Repor
                         className={`flex flex-col items-center justify-center min-w-[44px] h-14 rounded-xl border-2 transition-all ${
                           item.diasSemana[day] 
                             ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-sm' 
-                            : 'bg-gray-50 border-gray-200'
+                            : 'bg-gray-50 border-gray-100'
                         }`}
                       >
                         <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${
