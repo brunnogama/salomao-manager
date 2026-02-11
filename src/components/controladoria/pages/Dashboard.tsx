@@ -1,17 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../lib/supabase';
+import React, { useRef, useState, useEffect } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { 
   Loader2, 
-  TrendingUp, 
-  FileText, 
-  DollarSign, 
-  Users, 
-  Plane, 
   UserCircle, 
   LogOut, 
   Grid,
   LayoutDashboard
 } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
+import { useDashboardData } from '../hooks/useDashboardData';
+
+// --- COMPONENTES MODULARES DA CONTROLADORIA ---
+import { DashboardHeader } from '../components/dashboard/DashboardHeader';
+import { EfficiencyFunnel } from '../components/dashboard/EfficiencyFunnel';
+import { PortfolioFinancialOverview } from '../components/dashboard/PortfolioFinancialOverview';
+import { WeeklySummary } from '../components/dashboard/WeeklySummary';
+import { MonthlySummary } from '../components/dashboard/MonthlySummary';
+import { EvolutionCharts } from '../components/dashboard/EvolutionCharts';
+import { PartnerStats } from '../components/dashboard/PartnerStats';
+import { OperationalStats } from '../components/dashboard/OperationalStats';
 
 interface Props {
   userName: string;
@@ -20,60 +28,87 @@ interface Props {
 }
 
 export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalContracts: 0,
-    activeContracts: 0,
-    totalClients: 0,
-    totalRevenue: 0
-  });
+  // --- ESTADOS DE FILTROS E PERMISSÕES ---
+  const [selectedPartner, setSelectedPartner] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [partnersList, setPartnersList] = useState<{id: string, name: string}[]>([]);
+  const [locationsList, setLocationsList] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
+  // Hook de Dados da Controladoria
+  const {
+    loading, metrics, funil, evolucaoMensal, financeiro12Meses, statsFinanceiro,
+    propostas12Meses, statsPropostas, mediasFinanceiras, mediasPropostas,
+    rejectionData, contractsByPartner
+  } = useDashboardData(selectedPartner, selectedLocation);
+
+  // --- CARREGAMENTO DE OPÇÕES E ROLE ---
   useEffect(() => {
-    fetchStats();
+    const fetchOptions = async () => {
+      const { data: partners } = await supabase.from('partners').select('id, name').eq('active', true).order('name');
+      if (partners) setPartnersList(partners);
+
+      const { data: contracts } = await supabase.from('contracts').select('billing_location');
+      if (contracts) {
+        const unique = Array.from(new Set(contracts.map(c => c.billing_location).filter(Boolean)));
+        setLocationsList(unique.sort() as string[]);
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        if (profile) setUserRole(profile.role as any);
+      }
+    };
+    fetchOptions();
   }, []);
 
-  const fetchStats = async () => {
-    setLoading(true);
-    
+  // --- FUNÇÃO EXPORTAR (MANTIDA DA CONTROLADORIA) ---
+  const handleExportAndEmail = async () => {
+    if (!dashboardRef.current) return;
+    setExporting(true);
     try {
-      // Buscar contratos
-      const { data: contracts } = await supabase
-        .from('contracts')
-        .select('*');
-
-      // Buscar clientes
-      const { data: clients } = await supabase
-        .from('clients')
-        .select('id');
-
-      // Calcular estatísticas
-      const totalContracts = contracts?.length || 0;
-      const activeContracts = contracts?.filter(c => c.status === 'active').length || 0;
-      const totalClients = clients?.length || 0;
-      
-      // Calcular receita total (pro_labore de contratos ativos)
-      const totalRevenue = contracts
-        ?.filter(c => c.status === 'active')
-        .reduce((acc, c) => acc + (parseFloat(c.pro_labore) || 0), 0) || 0;
-
-      setStats({
-        totalContracts,
-        activeContracts,
-        totalClients,
-        totalRevenue
+      const canvas = await html2canvas(dashboardRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#F8FAFC',
+        ignoreElements: (el) => el.id === 'dashboard-filters'
       });
+
+      const imgData = canvas.toDataURL('image/png');
+      const dateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+      // Download PNG
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = `Relatorio_Controladoria_${dateStr}.png`;
+      link.click();
+
+      // Download PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Relatorio_Controladoria_${dateStr}.pdf`);
+
+      // Email
+      const subject = encodeURIComponent(`Panorama Controladoria - ${dateStr}`);
+      const body = encodeURIComponent(`Caros,\n\nSegue em anexo o panorama atualizado.\n\nAtenciosamente,\n${userName} - Controladoria.`);
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
+      console.error("Erro ao exportar:", error);
     } finally {
-      setLoading(false);
+      setExporting(false);
     }
   };
 
-  if (loading) {
+  if (loading || !metrics) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50 gap-4">
         <Loader2 className="w-10 h-10 text-[#1e3a8a] animate-spin" />
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando dashboard...</p>
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando controladoria...</p>
       </div>
     );
   }
@@ -81,7 +116,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
       
-      {/* 1. Header - Salomão Design System */}
+      {/* 1. Header - Design Manager */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
@@ -94,6 +129,22 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Filtros Integrados no Header */}
+          <DashboardHeader 
+            userRole={userRole}
+            selectedPartner={selectedPartner}
+            setSelectedPartner={setSelectedPartner}
+            partnersList={partnersList}
+            selectedLocation={selectedLocation}
+            setSelectedLocation={setSelectedLocation}
+            locationsList={locationsList}
+            exporting={exporting}
+            onExport={handleExportAndEmail}
+            hideTitle={true} // Prop sugerida para não duplicar o título se o componente suportar
+          />
+          
+          <div className="h-8 w-px bg-gray-200 mx-2 hidden md:block"></div>
+
           <div className="hidden md:flex flex-col items-end mr-2">
             <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
             <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
@@ -114,68 +165,41 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
         </div>
       </div>
 
-      {/* 2. Cards de Estatísticas - Salomão Design System */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total de Casos */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Casos</p>
-            <p className="text-2xl font-black text-blue-900 mt-1">{stats.totalContracts}</p>
-          </div>
-          <div className="p-3 bg-blue-50 rounded-xl">
-            <FileText className="h-6 w-6 text-blue-600" />
-          </div>
+      {/* 2. Conteúdo do Dashboard (Ref para Exportação) */}
+      <div ref={dashboardRef} className="space-y-6">
+        
+        {/* Funil de Eficiência */}
+        <EfficiencyFunnel funil={funil} />
+
+        {/* Snapshots da Carteira */}
+        <PortfolioFinancialOverview metrics={metrics} />
+
+        {/* Resumos Semanal e Mensal */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <WeeklySummary metrics={metrics} />
+          <MonthlySummary metrics={metrics} />
         </div>
 
-        {/* Contratos Ativos */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contratos Ativos</p>
-            <p className="text-2xl font-black text-emerald-900 mt-1">{stats.activeContracts}</p>
-          </div>
-          <div className="p-3 bg-emerald-50 rounded-xl">
-            <TrendingUp className="h-6 w-6 text-emerald-600" />
-          </div>
-        </div>
+        {/* Gráficos de Evolução */}
+        <EvolutionCharts 
+          evolucaoMensal={evolucaoMensal}
+          propostas12Meses={propostas12Meses}
+          financeiro12Meses={financeiro12Meses}
+          mediasPropostas={mediasPropostas}
+          mediasFinanceiras={mediasFinanceiras}
+          statsPropostas={statsPropostas}
+          statsFinanceiro={statsFinanceiro}
+        />
 
-        {/* Total de Clientes */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Clientes</p>
-            <p className="text-2xl font-black text-indigo-900 mt-1">{stats.totalClients}</p>
-          </div>
-          <div className="p-3 bg-indigo-50 rounded-xl">
-            <Users className="h-6 w-6 text-indigo-600" />
-          </div>
-        </div>
+        {/* Estatísticas por Sócio */}
+        <PartnerStats contractsByPartner={contractsByPartner} />
 
-        {/* Receita Total */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-amber-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Receita (Pró-Labore)</p>
-            <p className="text-2xl font-black text-amber-900 mt-1">
-              {stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </p>
-          </div>
-          <div className="p-3 bg-amber-50 rounded-xl">
-            <DollarSign className="h-6 w-6 text-amber-600" />
-          </div>
-        </div>
-      </div>
+        {/* Operacional */}
+        <OperationalStats 
+          rejectionData={rejectionData} 
+          metrics={metrics} 
+        />
 
-      {/* 3. Mensagem de Boas-vindas */}
-      <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-        <div className="absolute left-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
-        <h2 className="text-2xl font-black text-[#0a192f] mb-2 uppercase tracking-tight">
-          Bem-vindo ao Sistema, {userName}!
-        </h2>
-        <p className="text-sm font-semibold text-gray-500 max-w-2xl">
-          Sua visão geral da Controladoria Jurídica está atualizada. Utilize o menu lateral para gerenciar clientes, contratos e fluxos de trabalho.
-        </p>
       </div>
     </div>
   );
