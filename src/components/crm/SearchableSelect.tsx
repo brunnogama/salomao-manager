@@ -1,7 +1,7 @@
 // src/components/SearchableSelect.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ChevronDown, X, Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 interface Option {
   id?: string | number;
