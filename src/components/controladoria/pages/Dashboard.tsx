@@ -12,14 +12,15 @@ import { supabase } from '../../../lib/supabase';
 import { useDashboardData } from '../hooks/useDashboardData';
 
 // --- COMPONENTES MODULARES DA CONTROLADORIA ---
-import { DashboardHeader } from '../components/dashboard/DashboardHeader';
-import { EfficiencyFunnel } from '../components/dashboard/EfficiencyFunnel';
-import { PortfolioFinancialOverview } from '../components/dashboard/PortfolioFinancialOverview';
-import { WeeklySummary } from '../components/dashboard/WeeklySummary';
-import { MonthlySummary } from '../components/dashboard/MonthlySummary';
-import { EvolutionCharts } from '../components/dashboard/EvolutionCharts';
-import { PartnerStats } from '../components/dashboard/PartnerStats';
-import { OperationalStats } from '../components/dashboard/OperationalStats';
+// O caminho correto agora aponta para ../dashboard/ (dentro de controladoria)
+import { DashboardHeader } from '../dashboard/DashboardHeader';
+import { EfficiencyFunnel } from '../dashboard/EfficiencyFunnel';
+import { PortfolioFinancialOverview } from '../dashboard/PortfolioFinancialOverview';
+import { WeeklySummary } from '../dashboard/WeeklySummary';
+import { MonthlySummary } from '../dashboard/MonthlySummary';
+import { EvolutionCharts } from '../dashboard/EvolutionCharts';
+import { PartnerStats } from '../dashboard/PartnerStats';
+import { OperationalStats } from '../dashboard/OperationalStats
 
 interface Props {
   userName: string;
