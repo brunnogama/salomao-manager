@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { useNavigate } from 'react-router-dom';
 import { 
   DollarSign, Search, Download, CheckCircle2, Circle, Clock, Loader2, 
   CalendarDays, Receipt, X, Filter, MapPin, Hash, FileText, 
@@ -64,8 +63,13 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   );
 };
 
-export function Finance() {
-  const navigate = useNavigate();
+interface Props {
+  userName: string;
+  onModuleHome: () => void;
+  onLogout: () => void;
+}
+
+export function Finance({ userName, onModuleHome, onLogout }: Props) {
   
   // --- STATES ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
@@ -204,7 +208,7 @@ export function Finance() {
     });
   };
 
-  // NOVA FUNÇÃO: Buscar dados completos do contrato e abrir modal
+  // NOVA FUNÇÃO: Buscar dados completos do contrato e abrir modal (Simplificada sem navegação)
   const handleOpenContractModal = async (contractId: string) => {
     try {
       // Buscar contrato completo (SEM analyzed_by para evitar erro de relacionamento)
@@ -691,7 +695,8 @@ export function Finance() {
           }}
           contract={selectedContractData}
           onEdit={() => {
-            navigate(`/contracts/edit/${selectedContractId}`);
+            toast.info('Edição não disponível nesta tela');
+            setIsContractModalOpen(false);
           }}
           onDelete={() => {
             toast.info('Função de exclusão não implementada');

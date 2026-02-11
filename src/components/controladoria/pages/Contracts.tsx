@@ -7,23 +7,15 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import * as XLSX from 'xlsx';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner'; 
 
-// Subir 3 níveis para chegar em /src e entrar em /types
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../../types/controladoria';
-
-// Referências para componentes irmãos (subir 1 nível para /controladoria e entrar nas pastas)
 import { ContractFormModal } from '../contracts/ContractFormModal';
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
 import { PartnerManagerModal } from '../partners/PartnerManagerModal';
 import { AnalystManagerModal } from '../analysts/AnalystManagerModal';
-
-// ROTA CORRIGIDA: Subir 1 nível para sair de /pages e entrar em /ui (dentro de controladoria)
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { EmptyState } from '../ui/EmptyState';
-
-// ROTA CORRIGIDA: Subir 1 nível para sair de /pages e entrar em /utils (dentro de controladoria)
 import { parseCurrency } from '../utils/masks';
 
 const getStatusColor = (status: string) => {
@@ -67,7 +59,6 @@ const calculateTotalSuccess = (c: Contract) => {
   return total;
 };
 
-// Componente Local de Filtro Padronizado
 const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { icon?: React.ElementType, value: string, onChange: (val: string) => void, options: { label: string, value: string }[], placeholder: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -115,11 +106,13 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   );
 };
 
-export function Contracts() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  
-  // --- ROLE STATE ---
+interface Props {
+  userName: string;
+  onModuleHome: () => void;
+  onLogout: () => void;
+}
+
+export function Contracts({ userName, onModuleHome, onLogout }: Props) {
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -129,10 +122,9 @@ export function Contracts() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Filtros e Ordenação
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false); // Estado para animação da busca
-  const searchRef = useRef<HTMLDivElement>(null); // Ref para fechar ao clicar fora
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const [statusFilter, setStatusFilter] = useState('all');
   const [partnerFilter, setPartnerFilter] = useState('');
@@ -143,7 +135,6 @@ export function Contracts() {
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('asc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
-  // Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
@@ -165,10 +156,7 @@ export function Contracts() {
 
   useEffect(() => {
     checkUserRole();
-    if (location.state && location.state.status) {
-      setStatusFilter(location.state.status);
-    }
-  }, [location.state]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -186,7 +174,6 @@ export function Contracts() {
     };
   }, []);
 
-  // Fechar busca ao clicar fora, se estiver vazia
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -199,7 +186,6 @@ export function Contracts() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [searchRef, searchTerm]);
 
-  // --- ROLE CHECK ---
   const checkUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -207,7 +193,7 @@ export function Contracts() {
             .from('user_profiles')
             .select('role')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
         if (profile) {
             setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
         }
@@ -217,23 +203,22 @@ export function Contracts() {
   const fetchData = async () => {
     setLoading(true);
     const [contractsRes, partnersRes, analystsRes] = await Promise.all([
-      supabase.from('contracts').select(`*, partner:partners(name), analyst:analysts(name), processes:contract_processes(*), documents:contract_documents(id, file_name, file_path, uploaded_at)`).order('created_at', { ascending: false }),
+      supabase.from('contracts').select(`*, partner:partners(name), processes:contract_processes(*), documents:contract_documents(id, file_name, file_path, uploaded_at)`).order('created_at', { ascending: false }),
       supabase.from('partners').select('*').eq('active', true).order('name'),
-      supabase.from('analysts').select('*').eq('active', true).order('name')
+      supabase.from('partners').select('*').eq('active', true).order('name')
     ]);
 
     if (contractsRes.data) {
       const formatted: Contract[] = contractsRes.data.map((c: any) => ({
         ...c,
         partner_name: c.partner?.name,
-        analyzed_by_name: c.analyst?.name,
         process_count: c.processes?.length || 0,
         display_id: String(c.seq_id || 0).padStart(6, '0') 
       }));
       setContracts(formatted);
     }
     if (partnersRes.data) setPartners(partnersRes.data);
-    if (analystsRes.data) setAnalysts(analystsRes.data);
+    if (analystsRes.data) setAnalysts(analystsRes.data as Analyst[]);
     setLoading(false);
   };
 
@@ -261,9 +246,9 @@ export function Contracts() {
   };
 
   const handleNotificationClick = (taskId: string) => {
-    navigate('/kanban', { state: { openTaskId: taskId } });
+    toast.info('Navegação para Kanban não disponível nesta versão');
   };
-
+  
   const handleNew = () => {
     if (userRole === 'viewer') return toast.error("Sem permissão para criar.");
     setFormData(emptyContract);
@@ -384,7 +369,6 @@ export function Contracts() {
   const filteredContracts = contracts.filter((c: Contract) => {
     const term = searchTerm.toLowerCase();
     
-    // Busca abrangente em todos os campos relevantes
     const matchesSearch = 
       c.client_name?.toLowerCase().includes(term) ||
       c.hon_number?.toLowerCase().includes(term) ||
@@ -394,7 +378,6 @@ export function Contracts() {
       c.reference?.toLowerCase().includes(term) ||
       c.partner_name?.toLowerCase().includes(term) ||
       c.analyzed_by_name?.toLowerCase().includes(term) ||
-      // Busca profunda nos processos vinculados
       (c.processes && c.processes.some(p => 
         p.process_number.toLowerCase().includes(term) ||
         p.author?.toLowerCase().includes(term) ||
@@ -445,7 +428,6 @@ export function Contracts() {
   });
 
   const exportToExcel = () => {
-    // 1. Calcular Totais
     let sumPro = 0;
     let sumOther = 0;
     let sumFixed = 0;
@@ -453,7 +435,6 @@ export function Contracts() {
     let sumFinal = 0;
     let sumTotalSuccess = 0;
 
-    // 2. Preparar Dados
     const header = [
         'ID', 'Status', 'Cliente', 'Sócio', 'HON', 'Data Relevante', 'Local Faturamento',
         'Pró-Labore', 'Cláusula Pró-Labore',
@@ -472,7 +453,6 @@ export function Contracts() {
         const vFixed = parseCurrency(c.fixed_monthly_fee);
         const vFinal = parseCurrency(c.final_success_fee);
 
-        // Calcula total de intermediários
         let vInter = 0;
         if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
              c.intermediate_fees.forEach((f: string) => vInter += parseCurrency(f));
@@ -480,7 +460,6 @@ export function Contracts() {
 
         const vTotalSuccess = calculateTotalSuccess(c);
 
-        // Acumula
         sumPro += vPro;
         sumOther += vOther;
         sumFixed += vFixed;
@@ -488,7 +467,6 @@ export function Contracts() {
         sumFinal += vFinal;
         sumTotalSuccess += vTotalSuccess;
 
-        // Linha Principal
         rows.push([
           c.display_id,
           getStatusLabel(c.status),
@@ -511,7 +489,6 @@ export function Contracts() {
           c.observations || '-' 
         ]);
 
-        // Linhas Extras para Cláusulas Detalhadas
         const clauses: {type: string, text: string}[] = [];
         
         if((c as any).pro_labore_extras_clauses && Array.isArray((c as any).pro_labore_extras_clauses)) {
@@ -538,7 +515,6 @@ export function Contracts() {
         });
     });
 
-    // 3. Adicionar Linha de Totais
     const totalRow = [
         'TOTAIS', '', '', '', '', '', '',
         sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalSuccess, ''
@@ -546,10 +522,8 @@ export function Contracts() {
 
     const dataWithHeader = [header, ...rows, [], totalRow];
 
-    // 4. Criar planilha
     const ws = XLSX.utils.aoa_to_sheet(dataWithHeader);
 
-    // 5. Formatação de Células (Moeda)
     const currencyFormat = '"R$" #,##0.00';
     const range = XLSX.utils.decode_range(ws['!ref']!);
     const moneyCols = [7, 9, 11, 13, 15, 17];
@@ -564,7 +538,6 @@ export function Contracts() {
         });
     }
 
-    // 6. Gerar arquivo
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Contratos");
     
@@ -604,7 +577,6 @@ export function Contracts() {
   return (
     <div className="p-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        {/* Esquerda: Título */}
         <div>
           <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
             <FileSignature className="w-8 h-8" /> Casos
@@ -614,7 +586,6 @@ export function Contracts() {
           </div>
         </div>
 
-        {/* Direita: Filtros de Status/Sócio, Botão Novo, Notificações */}
         <div className="flex flex-wrap items-center gap-2">
            <FilterSelect
               icon={Filter}
@@ -632,14 +603,12 @@ export function Contracts() {
               placeholder="Sócios"
             />
 
-          {/* Botão Novo Caso */}
           {userRole !== 'viewer' && (
             <button onClick={handleNew} className="bg-salomao-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold h-[40px] whitespace-nowrap">
                 <Plus className="w-5 h-5 mr-2" /> Novo Caso
             </button>
           )}
 
-          {/* Notificações */}
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
@@ -686,10 +655,8 @@ export function Contracts() {
         </div>
       </div>
 
-      {/* Barra de Controles Inferior (Card Total + Ferramentas) */}
       <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm items-center justify-between">
         
-        {/* Esquerda: Card de Total (FIXO) */}
         <div className="flex items-center gap-3 pr-4 border-r border-gray-100 mr-2 min-w-[200px]">
             <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                 <Briefcase className="w-5 h-5" />
@@ -700,10 +667,8 @@ export function Contracts() {
             </div>
         </div>
 
-        {/* Grupo da Direita: Busca Animada, Datas, Ações */}
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end flex-1">
             
-            {/* Busca Animada Expandível */}
             <div 
               ref={searchRef}
               className={`
@@ -734,10 +699,8 @@ export function Contracts() {
                 )}
             </div>
 
-            {/* Separador Visual */}
             <div className="h-6 w-px bg-gray-200 mx-1 hidden md:block"></div>
 
-            {/* Filtros de Data */}
             <div className="flex items-center gap-2">
               <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
                  <span className="text-xs text-gray-400 mr-2">De</span>
@@ -759,7 +722,6 @@ export function Contracts() {
               </div>
             </div>
 
-            {/* Ordenação */}
             <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200 h-[42px] items-center">
                 <button
                   onClick={() => { if(sortBy !== 'name') { setSortBy('name'); setSortOrder('asc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
@@ -779,18 +741,15 @@ export function Contracts() {
                 </button>
             </div>
 
-            {/* Visualização */}
             <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200 h-[42px] items-center">
                 <button onClick={() => setViewMode('grid')} className={`p-1.5 h-full flex items-center rounded ${viewMode === 'grid' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
                 <button onClick={() => setViewMode('list')} className={`p-1.5 h-full flex items-center rounded ${viewMode === 'list' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
             </div>
 
-             {/* Exportar */}
              <button onClick={exportToExcel} className="flex items-center px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium whitespace-nowrap h-[42px]">
                 <Download className="w-4 h-4 mr-2" /> XLS
               </button>
 
-             {/* Limpar (se houver filtros) */}
              {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
@@ -919,15 +878,12 @@ export function Contracts() {
                       </td>
                       <td className="p-3 text-right">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {/* Visualizar: Todos */}
                             <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="text-gray-500 hover:bg-gray-100 p-1 rounded"><Eye className="w-4 h-4" /></button>
                             
-                            {/* Editar: Admin ou Editor */}
                             {userRole !== 'viewer' && (
                                 <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Edit className="w-4 h-4" /></button>
                             )}
                             
-                            {/* Excluir: Apenas Admin */}
                             {userRole === 'admin' && (
                                 <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 className="w-4 h-4" /></button>
                             )}
@@ -942,7 +898,6 @@ export function Contracts() {
         </>
       )}
 
-      {/* --- CONFIRMATION MODAL --- */}
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
@@ -959,7 +914,6 @@ export function Contracts() {
         onDelete={handleDelete}
         processes={processes}
         documents={(formData as any).documents}
-        // Novo: Prop para controlar se botões de ação aparecem no modal
         canEdit={userRole !== 'viewer'}
         canDelete={userRole === 'admin'}
       />
