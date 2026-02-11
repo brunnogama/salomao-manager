@@ -115,6 +115,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             ...prev,
             endereco: toTitleCase(data.logradouro),
             bairro: toTitleCase(data.bairro),
+            city: toTitleCase(data.localidade), // city mapeado para cidade se necessário
             cidade: toTitleCase(data.localidade),
             estado: estadoEncontrado ? estadoEncontrado.nome : data.uf
           })) 
@@ -227,7 +228,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       nome: toTitleCase(formData.nome || ''),
       email: formData.email?.toLowerCase(),
       endereco: toTitleCase(formData.endereco || ''),
-      complemento: toTitleCase(formData.complemento || ''),
+      complement: toTitleCase(formData.complemento || ''),
       bairro: toTitleCase(formData.bairro || ''),
       cidade: toTitleCase(formData.cidade || ''),
       lider_equipe: toTitleCase(formData.lider_equipe || ''),
@@ -551,8 +552,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   </div>
                   <div className="space-y-6">
                     <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Corporativo</h3>
-                    <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
                     <div className="grid grid-cols-2 gap-4">
+                      <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
                       <DetailRow label="Equipe" value={selectedColaborador.equipe} />
                       <DetailRow label="Cargo" value={selectedColaborador.cargo} />
                       <DetailRow label="Local" value={selectedColaborador.local} icon={Building2} />

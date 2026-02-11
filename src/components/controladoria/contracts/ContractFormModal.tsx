@@ -1,3 +1,5 @@
+// brunnogama/salomao-manager/salomao-manager-3e743876de4fb5af74c8aedf5b89ce1e3913c795/src/components/controladoria/contracts/ContractFormModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { 
@@ -594,7 +596,7 @@ export function ContractFormModal(props: Props) {
     if (!currentProcess.process_number) return;
     const numeroLimpo = currentProcess.process_number.replace(/\D/g, '');
     if (numeroLimpo.length !== 20) return alert('Número de processo inválido. Deve ter 20 dígitos.');
-    setSearchingCNJ(true);
+    searchingCNJ && setSearchingCNJ(true);
     try {
       const decoded = decodeCNJ(numeroLimpo);
       if (!decoded) throw new Error('Não foi possível decodificar o número do processo');
@@ -692,7 +694,6 @@ export function ContractFormModal(props: Props) {
           <button onClick={onClose}><X className="w-6 h-6 text-gray-400" /></button>
         </div>
 
-        {/* Removida a classe overflow-y-auto do container pai para evitar o corte dos dropdowns */}
         <div className="flex-1 p-8 space-y-8 overflow-y-auto overflow-x-visible">
             
             <div className="flex items-center justify-between w-full mb-8 px-4 relative">
@@ -795,7 +796,6 @@ export function ContractFormModal(props: Props) {
 
             {activeTab === 3 && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-left-2 duration-200 overflow-visible">
-                    {/* section com overflow-visible para os menus de busca */}
                     <section className="space-y-4 bg-white/60 p-5 rounded-xl border border-white/40 shadow-sm backdrop-blur-sm relative z-30 overflow-visible">
                         <h3 className="text-lg font-semibold text-gray-700 mb-2">Casos</h3>
                         
@@ -882,7 +882,7 @@ export function ContractFormModal(props: Props) {
          <OptionManager 
            title={activeManager === 'area' ? "Gerenciar Áreas" : activeManager === 'position' ? "Gerenciar Posições" : activeManager === 'court' ? "Gerenciar Tribunais" : activeManager === 'vara' ? "Gerenciar Varas" : activeManager === 'comarca' ? "Gerenciar Comarcas" : activeManager === 'class' ? "Gerenciar Classes" : activeManager === 'subject' ? "Gerenciar Assuntos" : activeManager === 'justice' ? "Gerenciar Justiças" : activeManager === 'magistrate' ? "Gerenciar Magistrados" : activeManager === 'opponent' ? "Gerenciar Contrário" : activeManager === 'author' ? "Gerenciar Autores" : activeManager === 'location' ? "Gerenciar Locais de Faturamento" : activeManager === 'client' ? "Gerenciar Clientes" : "Gerenciar"}
            options={activeManager === 'area' ? options.legalAreas : activeManager === 'position' ? options.positionsList : activeManager === 'court' ? options.courtOptions : activeManager === 'vara' ? options.varaOptions : activeManager === 'comarca' ? options.comarcaOptions : activeManager === 'class' ? options.classOptions : activeManager === 'subject' ? options.subjectOptions : activeManager === 'justice' ? options.justiceOptions : activeManager === 'magistrate' ? options.magistrateOptions : activeManager === 'opponent' ? options.opponentOptions : activeManager === 'author' ? options.authorOptions : activeManager === 'location' ? options.billingLocations : activeManager === 'client' ? options.clientOptions : []}
-           onAdd={(v) => options.handleGenericAdd(v, { title: newMagistrateTitle, setNewSubject, setNewMagistrateName })}
+           onAdd={(v) => options.handleGenericAdd(v, { title: (formData as any).newMagistrateTitle, setNewSubject, setNewMagistrateName })}
            onRemove={options.handleGenericRemove}
            onEdit={options.handleGenericEdit}
            onClose={() => setActiveManager(null)}

@@ -1,3 +1,5 @@
+// brunnogama/salomao-manager/salomao-manager-3e743876de4fb5af74c8aedf5b89ce1e3913c795/src/components/controladoria/clients/ClientFormModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import { X, Save, Search, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
@@ -66,7 +68,12 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
   }, [formData.name, client?.id]);
 
   const fetchPartners = async () => {
-    const { data } = await supabase.from('partners').select('*').eq('active', true).order('name');
+    // Busca na tabela partners utilizando o novo padrão de status
+    const { data } = await supabase
+      .from('partners')
+      .select('*')
+      .eq('status', 'active')
+      .order('name');
     if (data) setPartners(data);
   };
 

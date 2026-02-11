@@ -1,14 +1,38 @@
+// brunnogama/salomao-manager/salomao-manager-3e743876de4fb5af74c8aedf5b89ce1e3913c795/src/types/controladoria.ts
+
 // Types da Controladoria - Integrados ao Manager
 
 export interface Partner {
   id: string;
-  name: string;
-  active: boolean;
+  name: string; // Centralizado (antigo socio_responsavel/nome)
   email?: string;
   phone?: string;
+  active: boolean; // Mapeado para 'status' no banco (active/inactive)
+  weekly_goal?: number;
+  cpf?: string;
+  birthday?: string;
+  gender?: string;
+  photo_url?: string;
+  
+  // Endereço
+  zip_code?: string;
+  address?: string;
+  address_number?: string;
+  address_complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  
+  // Profissional
+  oab_number?: string;
+  oab_state?: string;
+  oab_expiration?: string;
+  hire_date?: string;
+  termination_date?: string;
+  
   created_at?: string;
+  updated_at?: string;
 }
-
 export interface Analyst {
   id: string;
   name: string;

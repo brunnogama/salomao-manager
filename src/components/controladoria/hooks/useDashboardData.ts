@@ -1,3 +1,5 @@
+// brunnogama/salomao-manager/salomao-manager-3e743876de4fb5af74c8aedf5b89ce1e3913c795/src/components/controladoria/hooks/useDashboardData.ts
+
 import { useState, useEffect, useMemo } from 'react';
 import { contractService } from '../services/contractService';
 import { partnerService } from '../services/partnerService';
@@ -116,8 +118,8 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const periodoAnteriorStr = `${formatDateShort(primeiroDiaMesAnterior)} - ${formatDateShort(diaLimiteMesAnterior)}`;
     // -------------------------------------
 
-    const partnerMap = partners.reduce((acc: any, s: any) => {
-        acc[s.id] = s.name;
+    const partnerMap = partners.reduce((acc: any, s: Partner) => {
+        acc[s.id] = s.name; // Atualizado para usar s.name
         return acc;
     }, {});
 
@@ -197,8 +199,6 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       if (c.final_success_extras && Array.isArray(c.final_success_extras)) exito += c.final_success_extras.reduce((acc, val) => acc + safeParseMoney(val), 0);
       if (c.fixed_monthly_extras && Array.isArray(c.fixed_monthly_extras)) mensal += c.fixed_monthly_extras.reduce((acc, val) => acc + safeParseMoney(val), 0);
       if (c.other_fees_extras && Array.isArray(c.other_fees_extras)) outros += c.other_fees_extras.reduce((acc, val) => acc + safeParseMoney(val), 0);
-      
-      // IMPORTANTE: NÃO somamos mais 'outros' ao 'pl'. Mantemos separados.
       
       // Extras Intermediários somam ao Êxito
       if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) exito += c.intermediate_fees.reduce((acc, val) => acc + safeParseMoney(val), 0);
@@ -370,7 +370,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       // Funil
       fTotal++;
       const chegouEmProposta = c.status === 'proposal' || c.status === 'active' || (c.status === 'rejected' && c.proposal_date);
-      if (chehouEmProposta) fQualificados++;
+      if (chegouEmProposta) fQualificados++;
       if (c.status === 'active') fFechados++;
       else if (c.status === 'rejected') c.proposal_date ? fPerdaNegociacao++ : fPerdaAnalise++;
     });

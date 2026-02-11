@@ -1,3 +1,5 @@
+// brunnogama/salomao-manager/salomao-manager-3e743876de4fb5af74c8aedf5b89ce1e3913c795/src/components/controladoria/partners/PartnerManagerModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Edit, Save, Check } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
@@ -55,7 +57,7 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
                 .insert([{ 
                     name: formData.name.trim(), 
                     email: formData.email.trim(),
-                    active: true 
+                    status: 'active' 
                 }])
                 .select()
                 .single();
@@ -92,7 +94,8 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
 
   const handleToggleActive = async (partner: Partner) => {
     try {
-        await supabase.from('partners').update({ active: !partner.active }).eq('id', partner.id);
+        const newStatus = partner.active ? 'inactive' : 'active';
+        await supabase.from('partners').update({ status: newStatus }).eq('id', partner.id);
         fetchPartners();
         if (onUpdate) onUpdate();
     } catch (error) {
