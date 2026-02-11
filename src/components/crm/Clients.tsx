@@ -55,6 +55,7 @@ export function Clients({
   const [filterBrinde, setFilterBrinde] = useState<string>('')
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest')
 
+  // Ajustado para garantir que os sócios disponíveis no filtro venham da lista carregada de clientes
   const availableSocios = useMemo(() => 
     Array.from(new Set(clients.map(c => c.socio).filter(Boolean))).sort(), [clients]
   )
