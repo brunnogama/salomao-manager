@@ -385,10 +385,17 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 placeholder="Cargos" 
                 value={filterCargo} 
                 onChange={setFilterCargo} 
-                options={Array.from(new Set(colaboradores.map(c => c.role).filter(Boolean))).map(role => ({ name: toTitleCase(role!) }))} 
+                table="roles" 
               />
             </div>
-            <div className="w-44"><SearchableSelect placeholder="Locais" value={filterLocal} onChange={setFilterLocal} table="opcoes_locais" nameField="nome" /></div>
+            <div className="w-44">
+              <SearchableSelect 
+                placeholder="Locais" 
+                value={filterLocal} 
+                onChange={setFilterLocal} 
+                table="locations" 
+              />
+            </div>
           </div>
           <button 
             onClick={handleOpenNewForm} 
@@ -612,7 +619,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 relative">
                     <div className="flex flex-col md:flex-row items-end gap-4">
                       <div className="flex-1 w-full relative z-[110]">
-                        <SearchableSelect label="Tipo de Documento" placeholder="Selecione ou gerencie..." value={selectedGedCategory} onChange={setSelectedGedCategory} table="opcoes_ged_colaboradores" onRefresh={handleRefresh} />
+                        <SearchableSelect label="Tipo de Documento" placeholder="Selecione ou gerencie..." value={selectedGedCategory} onChange={setSelectedGedCategory} table="ged_categories" onRefresh={handleRefresh} />
                       </div>
                       <div className="shrink-0 w-full md:w-auto">
                         <input type="file" hidden ref={gedInputRef} accept=".pdf,image/*" onChange={handleGedUpload} />
