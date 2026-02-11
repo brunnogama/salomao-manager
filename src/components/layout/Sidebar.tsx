@@ -14,7 +14,7 @@ import {
   LogOut,
   Share2,
   X 
-} from 'lucide-center';
+} from 'lucide-react'; // Corrigido de lucide-center para lucide-react
 import { supabase } from '../../lib/supabase';
 
 interface SidebarProps {
