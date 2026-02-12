@@ -3,8 +3,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserMinus, CheckCircle, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2, Link as LinkIcon,
-  Grid, LogOut, UserCircle, GraduationCap, Briefcase, Files, History, User, Check, BookOpen, AlertCircle
+  Grid, LogOut, UserCircle, GraduationCap, Briefcase, Files, History, User, Check, BookOpen, AlertCircle, FileSpreadsheet
 } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { Collaborator, Partner } from '../../../types/controladoria'
@@ -363,6 +364,24 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     const matchCargo = filterCargo ? String(c.role) === filterCargo : true
     return matchSearch && matchLider && matchPartner && matchLocal && matchCargo
   })
+
+  const handleExportXLSX = () => {
+    const dataToExport = filtered.map(c => ({
+      Nome: c.name,
+      'Email Corporativo': c.email,
+      CPF: c.cpf,
+      Cargo: (c as any).roles?.name || c.role,
+      Equipe: (c as any).teams?.name || c.equipe,
+      Local: (c as any).locations?.name || c.local,
+      Status: c.status === 'active' ? 'Ativo' : 'Inativo',
+      Admissão: formatDateDisplay(c.hire_date)
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Colaboradores");
+    XLSX.writeFile(wb, "colaboradores_export.xlsx");
+  };
 
   // LAYOUT FUNCTIONS
   const renderModalContent = (activeTab: number, isViewMode: boolean, data: Partial<Collaborator>) => {
@@ -769,8 +788,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
 
-      {/* PAGE HEADER COMPLETO - Título + User Info */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
+      {/* PAGE HEADER COMPLETO - Título + Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
         {/* Left: Título e Ícone */}
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
@@ -786,42 +805,35 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           </div>
         </div>
 
-        {/* Right: User Info & Actions */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && (
-            <button
-              onClick={onModuleHome}
-              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
-              title="Voltar aos módulos"
-            >
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-              title="Sair"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
+        {/* Right: Actions */}
+        <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0">
+          <button
+            onClick={handleExportXLSX}
+            className="flex items-center gap-2 px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 whitespace-nowrap"
+          >
+            <FileSpreadsheet className="h-4 w-4" /> Exportar XLSX
+          </button>
+
+          <button
+            onClick={() => {
+              setFormData({ status: 'active', state: '' })
+              setPhotoPreview(null)
+              setActiveFormTab(1)
+              setShowFormModal(true)
+            }}
+            className="flex items-center gap-2 px-5 py-3 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 whitespace-nowrap"
+          >
+            <Plus className="h-4 w-4" /> Novo Colaborador
+          </button>
         </div>
       </div>
 
-      {/* CONTROLS CARD - Search | Filters | Action */}
+      {/* CONTROLS CARD - Search | Filters */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
         <div className="flex flex-col xl:flex-row items-center gap-4">
 
-          {/* Search Bar - Fixed width */}
-          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full xl:w-72 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+          {/* Search Bar - Expanded */}
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 flex-1 w-full focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
             <Search className="h-4 w-4 text-gray-400 mr-3" />
             <input
               type="text"
@@ -832,8 +844,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             />
           </div>
 
-          {/* Filters Row - Grows */}
-          <div className="flex items-center gap-2 flex-1 overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
+          {/* Filters Row */}
+          <div className="flex items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
             <SearchableSelect
               label=""
               placeholder="Líder"
@@ -841,7 +853,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               onChange={setFilterLider}
               table="collaborators"
               options={colaboradores.map(c => ({ id: c.id, name: c.name }))}
-              className="min-w-[200px]"
+              className="min-w-[150px]"
             />
             <SearchableSelect
               label=""
@@ -849,7 +861,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               value={filterPartner}
               onChange={setFilterPartner}
               table="partners"
-              className="min-w-[200px]"
+              className="min-w-[150px]"
             />
             <SearchableSelect
               label=""
@@ -857,7 +869,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               value={filterLocal}
               onChange={setFilterLocal}
               table="locations"
-              className="min-w-[200px]"
+              className="min-w-[150px]"
             />
             <SearchableSelect
               label=""
@@ -865,22 +877,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               value={filterCargo}
               onChange={setFilterCargo}
               table="roles"
-              className="min-w-[200px]"
+              className="min-w-[150px]"
             />
           </div>
-
-          {/* Action Button */}
-          <button
-            onClick={() => {
-              setFormData({ status: 'active', state: '' })
-              setPhotoPreview(null)
-              setActiveFormTab(1)
-              setShowFormModal(true)
-            }}
-            className="bg-[#1e3a8a] hover:bg-[#112240] text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap shrink-0"
-          >
-            <Plus className="h-4 w-4" /> Novo Colaborador
-          </button>
         </div>
       </div>
 
