@@ -242,7 +242,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     } catch (error) { alert('Erro ao excluir documento.') }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (closeModal = true) => {
     if (!formData.name) return alert('Nome obrigatório')
 
     const toISO = (s?: string) => {
@@ -289,8 +289,21 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       ? await supabase.from('collaborators').update(payload).eq('id', formData.id)
       : await supabase.from('collaborators').insert(payload)
 
-    if (error) alert(error.message)
-    else { setShowFormModal(false); fetchColaboradores(); setPhotoPreview(null); }
+    if (error) {
+      alert(error.message)
+    } else {
+      fetchColaboradores()
+      if (closeModal) {
+        setShowFormModal(false)
+        setPhotoPreview(null)
+      } else {
+        setFormData({ status: 'active', state: 'Rio de Janeiro' })
+        setPhotoPreview(null)
+        if (photoInputRef.current) photoInputRef.current.value = ''
+        // Optional: Scroll to top of form
+        document.querySelector('.custom-scrollbar')?.scrollTo(0, 0)
+      }
+    }
   }
 
   const handleDelete = async (id: string) => {
@@ -440,7 +453,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab('dados'); }} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <Avatar src={c.photo_url} name={c.name} />
+                      <Avatar src={c.photo_url} name={c.name} onImageClick={() => c.photo_url && setViewingPhoto(c.photo_url)} />
                       <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
                     </div>
                   </td>
@@ -497,50 +510,55 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
             {/* Body */}
             <div className="px-8 py-6 overflow-y-auto custom-scrollbar flex-1">
-              <div className="space-y-8">
-                {/* Photo Upload */}
-                <PhotoUploadSection
-                  photoPreview={photoPreview}
-                  uploadingPhoto={uploadingPhoto}
-                  photoInputRef={photoInputRef}
-                  setPhotoPreview={setPhotoPreview}
-                />
+              <div className="space-y-6">
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                  <div className="space-y-8">
-                    {/* Dados Pessoais */}
+                {/* Header Row: Photo + Personal Data */}
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  {/* Photo - Compact */}
+                  <div className="shrink-0 flex justify-center md:justify-start pt-2">
+                    <PhotoUploadSection
+                      photoPreview={photoPreview}
+                      uploadingPhoto={uploadingPhoto}
+                      photoInputRef={photoInputRef}
+                      setPhotoPreview={setPhotoPreview}
+                    />
+                  </div>
+
+                  {/* Personal Data - Expands */}
+                  <div className="flex-1 w-full">
                     <DadosPessoaisSection
                       formData={formData}
                       setFormData={setFormData}
                       maskCPF={maskCPF}
                       maskDate={maskDate}
                     />
-
-                    {/* Endereço */}
-                    <EnderecoSection
-                      formData={formData}
-                      setFormData={setFormData}
-                      maskCEP={maskCEP}
-                      handleCepBlur={handleCepBlur}
-                    />
                   </div>
+                </div>
 
-                  <div className="space-y-8">
-                    {/* Informações Profissionais (OAB) */}
-                    <InformacoesProfissionaisSection
-                      formData={formData}
-                      setFormData={setFormData}
-                      maskDate={maskDate}
-                    />
+                {/* Address Section */}
+                <EnderecoSection
+                  formData={formData}
+                  setFormData={setFormData}
+                  maskCEP={maskCEP}
+                  handleCepBlur={handleCepBlur}
+                />
 
-                    {/* Dados Corporativos */}
-                    <DadosCorporativosSection
-                      formData={formData}
-                      setFormData={setFormData}
-                      maskDate={maskDate}
-                      handleRefresh={handleRefresh}
-                    />
-                  </div>
+                {/* Professional & Corporate Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Informações Profissionais (OAB, CTPS, PIS) */}
+                  <InformacoesProfissionaisSection
+                    formData={formData}
+                    setFormData={setFormData}
+                    maskDate={maskDate}
+                  />
+
+                  {/* Dados Corporativos */}
+                  <DadosCorporativosSection
+                    formData={formData}
+                    setFormData={setFormData}
+                    maskDate={maskDate}
+                    handleRefresh={handleRefresh}
+                  />
                 </div>
               </div>
             </div>
@@ -559,6 +577,12 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               >
                 <Save className="h-4 w-4" /> Salvar
               </button>
+              <button
+                onClick={() => handleSave(false)}
+                className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 hover:bg-[#112240]"
+              >
+                <Plus className="h-4 w-4" /> Salvar e Novo
+              </button>
             </div>
           </div>
         </div>
@@ -573,7 +597,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               {/* Header */}
               <div className="px-8 py-5 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-[2rem]">
                 <div className="flex items-center gap-4">
-                  <Avatar src={selectedColaborador.photo_url} name={selectedColaborador.name} size="lg" />
+                  <Avatar src={selectedColaborador.photo_url} name={selectedColaborador.name} size="lg" onImageClick={() => selectedColaborador.photo_url && setViewingPhoto(selectedColaborador.photo_url)} />
                   <div>
                     <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">{toTitleCase(selectedColaborador.name)}</h2>
                     <p className="text-sm text-gray-500 font-semibold">
@@ -704,16 +728,26 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           </div>
         )
       }
-    </div >
+      {viewingPhoto && (
+        <div className="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setViewingPhoto(null)}>
+          <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors" onClick={() => setViewingPhoto(null)}>
+            <X className="h-8 w-8" />
+          </button>
+          <img src={viewingPhoto} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default" onClick={e => e.stopPropagation()} alt="Visualização" />
+        </div>
+      )}
+    </div>
   )
 }
 
 // --- SUB-COMPONENTS ---
 // --- SUB-COMPONENTS ---
 
-function Avatar({ src, name, size = 'sm' }: any) {
+function Avatar({ src, name, size = 'sm', onImageClick }: any) {
   const sz = size === 'lg' ? 'w-20 h-20 text-xl' : 'w-10 h-10 text-sm'
-  if (src) return <img src={src} className={`${sz} rounded-full object-cover border-2 border-white shadow-sm`} alt={name} />
+  const clickableClass = onImageClick && src ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
+
+  if (src) return <img src={src} onClick={onImageClick} className={`${sz} rounded-full object-cover border-2 border-white shadow-sm ${clickableClass}`} alt={name} />
   return (
     <div className={`${sz} rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center font-black text-white shadow-md`}>
       {name?.charAt(0).toUpperCase()}

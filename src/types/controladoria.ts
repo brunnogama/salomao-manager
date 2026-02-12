@@ -63,6 +63,14 @@ export interface Collaborator {
   oab_numero?: string;
   oab_uf?: string;
   oab_vencimento?: string;
+
+  // Novos campos
+  ctps_numero?: string;
+  ctps_serie?: string;
+  ctps_uf?: string;
+  pis_pasep?: string;
+  dispensa_militar?: string;
+
   local?: string;
   locations?: { name: string }; // Joined field
   equipe?: string;
