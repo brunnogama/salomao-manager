@@ -11,6 +11,8 @@ interface DashboardHeaderProps {
   locationsList: string[];
   exporting: boolean;
   onExport: () => void;
+  hideTitle?: boolean;
+  className?: string;
 }
 
 export function DashboardHeader({
@@ -22,30 +24,34 @@ export function DashboardHeader({
   setSelectedLocation,
   locationsList,
   exporting,
-  onExport
+  onExport,
+  hideTitle = false,
+  className = ""
 }: DashboardHeaderProps) {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6">
+    <div className={`bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 ${className}`}>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        
+
         {/* Título e Subtítulo */}
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
-              <LayoutDashboard className="w-6 h-6" />
+        {!hideTitle && (
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+                <LayoutDashboard className="w-6 h-6" />
+              </div>
+              <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight">
+                Controladoria Jurídica
+              </h1>
             </div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight">
-              Controladoria Jurídica
-            </h1>
+            <p className="text-sm font-semibold text-gray-500 ml-[52px]">
+              Visão estratégica de contratos e resultados
+            </p>
           </div>
-          <p className="text-sm font-semibold text-gray-500 ml-[52px]">
-            Visão estratégica de contratos e resultados
-          </p>
-        </div>
+        )}
 
         {/* Filtros e Botão de Exportar */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          
+
           {/* Filtro de Sócio */}
           <div className="relative min-w-[200px]" id="dashboard-filters">
             <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />

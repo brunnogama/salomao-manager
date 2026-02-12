@@ -2,15 +2,15 @@ import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { supabase } from '../../../lib/supabase';
-import { 
-  Loader2, 
-  TrendingUp, 
-  FileText, 
-  DollarSign, 
-  Users, 
-  Plane, 
-  UserCircle, 
-  LogOut, 
+import {
+  Loader2,
+  TrendingUp,
+  FileText,
+  DollarSign,
+  Users,
+  Plane,
+  UserCircle,
+  LogOut,
   Grid,
   LayoutDashboard
 } from 'lucide-react';
@@ -45,7 +45,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
   // --- NOVOS ESTADOS PARA FUNCIONALIDADES DA CONTROLADORIA ---
   const [selectedPartner, setSelectedPartner] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
-  const [partnersList, setPartnersList] = useState<{id: string, name: string}[]>([]);
+  const [partnersList, setPartnersList] = useState<{ id: string, name: string }[]>([]);
   const [locationsList, setLocationsList] = useState<string[]>([]);
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -116,7 +116,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
       });
       const imgData = canvas.toDataURL('image/png');
       const dateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-      
+
       const link = document.createElement('a');
       link.href = imgData;
       link.download = `Relatorio_Controladoria_${dateStr}.png`;
@@ -147,7 +147,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
-      
+
       {/* 1. Header - Salomão Design System */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -162,7 +162,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
 
         <div className="flex items-center gap-3">
           {/* Integração dos Filtros no Header */}
-          <DashboardHeader 
+          <DashboardHeader
             userRole={userRole}
             selectedPartner={selectedPartner}
             setSelectedPartner={setSelectedPartner}
@@ -172,6 +172,8 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
             locationsList={locationsList}
             exporting={exporting}
             onExport={handleExportAndEmail}
+            hideTitle={true}
+            className="!p-0 !border-0 !shadow-none !bg-transparent"
           />
 
           <div className="hidden md:flex flex-col items-end mr-2">
@@ -266,7 +268,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
           <WeeklySummary metrics={metrics} />
           <MonthlySummary metrics={metrics} />
         </div>
-        <EvolutionCharts 
+        <EvolutionCharts
           evolucaoMensal={evolucaoMensal}
           propostas12Meses={propostas12Meses}
           financeiro12Meses={financeiro12Meses}
