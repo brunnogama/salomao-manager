@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserMinus, CheckCircle, UserX,
-  Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
-  Grid, LogOut, UserCircle, GraduationCap
+  Calendar, Building2, Mail, FileText, ExternalLink, Loader2, Link as LinkIcon,
+  Grid, LogOut, UserCircle, GraduationCap, Briefcase, Files, History, User, Check
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { SearchableSelect } from '../../crm/SearchableSelect'
@@ -49,7 +49,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
-  const [activeDetailTab, setActiveDetailTab] = useState<'dados' | 'ged'>('dados')
+  const [activeDetailTab, setActiveDetailTab] = useState(1)
+  const [activeFormTab, setActiveFormTab] = useState(1)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLider, setFilterLider] = useState('')
@@ -58,6 +59,14 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const [filterCargo, setFilterCargo] = useState('')
 
   const [formData, setFormData] = useState<Partial<Collaborator>>({ status: 'active', state: 'Rio de Janeiro' })
+
+  const formSteps = [
+    { id: 1, label: 'Dados Pessoais', icon: User },
+    { id: 2, label: 'Dados Profissionais', icon: GraduationCap },
+    { id: 3, label: 'Dados Corporativos', icon: Briefcase },
+    { id: 4, label: 'Histórico', icon: History },
+    { id: 5, label: 'GED', icon: Files }
+  ]
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -88,7 +97,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   }, [viewingPhoto, showFormModal, selectedColaborador])
 
   useEffect(() => {
-    if (selectedColaborador && activeDetailTab === 'ged') {
+    if (selectedColaborador && activeDetailTab === 5) {
       fetchGedDocs(selectedColaborador.id)
     }
   }, [selectedColaborador, activeDetailTab])
@@ -370,6 +379,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       oab_vencimento: fmt(colab.oab_vencimento)
     })
     setPhotoPreview(colab.photo_url || null)
+    setActiveFormTab(1)
     setShowFormModal(true)
     setSelectedColaborador(null)
   }
@@ -377,6 +387,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const handleOpenNewForm = () => {
     setFormData({ status: 'active', state: 'Rio de Janeiro' })
     setPhotoPreview(null)
+    setActiveFormTab(1)
     setShowFormModal(true)
   }
 
@@ -492,7 +503,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.filter(c => c.status === 'active').map(c => (
-                <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab('dados'); }} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
+                <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab(1); }} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <Avatar src={c.photo_url} name={c.name} onImageClick={() => c.photo_url && setViewingPhoto(c.photo_url)} />
@@ -532,7 +543,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               )}
 
               {filtered.filter(c => c.status !== 'active').map(c => (
-                <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab('dados'); }} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
+                <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab(1); }} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <Avatar src={c.photo_url} name={c.name} onImageClick={() => c.photo_url && setViewingPhoto(c.photo_url)} />
@@ -592,56 +603,114 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
             {/* Body */}
             <div className="px-8 py-6 overflow-y-auto custom-scrollbar flex-1">
-              <div className="space-y-6">
 
-                {/* Header Row: Photo + Personal Data */}
-                <div className="flex flex-col md:flex-row gap-8 items-start">
-                  {/* Photo - Compact */}
-                  <div className="shrink-0 flex justify-center md:justify-start pt-2">
-                    <PhotoUploadSection
-                      photoPreview={photoPreview}
-                      uploadingPhoto={uploadingPhoto}
-                      photoInputRef={photoInputRef}
-                      setPhotoPreview={setPhotoPreview}
-                    />
-                  </div>
+              {/* Stepper / Tabs */}
+              <div className="flex items-center justify-between mb-8 px-2 relative">
+                {/* Progress Bar Background */}
+                <div className="absolute top-5 left-10 right-10 h-0.5 bg-gray-100 -z-0 hidden md:block" />
 
-                  {/* Personal Data - Expands */}
-                  <div className="flex-1 w-full">
-                    <DadosPessoaisSection
+                {formSteps.map((step) => {
+                  const Icon = step.icon
+                  const isActive = activeFormTab === step.id
+                  const isCompleted = activeFormTab > step.id
+
+                  return (
+                    <button
+                      key={step.id}
+                      onClick={() => setActiveFormTab(step.id)}
+                      className={`flex flex-col items-center gap-2 group relative z-10 transition-colors ${isActive ? 'text-[#1e3a8a]' : isCompleted ? 'text-green-600' : 'text-gray-300'}`}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${isActive ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-lg scale-110' : isCompleted ? 'bg-green-50 text-green-600 border-green-200' : 'bg-white border-gray-200 group-hover:border-gray-300'}`}>
+                        {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                      </div>
+                      <span className={`text-[10px] font-black uppercase tracking-wider hidden md:block transition-colors ${isActive ? 'text-[#1e3a8a]' : 'text-gray-400'}`}>
+                        {step.label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="mt-6">
+                {activeFormTab === 1 && (
+                  <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                    <div className="flex flex-col md:flex-row gap-8 items-start">
+                      {/* Photo */}
+                      <div className="shrink-0 flex justify-center md:justify-start pt-2">
+                        <PhotoUploadSection
+                          photoPreview={photoPreview}
+                          uploadingPhoto={uploadingPhoto}
+                          photoInputRef={photoInputRef}
+                          setPhotoPreview={setPhotoPreview}
+                        />
+                      </div>
+                      {/* Personal Data */}
+                      <div className="flex-1 w-full">
+                        <DadosPessoaisSection
+                          formData={formData}
+                          setFormData={setFormData}
+                          maskCPF={maskCPF}
+                          maskDate={maskDate}
+                        />
+                      </div>
+                    </div>
+                    {/* Address */}
+                    <EnderecoSection
                       formData={formData}
                       setFormData={setFormData}
-                      maskCPF={maskCPF}
+                      maskCEP={maskCEP}
+                      handleCepBlur={handleCepBlur}
+                    />
+                  </div>
+                )}
+
+                {activeFormTab === 2 && (
+                  <div className="animate-in slide-in-from-right-4 duration-300">
+                    <InformacoesProfissionaisSection
+                      formData={formData}
+                      setFormData={setFormData}
                       maskDate={maskDate}
                     />
                   </div>
-                </div>
+                )}
 
-                {/* Address Section */}
-                <EnderecoSection
-                  formData={formData}
-                  setFormData={setFormData}
-                  maskCEP={maskCEP}
-                  handleCepBlur={handleCepBlur}
-                />
+                {activeFormTab === 3 && (
+                  <div className="animate-in slide-in-from-right-4 duration-300">
+                    <DadosCorporativosSection
+                      formData={formData}
+                      setFormData={setFormData}
+                      maskDate={maskDate}
+                      handleRefresh={handleRefresh}
+                    />
+                  </div>
+                )}
 
-                {/* Professional & Corporate Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Informações Profissionais (OAB, CTPS, PIS) */}
-                  <InformacoesProfissionaisSection
-                    formData={formData}
-                    setFormData={setFormData}
-                    maskDate={maskDate}
-                  />
+                {activeFormTab === 4 && (
+                  <div className="text-center py-12 text-gray-400 animate-in slide-in-from-right-4 duration-300 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
+                    <History className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <h3 className="text-lg font-bold text-gray-500 mb-1">Histórico do Colaborador</h3>
+                    <p className="text-sm">Registro de alterações, férias e ocorrências.</p>
+                    <p className="text-xs mt-4 py-1 px-3 bg-gray-200 rounded-full inline-block font-bold">Em Breve</p>
+                  </div>
+                )}
 
-                  {/* Dados Corporativos */}
-                  <DadosCorporativosSection
-                    formData={formData}
-                    setFormData={setFormData}
-                    maskDate={maskDate}
-                    handleRefresh={handleRefresh}
-                  />
-                </div>
+                {activeFormTab === 5 && (
+                  <div className="animate-in slide-in-from-right-4 duration-300">
+                    {formData.id ? (
+                      <div className="border-2 border-dashed border-gray-100 rounded-2xl p-8 text-center bg-gray-50/50">
+                        <Files className="h-12 w-12 mx-auto mb-4 text-[#1e3a8a] opacity-50" />
+                        <h3 className="text-lg font-bold text-[#0a192f] mb-2">Gestão de Documentos</h3>
+                        <p className="text-gray-500 text-sm mb-6">Utilize a visualização detalhada do colaborador para gerenciar documentos.</p>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
+                        <Save className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                        <h3 className="text-lg font-bold text-gray-500 mb-1">Salve para habilitar</h3>
+                        <p className="text-sm">Você precisa salvar o colaborador antes de anexar documentos.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -693,62 +762,122 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               </div>
 
               {/* Tabs */}
-              <div className="flex border-b px-8 bg-white shrink-0">
-                <button onClick={() => setActiveDetailTab('dados')} className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors ${activeDetailTab === 'dados' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
-                  Dados Pessoais
-                </button>
-                <button onClick={() => setActiveDetailTab('ged')} className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors flex items-center gap-2 ${activeDetailTab === 'ged' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
-                  <FileText className="h-3.5 w-3.5" /> Documentos
-                </button>
+              <div className="flex border-b px-8 bg-white shrink-0 overflow-x-auto no-scrollbar">
+                {formSteps.map((step) => (
+                  <button
+                    key={step.id}
+                    onClick={() => setActiveDetailTab(step.id)}
+                    className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${activeDetailTab === step.id ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400 hover:text-gray-600'
+                      }`}
+                  >
+                    <step.icon className="h-3.5 w-3.5" />
+                    {step.label}
+                  </button>
+                ))}
               </div>
 
               {/* Body */}
-              <div className={`px-8 py-6 ${activeDetailTab === 'dados' ? 'max-h-[calc(90vh-320px)] overflow-y-auto custom-scrollbar' : ''}`}>
-                {activeDetailTab === 'dados' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className={`px-8 py-6 ${activeDetailTab !== 5 ? 'max-h-[calc(90vh-320px)] overflow-y-auto custom-scrollbar' : ''}`}>
+
+                {/* 1. DADOS PESSOAIS + ENDEREÇO */}
+                {activeDetailTab === 1 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="space-y-6">
-                      <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Pessoal</h3>
+                      <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Informações Pessoais</h3>
                       <div className="grid grid-cols-2 gap-4">
                         <DetailRow label="CPF" value={selectedColaborador.cpf} />
                         <DetailRow label="Nascimento" value={formatDateDisplay(selectedColaborador.birthday)} icon={Calendar} />
                         <DetailRow label="Gênero" value={selectedColaborador.gender} />
-                        <DetailRow label="CEP" value={selectedColaborador.zip_code} />
+                        <DetailRow label="Est. Civil" value={selectedColaborador.civil_status} />
                       </div>
-                      <DetailRow label="Endereço" value={`${selectedColaborador.address || ''}, ${selectedColaborador.address_number || ''} ${selectedColaborador.address_complement ? '- ' + selectedColaborador.address_complement : ''}`} />
+                      <DetailRow label="Nome da Mãe" value={selectedColaborador.mother_name} />
+                      <DetailRow label="Nome do Pai" value={selectedColaborador.father_name} />
+                    </div>
+
+                    <div className="space-y-6">
+                      <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Endereço</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <DetailRow label="CEP" value={selectedColaborador.zip_code} />
+                        <DetailRow label="Estado" value={selectedColaborador.state} />
+                      </div>
+                      <DetailRow label="Logradouro" value={`${selectedColaborador.address || ''}, ${selectedColaborador.address_number || ''}`} />
+                      <DetailRow label="Complemento" value={selectedColaborador.address_complement} />
                       <div className="grid grid-cols-2 gap-4">
                         <DetailRow label="Bairro" value={selectedColaborador.neighborhood} />
-                        <DetailRow label="Cidade/UF" value={`${selectedColaborador.city} - ${selectedColaborador.state}`} />
+                        <DetailRow label="Cidade" value={selectedColaborador.city} />
                       </div>
-                    </div>
-                    <div className="space-y-6">
-                      <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Corporativo</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
-                        <DetailRow label="Sócio Resp." value={(selectedColaborador as any).partner?.name} />
-                        <DetailRow label="Cargo" value={(selectedColaborador as any).roles?.name || selectedColaborador.role} />
-                        <DetailRow label="Local" value={(selectedColaborador as any).locations?.name || selectedColaborador.local} icon={Building2} />
-                        <DetailRow label="Líder" value={(selectedColaborador as any).leader?.name} />
-                        <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.hire_date)} icon={Calendar} />
-                        <DetailRow label="Desligamento" value={formatDateDisplay(selectedColaborador.termination_date)} icon={Calendar} />
-                      </div>
-
-                      {/* Informações Profissionais no Modal */}
-                      {(selectedColaborador.oab_number || selectedColaborador.oab_state || selectedColaborador.oab_vencimento) && (
-                        <>
-                          <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2 mt-6">
-                            < GraduationCap className="h-3.5 w-3.5" /> Profissional
-                          </h3>
-                          <div className="grid grid-cols-2 gap-4">
-                            <DetailRow label="OAB" value={selectedColaborador.oab_numero} />
-                            <DetailRow label="UF OAB" value={selectedColaborador.oab_uf} />
-                            <DetailRow label="Vencimento OAB" value={formatDateDisplay(selectedColaborador.oab_vencimento)} icon={Calendar} />
-                          </div>
-                        </>
-                      )}
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-6">
+                )}
+
+                {/* 2. DADOS PROFISSIONAIS (OAB, CTPS, PIS) */}
+                {activeDetailTab === 2 && (
+                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <div className="space-y-6">
+                        <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Registro Profissional (OAB)</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <DetailRow label="Número OAB" value={selectedColaborador.oab_numero} />
+                          <DetailRow label="Estado OAB" value={selectedColaborador.oab_uf} />
+                          <DetailRow label="Emissão" value={formatDateDisplay(selectedColaborador.oab_emissao)} icon={Calendar} />
+                          <DetailRow label="Vencimento" value={formatDateDisplay(selectedColaborador.oab_vencimento)} icon={Calendar} />
+                        </div>
+                        {selectedColaborador.oab_tipo && <DetailRow label="Tipo de Inscrição" value={selectedColaborador.oab_tipo} />}
+                      </div>
+
+                      <div className="space-y-6">
+                        <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Outros Documentos</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          <DetailRow label="PIS/PASEP" value={selectedColaborador.pis} />
+                          <DetailRow label="CTPS (Carteira de Trabalho)" value={selectedColaborador.ctps} />
+                          <div className="grid grid-cols-2 gap-4">
+                            <DetailRow label="Série CTPS" value={selectedColaborador.ctps_serie} />
+                            <DetailRow label="UF CTPS" value={selectedColaborador.ctps_uf} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Escolaridade place holder if field exists, currently not in type but in form */}
+                  </div>
+                )}
+
+                {/* 3. DADOS CORPORATIVOS */}
+                {activeDetailTab === 3 && (
+                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-6">Informações da Empresa</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+                      <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
+                      <DetailRow label="Cargo" value={(selectedColaborador as any).roles?.name || selectedColaborador.role} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <DetailRow label="Sócio Responsável" value={(selectedColaborador as any).partner?.name} />
+                        <DetailRow label="Líder" value={(selectedColaborador as any).leader?.name} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <DetailRow label="Equipe/Área" value={(selectedColaborador as any).teams?.name || selectedColaborador.equipe} />
+                        <DetailRow label="Local de Trabalho" value={(selectedColaborador as any).locations?.name || selectedColaborador.local} icon={Building2} />
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 md:col-span-2">
+                        <DetailRow label="Data de Admissão" value={formatDateDisplay(selectedColaborador.hire_date)} icon={Calendar} />
+                        <DetailRow label="Data de Desligamento" value={formatDateDisplay(selectedColaborador.termination_date)} icon={Calendar} />
+                        <DetailRow label="Status" value={selectedColaborador.status === 'active' ? 'Ativo' : 'Inativo'} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. HISTÓRICO */}
+                {activeDetailTab === 4 && (
+                  <div className="text-center py-12 text-gray-400 animate-in fade-in slide-in-from-bottom-4 duration-500 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
+                    <History className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <h3 className="text-lg font-bold text-gray-500 mb-1">Histórico do Colaborador</h3>
+                    <p className="text-sm">Registro de alterações de cargo, salários, férias e ocorrências.</p>
+                    <p className="text-xs mt-4 py-1 px-3 bg-gray-200 rounded-full inline-block font-bold">Em Breve</p>
+                  </div>
+                )}
+
+                {/* 5. GED / DOCUMENTOS */}
+                {activeDetailTab === 5 && (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 relative">
                       <div className="flex flex-col md:flex-row items-end gap-4">
                         <div className="flex-1 w-full relative z-[110]">
