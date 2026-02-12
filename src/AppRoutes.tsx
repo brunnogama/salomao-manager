@@ -98,6 +98,18 @@ export function AppRoutes() {
     // State for CRM Filters (passing down to Clients from Dashboard)
     const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({});
 
+    // Mapeamento de chaves de módulo para rotas
+    const moduleRoutes: Record<string, string> = {
+        crm: '/crm/dashboard',
+        family: '/family/dashboard',
+        collaborators: '/rh/dashboard',
+        operational: '/operational/dashboard',
+        financial: '/financeiro/dashboard',
+        executive: '/executivo/dashboard',
+        'legal-control': '/controladoria/dashboard',
+        settings: '/configuracoes'
+    };
+
     const handleCrmNavigateWithFilter = (page: string, filters: any) => {
         setClientFilters(filters);
         navigate(`/crm/${page}`);
@@ -116,7 +128,17 @@ export function AppRoutes() {
 
                 {/* Home / Module Selector */}
                 <Route path="/" element={
-                    <WithProps Component={ModuleSelector} extraProps={{ onSelect: (m: string) => navigate(m === 'settings' ? '/configuracoes' : `/${m}/dashboard`) }} />
+                    <WithProps Component={ModuleSelector} extraProps={{
+                        onSelect: (m: string) => {
+                            const path = moduleRoutes[m];
+                            console.log(`[AppRoutes] Navigating to module: ${m} -> ${path}`);
+                            if (path) {
+                                navigate(path);
+                            } else {
+                                console.error(`[AppRoutes] No route found for module: ${m}`);
+                            }
+                        }
+                    }} />
                 } />
 
                 <Route path="/configuracoes" element={<WithProps Component={Settings} />} />
@@ -135,7 +157,7 @@ export function AppRoutes() {
 
                 {/* RH */}
                 <Route path="/rh">
-                    <Route path="dashboard" element={<WithProps Component={RHDashboard} />} />
+                    <Route path="dashboard" element={<div className="p-10 text-2xl font-bold text-red-600">TESTE DE ROTA - DASHBOARD RH</div>} />
                     <Route path="calendario" element={<WithProps Component={CalendarioRH} />} />
                     <Route path="presencial" element={<WithProps Component={Presencial} />} />
                     <Route path="colaboradores" element={<WithProps Component={Colaboradores} />} />
