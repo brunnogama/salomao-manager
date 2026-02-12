@@ -1,5 +1,5 @@
 // src/components/collaborators/pages/Colaboradores.tsx
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserMinus, CheckCircle, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2, Link as LinkIcon,
@@ -415,23 +415,14 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         // FORM MODE
         return (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-            <div className="flex flex-col md:flex-row gap-8 items-start">
-              <div className="shrink-0 flex justify-center md:justify-start pt-2">
-                <PhotoUploadSection
-                  photoPreview={photoPreview}
-                  uploadingPhoto={uploadingPhoto}
-                  photoInputRef={photoInputRef}
-                  setPhotoPreview={setPhotoPreview}
-                />
-              </div>
-              <div className="flex-1 w-full">
-                <DadosPessoaisSection
-                  formData={formData}
-                  setFormData={setFormData}
-                  maskCPF={maskCPF}
-                  maskDate={maskDate}
-                />
-              </div>
+            {/* FORM MODE - Photo moved to sidebar */}
+            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+              <DadosPessoaisSection
+                formData={formData}
+                setFormData={setFormData}
+                maskCPF={maskCPF}
+                maskDate={maskDate}
+              />
             </div>
             <EnderecoSection
               formData={formData}
@@ -706,63 +697,67 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     activeTab: number,
     setActiveTab: (id: number) => void,
     children: React.ReactNode,
-    footer?: React.ReactNode
+    footer?: React.ReactNode,
+    sidebarContent?: React.ReactNode
   ) => {
     return (
       <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-        <div className="bg-white rounded-[2rem] w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200">
+        <div className="bg-white rounded-[2rem] w-full max-w-6xl h-[90vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">
 
-          {/* Header */}
-          <div className="px-8 py-5 border-b flex justify-between items-center bg-gray-50/50 shrink-0">
-            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-3">
-              {title}
-            </h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-all group">
-              <X className="h-6 w-6 text-gray-400 group-hover:rotate-90 transition-transform duration-200" />
-            </button>
-          </div>
+          {/* Left Sidebar */}
+          <div className="w-80 bg-white border-r border-gray-100 flex flex-col py-10 px-6 shrink-0 overflow-y-auto no-scrollbar">
+            {/* Photo Area */}
+            <div className="mb-10 flex justify-center">
+              {sidebarContent}
+            </div>
 
-          {/* Main Content Layout - Horizontal Flex */}
-          <div className="flex flex-1 overflow-hidden">
-            {/* Left Sidebar - Vertical Tabs */}
-            <div className="w-64 bg-gray-50/50 border-r border-gray-100 overflow-y-auto p-4 space-y-2 shrink-0">
+            {/* Vertical Tabs */}
+            <div className="space-y-1 w-full">
               {formSteps.map((step) => {
                 const Icon = step.icon
                 const isActive = activeTab === step.id
-
-                // Visual calculation for "Completed" isn't strictly necessary for View, but nice for Form
-                // We can simplify to just active state highlight
                 return (
                   <button
                     key={step.id}
                     onClick={() => setActiveTab(step.id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group relative overflow-hidden ${isActive
-                      ? 'bg-white text-[#1e3a8a] shadow-md border border-gray-100 font-bold'
-                      : 'text-gray-500 hover:bg-white hover:text-gray-700 hover:shadow-sm'
+                    className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left relative group ${isActive
+                      ? 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm'
+                      : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
                       }`}
                   >
-                    <div className={`p-2 rounded-lg transition-colors ${isActive ? 'bg-[#1e3a8a]/10 text-[#1e3a8a]' : 'bg-gray-100 text-gray-400 group-hover:text-gray-600'}`}>
-                      <Icon className="h-4 w-4" />
+                    <div className={`p-1 rounded-lg transition-colors ${isActive ? 'text-[#1e3a8a]' : 'text-gray-300 group-hover:text-gray-500'}`}>
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] uppercase tracking-wider">{step.label}</span>
-                    {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#1e3a8a] rounded-l-xl" />}
+                    <span className="text-[10px] uppercase tracking-[0.2em]">{step.label}</span>
+                    {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 bg-[#1e3a8a] rounded-r-full" />}
                   </button>
                 )
               })}
             </div>
-
-            {/* Right Content - Scrollable Area */}
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-white relative">
-              {children}
-            </div>
           </div>
 
-          {/* Footer */}
-          {footer && (
-            <div className="px-8 py-5 border-t flex justify-end gap-3 bg-gray-50/50 shrink-0">
-              {footer}
+          {/* Right Content */}
+          <div className="flex-1 flex flex-col min-w-0 bg-[#fafafa]">
+            {/* Content Header (Title + Close) */}
+            <div className="px-12 py-8 pb-2 flex justify-between items-center shrink-0">
+              <h2 className="text-3xl font-black text-[#0a192f] tracking-tight">{title}</h2>
+              <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-all text-gray-400 hover:text-red-500">
+                <X className="h-6 w-6" />
+              </button>
             </div>
-          )}
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto px-12 py-6 custom-scrollbar">
+              {children}
+            </div>
+
+            {/* Footer */}
+            {footer && (
+              <div className="px-12 py-6 bg-white border-t border-gray-100 flex justify-end gap-3 shrink-0">
+                {footer}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     )
@@ -1010,24 +1005,27 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           <>
             <button
               onClick={() => setShowFormModal(false)}
-              className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
+              className="px-6 py-2.5 text-[9px] font-black text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
             >
               Cancelar
             </button>
             <button
               onClick={() => handleSave(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
             >
               <Save className="h-4 w-4" /> Salvar
             </button>
-            <button
-              onClick={() => handleSave(false)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 hover:bg-[#112240]"
-            >
-              <Plus className="h-4 w-4" /> Salvar e Novo
-            </button>
           </>
-        )
+        ),
+        // Sidebar Content (Photo Upload)
+        <div className="w-48 h-48 rounded-full overflow-hidden border-[6px] border-white shadow-xl bg-gray-50 relative group">
+          <PhotoUploadSection
+            photoPreview={photoPreview}
+            uploadingPhoto={uploadingPhoto}
+            photoInputRef={photoInputRef}
+            setPhotoPreview={setPhotoPreview}
+          />
+        </div>
       )}
 
       {/* VIEW MODAL */}
@@ -1041,18 +1039,28 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           <>
             <button
               onClick={() => handleDelete(selectedColaborador.id)}
-              className="px-4 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all"
+              className="px-6 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all flex items-center gap-2"
             >
-              Excluir
+              <Trash2 className="h-4 w-4" /> Excluir
             </button>
             <button
               onClick={() => handleEdit(selectedColaborador)}
-              className="px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95"
+              className="px-6 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
             >
-              Editar
+              <Pencil className="h-4 w-4" /> Editar
             </button>
           </>
-        )
+        ),
+        // Sidebar Content (Display Photo)
+        <div className="w-48 h-48 rounded-full overflow-hidden border-[6px] border-white shadow-xl bg-gray-50 flex items-center justify-center cursor-pointer transition-transform hover:scale-105" onClick={() => selectedColaborador.photo_url && setViewingPhoto(selectedColaborador.photo_url)}>
+          {selectedColaborador.photo_url ? (
+            <img src={selectedColaborador.photo_url} className="w-full h-full object-cover" alt={selectedColaborador.name} />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center">
+              <span className="text-5xl font-black text-white opacity-50">{selectedColaborador.name?.charAt(0).toUpperCase()}</span>
+            </div>
+          )}
+        </div>
       )}
 
       {viewingPhoto && (
