@@ -244,61 +244,62 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   }
 
   const handleSave = async (closeModal = true) => {
-    if (!formData.name) return alert('Nome obrigatório')
+    try {
+      if (!formData.name) return alert('Nome obrigatório')
 
-    const toISO = (s?: string) => {
-      if (!s || s.length !== 10) return null
-      if (!s.includes('/')) return s
-      const [d, m, y] = s.split('/')
-      return `${y}-${m}-${d}`
-    }
+      const toISO = (s?: string) => {
+        if (!s || s.length !== 10) return null
+        if (!s.includes('/')) return s
+        const [d, m, y] = s.split('/')
+        return `${y}-${m}-${d}`
+      }
 
-    let photoUrl = formData.photo_url
-    if (photoInputRef.current?.files?.[0]) {
-      if (formData.id && formData.photo_url) await deleteFoto(formData.photo_url)
-      photoUrl = await uploadPhoto(photoInputRef.current.files[0], formData.id || 'temp_' + Date.now()) || photoUrl
-    }
+      let photoUrl = formData.photo_url
+      if (photoInputRef.current?.files?.[0]) {
+        if (formData.id && formData.photo_url) await deleteFoto(formData.photo_url)
+        photoUrl = await uploadPhoto(photoInputRef.current.files[0], formData.id || 'temp_' + Date.now()) || photoUrl
+      }
 
-    const payload = {
-      ...formData,
-      name: toTitleCase(formData.name || ''),
-      email: formData.email?.toLowerCase(),
-      address: toTitleCase(formData.address || ''),
-      address_complement: toTitleCase(formData.address_complement || ''),
-      neighborhood: toTitleCase(formData.neighborhood || ''),
-      city: toTitleCase(formData.city || ''),
-      role: toTitleCase(formData.role || ''),
-      birthday: toISO(formData.birthday),
-      hire_date: toISO(formData.hire_date),
-      termination_date: toISO(formData.termination_date),
-      oab_vencimento: toISO(formData.oab_vencimento),
-      photo_url: photoUrl,
-      partner_id: formData.partner_id || null,
-      leader_id: formData.leader_id || null
-    }
+      const payload = {
+        ...formData,
+        name: toTitleCase(formData.name || ''),
+        email: formData.email?.toLowerCase(),
+        address: toTitleCase(formData.address || ''),
+        address_complement: toTitleCase(formData.address_complement || ''),
+        neighborhood: toTitleCase(formData.neighborhood || ''),
+        city: toTitleCase(formData.city || ''),
+        role: toTitleCase(formData.role || ''),
+        birthday: toISO(formData.birthday),
+        hire_date: toISO(formData.hire_date),
+        termination_date: toISO(formData.termination_date),
+        oab_vencimento: toISO(formData.oab_vencimento),
+        photo_url: photoUrl,
+        partner_id: formData.partner_id || null,
+        leader_id: formData.leader_id || null
+      }
 
-      // Map photo_url to foto_url for DB compatibility and cleanup payload
-      // Map photo_url to foto_url for DB compatibility and cleanup payload
-      // Unconditionally map to ensure photo_url is never sent to the DB if it doesn't exist in schema
-      (payload as any).foto_url = (payload as any).photo_url;
-    delete (payload as any).photo_url;
+        // Map photo_url to foto_url for DB compatibility and cleanup payload
+        // Unconditionally map to ensure photo_url is never sent to the DB if it doesn't exist in schema
+        (payload as any).foto_url = (payload as any).photo_url;
+      delete (payload as any).photo_url;
 
-    // Remove joined fields that are not columns in the table
-    delete (payload as any).leader
-    delete (payload as any).partner
-    delete (payload as any).roles
-    delete (payload as any).locations
-    delete (payload as any).teams
-    // Remove legacy field if present in formData
-    delete (payload as any).oab_expiration
+      // Remove joined fields that are not columns in the table
+      delete (payload as any).leader
+      delete (payload as any).partner
+      delete (payload as any).roles
+      delete (payload as any).locations
+      delete (payload as any).teams
+      // Remove legacy field if present in formData
+      delete (payload as any).oab_expiration
 
-    const { error } = formData.id
-      ? await supabase.from('collaborators').update(payload).eq('id', formData.id)
-      : await supabase.from('collaborators').insert(payload)
+      const { error } = formData.id
+        ? await supabase.from('collaborators').update(payload).eq('id', formData.id)
+        : await supabase.from('collaborators').insert(payload)
 
-    if (error) {
-      alert(error.message)
-    } else {
+      if (error) {
+        throw error;
+      }
+
       fetchColaboradores()
       if (closeModal) {
         setShowFormModal(false)
@@ -309,7 +310,11 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         if (photoInputRef.current) photoInputRef.current.value = ''
         // Optional: Scroll to top of form
         document.querySelector('.custom-scrollbar')?.scrollTo(0, 0)
+        alert('Colaborador salvo com sucesso!')
       }
+    } catch (error: any) {
+      console.error('Erro ao salvar colaborador:', error)
+      alert('Erro ao salvar: ' + (error.message || 'Erro desconhecido. Verifique o console.'))
     }
   }
 
