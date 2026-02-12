@@ -769,114 +769,125 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   }
 
   return (
-    <div className="p-8 w-full relative min-h-screen bg-gray-50/30">
-      {/* Header with User Profile code restored */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 animate-in slide-in-from-top-4 duration-500">
-        <div className="flex-1">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-black text-[#0a192f] tracking-tight mb-2">Colaboradores</h1>
-              <p className="text-gray-500 font-medium">Gerencie o time, edite perfis e controle acessos.</p>
-            </div>
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
 
-            {/* User Controls Restored */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-gray-200 shadow-sm">
-                <UserCircle className="h-5 w-5 text-gray-400" />
-                <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-              </div>
-              <button
-                onClick={onModuleHome}
-                className="p-2.5 bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-500 transition-all hover:scale-105 active:scale-95 shadow-sm"
-                title="Trocar Módulo"
-              >
-                <Grid className="h-5 w-5" />
-              </button>
-              <button
-                onClick={onLogout}
-                className="p-2.5 bg-white border border-gray-200 rounded-full hover:bg-red-50 text-red-500 transition-all hover:scale-105 active:scale-95 shadow-sm"
-                title="Sair"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
-            </div>
+      {/* PAGE HEADER COMPLETO - Título + User Info */}
+      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-4 duration-500">
+        {/* Left: Título e Ícone */}
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+            <Users className="h-7 w-7 text-white" />
           </div>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+              Colaboradores
+            </h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+              Gerencie o time, edite perfis e controle acessos
+            </p>
+          </div>
+        </div>
 
-          <div className="flex items-center justify-between">
-            {/* Search Bar moved here if needed or separate? Let's keep structure similar to previous but refined */}
+        {/* Right: User Info & Actions */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
           </div>
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
+            <UserCircle className="h-5 w-5" />
+          </div>
+          {onModuleHome && (
+            <button
+              onClick={onModuleHome}
+              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
+              title="Voltar aos módulos"
+            >
+              <Grid className="h-5 w-5" />
+            </button>
+          )}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+              title="Sair"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Actions Bar */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 animate-in slide-in-from-top-5 duration-600">
-        {/* Search */}
-        <div className="bg-white p-2 pl-4 rounded-2xl border border-gray-100 shadow-sm flex-1 w-full max-w-2xl flex items-center gap-3">
-          <Search className="h-5 w-5 text-gray-300" />
-          <input
-            type="text"
-            placeholder="Buscar por nome ou email..."
-            className="w-full py-2 bg-transparent focus:outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
+      {/* CONTROLS CARD - Search | Filters | Action */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
+        <div className="flex flex-col xl:flex-row items-center gap-4">
 
-        <button
-          onClick={() => {
-            setFormData({ status: 'active', state: '' })
-            setPhotoPreview(null)
-            setActiveFormTab(1)
-            setShowFormModal(true)
-          }}
-          className="flex items-center gap-2 bg-[#1e3a8a] hover:bg-[#112240] text-white px-6 py-3 rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 group whitespace-nowrap"
-        >
-          <div className="bg-white/20 p-1.5 rounded-lg group-hover:rotate-90 transition-transform">
-            <Plus className="h-4 w-4" />
+          {/* Search Bar - Grows to fill space */}
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full xl:flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+            <Search className="h-4 w-4 text-gray-400 mr-3" />
+            <input
+              type="text"
+              placeholder="Buscar por nome ou email..."
+              className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          Novo Colaborador
-        </button>
-      </div>
 
-      {/* Filters Restored */}
-      <div className="flex flex-wrap gap-2 mb-8 animate-in slide-in-from-top-6 duration-700">
-        <SearchableSelect
-          label=""
-          placeholder="Líder"
-          value={filterLider}
-          onChange={setFilterLider}
-          table="collaborators"
-          options={colaboradores.map(c => ({ id: c.id, name: c.name }))}
-          className="min-w-[150px] bg-white border-gray-100 rounded-xl"
-        />
-        <SearchableSelect
-          label=""
-          placeholder="Sócio"
-          value={filterPartner}
-          onChange={setFilterPartner}
-          table="partners"
-          className="min-w-[150px] bg-white border-gray-100 rounded-xl"
-        />
-        <SearchableSelect
-          label=""
-          placeholder="Local"
-          value={filterLocal}
-          onChange={setFilterLocal}
-          table="locations"
-          className="min-w-[150px] bg-white border-gray-100 rounded-xl"
-        />
-        <SearchableSelect
-          label=""
-          placeholder="Cargo"
-          value={filterCargo}
-          onChange={setFilterCargo}
-          table="roles"
-          className="min-w-[150px] bg-white border-gray-100 rounded-xl"
-        />
+          {/* Filters Row */}
+          <div className="flex items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
+            <SearchableSelect
+              label=""
+              placeholder="Líder"
+              value={filterLider}
+              onChange={setFilterLider}
+              table="collaborators"
+              options={colaboradores.map(c => ({ id: c.id, name: c.name }))}
+              className="min-w-[140px]"
+            />
+            <SearchableSelect
+              label=""
+              placeholder="Sócio"
+              value={filterPartner}
+              onChange={setFilterPartner}
+              table="partners"
+              className="min-w-[140px]"
+            />
+            <SearchableSelect
+              label=""
+              placeholder="Local"
+              value={filterLocal}
+              onChange={setFilterLocal}
+              table="locations"
+              className="min-w-[140px]"
+            />
+            <SearchableSelect
+              label=""
+              placeholder="Cargo"
+              value={filterCargo}
+              onChange={setFilterCargo}
+              table="roles"
+              className="min-w-[140px]"
+            />
+          </div>
+
+          {/* Action Button */}
+          <button
+            onClick={() => {
+              setFormData({ status: 'active', state: '' })
+              setPhotoPreview(null)
+              setActiveFormTab(1)
+              setShowFormModal(true)
+            }}
+            className="bg-[#1e3a8a] hover:bg-[#112240] text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap shrink-0"
+          >
+            <Plus className="h-4 w-4" /> Novo Colaborador
+          </button>
+        </div>
       </div>
 
       {/* Table/Grid */}
-      <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden animate-in fade-in duration-700">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50/50 border-b border-gray-100">
