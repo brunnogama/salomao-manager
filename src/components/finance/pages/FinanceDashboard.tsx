@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
-  LayoutDashboard,
-  UserCircle
+  LayoutDashboard
 } from 'lucide-react'
 
 interface FinanceDashboardProps {
@@ -30,13 +29,7 @@ export function FinanceDashboard({ userName = 'Usuário' }: FinanceDashboardProp
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Financeiro</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
+          {/* User info removed */}
           {/* Navigation buttons removed as per new UI requirements */}
         </div>
       </div>

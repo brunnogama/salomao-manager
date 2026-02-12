@@ -3,6 +3,8 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
+  CalendarDays,
+  Plus,
   ArrowUpCircle,
   ArrowDownCircle,
   DollarSign,
@@ -10,23 +12,14 @@ import {
   Clock,
   Filter,
   X,
-  Plus,
   Save,
   AlignLeft,
-  CalendarDays,
-  Grid,
-  LogOut,
-  UserCircle,
   GraduationCap,
   Pencil,
   Trash2,
   CalendarDays as MonthIcon
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
-
-interface CalendarioProps {
-  userName?: string;
-}
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -35,7 +28,7 @@ const MESES = [
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
-export function Calendario({ userName = 'Usuário' }: CalendarioProps) {
+export function Calendario() {
   const [currentDate] = useState(new Date())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
@@ -211,13 +204,6 @@ export function Calendario({ userName = 'Usuário' }: CalendarioProps) {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Financeiro</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"

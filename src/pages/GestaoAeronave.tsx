@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Plane,
-  UserCircle,
   Plus,
   Search,
   Download,
@@ -127,13 +126,9 @@ function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
   )
 }
 
-interface GestaoAeronaveProps {
-  userName?: string;
-}
 
-export function GestaoAeronave({
-  userName = 'Usuário'
-}: GestaoAeronaveProps) {
+
+export function GestaoAeronave() {
   // --- Estados de Controle ---
   const [activeTab, setActiveTab] = useState<'dashboard' | 'comparativo' | 'faturas' | 'dados'>('dashboard')
   const [filterOrigem, setFilterOrigem] = useState<'todos' | 'missao' | 'fixa'>('todos')
@@ -539,13 +534,6 @@ export function GestaoAeronave({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
-            <UserCircle className="h-5 w-5" />
-          </div>
           <button
             onClick={() => setIsTipoModalOpen(true)}
             className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest"
@@ -640,7 +628,6 @@ export function GestaoAeronave({
                 setSearchTerm('')
                 setStartDate('')
                 setEndDate('')
-                setFilterCentroCusto('todos')
               }}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-900'
                 }`}

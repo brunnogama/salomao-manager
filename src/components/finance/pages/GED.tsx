@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Folder,
-  UserCircle,
   Plus,
   Search,
   Download,
@@ -38,9 +37,8 @@ interface Documento {
   origem?: 'ged' | 'aeronave'; // Campo para controle interno
 }
 
-export function GED({
-  userName = 'Usuário'
-}: GEDProps) {
+export function GED() {
+  const [userName, setUserName] = useState('Usuário')
   const [documentos, setDocumentos] = useState<Documento[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -93,6 +91,19 @@ export function GED({
   }
 
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user && user.email) {
+          const emailName = user.email.split('@')[0]
+          const formattedName = emailName.split('.').map((part: string) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+          setUserName(formattedName)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar usuário:', error)
+      }
+    }
+    fetchUser()
     fetchDocumentos()
   }, [])
 
@@ -192,13 +203,6 @@ export function GED({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
           <button onClick={() => setIsUploadModalOpen(true)} className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95">
             <Plus className="h-3.5 w-3.5" /> Novo Documento
           </button>

@@ -1,20 +1,14 @@
 import { useState } from 'react'
 import {
   ArrowUpCircle,
-  UserCircle,
-  Grid,
-  LogOut,
-  Filter,
+
   Plus,
+  Filter,
   Search,
   FileText
 } from 'lucide-react'
 
-interface FinanceContasPagarProps {
-  userName?: string;
-}
-
-export function FinanceContasPagar({ userName = 'Usuário' }: FinanceContasPagarProps) {
+export function FinanceContasPagar() {
   const [searchTerm, setSearchTerm] = useState('')
 
   return (
@@ -37,13 +31,6 @@ export function FinanceContasPagar({ userName = 'Usuário' }: FinanceContasPagar
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Financeiro</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
           <button className="flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95">
             <Plus className="h-4 w-4" /> Nova Conta
           </button>

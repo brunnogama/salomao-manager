@@ -1,15 +1,10 @@
 import { useState } from 'react'
 import {
-  UserCircle,
   GraduationCap
 } from 'lucide-react'
 import { ListaVencimentosOAB } from '../components/ListaVencimentosOAB'
 
-interface ListaOABProps {
-  userName?: string;
-}
-
-export function ListaOAB({ userName = 'Usuário' }: ListaOABProps) {
+export function ListaOAB() {
   const [selectedMonth] = useState(new Date().getMonth())
   const [selectedYear] = useState(new Date().getFullYear())
 
@@ -33,13 +28,6 @@ export function ListaOAB({ userName = 'Usuário' }: ListaOABProps) {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Financeiro</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
           {/* Navigation buttons removed as per new UI requirements */}
         </div>
       </div>

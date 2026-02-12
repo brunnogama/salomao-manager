@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   ArrowDownCircle,
-  UserCircle,
   Filter,
   Mail,
   Clock,
@@ -21,7 +20,7 @@ import { FinanceModalEnviarFatura } from '../components/FinanceModalEnviarFatura
 import { useFinanceContasReceber, FaturaStatus } from '../hooks/useFinanceContasReceber'
 
 interface FinanceContasReceberProps {
-  userName?: string;
+
   userEmail?: string;
 }
 
@@ -33,7 +32,6 @@ const MESES = [
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 export function FinanceContasReceber({
-  userName = 'Usuário',
   userEmail = ''
 }: FinanceContasReceberProps) {
   const [activeTab, setActiveTab] = useState<'lista' | 'calendario'>('lista')
@@ -136,13 +134,6 @@ export function FinanceContasReceber({
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Financeiro</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
           <button
             onClick={() => setIsModalOpen(true)}
             className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
