@@ -997,38 +997,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         </div>
       </div>
 
-      {/* FORM MODAL */}
-      {showFormModal && renderModalLayout(
-        formData.id ? 'Editar Colaborador' : 'Novo Colaborador',
-        () => setShowFormModal(false),
-        activeFormTab,
-        setActiveFormTab,
-        renderModalContent(activeFormTab, false, formData),
-        (
-          <>
-            <button
-              onClick={() => setShowFormModal(false)}
-              className="px-6 py-2.5 text-[9px] font-black text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={() => handleSave(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-            >
-              <Save className="h-4 w-4" /> Salvar
-            </button>
-          </>
-        ),
-        // Sidebar Content (Photo Upload)
-        <PhotoUploadSection
-          photoPreview={photoPreview}
-          uploadingPhoto={uploadingPhoto}
-          photoInputRef={photoInputRef}
-          setPhotoPreview={setPhotoPreview}
-        />
-      )}
-
       {/* VIEW MODAL */}
       {selectedColaborador && renderModalLayout(
         toTitleCase(selectedColaborador.name),
@@ -1062,6 +1030,38 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             </div>
           )}
         </div>
+      )}
+
+      {/* FORM MODAL */}
+      {showFormModal && renderModalLayout(
+        formData.id ? 'Editar Colaborador' : 'Novo Colaborador',
+        () => setShowFormModal(false),
+        activeFormTab,
+        setActiveFormTab,
+        renderModalContent(activeFormTab, false, formData),
+        (
+          <>
+            <button
+              onClick={() => setShowFormModal(false)}
+              className="px-6 py-2.5 text-[9px] font-black text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => handleSave(true)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            >
+              <Save className="h-4 w-4" /> Salvar
+            </button>
+          </>
+        ),
+        // Sidebar Content (Photo Upload)
+        <PhotoUploadSection
+          photoPreview={photoPreview}
+          uploadingPhoto={uploadingPhoto}
+          photoInputRef={photoInputRef}
+          setPhotoPreview={setPhotoPreview}
+        />
       )}
 
       {viewingPhoto && (
