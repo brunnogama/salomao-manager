@@ -1,34 +1,29 @@
 // src/components/finance/contasareceber/components/FinanceModalEnviarFatura.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  X, 
-  Mail, 
-  Paperclip, 
-  AlertTriangle, 
-  Send, 
+import {
+  X,
+  Mail,
+  Paperclip,
+  AlertTriangle,
+  Send,
   Loader2,
   Info,
   Plus,
   Save,
   Users,
-  Building2,
   DollarSign
 } from 'lucide-react';
 import { SearchableSelect } from '../../../SearchableSelect';
 import { useFinanceContasReceber } from '../hooks/useFinanceContasReceber';
 import { supabase } from '../../../../lib/supabase';
 
+import { Client, Partner } from '../../../../types/controladoria';
+import { toTitleCase } from '../../../controladoria/utils/masks';
+
 interface FinanceModalEnviarFaturaProps {
   isOpen: boolean;
   onClose: () => void;
   userEmail: string;
-}
-
-interface Cliente {
-  id: string;
-  cnpj: string;
-  nome: string;
-  email: string;
 }
 
 export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: FinanceModalEnviarFaturaProps) {
@@ -48,22 +43,30 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const [clienteCNPJ, setClienteCNPJ] = useState('');
   const [novoClienteNome, setNovoClienteNome] = useState('');
   const [novoClienteEmail, setNovoClienteEmail] = useState('');
+  const [novoClientePartnerId, setNovoClientePartnerId] = useState(''); // New State
   const [savingCliente, setSavingCliente] = useState(false);
   const [searchingCNPJ, setSearchingCNPJ] = useState(false);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [clientes, setClientes] = useState<Client[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]); // New State
 
   useEffect(() => {
     if (isOpen) {
       loadClientes();
+      loadPartners();
     }
   }, [isOpen]);
 
+  const loadPartners = async () => {
+    const { data } = await supabase.from('partners').select('*').eq('status', 'active').order('name');
+    if (data) setPartners(data);
+  };
+
   const loadClientes = async () => {
     const { data } = await supabase
-      .from('finance_clientes')
+      .from('clients')
       .select('*')
-      .order('nome');
-    
+      .order('name');
+
     if (data) {
       setClientes(data);
     }
@@ -89,13 +92,13 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     const cleaned = formatted.replace(/\D/g, '');
     if (cleaned.length === 14) {
       setSearchingCNPJ(true);
-      
+
       // Buscar no banco primeiro
       const { data: existing } = await supabase
-        .from('finance_clientes')
+        .from('clients')
         .select('*')
-        .eq('cnpj', formatted)
-        .single();
+        .eq('cnpj', cleaned) // Assuming 'cnpj' is stored raw in 'clients' based on other files, or adjust if needed. Usually raw.
+        .maybeSingle();
 
       if (existing) {
         setNovoClienteNome(existing.nome);
@@ -107,33 +110,36 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleaned}`);
           if (response.ok) {
             const empresa = await response.json();
-            setNovoClienteNome(empresa.razao_social || empresa.nome_fantasia || '');
+            setNovoClienteNome(toTitleCase(empresa.razao_social || empresa.nome_fantasia || ''));
           }
         } catch (error) {
           console.error('Erro ao buscar CNPJ:', error);
         }
       }
-      
+
       setSearchingCNPJ(false);
     }
   };
 
   const handleSaveCliente = async () => {
     if (!clienteCNPJ || !novoClienteNome || !novoClienteEmail) {
-      alert('Preencha todos os campos do cliente');
+      alert('Preencha os campos obrigatórios do cliente');
       return;
     }
 
     setSavingCliente(true);
 
     try {
+      const payload = {
+        cnpj: clienteCNPJ.replace(/\D/g, ''),
+        name: toTitleCase(novoClienteNome),
+        email: novoClienteEmail,
+        partner_id: novoClientePartnerId || null
+      };
+
       const { data, error } = await supabase
-        .from('finance_clientes')
-        .upsert({
-          cnpj: clienteCNPJ,
-          nome: novoClienteNome,
-          email: novoClienteEmail
-        }, {
+        .from('clients')
+        .upsert(payload, {
           onConflict: 'cnpj'
         })
         .select()
@@ -143,18 +149,19 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
       // Atualizar lista de clientes
       await loadClientes();
-      
+
       // Selecionar o cliente recém-criado
-      setClienteNome(novoClienteNome);
-      setClienteEmail(novoClienteEmail);
-      
+      setClienteNome(data.name);
+      setClienteEmail(data.email);
+
       // Limpar campos e fechar painel
       setClienteCNPJ('');
       setNovoClienteNome('');
       setNovoClienteEmail('');
+      setNovoClientePartnerId('');
       setShowAdicionar(false);
-      
-      alert('Cliente salvo com sucesso!');
+
+      alert('Cliente salvo com sucesso na base geral!');
     } catch (error: any) {
       alert('Erro ao salvar cliente: ' + error.message);
     } finally {
@@ -165,9 +172,11 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const handleClienteChange = (nome: string) => {
     setClienteNome(nome);
     // Buscar email do cliente selecionado
-    const cliente = clientes.find(c => c.nome === nome);
+    setClienteNome(nome);
+    // Buscar email do cliente selecionado
+    const cliente = clientes.find(c => c.name === nome);
     if (cliente) {
-      setClienteEmail(cliente.email);
+      setClienteEmail(cliente.email || '');
     }
   };
 
@@ -188,7 +197,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (arquivos.length === 0) {
       const confirmSend = confirm("Nenhum arquivo PDF anexado. Deseja enviar a fatura assim mesmo?");
       if (!confirmSend) return;
@@ -197,11 +206,13 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     setLoading(true);
     try {
       await enviarFatura({
-        cliente: clienteEmail,
+        cliente_nome: clienteNome,
+        cliente_email: clienteEmail,
         valor: parseFloat(valor.replace(',', '.')),
         remetente,
         assunto,
-        corpo
+        corpo,
+        arquivos
       });
       alert("Fatura enviada com sucesso! O acompanhamento de 2d + 2d foi iniciado.");
       onClose();
@@ -215,7 +226,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   return (
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-gray-200">
-        
+
         {/* HEADER */}
         <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
@@ -233,11 +244,11 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto max-h-[80vh]">
-          
+
           {/* REMETENTE */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Remetente (Cópia Automática)</label>
-            <input 
+            <input
               type="email"
               value={remetente}
               onChange={(e) => setRemetente(e.target.value)}
@@ -253,11 +264,10 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               <button
                 type="button"
                 onClick={() => setShowAdicionar(!showAdicionar)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-                  showAdicionar 
-                    ? 'bg-[#1e3a8a] text-white shadow-md' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAdicionar
+                  ? 'bg-[#1e3a8a] text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
               >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </button>
@@ -266,7 +276,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               value={clienteNome}
               onChange={handleClienteChange}
               placeholder="Pesquisar cliente..."
-              table="finance_clientes" 
+              table="clients"
               className="w-full"
             />
             {isExternalDomain(clienteEmail) && (
@@ -296,7 +306,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                     CNPJ *
                   </label>
                   <div className="relative">
-                    <input 
+                    <input
                       type="text"
                       value={clienteCNPJ}
                       onChange={(e) => handleCNPJChange(e.target.value)}
@@ -317,7 +327,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                   <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
                     Nome/Razão Social *
                   </label>
-                  <input 
+                  <input
                     type="text"
                     value={novoClienteNome}
                     onChange={(e) => setNovoClienteNome(e.target.value)}
@@ -331,13 +341,30 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                   <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
                     E-mail *
                   </label>
-                  <input 
+                  <input
                     type="email"
                     value={novoClienteEmail}
                     onChange={(e) => setNovoClienteEmail(e.target.value)}
                     placeholder="cliente@empresa.com.br"
                     className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
                   />
+                </div>
+
+                {/* SÓCIO RESPONSÁVEL */}
+                <div className="md:col-span-3 space-y-1.5">
+                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
+                    Sócio Responsável
+                  </label>
+                  <select
+                    value={novoClientePartnerId}
+                    onChange={(e) => setNovoClientePartnerId(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
+                  >
+                    <option value="">Selecione um sócio...</option>
+                    {partners.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -377,7 +404,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">E-mail Cliente</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input 
+                <input
                   type="email"
                   value={clienteEmail}
                   onChange={(e) => setClienteEmail(e.target.value)}
@@ -393,7 +420,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Valor da Fatura (R$)</label>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input 
+                <input
                   type="text"
                   value={valor}
                   onChange={(e) => setValor(e.target.value)}
@@ -408,7 +435,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           {/* ASSUNTO */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Assunto</label>
-            <input 
+            <input
               type="text"
               value={assunto}
               onChange={(e) => setAssunto(e.target.value)}
@@ -421,7 +448,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           {/* CORPO DO E-MAIL */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Corpo do E-mail</label>
-            <textarea 
+            <textarea
               value={corpo}
               onChange={(e) => setCorpo(e.target.value)}
               rows={4}
@@ -433,17 +460,17 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           {/* ANEXOS */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Anexos (PDF)</label>
-            <div 
+            <div
               onClick={() => fileInputRef.current?.click()}
               className="border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center bg-gray-50 hover:bg-white hover:border-[#1e3a8a] cursor-pointer transition-all group"
             >
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
-                multiple 
-                accept=".pdf" 
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                multiple
+                accept=".pdf"
               />
               <Paperclip className="h-6 w-6 text-gray-400 group-hover:text-[#1e3a8a] mb-2" />
               <span className="text-xs font-bold text-gray-500">

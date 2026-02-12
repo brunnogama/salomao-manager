@@ -92,7 +92,7 @@ export function useFinanceContasReceber() {
       let cliente_id = null;
       if (params.cliente_email) {
         const { data: clienteData } = await supabase
-          .from('finance_clientes')
+          .from('clients')
           .select('id')
           .eq('email', params.cliente_email)
           .maybeSingle();
@@ -118,7 +118,7 @@ export function useFinanceContasReceber() {
             const { data: urlData } = supabase.storage
               .from('finance-documents')
               .getPublicUrl(filePath);
-            
+
             arquivos_urls.push(urlData.publicUrl);
           }
         }
