@@ -250,15 +250,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
       </div>
 
       {/* 3. Mensagem de Boas-vindas */}
-      <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-        <div className="absolute left-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
-        <h2 className="text-2xl font-black text-[#0a192f] mb-2 uppercase tracking-tight">
-          Bem-vindo ao Sistema, {userName}!
-        </h2>
-        <p className="text-sm font-semibold text-gray-500 max-w-2xl">
-          Sua visão geral da Controladoria Jurídica está atualizada. Utilize o menu lateral para gerenciar clientes, contratos e fluxos de trabalho.
-        </p>
-      </div>
+
 
       {/* 4. NOVOS GRÁFICOS E FUNCIONALIDADES DA CONTROLADORIA (Integrados abaixo do conteúdo original) */}
       <div ref={dashboardRef} className="space-y-6">
