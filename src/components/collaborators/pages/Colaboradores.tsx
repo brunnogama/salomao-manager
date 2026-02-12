@@ -16,6 +16,7 @@ import { EnderecoSection } from '../components/EnderecoSection'
 import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
 import { InformacoesProfissionaisSection } from '../components/InformacoesProfissionaisSection'
 import { DadosEscolaridadeSection } from '../components/DadosEscolaridadeSection'
+import { HistoricoSection } from '../components/HistoricoSection'
 
 // --- ESTADOS ---
 const ESTADOS_BRASIL = [
@@ -565,12 +566,14 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
     // 5. HISTORICO
     if (activeTab === 5) {
+      // Usar HistoricoSection para visualização e edição (interativo)
       return (
-        <div className="text-center py-12 text-gray-400 animate-in slide-in-from-right-4 duration-300 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
-          <History className="h-12 w-12 mx-auto mb-4 opacity-20" />
-          <h3 className="text-lg font-bold text-gray-500 mb-1">Histórico do Colaborador</h3>
-          <p className="text-sm">Registro de alterações, férias e ocorrências.</p>
-          <p className="text-xs mt-4 py-1 px-3 bg-gray-200 rounded-full inline-block font-bold">Em Breve</p>
+        <div className="animate-in slide-in-from-right-4 duration-300">
+          <HistoricoSection
+            formData={formData}
+            setFormData={setFormData}
+            maskDate={maskDate}
+          />
         </div>
       )
     }

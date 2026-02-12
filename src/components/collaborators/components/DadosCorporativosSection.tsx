@@ -114,6 +114,20 @@ export function DadosCorporativosSection({
           onRefresh={handleRefresh}
         />
 
+        {/* Tipo de Contrato */}
+        <SearchableSelect
+          label="Tipo"
+          value={formData.contract_type || ''}
+          onChange={v => setFormData({ ...formData, contract_type: v })}
+          options={[
+            { id: 'CLT', name: 'CLT' },
+            { id: 'Advogado', name: 'Advogado' },
+            { id: 'PJ', name: 'PJ' },
+            { id: 'Estagiário', name: 'Estagiário' },
+            { id: 'Jovem Aprendiz', name: 'Jovem Aprendiz' }
+          ]}
+        />
+
         {/* Local - Atualizado para tabela 'locations' */}
         <SearchableSelect
           label="Local"
@@ -162,14 +176,14 @@ export function DadosCorporativosSection({
           </div>
 
           <div className="space-y-1.5" key={`motivo-${refreshKey}`}>
-            <label className="flex items-center justify-between text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
+            <label className="flex items-center justify-between text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
               <span>Motivo</span>
               <button
                 type="button"
                 onClick={() => setShowAddMotivo(!showAddMotivo)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAddMotivo
-                    ? 'bg-[#1e3a8a] text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-[#1e3a8a] text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 <Plus className="h-3.5 w-3.5" /> Adicionar

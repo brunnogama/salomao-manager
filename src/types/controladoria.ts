@@ -66,6 +66,8 @@ export interface Collaborator {
   oab_vencimento?: string;
 
   // Novos campos
+  contract_type?: string;
+  history_observations?: string;
   ctps_numero?: string;
   ctps_serie?: string;
   ctps_uf?: string;
