@@ -45,6 +45,7 @@ export interface Collaborator {
   birthday?: string;
   gender?: string;
   photo_url?: string;
+  foto_url?: string; // Legacy/DB field support
 
   // Endereço
   zip_code?: string;
@@ -63,6 +64,36 @@ export interface Collaborator {
   oab_numero?: string;
   oab_uf?: string;
   oab_vencimento?: string;
+
+  // Novos campos
+  contract_type?: string;
+  history_observations?: string;
+  ctps_numero?: string;
+  ctps_serie?: string;
+  ctps_uf?: string;
+  pis_pasep?: string;
+  dispensa_militar?: string;
+
+  // Escolaridade
+  escolaridade_nivel?: string;
+  escolaridade_subnivel?: string;
+  escolaridade_instituicao?: string;
+  escolaridade_matricula?: string;
+  escolaridade_semestre?: string;
+  escolaridade_previsao_conclusao?: string;
+  escolaridade_curso?: string;
+
+  // Novos Campos (Solicitados)
+  rg?: string;
+  emergencia_nome?: string;
+  emergencia_telefone?: string;
+  emergencia_parentesco?: string;
+  centro_custo?: string;
+  motivo_desligamento?: string;
+  matricula_esocial?: string;
+  observacoes?: string;
+  oab_emissao?: string;
+
   local?: string;
   locations?: { name: string }; // Joined field
   equipe?: string;

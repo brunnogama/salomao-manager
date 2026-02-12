@@ -1,17 +1,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { 
-  Users, 
-  Gift, 
-  LayoutGrid, 
-  Award, 
-  Map, 
-  Gavel, 
-  RefreshCw, 
-  UserCircle, 
-  Grid, 
-  LogOut 
+import {
+  Users,
+  Gift,
+  LayoutGrid,
+  Award,
+  Map,
+  Gavel,
+  RefreshCw
 } from 'lucide-react';
 
 interface SocioData {
@@ -36,16 +33,14 @@ interface DashboardStats {
 
 interface DashboardProps {
   onNavigateWithFilter: (page: string, filters: { socio?: string; brinde?: string }) => void;
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
+  // Removed unused props
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     const color = data.payload.fill || data.color || '#1e3a8a';
-    
+
     return (
       <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-lg min-w-[120px]">
         <p className="text-[9px] font-black text-[#0a192f] uppercase tracking-[0.2em] border-b border-gray-100 pb-1 mb-2">
@@ -68,17 +63,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function Dashboard({ 
-  onNavigateWithFilter, 
-  userName = 'Usuário',
-  onModuleHome,
-  onLogout
+export function Dashboard({
+  onNavigateWithFilter
 }: DashboardProps) {
-  const [stats, setStats] = useState<DashboardStats>({ 
+  const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0,
     totalMagistrados: 0,
-    brindeCounts: {}, 
-    lastClients: [], 
+    brindeCounts: {},
+    lastClients: [],
     socioData: [],
     stateData: []
   });
@@ -171,7 +163,7 @@ export function Dashboard({ 
 
   return (
     <div className="flex flex-col h-full space-y-6 p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-      
+
       {/* PAGE HEADER - Identêntico ao arquivo de Clientes */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -188,103 +180,75 @@ export function Dashboard({ 
           </div>
         </div>
 
-        {/* Right: User Info & Actions */}
+        {/* Right: Actions */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          
-          <button 
+          <button
             onClick={() => fetchDashboardData()}
-            className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-[#1e3a8a]/30 text-gray-600 hover:text-[#1e3a8a] rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] transition-all shadow-sm hover:shadow-md active:scale-95"
             title="Atualizar Dados"
           >
-            <RefreshCw className="h-5 w-5" />
+            <RefreshCw className="h-4 w-4" /> Atualizar
           </button>
-
-          {onModuleHome && (
-            <button 
-              onClick={onModuleHome} 
-              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
-              title="Voltar aos módulos"
-            >
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          
-          {onLogout && (
-            <button 
-              onClick={onLogout} 
-              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-              title="Sair"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
         </div>
       </div>
 
       {/* CONTENT */}
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-10">
-        
+
         {/* CARDS DE MÉTRICAS */}
         <div className="flex flex-wrap gap-4">
-          
+
           {/* Card Total Geral */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col gap-3 flex-1 min-w-[180px] transition-all hover:shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-                  <Award className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Clientes</p>
-                  <p className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none mt-1">{stats.totalClients}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+                <Award className="h-5 w-5 text-white" />
               </div>
+              <div className="flex-1">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Clientes</p>
+                <p className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none mt-1">{stats.totalClients}</p>
+              </div>
+            </div>
           </div>
 
           {/* Cards de Brindes */}
           {Object.entries(stats.brindeCounts)
             .filter(([tipo]) => tipo !== 'Brinde Pequeno')
             .map(([tipo, qtd]) => (
-            <div 
-              key={tipo} 
-              onClick={() => onNavigateWithFilter('clientes', { brinde: tipo })}
-              className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col gap-3 cursor-pointer hover:border-[#1e3a8a]/30 hover:shadow-md transition-all flex-1 min-w-[180px] active:scale-95"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
-                  <Gift className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] line-clamp-1">{tipo}</p>
-                  <p className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none mt-1">{qtd}</p>
+              <div
+                key={tipo}
+                onClick={() => onNavigateWithFilter('clientes', { brinde: tipo })}
+                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col gap-3 cursor-pointer hover:border-[#1e3a8a]/30 hover:shadow-md transition-all flex-1 min-w-[180px] active:scale-95"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+                    <Gift className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] line-clamp-1">{tipo}</p>
+                    <p className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none mt-1">{qtd}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
 
           {/* Card Magistrados */}
-          <div 
+          <div
             className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-2xl shadow-sm border border-gray-300 flex flex-col gap-3 cursor-pointer hover:border-[#1e3a8a]/30 hover:shadow-md transition-all flex-1 min-w-[200px] active:scale-95"
             onClick={() => onNavigateWithFilter('magistrados', {})}
           >
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-                  <Gavel className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Magistrados</p>
-                  <p className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none mt-1">{stats.totalMagistrados}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+                <Gavel className="h-5 w-5 text-white" />
               </div>
-              <div className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">
-                ÁREA RESTRITA
+              <div className="flex-1">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Magistrados</p>
+                <p className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none mt-1">{stats.totalMagistrados}</p>
               </div>
+            </div>
+            <div className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">
+              ÁREA RESTRITA
+            </div>
           </div>
         </div>
 
@@ -296,11 +260,11 @@ export function Dashboard({ 
               </div>
               <h3 className="text-[20px] font-black text-[#0a192f] tracking-tight">Clientes por Sócio</h3>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {stats.socioData.map((socio) => (
-                <div 
-                  key={socio.name} 
+                <div
+                  key={socio.name}
                   className="bg-gradient-to-br from-gray-50 to-white p-5 rounded-xl border border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md transition-all flex flex-col h-full cursor-pointer group active:scale-95"
                   onClick={() => onNavigateWithFilter('clientes', { socio: socio.name })}
                 >
@@ -316,17 +280,17 @@ export function Dashboard({ 
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart layout="vertical" data={socio.brindes} margin={{ left: -20, right: 30, top: 5, bottom: 5 }}>
                         <XAxis type="number" hide />
-                        <YAxis 
-                          dataKey="tipo" 
-                          type="category" 
-                          axisLine={false} 
-                          tickLine={false} 
-                          fontSize={10} 
+                        <YAxis
+                          dataKey="tipo"
+                          type="category"
+                          axisLine={false}
+                          tickLine={false}
+                          fontSize={10}
                           width={70}
-                          tick={{fill: '#64748b', fontWeight: 700}}
-                          interval={0} 
+                          tick={{ fill: '#64748b', fontWeight: 700 }}
+                          interval={0}
                         />
-                        <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc', radius: 4 }} />
                         <Bar dataKey="qtd" radius={[0, 8, 8, 0]} barSize={16} name="Quantidade">
                           {socio.brindes.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={getBrindeColor(entry.tipo)} />
@@ -342,59 +306,59 @@ export function Dashboard({ 
           </div>
 
           <div className="space-y-6">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col">
-                  <div className="flex items-center gap-3 mb-6">
-                      <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-                        <Map className="h-5 w-5 text-white" />
-                      </div>
-                      <h3 className="text-[20px] font-black text-[#0a192f] tracking-tight">Por Estado</h3>
-                  </div>
-                  <div className="h-64 w-full"> 
-                      <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={stats.stateData} layout="vertical" margin={{ left: 0, right: 30, top: 5, bottom: 5 }}>
-                              <XAxis type="number" hide />
-                              <YAxis 
-                                  dataKey="name" 
-                                  type="category" 
-                                  axisLine={false} 
-                                  tickLine={false} 
-                                  fontSize={12} 
-                                  width={35}   
-                                  tick={{fill: '#64748b', fontWeight: 700}}
-                                  interval={0} 
-                              />
-                              <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc', radius: 4}} />
-                              <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={24} fill="#1e3a8a" name="Clientes">
-                                  <LabelList dataKey="value" position="right" style={{ fontSize: '12px', fontWeight: 'bold', fill: '#1f2937' }} />
-                              </Bar>
-                          </BarChart>
-                      </ResponsiveContainer>
-                  </div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+                  <Map className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-[20px] font-black text-[#0a192f] tracking-tight">Por Estado</h3>
               </div>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats.stateData} layout="vertical" margin={{ left: 0, right: 30, top: 5, bottom: 5 }}>
+                    <XAxis type="number" hide />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      axisLine={false}
+                      tickLine={false}
+                      fontSize={12}
+                      width={35}
+                      tick={{ fill: '#64748b', fontWeight: 700 }}
+                      interval={0}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc', radius: 4 }} />
+                    <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={24} fill="#1e3a8a" name="Clientes">
+                      <LabelList dataKey="value" position="right" style={{ fontSize: '12px', fontWeight: 'bold', fill: '#1f2937' }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-fit">
-                  <div className="flex items-center gap-3 mb-6">
-                      <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-                        <Users className="h-5 w-5 text-white" />
-                      </div>
-                      <h3 className="text-[20px] font-black text-[#0a192f] tracking-tight">Últimos</h3>
-                  </div>
-                  <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 max-h-[400px]">
-                      {stats.lastClients.map((client) => (
-                      <div key={client.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-sm transition-all group">
-                          <div className="min-w-0">
-                            <p className="text-sm font-black text-[#0a192f] truncate mb-1">{client.nome}</p>
-                            <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">
-                              {client.socio || 'Sem Sócio'}
-                            </p>
-                          </div>
-                          <span className="text-[9px] px-2.5 py-1 rounded-lg font-black bg-white border border-gray-200 shrink-0 uppercase tracking-[0.2em] text-gray-700 group-hover:border-[#1e3a8a]/30 transition-colors">
-                            {client.tipo_brinde?.replace('Brinde ', '') || 'BRINDE'}
-                          </span>
-                      </div>
-                      ))}
-                  </div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-fit">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+                  <Users className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-[20px] font-black text-[#0a192f] tracking-tight">Últimos</h3>
               </div>
+              <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 max-h-[400px]">
+                {stats.lastClients.map((client) => (
+                  <div key={client.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-sm transition-all group">
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-[#0a192f] truncate mb-1">{client.nome}</p>
+                      <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">
+                        {client.socio || 'Sem Sócio'}
+                      </p>
+                    </div>
+                    <span className="text-[9px] px-2.5 py-1 rounded-lg font-black bg-white border border-gray-200 shrink-0 uppercase tracking-[0.2em] text-gray-700 group-hover:border-[#1e3a8a]/30 transition-colors">
+                      {client.tipo_brinde?.replace('Brinde ', '') || 'BRINDE'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

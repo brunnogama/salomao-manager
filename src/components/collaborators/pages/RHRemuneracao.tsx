@@ -1,9 +1,6 @@
 import { useState } from 'react'
-import { 
-  Banknote, 
-  UserCircle, 
-  Grid, 
-  LogOut,
+import {
+  Banknote,
   Wallet,
   TrendingUp,
   PieChart,
@@ -12,18 +9,12 @@ import {
   DollarSign
 } from 'lucide-react'
 
-interface RHRemuneracaoProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
-}
-
-export function RHRemuneracao({ userName = 'Usuário', onModuleHome, onLogout }: RHRemuneracaoProps) {
+export function RHRemuneracao() {
   const [searchTerm, setSearchTerm] = useState('')
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
-      
+
       {/* PAGE HEADER - Padrão Salomão Design System */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -41,36 +32,14 @@ export function RHRemuneracao({ userName = 'Usuário', onModuleHome, onLogout }:
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Recursos Humanos</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && (
-            <button 
-              onClick={onModuleHome} 
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
-              title="Voltar aos módulos"
-            >
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button 
-              onClick={onLogout} 
-              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-              title="Sair"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
+          <button className="flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white font-black text-[9px] uppercase tracking-widest hover:bg-[#112240] rounded-xl transition-all shadow-lg active:scale-95">
+            <FileText className="h-4 w-4" /> Exportar Relatório
+          </button>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto space-y-6 w-full">
-        
+
         {/* CARDS DE CUSTO FINANCEIRO */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
@@ -109,7 +78,7 @@ export function RHRemuneracao({ userName = 'Usuário', onModuleHome, onLogout }:
           <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="relative w-full md:w-96">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input 
+              <input
                 type="text"
                 placeholder="Buscar por colaborador..."
                 value={searchTerm}
@@ -117,9 +86,7 @@ export function RHRemuneracao({ userName = 'Usuário', onModuleHome, onLogout }:
                 className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium text-xs"
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 text-[#1e3a8a] font-black text-[9px] uppercase tracking-widest hover:bg-blue-50 rounded-lg transition-all">
-              <FileText className="h-4 w-4" /> Exportar Relatório
-            </button>
+            {/* Export Button moved to header */}
           </div>
 
           <div className="p-16 flex flex-col items-center justify-center text-center">

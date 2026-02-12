@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { supabase } from '../../../lib/supabase';
@@ -8,10 +8,6 @@ import {
   FileText,
   DollarSign,
   Users,
-  Plane,
-  UserCircle,
-  LogOut,
-  Grid,
   LayoutDashboard
 } from 'lucide-react';
 
@@ -32,7 +28,7 @@ interface Props {
   onLogout: () => void;
 }
 
-export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
+export function Dashboard({ }: Props) {
   // --- ESTADOS ORIGINAIS MANTIDOS ---
   const [loadingStats, setLoadingStats] = useState(true);
   const [stats, setStats] = useState({
@@ -175,24 +171,6 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
             hideTitle={true}
             className="!p-0 !border-0 !shadow-none !bg-transparent"
           />
-
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && (
-            <button onClick={onModuleHome} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors">
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button onClick={onLogout} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
         </div>
       </div>
 
@@ -256,7 +234,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
       <div ref={dashboardRef} className="space-y-6">
         <EfficiencyFunnel funil={funil} />
         <PortfolioFinancialOverview metrics={metrics} />
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <WeeklySummary metrics={metrics} />
           <MonthlySummary metrics={metrics} />
         </div>

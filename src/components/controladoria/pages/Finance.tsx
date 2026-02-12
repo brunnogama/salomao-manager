@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { 
-  DollarSign, Search, Download, CheckCircle2, Circle, Clock, Loader2, 
-  CalendarDays, Receipt, X, Filter, MapPin, Hash, FileText, 
-  AlertTriangle, Plus, ChevronDown, FileDown, Briefcase, Plane, UserCircle, LogOut, Grid
+import {
+  DollarSign, Search, Download, CheckCircle2, Circle, Clock, Loader2,
+  CalendarDays, Receipt, X, Filter, MapPin, Hash,
+  AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
 } from 'lucide-react';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 
@@ -63,20 +63,14 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   );
 };
 
-interface Props {
-  userName: string;
-  onModuleHome: () => void;
-  onLogout: () => void;
-}
+export function Finance() {
 
-export function Finance({ userName, onModuleHome, onLogout }: Props) {
-  
   // --- STATES ---
-  const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
+
   const [installments, setInstallments] = useState<FinancialInstallment[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -101,13 +95,13 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
 
   // Modal de Detalhes do Contrato
   const [isContractModalOpen, setIsContractModalOpen] = useState(false);
-  const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
+
   const [selectedContractData, setSelectedContractData] = useState<Contract | null>(null);
   const [contractProcesses, setContractProcesses] = useState<ContractProcess[]>([]);
   const [contractDocuments, setContractDocuments] = useState<ContractDocument[]>([]);
 
   useEffect(() => {
-    checkUserRole();
+
     fetchData();
   }, []);
 
@@ -122,21 +116,11 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
   }, [searchRef, searchTerm]);
 
   // --- LOGIC ---
-  const checkUserRole = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-        const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-        if (profile) setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
-    }
-  };
+
 
   const fetchData = async () => {
     setLoading(true);
-    
+
     // Atualizado para buscar parceiros ativos com base no novo campo 'status'
     const { data: partnersData } = await supabase.from('partners').select('*').eq('status', 'active').order('name');
     if (partnersData) setPartners(partnersData);
@@ -201,7 +185,7 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
     setStartDate('');
     setEndDate('');
     setIsSearchOpen(false);
-    
+
     const overdueCount = installments.filter(i => isOverdue(i)).length;
     toast.info(`Filtrando ${overdueCount} parcela${overdueCount !== 1 ? 's' : ''} vencida${overdueCount !== 1 ? 's' : ''}`, {
       description: 'Exibindo apenas parcelas com vencimento atrasado',
@@ -240,7 +224,7 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
           .select('name')
           .eq('id', contractData.analyzed_by)
           .single();
-        
+
         analyzedByName = profileData?.name;
       }
 
@@ -254,7 +238,7 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
       setSelectedContractData(formattedContract);
       setContractProcesses(processesData || []);
       setContractDocuments(documentsData || []);
-      setSelectedContractId(contractId);
+
       setIsContractModalOpen(true);
     } catch (error: any) {
       console.error('Erro ao carregar contrato:', error);
@@ -264,26 +248,26 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
 
   const filteredInstallments = installments.filter(i => {
     const term = searchTerm.toLowerCase();
-    const matchesSearch = i.contract?.client_name?.toLowerCase().includes(term) || 
-                          i.contract?.hon_number?.includes(searchTerm) ||
-                          (i.contract as any)?.display_id?.includes(searchTerm);
-    
+    const matchesSearch = i.contract?.client_name?.toLowerCase().includes(term) ||
+      i.contract?.hon_number?.includes(searchTerm) ||
+      (i.contract as any)?.display_id?.includes(searchTerm);
+
     const matchesPartner = selectedPartner ? i.contract?.partner_id === selectedPartner : true;
     const matchesLocation = selectedLocation ? i.contract?.billing_location === selectedLocation : true;
-    
+
     let matchesDate = true;
     if (startDate || endDate) {
-        const dateToCheck = i.paid_at ? new Date(i.paid_at) : (i.due_date ? new Date(i.due_date) : null);
-        if (dateToCheck) {
-            if (startDate && dateToCheck < new Date(startDate)) matchesDate = false;
-            if (endDate) {
-                const end = new Date(endDate);
-                end.setHours(23, 59, 59, 999);
-                if (dateToCheck > end) matchesDate = false;
-            }
-        } else {
-            matchesDate = false;
+      const dateToCheck = i.paid_at ? new Date(i.paid_at) : (i.due_date ? new Date(i.due_date) : null);
+      if (dateToCheck) {
+        if (startDate && dateToCheck < new Date(startDate)) matchesDate = false;
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          if (dateToCheck > end) matchesDate = false;
         }
+      } else {
+        matchesDate = false;
+      }
     }
 
     let matchesStatus = true;
@@ -329,7 +313,7 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
 
   const handleDownloadContractPDF = async (contractId: string) => {
     const loadingToast = toast.loading('Buscando documento do contrato...');
-    
+
     try {
       const { data: documents, error } = await supabase
         .from('contract_documents')
@@ -372,7 +356,7 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
   };
 
   const handleNewInvoice = () => {
-      alert("Abrir modal de Cadastro de Casos / Faturamento avulso");
+    alert("Abrir modal de Cadastro de Casos / Faturamento avulso");
   };
 
   const exportToExcel = () => {
@@ -395,22 +379,22 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
   };
 
   const clearFilters = () => {
-      setSearchTerm('');
-      setSelectedPartner('');
-      setSelectedLocation('');
-      setStatusFilter('all');
-      setStartDate('');
-      setEndDate('');
-      setIsSearchOpen(false);
+    setSearchTerm('');
+    setSelectedPartner('');
+    setSelectedLocation('');
+    setStatusFilter('all');
+    setStartDate('');
+    setEndDate('');
+    setIsSearchOpen(false);
   };
 
   const hasActiveFilters = searchTerm || selectedPartner || selectedLocation || statusFilter !== 'all' || startDate || endDate;
 
   const statusOptions = [
-      { label: 'Todos Status', value: 'all' },
-      { label: 'Pendentes', value: 'pending' },
-      { label: 'Faturados', value: 'paid' },
-      { label: 'Vencidos', value: 'overdue' },
+    { label: 'Todos Status', value: 'all' },
+    { label: 'Pendentes', value: 'pending' },
+    { label: 'Faturados', value: 'paid' },
+    { label: 'Vencidos', value: 'overdue' },
   ];
 
   const locationOptions = [{ label: 'Todos Locais', value: '' }, ...locations.map(l => ({ label: l, value: l }))];
@@ -418,7 +402,7 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
-      
+
       {/* 1. Header - Salomão Design System */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -431,43 +415,27 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
-              {userRole && (
-                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
-                  • {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && (
-            <button onClick={onModuleHome} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors">
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button onClick={onLogout} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
+        <div className="flex items-center gap-3 shrink-0">
+          <button onClick={exportToExcel} className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
+            <Download className="h-4 w-4" /> Exportar XLS
+          </button>
+          <button
+            onClick={handleNewInvoice}
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+          >
+            <Plus className="h-4 w-4" /> Novo Lançamento
+          </button>
         </div>
       </div>
 
       {/* 2. Cards de Totais - Salomão Design System */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div 
+        <div
           onClick={totalOverdueCount > 0 ? handleFilterOverdue : undefined}
-          className={`p-5 rounded-2xl border shadow-sm flex items-center justify-between relative overflow-hidden group transition-all ${
-            totalOverdueCount > 0 
-              ? 'bg-red-50 border-red-100 cursor-pointer hover:shadow-md' 
-              : 'bg-white border-gray-100'
-          }`}
+          className={`p-5 rounded-2xl border shadow-sm flex items-center justify-between relative overflow-hidden group transition-all ${totalOverdueCount > 0
+            ? 'bg-red-50 border-red-100 cursor-pointer hover:shadow-md'
+            : 'bg-white border-gray-100'
+            }`}
         >
           <div className={`absolute right-0 top-0 h-full w-1 ${totalOverdueCount > 0 ? 'bg-red-600' : 'bg-blue-600'}`}></div>
           <div>
@@ -518,67 +486,54 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
             <FilterSelect icon={MapPin} value={selectedLocation} onChange={setSelectedLocation} options={locationOptions} placeholder="Locais" />
             <FilterSelect icon={Briefcase} value={selectedPartner} onChange={setSelectedPartner} options={partnerOptions} placeholder="Sócios" />
           </div>
-          
+
           <div className="flex items-center gap-2">
             <div className="px-4 py-2 bg-gray-100/50 rounded-lg text-[10px] font-black text-gray-500 uppercase tracking-widest border border-gray-200 h-[40px] flex items-center gap-2">
               <Receipt className="h-4 w-4 text-[#1e3a8a]" /> Total: {filteredInstallments.length}
             </div>
-            
-            {userRole !== 'viewer' && (
-              <button
-                onClick={handleNewInvoice}
-                className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest h-[40px]"
-              >
-                <Plus className="h-4 w-4" /> Novo Lançamento
-              </button>
-            )}
+
+
           </div>
         </div>
 
         <div className="h-px bg-gray-100 w-full my-2"></div>
 
         <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-                <div 
-                  ref={searchRef}
-                  className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 border border-gray-200 ${isSearchOpen ? 'w-64 px-3 rounded-lg shadow-inner' : 'w-10 justify-center cursor-pointer hover:bg-gray-100 rounded-lg'} h-[40px]`}
-                  onClick={() => !isSearchOpen && setIsSearchOpen(true)}
-                >
-                    <Search className={`w-4 h-4 text-gray-400 shrink-0`} />
-                    <input
-                        type="text"
-                        placeholder="Buscar cliente, HON, ID..."
-                        className={`ml-2 bg-transparent outline-none text-xs font-semibold w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        autoFocus={isSearchOpen}
-                    />
-                    {isSearchOpen && searchTerm && (
-                        <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-1 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
-                    )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
-                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
-                         <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
-                    </div>
-                    <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
-                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
-                         <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
-                    </div>
-                </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              ref={searchRef}
+              className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 border border-gray-200 ${isSearchOpen ? 'w-64 px-3 rounded-lg shadow-inner' : 'w-10 justify-center cursor-pointer hover:bg-gray-100 rounded-lg'} h-[40px]`}
+              onClick={() => !isSearchOpen && setIsSearchOpen(true)}
+            >
+              <Search className={`w-4 h-4 text-gray-400 shrink-0`} />
+              <input
+                type="text"
+                placeholder="Buscar cliente, HON, ID..."
+                className={`ml-2 bg-transparent outline-none text-xs font-semibold w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus={isSearchOpen}
+              />
+              {isSearchOpen && searchTerm && (
+                <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-1 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
-                <button onClick={exportToExcel} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-green-400 transition-all text-xs font-black uppercase tracking-widest h-[40px]">
-                    <Download className="w-4 h-4" /> Exportar XLS
-                </button>
-
-                {hasActiveFilters && (
-                    <button onClick={clearFilters} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"><X className="w-5 h-5" /></button>
-                )}
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
+              </div>
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
+              </div>
             </div>
+          </div>
+
+          {hasActiveFilters && (
+            <button onClick={clearFilters} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"><X className="w-5 h-5" /></button>
+          )}
         </div>
       </div>
 
@@ -586,19 +541,19 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
       <div className="flex-1">
         {loading ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
-              Carregando dados financeiros...
+            <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
+            Carregando dados financeiros...
           </div>
         ) : filteredInstallments.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 min-h-[400px]">
-              <EmptyState
-                icon={Receipt}
-                title="Nenhum lançamento encontrado"
-                description={hasActiveFilters ? "Não encontramos resultados para os filtros atuais." : "Ainda não existem lançamentos financeiros cadastrados."}
-                actionLabel={hasActiveFilters ? "Limpar Filtros" : undefined}
-                onAction={hasActiveFilters ? clearFilters : undefined}
-                className="h-full justify-center"
-              />
+            <EmptyState
+              icon={Receipt}
+              title="Nenhum lançamento encontrado"
+              description={hasActiveFilters ? "Não encontramos resultados para os filtros atuais." : "Ainda não existem lançamentos financeiros cadastrados."}
+              actionLabel={hasActiveFilters ? "Limpar Filtros" : undefined}
+              onAction={hasActiveFilters ? clearFilters : undefined}
+              className="h-full justify-center"
+            />
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
@@ -618,15 +573,15 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filteredInstallments.map((item) => (
-                    <tr 
-                      key={item.id} 
+                    <tr
+                      key={item.id}
                       className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
                       onClick={() => handleOpenContractModal(item.contract!.id)}
                     >
                       <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{(item.contract as any)?.display_id}</td>
                       <td className="p-4">
-                        {item.status === 'paid' 
-                          ? <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> Faturado</span> 
+                        {item.status === 'paid'
+                          ? <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> Faturado</span>
                           : <span className="flex items-center text-amber-500 text-[9px] font-black uppercase tracking-widest"><Circle className="w-3 h-3 mr-1" /> Pendente</span>
                         }
                       </td>
@@ -642,26 +597,25 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
                       </td>
                       <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{item.contract?.client_name}</td>
                       <td className="p-4 text-[10px] font-semibold text-gray-500 uppercase">
-                          <div className="font-bold">HON: {item.contract?.hon_number || '-'}</div>
-                          <div className="text-[9px] text-gray-400 truncate max-w-[150px] lowercase tracking-normal">{(item as any).clause}</div>
+                        <div className="font-bold">HON: {item.contract?.hon_number || '-'}</div>
+                        <div className="text-[9px] text-gray-400 truncate max-w-[150px] lowercase tracking-normal">{(item as any).clause}</div>
                       </td>
                       <td className="p-4">
-                          <div className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest">{getTypeLabel(item.type)}</div>
-                          <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Parcela {item.installment_number}/{item.total_installments}</div>
+                        <div className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest">{getTypeLabel(item.type)}</div>
+                        <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Parcela {item.installment_number}/{item.total_installments}</div>
                       </td>
                       <td className="p-4 text-right font-black text-[#0a192f] text-xs">
                         {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </td>
                       <td className="p-4 text-right">
-                        {item.status === 'pending' && userRole !== 'viewer' && (
-                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                            <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-all" title="Alterar Vencimento"><CalendarDays className="w-4 h-4" /></button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-all" title="Baixar Contrato"><FileDown className="w-4 h-4" /></button>
-                            <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-lg hover:bg-emerald-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
-                              <DollarSign className="w-3 h-3 mr-1" /> Faturar
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-all" title="Alterar Vencimento"><CalendarDays className="w-4 h-4" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-all" title="Baixar Contrato"><FileDown className="w-4 h-4" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-lg hover:bg-emerald-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
+                            <DollarSign className="w-3 h-3 mr-1" /> Faturar
+                          </button>
+                        </div>
+
                       </td>
                     </tr>
                   ))}
@@ -674,7 +628,7 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
 
       {/* MODAL: DETALHES DO CONTRATO */}
       {selectedContractData && (
-        <ContractDetailsModal 
+        <ContractDetailsModal
           isOpen={isContractModalOpen}
           onClose={() => {
             setIsContractModalOpen(false);
@@ -691,8 +645,8 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
           }}
           processes={contractProcesses}
           documents={contractDocuments}
-          canEdit={userRole === 'admin' || userRole === 'editor'}
-          canDelete={userRole === 'admin'}
+          canEdit={true}
+          canDelete={true}
         />
       )}
 
@@ -702,11 +656,11 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
           <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm animate-in zoom-in-95 border border-gray-100">
             <h3 className="text-lg font-black text-[#0a192f] mb-2 uppercase tracking-tight">Confirmar Faturamento</h3>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Confirma o recebimento desta parcela?</p>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Data do Recebimento</label>
-                <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={billingDate} onChange={(e) => setBillingDate(e.target.value)}/>
+                <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={billingDate} onChange={(e) => setBillingDate(e.target.value)} />
               </div>
             </div>
 
@@ -723,11 +677,11 @@ export function Finance({ userName, onModuleHome, onLogout }: Props) {
         <div className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
           <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm animate-in zoom-in-95 border border-gray-100">
             <h3 className="text-lg font-black text-[#0a192f] mb-4 uppercase tracking-tight">Alterar Vencimento</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Nova Data de Vencimento</label>
-                <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)}/>
+                <input type="date" className="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none transition-all" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} />
               </div>
             </div>
 

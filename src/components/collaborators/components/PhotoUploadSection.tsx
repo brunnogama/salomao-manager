@@ -8,44 +8,49 @@ interface PhotoUploadSectionProps {
   setPhotoPreview: (preview: string | null) => void
 }
 
-export function PhotoUploadSection({ 
-  photoPreview, 
-  uploadingPhoto, 
-  photoInputRef, 
-  setPhotoPreview 
+export function PhotoUploadSection({
+  photoPreview,
+  uploadingPhoto,
+  photoInputRef,
+  setPhotoPreview
 }: PhotoUploadSectionProps) {
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100 flex items-center gap-6">
-      <div className="w-32 h-32 rounded-full bg-white border-4 border-white shadow-lg overflow-hidden flex items-center justify-center relative group">
+    <div className="flex flex-col items-center gap-3">
+      <div
+        onClick={() => photoInputRef.current?.click()}
+        className="w-40 h-40 rounded-full bg-gray-50 border-[6px] border-white shadow-xl overflow-hidden flex items-center justify-center relative group cursor-pointer hover:border-gray-100 transition-all"
+      >
         {photoPreview ? (
           <img src={photoPreview} className="w-full h-full object-cover" alt="Preview" />
         ) : (
-          <Image className="text-gray-300 h-12 w-12" />
-        )}
-        {uploadingPhoto && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <Loader2 className="animate-spin text-white" />
+          <div className="flex flex-col items-center justify-center text-gray-300 gap-2">
+            <Image className="h-12 w-12" />
           </div>
         )}
-      </div>
-      
-      <div>
-        <button 
-          onClick={() => photoInputRef.current?.click()} 
-          className="px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl flex items-center gap-2 transition-all active:scale-95"
-        >
-          <Camera className="h-4 w-4" /> {photoPreview ? 'Alterar' : 'Adicionar'}
-        </button>
-        <p className="text-xs text-gray-500 mt-2 font-medium">
-          JPG, PNG ou GIF. Máximo 5MB.
-        </p>
+
+        {uploadingPhoto && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+            <Loader2 className="animate-spin text-white h-8 w-8" />
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+          <Camera className="text-white h-8 w-8" />
+        </div>
       </div>
 
-      <input 
-        type="file" 
-        hidden 
-        ref={photoInputRef} 
-        accept="image/*" 
+      <button
+        onClick={() => photoInputRef.current?.click()}
+        className="text-[10px] uppercase font-black tracking-[0.2em] text-[#1e3a8a] hover:text-[#112240] transition-colors py-1 px-3 rounded-full hover:bg-blue-50"
+      >
+        {photoPreview ? 'Alterar Foto' : 'Adicionar Foto'}
+      </button>
+
+      <input
+        type="file"
+        hidden
+        ref={photoInputRef}
+        accept="image/*"
         onChange={e => {
           const f = e.target.files?.[0]
           if (f) {
@@ -53,7 +58,7 @@ export function PhotoUploadSection({
             r.onload = (ev) => setPhotoPreview(ev.target?.result as string)
             r.readAsDataURL(f)
           }
-        }} 
+        }}
       />
     </div>
   )

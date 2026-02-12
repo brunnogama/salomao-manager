@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Plus, Search, Filter, Calendar, DollarSign, User, Briefcase,
-  CheckCircle2, Clock, Scale, Tag, Loader2,
-  LayoutGrid, List, Download, ArrowUpDown, Edit, Trash2, Bell, ArrowDownAZ, ArrowUpAZ,
-  FileSignature, ChevronDown, X, FileSearch, Paperclip, Eye, Plane, UserCircle, LogOut, Grid
+  Plus, Search, Filter, User, Briefcase,
+  Clock, Scale, Tag, Loader2,
+  LayoutGrid, List, Download, ArrowUpDown, Edit, Trash2, ArrowDownAZ, ArrowUpAZ,
+  FileSignature, ChevronDown, X, FileSearch, Eye
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import * as XLSX from 'xlsx';
-import { toast } from 'sonner'; 
+import { toast } from 'sonner';
 
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../../types/controladoria';
 import { ContractFormModal } from '../contracts/ContractFormModal';
@@ -48,7 +48,7 @@ const formatMoney = (val: number | string | undefined) => {
 
 const calculateTotalSuccess = (c: Contract) => {
   let total = parseCurrency(c.final_success_fee);
-    
+
   if ((c as any).final_success_extras && Array.isArray((c as any).final_success_extras)) {
     (c as any).final_success_extras.forEach((fee: string) => total += parseCurrency(fee));
   }
@@ -106,21 +106,14 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   );
 };
 
-interface Props {
-  userName: string;
-  onModuleHome: () => void;
-  onLogout: () => void;
-}
-
-export function Contracts({ userName, onModuleHome, onLogout }: Props) {
+export function Contracts() {
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [analysts, setAnalysts] = useState<Analyst[]>([]);
   const [loading, setLoading] = useState(true);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
+
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -160,7 +153,7 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
 
   useEffect(() => {
     fetchData();
-    fetchNotifications();
+
 
     const subscription = supabase
       .channel('contracts_list_changes')
@@ -178,7 +171,7 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         if (!searchTerm) {
-            setIsSearchOpen(false);
+          setIsSearchOpen(false);
         }
       }
     }
@@ -189,14 +182,14 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
   const checkUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-        const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('role')
-            .eq('id', user.id)
-            .maybeSingle();
-        if (profile) {
-            setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
-        }
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profile) {
+        setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
+      }
     }
   };
 
@@ -214,7 +207,7 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
         ...c,
         partner_name: c.partner?.name,
         process_count: c.processes?.length || 0,
-        display_id: String(c.seq_id || 0).padStart(6, '0') 
+        display_id: String(c.seq_id || 0).padStart(6, '0')
       }));
       setContracts(formatted);
     }
@@ -237,19 +230,8 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
     }
   };
 
-  const fetchNotifications = async () => {
-    const { data } = await supabase
-      .from('kanban_tasks')
-      .select('id, title, due_date')
-      .eq('status', 'signature')
-      .order('due_date', { ascending: true });
-    if (data) setNotifications(data);
-  };
 
-  const handleNotificationClick = (taskId: string) => {
-    toast.info('Navegação para Kanban não disponível nesta versão');
-  };
-  
+
   const handleNew = () => {
     if (userRole === 'viewer') return toast.error("Sem permissão para criar.");
     setFormData(emptyContract);
@@ -296,11 +278,11 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
 
   const confirmDelete = async () => {
     if (!deleteTargetId) return;
-      
+
     const toastId = toast.loading('Excluindo contrato...');
 
     const { error } = await supabase.from('contracts').delete().eq('id', deleteTargetId);
-      
+
     if (!error) {
       toast.success('Contrato excluído com sucesso!', { id: toastId });
       setIsDetailsModalOpen(false);
@@ -314,7 +296,7 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
 
   const handleSave = () => {
     fetchData();
-    fetchNotifications();
+
     toast.success(isEditing ? 'Contrato atualizado com sucesso!' : 'Contrato criado com sucesso!');
   };
 
@@ -369,8 +351,8 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
 
   const filteredContracts = contracts.filter((c: Contract) => {
     const term = searchTerm.toLowerCase();
-    
-    const matchesSearch = 
+
+    const matchesSearch =
       c.client_name?.toLowerCase().includes(term) ||
       c.hon_number?.toLowerCase().includes(term) ||
       c.cnpj?.includes(term) ||
@@ -379,7 +361,7 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
       c.reference?.toLowerCase().includes(term) ||
       c.partner_name?.toLowerCase().includes(term) ||
       c.analyzed_by_name?.toLowerCase().includes(term) ||
-      (c.processes && c.processes.some(p => 
+      (c.processes && c.processes.some(p =>
         p.process_number.toLowerCase().includes(term) ||
         p.author?.toLowerCase().includes(term) ||
         p.opponent?.toLowerCase().includes(term) ||
@@ -397,7 +379,7 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
       const relevantDateStr = getRelevantDate(c);
       if (relevantDateStr) {
         const relevantDate = new Date(relevantDateStr);
-        relevantDate.setHours(0, 0, 0, 0); 
+        relevantDate.setHours(0, 0, 0, 0);
 
         if (startDate) {
           const start = new Date(startDate);
@@ -407,14 +389,14 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
 
         if (endDate) {
           const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999); 
+          end.setHours(23, 59, 59, 999);
           if (relevantDate > end) matchesDate = false;
         }
       } else {
-        matchesDate = false; 
+        matchesDate = false;
       }
     }
-      
+
     return matchesSearch && matchesStatus && matchesPartner && matchesDate;
   }).sort((a: Contract, b: Contract) => {
     if (sortBy === 'name') {
@@ -437,88 +419,88 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
     let sumTotalSuccess = 0;
 
     const header = [
-        'ID', 'Status', 'Cliente', 'Sócio', 'HON', 'Data Relevante', 'Local Faturamento',
-        'Pró-Labore', 'Cláusula Pró-Labore',
-        'Outros Honorários', 'Cláusula Outros',
-        'Fixo Mensal', 'Cláusula Fixo Mensal',
-        'Êxito Intermediário', 'Cláusula Intermediário',
-        'Êxito Final', 'Cláusula Êxito Final',
-        'Êxito (Total)', 'Observações'
+      'ID', 'Status', 'Cliente', 'Sócio', 'HON', 'Data Relevante', 'Local Faturamento',
+      'Pró-Labore', 'Cláusula Pró-Labore',
+      'Outros Honorários', 'Cláusula Outros',
+      'Fixo Mensal', 'Cláusula Fixo Mensal',
+      'Êxito Intermediário', 'Cláusula Intermediário',
+      'Êxito Final', 'Cláusula Êxito Final',
+      'Êxito (Total)', 'Observações'
     ];
 
     const rows: any[] = [];
 
     filteredContracts.forEach(c => {
-        const vPro = parseCurrency(c.pro_labore);
-        const vOther = parseCurrency(c.other_fees);
-        const vFixed = parseCurrency(c.fixed_monthly_fee);
-        const vFinal = parseCurrency(c.final_success_fee);
+      const vPro = parseCurrency(c.pro_labore);
+      const vOther = parseCurrency(c.other_fees);
+      const vFixed = parseCurrency(c.fixed_monthly_fee);
+      const vFinal = parseCurrency(c.final_success_fee);
 
-        let vInter = 0;
-        if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
-             c.intermediate_fees.forEach((f: string) => vInter += parseCurrency(f));
-        }
+      let vInter = 0;
+      if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) {
+        c.intermediate_fees.forEach((f: string) => vInter += parseCurrency(f));
+      }
 
-        const vTotalSuccess = calculateTotalSuccess(c);
+      const vTotalSuccess = calculateTotalSuccess(c);
 
-        sumPro += vPro;
-        sumOther += vOther;
-        sumFixed += vFixed;
-        sumInter += vInter;
-        sumFinal += vFinal;
-        sumTotalSuccess += vTotalSuccess;
+      sumPro += vPro;
+      sumOther += vOther;
+      sumFixed += vFixed;
+      sumInter += vInter;
+      sumFinal += vFinal;
+      sumTotalSuccess += vTotalSuccess;
 
+      rows.push([
+        c.display_id,
+        getStatusLabel(c.status),
+        c.client_name,
+        c.partner_name || '-',
+        c.hon_number || '-',
+        new Date(getRelevantDate(c) || '').toLocaleDateString('pt-BR'),
+        c.billing_location || '-',
+        vPro,
+        (c as any).pro_labore_clause || '-',
+        vOther,
+        (c as any).other_fees_clause || '-',
+        vFixed,
+        (c as any).fixed_monthly_fee_clause || '-',
+        vInter,
+        (c.intermediate_fees_clauses && (c.intermediate_fees_clauses as any).length > 0) ? 'Ver detalhe abaixo' : '-',
+        vFinal,
+        (c as any).final_success_fee_clause || '-',
+        vTotalSuccess,
+        c.observations || '-'
+      ]);
+
+      const clauses: { type: string, text: string }[] = [];
+
+      if ((c as any).pro_labore_extras_clauses && Array.isArray((c as any).pro_labore_extras_clauses)) {
+        (c as any).pro_labore_extras_clauses.forEach((cl: string) => clauses.push({ type: 'Extra Pró-Labore', text: cl }));
+      }
+      if ((c.intermediate_fees_clauses as any) && Array.isArray((c.intermediate_fees_clauses as any))) {
+        (c.intermediate_fees_clauses as any).forEach((cl: string) => clauses.push({ type: 'Intermediário', text: cl }));
+      }
+      if ((c as any).final_success_extras_clauses && Array.isArray((c as any).final_success_extras_clauses)) {
+        (c as any).final_success_extras_clauses.forEach((cl: string) => clauses.push({ type: 'Extra Êxito Final', text: cl }));
+      }
+
+      clauses.forEach(clause => {
         rows.push([
           c.display_id,
-          getStatusLabel(c.status),
-          c.client_name,
-          c.partner_name || '-',
-          c.hon_number || '-',
-          new Date(getRelevantDate(c) || '').toLocaleDateString('pt-BR'),
-          c.billing_location || '-',
-          vPro,   
-          (c as any).pro_labore_clause || '-', 
-          vOther, 
-          (c as any).other_fees_clause || '-', 
-          vFixed, 
-          (c as any).fixed_monthly_fee_clause || '-', 
-          vInter, 
-          (c.intermediate_fees_clauses && (c.intermediate_fees_clauses as any).length > 0) ? 'Ver detalhe abaixo' : '-', 
-          vFinal, 
-          (c as any).final_success_fee_clause || '-', 
-          vTotalSuccess, 
-          c.observations || '-' 
+          '', '', '', '', '', '',
+          '', clause.type === 'Extra Pró-Labore' ? clause.text : '',
+          '', '',
+          '', '',
+          '', clause.type === 'Intermediário' ? clause.text : '',
+          '', clause.type === 'Extra Êxito Final' ? clause.text : '',
+          '', ''
         ]);
-
-        const clauses: {type: string, text: string}[] = [];
-        
-        if((c as any).pro_labore_extras_clauses && Array.isArray((c as any).pro_labore_extras_clauses)) {
-            (c as any).pro_labore_extras_clauses.forEach((cl: string) => clauses.push({type: 'Extra Pró-Labore', text: cl}));
-        }
-        if((c.intermediate_fees_clauses as any) && Array.isArray((c.intermediate_fees_clauses as any))) {
-             (c.intermediate_fees_clauses as any).forEach((cl: string) => clauses.push({type: 'Intermediário', text: cl}));
-        }
-        if((c as any).final_success_extras_clauses && Array.isArray((c as any).final_success_extras_clauses)) {
-            (c as any).final_success_extras_clauses.forEach((cl: string) => clauses.push({type: 'Extra Êxito Final', text: cl}));
-        }
-
-        clauses.forEach(clause => {
-            rows.push([
-                c.display_id, 
-                '', '', '', '', '', '', 
-                '', clause.type === 'Extra Pró-Labore' ? clause.text : '', 
-                '', '', 
-                '', '', 
-                '', clause.type === 'Intermediário' ? clause.text : '', 
-                '', clause.type === 'Extra Êxito Final' ? clause.text : '', 
-                '', ''
-            ]);
-        });
+      });
     });
 
     const totalRow = [
-        'TOTAIS', '', '', '', '', '', '',
-        sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalSuccess, ''
+      'TOTAIS', '', '', '', '', '', '',
+      sumPro, '', sumOther, '', sumFixed, '', sumInter, '', sumFinal, '', sumTotalSuccess, ''
     ];
 
     const dataWithHeader = [header, ...rows, [], totalRow];
@@ -528,20 +510,20 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
     const currencyFormat = '"R$" #,##0.00';
     const range = XLSX.utils.decode_range(ws['!ref']!);
     const moneyCols = [7, 9, 11, 13, 15, 17];
-    
+
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        moneyCols.forEach(C => {
-            const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-            if (ws[cellRef] && typeof ws[cellRef].v === 'number') {
-                ws[cellRef].z = currencyFormat;
-                ws[cellRef].t = 'n';
-            }
-        });
+      moneyCols.forEach(C => {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (ws[cellRef] && typeof ws[cellRef].v === 'number') {
+          ws[cellRef].z = currencyFormat;
+          ws[cellRef].t = 'n';
+        }
+      });
     }
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Contratos");
-    
+
     const statusName = statusFilter === 'all' ? 'Geral' : getStatusLabel(statusFilter).replace(/ /g, '_');
     const dateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
     const fileName = `Salomão_${statusName}_${dateStr}.xlsx`;
@@ -577,7 +559,7 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
-      
+
       {/* 1. Header - Salomão Design System */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -590,72 +572,16 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
-              {userRole && (
-                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
-                  • {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
-                </span>
-              )}
-            </div>
-          </div>
-          
-          <div className="relative mr-2">
+        <div className="flex items-center gap-3 shrink-0">
+          <button onClick={exportToExcel} className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
+            <Download className="h-4 w-4" /> Exportar XLS
+          </button>
+          {userRole !== 'viewer' && (
             <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className={`p-2 rounded-full relative transition-all h-9 w-9 flex items-center justify-center ${
-                notifications.length > 0
-                  ? 'bg-red-50 text-red-500 hover:bg-red-100'
-                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-              }`}
+              onClick={handleNew}
+              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
             >
-              <Bell className={`w-5 h-5 ${notifications.length > 0 ? 'animate-pulse' : ''}`} />
-              {notifications.length > 0 && (
-                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-600 border-2 border-white rounded-full"></span>
-              )}
-            </button>
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95">
-                <div className="p-3 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
-                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pendências de Assinatura</h4>
-                  <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[10px] font-bold">{notifications.length}</span>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Nenhuma pendência</div>
-                  ) : (
-                    notifications.map(notif => (
-                      <div
-                        key={notif.id}
-                        onClick={() => handleNotificationClick(notif.id)}
-                        className="p-3 border-b border-gray-50 last:border-0 hover:bg-blue-50 cursor-pointer transition-colors"
-                      >
-                        <p className="text-xs font-bold text-gray-700 truncate">{notif.title}</p>
-                        <p className="text-[9px] font-black text-gray-400 flex items-center mt-1 uppercase tracking-wider">
-                          <Calendar className="w-3 h-3 mr-1" /> Vence: {new Date(notif.due_date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && (
-            <button onClick={onModuleHome} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors">
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button onClick={onLogout} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <LogOut className="h-5 w-5" />
+              <Plus className="h-4 w-4" /> Novo Caso
             </button>
           )}
         </div>
@@ -680,93 +606,84 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
               placeholder="Sócios"
             />
             <div className="flex bg-gray-100/50 rounded-lg p-1 border border-gray-200 h-[40px] items-center">
-                <button
-                  onClick={() => { if(sortBy !== 'name') { setSortBy('name'); setSortOrder('asc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-                  className={`flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-full ${sortBy === 'name' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  Nome
-                  {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowDownAZ className="w-3 h-3 ml-1" /> : <ArrowUpAZ className="w-3 h-3 ml-1" />)}
-                </button>
-                <button
-                  onClick={() => { if(sortBy !== 'date') { setSortBy('date'); setSortOrder('desc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-                  className={`flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-full ${sortBy === 'date' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  Data
-                  {sortBy === 'date' && <ArrowUpDown className="w-3 h-3 ml-1" />}
-                </button>
+              <button
+                onClick={() => { if (sortBy !== 'name') { setSortBy('name'); setSortOrder('asc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
+                className={`flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-full ${sortBy === 'name' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Nome
+                {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowDownAZ className="w-3 h-3 ml-1" /> : <ArrowUpAZ className="w-3 h-3 ml-1" />)}
+              </button>
+              <button
+                onClick={() => { if (sortBy !== 'date') { setSortBy('date'); setSortOrder('desc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
+                className={`flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-full ${sortBy === 'date' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Data
+                {sortBy === 'date' && <ArrowUpDown className="w-3 h-3 ml-1" />}
+              </button>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="bg-gray-100 p-4 rounded-xl flex items-center gap-3 h-[40px]">
-                <Briefcase className="w-4 h-4 text-[#1e3a8a]" />
-                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total: {contracts.length}</span>
+              <Briefcase className="w-4 h-4 text-[#1e3a8a]" />
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total: {contracts.length}</span>
             </div>
-            
-            {userRole !== 'viewer' && (
-              <button
-                onClick={handleNew}
-                className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest h-[40px]"
-              >
-                <Plus className="h-4 w-4" /> Novo Caso
-              </button>
-            )}
+
+
           </div>
         </div>
 
         <div className="h-px bg-gray-100 w-full my-2"></div>
 
         <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-                <div 
-                  ref={searchRef}
-                  className={`
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              ref={searchRef}
+              className={`
                     flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 border border-gray-200
                     ${isSearchOpen ? 'w-64 px-3 rounded-lg shadow-inner' : 'w-10 justify-center cursor-pointer hover:bg-gray-100 rounded-lg'}
                     h-[40px]
                   `}
-                  onClick={() => !isSearchOpen && setIsSearchOpen(true)}
-                >
-                    <Search className={`w-4 h-4 text-gray-400 shrink-0`} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por cliente, HON, processo..."
-                        className={`ml-2 bg-transparent outline-none text-xs font-semibold w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        autoFocus={isSearchOpen}
-                    />
-                    {isSearchOpen && searchTerm && (
-                        <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-1 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
-                    )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
-                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
-                         <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"/>
-                    </div>
-                    <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
-                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
-                         <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"/>
-                    </div>
-                </div>
+              onClick={() => !isSearchOpen && setIsSearchOpen(true)}
+            >
+              <Search className={`w-4 h-4 text-gray-400 shrink-0`} />
+              <input
+                type="text"
+                placeholder="Buscar por cliente, HON, processo..."
+                className={`ml-2 bg-transparent outline-none text-xs font-semibold w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus={isSearchOpen}
+              />
+              {isSearchOpen && searchTerm && (
+                <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-1 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
-                <div className="flex bg-gray-100/50 rounded-lg p-1 border border-gray-200 h-[40px] items-center">
-                    <button onClick={() => setViewMode('grid')} className={`p-1.5 h-full flex items-center rounded-md ${viewMode === 'grid' ? 'bg-white shadow text-[#1e3a8a]' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
-                    <button onClick={() => setViewMode('list')} className={`p-1.5 h-full flex items-center rounded-md ${viewMode === 'list' ? 'bg-white shadow text-[#1e3a8a]' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
-                </div>
-
-                <button onClick={exportToExcel} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-green-400 transition-all text-xs font-black uppercase tracking-widest h-[40px]">
-                    <Download className="w-4 h-4" /> Exportar XLS
-                </button>
-
-                {hasActiveFilters && (
-                    <button onClick={clearFilters} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"><X className="w-5 h-5" /></button>
-                )}
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
+              </div>
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
+              </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex bg-gray-100/50 rounded-lg p-1 border border-gray-200 h-[40px] items-center">
+              <button onClick={() => setViewMode('grid')} className={`p-1.5 h-full flex items-center rounded-md ${viewMode === 'grid' ? 'bg-white shadow text-[#1e3a8a]' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
+              <button onClick={() => setViewMode('list')} className={`p-1.5 h-full flex items-center rounded-md ${viewMode === 'list' ? 'bg-white shadow text-[#1e3a8a]' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
+            </div>
+
+
+
+            {hasActiveFilters && (
+              <button onClick={clearFilters} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"><X className="w-5 h-5" /></button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -774,18 +691,18 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
       <div className="flex-1">
         {loading ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
-              Carregando base de dados...
+            <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mx-auto mb-4" />
+            Carregando base de dados...
           </div>
         ) : filteredContracts.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <EmptyState
-                icon={FileSearch}
-                title="Nenhum caso encontrado"
-                description={hasActiveFilters ? "Não encontramos nenhum contrato com os filtros atuais." : "Você ainda não possui casos cadastrados."}
-                actionLabel={hasActiveFilters ? "Limpar Filtros" : "Novo Caso"}
-                onAction={hasActiveFilters ? clearFilters : handleNew}
-              />
+            <EmptyState
+              icon={FileSearch}
+              title="Nenhum caso encontrado"
+              description={hasActiveFilters ? "Não encontramos nenhum contrato com os filtros atuais." : "Você ainda não possui casos cadastrados."}
+              actionLabel={hasActiveFilters ? "Limpar Filtros" : "Novo Caso"}
+              onAction={hasActiveFilters ? clearFilters : handleNew}
+            />
           </div>
         ) : (
           <>
@@ -796,7 +713,7 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
                   return (
                     <div key={contract.id} onClick={() => handleView(contract)} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group relative overflow-hidden">
                       <div className={`absolute right-0 top-0 h-full w-1 ${getStatusColor(contract.status).split(' ')[0].replace('bg-', 'bg-').replace('-50', '-500')}`}></div>
-                      
+
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1 min-w-0 pr-8">
                           <span className="text-[10px] font-black text-gray-400 font-mono mb-1 block uppercase tracking-widest">{contract.display_id}</span>
@@ -881,13 +798,13 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
                         <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{new Date(getRelevantDate(contract) || '').toLocaleDateString()}</td>
                         <td className="p-4">
                           <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>
-                              {userRole !== 'viewer' && (
-                                  <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"><Edit className="w-4 h-4" /></button>
-                              )}
-                              {userRole === 'admin' && (
-                                  <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
-                              )}
+                            <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>
+                            {userRole !== 'viewer' && (
+                              <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"><Edit className="w-4 h-4" /></button>
+                            )}
+                            {userRole === 'admin' && (
+                              <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -932,7 +849,7 @@ export function Contracts({ userName, onModuleHome, onLogout }: Props) {
         onOpenPartnerManager={() => setIsPartnerModalOpen(true)}
         analysts={analysts}
         onOpenAnalystManager={() => setIsAnalystModalOpen(true)}
-        onCNPJSearch={() => {}}
+        onCNPJSearch={() => { }}
         processes={processes}
         currentProcess={currentProcess}
         setCurrentProcess={setCurrentProcess}

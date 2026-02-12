@@ -1,7 +1,7 @@
 export const maskCNPJ = (value: string) => {
   // Máscara mista para CPF e CNPJ
   const cleanValue = value.replace(/\D/g, '');
-  
+
   if (cleanValue.length <= 11) {
     // CPF
     return cleanValue
@@ -56,9 +56,29 @@ export const parseCurrency = (value: string | undefined): number => {
 
 export const toTitleCase = (str: string) => {
   if (!str) return '';
+
+  const acronyms: Record<string, string> = {
+    'clt': 'CLT', 'pj': 'PJ', 'oab': 'OAB', 'rg': 'RG', 'cpf': 'CPF', 'cnpj': 'CNPJ',
+    'uf': 'UF', 'ti': 'TI', 'rh': 'RH', 'ceo': 'CEO', 'cfo': 'CFO', 'mei': 'MEI',
+    'pis': 'PIS', 'pasep': 'PASEP', 'ctps': 'CTPS', 'cnh': 'CNH', 'oab/uf': 'OAB/UF'
+  };
+
+  const lowerCaseWords = ['da', 'de', 'do', 'das', 'dos', 'e', 'em', 'para', 'com'];
+
   return str.replace(
     /\w\S*/g,
-    (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    (txt) => {
+      const lower = txt.toLowerCase();
+      // Verifique se é uma sigla conhecida
+      if (acronyms[lower]) return acronyms[lower];
+      // Verifique se é uma preposição (apenas se não for a primeira palavra da string original - simplificado aqui)
+      // Nota: Para ser perfeito precisaria do índice, mas para "Tipo" funciona bem.
+      // Vou manter a capitalização da primeira letra sempre se não for sigla, unless it's strictly a formatter that usually lowercases connectors.
+      // O formato Title Case padrão geralmente coloca conectivos em minúsculo.
+      if (lowerCaseWords.includes(lower)) return lower;
+
+      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    }
   );
 };
 
