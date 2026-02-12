@@ -265,6 +265,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       leader_id: formData.leader_id || null
     }
 
+    // Remove joined fields that are not columns in the table
+    delete (payload as any).leader
+    delete (payload as any).partner
+
     const { error } = formData.id
       ? await supabase.from('collaborators').update(payload).eq('id', formData.id)
       : await supabase.from('collaborators').insert(payload)
