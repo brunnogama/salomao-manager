@@ -632,7 +632,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       {
         selectedColaborador && (
           <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
-            <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50">
+            <div className="bg-white rounded-[2rem] w-full max-w-7xl my-8 flex flex-col shadow-2xl border border-gray-200/50">
 
               {/* Header */}
               <div className="px-8 py-5 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-[2rem]">
