@@ -366,8 +366,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
           <StatCard title="Total" value={colaboradores.length} icon={Users} color="blue" />
           <StatCard title="Ativos" value={colaboradores.filter(c => c.status === 'active').length} icon={CheckCircle} color="green" />
-          <StatCard title="Inativos" value={colaboradores.filter(c => c.status === 'inactive').length} icon={UserX} color="gray" />
-          <StatCard title="Local RJ" value={colaboradores.filter(c => c.local === 'Rio de Janeiro').length} icon={Building2} color="red" />
+          <LocationStatsCard colaboradores={colaboradores} />
         </div>
 
         {/* TOOLBAR */}
@@ -701,6 +700,34 @@ function StatCard({ title, value, icon: Icon, color }: any) {
       </div>
       <div className={`p-3 rounded-xl ${themes[color].split(' ')[0]} ${themes[color].split(' ')[1]}`}>
         <Icon className="h-6 w-6" />
+      </div>
+    </div>
+  )
+}
+
+function LocationStatsCard({ colaboradores }: { colaboradores: any[] }) {
+  const stats = colaboradores.reduce((acc: any, curr: any) => {
+    const local = curr.local || 'Sem Local';
+    acc[local] = (acc[local] || 0) + 1;
+    return acc;
+  }, {});
+
+  return (
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 md:col-span-2 flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
+      <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12">
+        <Building2 className="w-32 h-32 text-[#1e3a8a]" />
+      </div>
+      <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 z-10">Distribuição por Local</p>
+      <div className="grid grid-cols-2 gap-3 z-10">
+        {Object.entries(stats).map(([local, count]) => (
+          <div key={local} className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 border border-gray-100 hover:bg-white hover:border-blue-100 transition-colors">
+            <div className="flex items-center gap-2.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a]"></div>
+              <span className="text-xs font-bold text-gray-700 truncate max-w-[100px]" title={local}>{local}</span>
+            </div>
+            <span className="text-sm font-black text-[#0a192f]">{String(count)}</span>
+          </div>
+        ))}
       </div>
     </div>
   )
