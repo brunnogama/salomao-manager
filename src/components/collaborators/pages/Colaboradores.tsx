@@ -491,8 +491,48 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.map(c => (
+              {filtered.filter(c => c.status === 'active').map(c => (
                 <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab('dados'); }} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar src={c.photo_url} name={c.name} onImageClick={() => c.photo_url && setViewingPhoto(c.photo_url)} />
+                      <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
+                      {c.status === 'active' ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {filtered.some(c => c.status !== 'active') && (
+                <tr className="bg-gray-50/50">
+                  <td colSpan={6} className="px-6 py-3 border-y border-gray-100">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inativos</p>
+                  </td>
+                </tr>
+              )}
+
+              {filtered.filter(c => c.status !== 'active').map(c => (
+                <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab('dados'); }} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <Avatar src={c.photo_url} name={c.name} onImageClick={() => c.photo_url && setViewingPhoto(c.photo_url)} />
