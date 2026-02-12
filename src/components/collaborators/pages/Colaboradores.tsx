@@ -514,16 +514,16 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                       setFormData={setFormData}
                       maskDate={maskDate}
                     />
+
+                    {/* Dados Corporativos */}
+                    <DadosCorporativosSection
+                      formData={formData}
+                      setFormData={setFormData}
+                      maskDate={maskDate}
+                      handleRefresh={handleRefresh}
+                    />
                   </div>
                 </div>
-
-                {/* Dados Corporativos */}
-                <DadosCorporativosSection
-                  formData={formData}
-                  setFormData={setFormData}
-                  maskDate={maskDate}
-                  handleRefresh={handleRefresh}
-                />
               </div>
             </div>
 
