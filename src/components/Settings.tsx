@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
-  Shield, Users, History as HistoryIcon, Code, Lock,
-  Briefcase, EyeOff, LayoutGrid, Heart, Plane, DollarSign, Grid,
-  CheckCircle, AlertCircle, Trash2, AlertTriangle, ChevronRight,
-  UserCircle, LogOut, Settings as SettingsIcon, Database, Layout, Mail, Save, User, Info
+  Shield, Users, History as HistoryIcon, Code,
+  Briefcase, EyeOff, LayoutGrid, Heart, DollarSign, Grid,
+  CheckCircle, AlertCircle, Trash2, AlertTriangle,
+  UserCircle, LogOut, Settings as SettingsIcon, Layout, Mail, Info, Database
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
@@ -15,6 +15,7 @@ import { UserModal } from './settings/UserModal'
 import { CRMSection } from './settings/CRMSection'
 import { MaintenanceSection } from './settings/MaintenanceSection'
 import { SystemSection } from './settings/SystemSection'
+import { ControladoriaSection } from './settings/ControladoriaSection'
 
 // --- INTERFACES & CONSTANTS ---
 interface UserPermissions {
@@ -27,8 +28,6 @@ interface AppUser {
   cargo: string; role: string; ativo: boolean; allowed_modules: string[];
 }
 
-interface GenericItem { id: number; nome: string; ativo?: boolean; }
-
 const DEFAULT_PERMISSIONS: UserPermissions = {
   geral: true, crm: true, family: false, collaborators: false, operational: false, financial: false
 }
@@ -37,7 +36,15 @@ const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
 const CHANGELOG = [
   {
-    version: '3.0.0', date: '11/02/2026', type: 'radical', title: '🚀 Padronização e Recuperação',
+    version: '3.1.0', date: '11/02/2026', type: 'feature' as const, title: '⚙️ Configurações Controladoria',
+    changes: [
+      'Nova aba de configurações exclusivas da Controladoria',
+      'Reset modular para Financeiro, Tarefas, Contratos e Clientes',
+      'Zona de perigo com Factory Reset específico para o módulo'
+    ]
+  },
+  {
+    version: '3.0.0', date: '11/02/2026', type: 'feature' as const, title: '🚀 Padronização e Recuperação',
     changes: [
       'Padronização de Cabeçalho Geral (Settings)',
       'Migração de Configurações da Controladoria',
@@ -46,11 +53,11 @@ const CHANGELOG = [
     ]
   },
   {
-    version: '2.9.9', date: '04/02/2026', type: 'fix', title: '🛡️ Ajuste Permissão RH/Collaborators',
+    version: '2.9.9', date: '04/02/2026', type: 'fix' as const, title: '🛡️ Ajuste Permissão RH/Collaborators',
     changes: ['Unificação de flags de acesso para o módulo de colaboradores', 'Correção de bypass emergencial']
   },
   {
-    version: '2.9.8', date: '03/02/2026', type: 'fix', title: '🛡️ Reset de Segurança e Bypass',
+    version: '2.9.8', date: '03/02/2026', type: 'fix' as const, title: '🛡️ Reset de Segurança e Bypass',
     changes: ['Remoção de políticas RLS conflitantes (Erro 500)', 'Bypass local prioritário para marcio.gama', 'Sincronização forçada de UUID via Upsert']
   }
 ]
@@ -59,7 +66,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   // --- STATES ---
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
-  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'family' | 'financial' | 'historico' | 'sistema' | 'about'>('menu')
+  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'family' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria'>('menu')
 
   const [users, setUsers] = useState<AppUser[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
@@ -71,9 +78,6 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   const [currentUserPermissions, setCurrentUserPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS)
   const [sessionUserId, setSessionUserId] = useState<string>('')
 
-  const [brindes, setBrindes] = useState<GenericItem[]>([])
-  const [socios, setSocios] = useState<GenericItem[]>([])
-
   const [resetModal, setResetModal] = useState<{ isOpen: boolean; table: string; moduleName: string; logMsg: string; description: string } | null>(null)
   const [confirmText, setConfirmText] = useState('')
 
@@ -84,8 +88,6 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   useEffect(() => {
     fetchCurrentUserMetadata();
     fetchUsers();
-    fetchBrindes();
-    fetchSocios();
   }, [sessionUserId])
 
   // --- DATA FETCHING ---
@@ -127,16 +129,6 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
         role: u.role || 'user', ativo: !!u.user_id, allowed_modules: u.allowed_modules || []
       })))
     }
-  }
-
-  const fetchBrindes = async () => {
-    const { data } = await supabase.from('tipos_brinde').select('*').order('nome')
-    if (data) setBrindes(data)
-  }
-
-  const fetchSocios = async () => {
-    const { data } = await supabase.from('socios').select('*').order('nome')
-    if (data) setSocios(data)
   }
 
   // --- ACTIONS ---
@@ -217,30 +209,128 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
     setConfirmText('');
   }
 
+  // --- CONTROLADORIA RESET LOGIC ---
+  const handleControladoriaReset = async (module: 'contracts' | 'clients' | 'financial' | 'kanban') => {
+    if (!isAdmin) return;
+
+    // Using the same modal logic but adapting the parameters
+    const labels: any = {
+      contracts: 'CONTRATOS',
+      clients: 'CLIENTES',
+      financial: 'FINANCEIRO',
+      kanban: 'TAREFAS'
+    };
+
+    // We will use a special confirming text or just re-use openResetModal but customize the action
+    // Since openResetModal is tied to a single table delete, and these resets delete from multiple tables,
+    // we might need a specialized handler or extend the existing one. For simplicity and safety, 
+    // let's create a specific handler that uses window.confirm or a custom modal state if we want to reuse the UI.
+    // The previous implementation used window.prompt. Let's stick to the nice UI modal by extending it or creating a new state.
+
+    // Extending resetModal state to support custom action type
+    // For now, I'll map these to the existing resetModal structure by using a special "table" name that triggers the complex logic
+
+    let description = '';
+    let logMsg = '';
+
+    if (module === 'financial') {
+      description = 'Remove todas as parcelas financeiras.';
+      logMsg = 'Resetou financeiro da controladoria';
+    } else if (module === 'kanban') {
+      description = 'Remove todas as tarefas do Kanban.';
+      logMsg = 'Resetou tarefas da controladoria';
+    } else if (module === 'contracts') {
+      description = 'Remove contratos, documentos, timeline e parcelas associadas.';
+      logMsg = 'Resetou contratos da controladoria';
+    } else if (module === 'clients') {
+      description = 'Remove clientes sem vínculos. (Com vinculados o reset falhará).';
+      logMsg = 'Resetou clientes da controladoria';
+    }
+
+    setResetModal({
+      isOpen: true,
+      table: `controladoria_${module}`, // Special prefix to identify complex action
+      moduleName: `CONTROLADORIA - ${labels[module]}`,
+      logMsg,
+      description
+    });
+    setConfirmText('');
+  }
+
+  const handleControladoriaFactoryReset = () => {
+    if (!isAdmin) return;
+    setResetModal({
+      isOpen: true,
+      table: 'controladoria_factory_reset',
+      moduleName: 'CONTROLADORIA - RESET COMPLETO',
+      logMsg: 'Realizou Factory Reset na Controladoria',
+      description: 'ATENÇÃO: Apaga Contratos, Clientes, Sócios, Analistas e Financeiro.'
+    });
+    setConfirmText('');
+  }
+
+  // Modified handleResetAction to handle complex resets
   const handleResetAction = async () => {
     if (!resetModal || confirmText !== 'APAGAR') return;
     setLoading(true);
     try {
-      const uuidTables = [
-        'aeronave_lancamentos',
-        'financeiro_aeronave',
-        'presenca_portaria',
-        'marcacoes_ponto',
-        'colaboradores'
-      ];
+      // --- CONTROLADORIA LOGIC START ---
+      if (resetModal.table.startsWith('controladoria_')) {
+        const action = resetModal.table.replace('controladoria_', '');
 
-      if (uuidTables.includes(resetModal.table)) {
-        const { error } = await supabase
-          .from(resetModal.table)
-          .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000');
-        if (error) throw error;
+        if (action === 'financial') {
+          await supabase.from('financial_installments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        }
+        else if (action === 'kanban') {
+          await supabase.from('kanban_tasks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        }
+        else if (action === 'contracts') {
+          await supabase.from('financial_installments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('contract_timeline').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('contract_documents').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('contract_processes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('kanban_tasks').delete().not('contract_id', 'is', null);
+          await supabase.from('contracts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        }
+        else if (action === 'clients') {
+          const { error } = await supabase.from('clients').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          if (error) throw new Error("Não é possível excluir clientes que possuem contratos vinculados.");
+        }
+        else if (action === 'factory_reset') {
+          await supabase.from('financial_installments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('contract_timeline').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('contract_documents').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('contract_processes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('kanban_tasks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('contracts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('clients').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('partners').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('analysts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        }
+        // --- END CONTROLADORIA LOGIC ---
       } else {
-        const { error } = await supabase
-          .from(resetModal.table)
-          .delete()
-          .not('id', 'eq', 0);
-        if (error) throw error;
+        // ... (existing logic for other tables)
+        const uuidTables = [
+          'aeronave_lancamentos',
+          'financeiro_aeronave',
+          'presenca_portaria',
+          'marcacoes_ponto',
+          'colaboradores'
+        ];
+
+        if (uuidTables.includes(resetModal.table)) {
+          const { error } = await supabase
+            .from(resetModal.table)
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000');
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from(resetModal.table)
+            .delete()
+            .not('id', 'eq', 0);
+          if (error) throw error;
+        }
       }
 
       setStatus({ type: 'success', message: `${resetModal.moduleName} resetado com sucesso!` });
@@ -255,16 +345,21 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
     }
   }
 
+  // Ensure "Controladoria" is accessible
+  // I'll add 'controladoria' to the keyMap or just allow it for admins
   const hasAccessToModule = (modId: string) => {
     if (isSuperAdmin || isAdmin) return true;
     if (['menu', 'historico', 'juridico', 'geral', 'about'].includes(modId)) return true;
-    const keyMap: any = { crm: 'crm', rh: 'collaborators', family: 'family', financial: 'financial' };
+    const keyMap: any = { crm: 'crm', rh: 'collaborators', family: 'family', financial: 'financial', controladoria: 'controladoria' }; // Assumes user permission might track it, but for now mostly Admin
+
+    // If it's pure Admin module, only admins should see it (already handled by !item.adminOnly check in menu render)
     return currentUserPermissions[keyMap[modId] as keyof UserPermissions] || false;
   }
 
   const menuItems = [
     { id: 'geral', label: 'Geral', icon: Shield },
     { id: 'crm', label: 'CRM Brindes', icon: Briefcase },
+    { id: 'controladoria', label: 'Controladoria', icon: Layout, adminOnly: true }, // NEW ITEM
     { id: 'rh', label: 'RH', icon: Users },
     { id: 'family', label: 'Família', icon: Heart },
     { id: 'financial', label: 'Financeiro', icon: DollarSign },
@@ -337,8 +432,8 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
                   key={item.id}
                   onClick={() => setActiveModule(item.id as any)}
                   className={`w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeModule === item.id
-                      ? 'bg-[#1e3a8a] text-white shadow-md'
-                      : 'text-gray-500 hover:bg-gray-50'
+                    ? 'bg-[#1e3a8a] text-white shadow-md'
+                    : 'text-gray-500 hover:bg-gray-50'
                     }`}
                 >
                   <item.icon className="mr-3 h-4 w-4" />
@@ -444,6 +539,15 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
             <CRMSection
               isAdmin={isAdmin}
               onReset={() => openResetModal('clientes', 'CRM Brindes', 'Resetou base do CRM', 'Remove TODOS os clientes, brindes e histórico do CRM')}
+            />
+          )}
+
+          {activeModule === 'controladoria' && (
+            <ControladoriaSection
+              isAdmin={isAdmin}
+              onReset={handleControladoriaReset}
+              onFactoryReset={handleControladoriaFactoryReset}
+              loading={loading}
             />
           )}
 
