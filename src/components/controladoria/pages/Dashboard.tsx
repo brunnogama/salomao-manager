@@ -256,7 +256,7 @@ export function Dashboard({ userName, onModuleHome, onLogout }: Props) {
       <div ref={dashboardRef} className="space-y-6">
         <EfficiencyFunnel funil={funil} />
         <PortfolioFinancialOverview metrics={metrics} />
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <WeeklySummary metrics={metrics} />
           <MonthlySummary metrics={metrics} />
         </div>
