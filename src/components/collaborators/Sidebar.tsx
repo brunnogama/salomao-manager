@@ -102,18 +102,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <X className="w-6 h-6" />
         </button>
 
-        {/* 1. HEADER - FAVICON + MÓDULO */}
+        {/* 1. HEADER - BRAND + MÓDULO */}
         <div className="p-6 pb-2">
-          <div className="flex items-center gap-4 mb-6">
-            <img src="/favicon.png" alt="Icon" className="h-8 w-8 drop-shadow-lg" />
-            <div className="px-3 py-1.5 bg-white/10 rounded-lg border border-white/10 backdrop-blur-sm shadow-inner">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 block text-center min-w-[80px]">
-                RH
-              </span>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 bg-[#1e3a8a] rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20 border border-blue-700/50">
+              <img src="/favicon.png" alt="S" className="h-6 w-6 drop-shadow-md" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-white leading-none tracking-wide">RECURSOS</h2>
+              <h2 className="text-xl font-black text-white leading-none tracking-wide mt-0.5">HUMANOS</h2>
             </div>
           </div>
           {/* Separator */}
-          <div className="h-px bg-gradient-to-r from-transparent via-blue-800 to-transparent mb-2" />
+          <div className="h-px bg-gray-800 mb-2" />
         </div>
 
         {/* 2. MENU PRINCIPAL */}
@@ -124,14 +125,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               to={item.path}
               onClick={onClose}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${isActive(item.path)
-                ? 'bg-[#1e3a8a] text-white shadow-lg shadow-blue-900/50 translate-x-1'
-                : 'text-blue-200 hover:bg-white/5 hover:text-white hover:translate-x-1'
+                ? 'bg-[#1e3a8a] text-white font-medium shadow-md'
+                : 'text-gray-300 hover:bg-white/5 hover:text-white'
                 }`}
             >
               <item.icon className={`h-5 w-5 transition-transform duration-300 ${isActive(item.path) ? 'scale-110' : 'group-hover:scale-110'}`} />
-              <span className="text-sm font-bold tracking-wide">{item.label}</span>
+              <span className="text-sm font-medium">{item.label}</span>
               {isActive(item.path) && (
-                <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
+                <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-blue-400" />
               )}
             </Link>
           ))}
