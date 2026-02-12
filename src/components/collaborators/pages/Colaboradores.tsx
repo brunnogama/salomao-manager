@@ -132,20 +132,28 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     setLoading(true)
     try {
       // Query padronizada para evitar erros de cache de esquema
-      const { data, error } = await supabase
-        .from('collaborators')
-        .select(`
-          *,
-          partner:partner_id(id, name),
-          leader:leader_id(id, name),
-          roles:roles(name),
-          locations:locations(name),
-          teams:teams(name)
-        `)
-        .order('name')
+      // Fetch data independently since joins might fail without FKs
+      const [colabRes, rolesRes, locsRes, teamsRes] = await Promise.all([
+        supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name)`).order('name'),
+        supabase.from('roles').select('id, name'),
+        supabase.from('locations').select('id, name'),
+        supabase.from('teams').select('id, name')
+      ])
 
-      if (error) throw error
-      if (data) setColaboradores(data)
+      if (colabRes.error) throw colabRes.error
+
+      const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
+      const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
+      const teamsMap = new Map(teamsRes.data?.map(t => [String(t.id), t.name]) || [])
+
+      const enrichedData = colabRes.data?.map(c => ({
+        ...c,
+        roles: { name: rolesMap.get(String(c.role)) || c.role },
+        locations: { name: locsMap.get(String(c.local)) || c.local },
+        teams: { name: teamsMap.get(String(c.equipe)) || c.equipe }
+      })) || []
+
+      setColaboradores(enrichedData)
     } catch (error: any) {
       console.error("Erro ao buscar colaboradores:", error.message)
       setColaboradores([])
