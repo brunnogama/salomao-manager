@@ -390,9 +390,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               <input type="text" placeholder="Buscar..." className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <div className="w-44"><SearchableSelect placeholder="Sócios" value={filterPartner} onChange={setFilterPartner} options={partners.map(p => ({ id: p.id, name: p.name }))} /></div>
-            <div className="w-44"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={colaboradores.filter(c => c.status === 'active').map(c => ({ id: c.id, name: c.name }))} /></div>
-            <div className="w-44">
+            <div className="w-64"><SearchableSelect placeholder="Sócios" value={filterPartner} onChange={setFilterPartner} options={partners.map(p => ({ id: p.id, name: p.name }))} /></div>
+            <div className="w-64"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={colaboradores.filter(c => c.status === 'active').map(c => ({ id: c.id, name: c.name }))} /></div>
+            <div className="w-64">
               <SearchableSelect
                 placeholder="Cargos"
                 value={filterCargo}
@@ -400,7 +400,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 table="roles"
               />
             </div>
-            <div className="w-44">
+            <div className="w-64">
               <SearchableSelect
                 placeholder="Locais"
                 value={filterLocal}
@@ -420,7 +420,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         {/* TABLE */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible">
           <table className="w-full text-left">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+            <thead className="sticky top-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200 shadow-sm">
               <tr>
                 <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
                   Colaborador
