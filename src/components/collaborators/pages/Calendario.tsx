@@ -304,10 +304,10 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           key={day}
           onClick={() => setSelectedDayEvents({ day, events: totalDia })}
           className={`aspect-square p-2 rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer ${isToday
-              ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a] shadow-xl'
-              : totalDia.length > 0
-                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg hover:scale-105 hover:border-[#1e3a8a]/50'
-                : 'bg-white border-gray-100 hover:border-[#1e3a8a]/30 hover:bg-blue-50/30'
+            ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a] shadow-xl'
+            : totalDia.length > 0
+              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg hover:scale-105 hover:border-[#1e3a8a]/50'
+              : 'bg-white border-gray-100 hover:border-[#1e3a8a]/30 hover:bg-blue-50/30'
             }`}
         >
           <div className={`text-sm font-black ${isToday ? 'text-white' : 'text-[#0a192f]'}`}>
@@ -367,21 +367,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
   const aniversariosEsteMes = getAniversariosEsteMes()
 
   // Agrupamento de eventos para a lista lateral
-  const getAgrupadosPorDia = () => {
-    const list = [...aniversariosDoMes(selectedMonth, selectedYear), ...eventosDoMes(selectedMonth, selectedYear)];
-    const grouped: { [key: number]: any[] } = {};
 
-    list.forEach(item => {
-      const day = 'dia' in item ? item.dia : new Date(item.data_evento + 'T12:00:00').getDate();
-      if (!grouped[day]) grouped[day] = [];
-      grouped[day].push(item);
-    });
-
-    return Object.keys(grouped)
-      .map(Number)
-      .sort((a, b) => a - b)
-      .map(day => ({ day, items: grouped[day] }));
-  };
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
@@ -490,8 +476,8 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
               <button
                 onClick={() => setViewMode('calendario')}
                 className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm ${viewMode === 'calendario'
-                    ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                  ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                   }`}
               >
                 Calendário
@@ -499,8 +485,8 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
               <button
                 onClick={() => setViewMode('proximos')}
                 className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm ${viewMode === 'proximos'
-                    ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                  ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                   }`}
               >
                 Lista
@@ -700,10 +686,10 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
                 <div
                   key={aniv.colaborador.id}
                   className={`flex items-center justify-between p-5 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${aniv.isHoje
-                      ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-[#d4af37]/50'
-                      : aniv.isEstaSemana
-                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
-                        : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
+                    ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-[#d4af37]/50'
+                    : aniv.isEstaSemana
+                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
+                      : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
                     }`}
                 >
                   <div className="flex items-center gap-4">
