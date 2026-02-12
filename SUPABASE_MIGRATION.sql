@@ -1,4 +1,4 @@
--- Migration for Collaborator Module Refactor
+-- Migration for Collaborator Module Refactor (Idempotent)
 
 -- 1. Add new columns to 'collaborators' table
 ALTER TABLE collaborators
@@ -22,17 +22,18 @@ CREATE TABLE IF NOT EXISTS cost_centers (
 -- Enable RLS for 'cost_centers'
 ALTER TABLE cost_centers ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Enable read access for all users" ON cost_centers
-    FOR SELECT USING (true);
+-- Safely recreate policies for 'cost_centers'
+DROP POLICY IF EXISTS "Enable read access for all users" ON cost_centers;
+CREATE POLICY "Enable read access for all users" ON cost_centers FOR SELECT USING (true);
 
-CREATE POLICY "Enable insert for authenticated users only" ON cost_centers
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-    
-CREATE POLICY "Enable update for authenticated users only" ON cost_centers
-    FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON cost_centers;
+CREATE POLICY "Enable insert for authenticated users only" ON cost_centers FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Enable delete for authenticated users only" ON cost_centers
-    FOR DELETE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Enable update for authenticated users only" ON cost_centers;
+CREATE POLICY "Enable update for authenticated users only" ON cost_centers FOR UPDATE USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Enable delete for authenticated users only" ON cost_centers;
+CREATE POLICY "Enable delete for authenticated users only" ON cost_centers FOR DELETE USING (auth.role() = 'authenticated');
 
 
 -- 3. Create 'termination_reasons' table for new dropdown
@@ -45,17 +46,18 @@ CREATE TABLE IF NOT EXISTS termination_reasons (
 -- Enable RLS for 'termination_reasons'
 ALTER TABLE termination_reasons ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Enable read access for all users" ON termination_reasons
-    FOR SELECT USING (true);
+-- Safely recreate policies for 'termination_reasons'
+DROP POLICY IF EXISTS "Enable read access for all users" ON termination_reasons;
+CREATE POLICY "Enable read access for all users" ON termination_reasons FOR SELECT USING (true);
 
-CREATE POLICY "Enable insert for authenticated users only" ON termination_reasons
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-    
-CREATE POLICY "Enable update for authenticated users only" ON termination_reasons
-    FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON termination_reasons;
+CREATE POLICY "Enable insert for authenticated users only" ON termination_reasons FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Enable delete for authenticated users only" ON termination_reasons
-    FOR DELETE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Enable update for authenticated users only" ON termination_reasons;
+CREATE POLICY "Enable update for authenticated users only" ON termination_reasons FOR UPDATE USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Enable delete for authenticated users only" ON termination_reasons;
+CREATE POLICY "Enable delete for authenticated users only" ON termination_reasons FOR DELETE USING (auth.role() = 'authenticated');
 
 -- 4. Initial Seed Data (Optional)
 INSERT INTO termination_reasons (name) VALUES 

@@ -1,4 +1,5 @@
 // src/components/collaborators/components/DadosPessoaisSection.tsx
+import React from 'react'
 import { User } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
@@ -147,5 +148,6 @@ export function DadosPessoaisSection({
           placeholder="Observações gerais sobre o colaborador..."
         />
       </div>
-      )
+    </section>
+  )
 }

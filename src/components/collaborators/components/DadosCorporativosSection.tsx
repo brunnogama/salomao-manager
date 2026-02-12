@@ -1,4 +1,5 @@
 // src/components/collaborators/components/DadosCorporativosSection.tsx
+import React from 'react'
 import { Briefcase } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
