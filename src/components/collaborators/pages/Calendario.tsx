@@ -15,22 +15,14 @@ import {
   Save,
   AlignLeft,
   CalendarDays,
-  Grid,
-  LogOut,
-  UserCircle,
   Calendar as CalendarEventIcon,
   Pencil,
-  Trash2,
-  CalendarDays as MonthIcon
+  Trash2
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { RHCalendarioDiaModal } from '../components/RHCalendarioDiaModal'
 
-interface CalendarioProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
-}
+
 
 interface Colaborador {
   id: number;
@@ -66,7 +58,7 @@ const MESES = [
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
-export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: CalendarioProps) {
+export function Calendario() {
   const [collaborators, setcollaborators] = useState<Colaborador[]>([])
   const [eventos, setEventos] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
@@ -388,32 +380,15 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           </div>
         </div>
 
+        {/* Right: Actions */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && (
-            <button
-              onClick={onModuleHome}
-              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
-              title="Voltar aos módulos"
-            >
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-              title="Sair"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
+          <button
+            onClick={() => { setEditingEvento(null); setIsModalOpen(true); }}
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#15803d] to-green-700 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 hover:from-green-700 hover:to-[#15803d]"
+          >
+            <Plus className="h-4 w-4" />
+            Novo Evento
+          </button>
         </div>
       </div>
 
@@ -464,13 +439,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           </div>
 
           <div className="flex flex-wrap gap-3 w-full xl:w-auto justify-end">
-            <button
-              onClick={() => { setEditingEvento(null); setIsModalOpen(true); }}
-              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#15803d] to-green-700 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 hover:from-green-700 hover:to-[#15803d]"
-            >
-              <Plus className="h-4 w-4" />
-              Novo Evento
-            </button>
+            {/* Novo Evento moved to header */}
 
             <div className="flex gap-2">
               <button

@@ -30,6 +30,7 @@ import { RHVagas } from './components/collaborators/pages/RHVagas';
 import { RHRemuneracao } from './components/collaborators/pages/RHRemuneracao';
 import { RHAcoes } from './components/collaborators/pages/RHAcoes';
 import { RHGED } from './components/collaborators/pages/RHGED';
+import { RHKanban } from './components/collaborators/pages/RHKanban';
 
 // Financeiro Components
 import { FinanceDashboard } from './components/finance/pages/FinanceDashboard';
@@ -169,6 +170,7 @@ export function AppRoutes() {
                     <Route path="remuneracao" element={<WithProps Component={RHRemuneracao} />} />
                     <Route path="acoes" element={<WithProps Component={RHAcoes} />} />
                     <Route path="ged" element={<WithProps Component={RHGED} />} />
+                    <Route path="kanban" element={<WithProps Component={RHKanban} />} />
                 </Route>
 
                 {/* Financeiro */}
