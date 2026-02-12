@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Camera, Clock, Briefcase, CheckCircle2, XCircle, HeartHandshake, Layers 
+import {
+  Camera, Clock, Briefcase, CheckCircle2, XCircle, HeartHandshake, Layers
 } from 'lucide-react';
 import { formatMoney } from './dashboardHelpers';
 
@@ -17,22 +17,22 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
   };
 
   // Cálculos protegidos
-  const totalCarteira = (metrics?.geral?.totalFechadoPL || 0) + 
-                        (metrics?.geral?.totalFechadoExito || 0) + 
-                        (metrics?.geral?.receitaRecorrenteAtiva || 0) + 
-                        ((metrics?.geral as any)?.totalFechadoOutros || 0);
+  const totalCarteira = (metrics?.geral?.totalFechadoPL || 0) +
+    (metrics?.geral?.totalFechadoExito || 0) +
+    (metrics?.geral?.receitaRecorrenteAtiva || 0) +
+    ((metrics?.geral as any)?.totalFechadoOutros || 0);
 
-  const totalNegociacao = (metrics?.geral?.valorEmNegociacaoPL || 0) + 
-                          (metrics?.geral?.valorEmNegociacaoExito || 0) +
-                          ((metrics?.geral as any)?.valorEmNegociacaoMensal || 0) +
-                          ((metrics?.geral as any)?.valorEmNegociacaoOutros || 0);
+  const totalNegociacao = (metrics?.geral?.valorEmNegociacaoPL || 0) +
+    (metrics?.geral?.valorEmNegociacaoExito || 0) +
+    ((metrics?.geral as any)?.valorEmNegociacaoMensal || 0) +
+    ((metrics?.geral as any)?.valorEmNegociacaoOutros || 0);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      
+
       {/* Esquerda: Fotografia da Carteira Atual (Cards) */}
       <div className='lg:col-span-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 h-full flex flex-col'>
-        
+
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100'>
           <div className='flex items-center gap-3 mb-2'>
@@ -50,11 +50,11 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
 
         {/* Cards Clicáveis para Drill-Down */}
         <div className='grid grid-cols-2 gap-3 flex-1'>
-          
+
           {/* Sob Análise */}
-          <button 
-            onClick={() => handleDrillDown('analysis')} 
-            className='bg-gradient-to-br from-amber-600 to-amber-500 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-amber-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+          <button
+            onClick={() => handleDrillDown('analysis')}
+            className='bg-gradient-to-br from-amber-600/90 to-amber-500/80 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-amber-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
           >
             <Clock className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
             <p className='text-[24px] font-black text-white tracking-tight'>
@@ -66,9 +66,9 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           </button>
 
           {/* Propostas */}
-          <button 
-            onClick={() => handleDrillDown('proposal')} 
-            className='bg-gradient-to-br from-[#112240] to-[#1e3a8a] p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+          <button
+            onClick={() => handleDrillDown('proposal')}
+            className='bg-gradient-to-br from-[#1e3a8a]/90 to-[#1e3a8a]/80 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-blue-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
           >
             <Briefcase className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
             <p className='text-[24px] font-black text-white tracking-tight'>
@@ -80,9 +80,9 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           </button>
 
           {/* Fechados */}
-          <button 
-            onClick={() => handleDrillDown('active')} 
-            className='bg-gradient-to-br from-green-700 to-green-600 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-green-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+          <button
+            onClick={() => handleDrillDown('active')}
+            className='bg-gradient-to-br from-emerald-700/90 to-emerald-600/80 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-emerald-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
           >
             <CheckCircle2 className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
             <p className='text-[24px] font-black text-white tracking-tight'>
@@ -94,9 +94,9 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           </button>
 
           {/* Rejeitados */}
-          <button 
-            onClick={() => handleDrillDown('rejected')} 
-            className='bg-gradient-to-br from-red-600 to-red-500 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-red-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+          <button
+            onClick={() => handleDrillDown('rejected')}
+            className='bg-gradient-to-br from-rose-700/90 to-rose-600/80 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-rose-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
           >
             <XCircle className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
             <p className='text-[24px] font-black text-white tracking-tight'>
@@ -108,9 +108,9 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           </button>
 
           {/* Probono */}
-          <button 
-            onClick={() => handleDrillDown('probono')} 
-            className='bg-gradient-to-br from-purple-700 to-purple-600 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-purple-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+          <button
+            onClick={() => handleDrillDown('probono')}
+            className='bg-gradient-to-br from-slate-600 to-slate-500 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-slate-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
           >
             <HeartHandshake className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
             <p className='text-[24px] font-black text-white tracking-tight'>
@@ -122,9 +122,9 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           </button>
 
           {/* Total Geral */}
-          <button 
-            onClick={() => handleDrillDown('all')} 
-            className='bg-gradient-to-br from-[#1a2c4e] to-[#112240] p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-95 group'
+          <button
+            onClick={() => handleDrillDown('all')}
+            className='bg-gradient-to-br from-gray-800 to-gray-700 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-gray-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
           >
             <Layers className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
             <p className='text-[24px] font-black text-white tracking-tight'>
@@ -139,7 +139,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
 
       {/* Direita: Fotografia Financeira Total */}
       <div className='lg:col-span-7 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 h-full flex flex-col'>
-        
+
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100'>
           <div className='flex items-center gap-3 mb-2'>
@@ -154,9 +154,9 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
             Visão consolidada de oportunidades e receita garantida
           </p>
         </div>
-        
+
         <div className='grid grid-cols-1 md:grid-cols-2 gap-8 flex-1'>
-          
+
           {/* Coluna Propostas Enviadas */}
           <div className="flex flex-col justify-between h-full">
             <div>
@@ -189,7 +189,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
                     {formatMoney((metrics.geral as any).valorEmNegociacaoOutros || 0)}
                   </span>
                 </div>
-                
+
                 {/* Total */}
                 <div className='flex justify-between items-end border-t border-gray-200 pt-3 mt-4'>
                   <span className='text-[9px] font-black text-gray-500 uppercase tracking-widest'>
@@ -201,7 +201,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
                 </div>
               </div>
             </div>
-            
+
             {/* Médias */}
             <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
               <div className="flex justify-between items-center">
@@ -267,7 +267,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
                 </div>
               </div>
             </div>
-            
+
             {/* Médias */}
             <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
               <div className="flex justify-between items-center">
