@@ -363,12 +363,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
       <div className="space-y-6 pb-12 w-full">
         {/* STATS CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4">
-          <StatCard title="Total" value={colaboradores.length} icon={Users} color="blue" />
-          <StatCard title="Ativos" value={colaboradores.filter(c => c.status === 'active').length} icon={CheckCircle} color="green" />
-          <LocationStatsCard colaboradores={colaboradores} />
-        </div>
-
         {/* TOOLBAR */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 overflow-visible">
           <div className="flex flex-1 gap-3 overflow-visible">
@@ -408,7 +402,12 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           <table className="w-full text-left">
             <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Colaborador</th>
+                <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                  Colaborador
+                  <span className="bg-blue-50 text-[#1e3a8a] px-2 py-0.5 rounded-full text-[9px] font-black border border-blue-100">
+                    {colaboradores.filter(c => c.status === 'active').length}
+                  </span>
+                </th>
                 <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cargo</th>
                 <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Sócio Resp.</th>
                 <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Líder</th>
@@ -449,9 +448,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
-      </div>
+          </table >
+        </div >
+      </div >
 
       {showFormModal && (
         <div
@@ -543,195 +542,152 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             </div>
           </div>
         </div>
-      )}
+      )
+      }
 
-      {selectedColaborador && (
-        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
-          <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50">
+      {
+        selectedColaborador && (
+          <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
+            <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50">
 
-            {/* Header */}
-            <div className="px-8 py-5 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-[2rem]">
-              <div className="flex items-center gap-4">
-                <Avatar src={selectedColaborador.photo_url} name={selectedColaborador.name} size="lg" />
-                <div>
-                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">{toTitleCase(selectedColaborador.name)}</h2>
-                  <p className="text-sm text-gray-500 font-semibold">{toTitleCase(selectedColaborador.role || '')} • {toTitleCase(selectedColaborador.equipe || '')}</p>
+              {/* Header */}
+              <div className="px-8 py-5 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-[2rem]">
+                <div className="flex items-center gap-4">
+                  <Avatar src={selectedColaborador.photo_url} name={selectedColaborador.name} size="lg" />
+                  <div>
+                    <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">{toTitleCase(selectedColaborador.name)}</h2>
+                    <p className="text-sm text-gray-500 font-semibold">{toTitleCase(selectedColaborador.role || '')} • {toTitleCase(selectedColaborador.equipe || '')}</p>
+                  </div>
                 </div>
+                <button onClick={() => setSelectedColaborador(null)} className="p-2 hover:bg-gray-200 rounded-full transition-all group">
+                  <X className="h-6 w-6 text-gray-400 group-hover:rotate-90 transition-transform duration-200" />
+                </button>
               </div>
-              <button onClick={() => setSelectedColaborador(null)} className="p-2 hover:bg-gray-200 rounded-full transition-all group">
-                <X className="h-6 w-6 text-gray-400 group-hover:rotate-90 transition-transform duration-200" />
-              </button>
-            </div>
 
-            {/* Tabs */}
-            <div className="flex border-b px-8 bg-white shrink-0">
-              <button onClick={() => setActiveDetailTab('dados')} className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors ${activeDetailTab === 'dados' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
-                Dados Pessoais
-              </button>
-              <button onClick={() => setActiveDetailTab('ged')} className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors flex items-center gap-2 ${activeDetailTab === 'ged' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
-                <FileText className="h-3.5 w-3.5" /> Documentos
-              </button>
-            </div>
+              {/* Tabs */}
+              <div className="flex border-b px-8 bg-white shrink-0">
+                <button onClick={() => setActiveDetailTab('dados')} className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors ${activeDetailTab === 'dados' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+                  Dados Pessoais
+                </button>
+                <button onClick={() => setActiveDetailTab('ged')} className={`py-4 px-6 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-colors flex items-center gap-2 ${activeDetailTab === 'ged' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+                  <FileText className="h-3.5 w-3.5" /> Documentos
+                </button>
+              </div>
 
-            {/* Body */}
-            <div className={`px-8 py-6 ${activeDetailTab === 'dados' ? 'max-h-[calc(90vh-320px)] overflow-y-auto custom-scrollbar' : ''}`}>
-              {activeDetailTab === 'dados' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="space-y-6">
-                    <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Pessoal</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <DetailRow label="CPF" value={selectedColaborador.cpf} />
-                      <DetailRow label="Nascimento" value={formatDateDisplay(selectedColaborador.birthday)} icon={Calendar} />
-                      <DetailRow label="Gênero" value={selectedColaborador.gender} />
-                      <DetailRow label="CEP" value={selectedColaborador.zip_code} />
+              {/* Body */}
+              <div className={`px-8 py-6 ${activeDetailTab === 'dados' ? 'max-h-[calc(90vh-320px)] overflow-y-auto custom-scrollbar' : ''}`}>
+                {activeDetailTab === 'dados' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-6">
+                      <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Pessoal</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <DetailRow label="CPF" value={selectedColaborador.cpf} />
+                        <DetailRow label="Nascimento" value={formatDateDisplay(selectedColaborador.birthday)} icon={Calendar} />
+                        <DetailRow label="Gênero" value={selectedColaborador.gender} />
+                        <DetailRow label="CEP" value={selectedColaborador.zip_code} />
+                      </div>
+                      <DetailRow label="Endereço" value={`${selectedColaborador.address || ''}, ${selectedColaborador.address_number || ''} ${selectedColaborador.address_complement ? '- ' + selectedColaborador.address_complement : ''}`} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <DetailRow label="Bairro" value={selectedColaborador.neighborhood} />
+                        <DetailRow label="Cidade/UF" value={`${selectedColaborador.city} - ${selectedColaborador.state}`} />
+                      </div>
                     </div>
-                    <DetailRow label="Endereço" value={`${selectedColaborador.address || ''}, ${selectedColaborador.address_number || ''} ${selectedColaborador.address_complement ? '- ' + selectedColaborador.address_complement : ''}`} />
-                    <div className="grid grid-cols-2 gap-4">
-                      <DetailRow label="Bairro" value={selectedColaborador.neighborhood} />
-                      <DetailRow label="Cidade/UF" value={`${selectedColaborador.city} - ${selectedColaborador.state}`} />
+                    <div className="space-y-6">
+                      <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Corporativo</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
+                        <DetailRow label="Sócio Resp." value={(selectedColaborador as any).partner?.name} />
+                        <DetailRow label="Cargo" value={selectedColaborador.role} />
+                        <DetailRow label="Local" value={selectedColaborador.local} icon={Building2} />
+                        <DetailRow label="Líder" value={(selectedColaborador as any).leader?.name} />
+                        <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.hire_date)} icon={Calendar} />
+                        <DetailRow label="Desligamento" value={formatDateDisplay(selectedColaborador.termination_date)} icon={Calendar} />
+                      </div>
+
+                      {/* Informações Profissionais no Modal */}
+                      {(selectedColaborador.oab_number || selectedColaborador.oab_state || selectedColaborador.oab_vencimento) && (
+                        <>
+                          <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2 mt-6">
+                            < GraduationCap className="h-3.5 w-3.5" /> Profissional
+                          </h3>
+                          <div className="grid grid-cols-2 gap-4">
+                            <DetailRow label="OAB" value={selectedColaborador.oab_numero} />
+                            <DetailRow label="UF OAB" value={selectedColaborador.oab_uf} />
+                            <DetailRow label="Vencimento OAB" value={formatDateDisplay(selectedColaborador.oab_vencimento)} icon={Calendar} />
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
+                ) : (
                   <div className="space-y-6">
-                    <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Corporativo</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
-                      <DetailRow label="Sócio Resp." value={(selectedColaborador as any).partner?.name} />
-                      <DetailRow label="Cargo" value={selectedColaborador.role} />
-                      <DetailRow label="Local" value={selectedColaborador.local} icon={Building2} />
-                      <DetailRow label="Líder" value={(selectedColaborador as any).leader?.name} />
-                      <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.hire_date)} icon={Calendar} />
-                      <DetailRow label="Desligamento" value={formatDateDisplay(selectedColaborador.termination_date)} icon={Calendar} />
-                    </div>
-
-                    {/* Informações Profissionais no Modal */}
-                    {(selectedColaborador.oab_number || selectedColaborador.oab_state || selectedColaborador.oab_vencimento) && (
-                      <>
-                        <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2 mt-6">
-                          < GraduationCap className="h-3.5 w-3.5" /> Profissional
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <DetailRow label="OAB" value={selectedColaborador.oab_numero} />
-                          <DetailRow label="UF OAB" value={selectedColaborador.oab_uf} />
-                          <DetailRow label="Vencimento OAB" value={formatDateDisplay(selectedColaborador.oab_vencimento)} icon={Calendar} />
+                    <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 relative">
+                      <div className="flex flex-col md:flex-row items-end gap-4">
+                        <div className="flex-1 w-full relative z-[110]">
+                          <SearchableSelect label="Tipo de Documento" placeholder="Selecione ou gerencie..." value={selectedGedCategory} onChange={setSelectedGedCategory} table="ged_categories" onRefresh={handleRefresh} />
                         </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 relative">
-                    <div className="flex flex-col md:flex-row items-end gap-4">
-                      <div className="flex-1 w-full relative z-[110]">
-                        <SearchableSelect label="Tipo de Documento" placeholder="Selecione ou gerencie..." value={selectedGedCategory} onChange={setSelectedGedCategory} table="ged_categories" onRefresh={handleRefresh} />
-                      </div>
-                      <div className="shrink-0 w-full md:w-auto">
-                        <input type="file" hidden ref={gedInputRef} accept=".pdf,image/*" onChange={handleGedUpload} />
-                        <button
-                          disabled={uploadingGed || !selectedGedCategory}
-                          onClick={() => gedInputRef.current?.click()}
-                          className="w-full flex items-center justify-center gap-2 bg-[#1e3a8a] hover:bg-[#112240] hover:shadow-xl disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95"
-                        >
-                          {uploadingGed ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                          Vincular
-                        </button>
+                        <div className="shrink-0 w-full md:w-auto">
+                          <input type="file" hidden ref={gedInputRef} accept=".pdf,image/*" onChange={handleGedUpload} />
+                          <button
+                            disabled={uploadingGed || !selectedGedCategory}
+                            onClick={() => gedInputRef.current?.click()}
+                            className="w-full flex items-center justify-center gap-2 bg-[#1e3a8a] hover:bg-[#112240] hover:shadow-xl disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95"
+                          >
+                            {uploadingGed ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                            Vincular
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-black text-[#0a192f]">Arquivos Vinculados ({gedDocs.length})</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {gedDocs.map(doc => (
-                        <div key={doc.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-[#1e3a8a]/30 transition-all shadow-sm hover:shadow-md">
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="p-2 bg-red-50 text-red-600 rounded-lg"><FileText className="h-5 w-5" /></div>
-                            <div className="overflow-hidden">
-                              <p className="text-sm font-bold text-[#0a192f] truncate">{doc.nome_arquivo}</p>
-                              <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">{doc.categoria}</span>
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-black text-[#0a192f]">Arquivos Vinculados ({gedDocs.length})</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {gedDocs.map(doc => (
+                          <div key={doc.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-[#1e3a8a]/30 transition-all shadow-sm hover:shadow-md">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div className="p-2 bg-red-50 text-red-600 rounded-lg"><FileText className="h-5 w-5" /></div>
+                              <div className="overflow-hidden">
+                                <p className="text-sm font-bold text-[#0a192f] truncate">{doc.nome_arquivo}</p>
+                                <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">{doc.categoria}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-lg transition-all"><ExternalLink className="h-4 w-4" /></a>
+                              <button onClick={() => handleDeleteGed(doc)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"><Trash2 className="h-4 w-4" /></button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-lg transition-all"><ExternalLink className="h-4 w-4" /></a>
-                            <button onClick={() => handleDeleteGed(doc)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"><Trash2 className="h-4 w-4" /></button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Footer */}
-            <div className="px-8 py-5 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-[2rem]">
-              <button
-                onClick={() => handleDelete(selectedColaborador.id)}
-                className="px-4 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all"
-              >
-                Excluir
-              </button>
-              <button
-                onClick={() => handleEdit(selectedColaborador)}
-                className="px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95"
-              >
-                Editar
-              </button>
+              {/* Footer */}
+              <div className="px-8 py-5 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-[2rem]">
+                <button
+                  onClick={() => handleDelete(selectedColaborador.id)}
+                  className="px-4 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all"
+                >
+                  Excluir
+                </button>
+                <button
+                  onClick={() => handleEdit(selectedColaborador)}
+                  className="px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95"
+                >
+                  Editar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   )
 }
 
 // --- SUB-COMPONENTS ---
-function StatCard({ title, value, icon: Icon, color }: any) {
-  const themes: any = {
-    blue: 'text-blue-600 bg-blue-50 border-blue-100',
-    green: 'text-green-600 bg-green-50 border-green-100',
-    red: 'text-red-600 bg-red-50 border-red-100',
-    gray: 'text-gray-600 bg-gray-50 border-gray-100'
-  }
-  return (
-    <div className={`bg-white p-6 rounded-2xl shadow-sm border flex items-center justify-between transition-all hover:shadow-md ${themes[color].split(' ')[2]}`}>
-      <div>
-        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{title}</p>
-        <p className="text-[30px] font-black mt-1 text-[#0a192f] tracking-tight">{value}</p>
-      </div>
-      <div className={`p-3 rounded-xl ${themes[color].split(' ')[0]} ${themes[color].split(' ')[1]}`}>
-        <Icon className="h-6 w-6" />
-      </div>
-    </div>
-  )
-}
-
-function LocationStatsCard({ colaboradores }: { colaboradores: any[] }) {
-  const stats = colaboradores.reduce((acc: any, curr: any) => {
-    const local = curr.local || 'Sem Local';
-    acc[local] = (acc[local] || 0) + 1;
-    return acc;
-  }, {});
-
-  return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 md:col-span-2 flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
-      <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12">
-        <Building2 className="w-32 h-32 text-[#1e3a8a]" />
-      </div>
-      <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 z-10">Distribuição por Local</p>
-      <div className="grid grid-cols-2 gap-3 z-10">
-        {Object.entries(stats).map(([local, count]) => (
-          <div key={local} className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 border border-gray-100 hover:bg-white hover:border-blue-100 transition-colors">
-            <div className="flex items-center gap-2.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a]"></div>
-              <span className="text-xs font-bold text-gray-700 truncate max-w-[100px]" title={local}>{local}</span>
-            </div>
-            <span className="text-sm font-black text-[#0a192f]">{String(count)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+// --- SUB-COMPONENTS ---
 
 function Avatar({ src, name, size = 'sm' }: any) {
   const sz = size === 'lg' ? 'w-20 h-20 text-xl' : 'w-10 h-10 text-sm'
