@@ -157,7 +157,7 @@ export function AppRoutes() {
 
                 {/* RH */}
                 <Route path="/rh">
-                    <Route path="dashboard" element={<div className="p-10 text-2xl font-bold text-red-600">TESTE DE ROTA - DASHBOARD RH</div>} />
+                    <Route path="dashboard" element={<WithProps Component={RHDashboard} />} />
                     <Route path="calendario" element={<WithProps Component={CalendarioRH} />} />
                     <Route path="presencial" element={<WithProps Component={Presencial} />} />
                     <Route path="colaboradores" element={<WithProps Component={Colaboradores} />} />
