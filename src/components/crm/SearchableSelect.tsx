@@ -23,6 +23,7 @@ interface SearchableSelectProps {
   disabled?: boolean;
   className?: string;
   onRefresh?: () => void;
+  uppercase?: boolean;
 }
 
 export function SearchableSelect({
@@ -35,7 +36,8 @@ export function SearchableSelect({
   options: externalOptions = [],
   disabled = false,
   className = "",
-  onRefresh
+  onRefresh,
+  uppercase = false
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,8 +48,9 @@ export function SearchableSelect({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isFetchedRef = useRef(false);
 
-  const toTitleCase = (str: string) => {
+  const formatText = (str: string) => {
     if (!str) return '';
+    if (uppercase) return str.toUpperCase();
     return str.toLowerCase().split(' ').map(word => {
       return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
     }).join(' ');
@@ -177,7 +180,7 @@ export function SearchableSelect({
                     }
                   `}
                 >
-                  {toTitleCase(getName(opt))}
+                  {formatText(getName(opt))}
                 </button>
               );
             })}
@@ -216,7 +219,7 @@ export function SearchableSelect({
         `}
       >
         <span className={`text-sm font-medium truncate ${value ? "text-gray-900" : "text-gray-400"}`}>
-          {selectedOption ? toTitleCase(getName(selectedOption)) : placeholder}
+          {selectedOption ? formatText(getName(selectedOption)) : placeholder}
         </span>
 
         <div className="flex items-center gap-1">
