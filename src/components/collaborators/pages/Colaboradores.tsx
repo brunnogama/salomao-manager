@@ -284,14 +284,16 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         address_complement: toTitleCase(formData.address_complement || ''),
         neighborhood: toTitleCase(formData.neighborhood || ''),
         city: toTitleCase(formData.city || ''),
-        role: toTitleCase(formData.role || ''),
+        role: formData.role, // Send raw value (ID)
+        local: formData.local, // Send raw value (ID)
+        equipe: formData.equipe, // Send raw value (ID)
         birthday: toISO(formData.birthday),
         hire_date: toISO(formData.hire_date),
         termination_date: toISO(formData.termination_date),
         oab_vencimento: toISO(formData.oab_vencimento),
         photo_url: photoUrl,
-        partner_id: formData.partner_id || null,
-        leader_id: formData.leader_id || null
+        partner_id: formData.partner_id,
+        leader_id: formData.leader_id
       }
 
       // Map photo_url to foto_url for DB compatibility and cleanup payload
