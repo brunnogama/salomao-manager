@@ -817,20 +817,20 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
         <div className="flex flex-col xl:flex-row items-center gap-4">
 
-          {/* Search Bar - Grows to fill space */}
-          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full xl:flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+          {/* Search Bar - Fixed width */}
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full xl:w-72 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
             <Search className="h-4 w-4 text-gray-400 mr-3" />
             <input
               type="text"
-              placeholder="Buscar por nome ou email..."
+              placeholder="Buscar..."
               className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          {/* Filters Row */}
-          <div className="flex items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
+          {/* Filters Row - Grows */}
+          <div className="flex items-center gap-2 flex-1 overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
             <SearchableSelect
               label=""
               placeholder="Líder"
@@ -838,7 +838,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               onChange={setFilterLider}
               table="collaborators"
               options={colaboradores.map(c => ({ id: c.id, name: c.name }))}
-              className="min-w-[140px]"
+              className="min-w-[200px]"
             />
             <SearchableSelect
               label=""
@@ -846,7 +846,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               value={filterPartner}
               onChange={setFilterPartner}
               table="partners"
-              className="min-w-[140px]"
+              className="min-w-[200px]"
             />
             <SearchableSelect
               label=""
@@ -854,7 +854,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               value={filterLocal}
               onChange={setFilterLocal}
               table="locations"
-              className="min-w-[140px]"
+              className="min-w-[200px]"
             />
             <SearchableSelect
               label=""
@@ -862,7 +862,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               value={filterCargo}
               onChange={setFilterCargo}
               table="roles"
-              className="min-w-[140px]"
+              className="min-w-[200px]"
             />
           </div>
 
@@ -882,8 +882,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       </div>
 
       {/* Table/Grid */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1 flex flex-col">
+        <div className="overflow-auto h-full custom-scrollbar">
           <table className="w-full">
             <thead className="bg-gray-50/50 border-b border-gray-100">
               <tr>
@@ -1018,14 +1018,12 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           </>
         ),
         // Sidebar Content (Photo Upload)
-        <div className="w-48 h-48 rounded-full overflow-hidden border-[6px] border-white shadow-xl bg-gray-50 relative group">
-          <PhotoUploadSection
-            photoPreview={photoPreview}
-            uploadingPhoto={uploadingPhoto}
-            photoInputRef={photoInputRef}
-            setPhotoPreview={setPhotoPreview}
-          />
-        </div>
+        <PhotoUploadSection
+          photoPreview={photoPreview}
+          uploadingPhoto={uploadingPhoto}
+          photoInputRef={photoInputRef}
+          setPhotoPreview={setPhotoPreview}
+        />
       )}
 
       {/* VIEW MODAL */}

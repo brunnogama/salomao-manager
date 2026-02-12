@@ -15,34 +15,36 @@ export function PhotoUploadSection({
   setPhotoPreview
 }: PhotoUploadSectionProps) {
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="w-32 h-32 rounded-full bg-white border-4 border-gray-100 shadow-md overflow-hidden flex items-center justify-center relative group">
+    <div className="flex flex-col items-center gap-3">
+      <div
+        onClick={() => photoInputRef.current?.click()}
+        className="w-40 h-40 rounded-full bg-gray-50 border-[6px] border-white shadow-xl overflow-hidden flex items-center justify-center relative group cursor-pointer hover:border-gray-100 transition-all"
+      >
         {photoPreview ? (
           <img src={photoPreview} className="w-full h-full object-cover" alt="Preview" />
         ) : (
-          <Image className="text-gray-300 h-10 w-10" />
-        )}
-        {uploadingPhoto && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <Loader2 className="animate-spin text-white" />
+          <div className="flex flex-col items-center justify-center text-gray-300 gap-2">
+            <Image className="h-12 w-12" />
           </div>
         )}
-        <button
-          onClick={() => photoInputRef.current?.click()}
-          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs uppercase tracking-widest"
-        >
-          Alterar
-        </button>
+
+        {uploadingPhoto && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+            <Loader2 className="animate-spin text-white h-8 w-8" />
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+          <Camera className="text-white h-8 w-8" />
+        </div>
       </div>
 
-      <div className="text-center">
-        <button
-          onClick={() => photoInputRef.current?.click()}
-          className="text-[10px] uppercase font-black tracking-[0.2em] text-[#1e3a8a] hover:underline"
-        >
-          {photoPreview ? 'Alterar Foto' : 'Adicionar Foto'}
-        </button>
-      </div>
+      <button
+        onClick={() => photoInputRef.current?.click()}
+        className="text-[10px] uppercase font-black tracking-[0.2em] text-[#1e3a8a] hover:text-[#112240] transition-colors py-1 px-3 rounded-full hover:bg-blue-50"
+      >
+        {photoPreview ? 'Alterar Foto' : 'Adicionar Foto'}
+      </button>
 
       <input
         type="file"
