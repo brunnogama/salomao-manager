@@ -138,9 +138,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           *,
           partner:partner_id(id, name),
           leader:leader_id(id, name),
-          roles:role(name),
-          locations:local(name),
-          teams:equipe(name)
+          roles:roles(name),
+          locations:locations(name),
+          teams:teams(name)
         `)
         .order('name')
 
