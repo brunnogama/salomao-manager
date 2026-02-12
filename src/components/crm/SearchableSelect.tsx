@@ -42,7 +42,7 @@ export function SearchableSelect({
   const [options, setOptions] = useState<Option[]>([]);
   const [loading, setLoading] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
-  
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isFetchedRef = useRef(false);
 
@@ -74,7 +74,7 @@ export function SearchableSelect({
         .from(table)
         .select(`id, ${nameField}`)
         .order(nameField);
-      
+
       if (error) throw error;
       if (data) {
         setOptions(data);
@@ -88,17 +88,7 @@ export function SearchableSelect({
     }
   };
 
-  // Calcula a posição do menu em relação à janela global
-  useEffect(() => {
-    if (isOpen && dropdownRef.current) {
-      const rect = dropdownRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
-    }
-  }, [isOpen]);
+  /* Removed redundant useEffect for coords */
 
   useEffect(() => {
     isFetchedRef.current = false;
@@ -108,8 +98,8 @@ export function SearchableSelect({
     function handleClickOutside(event: MouseEvent) {
       // Verifica se o clique não foi no trigger nem no menu renderizado via portal
       const menuPortal = document.getElementById('select-portal-root');
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) && 
-          (!menuPortal || !menuPortal.contains(event.target as Node))) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+        (!menuPortal || !menuPortal.contains(event.target as Node))) {
         setIsOpen(false);
         setSearchTerm('');
       }
@@ -121,11 +111,11 @@ export function SearchableSelect({
   const getName = (opt: Option) => opt.name || opt.nome || opt.label || opt.value || '';
   const getId = (opt: Option) => opt.id || opt.value || Math.random();
 
-  const filteredOptions = options.filter(opt => 
+  const filteredOptions = options.filter(opt =>
     getName(opt).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const selectedOption = options.find(opt => 
+  const selectedOption = options.find(opt =>
     (opt.id?.toString() === value) || (getName(opt).toLowerCase() === value.toLowerCase())
   );
 
@@ -136,7 +126,7 @@ export function SearchableSelect({
   };
 
   const DropdownMenu = (
-    <div 
+    <div
       id="select-portal-root"
       className="fixed bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[10000]"
       style={{
@@ -181,8 +171,8 @@ export function SearchableSelect({
                   }}
                   className={`
                     w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all
-                    ${isSelected 
-                      ? 'bg-[#1e3a8a] text-white' 
+                    ${isSelected
+                      ? 'bg-[#1e3a8a] text-white'
                       : 'text-gray-600 hover:bg-blue-50 hover:text-[#1e3a8a]'
                     }
                   `}
@@ -204,9 +194,21 @@ export function SearchableSelect({
   return (
     <div ref={dropdownRef} className={`relative w-full ${className}`}>
       {label && <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{label}</label>}
-      
-      <div 
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+
+      <div
+        onClick={() => {
+          if (!disabled) {
+            if (!isOpen && dropdownRef.current) {
+              const rect = dropdownRef.current.getBoundingClientRect();
+              setCoords({
+                top: rect.bottom + window.scrollY,
+                left: rect.left + window.scrollX,
+                width: rect.width
+              });
+            }
+            setIsOpen(!isOpen);
+          }
+        }}
         className={`
           w-full bg-gray-100/50 border rounded-xl p-3 text-left flex items-center justify-between cursor-pointer transition-all
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white hover:border-[#1e3a8a]'}
@@ -216,10 +218,10 @@ export function SearchableSelect({
         <span className={`text-sm font-medium truncate ${value ? "text-gray-900" : "text-gray-400"}`}>
           {selectedOption ? toTitleCase(getName(selectedOption)) : placeholder}
         </span>
-        
+
         <div className="flex items-center gap-1">
           {value && !disabled && (
-            <button 
+            <button
               onClick={handleClearSelection}
               className="p-1 text-gray-400 hover:text-red-500 rounded-full transition-colors"
             >
