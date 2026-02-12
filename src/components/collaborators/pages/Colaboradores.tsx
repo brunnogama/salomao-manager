@@ -277,11 +277,11 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       leader_id: formData.leader_id || null
     }
 
-    // Map photo_url to foto_url for DB compatibility and cleanup payload
-    if ((payload as any).photo_url) {
-      (payload as any).foto_url = (payload as any).photo_url
-      delete (payload as any).photo_url
-    }
+      // Map photo_url to foto_url for DB compatibility and cleanup payload
+      // Map photo_url to foto_url for DB compatibility and cleanup payload
+      // Unconditionally map to ensure photo_url is never sent to the DB if it doesn't exist in schema
+      (payload as any).foto_url = (payload as any).photo_url;
+    delete (payload as any).photo_url;
 
     // Remove joined fields that are not columns in the table
     delete (payload as any).leader
