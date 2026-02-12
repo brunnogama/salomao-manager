@@ -683,8 +683,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                       <div className="grid grid-cols-2 gap-4">
                         <DetailRow label="Email Corporativo" value={selectedColaborador.email} icon={Mail} />
                         <DetailRow label="Sócio Resp." value={(selectedColaborador as any).partner?.name} />
-                        <DetailRow label="Cargo" value={selectedColaborador.role} />
-                        <DetailRow label="Local" value={selectedColaborador.local} icon={Building2} />
+                        <DetailRow label="Cargo" value={(selectedColaborador as any).roles?.name || selectedColaborador.role} />
+                        <DetailRow label="Local" value={(selectedColaborador as any).locations?.name || selectedColaborador.local} icon={Building2} />
                         <DetailRow label="Líder" value={(selectedColaborador as any).leader?.name} />
                         <DetailRow label="Admissão" value={formatDateDisplay(selectedColaborador.hire_date)} icon={Calendar} />
                         <DetailRow label="Desligamento" value={formatDateDisplay(selectedColaborador.termination_date)} icon={Calendar} />
