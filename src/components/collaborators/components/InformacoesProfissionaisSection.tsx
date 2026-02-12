@@ -51,12 +51,12 @@ export function InformacoesProfissionaisSection({
 
         <div>
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-            Vencimento OAB
+            Emissão OAB
           </label>
           <input
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
-            value={formData.oab_vencimento || ''}
-            onChange={e => setFormData({ ...formData, oab_vencimento: maskDate(e.target.value) })}
+            value={formData.oab_emissao || ''}
+            onChange={e => setFormData({ ...formData, oab_emissao: maskDate(e.target.value) })}
             maxLength={10}
             placeholder="DD/MM/AAAA"
           />
@@ -99,8 +99,8 @@ export function InformacoesProfissionaisSection({
         />
       </div>
 
-      {/* PIS/Militar Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* PIS/Matricula/Militar Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             PIS/PASEP
@@ -111,6 +111,18 @@ export function InformacoesProfissionaisSection({
             onChange={e => setFormData({ ...formData, pis_pasep: e.target.value.replace(/\D/g, '').slice(0, 11) })}
             maxLength={11}
             placeholder="99999999999"
+          />
+        </div>
+
+        <div>
+          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+            Matrícula e-Social
+          </label>
+          <input
+            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+            value={formData.matricula_esocial || ''}
+            onChange={e => setFormData({ ...formData, matricula_esocial: e.target.value })}
+            placeholder="Matrícula"
           />
         </div>
 

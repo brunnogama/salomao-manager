@@ -81,6 +81,17 @@ export interface Collaborator {
   escolaridade_previsao_conclusao?: string;
   escolaridade_curso?: string;
 
+  // Novos Campos (Solicitados)
+  rg?: string;
+  emergencia_nome?: string;
+  emergencia_telefone?: string;
+  emergencia_parentesco?: string;
+  centro_custo?: string;
+  motivo_desligamento?: string;
+  matricula_esocial?: string;
+  observacoes?: string;
+  oab_emissao?: string;
+
   local?: string;
   locations?: { name: string }; // Joined field
   equipe?: string;

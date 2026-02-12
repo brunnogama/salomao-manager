@@ -8,6 +8,7 @@ interface DadosEscolaridadeSectionProps {
     formData: Partial<Collaborator>
     setFormData: React.Dispatch<React.SetStateAction<Partial<Collaborator>>>
     maskDate: (v: string) => string
+    handleRefresh?: () => void
 }
 
 const educationLevelOptions = [
@@ -25,7 +26,7 @@ const postGradOptions = [
     { id: 'Pós-Doutorado', label: 'Pós-Doutorado', value: 'Pós-Doutorado' }
 ]
 
-export function DadosEscolaridadeSection({ formData, setFormData, maskDate }: DadosEscolaridadeSectionProps) {
+export function DadosEscolaridadeSection({ formData, setFormData, maskDate, handleRefresh }: DadosEscolaridadeSectionProps) {
 
     const handleLevelChange = (value: string) => {
         setFormData(prev => ({
@@ -94,6 +95,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate }: Da
                                 onChange={(val) => setFormData(prev => ({ ...prev, escolaridade_curso: val }))}
                                 table="education_courses"
                                 placeholder="Selecione ou gerencie..."
+                                onRefresh={handleRefresh}
                             />
                         </div>
 
