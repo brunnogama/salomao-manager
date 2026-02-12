@@ -13,7 +13,7 @@ export interface Partner {
   birthday?: string;
   gender?: string;
   photo_url?: string;
-  
+
   // Endereço
   zip_code?: string;
   address?: string;
@@ -22,14 +22,14 @@ export interface Partner {
   neighborhood?: string;
   city?: string;
   state?: string;
-  
+
   // Profissional
   oab_number?: string;
   oab_state?: string;
   oab_expiration?: string;
   hire_date?: string;
   termination_date?: string;
-  
+
   created_at?: string;
   updated_at?: string;
 }
@@ -59,6 +59,11 @@ export interface Collaborator {
   role?: string;
   hire_date?: string;
   termination_date?: string;
+  oab_numero?: string;
+  oab_uf?: string;
+  oab_vencimento?: string;
+  local?: string;
+  equipe?: string;
 
   created_at?: string;
   updated_at?: string;
@@ -173,7 +178,7 @@ export interface Client {
   contacts?: ClientContact[];
   created_at?: string;
   updated_at?: string;
-  
+
   // Campos unificados para Brindes/CRM
   company?: string;
   gift_type?: string;

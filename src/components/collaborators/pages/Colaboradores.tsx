@@ -259,7 +259,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       birthday: toISO(formData.birthday),
       hire_date: toISO(formData.hire_date),
       termination_date: toISO(formData.termination_date),
-      oab_expiration: toISO(formData.oab_expiration),
+      oab_vencimento: toISO(formData.oab_vencimento),
       photo_url: photoUrl,
       partner_id: formData.partner_id || null,
       leader_id: formData.leader_id || null
@@ -268,6 +268,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     // Remove joined fields that are not columns in the table
     delete (payload as any).leader
     delete (payload as any).partner
+    // Remove legacy field if present in formData
+    delete (payload as any).oab_expiration
 
     const { error } = formData.id
       ? await supabase.from('collaborators').update(payload).eq('id', formData.id)
@@ -296,7 +298,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       birthday: fmt(colab.birthday),
       hire_date: fmt(colab.hire_date),
       termination_date: fmt(colab.termination_date),
-      oab_expiration: fmt(colab.oab_expiration)
+      oab_vencimento: fmt(colab.oab_vencimento)
     })
     setPhotoPreview(colab.photo_url || null)
     setShowFormModal(true)
