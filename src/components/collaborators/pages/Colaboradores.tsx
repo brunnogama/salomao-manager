@@ -488,21 +488,34 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   setPhotoPreview={setPhotoPreview}
                 />
 
-                {/* Dados Pessoais */}
-                <DadosPessoaisSection
-                  formData={formData}
-                  setFormData={setFormData}
-                  maskCPF={maskCPF}
-                  maskDate={maskDate}
-                />
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                  <div className="space-y-8">
+                    {/* Dados Pessoais */}
+                    <DadosPessoaisSection
+                      formData={formData}
+                      setFormData={setFormData}
+                      maskCPF={maskCPF}
+                      maskDate={maskDate}
+                    />
 
-                {/* Endereço */}
-                <EnderecoSection
-                  formData={formData}
-                  setFormData={setFormData}
-                  maskCEP={maskCEP}
-                  handleCepBlur={handleCepBlur}
-                />
+                    {/* Endereço */}
+                    <EnderecoSection
+                      formData={formData}
+                      setFormData={setFormData}
+                      maskCEP={maskCEP}
+                      handleCepBlur={handleCepBlur}
+                    />
+                  </div>
+
+                  <div className="space-y-8">
+                    {/* Informações Profissionais (OAB) */}
+                    <InformacoesProfissionaisSection
+                      formData={formData}
+                      setFormData={setFormData}
+                      maskDate={maskDate}
+                    />
+                  </div>
+                </div>
 
                 {/* Dados Corporativos */}
                 <DadosCorporativosSection
@@ -510,13 +523,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   setFormData={setFormData}
                   maskDate={maskDate}
                   handleRefresh={handleRefresh}
-                />
-
-                {/* Informações Profissionais */}
-                <InformacoesProfissionaisSection
-                  formData={formData}
-                  setFormData={setFormData}
-                  maskDate={maskDate}
                 />
               </div>
             </div>
