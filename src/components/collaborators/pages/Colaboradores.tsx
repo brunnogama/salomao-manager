@@ -802,7 +802,7 @@ function DetailRow({ label, value, icon: Icon }: any) {
         {Icon && <Icon className="h-3 w-3" />}
         {label}
       </p>
-      <p className="text-sm font-bold text-[#0a192f]">{value || '-'}</p>
+      <p className="text-sm font-bold text-[#0a192f] break-all">{value || '-'}</p>
     </div>
   )
 }
