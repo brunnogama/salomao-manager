@@ -1,7 +1,7 @@
 // src/components/collaborators/pages/Colaboradores.tsx
 import { useState, useEffect, useRef } from 'react'
-import { 
-  Search, Plus, X, Trash2, Pencil, Save, Users, UserMinus, CheckCircle, UserX, 
+import {
+  Search, Plus, X, Trash2, Pencil, Save, Users, UserMinus, CheckCircle, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
   Grid, LogOut, UserCircle, GraduationCap
 } from 'lucide-react'
@@ -50,10 +50,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
   const [activeDetailTab, setActiveDetailTab] = useState<'dados' | 'ged'>('dados')
-  
+
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLider, setFilterLider] = useState('')
-  const [filterPartner, setFilterPartner] = useState('') 
+  const [filterPartner, setFilterPartner] = useState('')
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
 
@@ -70,7 +70,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const photoInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchColaboradores()
     fetchPartners()
   }, [])
@@ -122,7 +122,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             neighborhood: toTitleCase(data.bairro),
             city: toTitleCase(data.localidade),
             state: estadoEncontrado ? estadoEncontrado.nome : data.uf
-          })) 
+          }))
         }
       } catch (error) { console.error("Erro CEP:", error) }
     }
@@ -140,7 +140,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           leader:leader_id(id, name)
         `)
         .order('name')
-      
+
       if (error) throw error
       if (data) setColaboradores(data)
     } catch (error: any) {
@@ -205,7 +205,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       if (uploadError) throw uploadError
 
       const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath)
-      
+
       await supabase.from('ged_colaboradores').insert({
         colaborador_id: selectedColaborador.id,
         nome_arquivo: `${toTitleCase(selectedColaborador.name)}_${toTitleCase(selectedGedCategory)}.${fileExt}`,
@@ -214,9 +214,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         tamanho: file.size,
         tipo_arquivo: file.type
       })
-      
-      fetchGedDocs(selectedColaborador.id); 
-      setSelectedGedCategory(''); 
+
+      fetchGedDocs(selectedColaborador.id);
+      setSelectedGedCategory('');
       if (gedInputRef.current) gedInputRef.current.value = ''
     } catch (error: any) { alert('Erro no upload do GED: ' + error.message) } finally { setUploadingGed(false) }
   }
@@ -233,14 +233,14 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const handleSave = async () => {
     if (!formData.name) return alert('Nome obrigatório')
-    
+
     const toISO = (s?: string) => {
       if (!s || s.length !== 10) return null
-      if (!s.includes('/')) return s 
+      if (!s.includes('/')) return s
       const [d, m, y] = s.split('/')
       return `${y}-${m}-${d}`
     }
-    
+
     let photoUrl = formData.photo_url
     if (photoInputRef.current?.files?.[0]) {
       if (formData.id && formData.photo_url) await deleteFoto(formData.photo_url)
@@ -265,7 +265,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       leader_id: formData.leader_id || null
     }
 
-    const { error } = formData.id 
+    const { error } = formData.id
       ? await supabase.from('collaborators').update(payload).eq('id', formData.id)
       : await supabase.from('collaborators').insert(payload)
 
@@ -287,10 +287,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       const date = new Date(s)
       return new Date(date.valueOf() + date.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR')
     }
-    setFormData({ 
-      ...colab, 
-      birthday: fmt(colab.birthday), 
-      hire_date: fmt(colab.hire_date), 
+    setFormData({
+      ...colab,
+      birthday: fmt(colab.birthday),
+      hire_date: fmt(colab.hire_date),
       termination_date: fmt(colab.termination_date),
       oab_expiration: fmt(colab.oab_expiration)
     })
@@ -305,7 +305,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     setShowFormModal(true)
   }
 
-  const filtered = colaboradores.filter(c => 
+  const filtered = colaboradores.filter(c =>
     (c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || c.cpf?.includes(searchTerm)) &&
     (!filterLider || c.leader_id === filterLider) &&
     (!filterPartner || c.partner_id === filterPartner) &&
@@ -315,7 +315,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
-      
+
       {/* PAGE HEADER COMPLETO */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -341,8 +341,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             <UserCircle className="h-5 w-5" />
           </div>
           {onModuleHome && (
-            <button 
-              onClick={onModuleHome} 
+            <button
+              onClick={onModuleHome}
               className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
               title="Voltar aos módulos"
             >
@@ -350,8 +350,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             </button>
           )}
           {onLogout && (
-            <button 
-              onClick={onLogout} 
+            <button
+              onClick={onLogout}
               className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
               title="Sair"
             >
@@ -380,24 +380,24 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             <div className="w-44"><SearchableSelect placeholder="Sócios" value={filterPartner} onChange={setFilterPartner} options={partners.map(p => ({ id: p.id, name: p.name }))} /></div>
             <div className="w-44"><SearchableSelect placeholder="Líderes" value={filterLider} onChange={setFilterLider} options={colaboradores.filter(c => c.status === 'active').map(c => ({ id: c.id, name: c.name }))} /></div>
             <div className="w-44">
-              <SearchableSelect 
-                placeholder="Cargos" 
-                value={filterCargo} 
-                onChange={setFilterCargo} 
-                table="roles" 
+              <SearchableSelect
+                placeholder="Cargos"
+                value={filterCargo}
+                onChange={setFilterCargo}
+                table="roles"
               />
             </div>
             <div className="w-44">
-              <SearchableSelect 
-                placeholder="Locais" 
-                value={filterLocal} 
-                onChange={setFilterLocal} 
-                table="locations" 
+              <SearchableSelect
+                placeholder="Locais"
+                value={filterLocal}
+                onChange={setFilterLocal}
+                table="locations"
               />
             </div>
           </div>
-          <button 
-            onClick={handleOpenNewForm} 
+          <button
+            onClick={handleOpenNewForm}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
           >
             <Plus className="h-4 w-4" /> Novo
@@ -455,22 +455,22 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       </div>
 
       {showFormModal && (
-        <div 
-          className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto"
+        <div
+          className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowFormModal(false)
           }}
         >
-          <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50 overflow-visible">
-            
+          <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50 overflow-hidden max-h-[95vh]">
+
             {/* Header */}
             <div className="px-8 py-5 border-b flex justify-between items-center bg-gray-50 shrink-0 rounded-t-[2rem]">
               <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2">
                 {formData.id ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
                 {formData.id ? 'Editar Colaborador' : 'Novo Colaborador'}
               </h2>
-              <button 
-                onClick={() => setShowFormModal(false)} 
+              <button
+                onClick={() => setShowFormModal(false)}
                 className="p-2 hover:bg-gray-200 rounded-full transition-all group"
               >
                 <X className="h-6 w-6 text-gray-400 group-hover:rotate-90 transition-transform duration-200" />
@@ -478,10 +478,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             </div>
 
             {/* Body */}
-            <div className="px-8 py-6 max-h-[calc(90vh-200px)] overflow-y-visible custom-scrollbar">
+            <div className="px-8 py-6 overflow-y-auto custom-scrollbar flex-1">
               <div className="space-y-8">
                 {/* Photo Upload */}
-                <PhotoUploadSection 
+                <PhotoUploadSection
                   photoPreview={photoPreview}
                   uploadingPhoto={uploadingPhoto}
                   photoInputRef={photoInputRef}
@@ -489,7 +489,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 />
 
                 {/* Dados Pessoais */}
-                <DadosPessoaisSection 
+                <DadosPessoaisSection
                   formData={formData}
                   setFormData={setFormData}
                   maskCPF={maskCPF}
@@ -497,7 +497,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 />
 
                 {/* Endereço */}
-                <EnderecoSection 
+                <EnderecoSection
                   formData={formData}
                   setFormData={setFormData}
                   maskCEP={maskCEP}
@@ -505,7 +505,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 />
 
                 {/* Dados Corporativos */}
-                <DadosCorporativosSection 
+                <DadosCorporativosSection
                   formData={formData}
                   setFormData={setFormData}
                   maskDate={maskDate}
@@ -513,7 +513,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 />
 
                 {/* Informações Profissionais */}
-                <InformacoesProfissionaisSection 
+                <InformacoesProfissionaisSection
                   formData={formData}
                   setFormData={setFormData}
                   maskDate={maskDate}
@@ -523,14 +523,14 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
             {/* Footer */}
             <div className="px-8 py-5 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-[2rem]">
-              <button 
-                onClick={() => setShowFormModal(false)} 
+              <button
+                onClick={() => setShowFormModal(false)}
                 className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
               >
                 Cancelar
               </button>
-              <button 
-                onClick={handleSave} 
+              <button
+                onClick={handleSave}
                 className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
               >
                 <Save className="h-4 w-4" /> Salvar
@@ -543,7 +543,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       {selectedColaborador && (
         <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
           <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50">
-            
+
             {/* Header */}
             <div className="px-8 py-5 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-[2rem]">
               <div className="flex items-center gap-4">
@@ -622,12 +622,12 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                       </div>
                       <div className="shrink-0 w-full md:w-auto">
                         <input type="file" hidden ref={gedInputRef} accept=".pdf,image/*" onChange={handleGedUpload} />
-                        <button 
-                          disabled={uploadingGed || !selectedGedCategory} 
-                          onClick={() => gedInputRef.current?.click()} 
+                        <button
+                          disabled={uploadingGed || !selectedGedCategory}
+                          onClick={() => gedInputRef.current?.click()}
                           className="w-full flex items-center justify-center gap-2 bg-[#1e3a8a] hover:bg-[#112240] hover:shadow-xl disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95"
                         >
-                          {uploadingGed ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} 
+                          {uploadingGed ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                           Vincular
                         </button>
                       </div>
@@ -659,14 +659,14 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
             {/* Footer */}
             <div className="px-8 py-5 border-t flex justify-end gap-3 bg-gray-50 shrink-0 rounded-b-[2rem]">
-              <button 
-                onClick={() => handleDelete(selectedColaborador.id)} 
+              <button
+                onClick={() => handleDelete(selectedColaborador.id)}
                 className="px-4 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all"
               >
                 Excluir
               </button>
-              <button 
-                onClick={() => handleEdit(selectedColaborador)} 
+              <button
+                onClick={() => handleEdit(selectedColaborador)}
                 className="px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95"
               >
                 Editar
@@ -681,11 +681,11 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
 // --- SUB-COMPONENTS ---
 function StatCard({ title, value, icon: Icon, color }: any) {
-  const themes: any = { 
-    blue: 'text-blue-600 bg-blue-50 border-blue-100', 
-    green: 'text-green-600 bg-green-50 border-green-100', 
-    red: 'text-red-600 bg-red-50 border-red-100', 
-    gray: 'text-gray-600 bg-gray-50 border-gray-100' 
+  const themes: any = {
+    blue: 'text-blue-600 bg-blue-50 border-blue-100',
+    green: 'text-green-600 bg-green-50 border-green-100',
+    red: 'text-red-600 bg-red-50 border-red-100',
+    gray: 'text-gray-600 bg-gray-50 border-gray-100'
   }
   return (
     <div className={`bg-white p-6 rounded-2xl shadow-sm border flex items-center justify-between transition-all hover:shadow-md ${themes[color].split(' ')[2]}`}>
