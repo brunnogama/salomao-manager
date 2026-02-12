@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserMinus, CheckCircle, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2, Link as LinkIcon,
-  Grid, LogOut, UserCircle, GraduationCap, Briefcase, Files, History, User, Check
+  Grid, LogOut, UserCircle, GraduationCap, Briefcase, Files, History, User, Check, BookOpen
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { SearchableSelect } from '../../crm/SearchableSelect'
@@ -15,6 +15,7 @@ import { DadosPessoaisSection } from '../components/DadosPessoaisSection'
 import { EnderecoSection } from '../components/EnderecoSection'
 import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
 import { InformacoesProfissionaisSection } from '../components/InformacoesProfissionaisSection'
+import { DadosEscolaridadeSection } from '../components/DadosEscolaridadeSection'
 
 // --- ESTADOS ---
 const ESTADOS_BRASIL = [
@@ -63,9 +64,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const formSteps = [
     { id: 1, label: 'Dados Pessoais', icon: User },
     { id: 2, label: 'Dados Profissionais', icon: GraduationCap },
-    { id: 3, label: 'Dados Corporativos', icon: Briefcase },
-    { id: 4, label: 'Histórico', icon: History },
-    { id: 5, label: 'GED', icon: Files }
+    { id: 3, label: 'Dados de Escolaridade', icon: BookOpen },
+    { id: 4, label: 'Dados Corporativos', icon: Briefcase },
+    { id: 5, label: 'Histórico', icon: History },
+    { id: 6, label: 'GED', icon: Files }
   ]
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -75,7 +77,21 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const [gedDocs, setGedDocs] = useState<GEDDocument[]>([])
   const [uploadingGed, setUploadingGed] = useState(false)
   const [selectedGedCategory, setSelectedGedCategory] = useState('')
+  const [atestadoDatas, setAtestadoDatas] = useState({ inicio: '', fim: '' })
+  const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string }[]>([])
   const gedInputRef = useRef<HTMLInputElement>(null)
+
+  const gedCategories = [
+    { id: 'Atestado Médico', label: 'Atestado Médico', value: 'Atestado Médico' },
+    { id: 'Carteira de Trabalho', label: 'Carteira de Trabalho', value: 'Carteira de Trabalho' },
+    { id: 'CNH', label: 'CNH', value: 'CNH' },
+    { id: 'Comprovante de Matrícula', label: 'Comprovante de Matrícula', value: 'Comprovante de Matrícula' },
+    { id: 'Comprovante de Residência', label: 'Comprovante de Residência', value: 'Comprovante de Residência' },
+    { id: 'CPF', label: 'CPF', value: 'CPF' },
+    { id: 'Diploma', label: 'Diploma', value: 'Diploma' },
+    { id: 'Identidade', label: 'Identidade', value: 'Identidade' },
+    { id: 'OAB', label: 'OAB', value: 'OAB' }
+  ]
 
   const photoInputRef = useRef<HTMLInputElement>(null)
 
@@ -97,7 +113,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   }, [viewingPhoto, showFormModal, selectedColaborador])
 
   useEffect(() => {
-    if (selectedColaborador && activeDetailTab === 5) {
+    if (selectedColaborador && activeDetailTab === 6) {
       fetchGedDocs(selectedColaborador.id)
     }
   }, [selectedColaborador, activeDetailTab])
@@ -205,41 +221,69 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const handleGedUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !selectedColaborador || !selectedGedCategory) {
+    if (!file || !selectedGedCategory) {
       if (!selectedGedCategory) alert('Selecione uma categoria primeiro.')
       return
     }
-    try {
-      setUploadingGed(true)
-      const fileExt = file.name.split('.').pop()
-      const rawFileName = `${selectedColaborador.name}_${selectedGedCategory}`
-      const cleanPathName = rawFileName
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '_');
 
-      const finalFileName = `${cleanPathName}.${fileExt}`
-      const filePath = `ged/${selectedColaborador.id}/${Date.now()}_${finalFileName}`
+    // If ID exists (editing), upload directly
+    if (formData.id) {
+      try {
+        setUploadingGed(true)
+        const fileExt = file.name.split('.').pop()
 
-      const { error: uploadError } = await supabase.storage.from('ged-colaboradores').upload(filePath, file)
-      if (uploadError) throw uploadError
+        let categoryLabel = selectedGedCategory;
+        if (selectedGedCategory === 'Atestado Médico' && atestadoDatas.inicio && atestadoDatas.fim) {
+          categoryLabel = `Atestado Médico (${atestadoDatas.inicio} a ${atestadoDatas.fim})`
+        }
 
-      const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath)
+        const rawFileName = `${formData.name}_${categoryLabel}`
+        const cleanPathName = rawFileName
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '_');
 
-      await supabase.from('ged_colaboradores').insert({
-        colaborador_id: selectedColaborador.id,
-        nome_arquivo: `${toTitleCase(selectedColaborador.name)}_${toTitleCase(selectedGedCategory)}.${fileExt}`,
-        url: publicUrl,
-        categoria: selectedGedCategory,
-        tamanho: file.size,
-        tipo_arquivo: file.type
-      })
+        const finalFileName = `${cleanPathName}.${fileExt}`
+        const filePath = `ged/${formData.id}/${Date.now()}_${finalFileName}`
 
-      fetchGedDocs(selectedColaborador.id);
-      setSelectedGedCategory('');
+        const { error: uploadError } = await supabase.storage.from('ged-colaboradores').upload(filePath, file)
+        if (uploadError) throw uploadError
+
+        const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath)
+
+        await supabase.from('ged_colaboradores').insert({
+          colaborador_id: formData.id,
+          nome_arquivo: `${toTitleCase(formData.name || '')}_${categoryLabel}.${fileExt}`,
+          url: publicUrl,
+          categoria: selectedGedCategory,
+          tamanho: file.size,
+          tipo_arquivo: file.type
+        })
+
+        fetchGedDocs(formData.id);
+        setSelectedGedCategory('');
+        setAtestadoDatas({ inicio: '', fim: '' })
+        if (gedInputRef.current) gedInputRef.current.value = ''
+      } catch (error: any) { alert('Erro no upload do GED: ' + error.message) } finally { setUploadingGed(false) }
+    } else {
+      // If new, add to pending
+      let categoryLabel = selectedGedCategory;
+      if (selectedGedCategory === 'Atestado Médico' && atestadoDatas.inicio && atestadoDatas.fim) {
+        categoryLabel = `Atestado Médico (${atestadoDatas.inicio} a ${atestadoDatas.fim})`
+      }
+
+      const newItem = {
+        file,
+        category: selectedGedCategory,
+        label: categoryLabel !== selectedGedCategory ? categoryLabel : undefined,
+        tempId: Math.random().toString(36).substr(2, 9)
+      }
+      setPendingGedDocs(prev => [...prev, newItem])
+      setSelectedGedCategory('')
+      setAtestadoDatas({ inicio: '', fim: '' })
       if (gedInputRef.current) gedInputRef.current.value = ''
-    } catch (error: any) { alert('Erro no upload do GED: ' + error.message) } finally { setUploadingGed(false) }
+    }
   }
 
   const handleDeleteGed = async (doc: GEDDocument) => {
@@ -321,20 +365,56 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
       console.log('Enviando para Supabase:', payload);
 
-      let result;
+      let savedData;
       if (formData.id) {
         console.log('Atualizando registro existente:', formData.id);
-        result = await supabase.from('collaborators').update(payload).eq('id', formData.id);
+        const { data, error } = await supabase.from('collaborators').update(payload).eq('id', formData.id).select().single();
+        if (error) throw error;
+        savedData = data;
       } else {
         console.log('Inserindo novo registro');
-        result = await supabase.from('collaborators').insert(payload);
+        const { data, error } = await supabase.from('collaborators').insert(payload).select().single();
+        if (error) throw error;
+        savedData = data;
       }
 
-      const { error } = result;
+      // Process Pending GED Docs
+      if (savedData && pendingGedDocs.length > 0) {
+        console.log('Processando anexos pendentes...');
+        for (const doc of pendingGedDocs) {
+          try {
+            const fileExt = doc.file.name.split('.').pop()
+            const rawFileName = `${savedData.name}_${doc.label || doc.category}`
+            const cleanPathName = rawFileName
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '_');
 
-      if (error) {
-        console.error('Erro do Supabase:', error);
-        throw error;
+            const finalFileName = `${cleanPathName}.${fileExt}`
+            const filePath = `ged/${savedData.id}/${Date.now()}_${finalFileName}`
+
+            const { error: uploadError } = await supabase.storage.from('ged-colaboradores').upload(filePath, doc.file)
+            if (uploadError) {
+              console.error('Erro upload pendente:', uploadError)
+              continue
+            }
+
+            const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath)
+
+            await supabase.from('ged_colaboradores').insert({
+              colaborador_id: savedData.id,
+              nome_arquivo: `${toTitleCase(savedData.name)}_${toTitleCase(doc.category)}.${fileExt}`,
+              url: publicUrl,
+              categoria: doc.category,
+              tamanho: doc.file.size,
+              tipo_arquivo: doc.file.type
+            })
+          } catch (err) {
+            console.error('Erro processando anexo pendente:', err)
+          }
+        }
+        setPendingGedDocs([])
       }
 
       console.log('Sucesso! Atualizando lista...');
@@ -349,7 +429,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         if (photoInputRef.current) photoInputRef.current.value = ''
         // Optional: Scroll to top of form
         document.querySelector('.custom-scrollbar')?.scrollTo(0, 0)
-        alert('Colaborador salvo com sucesso!')
+        alert('Colaborador e documentos salvos com sucesso!')
       }
     } catch (error: any) {
       console.error('Erro ao salvar colaborador (CATCH):', error)
@@ -379,6 +459,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       oab_vencimento: fmt(colab.oab_vencimento)
     })
     setPhotoPreview(colab.photo_url || null)
+    setPendingGedDocs([])
+    // Fetch docs if editing
+    fetchGedDocs(colab.id)
     setActiveFormTab(1)
     setShowFormModal(true)
     setSelectedColaborador(null)
@@ -387,6 +470,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const handleOpenNewForm = () => {
     setFormData({ status: 'active', state: 'Rio de Janeiro' })
     setPhotoPreview(null)
+    setPendingGedDocs([]) // Clear pending docs
     setActiveFormTab(1)
     setShowFormModal(true)
   }
@@ -585,7 +669,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             if (e.target === e.currentTarget) setShowFormModal(false)
           }}
         >
-          <div className="bg-white rounded-[2rem] w-full max-w-[90vw] my-8 flex flex-col shadow-2xl border border-gray-200/50 overflow-visible max-h-[95vh]">
+          <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50 overflow-visible max-h-[95vh]">
 
             {/* Header */}
             <div className="px-8 py-5 border-b flex justify-between items-center bg-gray-50 shrink-0 rounded-t-[2rem]">
@@ -676,6 +760,16 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
                 {activeFormTab === 3 && (
                   <div className="animate-in slide-in-from-right-4 duration-300">
+                    <DadosEscolaridadeSection
+                      formData={formData}
+                      setFormData={setFormData}
+                      maskDate={maskDate}
+                    />
+                  </div>
+                )}
+
+                {activeFormTab === 4 && (
+                  <div className="animate-in slide-in-from-right-4 duration-300">
                     <DadosCorporativosSection
                       formData={formData}
                       setFormData={setFormData}
@@ -685,7 +779,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   </div>
                 )}
 
-                {activeFormTab === 4 && (
+                {activeFormTab === 5 && (
                   <div className="text-center py-12 text-gray-400 animate-in slide-in-from-right-4 duration-300 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
                     <History className="h-12 w-12 mx-auto mb-4 opacity-20" />
                     <h3 className="text-lg font-bold text-gray-500 mb-1">Histórico do Colaborador</h3>
@@ -694,21 +788,108 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   </div>
                 )}
 
-                {activeFormTab === 5 && (
+                {activeFormTab === 6 && (
                   <div className="animate-in slide-in-from-right-4 duration-300">
-                    {formData.id ? (
-                      <div className="border-2 border-dashed border-gray-100 rounded-2xl p-8 text-center bg-gray-50/50">
-                        <Files className="h-12 w-12 mx-auto mb-4 text-[#1e3a8a] opacity-50" />
-                        <h3 className="text-lg font-bold text-[#0a192f] mb-2">Gestão de Documentos</h3>
-                        <p className="text-gray-500 text-sm mb-6">Utilize a visualização detalhada do colaborador para gerenciar documentos.</p>
+                    <div className="border-2 border-dashed border-gray-100 rounded-2xl p-6 bg-gray-50/50">
+                      <div className="text-center mb-6">
+                        <Files className="h-10 w-10 mx-auto mb-2 text-[#1e3a8a] opacity-50" />
+                        <h3 className="text-sm font-bold text-[#0a192f]">Gestão de Documentos</h3>
+                        <p className="text-gray-500 text-xs">Anexe documentos antes mesmo de salvar.</p>
                       </div>
-                    ) : (
-                      <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
-                        <Save className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                        <h3 className="text-lg font-bold text-gray-500 mb-1">Salve para habilitar</h3>
-                        <p className="text-sm">Você precisa salvar o colaborador antes de anexar documentos.</p>
+
+                      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6">
+                        <div className="flex flex-col md:flex-row items-end gap-3">
+                          <div className="flex-1 w-full relative z-[110]">
+                            <SearchableSelect
+                              label="Tipo de Documento"
+                              placeholder="Selecione..."
+                              value={selectedGedCategory}
+                              onChange={setSelectedGedCategory}
+                              options={gedCategories}
+                              uppercase={false}
+                            />
+                          </div>
+
+                          {selectedGedCategory === 'Atestado Médico' && (
+                            <div className="flex items-center gap-2 w-full md:w-auto">
+                              <div className="relative">
+                                <input
+                                  type="date"
+                                  className="pl-3 pr-2 py-2.5 bg-white border border-gray-200 rounded-lg text-xs w-32"
+                                  value={atestadoDatas.inicio}
+                                  onChange={e => setAtestadoDatas(p => ({ ...p, inicio: e.target.value }))}
+                                  placeholder="Início"
+                                />
+                              </div>
+                              <span className="text-gray-400">-</span>
+                              <div className="relative">
+                                <input
+                                  type="date"
+                                  className="pl-3 pr-2 py-2.5 bg-white border border-gray-200 rounded-lg text-xs w-32"
+                                  value={atestadoDatas.fim}
+                                  onChange={e => setAtestadoDatas(p => ({ ...p, fim: e.target.value }))}
+                                  placeholder="Fim"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="shrink-0 w-full md:w-auto">
+                            <input type="file" hidden ref={gedInputRef} accept=".pdf,image/*" onChange={handleGedUpload} />
+                            <button
+                              disabled={!selectedGedCategory || (selectedGedCategory === 'Atestado Médico' && (!atestadoDatas.inicio || !atestadoDatas.fim))}
+                              onClick={() => gedInputRef.current?.click()}
+                              className="w-full flex items-center justify-center gap-2 bg-[#1e3a8a] hover:bg-[#112240] hover:shadow-xl disabled:opacity-50 text-white px-4 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-md active:scale-95"
+                            >
+                              <Plus className="h-4 w-4" /> Anexar
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    )}
+
+                      {/* List of files (Existing + Pending) */}
+                      <div className="space-y-3">
+                        {/* Existing Files (only if editing) */}
+                        {formData.id && gedDocs.map(doc => (
+                          <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div className="p-1.5 bg-blue-50 text-blue-600 rounded"><FileText className="h-4 w-4" /></div>
+                              <div className="overflow-hidden">
+                                <p className="text-xs font-bold text-[#0a192f] truncate">{doc.nome_arquivo}</p>
+                                <span className="text-[9px] bg-gray-100 text-gray-500 px-1 py-0.5 rounded uppercase tracking-wider">{doc.categoria}</span>
+                              </div>
+                            </div>
+                            <button onClick={() => handleDeleteGed(doc)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-all"><Trash2 className="h-4 w-4" /></button>
+                          </div>
+                        ))}
+
+                        {/* Pending Files */}
+                        {pendingGedDocs.map(doc => (
+                          <div key={doc.tempId} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-100 rounded-lg">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div className="p-1.5 bg-yellow-100 text-yellow-600 rounded"><FileText className="h-4 w-4" /></div>
+                              <div className="overflow-hidden">
+                                <p className="text-xs font-bold text-[#0a192f] truncate">{doc.file.name}</p>
+                                <div className="flex gap-2">
+                                  <span className="text-[9px] bg-yellow-100 text-yellow-700 px-1 py-0.5 rounded uppercase tracking-wider">{doc.category}</span>
+                                  <span className="text-[9px] text-yellow-600 italic">Pendente de salvamento</span>
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => setPendingGedDocs(prev => prev.filter(p => p.tempId !== doc.tempId))}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-all"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+
+                        {!formData.id && pendingGedDocs.length === 0 && (
+                          <p className="text-center text-gray-400 text-xs py-4">Nenhum documento anexado ainda.</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -743,7 +924,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       {
         selectedColaborador && (
           <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-y-auto">
-            <div className="bg-white rounded-[2rem] w-full max-w-7xl my-8 flex flex-col shadow-2xl border border-gray-200/50">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-50 duration-300">
 
               {/* Header */}
               <div className="px-8 py-5 border-b flex justify-between bg-gray-50 shrink-0 rounded-t-[2rem]">
@@ -811,6 +992,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 )}
 
                 {/* 2. DADOS PROFISSIONAIS (OAB, CTPS, PIS) */}
+                {/* 2. DADOS PROFISSIONAIS (OAB, CTPS, PIS) */}
                 {activeDetailTab === 2 && (
                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -837,12 +1019,33 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                         </div>
                       </div>
                     </div>
-                    {/* Escolaridade place holder if field exists, currently not in type but in form */}
                   </div>
                 )}
 
-                {/* 3. DADOS CORPORATIVOS */}
+                {/* 3. DADOS DE ESCOLARIDADE (NEW) */}
                 {activeDetailTab === 3 && (
+                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-[#1e3a8a]" />
+                      <h3 className="text-lg font-bold text-[#0a192f]">Dados de Escolaridade</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+                      <DetailRow label="Nível de Escolaridade" value={selectedColaborador.escolaridade_nivel} icon={GraduationCap} />
+                      {selectedColaborador.escolaridade_subnivel && (
+                        <DetailRow label="Subnível" value={selectedColaborador.escolaridade_subnivel} />
+                      )}
+                      <div className="col-span-1 md:col-span-2">
+                        <DetailRow label="Instituição" value={selectedColaborador.escolaridade_instituicao} icon={Building2} />
+                      </div>
+                      <DetailRow label="Matrícula" value={selectedColaborador.escolaridade_matricula} />
+                      <DetailRow label="Semestre" value={selectedColaborador.escolaridade_semestre} />
+                      <DetailRow label="Previsão de Conclusão" value={formatDateDisplay(selectedColaborador.escolaridade_previsao_conclusao)} icon={Calendar} />
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. DADOS CORPORATIVOS */}
+                {activeDetailTab === 4 && (
                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-6">Informações da Empresa</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
@@ -865,8 +1068,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   </div>
                 )}
 
-                {/* 4. HISTÓRICO */}
-                {activeDetailTab === 4 && (
+                {/* 5. HISTÓRICO */}
+                {activeDetailTab === 5 && (
                   <div className="text-center py-12 text-gray-400 animate-in fade-in slide-in-from-bottom-4 duration-500 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
                     <History className="h-12 w-12 mx-auto mb-4 opacity-20" />
                     <h3 className="text-lg font-bold text-gray-500 mb-1">Histórico do Colaborador</h3>
@@ -875,23 +1078,48 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   </div>
                 )}
 
-                {/* 5. GED / DOCUMENTOS */}
-                {activeDetailTab === 5 && (
+                {/* 6. GED / DOCUMENTOS */}
+                {activeDetailTab === 6 && (
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="bg-blue-50 p-6 rounded-xl border border-dashed border-blue-200 relative">
-                      <div className="flex flex-col md:flex-row items-end gap-4">
-                        <div className="flex-1 w-full relative z-[110]">
-                          <SearchableSelect label="Tipo de Documento" placeholder="Selecione ou gerencie..." value={selectedGedCategory} onChange={setSelectedGedCategory} table="ged_categories" onRefresh={handleRefresh} />
+                      <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                          <div className="flex-1 w-full relative z-[110]">
+                            <SearchableSelect label="Tipo de Documento" placeholder="Selecione..." value={selectedGedCategory} onChange={setSelectedGedCategory} options={gedCategories} uppercase={false} />
+                          </div>
+
+                          {selectedGedCategory === 'Atestado Médico' && (
+                            <div className="flex items-center gap-2 w-full">
+                              <div className="relative w-full">
+                                <input
+                                  type="date"
+                                  className="w-full pl-3 pr-2 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-[#1e3a8a]"
+                                  value={atestadoDatas.inicio}
+                                  onChange={e => setAtestadoDatas(p => ({ ...p, inicio: e.target.value }))}
+                                />
+                              </div>
+                              <span className="text-gray-400 font-bold">-</span>
+                              <div className="relative w-full">
+                                <input
+                                  type="date"
+                                  className="w-full pl-3 pr-2 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-[#1e3a8a]"
+                                  value={atestadoDatas.fim}
+                                  onChange={e => setAtestadoDatas(p => ({ ...p, fim: e.target.value }))}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="shrink-0 w-full md:w-auto">
+
+                        <div className="flex justify-end">
                           <input type="file" hidden ref={gedInputRef} accept=".pdf,image/*" onChange={handleGedUpload} />
                           <button
-                            disabled={uploadingGed || !selectedGedCategory}
+                            disabled={uploadingGed || !selectedGedCategory || (selectedGedCategory === 'Atestado Médico' && (!atestadoDatas.inicio || !atestadoDatas.fim))}
                             onClick={() => gedInputRef.current?.click()}
-                            className="w-full flex items-center justify-center gap-2 bg-[#1e3a8a] hover:bg-[#112240] hover:shadow-xl disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95"
+                            className="bg-[#1e3a8a] hover:bg-[#112240] hover:shadow-xl disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 flex items-center gap-2"
                           >
                             {uploadingGed ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                            Vincular
+                            Vincular Documento
                           </button>
                         </div>
                       </div>

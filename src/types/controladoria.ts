@@ -72,6 +72,15 @@ export interface Collaborator {
   pis_pasep?: string;
   dispensa_militar?: string;
 
+  // Escolaridade
+  escolaridade_nivel?: string;
+  escolaridade_subnivel?: string;
+  escolaridade_instituicao?: string;
+  escolaridade_matricula?: string;
+  escolaridade_semestre?: string;
+  escolaridade_previsao_conclusao?: string;
+  escolaridade_curso?: string;
+
   local?: string;
   locations?: { name: string }; // Joined field
   equipe?: string;
