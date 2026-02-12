@@ -461,7 +461,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             if (e.target === e.currentTarget) setShowFormModal(false)
           }}
         >
-          <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50 overflow-hidden max-h-[95vh]">
+          <div className="bg-white rounded-[2rem] w-full max-w-5xl my-8 flex flex-col shadow-2xl border border-gray-200/50 overflow-visible max-h-[95vh]">
 
             {/* Header */}
             <div className="px-8 py-5 border-b flex justify-between items-center bg-gray-50 shrink-0 rounded-t-[2rem]">
