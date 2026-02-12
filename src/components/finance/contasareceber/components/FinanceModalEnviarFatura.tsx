@@ -137,13 +137,33 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
         partner_id: novoClientePartnerId || null
       };
 
-      const { data, error } = await supabase
+      // Check for existing client by CNPJ manually to avoid ON CONFLICT error
+      const { data: existingClient } = await supabase
         .from('clients')
-        .upsert(payload, {
-          onConflict: 'cnpj'
-        })
-        .select()
-        .single();
+        .select('id')
+        .eq('cnpj', payload.cnpj)
+        .maybeSingle();
+
+      let result;
+
+      if (existingClient) {
+        // Update existing
+        result = await supabase
+          .from('clients')
+          .update(payload)
+          .eq('id', existingClient.id)
+          .select()
+          .single();
+      } else {
+        // Insert new
+        result = await supabase
+          .from('clients')
+          .insert(payload)
+          .select()
+          .single();
+      }
+
+      const { data, error } = result;
 
       if (error) throw error;
 

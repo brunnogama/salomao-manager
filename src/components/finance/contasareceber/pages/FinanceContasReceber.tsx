@@ -1,9 +1,7 @@
 import { useState } from 'react'
-import { 
-  ArrowDownCircle, 
-  UserCircle, 
-  Grid, 
-  LogOut,
+import {
+  ArrowDownCircle,
+  UserCircle,
   Filter,
   Mail,
   Clock,
@@ -25,8 +23,6 @@ import { useFinanceContasReceber, FaturaStatus } from '../hooks/useFinanceContas
 interface FinanceContasReceberProps {
   userName?: string;
   userEmail?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
 }
 
 const MESES = [
@@ -36,11 +32,9 @@ const MESES = [
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
-export function FinanceContasReceber({ 
-  userName = 'Usuário', 
-  userEmail = '',
-  onModuleHome, 
-  onLogout 
+export function FinanceContasReceber({
+  userName = 'Usuário',
+  userEmail = ''
 }: FinanceContasReceberProps) {
   const [activeTab, setActiveTab] = useState<'lista' | 'calendario'>('lista')
   const [searchTerm, setSearchTerm] = useState('')
@@ -50,12 +44,12 @@ export function FinanceContasReceber({
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay()
-  
+
   const prevMonth = () => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
     setCurrentDate(newDate)
   }
-  
+
   const nextMonth = () => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1)
     setCurrentDate(newDate)
@@ -86,7 +80,7 @@ export function FinanceContasReceber({
     }
   }
 
-  const filteredFaturas = faturas.filter(f => 
+  const filteredFaturas = faturas.filter(f =>
     f.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -126,7 +120,7 @@ export function FinanceContasReceber({
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
-      
+
       {/* PAGE HEADER */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -149,36 +143,34 @@ export function FinanceContasReceber({
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
             <UserCircle className="h-5 w-5" />
           </div>
-          {onModuleHome && (
-            <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"><Grid className="h-5 w-5" /></button>
-          )}
-          {onLogout && (
-            <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><LogOut className="h-5 w-5" /></button>
-          )}
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+          >
+            <Mail className="h-4 w-4" /> Enviar Fatura
+          </button>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto space-y-6 w-full">
-        
+
         {/* BOTÕES DE VISUALIZAÇÃO - LINHA PRÓPRIA */}
         <div className="flex bg-gray-100 p-1.5 rounded-xl w-fit shadow-sm">
-          <button 
+          <button
             onClick={() => setActiveTab('lista')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
-              activeTab === 'lista' 
-                ? 'bg-white text-[#1e3a8a] shadow-md' 
-                : 'text-gray-400 hover:text-gray-600'
-            }`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'lista'
+              ? 'bg-white text-[#1e3a8a] shadow-md'
+              : 'text-gray-400 hover:text-gray-600'
+              }`}
           >
             <List className="h-4 w-4" /> Lista
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('calendario')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
-              activeTab === 'calendario' 
-                ? 'bg-white text-[#1e3a8a] shadow-md' 
-                : 'text-gray-400 hover:text-gray-600'
-            }`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'calendario'
+              ? 'bg-white text-[#1e3a8a] shadow-md'
+              : 'text-gray-400 hover:text-gray-600'
+              }`}
           >
             <CalendarIcon className="h-4 w-4" /> Calendário
           </button>
@@ -189,7 +181,7 @@ export function FinanceContasReceber({
           {activeTab === 'lista' ? (
             <div className="relative w-full md:w-96">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input 
+              <input
                 type="text"
                 placeholder="Buscar por cliente..."
                 value={searchTerm}
@@ -211,12 +203,7 @@ export function FinanceContasReceber({
             <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white border border-gray-100 text-[#0a192f] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-sm hover:bg-gray-50 transition-all">
               <Filter className="h-4 w-4" /> Filtros
             </button>
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-            >
-              <Mail className="h-4 w-4" /> Enviar Fatura
-            </button>
+            {/* Button moved to header */}
           </div>
         </div>
 
@@ -314,7 +301,7 @@ export function FinanceContasReceber({
         </div>
       </div>
 
-      <FinanceModalEnviarFatura 
+      <FinanceModalEnviarFatura
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         userEmail={userEmail}

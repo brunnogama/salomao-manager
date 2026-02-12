@@ -87,8 +87,8 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
     { path: '/financeiro/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/financeiro/calendario', label: 'Calendário', icon: Calendar },
     { path: '/financeiro/contas-pagar', label: 'Contas a Pagar', icon: ArrowUpCircle },
-    { path: '/financeiro/oab', label: 'OAB', icon: GraduationCap },
     { path: '/financeiro/contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle },
+    { path: '/financeiro/oab', label: 'OAB', icon: GraduationCap },
     { path: '/financeiro/gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane },
     { path: '/financeiro/ged', label: 'GED', icon: Folder },
   ]
@@ -140,8 +140,8 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
               to={item.path}
               onClick={onClose}
               className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all group ${isActive(item.path)
-                  ? 'bg-[#1e3a8a] text-white font-medium shadow-md border-l-4 border-salomao-gold'
-                  : 'hover:bg-white/5 hover:text-white border-l-4 border-transparent'
+                ? 'bg-[#1e3a8a] text-white font-medium shadow-md border-l-4 border-salomao-gold'
+                : 'hover:bg-white/5 hover:text-white border-l-4 border-transparent'
                 }`}
             >
               <div className="flex items-center">

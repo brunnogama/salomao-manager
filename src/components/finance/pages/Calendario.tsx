@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { 
-  Calendar as CalendarIcon, 
-  ChevronLeft, 
-  ChevronRight, 
-  ArrowUpCircle, 
-  ArrowDownCircle, 
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpCircle,
+  ArrowDownCircle,
   DollarSign,
   TrendingUp,
   Clock,
@@ -23,12 +23,9 @@ import {
   CalendarDays as MonthIcon
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
-import { ListaVencimentosOAB } from '../components/ListaVencimentosOAB'
 
 interface CalendarioProps {
   userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
 }
 
 const MESES = [
@@ -38,8 +35,7 @@ const MESES = [
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
-export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: CalendarioProps) {
-  const [loading, setLoading] = useState(false)
+export function Calendario({ userName = 'Usuário' }: CalendarioProps) {
   const [currentDate] = useState(new Date())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
@@ -56,7 +52,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
   })
 
   // Estado para o Modal de Lista do Dia (mantendo lógica do sistema anterior)
-  const [selectedDayEvents, setSelectedDayEvents] = useState<{ day: number, events: any[] } | null>(null)
+  // Estado para o Modal de Lista do Dia (mantendo lógica do sistema anterior)
 
   // Efeito para buscar colaboradores e calcular vencimentos para a visão de grade
   useEffect(() => {
@@ -117,12 +113,12 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
   // Agrupamento de eventos para a lista lateral (Lógica aplicada do RH)
   const getAgrupadosPorDia = () => {
-    const list = vencimentosOAB.filter(v => 
-      v.dataVenc.getMonth() === selectedMonth && 
+    const list = vencimentosOAB.filter(v =>
+      v.dataVenc.getMonth() === selectedMonth &&
       v.dataVenc.getFullYear() === selectedYear
     );
     const grouped: { [key: number]: any[] } = {};
-    
+
     list.forEach(item => {
       const day = item.dataVenc.getDate();
       if (!grouped[day]) grouped[day] = [];
@@ -145,33 +141,31 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = 
-        day === currentDate.getDate() && 
-        selectedMonth === currentDate.getMonth() && 
+      const isToday =
+        day === currentDate.getDate() &&
+        selectedMonth === currentDate.getMonth() &&
         selectedYear === currentDate.getFullYear()
 
-      const vencimentosDoDia = vencimentosOAB.filter(v => 
-        v.dataVenc.getDate() === day && 
-        v.dataVenc.getMonth() === selectedMonth && 
+      const vencimentosDoDia = vencimentosOAB.filter(v =>
+        v.dataVenc.getDate() === day &&
+        v.dataVenc.getMonth() === selectedMonth &&
         v.dataVenc.getFullYear() === selectedYear
       )
 
       days.push(
         <div
           key={day}
-          onClick={() => setSelectedDayEvents({ day, events: vencimentosDoDia })}
-          className={`aspect-square p-2 rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer ${
-            isToday 
-              ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a] shadow-xl' 
-              : vencimentosDoDia.length > 0
+          className={`aspect-square p-2 rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer ${isToday
+            ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a] shadow-xl'
+            : vencimentosDoDia.length > 0
               ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg hover:scale-105 hover:border-[#1e3a8a]/50'
               : 'bg-white border-gray-100 hover:border-[#1e3a8a]/30 hover:bg-blue-50/30'
-          }`}
+            }`}
         >
           <div className={`text-sm font-black ${isToday ? 'text-white' : 'text-[#0a192f]'}`}>
             {day}
           </div>
-          
+
           <div className="space-y-1 mt-1">
             {vencimentosDoDia.slice(0, 2).map((v, idx) => (
               <div key={`oab-${idx}`} className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-1.5 py-1 rounded-lg shadow-sm border border-orange-100">
@@ -199,7 +193,7 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
-      
+
       {/* PAGE HEADER COMPLETO */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -224,64 +218,6 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
             <UserCircle className="h-5 w-5" />
           </div>
-          {onModuleHome && (
-            <button 
-              onClick={onModuleHome} 
-              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
-              title="Voltar aos módulos"
-            >
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button 
-              onClick={onLogout} 
-              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-              title="Sair"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="max-w-[1600px] mx-auto space-y-6 w-full">
-      
-      {/* TOOLBAR & STATS */}
-      <div className="flex flex-col xl:flex-row gap-4 items-center justify-between">
-        <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-          <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-red-500 to-red-700 shadow-lg">
-              <ArrowUpCircle className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">A Pagar Hoje</p>
-              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">0</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-green-500 to-green-700 shadow-lg">
-              <ArrowDownCircle className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">A Receber</p>
-              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">0</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-[#112240] shadow-lg">
-              <TrendingUp className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Pendente</p>
-              <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">0</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-3 w-full xl:w-auto justify-end">
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
@@ -291,156 +227,195 @@ export function Calendario({ userName = 'Usuário', onModuleHome, onLogout }: Ca
         </div>
       </div>
 
-      {/* CONTEÚDO PRINCIPAL - GRID 3:1 APLICADO */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Calendário */}
-        <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
-            <button 
-              onClick={handlePreviousMonth} 
-              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
-            >
-              <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
-            </button>
-            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
-              {MESES[selectedMonth]} {selectedYear}
-            </h2>
-            <button 
-              onClick={handleNextMonth} 
-              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
-            >
-              <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
-            </button>
+      <div className="max-w-[1600px] mx-auto space-y-6 w-full">
+
+        {/* TOOLBAR & STATS */}
+        <div className="flex flex-col xl:flex-row gap-4 items-center justify-between">
+          <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
+            <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-red-500 to-red-700 shadow-lg">
+                <ArrowUpCircle className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">A Pagar Hoje</p>
+                <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">0</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-green-500 to-green-700 shadow-lg">
+                <ArrowDownCircle className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">A Receber</p>
+                <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">0</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-[#112240] shadow-lg">
+                <TrendingUp className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Pendente</p>
+                <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">0</p>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-2 mb-3">
-            {DIAS_SEMANA.map(dia => (
-              <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">{dia}</div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-2">
-            {renderCalendar()}
-          </div>
+          {/* Button moved to header */}
         </div>
 
-        {/* Lista Lateral - Agrupada e com ações (Design Unificado) */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col h-full">
-          <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Clock className="h-4 w-4 text-[#1e3a8a]" /> Lançamentos do Mês
-          </h3>
-          <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: '600px' }}>
-            {getAgrupadosPorDia().length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-400 font-bold text-sm italic">Nenhum lançamento agendado.</p>
-              </div>
-            ) : (
-              getAgrupadosPorDia().map((group) => (
-                <div key={group.day} className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
-                  <div className="bg-gray-200/50 px-3 py-1.5 flex justify-between items-center">
-                    <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-wider">
-                      Dia {group.day}
-                    </span>
-                    <span className="text-[9px] font-bold text-gray-400 italic">
-                      {group.items.length} {group.items.length > 1 ? 'itens' : 'item'}
-                    </span>
-                  </div>
-                  <div className="p-2 space-y-2">
-                    {group.items.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
-                        <div className="flex items-center gap-2 overflow-hidden">
-                          <GraduationCap className="h-3.5 w-3.5 text-orange-600 shrink-0" />
-                          <p className="text-xs font-bold text-[#0a192f] truncate">
-                            {item.nome}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* MODAL NOVO LANÇAMENTO */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between text-white">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5" />
-                <h3 className="font-black text-base tracking-tight">Novo Lançamento</h3>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-white/70 hover:text-white p-1.5 rounded-lg transition-all">
-                <X className="h-5 w-5" />
+        {/* CONTEÚDO PRINCIPAL - GRID 3:1 APLICADO */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Calendário */}
+          <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
+              <button
+                onClick={handlePreviousMonth}
+                className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
+              >
+                <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
+              </button>
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
+                {MESES[selectedMonth]} {selectedYear}
+              </h2>
+              <button
+                onClick={handleNextMonth}
+                className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
+              >
+                <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
-                  Descrição da Conta
-                </label>
-                <input 
-                  type="text" 
-                  value={novoEvento.titulo} 
-                  onChange={(e) => setNovoEvento({...novoEvento, titulo: e.target.value})} 
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium transition-all" 
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
-                    Categoria
-                  </label>
-                  <select 
-                    value={novoEvento.tipo} 
-                    onChange={(e) => setNovoEvento({...novoEvento, tipo: e.target.value})} 
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none bg-white font-medium transition-all"
-                  >
-                    <option value="Pagamento">Contas a Pagar</option>
-                    <option value="Recebimento">Contas a Receber</option>
-                    <option value="Aeronave">Custos Aeronave</option>
-                  </select>
+
+            <div className="grid grid-cols-7 gap-2 mb-3">
+              {DIAS_SEMANA.map(dia => (
+                <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">{dia}</div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {renderCalendar()}
+            </div>
+          </div>
+
+          {/* Lista Lateral - Agrupada e com ações (Design Unificado) */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col h-full">
+            <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[#1e3a8a]" /> Lançamentos do Mês
+            </h3>
+            <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: '600px' }}>
+              {getAgrupadosPorDia().length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400 font-bold text-sm italic">Nenhum lançamento agendado.</p>
                 </div>
+              ) : (
+                getAgrupadosPorDia().map((group) => (
+                  <div key={group.day} className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
+                    <div className="bg-gray-200/50 px-3 py-1.5 flex justify-between items-center">
+                      <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-wider">
+                        Dia {group.day}
+                      </span>
+                      <span className="text-[9px] font-bold text-gray-400 italic">
+                        {group.items.length} {group.items.length > 1 ? 'itens' : 'item'}
+                      </span>
+                    </div>
+                    <div className="p-2 space-y-2">
+                      {group.items.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <GraduationCap className="h-3.5 w-3.5 text-orange-600 shrink-0" />
+                            <p className="text-xs font-bold text-[#0a192f] truncate">
+                              {item.nome}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* MODAL NOVO LANÇAMENTO */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between text-white">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5" />
+                  <h3 className="font-black text-base tracking-tight">Novo Lançamento</h3>
+                </div>
+                <button onClick={() => setIsModalOpen(false)} className="text-white/70 hover:text-white p-1.5 rounded-lg transition-all">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
-                    Vencimento
+                    Descrição da Conta
                   </label>
-                  <input 
-                    type="date" 
-                    value={novoEvento.data} 
-                    onChange={(e) => setNovoEvento({...novoEvento, data: e.target.value})} 
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium transition-all" 
+                  <input
+                    type="text"
+                    value={novoEvento.titulo}
+                    onChange={(e) => setNovoEvento({ ...novoEvento, titulo: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium transition-all"
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+                      Categoria
+                    </label>
+                    <select
+                      value={novoEvento.tipo}
+                      onChange={(e) => setNovoEvento({ ...novoEvento, tipo: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none bg-white font-medium transition-all"
+                    >
+                      <option value="Pagamento">Contas a Pagar</option>
+                      <option value="Recebimento">Contas a Receber</option>
+                      <option value="Aeronave">Custos Aeronave</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+                      Vencimento
+                    </label>
+                    <input
+                      type="date"
+                      value={novoEvento.data}
+                      onChange={(e) => setNovoEvento({ ...novoEvento, data: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] outline-none font-medium transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-6 py-2.5 text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] hover:bg-gray-200 rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveEvento}
+                  disabled={savingEvento}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl uppercase tracking-[0.2em] shadow-md hover:shadow-lg transition-all active:scale-95"
+                >
+                  {savingEvento ? (
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Salvar Lançamento
+                </button>
               </div>
             </div>
-            <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
-              <button 
-                onClick={() => setIsModalOpen(false)} 
-                className="px-6 py-2.5 text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] hover:bg-gray-200 rounded-xl transition-all"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={handleSaveEvento} 
-                disabled={savingEvento} 
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl uppercase tracking-[0.2em] shadow-md hover:shadow-lg transition-all active:scale-95"
-              >
-                {savingEvento ? (
-                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                Salvar Lançamento
-              </button>
-            </div>
           </div>
-        </div>
-      )}
-      
+        )}
+
       </div>
     </div>
   )
