@@ -5,7 +5,8 @@ import {
   Users,
   Scale,
   FileText,
-  Layers
+  Layers,
+  Download
 } from 'lucide-react';
 import { Contract, Partner } from '../../../types/controladoria';
 import { ContractFilters } from '../contracts/ContractFilters';
@@ -135,6 +136,11 @@ export function Volumetry() {
         </div>
 
 
+        <div className="flex items-center gap-3 shrink-0">
+          <button onClick={handleExport} className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
+            <Download className="h-4 w-4" /> Exportar XLS
+          </button>
+        </div>
       </div>
 
       {/* 2. Filtros Reutilizados */}
@@ -146,7 +152,7 @@ export function Volumetry() {
           partners={partners}
           sortOrder={sortOrder} setSortOrder={setSortOrder}
           viewMode={viewMode} setViewMode={setViewMode}
-          onExport={handleExport}
+
         />
       </div>
 
