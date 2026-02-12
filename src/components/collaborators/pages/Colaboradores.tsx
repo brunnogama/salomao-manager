@@ -148,6 +148,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
       const enrichedData = colabRes.data?.map(c => ({
         ...c,
+        photo_url: c.photo_url || c.foto_url, // Map from legacy DB field
         roles: { name: rolesMap.get(String(c.role)) || c.role },
         locations: { name: locsMap.get(String(c.local)) || c.local },
         teams: { name: teamsMap.get(String(c.equipe)) || c.equipe }
@@ -274,6 +275,12 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       photo_url: photoUrl,
       partner_id: formData.partner_id || null,
       leader_id: formData.leader_id || null
+    }
+
+    // Map photo_url to foto_url for DB compatibility and cleanup payload
+    if ((payload as any).photo_url) {
+      (payload as any).foto_url = (payload as any).photo_url
+      delete (payload as any).photo_url
     }
 
     // Remove joined fields that are not columns in the table
