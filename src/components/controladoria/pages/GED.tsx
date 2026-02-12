@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { 
-  FolderOpen, FileText, Download, Search, HardDrive, Clock, FileCheck, Hash, Shield,
-  Plane, UserCircle, LogOut, Grid
+import {
+  FolderOpen, FileText, Download, Search, HardDrive, Clock, FileCheck, Hash
 } from 'lucide-react';
 
 // ROTA CORRIGIDA: Saindo de /pages e entrando em /utils (dentro de controladoria)
@@ -25,62 +24,38 @@ interface GEDDocument {
     status: string;
     display_id?: string; // Formatado para UI
     clients: {
-        name: string;
+      name: string;
     } | null;
   };
   client_name: string;
 }
 
-interface GEDProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
-}
+export function GED() {
 
-export function GED({ 
-  userName = 'Usuário', 
-  onModuleHome, 
-  onLogout 
-}: GEDProps) {
-  // --- ROLE STATE ---
-  const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [documents, setDocuments] = useState<GEDDocument[]>([]);
   const [folders, setFolders] = useState<string[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Ref para o container principal de arquivos
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    checkUserRole();
+
     fetchDocuments();
   }, []);
 
   // Efeito para rolar para o topo quando a pasta (ou busca) mudar
   useEffect(() => {
     if (mainContentRef.current) {
-        // Força o scroll para o topo instantaneamente
-        mainContentRef.current.scrollTop = 0;
+      // Força o scroll para o topo instantaneamente
+      mainContentRef.current.scrollTop = 0;
     }
   }, [selectedFolder, searchTerm]);
 
-  // --- ROLE CHECK ---
-  const checkUserRole = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-        const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-        if (profile) {
-            setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
-        }
-    }
-  };
+
 
   const fetchDocuments = async () => {
     setLoading(true);
@@ -104,33 +79,33 @@ export function GED({
         ...doc,
         client_name: doc.contract?.clients?.name || 'Sem Cliente',
         contract: {
-            ...doc.contract,
-            display_id: doc.contract?.seq_id ? String(doc.contract.seq_id).padStart(6, '0') : '-'
+          ...doc.contract,
+          display_id: doc.contract?.seq_id ? String(doc.contract.seq_id).padStart(6, '0') : '-'
         }
       }));
 
       // 2. Recuperar metadados (tamanho) do Storage se não existir no banco
       const uniqueContractIds = Array.from(new Set(formattedDocs.map(d => d.contract?.id).filter(Boolean)));
-      
+
       const sizesMap = new Map<string, number>();
 
       await Promise.all(uniqueContractIds.map(async (contractId) => {
         const { data: files } = await supabase.storage.from('contract-documents').list(contractId);
-        
+
         if (files) {
-            files.forEach(f => {
-                const fullPath = `${contractId}/${f.name}`;
-                if (f.metadata && f.metadata.size) {
-                    sizesMap.set(fullPath, f.metadata.size);
-                }
-            });
+          files.forEach(f => {
+            const fullPath = `${contractId}/${f.name}`;
+            if (f.metadata && f.metadata.size) {
+              sizesMap.set(fullPath, f.metadata.size);
+            }
+          });
         }
       }));
 
       // 3. Mesclar tamanhos recuperados
       formattedDocs = formattedDocs.map(doc => ({
-          ...doc,
-          file_size: doc.file_size || sizesMap.get(doc.file_path) || 0
+        ...doc,
+        file_size: doc.file_size || sizesMap.get(doc.file_path) || 0
       }));
 
       setDocuments(formattedDocs);
@@ -144,16 +119,16 @@ export function GED({
 
   const handleDownload = async (path: string) => {
     let { data } = await supabase.storage.from('contract-documents').createSignedUrl(path, 60);
-    
+
     if (!data?.signedUrl) {
-          const res = await supabase.storage.from('ged').createSignedUrl(path, 60);
-          data = res.data;
+      const res = await supabase.storage.from('ged').createSignedUrl(path, 60);
+      data = res.data;
     }
 
     if (data?.signedUrl) {
       window.open(data.signedUrl, '_blank');
     } else {
-        alert('Erro ao gerar link de download. Arquivo não encontrado no Storage.');
+      alert('Erro ao gerar link de download. Arquivo não encontrado no Storage.');
     }
   };
 
@@ -168,10 +143,10 @@ export function GED({
 
   const filteredDocs = documents.filter(doc => {
     const matchesFolder = selectedFolder ? doc.client_name === selectedFolder : true;
-    const matchesSearch = searchTerm 
-      ? doc.file_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        doc.hon_number_ref?.includes(searchTerm) ||
-        doc.contract?.display_id?.includes(searchTerm)
+    const matchesSearch = searchTerm
+      ? doc.file_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.hon_number_ref?.includes(searchTerm) ||
+      doc.contract?.display_id?.includes(searchTerm)
       : true;
     return matchesFolder && matchesSearch;
   });
@@ -180,7 +155,7 @@ export function GED({
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
-      
+
       {/* 1. Header - Salomão Design System */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -193,36 +168,11 @@ export function GED({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
-              {userRole && (
-                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
-                  • {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && (
-            <button onClick={onModuleHome} className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors">
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button onClick={onLogout} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
-        </div>
+
       </div>
 
       <div className="flex flex-1 gap-6 overflow-hidden">
-        
+
         {/* Sidebar de Diretórios */}
         <div className="w-64 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50">
@@ -266,9 +216,9 @@ export function GED({
             </div>
             <div className="relative w-full md:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input 
-                type="text" 
-                placeholder="Buscar arquivo, ID ou HON..." 
+              <input
+                type="text"
+                placeholder="Buscar arquivo, ID ou HON..."
                 className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold outline-none focus:border-[#1e3a8a] transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -283,37 +233,37 @@ export function GED({
                 <p className="text-[10px] font-black uppercase tracking-widest">Sincronizando repositório...</p>
               </div>
             ) : filteredDocs.length === 0 ? (
-                <EmptyState 
-                   icon={FolderOpen}
-                   title="Nenhum arquivo encontrado"
-                   description={
-                       searchTerm 
-                       ? "Não encontramos arquivos com este nome. Tente outra busca." 
-                       : selectedFolder 
-                         ? "Esta pasta está vazia." 
-                         : "O GED ainda não possui documentos."
-                   }
-                   className="h-full justify-center"
-                />
+              <EmptyState
+                icon={FolderOpen}
+                title="Nenhum arquivo encontrado"
+                description={
+                  searchTerm
+                    ? "Não encontramos arquivos com este nome. Tente outra busca."
+                    : selectedFolder
+                      ? "Esta pasta está vazia."
+                      : "O GED ainda não possui documentos."
+                }
+                className="h-full justify-center"
+              />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredDocs.map((doc) => (
                   <div key={doc.id} className="group relative bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md transition-all overflow-hidden">
                     <div className="absolute right-0 top-0 h-full w-1 bg-[#1e3a8a] opacity-0 group-hover:opacity-100 transition-all"></div>
-                    
+
                     <div className="flex justify-between items-start mb-4">
                       <div className="bg-red-50 text-red-600 p-2.5 rounded-xl">
                         <FileText className="w-6 h-6" />
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         {doc.file_type === 'contract' ? (
-                            <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border border-emerald-100 flex items-center">
+                          <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border border-emerald-100 flex items-center">
                             <FileCheck className="w-3 h-3 mr-1" /> Contrato
-                            </span>
+                          </span>
                         ) : (
-                            <span className="bg-blue-50 text-blue-700 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border border-blue-100">
+                          <span className="bg-blue-50 text-blue-700 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border border-blue-100">
                             Proposta
-                            </span>
+                          </span>
                         )}
                       </div>
                     </div>
@@ -330,23 +280,23 @@ export function GED({
                         <span className="flex items-center"><Clock className="w-3 h-3 mr-1" /> {new Date(doc.uploaded_at).toLocaleDateString('pt-BR')}</span>
                         <span>{formatBytes(doc.file_size || 0)}</span>
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-2">
                         {doc.contract?.display_id && (
-                             <div className="bg-blue-50 border border-blue-100 rounded-lg px-2 py-1 text-[9px] font-black text-blue-600 truncate flex items-center uppercase tracking-widest">
-                               <Hash className="w-3 h-3 mr-1" /> {doc.contract.display_id}
-                             </div>
+                          <div className="bg-blue-50 border border-blue-100 rounded-lg px-2 py-1 text-[9px] font-black text-blue-600 truncate flex items-center uppercase tracking-widest">
+                            <Hash className="w-3 h-3 mr-1" /> {doc.contract.display_id}
+                          </div>
                         )}
                         {doc.hon_number_ref && (
-                            <div className="bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 text-[9px] font-black text-gray-500 truncate uppercase tracking-widest">
+                          <div className="bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 text-[9px] font-black text-gray-500 truncate uppercase tracking-widest">
                             HON: {maskHon(doc.hon_number_ref)}
-                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
 
                     <div className="absolute inset-0 bg-[#0a192f]/90 rounded-2xl opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-[2px]">
-                      <button 
+                      <button
                         onClick={() => handleDownload(doc.file_path)}
                         className="bg-white text-[#0a192f] px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all flex items-center active:scale-95"
                       >
@@ -366,5 +316,5 @@ export function GED({
 }
 
 const Loader2 = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
 );

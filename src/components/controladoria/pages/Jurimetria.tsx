@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess } from '../../../types/controladoria';
-import { 
-  Loader2, Share2, Gavel, Scale, FileText, Maximize2, 
-  Minimize2, Search, Filter, X, Shield, Plane, UserCircle, LogOut, Grid 
+import {
+  Loader2, Share2, Gavel, Scale, FileText, Maximize2,
+  Minimize2, Search, Filter, X
 } from 'lucide-react';
 // Sobe um nível para sair de /pages e entra em /ui (ambos dentro de controladoria)
 import { EmptyState } from '../ui/EmptyState';
@@ -20,14 +20,14 @@ interface GraphNode {
   x?: number;
   y?: number;
   color?: string;
-  hidden?: boolean; 
+  hidden?: boolean;
 }
 
 interface GraphLink {
   source: string | GraphNode;
   target: string | GraphNode;
   type: string;
-  hidden?: boolean; 
+  hidden?: boolean;
 }
 
 interface GraphData {
@@ -41,25 +41,13 @@ interface StatsCount {
   courts: Record<string, number>;
 }
 
-interface JurimetriaProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
-}
-
-export function Jurimetria({ 
-  userName = 'Usuário', 
-  onModuleHome, 
-  onLogout 
-}: JurimetriaProps) {
+export function Jurimetria() {
   // --- ROLE STATE ---
-  const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
-
   const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [fullGraphData, setFullGraphData] = useState<GraphData>({ nodes: [], links: [] });
   const [filteredGraphData, setFilteredGraphData] = useState<GraphData>({ nodes: [], links: [] });
-  
+
   const [dimensions, setDimensions] = useState({ w: 800, h: 600 });
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<any>(null);
@@ -69,13 +57,12 @@ export function Jurimetria({
   // --- FILTROS ---
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilters, setSelectedFilters] = useState<{
-      judge: string | null;
-      subject: string | null;
-      court: string | null;
+    judge: string | null;
+    subject: string | null;
+    court: string | null;
   }>({ judge: null, subject: null, court: null });
 
   useEffect(() => {
-    checkUserRole();
     fetchJurimetriaData();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -85,20 +72,7 @@ export function Jurimetria({
     setTimeout(handleResize, 500);
   }, [isFullscreen]);
 
-  // --- ROLE CHECK ---
-  const checkUserRole = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-        const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-        if (profile) {
-            setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
-        }
-    }
-  };
+
 
   // Aplicar Filtros
   useEffect(() => {
@@ -109,61 +83,61 @@ export function Jurimetria({
 
     // Filtro de Texto Global (Busca)
     if (searchTerm) {
-        const lowerSearch = searchTerm.toLowerCase();
-        const matchingNodes = new Set(
-            nodes.filter(n => n.label.toLowerCase().includes(lowerSearch)).map(n => n.id)
-        );
-        
-        if (matchingNodes.size > 0) {
-            const connectedNodes = new Set(matchingNodes);
-            const visibleLinks = links.filter(l => {
-                const sourceId = typeof l.source === 'object' ? (l.source as any).id : l.source;
-                const targetId = typeof l.target === 'object' ? (l.target as any).id : l.target;
-                
-                const isMatch = matchingNodes.has(sourceId) || matchingNodes.has(targetId);
-                if (isMatch) {
-                    connectedNodes.add(sourceId);
-                    connectedNodes.add(targetId);
-                }
-                return isMatch;
-            });
-            
-            nodes = nodes.filter(n => connectedNodes.has(n.id));
-            links = visibleLinks;
-        }
+      const lowerSearch = searchTerm.toLowerCase();
+      const matchingNodes = new Set(
+        nodes.filter(n => n.label.toLowerCase().includes(lowerSearch)).map(n => n.id)
+      );
+
+      if (matchingNodes.size > 0) {
+        const connectedNodes = new Set(matchingNodes);
+        const visibleLinks = links.filter(l => {
+          const sourceId = typeof l.source === 'object' ? (l.source as any).id : l.source;
+          const targetId = typeof l.target === 'object' ? (l.target as any).id : l.target;
+
+          const isMatch = matchingNodes.has(sourceId) || matchingNodes.has(targetId);
+          if (isMatch) {
+            connectedNodes.add(sourceId);
+            connectedNodes.add(targetId);
+          }
+          return isMatch;
+        });
+
+        nodes = nodes.filter(n => connectedNodes.has(n.id));
+        links = visibleLinks;
+      }
     }
 
     // Filtros Específicos (Click nos Cards)
     if (selectedFilters.judge || selectedFilters.subject || selectedFilters.court) {
-        const filterNodes = new Set<string>();
-        
-        if (selectedFilters.judge) filterNodes.add(`J-${selectedFilters.judge}`);
-        if (selectedFilters.subject) filterNodes.add(`S-${selectedFilters.subject}`);
-        if (selectedFilters.court) filterNodes.add(`T-${selectedFilters.court}`);
+      const filterNodes = new Set<string>();
 
-        const relevantNodes = new Set(filterNodes);
-        
-        const directLinks = links.filter(l => {
-            const s = typeof l.source === 'object' ? (l.source as any).id : l.source;
-            const t = typeof l.target === 'object' ? (l.target as any).id : l.target;
-            return filterNodes.has(s) || filterNodes.has(t);
-        });
+      if (selectedFilters.judge) filterNodes.add(`J-${selectedFilters.judge}`);
+      if (selectedFilters.subject) filterNodes.add(`S-${selectedFilters.subject}`);
+      if (selectedFilters.court) filterNodes.add(`T-${selectedFilters.court}`);
 
-        directLinks.forEach(l => {
-             const s = typeof l.source === 'object' ? (l.source as any).id : l.source;
-             const t = typeof l.target === 'object' ? (l.target as any).id : l.target;
-             relevantNodes.add(s);
-             relevantNodes.add(t);
-        });
+      const relevantNodes = new Set(filterNodes);
 
-        nodes = nodes.filter(n => relevantNodes.has(n.id));
-        links = directLinks;
+      const directLinks = links.filter(l => {
+        const s = typeof l.source === 'object' ? (l.source as any).id : l.source;
+        const t = typeof l.target === 'object' ? (l.target as any).id : l.target;
+        return filterNodes.has(s) || filterNodes.has(t);
+      });
+
+      directLinks.forEach(l => {
+        const s = typeof l.source === 'object' ? (l.source as any).id : l.source;
+        const t = typeof l.target === 'object' ? (l.target as any).id : l.target;
+        relevantNodes.add(s);
+        relevantNodes.add(t);
+      });
+
+      nodes = nodes.filter(n => relevantNodes.has(n.id));
+      links = directLinks;
     }
 
     setFilteredGraphData({ nodes, links });
-    
+
     if ((searchTerm || selectedFilters.judge || selectedFilters.subject || selectedFilters.court) && graphRef.current) {
-        setTimeout(() => graphRef.current.zoomToFit(400, 50), 200);
+      setTimeout(() => graphRef.current.zoomToFit(400, 50), 200);
     }
 
   }, [searchTerm, selectedFilters, fullGraphData]);
@@ -210,7 +184,7 @@ export function Jurimetria({
         nodeIds.add(cleanId);
       } else {
         const node = nodes.find(n => n.id === cleanId);
-        if (node) node.val += 0.5; 
+        if (node) node.val += 0.5;
       }
       return cleanId;
     };
@@ -252,7 +226,7 @@ export function Jurimetria({
   const stats = useMemo(() => {
     const counts: StatsCount = { judges: {}, subjects: {}, courts: {} };
     contracts.forEach(c => {
-      if(c.processes && Array.isArray(c.processes)) {
+      if (c.processes && Array.isArray(c.processes)) {
         c.processes.forEach((p: ContractProcess) => {
           if (p.subject) counts.subjects[p.subject.trim()] = (counts.subjects[p.subject.trim()] || 0) + 1;
           if (p.court) counts.courts[p.court.trim()] = (counts.courts[p.court.trim()] || 0) + 1;
@@ -264,7 +238,7 @@ export function Jurimetria({
         });
       }
     });
-    const sortObj = (obj: Record<string, number>) => Object.entries(obj).sort(([,a], [,b]) => b - a).slice(0, 10);
+    const sortObj = (obj: Record<string, number>) => Object.entries(obj).sort(([, a], [, b]) => b - a).slice(0, 10);
     return {
       topJudges: sortObj(counts.judges),
       topSubjects: sortObj(counts.subjects),
@@ -276,11 +250,11 @@ export function Jurimetria({
     const label = node.label;
     const fontSize = 12 / globalScale;
     let color = '#ccc';
-    switch(node.group) {
-        case 'contract': color = '#0a192f'; break;
-        case 'judge': color = '#1e3a8a'; break; 
-        case 'subject': color = '#10b981'; break;
-        case 'court': color = '#6366f1'; break;
+    switch (node.group) {
+      case 'contract': color = '#0a192f'; break;
+      case 'judge': color = '#1e3a8a'; break;
+      case 'subject': color = '#10b981'; break;
+      case 'court': color = '#6366f1'; break;
     }
     node.color = color;
     const radius = 5;
@@ -290,25 +264,25 @@ export function Jurimetria({
     ctx.fill();
 
     if (globalScale > 1.2 || node.group === 'contract' || node.group === 'judge' || node === selectedNode) {
-        ctx.font = `bold ${fontSize}px Inter, Sans-Serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = '#0a192f';
-        ctx.fillText(label, node.x, node.y + radius + 1);
+      ctx.font = `bold ${fontSize}px Inter, Sans-Serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = '#0a192f';
+      ctx.fillText(label, node.x, node.y + radius + 1);
     }
   }, [selectedNode]);
 
   const toggleFilter = (type: 'judge' | 'subject' | 'court', value: string) => {
-      setSelectedFilters(prev => ({
-          ...prev,
-          [type]: prev[type] === value ? null : value 
-      }));
+    setSelectedFilters(prev => ({
+      ...prev,
+      [type]: prev[type] === value ? null : value
+    }));
   };
 
   const clearFilters = () => {
-      setSearchTerm('');
-      setSelectedFilters({ judge: null, subject: null, court: null });
-      graphRef.current?.zoomToFit(400);
+    setSearchTerm('');
+    setSelectedFilters({ judge: null, subject: null, court: null });
+    graphRef.current?.zoomToFit(400);
   };
 
   if (loading) return (
@@ -320,7 +294,7 @@ export function Jurimetria({
 
   return (
     <div className={`flex flex-col h-screen bg-gray-50 p-6 space-y-6 overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 p-0' : ''}`}>
-      
+
       {/* 1. Header - Salomão Design System */}
       <div className={`flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 ${isFullscreen ? 'rounded-none border-x-0 border-t-0' : ''}`}>
         <div className="flex items-center gap-4">
@@ -334,36 +308,21 @@ export function Jurimetria({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Online</span>
-              {userRole && (
-                <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
-                  • {userRole === 'admin' ? 'Administrador' : userRole === 'editor' ? 'Editor' : 'Visualizador'}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-[#1e3a8a]">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          
-          <div className="h-px w-4 bg-gray-100 mx-1 hidden md:block"></div>
+
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-                type="text" 
-                placeholder="Buscar nó ou termo..." 
-                className="pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold w-48 md:w-64 outline-none focus:border-[#1e3a8a] transition-all"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+            <input
+              type="text"
+              placeholder="Buscar nó ou termo..."
+              className="pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold w-48 md:w-64 outline-none focus:border-[#1e3a8a] transition-all"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
             />
             {(searchTerm || selectedFilters.judge || selectedFilters.subject || selectedFilters.court) && (
-                <button onClick={clearFilters} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors">
-                  <X className="w-4 h-4" />
-                </button>
+              <button onClick={clearFilters} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
             )}
           </div>
 
@@ -371,154 +330,145 @@ export function Jurimetria({
             {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
           </button>
 
-          {onModuleHome && !isFullscreen && (
-            <button onClick={onModuleHome} className="p-2.5 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 border border-gray-200 bg-white rounded-xl transition-all shadow-sm">
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && !isFullscreen && (
-            <button onClick={onLogout} className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 border border-gray-200 bg-white rounded-xl transition-all shadow-sm">
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
+
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
-        
+
         {/* Sidebar de Estatísticas */}
         <div className="w-full lg:w-80 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                <div className="absolute left-0 top-0 h-full w-1 bg-amber-500"></div>
-                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-4">
-                  <Gavel className="w-4 h-4 text-amber-500" /> Top Magistrados
-                </h3>
-                <div className="space-y-1.5">
-                    {stats.topJudges.length > 0 ? stats.topJudges.map(([name, count], i) => (
-                        <div 
-                            key={i} 
-                            onClick={() => toggleFilter('judge', name)}
-                            className={`flex justify-between items-center px-3 py-2 rounded-xl cursor-pointer transition-all border ${selectedFilters.judge === name ? 'bg-amber-50 border-amber-200 text-amber-900 shadow-sm' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}
-                        >
-                            <span className="text-[11px] font-bold truncate flex-1 pr-2 uppercase tracking-tight">{name}</span>
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${selectedFilters.judge === name ? 'bg-amber-200' : 'bg-gray-100 text-gray-500'}`}>{count}</span>
-                        </div>
-                    )) : <p className="text-[10px] font-black text-gray-300 uppercase italic">Sem dados...</p>}
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+            <div className="absolute left-0 top-0 h-full w-1 bg-amber-500"></div>
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-4">
+              <Gavel className="w-4 h-4 text-amber-500" /> Top Magistrados
+            </h3>
+            <div className="space-y-1.5">
+              {stats.topJudges.length > 0 ? stats.topJudges.map(([name, count], i) => (
+                <div
+                  key={i}
+                  onClick={() => toggleFilter('judge', name)}
+                  className={`flex justify-between items-center px-3 py-2 rounded-xl cursor-pointer transition-all border ${selectedFilters.judge === name ? 'bg-amber-50 border-amber-200 text-amber-900 shadow-sm' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <span className="text-[11px] font-bold truncate flex-1 pr-2 uppercase tracking-tight">{name}</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${selectedFilters.judge === name ? 'bg-amber-200' : 'bg-gray-100 text-gray-500'}`}>{count}</span>
                 </div>
+              )) : <p className="text-[10px] font-black text-gray-300 uppercase italic">Sem dados...</p>}
             </div>
+          </div>
 
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                <div className="absolute left-0 top-0 h-full w-1 bg-blue-500"></div>
-                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-4">
-                  <FileText className="w-4 h-4 text-blue-500" /> Assuntos Principais
-                </h3>
-                <div className="space-y-1.5">
-                    {stats.topSubjects.length > 0 ? stats.topSubjects.map(([name, count], i) => (
-                        <div 
-                            key={i} 
-                            onClick={() => toggleFilter('subject', name)}
-                            className={`flex justify-between items-center px-3 py-2 rounded-xl cursor-pointer transition-all border ${selectedFilters.subject === name ? 'bg-blue-50 border-blue-200 text-blue-900 shadow-sm' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}
-                        >
-                            <span className="text-[11px] font-bold truncate flex-1 pr-2 uppercase tracking-tight">{name}</span>
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${selectedFilters.subject === name ? 'bg-blue-200' : 'bg-gray-100 text-gray-500'}`}>{count}</span>
-                        </div>
-                    )) : <p className="text-[10px] font-black text-gray-300 uppercase italic">Sem dados...</p>}
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+            <div className="absolute left-0 top-0 h-full w-1 bg-blue-500"></div>
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-4">
+              <FileText className="w-4 h-4 text-blue-500" /> Assuntos Principais
+            </h3>
+            <div className="space-y-1.5">
+              {stats.topSubjects.length > 0 ? stats.topSubjects.map(([name, count], i) => (
+                <div
+                  key={i}
+                  onClick={() => toggleFilter('subject', name)}
+                  className={`flex justify-between items-center px-3 py-2 rounded-xl cursor-pointer transition-all border ${selectedFilters.subject === name ? 'bg-blue-50 border-blue-200 text-blue-900 shadow-sm' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <span className="text-[11px] font-bold truncate flex-1 pr-2 uppercase tracking-tight">{name}</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${selectedFilters.subject === name ? 'bg-blue-200' : 'bg-gray-100 text-gray-500'}`}>{count}</span>
                 </div>
+              )) : <p className="text-[10px] font-black text-gray-300 uppercase italic">Sem dados...</p>}
             </div>
+          </div>
 
-             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                <div className="absolute left-0 top-0 h-full w-1 bg-emerald-500"></div>
-                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-4">
-                  <Scale className="w-4 h-4 text-emerald-500" /> Tribunais Atuantes
-                </h3>
-                <div className="space-y-1.5">
-                    {stats.topCourts.length > 0 ? stats.topCourts.map(([name, count], i) => (
-                        <div 
-                            key={i} 
-                            onClick={() => toggleFilter('court', name)}
-                            className={`flex justify-between items-center px-3 py-2 rounded-xl cursor-pointer transition-all border ${selectedFilters.court === name ? 'bg-emerald-50 border-emerald-200 text-emerald-900 shadow-sm' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}
-                        >
-                            <span className="text-[11px] font-bold truncate flex-1 pr-2 uppercase tracking-tight">{name}</span>
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${selectedFilters.court === name ? 'bg-emerald-200' : 'bg-gray-100 text-gray-500'}`}>{count}</span>
-                        </div>
-                    )) : <p className="text-[10px] font-black text-gray-300 uppercase italic">Sem dados...</p>}
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+            <div className="absolute left-0 top-0 h-full w-1 bg-emerald-500"></div>
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-4">
+              <Scale className="w-4 h-4 text-emerald-500" /> Tribunais Atuantes
+            </h3>
+            <div className="space-y-1.5">
+              {stats.topCourts.length > 0 ? stats.topCourts.map(([name, count], i) => (
+                <div
+                  key={i}
+                  onClick={() => toggleFilter('court', name)}
+                  className={`flex justify-between items-center px-3 py-2 rounded-xl cursor-pointer transition-all border ${selectedFilters.court === name ? 'bg-emerald-50 border-emerald-200 text-emerald-900 shadow-sm' : 'border-transparent text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <span className="text-[11px] font-bold truncate flex-1 pr-2 uppercase tracking-tight">{name}</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${selectedFilters.court === name ? 'bg-emerald-200' : 'bg-gray-100 text-gray-500'}`}>{count}</span>
                 </div>
+              )) : <p className="text-[10px] font-black text-gray-300 uppercase italic">Sem dados...</p>}
             </div>
+          </div>
         </div>
 
         {/* Graph Container */}
         <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden flex flex-col" ref={containerRef}>
-            
-            <div className="absolute top-5 left-5 z-10 flex flex-wrap gap-2 pointer-events-none">
-                <span className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-gray-100 flex items-center gap-2 shadow-sm text-[#0a192f]"><span className="w-2 h-2 rounded-full bg-[#0a192f]"></span> Contrato</span>
-                <span className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-gray-100 flex items-center gap-2 shadow-sm text-[#1e3a8a]"><span className="w-2 h-2 rounded-full bg-[#1e3a8a]"></span> Magistrado</span>
-                <span className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-gray-100 flex items-center gap-2 shadow-sm text-[#10b981]"><span className="w-2 h-2 rounded-full bg-[#10b981]"></span> Assunto</span>
-                <span className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-gray-100 flex items-center gap-2 shadow-sm text-[#6366f1]"><span className="w-2 h-2 rounded-full bg-[#6366f1]"></span> Tribunal</span>
+
+          <div className="absolute top-5 left-5 z-10 flex flex-wrap gap-2 pointer-events-none">
+            <span className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-gray-100 flex items-center gap-2 shadow-sm text-[#0a192f]"><span className="w-2 h-2 rounded-full bg-[#0a192f]"></span> Contrato</span>
+            <span className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-gray-100 flex items-center gap-2 shadow-sm text-[#1e3a8a]"><span className="w-2 h-2 rounded-full bg-[#1e3a8a]"></span> Magistrado</span>
+            <span className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-gray-100 flex items-center gap-2 shadow-sm text-[#10b981]"><span className="w-2 h-2 rounded-full bg-[#10b981]"></span> Assunto</span>
+            <span className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-gray-100 flex items-center gap-2 shadow-sm text-[#6366f1]"><span className="w-2 h-2 rounded-full bg-[#6366f1]"></span> Tribunal</span>
+          </div>
+
+          {filteredGraphData.nodes.length === 0 && !loading && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+              <EmptyState
+                icon={Filter}
+                title="Filtro sem correspondência"
+                description="Não encontramos conexões para os termos selecionados. Tente ajustar os filtros ou a busca."
+                actionLabel="Resetar Visão"
+                onAction={clearFilters}
+              />
             </div>
+          )}
 
-            {filteredGraphData.nodes.length === 0 && !loading && (
-                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm">
-                      <EmptyState 
-                          icon={Filter} 
-                          title="Filtro sem correspondência" 
-                          description="Não encontramos conexões para os termos selecionados. Tente ajustar os filtros ou a busca."
-                          actionLabel="Resetar Visão"
-                          onAction={clearFilters}
-                      />
-                 </div>
-            )}
+          {selectedNode && (
+            <div className="absolute bottom-6 left-6 z-10 bg-[#0a192f]/95 backdrop-blur-md p-5 rounded-2xl shadow-2xl border border-white/10 max-w-xs animate-in fade-in slide-in-from-bottom-4">
+              <button onClick={() => setSelectedNode(null)} className="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+              <h4 className="font-black text-white text-sm mb-1 uppercase tracking-tight leading-tight">{selectedNode.label}</h4>
+              <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-1 rounded-lg">
+                {selectedNode.group === 'contract' ? 'Processo/Contrato' : selectedNode.group === 'judge' ? 'Magistrado' : selectedNode.group === 'subject' ? 'Matéria Jurídica' : 'Instância/Tribunal'}
+              </span>
 
-            {selectedNode && (
-                <div className="absolute bottom-6 left-6 z-10 bg-[#0a192f]/95 backdrop-blur-md p-5 rounded-2xl shadow-2xl border border-white/10 max-w-xs animate-in fade-in slide-in-from-bottom-4">
-                    <button onClick={() => setSelectedNode(null)} className="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors">
-                      <X className="w-4 h-4" />
-                    </button>
-                    <h4 className="font-black text-white text-sm mb-1 uppercase tracking-tight leading-tight">{selectedNode.label}</h4>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-1 rounded-lg">
-                      {selectedNode.group === 'contract' ? 'Processo/Contrato' : selectedNode.group === 'judge' ? 'Magistrado' : selectedNode.group === 'subject' ? 'Matéria Jurídica' : 'Instância/Tribunal'}
-                    </span>
-                    
-                    {selectedNode.group === 'contract' && selectedNode.fullData && (
-                        <div className="mt-4 space-y-3">
-                            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Honorários Pró-Labore</p>
-                                <p className="text-sm font-black text-emerald-400">{selectedNode.fullData.pro_labore ? selectedNode.fullData.pro_labore.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ -'}</p>
-                            </div>
-                            <div className="flex justify-between items-center bg-white/5 rounded-xl p-3 border border-white/10">
-                                <div>
-                                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Status Atual</p>
-                                  <p className="text-[10px] font-bold text-gray-100 uppercase tracking-tight">{selectedNode.fullData.status}</p>
-                                </div>
-                                <div className="h-6 w-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+              {selectedNode.group === 'contract' && selectedNode.fullData && (
+                <div className="mt-4 space-y-3">
+                  <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Honorários Pró-Labore</p>
+                    <p className="text-sm font-black text-emerald-400">{selectedNode.fullData.pro_labore ? selectedNode.fullData.pro_labore.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ -'}</p>
+                  </div>
+                  <div className="flex justify-between items-center bg-white/5 rounded-xl p-3 border border-white/10">
+                    <div>
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Status Atual</p>
+                      <p className="text-[10px] font-bold text-gray-100 uppercase tracking-tight">{selectedNode.fullData.status}</p>
+                    </div>
+                    <div className="h-6 w-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    </div>
+                  </div>
                 </div>
-            )}
+              )}
+            </div>
+          )}
 
-            <ForceGraph2D
-                ref={graphRef}
-                width={dimensions.w}
-                height={dimensions.h}
-                graphData={filteredGraphData}
-                nodeCanvasObject={drawNode}
-                nodeRelSize={6}
-                linkColor={() => '#f1f5f9'}
-                linkWidth={1.5}
-                onNodeClick={(node) => {
-                    setSelectedNode(node);
-                    graphRef.current?.centerAt(node.x, node.y, 1000);
-                    graphRef.current?.zoom(4, 2000);
-                }}
-                cooldownTicks={100}
-                onEngineStop={() => {
-                    if (filteredGraphData.nodes.length > 0 && !searchTerm && !selectedFilters.judge) {
-                       graphRef.current?.zoomToFit(400);
-                    }
-                }}
-            />
+          <ForceGraph2D
+            ref={graphRef}
+            width={dimensions.w}
+            height={dimensions.h}
+            graphData={filteredGraphData}
+            nodeCanvasObject={drawNode}
+            nodeRelSize={6}
+            linkColor={() => '#f1f5f9'}
+            linkWidth={1.5}
+            onNodeClick={(node) => {
+              setSelectedNode(node);
+              graphRef.current?.centerAt(node.x, node.y, 1000);
+              graphRef.current?.zoom(4, 2000);
+            }}
+            cooldownTicks={100}
+            onEngineStop={() => {
+              if (filteredGraphData.nodes.length > 0 && !searchTerm && !selectedFilters.judge) {
+                graphRef.current?.zoomToFit(400);
+              }
+            }}
+          />
         </div>
       </div>
     </div>
