@@ -57,13 +57,16 @@ export interface Collaborator {
 
   // Profissional
   role?: string;
+  roles?: { name: string }; // Joined field
   hire_date?: string;
   termination_date?: string;
   oab_numero?: string;
   oab_uf?: string;
   oab_vencimento?: string;
   local?: string;
+  locations?: { name: string }; // Joined field
   equipe?: string;
+  teams?: { name: string }; // Joined field
 
   created_at?: string;
   updated_at?: string;

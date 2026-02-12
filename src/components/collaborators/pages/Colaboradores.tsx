@@ -137,7 +137,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         .select(`
           *,
           partner:partner_id(id, name),
-          leader:leader_id(id, name)
+          leader:leader_id(id, name),
+          roles:role(name),
+          locations:local(name),
+          teams:equipe(name)
         `)
         .order('name')
 
@@ -268,6 +271,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     // Remove joined fields that are not columns in the table
     delete (payload as any).leader
     delete (payload as any).partner
+    delete (payload as any).roles
+    delete (payload as any).locations
+    delete (payload as any).teams
     // Remove legacy field if present in formData
     delete (payload as any).oab_expiration
 
@@ -431,7 +437,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase(c.role || '')}</p>
+                    <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
@@ -562,7 +568,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   <Avatar src={selectedColaborador.photo_url} name={selectedColaborador.name} size="lg" />
                   <div>
                     <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">{toTitleCase(selectedColaborador.name)}</h2>
-                    <p className="text-sm text-gray-500 font-semibold">{toTitleCase(selectedColaborador.role || '')} • {toTitleCase(selectedColaborador.equipe || '')}</p>
+                    <p className="text-sm text-gray-500 font-semibold">
+                      {toTitleCase((selectedColaborador as any).roles?.name || selectedColaborador.role || '')} • {toTitleCase((selectedColaborador as any).teams?.name || selectedColaborador.equipe || '')}
+                    </p>
                   </div>
                 </div>
                 <button onClick={() => setSelectedColaborador(null)} className="p-2 hover:bg-gray-200 rounded-full transition-all group">
