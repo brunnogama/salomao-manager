@@ -737,8 +737,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                     key={step.id}
                     onClick={() => setActiveTab(step.id)}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group relative overflow-hidden ${isActive
-                        ? 'bg-white text-[#1e3a8a] shadow-md border border-gray-100 font-bold'
-                        : 'text-gray-500 hover:bg-white hover:text-gray-700 hover:shadow-sm'
+                      ? 'bg-white text-[#1e3a8a] shadow-md border border-gray-100 font-bold'
+                      : 'text-gray-500 hover:bg-white hover:text-gray-700 hover:shadow-sm'
                       }`}
                   >
                     <div className={`p-2 rounded-lg transition-colors ${isActive ? 'bg-[#1e3a8a]/10 text-[#1e3a8a]' : 'bg-gray-100 text-gray-400 group-hover:text-gray-600'}`}>
@@ -770,20 +770,66 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   return (
     <div className="p-8 w-full relative min-h-screen bg-gray-50/30">
-      {/* Page Header */}
+      {/* Header with User Profile code restored */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 animate-in slide-in-from-top-4 duration-500">
-        <div>
-          <h1 className="text-3xl font-black text-[#0a192f] tracking-tight mb-2">Colaboradores</h1>
-          <p className="text-gray-500 font-medium">Gerencie o time, edite perfis e controle acessos.</p>
+        <div className="flex-1">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-3xl font-black text-[#0a192f] tracking-tight mb-2">Colaboradores</h1>
+              <p className="text-gray-500 font-medium">Gerencie o time, edite perfis e controle acessos.</p>
+            </div>
+
+            {/* User Controls Restored */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-gray-200 shadow-sm">
+                <UserCircle className="h-5 w-5 text-gray-400" />
+                <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
+              </div>
+              <button
+                onClick={onModuleHome}
+                className="p-2.5 bg-white border border-gray-200 rounded-full hover:bg-gray-50 text-gray-500 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                title="Trocar Módulo"
+              >
+                <Grid className="h-5 w-5" />
+              </button>
+              <button
+                onClick={onLogout}
+                className="p-2.5 bg-white border border-gray-200 rounded-full hover:bg-red-50 text-red-500 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                title="Sair"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            {/* Search Bar moved here if needed or separate? Let's keep structure similar to previous but refined */}
+          </div>
         </div>
+      </div>
+
+      {/* Actions Bar */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 animate-in slide-in-from-top-5 duration-600">
+        {/* Search */}
+        <div className="bg-white p-2 pl-4 rounded-2xl border border-gray-100 shadow-sm flex-1 w-full max-w-2xl flex items-center gap-3">
+          <Search className="h-5 w-5 text-gray-300" />
+          <input
+            type="text"
+            placeholder="Buscar por nome ou email..."
+            className="w-full py-2 bg-transparent focus:outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+
         <button
           onClick={() => {
-            setFormData({ status: 'active', state: '' }) // Default empty state
+            setFormData({ status: 'active', state: '' })
             setPhotoPreview(null)
             setActiveFormTab(1)
             setShowFormModal(true)
           }}
-          className="flex items-center gap-2 bg-[#1e3a8a] hover:bg-[#112240] text-white px-6 py-3 rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 group"
+          className="flex items-center gap-2 bg-[#1e3a8a] hover:bg-[#112240] text-white px-6 py-3 rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 group whitespace-nowrap"
         >
           <div className="bg-white/20 p-1.5 rounded-lg group-hover:rotate-90 transition-transform">
             <Plus className="h-4 w-4" />
@@ -792,37 +838,41 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-8 flex flex-col md:flex-row gap-4 animate-in slide-in-from-top-6 duration-700 items-center">
-        <div className="flex-1 relative w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-300" />
-          <input
-            type="text"
-            placeholder="Buscar por nome ou email..."
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all text-sm font-medium text-gray-700 placeholder:text-gray-400"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
-          <SearchableSelect
-            label=""
-            placeholder="Líder"
-            value={filterLider}
-            onChange={setFilterLider}
-            table="collaborators"
-            options={colaboradores.map(c => ({ id: c.id, name: c.name }))}
-            className="min-w-[150px]"
-          />
-          <SearchableSelect
-            label=""
-            placeholder="Sócio"
-            value={filterPartner}
-            onChange={setFilterPartner}
-            table="partners"
-            className="min-w-[150px]"
-          />
-        </div>
+      {/* Filters Restored */}
+      <div className="flex flex-wrap gap-2 mb-8 animate-in slide-in-from-top-6 duration-700">
+        <SearchableSelect
+          label=""
+          placeholder="Líder"
+          value={filterLider}
+          onChange={setFilterLider}
+          table="collaborators"
+          options={colaboradores.map(c => ({ id: c.id, name: c.name }))}
+          className="min-w-[150px] bg-white border-gray-100 rounded-xl"
+        />
+        <SearchableSelect
+          label=""
+          placeholder="Sócio"
+          value={filterPartner}
+          onChange={setFilterPartner}
+          table="partners"
+          className="min-w-[150px] bg-white border-gray-100 rounded-xl"
+        />
+        <SearchableSelect
+          label=""
+          placeholder="Local"
+          value={filterLocal}
+          onChange={setFilterLocal}
+          table="locations"
+          className="min-w-[150px] bg-white border-gray-100 rounded-xl"
+        />
+        <SearchableSelect
+          label=""
+          placeholder="Cargo"
+          value={filterCargo}
+          onChange={setFilterCargo}
+          table="roles"
+          className="min-w-[150px] bg-white border-gray-100 rounded-xl"
+        />
       </div>
 
       {/* Table/Grid */}
