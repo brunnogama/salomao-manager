@@ -1,8 +1,9 @@
-// src/components/collaborators/components/DadosCorporativosSection.tsx
-import React from 'react'
-import { Briefcase } from 'lucide-react'
+import React, { useState } from 'react'
+import { Briefcase, Plus, Save, Loader2, AlertTriangle } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { supabase } from '../../../lib/supabase'
+import { toTitleCase } from '../../controladoria/utils/masks'
 
 interface DadosCorporativosSectionProps {
   formData: Partial<Collaborator>
@@ -17,6 +18,39 @@ export function DadosCorporativosSection({
   maskDate,
   handleRefresh
 }: DadosCorporativosSectionProps) {
+  const [showAddMotivo, setShowAddMotivo] = useState(false)
+  const [newMotivo, setNewMotivo] = useState('')
+  const [savingMotivo, setSavingMotivo] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleSaveMotivo = async () => {
+    if (!newMotivo) return
+
+    setSavingMotivo(true)
+    try {
+      const { data, error } = await supabase
+        .from('termination_reasons')
+        .insert({ name: newMotivo })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      if (data) {
+        setFormData({ ...formData, motivo_desligamento: data.id })
+        setNewMotivo('')
+        setShowAddMotivo(false)
+        setRefreshKey(prev => prev + 1)
+        if (handleRefresh) handleRefresh()
+      }
+    } catch (error) {
+      console.error('Erro ao salvar motivo:', error)
+      alert('Erro ao salvar motivo. Verifique se a tabela existe.')
+    } finally {
+      setSavingMotivo(false)
+    }
+  }
+
   return (
     <section className="space-y-4">
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
@@ -113,7 +147,7 @@ export function DadosCorporativosSection({
         </div>
 
         {/* Desligamento e Motivo (Agrupados) */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="md:col-span-3 grid grid-cols-[180px_1fr] gap-4 items-start">
           <div>
             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
               Desligamento
@@ -126,13 +160,80 @@ export function DadosCorporativosSection({
               placeholder="DD/MM/AAAA"
             />
           </div>
-          <SearchableSelect
-            label="Motivo"
-            value={formData.motivo_desligamento || ''}
-            onChange={v => setFormData({ ...formData, motivo_desligamento: v })}
-            table="termination_reasons"
-            onRefresh={handleRefresh}
-          />
+
+          <div className="space-y-1.5" key={`motivo-${refreshKey}`}>
+            <label className="flex items-center justify-between text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
+              <span>Motivo</span>
+              <button
+                type="button"
+                onClick={() => setShowAddMotivo(!showAddMotivo)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAddMotivo
+                    ? 'bg-[#1e3a8a] text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <Plus className="h-3.5 w-3.5" /> Adicionar
+              </button>
+            </label>
+            <SearchableSelect
+              value={formData.motivo_desligamento || ''}
+              onChange={v => setFormData({ ...formData, motivo_desligamento: v })}
+              table="termination_reasons"
+              onRefresh={handleRefresh}
+              className="w-full"
+            />
+
+            {/* PAINEL DE ADICIONAR MOTIVO */}
+            {showAddMotivo && (
+              <div className="bg-red-50 border-2 border-red-100 rounded-xl p-5 space-y-4 animate-in slide-in-from-top duration-200 mt-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <h4 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">
+                    Novo Motivo
+                  </h4>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
+                    Descrição do Motivo *
+                  </label>
+                  <input
+                    type="text"
+                    value={newMotivo}
+                    onChange={(e) => setNewMotivo(toTitleCase(e.target.value))}
+                    placeholder="Ex: Pedido de Demissão..."
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 outline-none transition-all font-medium"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewMotivo('')
+                      setShowAddMotivo(false)
+                    }}
+                    className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveMotivo}
+                    disabled={savingMotivo || !newMotivo}
+                    className="flex items-center gap-2 px-5 py-2 bg-red-600 text-white rounded-lg font-black text-[10px] uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {savingMotivo ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Save className="h-3 w-3" />
+                    )}
+                    Salvar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </section>
