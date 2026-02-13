@@ -315,7 +315,15 @@ export function ContractFormModal(props: Props) {
 
   const fetchStatuses = async () => {
     const { data } = await supabase.from('contract_statuses').select('*');
-    if (data) {
+    const defaultStatuses = [
+      { label: 'Sob Análise', value: 'analysis' },
+      { label: 'Proposta Enviada', value: 'proposal' },
+      { label: 'Contrato Fechado', value: 'active' },
+      { label: 'Probono', value: 'probono' },
+      { label: 'Rejeitada', value: 'rejected' }
+    ];
+
+    if (data && data.length > 0) {
       const order = ['analysis', 'proposal', 'active', 'rejected', 'probono'];
       const sortedData = data.sort((a, b) => {
         const iA = order.indexOf(a.value), iB = order.indexOf(b.value);
@@ -323,6 +331,8 @@ export function ContractFormModal(props: Props) {
         return (iA !== -1 ? -1 : (iB !== -1 ? 1 : a.label.localeCompare(b.label)));
       });
       setStatusOptions([{ label: 'Selecione', value: '' }, ...sortedData.map(s => ({ label: s.label, value: s.value }))]);
+    } else {
+      setStatusOptions([{ label: 'Selecione', value: '' }, ...defaultStatuses]);
     }
   };
 

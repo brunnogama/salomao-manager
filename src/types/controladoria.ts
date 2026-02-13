@@ -127,6 +127,14 @@ export interface ContractProcess {
   comarca?: string;
   subject?: string;
   magistrates?: Magistrate[];
+
+  // UI/Form fields
+  position?: string;
+  uf?: string;
+  author_cnpj?: string;
+  opponent_cnpj?: string;
+  cause_value?: string;
+  value_of_cause?: number;
 }
 
 export interface ContractDocument {
@@ -183,6 +191,32 @@ export interface Contract {
   created_at?: string;
   updated_at?: string;
   documents?: ContractDocument[];
+
+  // Missing fields added for ContractFormModal
+  client_id?: string;
+  timesheet?: boolean;
+
+  pro_labore_installments?: string;
+  final_success_fee_installments?: string;
+  fixed_monthly_fee_installments?: string;
+  other_fees_installments?: string;
+
+  pro_labore_breakdown?: any[];
+  final_success_fee_breakdown?: any[];
+  fixed_monthly_fee_breakdown?: any[];
+  other_fees_breakdown?: any[];
+  interim_breakdown?: any[];
+
+  pro_labore_extras_installments?: string[];
+  final_success_extras_installments?: string[];
+  fixed_monthly_extras_installments?: string[];
+  other_fees_extras_installments?: string[];
+  intermediate_fees_installments?: string[];
+
+  percent_extras?: string[];
+  percent_extras_clauses?: string[];
+  final_success_percent?: string;
+  final_success_percent_clause?: string;
 }
 
 export interface ClientContact {
