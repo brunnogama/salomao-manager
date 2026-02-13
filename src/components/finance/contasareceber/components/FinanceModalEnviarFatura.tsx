@@ -296,7 +296,8 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               value={clienteNome}
               onChange={handleClienteChange}
               placeholder="Pesquisar cliente..."
-              table="clients"
+              options={clientes}
+              nameField="name"
               className="w-full"
             />
             {isExternalDomain(clienteEmail) && (
