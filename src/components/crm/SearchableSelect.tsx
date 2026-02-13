@@ -25,6 +25,7 @@ interface SearchableSelectProps {
   onRefresh?: () => void;
   uppercase?: boolean;
   dropdownWidth?: string | number; // Largura personalizada do dropdown
+  align?: 'left' | 'right'; // Alinhamento do dropdown
 }
 
 export function SearchableSelect({
@@ -39,7 +40,8 @@ export function SearchableSelect({
   className = "",
   onRefresh,
   uppercase = false,
-  dropdownWidth
+  dropdownWidth,
+  align = 'left'
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -205,15 +207,23 @@ export function SearchableSelect({
           if (!disabled) {
             if (!isOpen && dropdownRef.current) {
               const rect = dropdownRef.current.getBoundingClientRect();
+
+              let left = rect.left + window.scrollX;
+              if (align === 'right') {
+                const width = dropdownWidth && typeof dropdownWidth === 'number' ? dropdownWidth : rect.width;
+                left = (rect.right + window.scrollX) - width;
+              }
+
               setCoords({
                 top: rect.bottom + window.scrollY,
-                left: rect.left + window.scrollX,
+                left,
                 width: rect.width
               });
             }
             setIsOpen(!isOpen);
           }
         }}
+
         className={`
           w-full bg-gray-100/50 border rounded-xl p-3 text-left flex items-center justify-between cursor-pointer transition-all
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white hover:border-[#1e3a8a]'}
@@ -239,6 +249,6 @@ export function SearchableSelect({
 
       {/* Renders the menu outside the DOM hierarchy of the modal */}
       {isOpen && createPortal(DropdownMenu, document.body)}
-    </div>
+    </div >
   );
 }
