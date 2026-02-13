@@ -312,7 +312,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         } = formData;
 
         const { error } = await supabase.from('collaborators').update({
-          ...cleanData, photo_url: photoUrl
+          ...cleanData, foto_url: photoUrl
         }).eq('id', formData.id)
         if (error) throw error
       } else {
@@ -333,7 +333,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         } = formData;
 
         const { data, error } = await supabase.from('collaborators').insert({
-          ...cleanData, photo_url: photoUrl
+          ...cleanData, foto_url: photoUrl
         }).select().single()
         if (error) throw error
 
