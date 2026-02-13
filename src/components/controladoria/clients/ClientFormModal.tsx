@@ -13,7 +13,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   client?: Client;
-  onSave: () => void;
+  onSave: (savedClient?: Client) => void;
 }
 
 export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
@@ -175,7 +175,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
         }
       }
 
-      onSave();
+      onSave({ ...payload, id: clientId || client?.id });
       onClose();
     } catch (error: any) {
       alert('Erro ao salvar: ' + error.message);

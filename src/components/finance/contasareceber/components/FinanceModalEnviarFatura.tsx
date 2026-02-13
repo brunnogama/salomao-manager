@@ -9,16 +9,14 @@ import {
   Loader2,
   Info,
   Plus,
-  Save,
-  Users,
   DollarSign
 } from 'lucide-react';
 import { SearchableSelect } from '../../../SearchableSelect';
 import { useFinanceContasReceber } from '../hooks/useFinanceContasReceber';
 import { supabase } from '../../../../lib/supabase';
 
-import { Client, Partner } from '../../../../types/controladoria';
-import { toTitleCase } from '../../../controladoria/utils/masks';
+import { Client } from '../../../../types/controladoria';
+import { ClientFormModal } from '../../../controladoria/clients/ClientFormModal';
 
 interface FinanceModalEnviarFaturaProps {
   isOpen: boolean;
@@ -39,27 +37,34 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Estados para adicionar cliente
-  const [showAdicionar, setShowAdicionar] = useState(false);
-  const [clienteCNPJ, setClienteCNPJ] = useState('');
-  const [novoClienteNome, setNovoClienteNome] = useState('');
-  const [novoClienteEmail, setNovoClienteEmail] = useState('');
-  const [novoClientePartnerId, setNovoClientePartnerId] = useState(''); // New State
-  const [savingCliente, setSavingCliente] = useState(false);
-  const [searchingCNPJ, setSearchingCNPJ] = useState(false);
+  const [showClientModal, setShowClientModal] = useState(false);
   const [clientes, setClientes] = useState<Client[]>([]);
-  const [partners, setPartners] = useState<Partner[]>([]); // New State
 
   useEffect(() => {
     if (isOpen) {
       loadClientes();
-      loadPartners();
     }
   }, [isOpen]);
 
-  const loadPartners = async () => {
-    const { data } = await supabase.from('partners').select('*').eq('status', 'active').order('name');
-    if (data) setPartners(data);
-  };
+  // Handle ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Only close if ClientFormModal is NOT open
+        if (!showClientModal) {
+          onClose();
+        }
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose, showClientModal]);
 
   const loadClientes = async () => {
     const { data } = await supabase
@@ -72,132 +77,22 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     }
   };
 
-  const formatCNPJ = (value: string) => {
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length <= 14) {
-      return cleaned
-        .replace(/^(\d{2})(\d)/, '$1.$2')
-        .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-        .replace(/\.(\d{3})(\d)/, '.$1/$2')
-        .replace(/(\d{4})(\d)/, '$1-$2');
-    }
-    return value;
-  };
-
-  const handleCNPJChange = async (value: string) => {
-    const formatted = formatCNPJ(value);
-    setClienteCNPJ(formatted);
-
-    // Busca automática se CNPJ estiver completo
-    const cleaned = formatted.replace(/\D/g, '');
-    if (cleaned.length === 14) {
-      setSearchingCNPJ(true);
-
-      // Buscar no banco primeiro
-      const { data: existing } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('cnpj', cleaned) // Assuming 'cnpj' is stored raw in 'clients' based on other files, or adjust if needed. Usually raw.
-        .maybeSingle();
-
-      if (existing) {
-        setNovoClienteNome(existing.nome);
-        setNovoClienteEmail(existing.email);
-        alert('Cliente já cadastrado! Carregando dados...');
-      } else {
-        // Buscar em API externa
-        try {
-          const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleaned}`);
-          if (response.ok) {
-            const empresa = await response.json();
-            setNovoClienteNome(toTitleCase(empresa.razao_social || empresa.nome_fantasia || ''));
-          }
-        } catch (error) {
-          console.error('Erro ao buscar CNPJ:', error);
-        }
-      }
-
-      setSearchingCNPJ(false);
-    }
-  };
-
-  const handleSaveCliente = async () => {
-    if (!clienteCNPJ || !novoClienteNome || !novoClienteEmail) {
-      alert('Preencha os campos obrigatórios do cliente');
-      return;
-    }
-
-    setSavingCliente(true);
-
-    try {
-      const payload = {
-        cnpj: clienteCNPJ.replace(/\D/g, ''),
-        name: toTitleCase(novoClienteNome),
-        email: novoClienteEmail,
-        partner_id: novoClientePartnerId || null
-      };
-
-      // Check for existing client by CNPJ manually to avoid ON CONFLICT error
-      const { data: existingClient } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('cnpj', payload.cnpj)
-        .maybeSingle();
-
-      let result;
-
-      if (existingClient) {
-        // Update existing
-        result = await supabase
-          .from('clients')
-          .update(payload)
-          .eq('id', existingClient.id)
-          .select()
-          .single();
-      } else {
-        // Insert new
-        result = await supabase
-          .from('clients')
-          .insert(payload)
-          .select()
-          .single();
-      }
-
-      const { data, error } = result;
-
-      if (error) throw error;
-
-      // Atualizar lista de clientes
-      await loadClientes();
-
-      // Selecionar o cliente recém-criado
-      setClienteNome(data.name);
-      setClienteEmail(data.email);
-
-      // Limpar campos e fechar painel
-      setClienteCNPJ('');
-      setNovoClienteNome('');
-      setNovoClienteEmail('');
-      setNovoClientePartnerId('');
-      setShowAdicionar(false);
-
-      alert('Cliente salvo com sucesso na base geral!');
-    } catch (error: any) {
-      alert('Erro ao salvar cliente: ' + error.message);
-    } finally {
-      setSavingCliente(false);
-    }
-  };
-
   const handleClienteChange = (nome: string) => {
-    setClienteNome(nome);
-    // Buscar email do cliente selecionado
     setClienteNome(nome);
     // Buscar email do cliente selecionado
     const cliente = clientes.find(c => c.name === nome);
     if (cliente) {
       setClienteEmail(cliente.email || '');
     }
+  };
+
+  const handleClientSaved = (savedClient?: Client) => {
+    loadClientes();
+    if (savedClient) {
+      setClienteNome(savedClient.name);
+      setClienteEmail(savedClient.email || '');
+    }
+    setShowClientModal(false);
   };
 
   if (!isOpen) return null;
@@ -244,7 +139,8 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+    // Lowered z-index to 50 to allow ClientFormModal (z-60) to appear on top
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[50] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-gray-200">
 
         {/* HEADER */}
@@ -283,11 +179,8 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               Selecionar Cliente
               <button
                 type="button"
-                onClick={() => setShowAdicionar(!showAdicionar)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAdicionar
-                  ? 'bg-[#1e3a8a] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                onClick={() => setShowClientModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all bg-gray-100 text-gray-600 hover:bg-gray-200"
               >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </button>
@@ -309,112 +202,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               </div>
             )}
           </div>
-
-          {/* PAINEL DE ADICIONAR CLIENTE */}
-          {showAdicionar && (
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-lg space-y-6 animate-in slide-in-from-top duration-200 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-[#1e3a8a]"></div>
-
-              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
-                <Users className="h-5 w-5 text-[#1e3a8a]" />
-                <h4 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">
-                  Cadastro de Cliente
-                </h4>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* CNPJ */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-                    CNPJ *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={clienteCNPJ}
-                      onChange={(e) => handleCNPJChange(e.target.value)}
-                      placeholder="00.000.000/0000-00"
-                      maxLength={18}
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
-                    />
-                    {searchingCNPJ && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <Loader2 className="h-4 w-4 animate-spin text-[#1e3a8a]" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* NOME */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-                    Nome/Razão Social *
-                  </label>
-                  <input
-                    type="text"
-                    value={novoClienteNome}
-                    onChange={(e) => setNovoClienteNome(e.target.value)}
-                    placeholder="Nome do cliente"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
-                  />
-                </div>
-
-                {/* E-MAIL */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-                    E-mail *
-                  </label>
-                  <input
-                    type="email"
-                    value={novoClienteEmail}
-                    onChange={(e) => setNovoClienteEmail(e.target.value)}
-                    placeholder="cliente@empresa.com.br"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
-                  />
-                </div>
-
-                {/* SÓCIO RESPONSÁVEL */}
-                <div className="md:col-span-3">
-                  <SearchableSelect
-                    label="Sócio Responsável"
-                    value={novoClientePartnerId}
-                    onChange={setNovoClientePartnerId}
-                    options={partners}
-                    nameField="name"
-                    placeholder="Selecione um sócio..."
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setClienteCNPJ('');
-                    setNovoClienteNome('');
-                    setNovoClienteEmail('');
-                  }}
-                  className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  Limpar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveCliente}
-                  disabled={savingCliente || !clienteCNPJ || !novoClienteNome || !novoClienteEmail}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {savingCliente ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Save className="h-3.5 w-3.5" />
-                  )}
-                  Salvar Cliente
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* E-MAIL CLIENTE E VALOR - LADO A LADO */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -525,6 +312,15 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           </button>
         </div>
       </div>
+
+      {/* Integration of ClientFormModal */}
+      {showClientModal && (
+        <ClientFormModal
+          isOpen={showClientModal}
+          onClose={() => setShowClientModal(false)}
+          onSave={handleClientSaved}
+        />
+      )}
     </div>
   );
 }
