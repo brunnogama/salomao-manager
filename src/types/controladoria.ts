@@ -144,6 +144,7 @@ export interface ContractDocument {
   file_path: string;
   file_type: 'proposal' | 'contract';
   uploaded_at: string;
+  hon_number_ref?: string;
 }
 
 export interface Contract {
