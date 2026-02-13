@@ -16,11 +16,10 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
-import { FinanceModalEnviarFatura } from '../components/FinanceModalEnviarFatura'
-import { useFinanceContasReceber, FaturaStatus } from '../hooks/useFinanceContasReceber'
+import { FinanceModalDetalhesFatura } from '../components/FinanceModalDetalhesFatura'
+import { useFinanceContasReceber, FaturaStatus, Fatura } from '../hooks/useFinanceContasReceber'
 
 interface FinanceContasReceberProps {
-
   userEmail?: string;
 }
 
@@ -37,6 +36,11 @@ export function FinanceContasReceber({
   const [activeTab, setActiveTab] = useState<'lista' | 'calendario'>('lista')
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // Estado para o modal de detalhes
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [selectedFatura, setSelectedFatura] = useState<Fatura | null>(null)
+
   const [currentDate, setCurrentDate] = useState(new Date())
   const { faturas, loading, confirmarPagamento } = useFinanceContasReceber()
 
@@ -51,6 +55,11 @@ export function FinanceContasReceber({
   const nextMonth = () => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1)
     setCurrentDate(newDate)
+  }
+
+  const handleOpenDetails = (fatura: Fatura) => {
+    setSelectedFatura(fatura)
+    setIsDetailsModalOpen(true)
   }
 
   const getStatusStyles = (status: FaturaStatus) => {
@@ -229,22 +238,49 @@ export function FinanceContasReceber({
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-gray-50/50 border-b border-gray-100">
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-16">#</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Valor</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status Fluxo</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Data Envio</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Data Resposta (+2d)</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center text-red-500">Prazo Fatal (+4d)</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Valor</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {filteredFaturas.map((fatura) => {
+                    {filteredFaturas.map((fatura, index) => {
                       const style = getStatusStyles(fatura.status);
+                      const dataEnvio = new Date(fatura.data_envio);
+
+                      const dataResposta = new Date(dataEnvio);
+                      dataResposta.setDate(dataResposta.getDate() + 2);
+
+                      const prazoFatal = new Date(dataEnvio);
+                      prazoFatal.setDate(prazoFatal.getDate() + 4);
+
                       return (
-                        <tr key={fatura.id} className="hover:bg-gray-50/50 transition-colors group">
-                          <td className="px-6 py-4">
-                            <span className="text-sm font-bold text-[#0a192f] block">{fatura.cliente_nome}</span>
-                            <span className="text-[10px] text-gray-400">Enviado em: {new Date(fatura.data_envio).toLocaleDateString('pt-BR')}</span>
+                        <tr
+                          key={fatura.id}
+                          className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                          onClick={() => handleOpenDetails(fatura)} // TODO: Implementar handleOpenDetails
+                        >
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-[10px] font-bold text-gray-300">#{String(index + 1).padStart(2, '0')}</span>
                           </td>
                           <td className="px-6 py-4">
+                            <span className="text-sm font-bold text-[#0a192f] block">{fatura.cliente_nome}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-xs font-medium text-gray-500">{dataEnvio.toLocaleDateString('pt-BR')}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-xs font-medium text-blue-600">{dataResposta.toLocaleDateString('pt-BR')}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-xs font-bold text-red-600">{prazoFatal.toLocaleDateString('pt-BR')}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
                             <span className="text-sm font-black text-[#1e3a8a]">
                               {Number(fatura.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                             </span>
@@ -257,7 +293,7 @@ export function FinanceContasReceber({
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-2">
                               {fatura.status !== 'pago' && (
                                 <button onClick={() => handleConfirmarPagamento(fatura.id, fatura.cliente_nome)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Confirmar Recebimento"><Check className="h-4 w-4" /></button>
@@ -296,6 +332,12 @@ export function FinanceContasReceber({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         userEmail={userEmail}
+      />
+
+      <FinanceModalDetalhesFatura
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        fatura={selectedFatura}
       />
     </div>
   )

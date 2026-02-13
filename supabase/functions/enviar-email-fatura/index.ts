@@ -29,8 +29,10 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from: payload.remetente,
+        from: 'Salomão Manager <financeiro@salomao.com>', // Idealmente usar um domínio verificado. Se payload.remetente for aceito, ótimo, senão fixar um no-reply
         to: [payload.destinatario],
+        bcc: [payload.remetente], // Cópia oculta para o remetente (usuário)
+        reply_to: payload.remetente, // Responder para o remetente original
         subject: payload.assunto,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -70,7 +72,7 @@ serve(async (req) => {
 
     // Registrar log de envio no Supabase
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    
+
     await supabase
       .from('finance_faturas')
       .update({
