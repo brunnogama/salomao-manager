@@ -25,6 +25,7 @@ import { FinanceModalEnviarFatura } from '../components/FinanceModalEnviarFatura
 import { FinanceModalDetalhesFatura } from '../components/FinanceModalDetalhesFatura'
 import { FinanceModalEditarDatas } from '../components/FinanceModalEditarDatas'
 import { useFinanceContasReceber, FaturaStatus, Fatura } from '../hooks/useFinanceContasReceber'
+import { SearchableSelect } from '../../../crm/SearchableSelect'
 
 interface FinanceContasReceberProps {
   userEmail?: string;
@@ -294,90 +295,64 @@ export function FinanceContasReceber({
           </button>
         </div>
 
-        {/* TOOLBAR */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          {activeTab === 'lista' ? (
-            <div className="flex flex-col md:flex-row gap-4 w-full">
-              {/* FILTER TABS */}
-              <div className="flex bg-gray-100 p-1 rounded-xl shrink-0 self-start md:self-auto overflow-x-auto max-w-full">
-                <button
-                  onClick={() => setActiveFilter('todos')}
-                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeFilter === 'todos' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  Enviadas <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] ${activeFilter === 'todos' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-500'}`}>{countTodos}</span>
-                </button>
-                <button
-                  onClick={() => setActiveFilter('aguardando')}
-                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeFilter === 'aguardando' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  Aguardando <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] ${activeFilter === 'aguardando' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-500'}`}>{countAguardando}</span>
-                </button>
-                <button
-                  onClick={() => setActiveFilter('radar')}
-                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeFilter === 'radar' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  Prazo Fatal <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] ${activeFilter === 'radar' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-500'}`}>{countRadar}</span>
-                </button>
-                <button
-                  onClick={() => setActiveFilter('pago')}
-                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeFilter === 'pago' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  Concluídas <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] ${activeFilter === 'pago' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-500'}`}>{countPago}</span>
-                </button>
+        {/* CONTROLS CARD - Search | Filters */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
+          <div className="flex flex-col xl:flex-row items-center gap-4">
+
+            {/* Search Bar - Compact */}
+            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full md:w-64 shrink-0 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+              <Search className="h-4 w-4 text-gray-400 mr-3" />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Filters Row - Expanded & Auto-sizing */}
+            <div className="flex items-center gap-3 w-full overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
+
+              {/* TABS DE STATUS (Integrados na linha de filtros como botões) */}
+              <div className="flex bg-gray-100/50 p-1 rounded-xl shrink-0">
+                <button onClick={() => setActiveFilter('todos')} className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeFilter === 'todos' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Enviadas</button>
+                <button onClick={() => setActiveFilter('aguardando')} className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeFilter === 'aguardando' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Aguardando</button>
+                <button onClick={() => setActiveFilter('radar')} className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeFilter === 'radar' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Prazo Fatal</button>
+                <button onClick={() => setActiveFilter('pago')} className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeFilter === 'pago' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Concluídas</button>
               </div>
 
-              {/* SEARCH BAR */}
-              <div className="relative w-full md:w-96">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <SearchableSelect
+                label=""
+                placeholder="Filtrar por Cliente"
+                value={selectedClient}
+                onChange={setSelectedClient}
+                options={uniqueClients.map(c => ({ id: c, name: c }))}
+                className="min-w-[200px]"
+              />
+
+              {/* DATA FILTER - Styled similar to SearchableSelect */}
+              <div className="bg-gray-100/50 border border-gray-200 rounded-xl p-2 px-3 flex items-center gap-2 h-[46px] min-w-fit">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-1">Período:</span>
                 <input
-                  type="text"
-                  placeholder="Buscar por cliente ou assunto..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl shadow-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium text-xs"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[95px]"
                 />
+                <span className="text-gray-400">-</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[95px]"
+                />
+                {(startDate || endDate) && (
+                  <button onClick={() => { setStartDate(''); setEndDate('') }} className="ml-1 p-1 hover:bg-red-50 text-red-500 rounded-full"><X className="h-3 w-3" /></button>
+                )}
               </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
-              <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg transition-all text-[#1e3a8a]"><ChevronLeft className="h-5 w-5" /></button>
-              <span className="text-lg font-black text-[#0a192f] min-w-[180px] text-center uppercase tracking-widest">
-                {MESES[currentDate.getMonth()]} {currentDate.getFullYear()}
-              </span>
-              <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-lg transition-all text-[#1e3a8a]"><ChevronRight className="h-5 w-5" /></button>
-            </div>
-          )}
 
-          <div className="flex gap-3 w-full md:w-auto items-center">
-            {/* CLIENTE FILTER */}
-            <select
-              value={selectedClient}
-              onChange={(e) => setSelectedClient(e.target.value)}
-              className="px-4 py-2 bg-gray-100/50 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all w-64 cursor-pointer"
-            >
-              <option value="">Todos os Clientes</option>
-              {uniqueClients.map(client => (
-                <option key={client} value={client}>{client}</option>
-              ))}
-            </select>
-
-            {/* DATA FILTER */}
-            <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-2 py-1">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="text-xs text-gray-600 outline-none bg-transparent w-24"
-              />
-              <span className="text-gray-400 text-[10px]">até</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="text-xs text-gray-600 outline-none bg-transparent w-24"
-              />
             </div>
-            {/* Button moved to header */}
           </div>
         </div>
 
@@ -408,140 +383,103 @@ export function FinanceContasReceber({
             </div>
           ) : activeTab === 'lista' ? (
             filteredFaturas.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50/50 border-b border-gray-100">
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-16">#</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Assunto</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Data Envio</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Data Resposta (+2d)</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center text-red-500">Prazo Fatal (+4d)</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {filteredFaturas.map((fatura, index) => {
-                      const style = getStatusStyles(fatura.status);
-                      const dataEnvio = new Date(fatura.data_envio);
+              filteredFaturas.length > 0 ? (
+                <div className="overflow-x-auto h-full custom-scrollbar">
+                  <table className="w-full">
+                    <thead className="bg-gray-50/50 border-b border-gray-100">
+                      <tr>
+                        <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">ID</th>
+                        <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cliente</th>
+                        <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Assunto</th>
+                        <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Envio</th>
+                        <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Resposta</th>
+                        <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Prazo Fatal</th>
+                        <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                        <th className="px-6 py-5 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredFaturas.map((fatura, index) => {
+                        const style = getStatusStyles(fatura.status);
+                        const dataEnvio = new Date(fatura.data_envio);
+                        let dataResposta = new Date(dataEnvio);
+                        if (fatura.data_resposta) dataResposta = new Date(fatura.data_resposta);
+                        else dataResposta.setDate(dataResposta.getDate() + 2);
 
-                      // Calcula datas visuais (se não houver overrides no banco)
-                      // Se fatura.data_resposta existe, usa ela. Senão +2d
-                      let dataResposta = new Date(dataEnvio);
-                      if (fatura.data_resposta) {
-                        dataResposta = new Date(fatura.data_resposta);
-                      } else {
-                        dataResposta.setDate(dataResposta.getDate() + 2);
-                      }
+                        let prazoFatal = new Date(dataEnvio);
+                        if (fatura.data_radar) prazoFatal = new Date(fatura.data_radar);
+                        else prazoFatal.setDate(prazoFatal.getDate() + 4);
 
-                      // Se fatura.data_radar existe, usa ela (que estamos usando como Prazo Fatal visual). Senão +4d
-                      let prazoFatal = new Date(dataEnvio);
-                      if (fatura.data_radar) {
-                        prazoFatal = new Date(fatura.data_radar);
-                      } else {
-                        prazoFatal.setDate(prazoFatal.getDate() + 4);
-                      }
-
-                      const statusStyle = getStatusStyles(fatura.status); // Renomear para evitar conflito se houver
-
-                      return (
-                        <tr
-                          key={fatura.id}
-                          onClick={() => handleOpenDetails(fatura)}
-                          className="hover:bg-gray-50 transition-colors cursor-pointer group"
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <span className="text-[10px] font-black text-gray-400 group-hover:text-[#1e3a8a] transition-colors">
-                              {formatInvoiceId(fatura.id)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold text-[#0a192f]">{fatura.cliente_nome}</span>
-                              <span className="text-[10px] text-gray-400">{fatura.cliente_email}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="text-xs font-medium text-gray-600 line-clamp-1">{fatura.assunto}</span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-[10px] font-bold text-gray-500">
-                              {dataEnvio.toLocaleDateString()}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-[10px] font-bold text-blue-600">
-                              {formatDate(dataResposta)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-[10px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-lg">
-                              {formatDate(prazoFatal)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${style.bg} ${style.text} border ${style.border}`}>
-                              {style.icon}
-                              {style.label}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-2">
-                              {fatura.status !== 'pago' && (
-                                <>
-                                  <button
-                                    onClick={() => handleConfirmarPagamento(fatura.id, fatura.cliente_nome)}
-                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                                    title="Confirmar Recebimento"
-                                  >
-                                    <Check className="h-4 w-4" />
-                                  </button>
-                                  <button
-                                    onClick={(e) => handleOpenEditDates(e, fatura)}
-                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                    title="Editar Prazos"
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </button>
-                                </>
-                              )}
-                              <button
-                                onClick={(e) => handleDeleteFatura(e, fatura)}
-                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                title="Excluir Fatura"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                        return (
+                          <tr
+                            key={fatura.id}
+                            onClick={() => handleOpenDetails(fatura)}
+                            className="hover:bg-blue-50/30 cursor-pointer transition-colors group"
+                          >
+                            <td className="px-6 py-4">
+                              <span className="text-[10px] font-black text-gray-400">{formatInvoiceId(fatura.id)}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-sm text-[#0a192f]">{fatura.cliente_nome}</span>
+                                <span className="text-[10px] text-gray-400 font-medium">{fatura.cliente_email}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm font-semibold text-gray-600 line-clamp-1">{fatura.assunto}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-[11px] font-bold text-gray-600">{dataEnvio.toLocaleDateString()}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-[11px] font-bold text-blue-600">{formatDate(dataResposta)}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-[10px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-lg">{formatDate(prazoFatal)}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${style.bg.replace('bg-', 'text-').replace('600', '700')} bg-opacity-10 border-opacity-20`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${style.bg}`} />
+                                {style.label}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {fatura.status !== 'pago' && (
+                                  <>
+                                    <button onClick={(e) => { e.stopPropagation(); handleConfirmarPagamento(fatura.id, fatura.cliente_nome) }} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all hover:scale-110 active:scale-95" title="Confirmar Recebimento"><Check className="h-4 w-4" /></button>
+                                    <button onClick={(e) => handleOpenEditDates(e, fatura)} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95" title="Editar Prazos"><Pencil className="h-4 w-4" /></button>
+                                  </>
+                                )}
+                                <button onClick={(e) => handleDeleteFatura(e, fatura)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95" title="Excluir"><Trash2 className="h-4 w-4" /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-20 flex flex-col items-center justify-center text-center">
+                  <FileText className="h-12 w-12 mb-4 text-gray-200" />
+                  <p className="font-bold text-[10px] uppercase tracking-[0.3em] text-gray-300">Nenhuma fatura encontrada</p>
+                </div>
+              )
             ) : (
-              <div className="p-20 flex flex-col items-center justify-center text-center">
-                <FileText className="h-12 w-12 mb-4 text-gray-200" />
-                <p className="font-bold text-[10px] uppercase tracking-[0.3em] text-gray-300">Nenhuma fatura encontrada</p>
+              <div className="flex flex-col h-full">
+                <div className="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">
+                  {DIAS_SEMANA.map((dia) => (
+                    <div key={dia} className="bg-gray-50 py-2 text-center text-[10px] font-black uppercase text-gray-400 tracking-widest">
+                      {dia}
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 flex-1">
+                  {renderCalendarDays()}
+                </div>
               </div>
-            )
-          ) : (
-            <div className="flex flex-col h-full">
-              <div className="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">
-                {DIAS_SEMANA.map((dia) => (
-                  <div key={dia} className="bg-gray-50 py-2 text-center text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                    {dia}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 flex-1">
-                {renderCalendarDays()}
-              </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
 
