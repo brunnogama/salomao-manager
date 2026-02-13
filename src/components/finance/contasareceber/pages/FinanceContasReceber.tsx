@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
+import { FinanceModalEnviarFatura } from '../components/FinanceModalEnviarFatura'
 import { FinanceModalDetalhesFatura } from '../components/FinanceModalDetalhesFatura'
 import { useFinanceContasReceber, FaturaStatus, Fatura } from '../hooks/useFinanceContasReceber'
 
