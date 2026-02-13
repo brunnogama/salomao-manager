@@ -127,20 +127,24 @@ export function useFinanceContasReceber() {
       }
 
       // 3. Inserir fatura no banco
+      const faturePayload = {
+        cliente_nome: params.cliente_nome, // Garantido pela validação no topo
+        cliente_email: params.cliente_email,
+        cliente_id,
+        valor: params.valor,
+        remetente: params.remetente,
+        assunto: params.assunto,
+        corpo: params.corpo || '',
+        status: 'aguardando_resposta',
+        data_envio: new Date().toISOString(),
+        arquivos_urls: arquivos_urls.length > 0 ? arquivos_urls : null
+      };
+
+      console.log("Payload para inserção no Supabase:", faturePayload);
+
       const { data: faturaData, error: faturaError } = await supabase
         .from('finance_faturas')
-        .insert({
-          cliente_nome: params.cliente_nome, // Garantido pela validação no topo
-          cliente_email: params.cliente_email,
-          cliente_id,
-          valor: params.valor,
-          remetente: params.remetente,
-          assunto: params.assunto,
-          corpo: params.corpo || '',
-          status: 'aguardando_resposta',
-          data_envio: new Date().toISOString(),
-          arquivos_urls: arquivos_urls.length > 0 ? arquivos_urls : null
-        })
+        .insert(faturePayload)
         .select()
         .single();
 

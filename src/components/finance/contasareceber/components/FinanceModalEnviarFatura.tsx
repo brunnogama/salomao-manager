@@ -140,6 +140,14 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       return;
     }
 
+    console.log("Tentando enviar fatura:", {
+      clienteNome,
+      clienteId,
+      tipoId: typeof clienteId,
+      clienteEmail,
+      valor
+    });
+
     setLoading(true);
     try {
       await enviarFatura({
