@@ -24,6 +24,7 @@ interface SearchableSelectProps {
   className?: string;
   onRefresh?: () => void;
   uppercase?: boolean;
+  dropdownWidth?: string | number; // Largura personalizada do dropdown
 }
 
 export function SearchableSelect({
@@ -37,7 +38,8 @@ export function SearchableSelect({
   disabled = false,
   className = "",
   onRefresh,
-  uppercase = false
+  uppercase = false,
+  dropdownWidth
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -135,7 +137,7 @@ export function SearchableSelect({
       style={{
         top: `${coords.top + 8}px`,
         left: `${coords.left}px`,
-        width: `${coords.width}px`,
+        width: dropdownWidth ? (typeof dropdownWidth === 'number' ? `${dropdownWidth}px` : dropdownWidth) : `${coords.width}px`,
         maxHeight: '300px'
       }}
     >

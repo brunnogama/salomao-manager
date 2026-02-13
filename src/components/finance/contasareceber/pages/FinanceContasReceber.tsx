@@ -299,8 +299,16 @@ export function FinanceContasReceber({
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
           <div className="flex flex-col xl:flex-row items-center gap-4">
 
-            {/* Search Bar - Compact */}
-            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full md:w-64 shrink-0 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+            {/* TABS DE STATUS (Esquerda) */}
+            <div className="flex bg-gray-100 p-1 rounded-xl shrink-0 mr-4">
+              <button onClick={() => setActiveFilter('todos')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter === 'todos' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Enviadas</button>
+              <button onClick={() => setActiveFilter('aguardando')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter === 'aguardando' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Aguardando</button>
+              <button onClick={() => setActiveFilter('radar')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter === 'radar' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Prazo Fatal</button>
+              <button onClick={() => setActiveFilter('pago')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter === 'pago' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Concluídas</button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full md:w-64 shrink-0 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all mr-auto">
               <Search className="h-4 w-4 text-gray-400 mr-3" />
               <input
                 type="text"
@@ -311,27 +319,19 @@ export function FinanceContasReceber({
               />
             </div>
 
-            {/* Filters Row - Expanded & Auto-sizing */}
-            <div className="flex items-center gap-3 w-full overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
-
-              {/* TABS DE STATUS (Integrados na linha de filtros como botões) */}
-              <div className="flex bg-gray-100/50 p-1 rounded-xl shrink-0">
-                <button onClick={() => setActiveFilter('todos')} className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeFilter === 'todos' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Enviadas</button>
-                <button onClick={() => setActiveFilter('aguardando')} className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeFilter === 'aguardando' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Aguardando</button>
-                <button onClick={() => setActiveFilter('radar')} className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeFilter === 'radar' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Prazo Fatal</button>
-                <button onClick={() => setActiveFilter('pago')} className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeFilter === 'pago' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Concluídas</button>
-              </div>
-
+            {/* Filters Row (Direita) */}
+            <div className="flex items-center gap-3 shrink-0">
               <SearchableSelect
                 label=""
-                placeholder="Filtrar por Cliente"
+                placeholder="Cliente"
                 value={selectedClient}
                 onChange={setSelectedClient}
                 options={uniqueClients.map(c => ({ id: c, name: c }))}
-                className="min-w-[200px]"
+                className="w-40" // Botão menor
+                dropdownWidth={300} // Dropdown largo
               />
 
-              {/* DATA FILTER - Styled to match SearchableSelect */}
+              {/* DATA FILTER */}
               <div className="bg-gray-100/50 border border-gray-200 rounded-xl p-3 flex items-center gap-3 h-[46px] min-w-fit hover:bg-white hover:border-[#1e3a8a] transition-all group cursor-pointer relative">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Período</span>
@@ -356,7 +356,6 @@ export function FinanceContasReceber({
                   <button onClick={() => { setStartDate(''); setEndDate('') }} className="hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full p-0.5 transition-colors absolute right-2"><X className="h-3.5 w-3.5" /></button>
                 )}
               </div>
-
             </div>
           </div>
         </div>
