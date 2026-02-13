@@ -38,6 +38,7 @@ export interface Collaborator {
   id: string;
   name: string;
   partner_id?: string; // Vínculo com o Sócio Responsável (tabela partners)
+  leader_id?: string; // Vínculo com o Líder Direto
   email?: string;
   phone?: string;
   status: 'active' | 'inactive';
