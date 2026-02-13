@@ -8,7 +8,9 @@ import {
   Send,
   Loader2,
   Info,
-  Plus
+  Plus,
+  Trash2,
+  FileText
 } from 'lucide-react';
 import { NumericFormat } from 'react-number-format';
 import { SearchableSelect } from '../../../SearchableSelect';
@@ -17,6 +19,7 @@ import { supabase } from '../../../../lib/supabase';
 
 import { Client } from '../../../../types/controladoria';
 import { ClientFormModal } from '../../../controladoria/clients/ClientFormModal';
+import { SuccessModal } from '../../../controladoria/ui/SuccessModal';
 
 interface FinanceModalEnviarFaturaProps {
   isOpen: boolean;
@@ -41,6 +44,9 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const [showClientModal, setShowClientModal] = useState(false);
   const [clientes, setClientes] = useState<Client[]>([]);
 
+  // Estado Modal Sucesso
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       loadClientes();
@@ -52,7 +58,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         // Only close if ClientFormModal is NOT open
-        if (!showClientModal) {
+        if (!showClientModal && !showSuccessModal) {
           onClose();
         }
       }
@@ -65,7 +71,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose, showClientModal]);
+  }, [isOpen, onClose, showClientModal, showSuccessModal]);
 
   const loadClientes = async () => {
     const { data } = await supabase
@@ -122,9 +128,16 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setArquivos(Array.from(e.target.files));
+    if (e.target.files && e.target.files.length > 0) {
+      // Append files instead of replacing
+      setArquivos(prev => [...prev, ...Array.from(e.target.files || [])]);
+      // Reset input value to allow selecting the same file again if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const removeArquivo = (index: number) => {
+    setArquivos(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -140,14 +153,6 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       return;
     }
 
-    console.log("Tentando enviar fatura:", {
-      clienteNome,
-      clienteId,
-      tipoId: typeof clienteId,
-      clienteEmail,
-      valor
-    });
-
     setLoading(true);
     try {
       await enviarFatura({
@@ -160,14 +165,17 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
         corpo,
         arquivos
       });
-      alert("Fatura enviada com sucesso! O acompanhamento de 2d + 2d foi iniciado.");
-      onClose();
-      window.location.reload(); // Recarregar página para atualizar lista
+      setShowSuccessModal(true);
     } catch (error: any) {
       alert("Erro ao processar envio: " + error.message);
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only set loading false on error, keep true on success until reload/close
     }
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    onClose();
+    window.location.reload();
   };
 
   return (
@@ -295,37 +303,66 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
           {/* ANEXOS */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Anexos (PDF)</label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center bg-gray-50 hover:bg-white hover:border-[#1e3a8a] cursor-pointer transition-all group"
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                multiple
-                accept=".pdf"
-              />
-              <Paperclip className="h-6 w-6 text-gray-400 group-hover:text-[#1e3a8a] mb-2" />
-              <div className="text-center w-full">
-                {arquivos.length > 0 ? (
-                  <div className="flex flex-col gap-1 items-center">
-                    <span className="text-[10px] font-black uppercase text-gray-400 mb-1">{arquivos.length} ARQUIVO(S) SELECIONADO(S)</span>
-                    {arquivos.map((arq, idx) => (
-                      <span key={idx} className="text-xs font-bold text-[#1e3a8a] break-all">
-                        {arq.name}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-xs font-bold text-gray-500">
-                    Clique para selecionar a fatura ou arraste aqui
-                  </span>
-                )}
-              </div>
+            <div className="flex justify-between items-center px-1">
+              <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider">Anexos (PDF)</label>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-[10px] flex items-center gap-1 font-bold text-[#1e3a8a] hover:underline uppercase tracking-wider bg-blue-50 px-2 py-1 rounded-lg"
+              >
+                <Plus className="h-3 w-3" /> Adicionar Arquivo
+              </button>
             </div>
+
+            <div className="border border-gray-200 rounded-xl bg-gray-50 min-h-[80px] p-3 flex flex-col gap-2">
+              {arquivos.length === 0 ? (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-full flex flex-col items-center justify-center py-6 text-gray-400 cursor-pointer hover:bg-gray-100 rounded-lg transition-all border-2 border-dashed border-gray-200 hover:border-[#1e3a8a]"
+                >
+                  <Paperclip className="h-6 w-6 mb-2" />
+                  <span className="text-xs font-medium">Nenhum arquivo selecionado</span>
+                  <span className="text-[10px] opacity-70">Clique ou arraste para adicionar</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {arquivos.map((arq, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm group">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="p-2 bg-red-50 rounded-lg">
+                          <FileText className="h-4 w-4 text-red-500" />
+                        </div>
+                        <span className="text-xs font-bold text-gray-700 truncate">{arq.name}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeArquivo(idx)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title="Remover anexo"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-3 text-center border-2 border-dashed border-gray-200 rounded-lg text-xs font-bold text-gray-400 hover:text-[#1e3a8a] hover:border-[#1e3a8a] hover:bg-white transition-all uppercase tracking-wider"
+                  >
+                    + Adicionar Outro Arquivo
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              multiple
+              accept=".pdf"
+            />
           </div>
 
           {/* INFO BOX FLUXO */}
@@ -364,6 +401,15 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           onSave={handleClientSaved}
         />
       )}
+
+      {/* SUCCESS MODAL */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessClose}
+        title="Fatura Enviada!"
+        description="A fatura foi enviada com sucesso e o fluxo de acompanhamento automático (2d + 2d) foi iniciado."
+        confirmText="OK, Entendi"
+      />
     </div>
   );
 }
