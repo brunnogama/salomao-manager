@@ -296,14 +296,44 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
       if (formData.id) {
         // Update
+        // Remove nested objects that are not columns
+        const {
+          // @ts-ignore
+          leader,
+          // @ts-ignore
+          partner,
+          // @ts-ignore
+          roles,
+          // @ts-ignore
+          locations,
+          // @ts-ignore
+          teams,
+          ...cleanData
+        } = formData;
+
         const { error } = await supabase.from('collaborators').update({
-          ...formData, photo_url: photoUrl
+          ...cleanData, photo_url: photoUrl
         }).eq('id', formData.id)
         if (error) throw error
       } else {
         // Insert
+        // Remove nested objects that are not columns
+        const {
+          // @ts-ignore
+          leader,
+          // @ts-ignore
+          partner,
+          // @ts-ignore
+          roles,
+          // @ts-ignore
+          locations,
+          // @ts-ignore
+          teams,
+          ...cleanData
+        } = formData;
+
         const { data, error } = await supabase.from('collaborators').insert({
-          ...formData, photo_url: photoUrl
+          ...cleanData, photo_url: photoUrl
         }).select().single()
         if (error) throw error
 
