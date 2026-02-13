@@ -308,6 +308,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           locations,
           // @ts-ignore
           teams,
+          photo_url,
           ...cleanData
         } = formData;
 
@@ -329,6 +330,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           locations,
           // @ts-ignore
           teams,
+          photo_url,
           ...cleanData
         } = formData;
 
