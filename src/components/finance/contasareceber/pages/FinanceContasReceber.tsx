@@ -17,8 +17,10 @@ import {
   ChevronRight,
   Pencil,
   Trash2,
-  X
+  X,
+  Download
 } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import { FinanceModalEnviarFatura } from '../components/FinanceModalEnviarFatura'
 import { FinanceModalDetalhesFatura } from '../components/FinanceModalDetalhesFatura'
 import { FinanceModalEditarDatas } from '../components/FinanceModalEditarDatas'
@@ -50,6 +52,11 @@ export function FinanceContasReceber({
   // Estado para modal de edição de datas
   const [isEditDateModalOpen, setIsEditDateModalOpen] = useState(false)
   const [faturaParaEditar, setFaturaParaEditar] = useState<Fatura | null>(null)
+
+  // Novos estados para filtros
+  const [selectedClient, setSelectedClient] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   const [currentDate, setCurrentDate] = useState(new Date())
   const { faturas, loading, confirmarPagamento, excluirFatura } = useFinanceContasReceber()
@@ -128,6 +135,24 @@ export function FinanceContasReceber({
     }
   }
 
+  const uniqueClients = Array.from(new Set(faturas.map(f => f.cliente_nome))).sort()
+
+  const handleExport = () => {
+    const dataToExport = filteredFaturas.map(f => ({
+      ID: formatInvoiceId(f.id),
+      Cliente: f.cliente_nome,
+      'E-mail': f.cliente_email,
+      Assunto: f.assunto,
+      'Data Envio': new Date(f.data_envio).toLocaleDateString(),
+      Status: f.status
+    }))
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Faturas")
+    XLSX.writeFile(wb, "Contas_a_Receber.xlsx")
+  }
+
   const filteredFaturas = faturas.filter(f => {
     const matchesSearch = f.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       f.assunto?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -137,7 +162,31 @@ export function FinanceContasReceber({
     if (activeFilter === 'radar') matchesTab = f.status === 'radar';
     if (activeFilter === 'pago') matchesTab = f.status === 'pago';
 
-    return matchesSearch && matchesTab;
+    let matchesClient = true;
+    if (selectedClient) {
+      matchesClient = f.cliente_nome === selectedClient
+    }
+
+    let matchesDate = true;
+    const faturaDate = new Date(f.data_envio)
+    faturaDate.setHours(0, 0, 0, 0)
+
+    if (startDate) {
+      const start = new Date(startDate)
+      start.setHours(0, 0, 0, 0) // Ajuste para comparar apenas data
+      // Ajuste de fuso horário se necessário, mas new Date("YYYY-MM-DD") é UTC, enquanto localDateString é local.
+      // Melhor usar string comparison ou lib de data, mas para simplificar:
+      // O input date retorna YYYY-MM-DD.
+      // Vamos comparar timestamps zerados.
+      // const start = new Date(startDate + 'T00:00:00')
+      if (faturaDate < new Date(startDate + 'T00:00:00')) matchesDate = false
+    }
+
+    if (endDate) {
+      if (faturaDate > new Date(endDate + 'T23:59:59')) matchesDate = false
+    }
+
+    return matchesSearch && matchesTab && matchesClient && matchesDate;
   })
 
   // Contadores para as abas
@@ -206,6 +255,12 @@ export function FinanceContasReceber({
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={handleExport}
+            className="hidden md:flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-sm hover:bg-gray-50 transition-all active:scale-95"
+          >
+            <Download className="h-4 w-4" /> Exportar XLSX
+          </button>
           <button
             onClick={() => setIsModalOpen(true)}
             className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
@@ -293,10 +348,35 @@ export function FinanceContasReceber({
             </div>
           )}
 
-          <div className="flex gap-3 w-full md:w-auto">
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white border border-gray-100 text-[#0a192f] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-sm hover:bg-gray-50 transition-all">
-              <Filter className="h-4 w-4" /> Filtros
-            </button>
+          <div className="flex gap-3 w-full md:w-auto items-center">
+            {/* CLIENTE FILTER */}
+            <select
+              value={selectedClient}
+              onChange={(e) => setSelectedClient(e.target.value)}
+              className="px-3 py-2 bg-white border border-gray-100 rounded-xl text-xs font-medium text-gray-600 outline-none focus:ring-2 focus:ring-[#1e3a8a]"
+            >
+              <option value="">Todos os Clientes</option>
+              {uniqueClients.map(client => (
+                <option key={client} value={client}>{client}</option>
+              ))}
+            </select>
+
+            {/* DATA FILTER */}
+            <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-2 py-1">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="text-xs text-gray-600 outline-none bg-transparent w-24"
+              />
+              <span className="text-gray-400 text-[10px]">até</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="text-xs text-gray-600 outline-none bg-transparent w-24"
+              />
+            </div>
             {/* Button moved to header */}
           </div>
         </div>
