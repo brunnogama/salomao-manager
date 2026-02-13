@@ -1,13 +1,13 @@
 // brunnogama/salomao-manager/salomao-manager-3e743876de4fb5af74c8aedf5b89ce1e3913c795/src/components/controladoria/clients/ClientFormModal.tsx
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Search, Loader2, AlertTriangle, Plus, Trash2, UserPlus } from 'lucide-react';
+import { X, Save, Search, Loader2, AlertTriangle, Plus, Trash2, UserPlus, User, MapPin, Users, FileText } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Client, Partner, ClientContact } from '../../../types/controladoria';
 import { maskCNPJ, toTitleCase } from '../utils/masks';
 import { CustomSelect } from '../ui/CustomSelect';
 
-const UFS = [ { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' }, { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' }, { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' }, { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' }, { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' }, { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' }, { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' }, { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' }, { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' } ];
+const UFS = [{ sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' }, { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' }, { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' }, { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' }, { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' }, { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' }, { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' }, { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' }, { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }];
 
 interface Props {
   isOpen: boolean;
@@ -20,10 +20,11 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
-  
+  const [activeTab, setActiveTab] = useState('dados');
+
   // Estado para duplicidade
   const [duplicateClients, setDuplicateClients] = useState<Client[]>([]);
-  
+
   // Estado para múltiplos contatos
   const [contacts, setContacts] = useState<Partial<ClientContact>[]>([]);
 
@@ -38,15 +39,17 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
     city: '',
     uf: 'RJ',
     is_person: false,
-    active: true
+    active: true,
+    notes: ''
   };
 
   const [formData, setFormData] = useState<Client>(emptyClient);
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(client ? { ...client } : emptyClient);
+      setFormData(client ? { ...client, notes: client.notes || '' } : emptyClient);
       setDuplicateClients([]);
+      setActiveTab('dados');
       fetchPartners();
       if (client?.id) {
         fetchContacts(client.id);
@@ -56,19 +59,36 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
     }
   }, [isOpen, client]);
 
+  // Handle ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   // EFEITO: Checagem de Duplicidade de Cliente (Nome)
   useEffect(() => {
     const checkDuplicates = async () => {
-        if (!formData.name || formData.name.length < 3) return setDuplicateClients([]);
-        
-        const { data } = await supabase
-            .from('clients')
-            .select('*')
-            .ilike('name', `%${formData.name}%`)
-            .neq('id', client?.id || '00000000-0000-0000-0000-000000000000') // Não comparar consigo mesmo
-            .limit(3);
-            
-        if (data) setDuplicateClients(data);
+      if (!formData.name || formData.name.length < 3) return setDuplicateClients([]);
+
+      const { data } = await supabase
+        .from('clients')
+        .select('*')
+        .ilike('name', `%${formData.name}%`)
+        .neq('id', client?.id || '00000000-0000-0000-0000-000000000000') // Não comparar consigo mesmo
+        .limit(3);
+
+      if (data) setDuplicateClients(data);
     };
 
     const timer = setTimeout(checkDuplicates, 500);
@@ -104,14 +124,14 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
   const handleContactChange = (index: number, field: keyof ClientContact, value: any) => {
     const newContacts = [...contacts];
     newContacts[index] = { ...newContacts[index], [field]: value };
-    
+
     // Se marcar como principal, desmarca os outros
     if (field === 'is_main_contact' && value === true) {
       newContacts.forEach((c, i) => {
         if (i !== index) c.is_main_contact = false;
       });
     }
-    
+
     setContacts(newContacts);
   };
 
@@ -122,7 +142,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
     try {
       const payload = { ...formData };
       delete (payload as any).contacts; // Remove virtual field if exists
-      
+
       // Limpeza de dados
       if (payload.cnpj) payload.cnpj = payload.cnpj.replace(/\D/g, '');
       if (!payload.cnpj) delete payload.cnpj;
@@ -154,7 +174,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
           if (contactsError) throw contactsError;
         }
       }
-      
+
       onSave();
       onClose();
     } catch (error: any) {
@@ -193,241 +213,336 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
     }
   };
 
+  const tabs = [
+    { id: 'dados', label: 'Dados do Cliente', icon: User },
+    { id: 'endereco', label: 'Endereço', icon: MapPin },
+    { id: 'contatos', label: 'Contatos', icon: Users },
+    { id: 'obs', label: 'Observações', icon: FileText },
+  ];
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in-95">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-          <h2 className="text-xl font-bold text-gray-800">{client ? 'Editar Cliente' : 'Novo Cliente'}</h2>
-          <button onClick={onClose}><X className="w-6 h-6 text-gray-400 hover:text-gray-600" /></button>
-        </div>
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl h-[85vh] flex overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
 
-        <div className="p-6 overflow-y-auto max-h-[80vh]">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            {/* COLUNA 1: DADOS CADASTRAIS */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-salomao-blue border-b pb-2">Informações Principais</h3>
-              
-              <div className="flex gap-4 items-start">
-                <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">CPF/CNPJ</label>
-                    <div className="flex gap-2">
-                      <input 
-                          type="text" 
-                          disabled={formData.is_person}
-                          className="flex-1 border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-salomao-blue disabled:bg-gray-100"
-                          value={formData.cnpj || ''}
-                          onChange={e => setFormData({...formData, cnpj: maskCNPJ(e.target.value)})}
-                          placeholder="00.000.000/0000-00"
-                      />
-                      <button 
-                          onClick={handleCNPJSearch} 
-                          disabled={formData.is_person || !formData.cnpj}
-                          className="p-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-50"
-                      >
-                          {searching ? <Loader2 className="w-4 h-4 animate-spin"/> : <Search className="w-4 h-4"/>}
-                      </button>
-                    </div>
-                    <div className="mt-2 flex items-center">
-                      <input 
-                          type="checkbox" 
-                          id="is_person" 
-                          checked={formData.is_person} 
-                          onChange={e => setFormData({...formData, is_person: e.target.checked, cnpj: undefined})}
-                          className="rounded text-salomao-blue"
-                      />
-                      <label htmlFor="is_person" className="ml-2 text-xs text-gray-500">Pessoa Física</label>
-                    </div>
-                </div>
-                <div className="flex-1">
-                  <CustomSelect 
-                    label="Sócio Responsável"
-                    value={formData.partner_id || ''}
-                    onChange={val => setFormData({...formData, partner_id: val})}
-                    options={[{label: 'Selecione', value: ''}, ...partners.map(p => ({label: p.name, value: p.id}))]}
-                  />
-                </div>
-              </div>
+        {/* Left Sidebar */}
+        <div className="w-72 bg-white border-r border-gray-100 flex flex-col py-8 px-5 shrink-0 overflow-y-auto">
+          <div className="mb-8 px-2">
+            <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight">
+              {client ? 'Editar Cliente' : 'Novo Cliente'}
+            </h2>
+            <p className="text-xs text-gray-400 mt-1 font-medium">
+              {client ? 'Gerencie os dados do cliente' : 'Cadastre um novo cliente'}
+            </p>
+          </div>
 
-              <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Nome Completo/Razão Social *</label>
-                  <input 
-                      type="text" 
-                      className={`w-full border rounded-lg p-2.5 text-sm outline-none focus:border-salomao-blue ${duplicateClients.length > 0 ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300'}`}
-                      value={formData.name}
-                      onChange={e => setFormData({...formData, name: toTitleCase(e.target.value)})}
-                  />
-                  {duplicateClients.length > 0 && (
-                      <div className="mt-2 p-2 bg-yellow-100 border border-yellow-200 rounded-lg">
-                          <div className="flex items-center gap-2 mb-1">
-                              <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                              <span className="text-xs font-bold text-yellow-700">Duplicidade encontrada:</span>
-                          </div>
-                          <ul className="space-y-1">
-                              {duplicateClients.map(dup => (
-                                  <li key={dup.id} className="text-[10px] text-yellow-800 bg-white/50 p-1 rounded">
-                                      {dup.name} {dup.cnpj ? ` - ${maskCNPJ(dup.cnpj)}` : ''}
-                                  </li>
-                              ))}
-                          </ul>
-                      </div>
-                  )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">E-mail Principal</label>
-                    <input 
-                        type="email" 
-                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
-                        value={formData.email || ''}
-                        onChange={e => setFormData({...formData, email: e.target.value})}
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Telefone Principal</label>
-                    <input 
-                        type="text" 
-                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
-                        value={formData.phone || ''}
-                        onChange={e => setFormData({...formData, phone: e.target.value})}
-                    />
-                </div>
-              </div>
-
-              <div className="pt-4 space-y-4">
-                <h3 className="text-xs font-black uppercase tracking-widest text-salomao-blue border-b pb-2">Endereço</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Logradouro</label>
-                    <input type="text" className="w-full border border-gray-300 rounded-lg p-2.5 text-sm" value={formData.address || ''} onChange={e => setFormData({...formData, address: toTitleCase(e.target.value)})} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Número</label>
-                    <input type="text" className="w-full border border-gray-300 rounded-lg p-2.5 text-sm" value={formData.number || ''} onChange={e => setFormData({...formData, number: e.target.value})} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Cidade</label>
-                    <input type="text" className="w-full border border-gray-300 rounded-lg p-2.5 text-sm" value={formData.city || ''} onChange={e => setFormData({...formData, city: toTitleCase(e.target.value)})} />
-                  </div>
-                  <div>
-                    <CustomSelect 
-                        label="Estado"
-                        value={formData.uf || ''}
-                        onChange={val => setFormData({...formData, uf: val})}
-                        options={UFS.map(u => ({label: u.nome, value: u.sigla}))}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* COLUNA 2: MULTI-CONTATOS */}
-            <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-salomao-blue">Pessoas de Contato</h3>
-                  <p className="text-[10px] text-gray-500 mt-1">Contatos internos deste cliente</p>
-                </div>
-                <button 
-                  onClick={handleAddContact}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-salomao-blue text-white rounded-lg text-[10px] font-black uppercase hover:bg-blue-900 transition-colors shadow-sm"
+          <div className="space-y-1 w-full flex-1">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center gap-3 p-3.5 rounded-xl transition-all text-left relative group ${isActive
+                    ? 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm'
+                    : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                    }`}
                 >
-                  <Plus className="w-3 h-3" /> Adicionar
+                  <div className={`p-1 rounded-lg transition-colors ${isActive ? 'text-[#1e3a8a]' : 'text-gray-300 group-hover:text-gray-500'}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-[0.1em] font-bold">{tab.label}</span>
+                  {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#1e3a8a] rounded-r-full" />}
                 </button>
-              </div>
+              );
+            })}
+          </div>
 
-              {contacts.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl">
-                  <UserPlus className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-xs text-gray-400 font-medium">Nenhum contato específico adicionado</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {contacts.map((contact, index) => (
-                    <div key={index} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3 relative group">
-                      <button 
-                        onClick={() => handleRemoveContact(index)}
-                        className="absolute top-2 right-2 p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2">
-                          <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nome Completo</label>
-                          <input 
-                            type="text" 
-                            className="w-full border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-salomao-blue"
-                            value={contact.name || ''}
-                            onChange={e => handleContactChange(index, 'name', e.target.value)}
-                            placeholder="Ex: João Diretor"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Cargo</label>
-                          <input 
-                            type="text" 
-                            className="w-full border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-salomao-blue"
-                            value={contact.role || ''}
-                            onChange={e => handleContactChange(index, 'role', e.target.value)}
-                            placeholder="Ex: Diretor Financeiro"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Telefone</label>
-                          <input 
-                            type="text" 
-                            className="w-full border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-salomao-blue"
-                            value={contact.phone || ''}
-                            onChange={e => handleContactChange(index, 'phone', e.target.value)}
-                            placeholder="(00) 00000-0000"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">E-mail</label>
-                          <input 
-                            type="email" 
-                            className="w-full border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-salomao-blue"
-                            value={contact.email || ''}
-                            onChange={e => handleContactChange(index, 'email', e.target.value)}
-                            placeholder="email@empresa.com"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center pt-1">
-                        <input 
-                          type="checkbox" 
-                          id={`main-${index}`}
-                          checked={contact.is_main_contact}
-                          onChange={e => handleContactChange(index, 'is_main_contact', e.target.checked)}
-                          className="rounded text-salomao-blue h-3 w-3"
-                        />
-                        <label htmlFor={`main-${index}`} className="ml-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Contato Principal</label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
+          <div className="mt-auto pt-6 border-t border-gray-100">
+            <button onClick={onClose} className="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-red-500 hover:bg-red-50 p-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest">
+              <X className="w-4 h-4" /> Fechar
+            </button>
           </div>
         </div>
 
-        <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
-            <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">Cancelar</button>
-            <button 
-                onClick={handleSave} 
-                disabled={loading}
-                className="px-8 py-2 bg-salomao-blue text-white rounded-lg hover:bg-blue-900 flex items-center shadow-lg transition-transform active:scale-95 font-bold"
+        {/* Right Content */}
+        <div className="flex-1 flex flex-col min-w-0 bg-[#fafafa]">
+          {/* Scrollable Body */}
+          <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar">
+
+            {activeTab === 'dados' && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <div className="flex gap-4 items-start">
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">CPF/CNPJ</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        disabled={formData.is_person}
+                        className="flex-1 bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] disabled:bg-gray-100 transition-all"
+                        value={formData.cnpj || ''}
+                        onChange={e => setFormData({ ...formData, cnpj: maskCNPJ(e.target.value) })}
+                        placeholder="00.000.000/0000-00"
+                      />
+                      <button
+                        onClick={handleCNPJSearch}
+                        disabled={formData.is_person || !formData.cnpj}
+                        className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-all"
+                      >
+                        {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <div className="mt-3 flex items-center ml-1">
+                      <input
+                        type="checkbox"
+                        id="is_person"
+                        checked={formData.is_person}
+                        onChange={e => setFormData({ ...formData, is_person: e.target.checked, cnpj: undefined })}
+                        className="rounded text-[#1e3a8a] focus:ring-[#1e3a8a]"
+                      />
+                      <label htmlFor="is_person" className="ml-2 text-xs font-bold text-gray-500">Pessoa Física</label>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Sócio Responsável</label>
+                    <CustomSelect
+                      value={formData.partner_id || ''}
+                      onChange={val => setFormData({ ...formData, partner_id: val })}
+                      options={[{ label: 'Selecione', value: '' }, ...partners.map(p => ({ label: p.name, value: p.id }))]}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo / Razão Social *</label>
+                  <input
+                    type="text"
+                    className={`w-full bg-white border rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all ${duplicateClients.length > 0 ? 'border-amber-400 bg-amber-50' : 'border-gray-200'}`}
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: toTitleCase(e.target.value) })}
+                    placeholder="Digite o nome do cliente"
+                  />
+                  {duplicateClients.length > 0 && (
+                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600" />
+                        <span className="text-xs font-bold text-amber-700">Possível Duplicidade Encontrada:</span>
+                      </div>
+                      <ul className="space-y-1 ml-6 list-disc">
+                        {duplicateClients.map(dup => (
+                          <li key={dup.id} className="text-[11px] text-amber-800 font-medium">
+                            {dup.name} {dup.cnpj ? ` - ${maskCNPJ(dup.cnpj)}` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">E-mail Principal</label>
+                    <input
+                      type="email"
+                      className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                      value={formData.email || ''}
+                      onChange={e => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="contato@empresa.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Telefone Principal</label>
+                    <input
+                      type="text"
+                      className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                      value={formData.phone || ''}
+                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'endereco' && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Logradouro</label>
+                    <input
+                      type="text"
+                      className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                      value={formData.address || ''}
+                      onChange={e => setFormData({ ...formData, address: toTitleCase(e.target.value) })}
+                      placeholder="Rua, Avenida..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Número</label>
+                    <input
+                      type="text"
+                      className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                      value={formData.number || ''}
+                      onChange={e => setFormData({ ...formData, number: e.target.value })}
+                      placeholder="123"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Complemento</label>
+                  <input
+                    type="text"
+                    className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                    value={formData.complement || ''}
+                    onChange={e => setFormData({ ...formData, complement: toTitleCase(e.target.value) })}
+                    placeholder="Sala, Apto..."
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cidade</label>
+                    <input
+                      type="text"
+                      className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                      value={formData.city || ''}
+                      onChange={e => setFormData({ ...formData, city: toTitleCase(e.target.value) })}
+                      placeholder="Cidade"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Estado</label>
+                    <CustomSelect
+                      value={formData.uf || ''}
+                      onChange={val => setFormData({ ...formData, uf: val })}
+                      options={UFS.map(u => ({ label: u.nome, value: u.sigla }))}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'contatos' && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[#0a192f]">Pessoas de Contato</h3>
+                    <p className="text-[11px] text-gray-400 font-medium">Contatos internos deste cliente</p>
+                  </div>
+                  <button
+                    onClick={handleAddContact}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-xl text-[10px] font-black uppercase hover:bg-[#112240] transition-all shadow-md active:scale-95"
+                  >
+                    <Plus className="w-3 h-3" /> Adicionar
+                  </button>
+                </div>
+
+                {contacts.length === 0 ? (
+                  <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                    <UserPlus className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                    <p className="text-xs text-gray-400 font-bold">Nenhum contato adicionado</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {contacts.map((contact, index) => (
+                      <div key={index} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4 relative group hover:border-blue-100 transition-all">
+                        <button
+                          onClick={() => handleRemoveContact(index)}
+                          className="absolute top-3 right-3 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="col-span-2">
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
+                            <input
+                              type="text"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
+                              value={contact.name || ''}
+                              onChange={e => handleContactChange(index, 'name', e.target.value)}
+                              placeholder="Ex: João Diretor"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cargo</label>
+                            <input
+                              type="text"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
+                              value={contact.role || ''}
+                              onChange={e => handleContactChange(index, 'role', e.target.value)}
+                              placeholder="Ex: Diretor Financeiro"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Telefone</label>
+                            <input
+                              type="text"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
+                              value={contact.phone || ''}
+                              onChange={e => handleContactChange(index, 'phone', e.target.value)}
+                              placeholder="(00) 00000-0000"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">E-mail</label>
+                            <input
+                              type="email"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
+                              value={contact.email || ''}
+                              onChange={e => handleContactChange(index, 'email', e.target.value)}
+                              placeholder="email@empresa.com"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center pt-2">
+                          <label className="flex items-center gap-2 cursor-pointer group/check">
+                            <input
+                              type="checkbox"
+                              checked={contact.is_main_contact}
+                              onChange={e => handleContactChange(index, 'is_main_contact', e.target.checked)}
+                              className="w-4 h-4 rounded text-[#1e3a8a] focus:ring-[#1e3a8a] border-gray-300"
+                            />
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover/check:text-[#1e3a8a] transition-colors">Contato Principal</span>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'obs' && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 h-full flex flex-col">
+                <div className="flex-1 flex flex-col">
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Observações Gerais</label>
+                  <textarea
+                    className="flex-1 w-full bg-white border border-gray-200 rounded-xl p-4 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all resize-none"
+                    value={formData.notes || ''}
+                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Adicione observações importantes sobre este cliente..."
+                  />
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          {/* Footer */}
+          <div className="px-10 py-6 border-t border-gray-100 flex justify-end gap-3 bg-white shrink-0">
+            <button onClick={onClose} className="px-6 py-2.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] hover:shadow-xl active:scale-95 disabled:opacity-50 transition-all"
             >
-                {loading ? 'Salvando...' : <><Save className="w-4 h-4 mr-2" /> Salvar Cadastro</>}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Salvar Registro
             </button>
+          </div>
         </div>
       </div>
     </div>
