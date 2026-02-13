@@ -1,6 +1,7 @@
 // src/components/finance/contasareceber/components/FinanceModalEnviarFatura.tsx
 import React, { useState, useRef, useEffect } from 'react';
-X,
+import {
+  X,
   Mail,
   Paperclip,
   AlertTriangle,
