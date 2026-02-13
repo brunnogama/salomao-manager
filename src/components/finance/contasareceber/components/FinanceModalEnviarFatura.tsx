@@ -232,14 +232,15 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
             <div className="space-y-1.5">
               <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Valor da Fatura (R$)</label>
               <div className="relative">
-                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-black">
+                  R$
+                </div>
                 <NumericFormat
                   value={valor}
                   onValueChange={(values) => setValor(values.value)}
                   placeholder="0,00"
                   thousandSeparator="."
                   decimalSeparator=","
-                  prefix="R$ "
                   decimalScale={2}
                   fixedDecimalScale
                   className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
@@ -290,9 +291,22 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                 accept=".pdf"
               />
               <Paperclip className="h-6 w-6 text-gray-400 group-hover:text-[#1e3a8a] mb-2" />
-              <span className="text-xs font-bold text-gray-500">
-                {arquivos.length > 0 ? `${arquivos.length} arquivo(s) selecionado(s)` : 'Clique para selecionar a fatura ou arraste aqui'}
-              </span>
+              <div className="text-center w-full">
+                {arquivos.length > 0 ? (
+                  <div className="flex flex-col gap-1 items-center">
+                    <span className="text-[10px] font-black uppercase text-gray-400 mb-1">{arquivos.length} ARQUIVO(S) SELECIONADO(S)</span>
+                    {arquivos.map((arq, idx) => (
+                      <span key={idx} className="text-xs font-bold text-[#1e3a8a] break-all">
+                        {arq.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-xs font-bold text-gray-500">
+                    Clique para selecionar a fatura ou arraste aqui
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
