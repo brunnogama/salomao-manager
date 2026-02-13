@@ -80,13 +80,15 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
   const handleClienteChange = (nome: string) => {
     setClienteNome(nome);
-    // Buscar email e ID do cliente selecionado
-    const cliente = clientes.find(c => c.name === nome);
+    // Buscar email e ID do cliente selecionado (Case insensitive e trim)
+    const termoBusca = nome.trim().toLowerCase();
+    const cliente = clientes.find(c => c.name.trim().toLowerCase() === termoBusca);
+
     if (cliente) {
       setClienteEmail(cliente.email || '');
       setClienteId(cliente.id);
     } else {
-      setClienteId(undefined); // Limpa ID se nome não bater (embora no SearchableSelect seja difícil)
+      setClienteId(undefined);
     }
   };
 
