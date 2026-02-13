@@ -308,7 +308,7 @@ export function FinanceContasReceber({
             </div>
 
             {/* Search Bar */}
-            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full md:w-64 shrink-0 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all mr-auto">
+            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 flex-1 shrink-0 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all mr-4">
               <Search className="h-4 w-4 text-gray-400 mr-3" />
               <input
                 type="text"
@@ -327,8 +327,8 @@ export function FinanceContasReceber({
                 value={selectedClient}
                 onChange={setSelectedClient}
                 options={uniqueClients.map(c => ({ id: c, name: c }))}
-                className="w-40" // Botão menor
-                dropdownWidth={300} // Dropdown largo
+                className="w-80" // Botão maior (dobrado)
+                dropdownWidth={320} // Dropdown ajustado
               />
 
               {/* DATA FILTER */}
