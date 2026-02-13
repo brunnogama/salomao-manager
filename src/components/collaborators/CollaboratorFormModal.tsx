@@ -87,6 +87,9 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
         leader_id: formData.leader_id || null
       };
 
+      console.log('DEBUG: Payload being sent:', payload);
+
+
       if (collaborator?.id) {
         const { error } = await supabase.from('collaborators').update(payload).eq('id', collaborator.id);
         if (error) throw error;
