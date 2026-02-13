@@ -180,6 +180,14 @@ export function FinanceContasReceber({
     return days
   }
 
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
 
@@ -390,7 +398,7 @@ export function FinanceContasReceber({
                           </td>
                           <td className="px-6 py-4 text-center">
                             <span className="text-[10px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-lg">
-                              {formatDate(dataRadar)}
+                              {formatDate(prazoFatal)}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-center">
