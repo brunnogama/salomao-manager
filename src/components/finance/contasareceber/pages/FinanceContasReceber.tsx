@@ -353,7 +353,7 @@ export function FinanceContasReceber({
             <select
               value={selectedClient}
               onChange={(e) => setSelectedClient(e.target.value)}
-              className="px-3 py-2 bg-white border border-gray-100 rounded-xl text-xs font-medium text-gray-600 outline-none focus:ring-2 focus:ring-[#1e3a8a]"
+              className="px-4 py-2 bg-gray-100/50 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all w-64 cursor-pointer"
             >
               <option value="">Todos os Clientes</option>
               {uniqueClients.map(client => (
