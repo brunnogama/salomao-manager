@@ -343,7 +343,7 @@ export function FinanceContasReceber({
                 value={selectedClient}
                 onChange={setSelectedClient}
                 options={uniqueClients.map(c => ({ id: c, name: c }))}
-                className="min-w-[600px]"
+                className="w-[300px]"
                 dropdownWidth={600}
                 align="right"
               />
