@@ -11,6 +11,7 @@ import {
   Plus,
   DollarSign
 } from 'lucide-react';
+import { NumericFormat } from 'react-number-format';
 import { SearchableSelect } from '../../../SearchableSelect';
 import { useFinanceContasReceber } from '../hooks/useFinanceContasReceber';
 import { supabase } from '../../../../lib/supabase';
@@ -123,7 +124,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       await enviarFatura({
         cliente_nome: clienteNome,
         cliente_email: clienteEmail,
-        valor: parseFloat(valor.replace(',', '.')),
+        valor: parseFloat(valor),
         remetente,
         assunto,
         corpo,
@@ -226,11 +227,15 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Valor da Fatura (R$)</label>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
+                <NumericFormat
                   value={valor}
-                  onChange={(e) => setValor(e.target.value)}
+                  onValueChange={(values) => setValor(values.value)}
                   placeholder="0,00"
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  prefix="R$ "
+                  decimalScale={2}
+                  fixedDecimalScale
                   className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
                   required
                 />
