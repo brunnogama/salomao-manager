@@ -455,30 +455,31 @@ export function FinanceContasReceber({
             </div>
           )}
         </div>
-
-        <FinanceModalEnviarFatura
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          userEmail={userEmail}
-        />
-
-        {selectedFatura && (
-          <FinanceModalDetalhesFatura
-            isOpen={isDetailsModalOpen}
-            onClose={() => setIsDetailsModalOpen(false)}
-            fatura={selectedFatura}
-          />
-        )}
-
-        {faturaParaEditar && (
-          <FinanceModalEditarDatas
-            isOpen={isEditDateModalOpen}
-            onClose={() => setIsEditDateModalOpen(false)}
-            faturaId={faturaParaEditar.id}
-            dataRespostaAtual={faturaParaEditar.data_resposta}
-            dataRadarAtual={faturaParaEditar.data_radar}
-          />
-        )}
       </div>
-      )
+
+      <FinanceModalEnviarFatura
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        userEmail={userEmail}
+      />
+
+      {selectedFatura && (
+        <FinanceModalDetalhesFatura
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
+          fatura={selectedFatura}
+        />
+      )}
+
+      {faturaParaEditar && (
+        <FinanceModalEditarDatas
+          isOpen={isEditDateModalOpen}
+          onClose={() => setIsEditDateModalOpen(false)}
+          faturaId={faturaParaEditar.id}
+          dataRespostaAtual={faturaParaEditar.data_resposta}
+          dataRadarAtual={faturaParaEditar.data_radar}
+        />
+      )}
+    </div>
+  )
 }
