@@ -331,24 +331,29 @@ export function FinanceContasReceber({
                 className="min-w-[200px]"
               />
 
-              {/* DATA FILTER - Styled similar to SearchableSelect */}
-              <div className="bg-gray-100/50 border border-gray-200 rounded-xl p-2 px-3 flex items-center gap-2 h-[46px] min-w-fit">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-1">Período:</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[95px]"
-                />
-                <span className="text-gray-400">-</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[95px]"
-                />
+              {/* DATA FILTER - Styled to match SearchableSelect */}
+              <div className="bg-gray-100/50 border border-gray-200 rounded-xl p-3 flex items-center gap-3 h-[46px] min-w-fit hover:bg-white hover:border-[#1e3a8a] transition-all group cursor-pointer relative">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Período</span>
+                  <div className="h-4 w-[1px] bg-gray-300 mx-1" />
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="bg-transparent text-xs font-medium text-gray-600 outline-none w-[90px] p-0 border-none focus:ring-0 cursor-pointer"
+                    />
+                    <span className="text-gray-400 text-[10px]">até</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="bg-transparent text-xs font-medium text-gray-600 outline-none w-[90px] p-0 border-none focus:ring-0 cursor-pointer"
+                    />
+                  </div>
+                </div>
                 {(startDate || endDate) && (
-                  <button onClick={() => { setStartDate(''); setEndDate('') }} className="ml-1 p-1 hover:bg-red-50 text-red-500 rounded-full"><X className="h-3 w-3" /></button>
+                  <button onClick={() => { setStartDate(''); setEndDate('') }} className="hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full p-0.5 transition-colors absolute right-2"><X className="h-3.5 w-3.5" /></button>
                 )}
               </div>
 
@@ -375,111 +380,114 @@ export function FinanceContasReceber({
         )}
 
         {/* CONTEÚDO DINÂMICO */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden min-h-[450px]">
-          {loading ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1 flex flex-col min-h-[450px]">
+          {loading && (
             <div className="flex flex-col items-center justify-center py-32 text-gray-400">
               <Loader2 className="h-8 w-8 animate-spin mb-4 text-[#1e3a8a]" />
               <p className="font-bold text-[10px] uppercase tracking-[0.3em]">Processando dados...</p>
             </div>
-          ) : activeTab === 'lista' ? (
+          )}
+
+          {!loading && activeTab === 'lista' && (
             filteredFaturas.length > 0 ? (
-              filteredFaturas.length > 0 ? (
-                <div className="overflow-x-auto h-full custom-scrollbar">
-                  <table className="w-full">
-                    <thead className="bg-gray-50/50 border-b border-gray-100">
-                      <tr>
-                        <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">ID</th>
-                        <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cliente</th>
-                        <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Assunto</th>
-                        <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Envio</th>
-                        <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Resposta</th>
-                        <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Prazo Fatal</th>
-                        <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                        <th className="px-6 py-5 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {filteredFaturas.map((fatura, index) => {
-                        const style = getStatusStyles(fatura.status);
-                        const dataEnvio = new Date(fatura.data_envio);
-                        let dataResposta = new Date(dataEnvio);
-                        if (fatura.data_resposta) dataResposta = new Date(fatura.data_resposta);
-                        else dataResposta.setDate(dataResposta.getDate() + 2);
+              <div className="overflow-auto h-full custom-scrollbar">
+                <table className="w-full">
+                  <thead className="bg-gray-50/50 border-b border-gray-100 sticky top-0 z-10 backdrop-blur-sm">
+                    <tr>
+                      <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] w-20">ID</th>
+                      <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cliente</th>
+                      <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Assunto</th>
+                      <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Envio</th>
+                      <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Resposta</th>
+                      <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Prazo Fatal</th>
+                      <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                      <th className="px-6 py-5 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredFaturas.map((fatura) => {
+                      const style = getStatusStyles(fatura.status);
+                      const dataEnvio = new Date(fatura.data_envio);
+                      let dataResposta = new Date(dataEnvio);
+                      if (fatura.data_resposta) dataResposta = new Date(fatura.data_resposta);
+                      else dataResposta.setDate(dataResposta.getDate() + 2);
 
-                        let prazoFatal = new Date(dataEnvio);
-                        if (fatura.data_radar) prazoFatal = new Date(fatura.data_radar);
-                        else prazoFatal.setDate(prazoFatal.getDate() + 4);
+                      let prazoFatal = new Date(dataEnvio);
+                      if (fatura.data_radar) prazoFatal = new Date(fatura.data_radar);
+                      else prazoFatal.setDate(prazoFatal.getDate() + 4);
 
-                        return (
-                          <tr
-                            key={fatura.id}
-                            onClick={() => handleOpenDetails(fatura)}
-                            className="hover:bg-blue-50/30 cursor-pointer transition-colors group"
-                          >
-                            <td className="px-6 py-4">
-                              <span className="text-[10px] font-black text-gray-400">{formatInvoiceId(fatura.id)}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex flex-col">
-                                <span className="font-bold text-sm text-[#0a192f]">{fatura.cliente_nome}</span>
-                                <span className="text-[10px] text-gray-400 font-medium">{fatura.cliente_email}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="text-sm font-semibold text-gray-600 line-clamp-1">{fatura.assunto}</span>
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-[11px] font-bold text-gray-600">{dataEnvio.toLocaleDateString()}</span>
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-[11px] font-bold text-blue-600">{formatDate(dataResposta)}</span>
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-[10px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-lg">{formatDate(prazoFatal)}</span>
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${style.bg.replace('bg-', 'text-').replace('600', '700')} bg-opacity-10 border-opacity-20`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${style.bg}`} />
-                                {style.label}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {fatura.status !== 'pago' && (
-                                  <>
-                                    <button onClick={(e) => { e.stopPropagation(); handleConfirmarPagamento(fatura.id, fatura.cliente_nome) }} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all hover:scale-110 active:scale-95" title="Confirmar Recebimento"><Check className="h-4 w-4" /></button>
-                                    <button onClick={(e) => handleOpenEditDates(e, fatura)} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95" title="Editar Prazos"><Pencil className="h-4 w-4" /></button>
-                                  </>
-                                )}
-                                <button onClick={(e) => handleDeleteFatura(e, fatura)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95" title="Excluir"><Trash2 className="h-4 w-4" /></button>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="p-20 flex flex-col items-center justify-center text-center">
-                  <FileText className="h-12 w-12 mb-4 text-gray-200" />
-                  <p className="font-bold text-[10px] uppercase tracking-[0.3em] text-gray-300">Nenhuma fatura encontrada</p>
-                </div>
-              )
-            ) : (
-              <div className="flex flex-col h-full">
-                <div className="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">
-                  {DIAS_SEMANA.map((dia) => (
-                    <div key={dia} className="bg-gray-50 py-2 text-center text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                      {dia}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 flex-1">
-                  {renderCalendarDays()}
-                </div>
+                      return (
+                        <tr
+                          key={fatura.id}
+                          onClick={() => handleOpenDetails(fatura)}
+                          className="hover:bg-blue-50/30 cursor-pointer transition-colors group"
+                        >
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-[10px] font-black text-gray-400">{formatInvoiceId(fatura.id)}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-sm text-[#0a192f]">{fatura.cliente_nome}</span>
+                              <span className="text-[10px] text-gray-400 font-medium">{fatura.cliente_email}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-sm font-semibold text-gray-600 line-clamp-1">{fatura.assunto}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-[11px] font-bold text-gray-600">{dataEnvio.toLocaleDateString()}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-[11px] font-bold text-blue-600">{formatDate(dataResposta)}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-[10px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-lg">{formatDate(prazoFatal)}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${style.bg.replace('bg-', 'text-').replace('600', '700')} bg-opacity-10 border-opacity-20`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${style.bg}`} />
+                              {style.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {fatura.status !== 'pago' && (
+                                <>
+                                  <button onClick={(e) => { e.stopPropagation(); handleConfirmarPagamento(fatura.id, fatura.cliente_nome) }} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all hover:scale-110 active:scale-95" title="Confirmar Recebimento"><Check className="h-4 w-4" /></button>
+                                  <button onClick={(e) => handleOpenEditDates(e, fatura)} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95" title="Editar Prazos"><Pencil className="h-4 w-4" /></button>
+                                </>
+                              )}
+                              <button onClick={(e) => handleDeleteFatura(e, fatura)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95" title="Excluir"><Trash2 className="h-4 w-4" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
-            )}
+            ) : (
+              <div className="flex flex-col items-center justify-center p-12 text-gray-400">
+                <FileText className="h-12 w-12 mb-4 opacity-20" />
+                <p className="text-sm font-medium">Nenhuma fatura encontrada</p>
+              </div>
+            )
+          )}
+
+          {!loading && activeTab === 'calendario' && (
+            <div className="flex flex-col h-full">
+              <div className="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">
+                {DIAS_SEMANA.map((dia) => (
+                  <div key={dia} className="bg-gray-50 py-2 text-center text-[10px] font-black uppercase text-gray-400 tracking-widest">
+                    {dia}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 flex-1">
+                {renderCalendarDays()}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
