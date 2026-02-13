@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   ArrowDownCircle,
   Filter,
@@ -14,10 +14,14 @@ import {
   Calendar as CalendarIcon,
   List,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Pencil,
+  Trash2,
+  X
 } from 'lucide-react'
 import { FinanceModalEnviarFatura } from '../components/FinanceModalEnviarFatura'
 import { FinanceModalDetalhesFatura } from '../components/FinanceModalDetalhesFatura'
+import { FinanceModalEditarDatas } from '../components/FinanceModalEditarDatas'
 import { useFinanceContasReceber, FaturaStatus, Fatura } from '../hooks/useFinanceContasReceber'
 
 interface FinanceContasReceberProps {
@@ -42,8 +46,24 @@ export function FinanceContasReceber({
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [selectedFatura, setSelectedFatura] = useState<Fatura | null>(null)
 
+  // Estado para modal de edição de datas
+  const [isEditDateModalOpen, setIsEditDateModalOpen] = useState(false)
+  const [faturaParaEditar, setFaturaParaEditar] = useState<Fatura | null>(null)
+
   const [currentDate, setCurrentDate] = useState(new Date())
-  const { faturas, loading, confirmarPagamento } = useFinanceContasReceber()
+  const { faturas, loading, confirmarPagamento, excluirFatura } = useFinanceContasReceber()
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsModalOpen(false);
+        setIsDetailsModalOpen(false);
+        setIsEditDateModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay()
@@ -61,6 +81,23 @@ export function FinanceContasReceber({
   const handleOpenDetails = (fatura: Fatura) => {
     setSelectedFatura(fatura)
     setIsDetailsModalOpen(true)
+  }
+
+  const handleOpenEditDates = (e: React.MouseEvent, fatura: Fatura) => {
+    e.stopPropagation();
+    setFaturaParaEditar(fatura);
+    setIsEditDateModalOpen(true);
+  }
+
+  const handleDeleteFatura = async (e: React.MouseEvent, fatura: Fatura) => {
+    e.stopPropagation();
+    if (confirm(`ATENÇÃO: Deseja realmente excluir a fatura de ${fatura.cliente_nome}? Esta ação não pode ser desfeita.`)) {
+      try {
+        await excluirFatura(fatura.id);
+      } catch (error: any) {
+        alert("Erro ao excluir: " + error.message);
+      }
+    }
   }
 
   const getStatusStyles = (status: FaturaStatus) => {
@@ -89,7 +126,8 @@ export function FinanceContasReceber({
   }
 
   const filteredFaturas = faturas.filter(f =>
-    f.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase())
+    f.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    f.assunto?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const renderCalendarDays = () => {
@@ -153,7 +191,7 @@ export function FinanceContasReceber({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-6 w-full">
+      <div className="max-w-[1600px] mx-auto space-y-6 w-full">
 
         {/* BOTÕES DE VISUALIZAÇÃO - LINHA PRÓPRIA */}
         <div className="flex bg-gray-100 p-1.5 rounded-xl w-fit shadow-sm">
@@ -184,7 +222,7 @@ export function FinanceContasReceber({
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar por cliente..."
+                placeholder="Buscar por cliente ou assunto..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-xl shadow-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium text-sm"
@@ -241,10 +279,10 @@ export function FinanceContasReceber({
                     <tr className="bg-gray-50/50 border-b border-gray-100">
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-16">#</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Assunto</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Data Envio</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Data Resposta (+2d)</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center text-red-500">Prazo Fatal (+4d)</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Valor</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</th>
                     </tr>
@@ -254,23 +292,37 @@ export function FinanceContasReceber({
                       const style = getStatusStyles(fatura.status);
                       const dataEnvio = new Date(fatura.data_envio);
 
-                      const dataResposta = new Date(dataEnvio);
-                      dataResposta.setDate(dataResposta.getDate() + 2);
+                      // Calcula datas visuais (se não houver overrides no banco)
+                      // Se fatura.data_resposta existe, usa ela. Senão +2d
+                      let dataResposta = new Date(dataEnvio);
+                      if (fatura.data_resposta) {
+                        dataResposta = new Date(fatura.data_resposta);
+                      } else {
+                        dataResposta.setDate(dataResposta.getDate() + 2);
+                      }
 
-                      const prazoFatal = new Date(dataEnvio);
-                      prazoFatal.setDate(prazoFatal.getDate() + 4);
+                      // Se fatura.data_radar existe, usa ela (que estamos usando como Prazo Fatal visual). Senão +4d
+                      let prazoFatal = new Date(dataEnvio);
+                      if (fatura.data_radar) {
+                        prazoFatal = new Date(fatura.data_radar);
+                      } else {
+                        prazoFatal.setDate(prazoFatal.getDate() + 4);
+                      }
 
                       return (
                         <tr
                           key={fatura.id}
                           className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
-                          onClick={() => handleOpenDetails(fatura)} // TODO: Implementar handleOpenDetails
+                          onClick={() => handleOpenDetails(fatura)}
                         >
                           <td className="px-6 py-4 text-center">
                             <span className="text-[10px] font-bold text-gray-300">#{String(index + 1).padStart(2, '0')}</span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-sm font-bold text-[#0a192f] block">{fatura.cliente_nome}</span>
+                            <span className="text-xs font-bold text-[#0a192f] block">{fatura.cliente_nome}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-xs font-medium text-gray-600 block truncate max-w-[200px]">{fatura.assunto}</span>
                           </td>
                           <td className="px-6 py-4 text-center">
                             <span className="text-xs font-medium text-gray-500">{dataEnvio.toLocaleDateString('pt-BR')}</span>
@@ -280,11 +332,6 @@ export function FinanceContasReceber({
                           </td>
                           <td className="px-6 py-4 text-center">
                             <span className="text-xs font-bold text-red-600">{prazoFatal.toLocaleDateString('pt-BR')}</span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="text-sm font-black text-[#1e3a8a]">
-                              {Number(fatura.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                            </span>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex justify-center">
@@ -297,9 +344,30 @@ export function FinanceContasReceber({
                           <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-2">
                               {fatura.status !== 'pago' && (
-                                <button onClick={() => handleConfirmarPagamento(fatura.id, fatura.cliente_nome)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Confirmar Recebimento"><Check className="h-4 w-4" /></button>
+                                <>
+                                  <button
+                                    onClick={() => handleConfirmarPagamento(fatura.id, fatura.cliente_nome)}
+                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                    title="Confirmar Recebimento"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => handleOpenEditDates(e, fatura)}
+                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                    title="Editar Prazos"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </button>
+                                </>
                               )}
-                              <button className="p-2 text-gray-400 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-all"><FileText className="h-4 w-4" /></button>
+                              <button
+                                onClick={(e) => handleDeleteFatura(e, fatura)}
+                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                title="Excluir Fatura"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -310,15 +378,17 @@ export function FinanceContasReceber({
               </div>
             ) : (
               <div className="p-20 flex flex-col items-center justify-center text-center">
-                <Mail className="h-12 w-12 text-[#1e3a8a] opacity-20 mb-4" />
-                <h2 className="text-xl font-black text-[#0a192f]">Nenhuma fatura encontrada</h2>
+                <FileText className="h-12 w-12 mb-4 text-gray-200" />
+                <p className="font-bold text-[10px] uppercase tracking-[0.3em] text-gray-300">Nenhuma fatura encontrada</p>
               </div>
             )
           ) : (
             <div className="flex flex-col h-full">
-              <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-100">
-                {DIAS_SEMANA.map(d => (
-                  <div key={d} className="py-3 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">{d}</div>
+              <div className="grid grid-cols-7 gap-px bg-gray-100 border-b border-gray-100">
+                {DIAS_SEMANA.map((dia) => (
+                  <div key={dia} className="bg-gray-50 py-2 text-center text-[10px] font-black uppercase text-gray-400 tracking-widest">
+                    {dia}
+                  </div>
                 ))}
               </div>
               <div className="grid grid-cols-7 flex-1">
@@ -335,11 +405,23 @@ export function FinanceContasReceber({
         userEmail={userEmail}
       />
 
-      <FinanceModalDetalhesFatura
-        isOpen={isDetailsModalOpen}
-        onClose={() => setIsDetailsModalOpen(false)}
-        fatura={selectedFatura}
-      />
+      {selectedFatura && (
+        <FinanceModalDetalhesFatura
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
+          fatura={selectedFatura}
+        />
+      )}
+
+      {faturaParaEditar && (
+        <FinanceModalEditarDatas
+          isOpen={isEditDateModalOpen}
+          onClose={() => setIsEditDateModalOpen(false)}
+          faturaId={faturaParaEditar.id}
+          dataRespostaAtual={faturaParaEditar.data_resposta}
+          dataRadarAtual={faturaParaEditar.data_radar}
+        />
+      )}
     </div>
   )
 }

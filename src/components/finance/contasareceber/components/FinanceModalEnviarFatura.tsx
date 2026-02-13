@@ -162,6 +162,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       });
       alert("Fatura enviada com sucesso! O acompanhamento de 2d + 2d foi iniciado.");
       onClose();
+      window.location.reload(); // Recarregar página para atualizar lista
     } catch (error: any) {
       alert("Erro ao processar envio: " + error.message);
     } finally {
@@ -224,14 +225,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               nameField="name"
               className="w-full"
             />
-            {isExternalDomain(clienteEmail) && (
-              <div className="flex items-center gap-2 mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
-                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-                <p className="text-[11px] text-amber-800 font-bold italic">
-                  Domínio externo detectado.
-                </p>
-              </div>
-            )}
+
           </div>
 
           {/* E-MAIL CLIENTE E VALOR - LADO A LADO */}

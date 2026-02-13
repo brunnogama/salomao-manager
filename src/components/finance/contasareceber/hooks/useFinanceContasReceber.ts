@@ -217,8 +217,55 @@ export function useFinanceContasReceber() {
       if (error) throw error;
 
       await loadFaturas();
+      await loadFaturas();
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
+      throw error;
+    }
+  };
+
+  // Excluir fatura
+  const excluirFatura = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('finance_faturas')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await loadFaturas();
+    } catch (error) {
+      console.error('Erro ao excluir fatura:', error);
+      throw error;
+    }
+  };
+
+  // Atualizar datas (Resposta e Radar/Fatal)
+  const atualizarDatasFatura = async (id: string, dataResposta?: string, dataRadar?: string) => {
+    try {
+      const updates: any = { updated_at: new Date().toISOString() };
+      if (dataResposta) updates.data_resposta = dataResposta;
+      if (dataRadar) updates.data_radar = dataRadar; // Usando data_radar como "Prazo Fatal" visualmente ou criando campo novo se necessário. 
+      // Nota: O user pediu para editar "Data Resposta" e "Prazo Fatal". 
+      // No código anterior, "Prazo Fatal" era calculado (+4d). Se ele quer editar, precisamos persistir isso.
+      // Vou assumir que 'data_radar' será usado para armazenar essa data personalizada ou criar um campo novo seria ideal, 
+      // mas para não alterar schema agora, vou usar os campos existentes de data se possível, 
+      // ou apenas permitir alterar a data base de envio?
+      // O user disse "editar as datas de resposta e fatal".
+      // Se essas datas são calculadas baseadas no envio, talvez ele queira editar a DATA DE ENVIO?
+      // Ou ele quer definir datas explícitas que sobrescrevem o cálculo?
+      // Vou permitir editar `data_resposta` e `data_radar` (que era +4d no calculo visual).
+
+      const { error } = await supabase
+        .from('finance_faturas')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+      await loadFaturas();
+    } catch (error) {
+      console.error('Erro ao atualizar datas:', error);
       throw error;
     }
   };
@@ -229,6 +276,8 @@ export function useFinanceContasReceber() {
     enviarFatura,
     confirmarPagamento,
     atualizarStatus,
+    excluirFatura,
+    atualizarDatasFatura,
     recarregar: loadFaturas
   };
 }
