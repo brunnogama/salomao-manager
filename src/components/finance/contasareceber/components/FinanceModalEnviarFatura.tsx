@@ -78,15 +78,25 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     }
   };
 
-  const handleClienteChange = (nome: string) => {
-    setClienteNome(nome);
-    // Buscar email e ID do cliente selecionado (Case insensitive e trim)
-    const termoBusca = nome.trim().toLowerCase();
-    const cliente = clientes.find(c => c.name.trim().toLowerCase() === termoBusca);
+  const handleClienteChange = (valor: string) => {
+    // 1. Tentar encontrar por ID (comportamento do SearchableSelect ao clicar)
+    const clientePorId = clientes.find(c => c.id?.toString() === valor);
 
-    if (cliente) {
-      setClienteEmail(cliente.email || '');
-      setClienteId(cliente.id);
+    if (clientePorId) {
+      setClienteNome(clientePorId.name); // Garante que o estado tenha o NOME, não o UUID
+      setClienteEmail(clientePorId.email || '');
+      setClienteId(clientePorId.id);
+      return;
+    }
+
+    // 2. Fallback: Tentar encontrar por Nome (caso venha texto ou limpeza)
+    setClienteNome(valor);
+    const termoBusca = valor.trim().toLowerCase();
+    const clientePorNome = clientes.find(c => c.name.trim().toLowerCase() === termoBusca);
+
+    if (clientePorNome) {
+      setClienteEmail(clientePorNome.email || '');
+      setClienteId(clientePorNome.id);
     } else {
       setClienteId(undefined);
     }
