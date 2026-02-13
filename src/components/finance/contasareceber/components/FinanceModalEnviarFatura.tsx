@@ -123,6 +123,11 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       if (!confirmSend) return;
     }
 
+    if (!clienteId) {
+      alert("Por favor, selecione um cliente válido da lista. Se for um novo cliente, cadastre-o primeiro.");
+      return;
+    }
+
     setLoading(true);
     try {
       await enviarFatura({
