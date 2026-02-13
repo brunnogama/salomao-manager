@@ -1,15 +1,13 @@
 // src/components/finance/contasareceber/components/FinanceModalEnviarFatura.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  X,
+X,
   Mail,
   Paperclip,
   AlertTriangle,
   Send,
   Loader2,
   Info,
-  Plus,
-  DollarSign
+  Plus
 } from 'lucide-react';
 import { NumericFormat } from 'react-number-format';
 import { SearchableSelect } from '../../../SearchableSelect';
