@@ -27,6 +27,7 @@ export interface Fatura {
 interface EnviarFaturaParams {
   cliente_nome: string;
   cliente_email: string;
+  cliente_id?: string;
   valor: number;
   remetente: string;
   assunto: string;
@@ -88,9 +89,10 @@ export function useFinanceContasReceber() {
     }
 
     try {
-      // 1. Buscar ID do cliente se existir (Proteção contra undefined para evitar erro 406)
-      let cliente_id = null;
-      if (params.cliente_email) {
+      // 1. Definir ID do cliente (Prioridade: ID explícito > Busca por Email)
+      let cliente_id = params.cliente_id || null;
+
+      if (!cliente_id && params.cliente_email) {
         const { data: clienteData } = await supabase
           .from('clients')
           .select('id')

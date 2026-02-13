@@ -29,6 +29,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const [loading, setLoading] = useState(false);
   const [clienteNome, setClienteNome] = useState('');
   const [clienteEmail, setClienteEmail] = useState('');
+  const [clienteId, setClienteId] = useState<string | undefined>(undefined);
   const [valor, setValor] = useState('');
   const [remetente, setRemetente] = useState(userEmail);
   const [assunto, setAssunto] = useState('');
@@ -80,10 +81,13 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
   const handleClienteChange = (nome: string) => {
     setClienteNome(nome);
-    // Buscar email do cliente selecionado
+    // Buscar email e ID do cliente selecionado
     const cliente = clientes.find(c => c.name === nome);
     if (cliente) {
       setClienteEmail(cliente.email || '');
+      setClienteId(cliente.id);
+    } else {
+      setClienteId(undefined); // Limpa ID se nome não bater (embora no SearchableSelect seja difícil)
     }
   };
 
@@ -92,6 +96,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     if (savedClient) {
       setClienteNome(savedClient.name);
       setClienteEmail(savedClient.email || '');
+      setClienteId(savedClient.id);
     }
     setShowClientModal(false);
   };
@@ -124,6 +129,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       await enviarFatura({
         cliente_nome: clienteNome,
         cliente_email: clienteEmail,
+        cliente_id: clienteId,
         valor: parseFloat(valor),
         remetente,
         assunto,
