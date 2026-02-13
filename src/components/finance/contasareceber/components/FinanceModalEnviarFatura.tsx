@@ -312,18 +312,20 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
           {/* PAINEL DE ADICIONAR CLIENTE */}
           {showAdicionar && (
-            <div className="bg-blue-50 border-2 border-[#1e3a8a] rounded-xl p-5 space-y-4 animate-in slide-in-from-top duration-200">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-lg space-y-6 animate-in slide-in-from-top duration-200 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-[#1e3a8a]"></div>
+
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
                 <Users className="h-5 w-5 text-[#1e3a8a]" />
                 <h4 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">
                   Cadastro de Cliente
                 </h4>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* CNPJ */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
                     CNPJ *
                   </label>
                   <div className="relative">
@@ -333,7 +335,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                       onChange={(e) => handleCNPJChange(e.target.value)}
                       placeholder="00.000.000/0000-00"
                       maxLength={18}
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
                     />
                     {searchingCNPJ && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -344,8 +346,8 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                 </div>
 
                 {/* NOME */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
                     Nome/Razão Social *
                   </label>
                   <input
@@ -353,13 +355,13 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                     value={novoClienteNome}
                     onChange={(e) => setNovoClienteNome(e.target.value)}
                     placeholder="Nome do cliente"
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
                   />
                 </div>
 
                 {/* E-MAIL */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
                     E-mail *
                   </label>
                   <input
@@ -367,29 +369,25 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                     value={novoClienteEmail}
                     onChange={(e) => setNovoClienteEmail(e.target.value)}
                     placeholder="cliente@empresa.com.br"
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
                   />
                 </div>
 
                 {/* SÓCIO RESPONSÁVEL */}
-                <div className="md:col-span-3 space-y-1.5">
-                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
-                    Sócio Responsável
-                  </label>
-                  <select
+                <div className="md:col-span-3">
+                  <SearchableSelect
+                    label="Sócio Responsável"
                     value={novoClientePartnerId}
-                    onChange={(e) => setNovoClientePartnerId(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
-                  >
-                    <option value="">Selecione um sócio...</option>
-                    {partners.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+                    onChange={setNovoClientePartnerId}
+                    options={partners}
+                    nameField="name"
+                    placeholder="Selecione um sócio..."
+                    className="w-full"
+                  />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -397,7 +395,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                     setNovoClienteNome('');
                     setNovoClienteEmail('');
                   }}
-                  className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 transition-colors"
+                  className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   Limpar
                 </button>
@@ -405,12 +403,12 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                   type="button"
                   onClick={handleSaveCliente}
                   disabled={savingCliente || !clienteCNPJ || !novoClienteNome || !novoClienteEmail}
-                  className="flex items-center gap-2 px-5 py-2 bg-[#1e3a8a] text-white rounded-lg font-black text-[10px] uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {savingCliente ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Save className="h-3 w-3" />
+                    <Save className="h-3.5 w-3.5" />
                   )}
                   Salvar Cliente
                 </button>
