@@ -44,7 +44,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   }
 
   const fetchCount = async () => {
-    const { data } = await supabase.from('clients').select('*')
+    const { data } = await supabase
+      .from('clients')
+      .select('*, contracts!inner(status)')
+      .in('contracts.status', ['proposal_sent', 'closed'])
     if (data) {
       const count = data.filter((c: any) => {
         const ignored = c.ignored_fields || []

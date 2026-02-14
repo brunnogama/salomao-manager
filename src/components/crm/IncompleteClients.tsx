@@ -54,7 +54,10 @@ export function IncompleteClients({
 
   const fetchIncompleteClients = async () => {
     setLoading(true)
-    const { data } = await supabase.from('clients').select('*')
+    const { data } = await supabase
+      .from('clients')
+      .select('*, contracts!inner(status)')
+      .in('contracts.status', ['proposal_sent', 'closed'])
 
     if (data) {
       const incomplete = data.filter((c: any) => {

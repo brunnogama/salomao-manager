@@ -127,9 +127,12 @@ export function Finance() {
       .order('due_date', { ascending: true });
 
     if (installmentsData) {
-      const activeInstallments = installmentsData.filter((i: any) => i.contract?.status === 'active');
+      const allowedStatuses = ['proposal_sent', 'closed'];
+      const filteredInstallments = installmentsData.filter((i: any) =>
+        i.contract?.status && allowedStatuses.includes(i.contract.status)
+      );
 
-      const formatted = activeInstallments.map((i: any) => ({
+      const formatted = filteredInstallments.map((i: any) => ({
         ...i,
         contract: {
           ...i.contract,

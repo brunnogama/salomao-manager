@@ -87,13 +87,15 @@ export function Dashboard({
     try {
       const { data: lastClients } = await supabase
         .from('clients')
-        .select('*')
+        .select('*, contracts!inner(status)')
+        .in('contracts.status', ['proposal_sent', 'closed'])
         .order('created_at', { ascending: false })
         .limit(10);
 
       const { data: allData } = await supabase
         .from('clients')
-        .select('tipo_brinde, socio, estado');
+        .select('tipo_brinde, socio, estado, contracts!inner(status)')
+        .in('contracts.status', ['proposal_sent', 'closed']);
 
       const { data: magistradosData } = await supabase
         .from('magistrados')
