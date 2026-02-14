@@ -377,10 +377,14 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                         <input
                                             type="number"
                                             min="1"
-                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
-                                            value={formData.gift_quantity || 1}
+                                            disabled={formData.gift_type === 'Não recebe'}
+                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                            value={formData.gift_type === 'Não recebe' ? 0 : (formData.gift_quantity || 1)}
                                             onChange={e => setFormData({ ...formData, gift_quantity: parseInt(e.target.value) || 1 })}
                                         />
+                                        {formData.gift_type === 'Não recebe' && (
+                                            <p className="text-xs text-gray-400 mt-1 ml-1">Quantidade desativada para "Não recebe"</p>
+                                        )}
                                     </div>
                                 </div>
 

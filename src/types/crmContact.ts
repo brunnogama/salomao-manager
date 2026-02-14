@@ -70,3 +70,20 @@ export const getGiftBadgeColor = (giftType?: string): string => {
             return 'bg-gray-100 text-gray-600 border-gray-200';
     }
 };
+
+// Helper to get gift icon gradient colors
+export const getGiftIconColor = (giftType: string): string => {
+    switch (giftType) {
+        case 'Brinde VIP':
+            return 'from-purple-500 to-purple-600';
+        case 'Brinde Médio':
+            return 'from-blue-500 to-blue-600';
+        case 'Outro':
+            return 'from-amber-500 to-amber-600';
+        case 'Não recebe':
+            return 'from-gray-400 to-gray-500';
+        default:
+            return 'from-green-500 to-emerald-600';
+    }
+};
+
