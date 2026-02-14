@@ -375,14 +375,14 @@ export function Contracts() {
       c.reference?.toLowerCase().includes(term) ||
       c.partner_name?.toLowerCase().includes(term) ||
       c.analyzed_by_name?.toLowerCase().includes(term) ||
-      (c.processes && c.processes.some(p =>
+      (Array.isArray(c.processes) && c.processes.some(p =>
         p.process_number.toLowerCase().includes(term) ||
         p.author?.toLowerCase().includes(term) ||
         p.opponent?.toLowerCase().includes(term) ||
         p.court?.toLowerCase().includes(term) ||
         p.vara?.toLowerCase().includes(term) ||
         p.comarca?.toLowerCase().includes(term) ||
-        p.magistrates?.some(m => m.name.toLowerCase().includes(term))
+        (Array.isArray(p.magistrates) && p.magistrates.some(m => m.name.toLowerCase().includes(term)))
       ));
 
     const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
