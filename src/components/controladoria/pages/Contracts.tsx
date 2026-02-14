@@ -16,7 +16,7 @@ import { PartnerManagerModal } from '../partners/PartnerManagerModal';
 import { AnalystManagerModal } from '../analysts/AnalystManagerModal';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { EmptyState } from '../ui/EmptyState';
-import { parseCurrency } from '../utils/masks';
+import { parseCurrency, safeDate } from '../utils/masks';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -378,19 +378,27 @@ export function Contracts() {
     if (startDate || endDate) {
       const relevantDateStr = getRelevantDate(c);
       if (relevantDateStr) {
-        const relevantDate = new Date(relevantDateStr);
-        relevantDate.setHours(0, 0, 0, 0);
+        const relevantDate = safeDate(relevantDateStr);
+        if (relevantDate) {
+          relevantDate.setHours(0, 0, 0, 0);
 
-        if (startDate) {
-          const start = new Date(startDate);
-          start.setHours(0, 0, 0, 0);
-          if (relevantDate < start) matchesDate = false;
-        }
+          if (startDate) {
+            const start = safeDate(startDate);
+            if (start) {
+              start.setHours(0, 0, 0, 0);
+              if (relevantDate < start) matchesDate = false;
+            }
+          }
 
-        if (endDate) {
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          if (relevantDate > end) matchesDate = false;
+          if (endDate) {
+            const end = safeDate(endDate);
+            if (end) {
+              end.setHours(23, 59, 59, 999);
+              if (relevantDate > end) matchesDate = false;
+            }
+          }
+        } else {
+          matchesDate = false;
         }
       } else {
         matchesDate = false;
@@ -404,8 +412,8 @@ export function Contracts() {
       const nameB = b.client_name || '';
       return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
     } else {
-      const dateA = new Date(getRelevantDate(a) || 0).getTime();
-      const dateB = new Date(getRelevantDate(b) || 0).getTime();
+      const dateA = safeDate(getRelevantDate(a))?.getTime() || 0;
+      const dateB = safeDate(getRelevantDate(b))?.getTime() || 0;
       return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
     }
   });
@@ -456,7 +464,7 @@ export function Contracts() {
         c.client_name,
         c.partner_name || '-',
         c.hon_number || '-',
-        new Date(getRelevantDate(c) || '').toLocaleDateString('pt-BR'),
+        safeDate(getRelevantDate(c))?.toLocaleDateString('pt-BR') || '-',
         c.billing_location || '-',
         vPro,
         (c as any).pro_labore_clause || '-',
@@ -748,7 +756,7 @@ export function Contracts() {
                       <div className="mt-5 pt-3 border-t border-gray-50 flex justify-between items-center">
                         <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center">
                           <Clock className="w-3 h-3 mr-1" />
-                          {new Date(getRelevantDate(contract) || '').toLocaleDateString()}
+                          {safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}
                         </div>
                         {contract.status === 'active' && (
                           <div className="text-right">
@@ -795,7 +803,7 @@ export function Contracts() {
                         </td>
                         <td className="p-4 text-[11px] font-semibold text-gray-600">{contract.partner_name || '-'}</td>
                         <td className="p-4 font-mono text-[10px] font-bold text-gray-400">{contract.hon_number || '-'}</td>
-                        <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{new Date(getRelevantDate(contract) || '').toLocaleDateString()}</td>
+                        <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}</td>
                         <td className="p-4">
                           <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>

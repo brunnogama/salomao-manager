@@ -4,7 +4,7 @@ import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 
 // ROTA CORRIGIDA: Subindo 1 nível para sair de /contracts e entrar em /utils (ambos dentro de controladoria)
-import { parseCurrency } from '../utils/masks';
+import { parseCurrency, safeDate } from '../utils/masks';
 
 // Interface interna para os eventos construídos a partir das datas do formulário
 interface InternalTimelineEvent {
@@ -17,8 +17,12 @@ interface InternalTimelineEvent {
 const getDurationBetween = (startDateStr: string, endDateStr: string): string => {
   if (!startDateStr || !endDateStr) return '-';
 
-  const start = new Date(startDateStr + 'T12:00:00');
-  const end = new Date(endDateStr + 'T12:00:00');
+  if (!startDateStr || !endDateStr) return '-';
+
+  const start = safeDate(startDateStr);
+  const end = safeDate(endDateStr);
+
+  if (!start || !end) return '-';
 
   const diffTime = Math.abs(end.getTime() - start.getTime());
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -108,7 +112,11 @@ export function ContractDetailsModal({
       events.push({ label: 'Probono', date: contract.probono_date, status: 'probono', color: 'bg-purple-100 text-purple-800 border-purple-200' });
     }
 
-    return events.sort((a, b) => a.date.localeCompare(b.date));
+    return events.sort((a, b) => {
+      const dateA = safeDate(a.date)?.getTime() || 0;
+      const dateB = safeDate(b.date)?.getTime() || 0;
+      return dateA - dateB;
+    });
   };
 
   const timelineEvents = buildInternalTimeline();
@@ -278,8 +286,8 @@ export function ContractDetailsModal({
                       onClick={handleDownloadLatest}
                       disabled={!documents || documents.length === 0}
                       className={`group flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg transition-all border w-full max-w-[250px] ${documents && documents.length > 0
-                          ? 'bg-white border-gray-200 text-gray-700 hover:border-salomao-blue hover:text-salomao-blue hover:shadow-sm cursor-pointer'
-                          : 'bg-gray-50 border-transparent text-gray-400 cursor-not-allowed'
+                        ? 'bg-white border-gray-200 text-gray-700 hover:border-salomao-blue hover:text-salomao-blue hover:shadow-sm cursor-pointer'
+                        : 'bg-gray-50 border-transparent text-gray-400 cursor-not-allowed'
                         }`}
                       title={documents && documents.length > 0 ? documents[0].file_name : "Nenhum arquivo anexado"}
                     >
