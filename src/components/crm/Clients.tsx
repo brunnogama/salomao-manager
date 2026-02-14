@@ -24,7 +24,8 @@ import {
   Grid
 } from 'lucide-react'
 import { NewClientModal } from './NewClientModal'
-import { ClientData, getBrindeColors } from '../../types/client'
+import { getBrindeColors, mapDbToClient } from '../../types/client'
+import type { ClientData, ClientDataLegacy } from '../../types/client'
 import { logAction } from '../../lib/logger'
 
 interface ClientsProps {
@@ -42,12 +43,12 @@ export function Clients({
   onModuleHome,
   onLogout
 }: ClientsProps) {
-  const [clients, setClients] = useState<ClientData[]>([])
+  const [clients, setClients] = useState<ClientDataLegacy[]>([])
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [clientToEdit, setClientToEdit] = useState<ClientData | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<ClientData | null>(null)
+  const [clientToEdit, setClientToEdit] = useState<ClientDataLegacy | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<ClientDataLegacy | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -82,13 +83,15 @@ export function Clients({
 
     if (!error && data) {
       console.log('Fetched clients:', data.length)
-      setClients(data as ClientData[])
+      // Converter dados do banco (inglês) para formato de exibição (português)
+      const mappedClients = data.map(mapDbToClient)
+      setClients(mappedClients)
     }
 
     setLoading(false)
   }
 
-  const handleDeleteClient = async (client: ClientData) => {
+  const handleDeleteClient = async (client: ClientDataLegacy) => {
     await supabase.from(tableName).delete().eq('id', client.id)
     await logAction('DELETE', tableName.toUpperCase(), `Excluiu ${client.nome}`)
     setDeleteConfirm(null)
