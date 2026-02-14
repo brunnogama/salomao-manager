@@ -37,7 +37,7 @@ interface ClientsProps {
 
 export function Clients({
   initialFilters,
-  tableName = 'clientes',
+  tableName = 'clients',
   userName = 'Usuário',
   onModuleHome,
   onLogout
