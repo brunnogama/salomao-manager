@@ -73,8 +73,7 @@ export function Clients({
     setLoading(true)
     const { data, error } = await supabase
       .from(tableName)
-      .select('*, contracts!inner(status)')
-      .in('contracts.status', ['proposal_sent', 'closed'])
+      .select('*')
 
     if (error) {
       console.error('Error fetching clients:', error)
