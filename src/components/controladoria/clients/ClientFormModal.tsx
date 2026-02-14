@@ -141,7 +141,10 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
     setLoading(true);
     try {
       const payload = { ...formData };
-      delete (payload as any).contacts; // Remove virtual field if exists
+      // Remove computed/virtual fields that don't exist in database
+      delete (payload as any).contacts;
+      delete (payload as any).active_contracts_count;
+      delete (payload as any).partner_name;
 
       // Limpeza de dados
       if (payload.cnpj) payload.cnpj = payload.cnpj.replace(/\D/g, '');
