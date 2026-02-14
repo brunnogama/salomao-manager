@@ -44,7 +44,7 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
     useEffect(() => {
         if (isOpen) {
             setFormData(contact || emptyContact);
-            setActiveTab('contato');
+            setActiveTab('empresa');
             fetchClients();
         }
     }, [isOpen, contact]);
@@ -123,8 +123,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
     };
 
     const tabs = [
-        { id: 'contato', label: 'Dados do Contato', icon: User },
         { id: 'empresa', label: 'Empresa', icon: Building2 },
+        { id: 'contato', label: 'Dados do Contato', icon: User },
         { id: 'endereco', label: 'Endereço Entrega', icon: MapPin },
         { id: 'brinde', label: 'Preferências Brinde', icon: Gift },
         { id: 'historico', label: 'Histórico', icon: History },
