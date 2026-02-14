@@ -572,7 +572,7 @@ export function Contracts() {
   return (
     <div className="p-8 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8">
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         {/* Esquerda: Ícone + Título */}
         <div className="flex items-center gap-4">
           <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
