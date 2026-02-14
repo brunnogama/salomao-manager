@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Plus, Search, Filter, User, Briefcase,
-  Clock, Scale, Tag, Loader2,
-  LayoutGrid, List, Download, ArrowUpDown, Edit, Trash2, ArrowDownAZ, ArrowUpAZ,
-  FileSignature, ChevronDown, X, FileSearch, Eye
+  Plus, Search, Filter, Calendar, DollarSign, User, Briefcase,
+  CheckCircle2, Clock, Scale, Tag, Loader2,
+  LayoutGrid, List, Download, ArrowUpDown, Edit, Trash2, Bell, ArrowDownAZ, ArrowUpAZ,
+  FileSignature, ChevronDown, X, FileSearch, Paperclip, Eye
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import * as XLSX from 'xlsx';
@@ -20,12 +20,12 @@ import { parseCurrency, safeDate } from '../utils/masks';
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'active': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
-    case 'analysis': return 'bg-amber-50 text-amber-700 border-amber-100';
-    case 'proposal': return 'bg-blue-50 text-blue-700 border-blue-100';
-    case 'rejected': return 'bg-red-50 text-red-700 border-red-100';
-    case 'probono': return 'bg-purple-50 text-purple-700 border-purple-100';
-    default: return 'bg-gray-50 text-gray-700 border-gray-100';
+    case 'active': return 'bg-green-100 text-green-800 border-green-200';
+    case 'analysis': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'proposal': return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
+    case 'probono': return 'bg-purple-100 text-purple-800 border-purple-200';
+    default: return 'bg-gray-100 text-gray-800 border-gray-200';
   }
 };
 
@@ -113,6 +113,8 @@ export function Contracts() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [analysts, setAnalysts] = useState<Analyst[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -153,7 +155,7 @@ export function Contracts() {
 
   useEffect(() => {
     fetchData();
-
+    fetchNotifications();
 
     const subscription = supabase
       .channel('contracts_list_changes')
@@ -228,6 +230,20 @@ export function Contracts() {
     if (newId && typeof newId === 'string') {
       setFormData(prev => ({ ...prev, analyst_id: newId } as Contract));
     }
+  };
+
+  const fetchNotifications = async () => {
+    const { data } = await supabase
+      .from('kanban_tasks')
+      .select('id, title, due_date')
+      .eq('status', 'signature')
+      .order('due_date', { ascending: true });
+    if (data) setNotifications(data);
+  };
+
+  const handleNotificationClick = (taskId: string) => {
+    // Navigate to kanban with task ID - would require useNavigate from react-router-dom
+    window.location.href = `/controladoria/kanban?taskId=${taskId}`;
   };
 
 
@@ -566,135 +582,205 @@ export function Contracts() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
-
-      {/* 1. Header - Salomão Design System */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <FileSignature className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Casos</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão completa de casos e propostas</p>
+    <div className="p-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        {/* Esquerda: Título */}
+        <div>
+          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
+            <FileSignature className="w-8 h-8" /> Casos
+          </h1>
+          <div className="flex items-center mt-1">
+            <p className="text-gray-500 mr-3">Gestão completa de casos e propostas.</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <button onClick={exportToExcel} className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
-            <Download className="h-4 w-4" /> Exportar XLS
-          </button>
+        {/* Direita: Filtros de Status/Sócio, Botão Novo, Notificações */}
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterSelect
+            icon={Filter}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={statusOptions}
+            placeholder="Status"
+          />
+
+          <FilterSelect
+            icon={User}
+            value={partnerFilter}
+            onChange={setPartnerFilter}
+            options={partnerOptions}
+            placeholder="Sócios"
+          />
+
+          {/* Botão Novo Caso */}
           {userRole !== 'viewer' && (
-            <button
-              onClick={handleNew}
-              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-            >
-              <Plus className="h-4 w-4" /> Novo Caso
+            <button onClick={handleNew} className="bg-salomao-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold h-[40px] whitespace-nowrap">
+              <Plus className="w-5 h-5 mr-2" /> Novo Caso
             </button>
           )}
-        </div>
-      </div>
 
-      {/* 2. Toolbar Principais Filtros - Salomão Design System */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-        <div className="flex flex-col lg:flex-row justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
-            <FilterSelect
-              icon={Filter}
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={statusOptions}
-              placeholder="Status"
-            />
-            <FilterSelect
-              icon={User}
-              value={partnerFilter}
-              onChange={setPartnerFilter}
-              options={partnerOptions}
-              placeholder="Sócios"
-            />
-            <div className="flex bg-gray-100/50 rounded-lg p-1 border border-gray-200 h-[40px] items-center">
-              <button
-                onClick={() => { if (sortBy !== 'name') { setSortBy('name'); setSortOrder('asc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-                className={`flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-full ${sortBy === 'name' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Nome
-                {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowDownAZ className="w-3 h-3 ml-1" /> : <ArrowUpAZ className="w-3 h-3 ml-1" />)}
-              </button>
-              <button
-                onClick={() => { if (sortBy !== 'date') { setSortBy('date'); setSortOrder('desc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-                className={`flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-full ${sortBy === 'date' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Data
-                {sortBy === 'date' && <ArrowUpDown className="w-3 h-3 ml-1" />}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="bg-gray-100 p-4 rounded-xl flex items-center gap-3 h-[40px]">
-              <Briefcase className="w-4 h-4 text-[#1e3a8a]" />
-              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Total: {contracts.length}</span>
-            </div>
-
-
-          </div>
-        </div>
-
-        <div className="h-px bg-gray-100 w-full my-2"></div>
-
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <div
-              ref={searchRef}
-              className={`
-                    flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 border border-gray-200
-                    ${isSearchOpen ? 'w-64 px-3 rounded-lg shadow-inner' : 'w-10 justify-center cursor-pointer hover:bg-gray-100 rounded-lg'}
-                    h-[40px]
-                  `}
-              onClick={() => !isSearchOpen && setIsSearchOpen(true)}
+          {/* Notificações */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className={`p-2 rounded-full relative transition-all h-[40px] w-[40px] flex items-center justify-center ${notifications.length > 0
+                ? 'bg-red-50 text-red-500 hover:bg-red-100'
+                : 'bg-white border border-gray-200 text-gray-400 hover:bg-gray-100'
+                }`}
             >
-              <Search className={`w-4 h-4 text-gray-400 shrink-0`} />
-              <input
-                type="text"
-                placeholder="Buscar por cliente, HON, processo..."
-                className={`ml-2 bg-transparent outline-none text-xs font-semibold w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                autoFocus={isSearchOpen}
-              />
-              {isSearchOpen && searchTerm && (
-                <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-1 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+              <Bell className={`w-5 h-5 ${notifications.length > 0 ? 'animate-pulse' : ''}`} />
+              {notifications.length > 0 && (
+                <span className="absolute top-0 right-0 w-3 h-3 bg-red-600 border-2 border-white rounded-full"></span>
               )}
-            </div>
+            </button>
 
-            <div className="flex items-center gap-2">
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95">
+                <div className="p-3 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
+                  <h4 className="text-xs font-bold text-gray-700 uppercase">Tarefas de Assinatura</h4>
+                  <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[10px] font-bold">{notifications.length}</span>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-gray-400">Nenhuma pendência.</div>
+                  ) : (
+                    notifications.map(notif => (
+                      <div
+                        key={notif.id}
+                        onClick={() => handleNotificationClick(notif.id)}
+                        className="p-3 border-b border-gray-50 last:border-0 hover:bg-blue-50 cursor-pointer transition-colors"
+                      >
+                        <p className="text-sm font-medium text-gray-800 line-clamp-1">{notif.title}</p>
+                        <p className="text-xs text-gray-500 flex items-center mt-1">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          Vence: {new Date(notif.due_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex bg-gray-100/50 rounded-lg p-1 border border-gray-200 h-[40px] items-center">
-              <button onClick={() => setViewMode('grid')} className={`p-1.5 h-full flex items-center rounded-md ${viewMode === 'grid' ? 'bg-white shadow text-[#1e3a8a]' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
-              <button onClick={() => setViewMode('list')} className={`p-1.5 h-full flex items-center rounded-md ${viewMode === 'list' ? 'bg-white shadow text-[#1e3a8a]' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
-            </div>
-
-
-
-            {hasActiveFilters && (
-              <button onClick={clearFilters} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"><X className="w-5 h-5" /></button>
             )}
           </div>
         </div>
       </div>
 
+      {/* Barra de Controles Inferior (Card Total + Ferramentas) */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm items-center justify-between">
+
+        {/* Esquerda: Card de Total (FIXO) */}
+        <div className="flex items-center gap-3 pr-4 border-r border-gray-100 mr-2 min-w-[200px]">
+          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <Briefcase className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Total de Casos</p>
+            <p className="text-xl font-bold text-gray-800 leading-none">{contracts.length}</p>
+          </div>
+        </div>
+
+        {/* Grupo da Direita: Busca Animada, Datas, Ações */}
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end flex-1">
+
+          {/* Busca Animada Expandível */}
+          <div
+            ref={searchRef}
+            className={`
+              flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-white
+              ${isSearchOpen ? 'w-64 border border-gray-200 shadow-sm px-3 rounded-lg' : 'w-10 border border-transparent justify-center cursor-pointer hover:bg-gray-50 rounded-lg'}
+              h-[42px]
+            `}
+            onClick={() => !isSearchOpen && setIsSearchOpen(true)}
+          >
+            <Search className={`w-5 h-5 text-gray-400 shrink-0 ${!isSearchOpen && 'cursor-pointer'}`} />
+
+            <input
+              type="text"
+              placeholder="Buscar..."
+              className={`ml-2 bg-transparent outline-none text-sm w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus={isSearchOpen}
+            />
+
+            {isSearchOpen && searchTerm && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }}
+                className="ml-1 text-gray-400 hover:text-red-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Separador Visual */}
+          <div className="h-6 w-px bg-gray-200 mx-1 hidden md:block"></div>
+
+          {/* Filtros de Data */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
+              <span className="text-xs text-gray-400 mr-2">De</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="bg-transparent text-sm text-gray-700 outline-none w-[110px]"
+              />
+            </div>
+            <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
+              <span className="text-xs text-gray-400 mr-2">Até</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="bg-transparent text-sm text-gray-700 outline-none w-[110px]"
+              />
+            </div>
+          </div>
+
+          {/* Ordenação */}
+          <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200 h-[42px] items-center">
+            <button
+              onClick={() => { if (sortBy !== 'name') { setSortBy('name'); setSortOrder('asc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
+              className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all h-full ${sortBy === 'name' ? 'bg-white shadow text-salomao-blue' : 'text-gray-500 hover:text-gray-700'}`}
+              title="Ordenar por Nome"
+            >
+              Nome
+              {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowDownAZ className="w-3 h-3 ml-1" /> : <ArrowUpAZ className="w-3 h-3 ml-1" />)}
+            </button>
+            <button
+              onClick={() => { if (sortBy !== 'date') { setSortBy('date'); setSortOrder('desc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
+              className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all h-full ${sortBy === 'date' ? 'bg-white shadow text-salomao-blue' : 'text-gray-500 hover:text-gray-700'}`}
+              title="Ordenar por Data do Status Atual"
+            >
+              Data
+              {sortBy === 'date' && <ArrowUpDown className="w-3 h-3 ml-1" />}
+            </button>
+          </div>
+
+          {/* Visualização */}
+          <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200 h-[42px] items-center">
+            <button onClick={() => setViewMode('grid')} className={`p-1.5 h-full flex items-center rounded ${viewMode === 'grid' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
+            <button onClick={() => setViewMode('list')} className={`p-1.5 h-full flex items-center rounded ${viewMode === 'list' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
+          </div>
+
+          {/* Exportar */}
+          <button onClick={exportToExcel} className="flex items-center px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium whitespace-nowrap h-[42px]">
+            <Download className="w-4 h-4 mr-2" /> XLS
+          </button>
+
+          {/* Limpar (se houver filtros) */}
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors h-[42px]"
+              title="Limpar todos os filtros"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
       {/* 3. Área de Conteúdo */}
       <div className="flex-1">
         {loading ? (
