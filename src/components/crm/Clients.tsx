@@ -6,11 +6,8 @@ import {
   Plus,
   Pencil,
   Trash,
-  MapPin,
   Gift,
   Building2,
-  Package,
-  Eye,
   Users
 } from 'lucide-react'
 import { CRMContactModal } from './CRMContactModal'
@@ -27,7 +24,11 @@ interface CompanyRow {
   client: any;
   contacts: CRMContact[];
   contactCount: number;
-  giftCount: number;
+  giftByType: {
+    vip: number;
+    medio: number;
+    outros: number;
+  };
 }
 
 export function Clients({
@@ -41,7 +42,6 @@ export function Clients({
   const [searchTerm, setSearchTerm] = useState('')
   const [filterSocio, setFilterSocio] = useState<string>('')
   const [filterGiftType, setFilterGiftType] = useState<string>('')
-  const [viewingCompany, setViewingCompany] = useState<CompanyRow | null>(null)
 
   useEffect(() => { fetchContacts() }, [])
   useEffect(() => {
@@ -102,14 +102,27 @@ export function Clients({
           client: contact.client,
           contacts: [],
           contactCount: 0,
-          giftCount: 0
+          giftByType: {
+            vip: 0,
+            medio: 0,
+            outros: 0
+          }
         }
       }
       acc[clientId].contacts.push(contact)
       acc[clientId].contactCount++
-      // Count gifts (excluding "Não recebe")
+
+      // Count gifts by type
       if (contact.gift_type && contact.gift_type !== 'Não recebe') {
-        acc[clientId].giftCount += contact.gift_quantity || 1
+        const qty = contact.gift_quantity || 1
+        if (contact.gift_type === 'Brinde VIP') {
+          acc[clientId].giftByType.vip += qty
+        } else if (contact.gift_type === 'Brinde Médio') {
+          acc[clientId].giftByType.medio += qty
+        } else {
+          // "Outro" and any other types
+          acc[clientId].giftByType.outros += qty
+        }
       }
       return acc
     }, {} as Record<string, CompanyRow>)
@@ -272,19 +285,25 @@ export function Clients({
             {/* Table Header */}
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
               <div className="grid grid-cols-12 gap-4 px-6 py-4">
-                <div className="col-span-4">
+                <div className="col-span-3">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Empresa</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Sócio</p>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Contatos</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Brindes</p>
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Brinde VIP</p>
                 </div>
                 <div className="col-span-2">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Brinde Médio</p>
+                </div>
+                <div className="col-span-1">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Outros</p>
+                </div>
+                <div className="col-span-1">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">Ações</p>
                 </div>
               </div>
@@ -295,10 +314,19 @@ export function Clients({
               {companyRows.map((row: CompanyRow, idx: number) => (
                 <div
                   key={idx}
-                  className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors"
+                  className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => {
+                    // Open modal to add new contact for this company
+                    const newContact: Partial<CRMContact> = {
+                      client_id: row.client?.id,
+                      client: row.client
+                    }
+                    setContactToEdit(newContact as CRMContact)
+                    setIsModalOpen(true)
+                  }}
                 >
                   {/* Company Name */}
-                  <div className="col-span-4 flex items-center gap-3">
+                  <div className="col-span-3 flex items-center gap-3">
                     <div className="p-2 bg-gradient-to-br from-[#1e3a8a] to-[#112240] rounded-lg shadow-sm">
                       <Building2 className="w-4 h-4 text-white" />
                     </div>
@@ -313,32 +341,50 @@ export function Clients({
                   </div>
 
                   {/* Contact Count */}
-                  <div className="col-span-2 flex items-center justify-center">
+                  <div className="col-span-1 flex items-center justify-center">
                     <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg">
                       <Users className="w-4 h-4 text-blue-600" />
                       <span className="text-sm font-black text-blue-700">{row.contactCount}</span>
                     </div>
                   </div>
 
-                  {/* Gift Count */}
+                  {/* Brinde VIP Count */}
                   <div className="col-span-2 flex items-center justify-center">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-lg">
-                      <Package className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-black text-green-700">{row.giftCount}</span>
+                    <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${row.giftByType.vip > 0 ? 'bg-purple-50' : 'bg-gray-50'}`}>
+                      <Gift className={`w-4 h-4 ${row.giftByType.vip > 0 ? 'text-purple-600' : 'text-gray-400'}`} />
+                      <span className={`text-sm font-black ${row.giftByType.vip > 0 ? 'text-purple-700' : 'text-gray-400'}`}>
+                        {row.giftByType.vip}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Brinde Médio Count */}
+                  <div className="col-span-2 flex items-center justify-center">
+                    <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${row.giftByType.medio > 0 ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                      <Gift className={`w-4 h-4 ${row.giftByType.medio > 0 ? 'text-blue-600' : 'text-gray-400'}`} />
+                      <span className={`text-sm font-black ${row.giftByType.medio > 0 ? 'text-blue-700' : 'text-gray-400'}`}>
+                        {row.giftByType.medio}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Outros Count */}
+                  <div className="col-span-1 flex items-center justify-center">
+                    <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${row.giftByType.outros > 0 ? 'bg-amber-50' : 'bg-gray-50'}`}>
+                      <Gift className={`w-4 h-4 ${row.giftByType.outros > 0 ? 'text-amber-600' : 'text-gray-400'}`} />
+                      <span className={`text-sm font-black ${row.giftByType.outros > 0 ? 'text-amber-700' : 'text-gray-400'}`}>
+                        {row.giftByType.outros}
+                      </span>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="col-span-2 flex items-center justify-end gap-2">
+                  <div className="col-span-1 flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                     <button
-                      onClick={() => setViewingCompany(row)}
-                      className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all"
-                      title="Visualizar contatos"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirm(row)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setDeleteConfirm(row)
+                      }}
                       className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
                       title="Excluir empresa e contatos"
                     >
@@ -362,95 +408,6 @@ export function Clients({
         contact={contactToEdit || undefined}
         onSave={fetchContacts}
       />
-
-      {/* Company View Modal - Design System */}
-      {viewingCompany && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-br from-[#1e3a8a] to-[#112240] px-6 py-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/10 rounded-xl">
-                  <Building2 className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-white">{viewingCompany.client?.name}</h3>
-                  {viewingCompany.client?.partner?.name && (
-                    <p className="text-sm text-white/80 font-semibold">Sócio: {viewingCompany.client.partner.name}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 max-h-[70vh] overflow-y-auto">
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Package className="w-5 h-5 text-[#1e3a8a]" />
-                  <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Contatos ({viewingCompany.contacts.length})</h4>
-                </div>
-
-                <div className="space-y-3">
-                  {viewingCompany.contacts.map((contact: any) => (
-                    <div key={contact.id} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h5 className="font-black text-gray-800">{contact.name}</h5>
-                            {contact.role && (
-                              <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded font-semibold">
-                                {contact.role}
-                              </span>
-                            )}
-                          </div>
-
-                          {contact.gift_type && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <Gift className="w-4 h-4 text-green-600" />
-                              <span className={`text-xs px-2.5 py-1 rounded-md font-bold ${getGiftBadgeColor(contact.gift_type)}`}>
-                                {contact.gift_type}
-                              </span>
-                              {contact.gift_type !== 'Não recebe' && contact.gift_quantity && contact.gift_quantity > 1 && (
-                                <span className="text-xs text-gray-500 font-semibold">× {contact.gift_quantity}</span>
-                              )}
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-4 text-xs text-gray-600 mt-2">
-                            {contact.email && <span>📧 {contact.email}</span>}
-                            {contact.phone && <span>📞 {contact.phone}</span>}
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            setContactToEdit(contact)
-                            setViewingCompany(null)
-                            setIsModalOpen(true)
-                          }}
-                          className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-6 pb-6 flex gap-3 justify-end border-t border-gray-200 pt-4">
-              <button
-                onClick={() => setViewingCompany(null)}
-                className="px-6 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation */}
       {deleteConfirm && (
