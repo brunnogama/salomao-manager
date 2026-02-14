@@ -5,28 +5,28 @@ import { X, Save, Gift, Calendar, Clock, UserCircle, ChevronDown, Plus, Trash2, 
 import { IMaskInput } from 'react-imask'
 import { supabase } from '../../lib/supabase'
 import { logAction } from '../../lib/logger'
-import { ClientData, GiftHistoryItem } from '../../types/client'
+import { ClientDataLegacy, mapClientToDb, mapDbToClient } from '../../types/client'
 import { SearchableSelect } from './SearchableSelect'
 
 interface NewClientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (client: ClientData) => void;
-  clientToEdit?: ClientData | null;
+  onSave: (client: ClientDataLegacy) => void;
+  clientToEdit?: ClientDataLegacy | null;
   tableName?: string;
 }
 
 export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableName = 'clientes' }: NewClientModalProps) {
   const [activeTab, setActiveTab] = useState<'geral' | 'endereco' | 'historico'>('geral')
   const [brindeOptions, setBrindeOptions] = useState<string[]>(['Brinde VIP', 'Brinde Médio', 'Não Recebe', 'Outro'])
-  
+
   const [sociosList, setSociosList] = useState<{ id: number, nome: string }[]>([])
   const [isSocioMenuOpen, setIsSocioMenuOpen] = useState(false)
   const [newSocioName, setNewSocioName] = useState('')
   const [loadingSocios, setLoadingSocios] = useState(false)
   const socioMenuRef = useRef<HTMLDivElement>(null)
 
-  const [formData, setFormData] = useState<ClientData>({
+  const [formData, setFormData] = useState<ClientDataLegacy>({
     nome: '', empresa: '', cargo: '', telefone: '',
     tipo_brinde: 'Brinde Médio', outro_brinde: '', quantidade: 1,
     cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
@@ -75,10 +75,21 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
   const handleSave = async () => {
     if (!formData.nome) return alert('Nome é obrigatório')
     try {
-      const { error } = clientToEdit?.id 
-        ? await supabase.from(tableName).update(formData).eq('id', clientToEdit.id)
-        : await supabase.from(tableName).insert([formData])
-      
+      // Mapear dados do formulário (português) para o schema do banco (inglês)
+      const dbData = mapClientToDb(formData)
+
+      // Resolver partner_id a partir do nome do sócio
+      if (formData.socio) {
+        const partner = sociosList.find(s => s.nome === formData.socio)
+        if (partner) {
+          dbData.partner_id = partner.id.toString()
+        }
+      }
+
+      const { error } = clientToEdit?.id
+        ? await supabase.from(tableName).update(dbData).eq('id', clientToEdit.id)
+        : await supabase.from(tableName).insert([dbData])
+
       if (error) throw error
       await logAction(clientToEdit ? 'UPDATE' : 'CREATE', tableName.toUpperCase(), `${clientToEdit ? 'Editou' : 'Criou'} ${formData.nome}`)
       onSave(formData); onClose()
@@ -111,7 +122,7 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
           <div className="flex min-h-full items-center justify-center p-4">
             <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100">
               <Dialog.Panel className="w-full max-w-3xl bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] border border-gray-200/50">
-                
+
                 {/* HEADER - Navy Gradient */}
                 <header className="bg-gradient-to-r from-[#0a192f] to-[#112240] px-8 py-5 flex justify-between items-center text-white rounded-t-[2rem]">
                   <div className="flex items-center gap-3">
@@ -132,14 +143,13 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                     { id: 'endereco', label: 'Endereço', icon: MapPin },
                     { id: 'historico', label: 'Histórico', icon: Gift }
                   ].map((tab: any) => (
-                    <button 
-                      key={tab.id} 
-                      onClick={() => setActiveTab(tab.id)} 
-                      className={`flex items-center gap-2 px-6 py-4 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-all ${
-                        activeTab === tab.id 
-                          ? 'border-[#1e3a8a] text-[#1e3a8a]' 
-                          : 'border-transparent text-gray-400 hover:text-gray-600'
-                      }`}
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-2 px-6 py-4 text-[9px] font-black uppercase tracking-[0.2em] border-b-2 transition-all ${activeTab === tab.id
+                        ? 'border-[#1e3a8a] text-[#1e3a8a]'
+                        : 'border-transparent text-gray-400 hover:text-gray-600'
+                        }`}
                     >
                       <tab.icon className="h-3.5 w-3.5" />
                       {tab.label}
@@ -152,58 +162,58 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                   {activeTab === 'geral' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="md:col-span-2">
-                        <FormInput 
-                          label="Nome Completo" 
+                        <FormInput
+                          label="Nome Completo"
                           icon={User}
-                          value={formData.nome} 
-                          onChange={v => setFormData({...formData, nome: v})} 
+                          value={formData.nome}
+                          onChange={v => setFormData({ ...formData, nome: v })}
                           placeholder="Digite o nome completo"
                         />
                       </div>
-                      
-                      <FormInput 
-                        label="Empresa" 
+
+                      <FormInput
+                        label="Empresa"
                         icon={Building2}
-                        value={formData.empresa} 
-                        onChange={v => setFormData({...formData, empresa: v})} 
+                        value={formData.empresa}
+                        onChange={v => setFormData({ ...formData, empresa: v })}
                         placeholder="Nome da empresa"
                       />
-                      
-                      <FormInput 
-                        label="Cargo" 
+
+                      <FormInput
+                        label="Cargo"
                         icon={Briefcase}
-                        value={formData.cargo} 
-                        onChange={v => setFormData({...formData, cargo: v})} 
+                        value={formData.cargo}
+                        onChange={v => setFormData({ ...formData, cargo: v })}
                         placeholder="Cargo do cliente"
                       />
-                      
+
                       <div>
                         <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                           <Phone className="h-3.5 w-3.5" />
                           Telefone
                         </label>
-                        <IMaskInput 
-                          mask="(00) 00000-0000" 
-                          value={formData.telefone} 
-                          onAccept={(v: any) => setFormData({...formData, telefone: v})} 
+                        <IMaskInput
+                          mask="(00) 00000-0000"
+                          value={formData.telefone}
+                          onAccept={(v: any) => setFormData({ ...formData, telefone: v })}
                           className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
                           placeholder="(00) 00000-0000"
                         />
                       </div>
-                      
-                      <FormInput 
-                        label="E-mail" 
+
+                      <FormInput
+                        label="E-mail"
                         icon={Mail}
-                        value={formData.email} 
-                        onChange={v => setFormData({...formData, email: v})} 
+                        value={formData.email}
+                        onChange={v => setFormData({ ...formData, email: v })}
                         type="email"
                         placeholder="email@exemplo.com"
                       />
-                      
-                      <SearchableSelect 
+
+                      <SearchableSelect
                         label="Sócio Responsável"
                         value={formData.socio}
-                        onChange={v => setFormData({...formData, socio: v})}
+                        onChange={v => setFormData({ ...formData, socio: v })}
                         table="partners"
                         placeholder="Selecione um sócio..."
                       />
@@ -213,9 +223,9 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                           <Gift className="h-3.5 w-3.5" />
                           Tipo Brinde
                         </label>
-                        <select 
-                          value={formData.tipo_brinde} 
-                          onChange={e => setFormData({...formData, tipo_brinde: e.target.value})} 
+                        <select
+                          value={formData.tipo_brinde}
+                          onChange={e => setFormData({ ...formData, tipo_brinde: e.target.value })}
                           className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-bold"
                         >
                           {brindeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
@@ -231,57 +241,57 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                           <MapPin className="h-3.5 w-3.5" />
                           CEP
                         </label>
-                        <IMaskInput 
-                          mask="00000-000" 
-                          value={formData.cep} 
-                          onAccept={(v: any) => setFormData({...formData, cep: v})} 
-                          onBlur={handleCepBlur} 
+                        <IMaskInput
+                          mask="00000-000"
+                          value={formData.cep}
+                          onAccept={(v: any) => setFormData({ ...formData, cep: v })}
+                          onBlur={handleCepBlur}
                           className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
                           placeholder="00000-000"
                         />
                       </div>
-                      
+
                       <div className="md:col-span-4">
-                        <FormInput 
-                          label="Endereço" 
-                          value={formData.endereco} 
-                          onChange={v => setFormData({...formData, endereco: v})} 
+                        <FormInput
+                          label="Endereço"
+                          value={formData.endereco}
+                          onChange={v => setFormData({ ...formData, endereco: v })}
                           placeholder="Rua, Avenida..."
                         />
                       </div>
-                      
+
                       <div className="md:col-span-2">
-                        <FormInput 
-                          label="Número" 
-                          value={formData.numero} 
-                          onChange={v => setFormData({...formData, numero: v})} 
+                        <FormInput
+                          label="Número"
+                          value={formData.numero}
+                          onChange={v => setFormData({ ...formData, numero: v })}
                           placeholder="Nº"
                         />
                       </div>
-                      
+
                       <div className="md:col-span-4">
-                        <FormInput 
-                          label="Bairro" 
-                          value={formData.bairro} 
-                          onChange={v => setFormData({...formData, bairro: v})} 
+                        <FormInput
+                          label="Bairro"
+                          value={formData.bairro}
+                          onChange={v => setFormData({ ...formData, bairro: v })}
                           placeholder="Bairro"
                         />
                       </div>
-                      
+
                       <div className="md:col-span-4">
-                        <FormInput 
-                          label="Cidade" 
-                          value={formData.cidade} 
-                          onChange={v => setFormData({...formData, cidade: v})} 
+                        <FormInput
+                          label="Cidade"
+                          value={formData.cidade}
+                          onChange={v => setFormData({ ...formData, cidade: v })}
                           placeholder="Cidade"
                         />
                       </div>
-                      
+
                       <div className="md:col-span-2">
-                        <FormInput 
-                          label="UF" 
-                          value={formData.estado} 
-                          onChange={v => setFormData({...formData, estado: v})} 
+                        <FormInput
+                          label="UF"
+                          value={formData.estado}
+                          onChange={v => setFormData({ ...formData, estado: v })}
                           placeholder="UF"
                         />
                       </div>
@@ -293,17 +303,17 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                       {formData.historico_brindes?.map((item, idx) => (
                         <div key={item.ano} className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-xl border border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-sm transition-all">
                           <div className="flex items-center gap-2 font-black text-[#0a192f] text-base mb-4 pb-3 border-b border-gray-100">
-                            <Calendar className="h-4 w-4 text-[#1e3a8a]" /> 
+                            <Calendar className="h-4 w-4 text-[#1e3a8a]" />
                             <span>{item.ano}</span>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Tipo de Brinde</label>
-                              <select 
-                                value={item.tipo} 
+                              <select
+                                value={item.tipo}
                                 onChange={e => {
-                                  const h = [...formData.historico_brindes!]; h[idx].tipo = e.target.value; setFormData({...formData, historico_brindes: h})
-                                }} 
+                                  const h = [...formData.historico_brindes!]; h[idx].tipo = e.target.value; setFormData({ ...formData, historico_brindes: h })
+                                }}
                                 className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-bold"
                               >
                                 <option value="">Selecione...</option>
@@ -312,13 +322,13 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
                             </div>
                             <div>
                               <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Observações</label>
-                              <input 
-                                type="text" 
-                                value={item.obs} 
-                                placeholder="Detalhes adicionais..." 
+                              <input
+                                type="text"
+                                value={item.obs}
+                                placeholder="Detalhes adicionais..."
                                 onChange={e => {
-                                  const h = [...formData.historico_brindes!]; h[idx].obs = e.target.value; setFormData({...formData, historico_brindes: h})
-                                }} 
+                                  const h = [...formData.historico_brindes!]; h[idx].obs = e.target.value; setFormData({ ...formData, historico_brindes: h })
+                                }}
                                 className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
                               />
                             </div>
@@ -331,26 +341,26 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
 
                 {/* FOOTER */}
                 <footer className="bg-gray-50 px-8 py-5 border-t border-gray-200 flex flex-col gap-4 rounded-b-[2rem]">
-                   {clientToEdit && (
-                     <div className="flex gap-3 justify-center pb-4 border-b border-gray-200">
-                        <AuditBadge label="Criado" date={clientToEdit.created_at} user={clientToEdit.created_by} />
-                        <AuditBadge label="Editado" date={clientToEdit.updated_at} user={clientToEdit.updated_by} />
-                     </div>
-                   )}
-                   <div className="flex justify-end gap-3">
-                    <button 
-                      onClick={onClose} 
+                  {clientToEdit && (
+                    <div className="flex gap-3 justify-center pb-4 border-b border-gray-200">
+                      <AuditBadge label="Criado" date={clientToEdit.created_at} user={clientToEdit.created_by} />
+                      <AuditBadge label="Editado" date={clientToEdit.updated_at} user={clientToEdit.updated_by} />
+                    </div>
+                  )}
+                  <div className="flex justify-end gap-3">
+                    <button
+                      onClick={onClose}
                       className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
                     >
                       Cancelar
                     </button>
-                    <button 
-                      onClick={handleSave} 
+                    <button
+                      onClick={handleSave}
                       className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
                     >
                       <Save className="h-4 w-4" /> Salvar
                     </button>
-                   </div>
+                  </div>
                 </footer>
               </Dialog.Panel>
             </Transition.Child>
@@ -368,10 +378,10 @@ function FormInput({ label, value, onChange, type = "text", icon: Icon, placehol
         {Icon && <Icon className="h-3.5 w-3.5" />}
         {label}
       </label>
-      <input 
-        type={type} 
-        value={value} 
-        onChange={e => onChange(e.target.value)} 
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
       />
