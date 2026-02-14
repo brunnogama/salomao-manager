@@ -76,7 +76,7 @@ export function Layout() {
         {/* Top: Favicon + Module Name */}
         <div className="p-6 pb-2">
           <div className="flex items-center gap-4 mb-6">
-            <img src="/favicon.png" alt="Icon" className="h-8 w-8 drop-shadow-lg" />
+            <img src="/logo-branca.png" alt="Icon" className="h-8 w-8 drop-shadow-lg" />
             <div className="px-3 py-1.5 bg-white/10 rounded-lg border border-white/10 backdrop-blur-sm shadow-inner">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 block text-center min-w-[80px]">
                 {currentModule.label}
@@ -98,8 +98,8 @@ export function Layout() {
                 key={item.path}
                 onClick={() => handleNavigate(item.path)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${isActive
-                    ? 'bg-[#1e3a8a] text-white shadow-lg shadow-blue-900/50 translate-x-1'
-                    : 'text-blue-200 hover:bg-white/5 hover:text-white hover:translate-x-1'
+                  ? 'bg-[#1e3a8a] text-white shadow-lg shadow-blue-900/50 translate-x-1'
+                  : 'text-blue-200 hover:bg-white/5 hover:text-white hover:translate-x-1'
                   }`}
               >
                 <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
@@ -156,7 +156,7 @@ export function Layout() {
         <aside className="absolute left-0 top-0 bottom-0 w-72 bg-[#0a192f] text-white shadow-2xl flex flex-col">
           <div className="p-6 border-b border-white/5 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <img src="/favicon.png" alt="Logo" className="h-8 w-8" />
+              <img src="/logo-branca.png" alt="Logo" className="h-8 w-8" />
               <span className="font-bold text-lg">Menu</span>
             </div>
             <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-white/5 rounded-lg text-white/70 hover:text-white">
@@ -176,8 +176,8 @@ export function Layout() {
                     handleNavigate(item.path);
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                      ? 'bg-[#1e3a8a] text-white shadow-lg'
-                      : 'text-blue-100 hover:bg-white/5'
+                    ? 'bg-[#1e3a8a] text-white shadow-lg'
+                    : 'text-blue-100 hover:bg-white/5'
                     }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -211,7 +211,7 @@ export function Layout() {
             <Menu className="w-6 h-6" />
           </button>
           <span className="font-bold text-gray-800 uppercase tracking-widest text-xs">{currentModule.label}</span>
-          <img src="/favicon.png" alt="Logo" className="h-8 w-8" />
+          <img src="/logo-branca.png" alt="Logo" className="h-8 w-8" />
         </header>
 
         <main className="flex-1 overflow-y-auto">

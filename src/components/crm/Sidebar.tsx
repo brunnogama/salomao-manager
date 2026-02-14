@@ -114,7 +114,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="p-6 pb-2">
           <div className="flex items-center gap-3 mb-6">
             <div className="h-10 w-10 bg-[#1e3a8a] rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20 border border-blue-700/50">
-              <img src="/favicon.png" alt="S" className="h-6 w-6 drop-shadow-md" />
+              <img src="/logo-branca.png" alt="S" className="h-6 w-6 drop-shadow-md" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-white leading-none tracking-wide">GESTÃO</h2>
