@@ -7,6 +7,7 @@ import {
     MapPin,
     Users
 } from 'lucide-react'
+import { SearchableSelect } from '../../crm/SearchableSelect'
 
 export interface RHAction {
     id?: string;
@@ -106,15 +107,16 @@ export function RHAcoesFormModal({ isOpen, onClose, onSave, initialData }: RHAco
                             />
                         </div>
                         <div>
-                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Meio</label>
-                            <select
+                            <SearchableSelect
+                                label="Meio"
+                                placeholder="Selecione..."
                                 value={formData.medium}
-                                onChange={(e) => setFormData({ ...formData, medium: e.target.value as 'Online' | 'Presencial' })}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all bg-white font-medium"
-                            >
-                                <option value="Online">Online</option>
-                                <option value="Presencial">Presencial</option>
-                            </select>
+                                onChange={(val) => setFormData({ ...formData, medium: val as 'Online' | 'Presencial' })}
+                                options={[
+                                    { id: 'Online', name: 'Online' },
+                                    { id: 'Presencial', name: 'Presencial' }
+                                ]}
+                            />
                         </div>
                     </div>
 
