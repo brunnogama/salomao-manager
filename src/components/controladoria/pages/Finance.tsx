@@ -468,21 +468,9 @@ export function Finance() {
         </div>
       </div>
 
-
       {/* 3. Toolbar Principal - Padrão Contratos */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
         <div className="flex flex-col lg:flex-row items-center gap-4">
-
-          {/* Card de Total */}
-          <div className="flex items-center gap-3 pr-4 border-r border-gray-100">
-            <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
-              <Receipt className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Total</p>
-              <p className="text-xl font-black text-[#0a192f] leading-none">{filteredInstallments.length}</p>
-            </div>
-          </div>
 
           {/* Barra de Busca (flex-1, sempre visível) */}
           <div className="relative flex-1 w-full lg:w-auto">
@@ -582,15 +570,15 @@ export function Finance() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#1e3a8a]/5 border-b border-[#1e3a8a]/10">
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Detalhamento</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Origem</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Valor</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</th>
+                  <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Vencimento</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Detalhamento</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Origem</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Valor</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
