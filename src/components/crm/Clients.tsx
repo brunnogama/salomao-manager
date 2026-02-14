@@ -1,466 +1,336 @@
-// src/components/crm/Clients.tsx
-import { useEffect, useState, useMemo, useRef, Fragment } from 'react'
+// CRM Clients - Gift Distribution Module
+// Shows CONTACTS grouped by COMPANY for year-end gift distribution
+
+import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Menu, Transition } from '@headlessui/react'
-import { utils, writeFile, read } from 'xlsx'
 import {
   Search,
-  MessageCircle,
-  Trash2,
-  Pencil,
-  Mail,
-  Briefcase,
-  FileSpreadsheet,
-  Upload,
-  Loader2,
-  AlertTriangle,
   Plus,
-  X,
-  Users,
-  Building2,
+  Pencil,
+  Trash,
+  MapPin,
   Gift,
+  Building2,
   UserCircle,
   LogOut,
-  Grid
+  ChevronDown,
+  Users,
+  Package
 } from 'lucide-react'
-import { ClientFormModal } from '../controladoria/clients/ClientFormModal'
-import { getBrindeColors, mapDbToClient } from '../../types/client'
-import type { ClientData, ClientDataLegacy } from '../../types/client'
-import type { Client } from '../../types/controladoria'
-import { logAction } from '../../lib/logger'
+import { CRMContactModal } from './CRMContactModal'
+import { CRMContact, getGiftBadgeColor } from '../../types/crmContact'
 
 interface ClientsProps {
-  initialFilters?: { socio?: string; brinde?: string };
-  tableName?: string;
   userName?: string;
   onModuleHome?: () => void;
   onLogout?: () => void;
 }
 
 export function Clients({
-  initialFilters,
-  tableName = 'clients',
   userName = 'Usuário',
   onModuleHome,
   onLogout
 }: ClientsProps) {
-  const [clients, setClients] = useState<ClientDataLegacy[]>([])
+  const [contacts, setContacts] = useState<CRMContact[]>([])
   const [loading, setLoading] = useState(true)
-  const [importing, setImporting] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [clientToEdit, setClientToEdit] = useState<Client | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<ClientDataLegacy | null>(null)
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [contactToEdit, setContactToEdit] = useState<CRMContact | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<CRMContact | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterSocio, setFilterSocio] = useState<string>('')
-  const [filterBrinde, setFilterBrinde] = useState<string>('')
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest')
+  const [filterGiftType, setFilterGiftType] = useState<string>('')
 
-  // Ajustado para garantir que os sócios disponíveis no filtro venham da lista carregada de clientes
-  const availableSocios = useMemo(() =>
-    Array.from(new Set(clients.map(c => c.socio).filter(Boolean))).sort(), [clients]
-  )
-  const availableBrindes = useMemo(() =>
-    Array.from(new Set(clients.map(c => c.tipo_brinde).filter(Boolean))), [clients]
-  )
+  useEffect(() => { fetchContacts() }, [])
 
-  useEffect(() => { fetchClients() }, [tableName])
-  useEffect(() => {
-    if (initialFilters?.socio) setFilterSocio(initialFilters.socio)
-    if (initialFilters?.brinde) setFilterBrinde(initialFilters.brinde)
-  }, [initialFilters])
-
-  const fetchClients = async () => {
+  const fetchContacts = async () => {
     setLoading(true)
     const { data, error } = await supabase
-      .from(tableName)
-      .select('*, partner:partners(name)')
+      .from('client_contacts')
+      .select(`
+        *,
+        client:clients(
+          id, name,
+          partner:partners(name)
+        )
+      `)
+      .order('client(name), name')
 
     if (error) {
-      console.error('Error fetching clients:', error)
-      console.log('Using table:', tableName)
+      console.error('Error fetching contacts:', error)
     }
 
     if (!error && data) {
-      console.log('Fetched clients:', data.length)
-      // Converter dados do banco (inglês) para formato de exibição (português)
-      const mappedClients = data.map(mapDbToClient)
-      setClients(mappedClients)
+      setContacts(data as unknown as CRMContact[])
     }
 
     setLoading(false)
   }
 
-  const handleDeleteClient = async (client: ClientDataLegacy) => {
-    await supabase.from(tableName).delete().eq('id', client.id)
-    await logAction('DELETE', tableName.toUpperCase(), `Excluiu ${client.nome}`)
+  const handleDeleteContact = async (contact: CRMContact) => {
+    await supabase.from('client_contacts').delete().eq('id', contact.id)
     setDeleteConfirm(null)
-    fetchClients()
+    fetchContacts()
   }
 
-  const processedClients = useMemo(() => {
-    let filtered = clients.filter(c => {
-      const matchSearch = !searchTerm || [c.nome, c.empresa, c.email].some(f => f?.toLowerCase().includes(searchTerm.toLowerCase()))
-      const matchSocio = !filterSocio || c.socio === filterSocio
-      const matchBrinde = !filterBrinde || c.tipo_brinde === filterBrinde
-      return matchSearch && matchSocio && matchBrinde
+  // Group contacts by company
+  const groupedContacts = useMemo(() => {
+    let filtered = contacts.filter(c => {
+      const matchSearch = !searchTerm ||
+        [c.name, c.role, c.client?.name, c.email].some(f =>
+          f?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      const matchGift = !filterGiftType || c.gift_type === filterGiftType
+      return matchSearch && matchGift
     })
-    filtered.sort((a, b) => {
-      if (sortOrder === 'newest') return (b.id || 0) - (a.id || 0)
-      if (sortOrder === 'oldest') return (a.id || 0) - (b.id || 0)
-      return sortOrder === 'az' ? (a.nome || '').localeCompare(b.nome || '') : (b.nome || '').localeCompare(a.nome || '')
-    })
-    return filtered
-  }, [clients, searchTerm, filterSocio, filterBrinde, sortOrder])
 
-  const handleExportExcel = () => {
-    const ws = utils.json_to_sheet(processedClients)
-    const wb = utils.book_new()
-    utils.book_append_sheet(wb, ws, "Clientes")
-    writeFile(wb, `${tableName}_export.xlsx`)
-  }
+    // Group by client
+    const grouped = filtered.reduce((acc, contact) => {
+      const clientId = contact.client?.id || 'no-client'
+      if (!acc[clientId]) {
+        acc[clientId] = {
+          client: contact.client,
+          contacts: []
+        }
+      }
+      acc[clientId].contacts.push(contact)
+      return acc
+    }, {} as Record<string, { client: any; contacts: CRMContact[] }>)
 
-  const hasActiveFilters = searchTerm || filterSocio || filterBrinde
+    return Object.values(grouped).sort((a, b) =>
+      (a.client?.name || '').localeCompare(b.client?.name || '')
+    )
+  }, [contacts, searchTerm, filterGiftType])
+
+  const availableGiftTypes = useMemo(() =>
+    Array.from(new Set(contacts.map(c => c.gift_type).filter(Boolean))).sort(),
+    [contacts]
+  )
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
-      <input ref={fileInputRef} type="file" accept=".xlsx, .xls" onChange={async (e) => {
-        const file = e.target.files?.[0]; if (!file) return;
-        setImporting(true);
-        try {
-          const data = await file.arrayBuffer();
-          const jsonData = utils.sheet_to_json(read(data).Sheets[read(data).SheetNames[0]]);
-          await supabase.from(tableName).insert(jsonData);
-          fetchClients();
-        } catch (err: any) { alert(err.message) } finally { setImporting(false) }
-      }} className="hidden" />
-
-      <ClientFormModal
-        isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setClientToEdit(null) }}
-        onSave={() => {
-          fetchClients();
-          setIsModalOpen(false);
-          setClientToEdit(null);
-        }}
-        client={clientToEdit || undefined}
-      />
-
-      {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-200">
-            <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 text-white flex items-center justify-between">
-              <h2 className="text-lg font-black">Confirmar Exclusão</h2>
+    <div className="min-h-screen bg-gradient-to-br from-[#0a192f] via-[#112240] to-[#0a192f]">
+      {/* Header */}
+      <div className="bg-white/10 backdrop-blur-md border-b border-white/10 sticky top-0 z-10">
+        <div className="max-w-[1800px] mx-auto px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
               <button
-                onClick={() => setDeleteConfirm(null)}
+                onClick={onModuleHome}
                 className="p-2 hover:bg-white/10 rounded-lg transition-all"
               >
-                <X className="h-5 w-5" />
+                <Gift className="w-6 h-6 text-white" />
               </button>
+              <div>
+                <h1 className="text-2xl font-black text-white tracking-tight">Distribuição de Brindes</h1>
+                <p className="text-xs text-white/60 font-medium">Contatos para entrega de presentes</p>
+              </div>
             </div>
 
-            <div className="p-6">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 rounded-xl bg-red-50 border-2 border-red-200">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-[#0a192f] mb-2">
-                    Tem certeza que deseja excluir este cliente?
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <span className="font-bold">{deleteConfirm.nome}</span>
-                    <br />
-                    {deleteConfirm.empresa && <span className="text-xs text-gray-500">{deleteConfirm.empresa}</span>}
-                  </p>
-                  <p className="text-xs text-red-600 mt-3 font-semibold">
-                    Esta ação não pode ser desfeita.
-                  </p>
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl">
+                <UserCircle className="w-4 h-4 text-white/60" />
+                <span className="text-sm font-bold text-white">{userName}</span>
               </div>
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-all text-white/60 hover:text-white"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-sm transition-all"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => handleDeleteClient(deleteConfirm)}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-95"
-                >
-                  Excluir
-                </button>
+      {/* Toolbar */}
+      <div className="max-w-[1800px] mx-auto px-8 py-6">
+        <div className="flex gap-4 items-center">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+            <input
+              type="text"
+              placeholder="Buscar contato, empresa, cargo..."
+              className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:bg-white/20 focus:border-white/40 transition-all outline-none"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <select
+            className="px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:bg-white/20 focus:border-white/40 transition-all outline-none"
+            value={filterGiftType}
+            onChange={e => setFilterGiftType(e.target.value)}
+          >
+            <option value="">Todos os brindes</option>
+            {availableGiftTypes.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => {
+              setContactToEdit(null)
+              setIsModalOpen(true)
+            }}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl active:scale-95"
+          >
+            <Plus className="w-5 h-5" />
+            Novo Contato
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-[1800px] mx-auto px-8 pb-8">
+        {loading ? (
+          <div className="text-center py-20">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-white/20 border-t-white"></div>
+            <p className="text-white/60 mt-4 font-medium">Carregando contatos...</p>
+          </div>
+        ) : groupedContacts.length === 0 ? (
+          <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10">
+            <Users className="w-16 h-16 text-white/20 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-white/80 mb-2">Nenhum contato encontrado</h3>
+            <p className="text-white/40">Adicione contatos para organizar a distribuição de brindes</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {groupedContacts.map((group, idx) => (
+              <div key={idx} className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
+                {/* Company Header */}
+                <div className="bg-white/5 px-6 py-4 border-b border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="w-5 h-5 text-blue-400" />
+                      <div>
+                        <h3 className="text-lg font-black text-white">{group.client?.name || 'Empresa Não Vinculada'}</h3>
+                        {group.client?.partner?.name && (
+                          <p className="text-xs text-white/60 font-medium">Sócio: {group.client.partner.name}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-lg">
+                      <Package className="w-4 h-4 text-white/60" />
+                      <span className="text-sm font-bold text-white">{group.contacts.length} {group.contacts.length === 1 ? 'contato' : 'contatos'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contacts List */}
+                <div className="p-6 space-y-3">
+                  {group.contacts.map(contact => (
+                    <div
+                      key={contact.id}
+                      className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 transition-all group"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-3">
+                            <h4 className="text-base font-bold text-white">{contact.name}</h4>
+                            {contact.role && (
+                              <span className="text-xs px-2 py-1 bg-white/10 text-white/60 rounded-md font-medium">
+                                {contact.role}
+                              </span>
+                            )}
+                            {contact.gift_type && (
+                              <span className={`text-xs px-2 py-1 rounded-md font-bold border ${getGiftBadgeColor(contact.gift_type)}`}>
+                                🎁 {contact.gift_type}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-4 text-xs text-white/60">
+                            {contact.email && (
+                              <span className="flex items-center gap-1">
+                                <span>📧</span> {contact.email}
+                              </span>
+                            )}
+                            {contact.phone && (
+                              <span className="flex items-center gap-1">
+                                <span>📞</span> {contact.phone}
+                              </span>
+                            )}
+                          </div>
+
+                          {contact.address && (
+                            <div className="flex items-start gap-2 text-xs text-white/60">
+                              <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                              <span>
+                                {contact.address}, {contact.address_number}
+                                {contact.neighborhood && ` - ${contact.neighborhood}`}
+                                {contact.city && contact.uf && ` - ${contact.city}/${contact.uf}`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => {
+                              setContactToEdit(contact)
+                              setIsModalOpen(true)
+                            }}
+                            className="p-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition-all"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(contact)}
+                            className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition-all"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* CRM Contact Modal */}
+      <CRMContactModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setContactToEdit(null)
+        }}
+        contact={contactToEdit || undefined}
+        onSave={fetchContacts}
+      />
+
+      {/* Delete Confirmation */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 text-white">
+              <h3 className="text-lg font-black">Confirmar Exclusão</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-700">
+                Tem certeza que deseja excluir o contato <strong>{deleteConfirm.name}</strong>?
+              </p>
+            </div>
+            <div className="px-6 pb-6 flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-6 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDeleteContact(deleteConfirm)}
+                className="px-6 py-2.5 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg"
+              >
+                Excluir
+              </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* PAGE HEADER - Padrão Presencial */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <Users className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Clientes CRM
-            </h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              Gestão completa de clientes e contatos
-            </p>
-          </div>
-        </div>
-
-        {/* Right: User Info & Actions */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && (
-            <button
-              onClick={onModuleHome}
-              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
-              title="Voltar aos módulos"
-            >
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-              title="Sair"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* CONTENT */}
-      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-
-        {/* Barra de Filtros Reorganizada */}
-        <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
-          <div className="flex items-center gap-3 overflow-x-auto">
-            {/* Card Total */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-2.5 flex items-center gap-3 hover:shadow-md transition-all flex-shrink-0">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
-                <Users className="h-4 w-4 text-white" />
-              </div>
-              <div className="border-l border-gray-200 pl-3">
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Total</p>
-                <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{clients.length}</p>
-              </div>
-            </div>
-
-            {/* Busca Expandida */}
-            <div className="flex-1 min-w-[300px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  placeholder="Buscar cliente..."
-                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all hover:border-[#1e3a8a]/30"
-                />
-              </div>
-            </div>
-
-            {/* Filtro Sócio */}
-            <div className="relative min-w-[160px] flex-shrink-0">
-              <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
-              <select
-                value={filterSocio}
-                onChange={e => setFilterSocio(e.target.value)}
-                className="w-full pl-9 pr-8 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all appearance-none cursor-pointer hover:border-[#1e3a8a]/30"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: 'right 0.5rem center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '1.5em 1.5em'
-                }}
-              >
-                <option value="">Todos Sócios</option>
-                {availableSocios.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-
-            {/* Filtro Brinde */}
-            <div className="relative min-w-[160px] flex-shrink-0">
-              <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
-              <select
-                value={filterBrinde}
-                onChange={e => setFilterBrinde(e.target.value)}
-                className="w-full pl-9 pr-8 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all appearance-none cursor-pointer hover:border-[#1e3a8a]/30"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: 'right 0.5rem center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '1.5em 1.5em'
-                }}
-              >
-                <option value="">Todos Brindes</option>
-                {availableBrindes.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            {hasActiveFilters && (
-              <button
-                onClick={() => { setSearchTerm(''); setFilterSocio(''); setFilterBrinde('') }}
-                className="flex items-center gap-2 px-3 py-2.5 text-[9px] font-black text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all uppercase tracking-[0.2em] flex-shrink-0"
-              >
-                <X className="h-3.5 w-3.5" /> Limpar
-              </button>
-            )}
-
-            {/* Actions - Importar, Exportar, Novo */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="p-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95"
-                title="Importar"
-              >
-                <Upload className="h-5 w-5" />
-              </button>
-
-              <button
-                onClick={handleExportExcel}
-                className="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95"
-                title="Exportar"
-              >
-                <FileSpreadsheet className="h-5 w-5" />
-              </button>
-
-              <button
-                onClick={() => { setClientToEdit(null); setIsModalOpen(true) }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-              >
-                <Plus className="h-4 w-4" /> Novo
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Listagem - Sempre em modo Lista */}
-        <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
-          {loading ? (
-            <div className="py-20 flex justify-center"><Loader2 className="animate-spin h-8 w-8 text-[#1e3a8a]" /></div>
-          ) : processedClients.length === 0 ? (
-            <div className="py-20 text-center text-gray-500">
-              <AlertTriangle className="mx-auto h-12 w-12 mb-2 text-gray-300" />
-              <p className="font-bold text-[#0a192f]">Nenhum registro encontrado</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-xl border border-gray-200">
-              <table className="w-full text-left">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                  <tr>
-                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cliente</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Empresa</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Sócio</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Brinde</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Contato</th>
-                    <th className="px-6 py-4 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
-                  {processedClients.map(c => (
-                    <ClientRow
-                      key={c.id}
-                      client={c}
-                      onEdit={setClientToEdit}
-                      onOpenModal={() => setIsModalOpen(true)}
-                      onDelete={setDeleteConfirm}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
-  )
-}
-
-// --- CLIENT ROW COMPONENT ---
-function ClientRow({ client, onEdit, onOpenModal, onDelete }: any) {
-  const colors = getBrindeColors(client.tipo_brinde)
-  return (
-    <tr
-      onClick={() => { onEdit(client); onOpenModal(); }}
-      className="hover:bg-blue-50/40 cursor-pointer transition-all duration-200 group"
-    >
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white font-black text-sm shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
-            {client.nome[0].toUpperCase()}
-          </div>
-          <div>
-            <p className="text-sm font-black text-[#0a192f] group-hover:text-[#1e3a8a] transition-colors">{client.nome}</p>
-            <p className="text-xs text-gray-500 font-medium">{client.cargo || 'Sem cargo'}</p>
-          </div>
-        </div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-700 font-medium">{client.empresa}</span>
-        </div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <Briefcase className="h-4 w-4 text-gray-400" />
-          <span className="text-sm font-bold text-[#0a192f]">{client.socio}</span>
-        </div>
-      </td>
-      <td className="px-6 py-4">
-        <span className={`inline-block px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${colors.badge}`}>
-          {client.tipo_brinde}
-        </span>
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          {client.email && (
-            <button
-              onClick={() => window.open(`mailto:${client.email}`)}
-              className="p-2 rounded-full border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-500 hover:shadow-sm transition-all"
-              title="E-mail"
-            >
-              <Mail className="h-4 w-4 text-blue-600" />
-            </button>
-          )}
-        </div>
-      </td>
-      <td className="px-6 py-4 text-right">
-        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => { onEdit(client); onOpenModal(); }}
-            className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
-            title="Editar"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => onDelete(client)}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"
-            title="Excluir"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
-      </td>
-    </tr>
   )
 }
