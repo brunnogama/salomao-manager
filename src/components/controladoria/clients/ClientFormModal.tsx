@@ -143,6 +143,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
       const payload = { ...formData };
       // Remove computed/virtual fields that don't exist in database
       delete (payload as any).contacts;
+      delete (payload as any).contracts;
       delete (payload as any).active_contracts_count;
       delete (payload as any).partner_name;
 

@@ -39,6 +39,7 @@ export function Clients({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [contactToEdit, setContactToEdit] = useState<CRMContact | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<CompanyRow | null>(null)
+  const [viewingCompany, setViewingCompany] = useState<CompanyRow | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterSocio, setFilterSocio] = useState<string>('')
   const [filterGiftType, setFilterGiftType] = useState<string>('')
@@ -315,15 +316,7 @@ export function Clients({
                 <div
                   key={idx}
                   className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => {
-                    // Open modal to add new contact for this company
-                    const newContact: Partial<CRMContact> = {
-                      client_id: row.client?.id,
-                      client: row.client
-                    }
-                    setContactToEdit(newContact as CRMContact)
-                    setIsModalOpen(true)
-                  }}
+                  onClick={() => setViewingCompany(row)}
                 >
                   {/* Company Name */}
                   <div className="col-span-3 flex items-center gap-3">
@@ -397,6 +390,150 @@ export function Clients({
           </div>
         )}
       </div>
+
+      {/* Company View Modal */}
+      {viewingCompany && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] px-6 py-5 text-white flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/10 rounded-xl">
+                  <Building2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black">{viewingCompany.client?.name || 'Empresa'}</h3>
+                  <p className="text-sm text-white/70 font-medium">
+                    Sócio: {viewingCompany.client?.partner?.name || 'Não definido'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setViewingCompany(null)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <span className="text-2xl">×</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="mb-6">
+                <h4 className="text-sm font-black text-gray-500 uppercase tracking-wide mb-4">
+                  Contatos da Empresa ({viewingCompany.contactCount})
+                </h4>
+
+                {viewingCompany.contacts.length === 0 ? (
+                  <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                    <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 font-semibold">Nenhum contato cadastrado</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {viewingCompany.contacts.map((contact: CRMContact, idx: number) => (
+                      <div
+                        key={idx}
+                        className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-[#1e3a8a]/30 transition-all"
+                      >
+                        <div className="grid grid-cols-12 gap-4 items-center">
+                          {/* Contact Info */}
+                          <div className="col-span-4">
+                            <p className="font-bold text-gray-800 text-base">{contact.name}</p>
+                            <p className="text-sm text-gray-500 font-medium">{contact.role || 'Cargo não informado'}</p>
+                            {contact.email && (
+                              <p className="text-xs text-gray-400 mt-1">{contact.email}</p>
+                            )}
+                          </div>
+
+                          {/* Gift Type */}
+                          <div className="col-span-3">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">
+                              Tipo de Brinde
+                            </p>
+                            {contact.gift_type ? (
+                              <div className="flex items-center gap-2">
+                                <div className={`p-2 rounded-lg bg-gradient-to-br ${getGiftIconColor(contact.gift_type)}`}>
+                                  <Gift className="w-3 h-3 text-white" />
+                                </div>
+                                <span className="text-sm font-bold text-gray-700">{contact.gift_type}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400">-</span>
+                            )}
+                          </div>
+
+                          {/* Gift Quantity */}
+                          <div className="col-span-2 text-center">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">
+                              Quantidade
+                            </p>
+                            <p className="text-lg font-black text-gray-800">
+                              {contact.gift_type === 'Não recebe' ? '-' : (contact.gift_quantity || 1)}
+                            </p>
+                          </div>
+
+                          {/* Gift Details */}
+                          <div className="col-span-3">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">
+                              Observações
+                            </p>
+                            {contact.gift_type === 'Outro' && contact.gift_other ? (
+                              <p className="text-xs font-semibold text-gray-600 line-clamp-2">
+                                {contact.gift_other}
+                              </p>
+                            ) : (
+                              <span className="text-sm text-gray-400">-</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="mt-3 pt-3 border-t border-gray-100 flex gap-2 justify-end">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setContactToEdit(contact)
+                              setIsModalOpen(true)
+                            }}
+                            className="px-3 py-1.5 text-xs font-bold text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            Editar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+              <button
+                onClick={() => {
+                  const newContact: Partial<CRMContact> = {
+                    client_id: viewingCompany.client?.id,
+                    client: viewingCompany.client
+                  }
+                  setContactToEdit(newContact as CRMContact)
+                  setIsModalOpen(true)
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-[#1e3a8a] to-[#112240] hover:from-[#2a4a9a] hover:to-[#213250] text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg hover:shadow-xl active:scale-95"
+              >
+                <Plus className="h-4 w-4" />
+                Adicionar Contato
+              </button>
+              <button
+                onClick={() => setViewingCompany(null)}
+                className="px-6 py-2 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CRM Contact Modal */}
       <CRMContactModal
