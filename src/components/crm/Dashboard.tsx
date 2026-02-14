@@ -86,13 +86,13 @@ export function Dashboard({
     setLoading(true);
     try {
       const { data: lastClients } = await supabase
-        .from('clientes')
+        .from('clients')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
       const { data: allData } = await supabase
-        .from('clientes')
+        .from('clients')
         .select('tipo_brinde, socio, estado');
 
       const { data: magistradosData } = await supabase

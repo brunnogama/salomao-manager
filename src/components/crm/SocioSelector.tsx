@@ -33,7 +33,7 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
       .select('*')
       .eq('status', 'active') // Utilizando a nova coluna status
       .order('name', { ascending: true }) // Ordenando pela nova coluna name
-    
+
     if (!error && data) {
       setSocios(data)
     }
@@ -76,9 +76,9 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
           .from('partners')
           .insert([{ name: socioName.trim(), status: 'active' }])
           .select()
-        
+
         if (error) throw error
-        
+
         if (data && data[0]) {
           await fetchSocios()
           onChange(data[0].name)
@@ -90,23 +90,23 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
           .from('partners')
           .update({ name: socioName.trim() })
           .eq('id', socioToEdit.id)
-        
+
         if (error) throw error
-        
+
         // Atualizar clientes e magistrados que usam este sócio (mantendo referências legadas por nome se necessário)
-        await supabase.from('clientes').update({ socio: socioName.trim() }).eq('socio', socioToEdit.name)
+        await supabase.from('clients').update({ socio: socioName.trim() }).eq('socio', socioToEdit.name)
         await supabase.from('magistrados').update({ socio: socioName.trim() }).eq('socio', socioToEdit.name)
-        
+
         await fetchSocios()
-        
+
         // Se o sócio selecionado é o que foi editado, atualizar o valor
         if (value === socioToEdit.name) {
           onChange(socioName.trim())
         }
-        
+
         alert('✅ Sócio atualizado com sucesso!')
       }
-      
+
       setIsModalOpen(false)
       setSocioName('')
       setSocioToEdit(null)
@@ -119,7 +119,7 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
   const handleDelete = async (socio: Socio, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     if (!confirm(`Tem certeza que deseja excluir o sócio "${socio.name}"?\n\nOs clientes já vinculados não serão afetados.`)) {
       return
     }
@@ -129,9 +129,9 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
         .from('partners')
         .update({ status: 'inactive' }) // Atualizado para usar status string
         .eq('id', socio.id)
-      
+
       if (error) throw error
-      
+
       await fetchSocios()
       alert('✅ Sócio removido da lista!')
     } catch (error: any) {
@@ -165,9 +165,8 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
                 {({ active }) => (
                   <button
                     onClick={handleOpenAdd}
-                    className={`${
-                      active ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                    } group flex w-full items-center px-3 py-2 text-sm font-bold rounded-md border-b border-gray-100`}
+                    className={`${active ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                      } group flex w-full items-center px-3 py-2 text-sm font-bold rounded-md border-b border-gray-100`}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Adicionar Novo Sócio
@@ -185,9 +184,8 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
                   <Menu.Item key={socio.id}>
                     {({ active }) => (
                       <div
-                        className={`${
-                          active ? 'bg-gray-50' : ''
-                        } group flex items-center justify-between px-3 py-2 text-sm rounded-md cursor-pointer`}
+                        className={`${active ? 'bg-gray-50' : ''
+                          } group flex items-center justify-between px-3 py-2 text-sm rounded-md cursor-pointer`}
                       >
                         <button
                           onClick={() => {
@@ -200,7 +198,7 @@ export function SocioSelector({ value, onChange, className = '' }: SocioSelector
                             <Check className="h-4 w-4 ml-2 text-blue-600" />
                           )}
                         </button>
-                        
+
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={(e) => handleOpenEdit(socio, e)}

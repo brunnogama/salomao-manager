@@ -26,7 +26,7 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
       .select('*')
       .eq('ativo', true)
       .order('nome')
-    
+
     if (data) setBrindes(data)
   }
 
@@ -54,20 +54,20 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
         const { error } = await supabase
           .from('tipos_brinde')
           .insert([{ nome: inputValue.trim() }])
-        
+
         if (error) throw error
-        
+
         onChange(inputValue.trim())
       } else {
         const { error } = await supabase
           .from('tipos_brinde')
           .update({ nome: inputValue.trim() })
           .eq('id', editingBrinde.id)
-        
+
         if (error) throw error
 
         await supabase
-          .from('clientes')
+          .from('clients')
           .update({ tipo_brinde: inputValue.trim() })
           .eq('tipo_brinde', editingBrinde.nome)
 
@@ -100,7 +100,7 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
         .from('tipos_brinde')
         .update({ ativo: false })
         .eq('id', brinde.id)
-      
+
       if (error) throw error
 
       if (value === brinde.nome) {
@@ -138,9 +138,8 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
               {({ active }) => (
                 <button
                   onClick={handleAdd}
-                  className={`w-full px-3 py-2.5 text-left flex items-center gap-2 border-b border-gray-200 text-sm font-semibold transition-colors ${
-                    active ? 'bg-gray-50' : 'bg-white'
-                  }`}
+                  className={`w-full px-3 py-2.5 text-left flex items-center gap-2 border-b border-gray-200 text-sm font-semibold transition-colors ${active ? 'bg-gray-50' : 'bg-white'
+                    }`}
                 >
                   <Plus className="h-4 w-4 text-gray-600" />
                   <span className="text-gray-700">Adicionar Novo Tipo</span>
@@ -152,9 +151,8 @@ export function BrindeSelector({ value, onChange }: BrindeSelectorProps) {
               <Menu.Item key={brinde.id}>
                 {({ active }) => (
                   <div
-                    className={`px-3 py-2.5 flex items-center justify-between group text-sm transition-colors cursor-pointer ${
-                      active ? 'bg-gray-50' : ''
-                    }`}
+                    className={`px-3 py-2.5 flex items-center justify-between group text-sm transition-colors cursor-pointer ${active ? 'bg-gray-50' : ''
+                      }`}
                   >
                     <button
                       onClick={() => onChange(brinde.nome)}
