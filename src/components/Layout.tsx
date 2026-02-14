@@ -76,7 +76,7 @@ export function Layout() {
         {/* Top: Favicon + Module Name */}
         <div className="p-6 pb-2">
           <div className="flex items-center gap-4 mb-6">
-            <img src="/logo-branca.png" alt="Icon" className="h-8 w-8 drop-shadow-lg" />
+            <img src="/so_logo-branca.png" alt="Icon" className="h-8 w-8 drop-shadow-lg" />
             <div className="px-3 py-1.5 bg-white/10 rounded-lg border border-white/10 backdrop-blur-sm shadow-inner">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 block text-center min-w-[80px]">
                 {currentModule.label}
@@ -156,7 +156,7 @@ export function Layout() {
         <aside className="absolute left-0 top-0 bottom-0 w-72 bg-[#0a192f] text-white shadow-2xl flex flex-col">
           <div className="p-6 border-b border-white/5 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <img src="/logo-branca.png" alt="Logo" className="h-8 w-8" />
+              <img src="/so_logo-branca.png" alt="Logo" className="h-8 w-8" />
               <span className="font-bold text-lg">Menu</span>
             </div>
             <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-white/5 rounded-lg text-white/70 hover:text-white">
@@ -211,7 +211,7 @@ export function Layout() {
             <Menu className="w-6 h-6" />
           </button>
           <span className="font-bold text-gray-800 uppercase tracking-widest text-xs">{currentModule.label}</span>
-          <img src="/logo-branca.png" alt="Logo" className="h-8 w-8" />
+          <img src="/so_logo-branca.png" alt="Logo" className="h-8 w-8" />
         </header>
 
         <main className="flex-1 overflow-y-auto">

@@ -16,7 +16,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
     async function fetchPermissions() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        
+
         if (user) {
           const { data, error } = await supabase
             .from('user_profiles') // Tabela correta
@@ -27,9 +27,9 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           if (data && !error) {
             const userRole = data.role || ''
             const isUserAdmin = userRole.toLowerCase() === 'admin'
-            
+
             setIsAdmin(isUserAdmin)
-            
+
             if (isUserAdmin) {
               setAllowedModules(['crm', 'family', 'collaborators', 'operational', 'financial', 'executive', 'legal-control'])
             } else {
@@ -52,7 +52,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
     fetchPermissions()
   }, [])
-  
+
   const handleLogout = async () => {
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
     localStorage.clear()
@@ -80,12 +80,12 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
     const allowed = isModuleAllowed(key)
 
     return (
-      <div 
+      <div
         key={key}
         onClick={() => allowed && onSelect(key)}
         className={`relative overflow-hidden rounded-xl border transition-all duration-300 h-64 flex flex-col items-center text-center justify-center group
-          ${allowed 
-            ? 'bg-white shadow-sm border-gray-100 hover:shadow-2xl hover:-translate-y-2 cursor-pointer hover:border-gray-200' 
+          ${allowed
+            ? 'bg-white shadow-sm border-gray-100 hover:shadow-2xl hover:-translate-y-2 cursor-pointer hover:border-gray-200'
             : 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed'
           }
         `}
@@ -103,11 +103,10 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         )}
 
         {/* Icon Container */}
-        <div className={`relative z-10 p-5 rounded-2xl mb-6 transition-all duration-300 ${
-          allowed 
-            ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl` 
+        <div className={`relative z-10 p-5 rounded-2xl mb-6 transition-all duration-300 ${allowed
+            ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl`
             : 'bg-gray-200 text-gray-400'
-        }`}>
+          }`}>
           <Icon className="h-10 w-10" />
         </div>
 
@@ -120,7 +119,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             {description}
           </p>
         </div>
-        
+
         {/* Status Badge */}
         {!allowed && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
@@ -151,18 +150,18 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
-      
+
       {/* Header - Design System Navy */}
       <header className="bg-gradient-to-r from-[#0a192f] to-[#112240] border-b border-white/10 shadow-xl">
         <div className="max-w-[1920px] mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
-          
+
           {/* Logo - Esquerda */}
-          <img 
-            src="/logo-branca.png" 
-            alt="Salomão Advogados" 
-            className="h-11 w-auto object-contain" 
+          <img
+            src="/so_logo-branca.png"
+            alt="Salomão Advogados"
+            className="h-11 w-auto object-contain"
           />
-          
+
           {/* Controles - Direita */}
           <div className="flex items-center gap-3">
             {/* User Info */}
@@ -183,10 +182,10 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
                 )}
               </div>
             </div>
-            
+
             {/* Settings Button (Admin only) */}
             {isAdmin && (
-              <button 
+              <button
                 onClick={() => onSelect('settings')}
                 className="p-2.5 text-gray-400 hover:text-white transition-all rounded-xl hover:bg-white/10 border border-transparent hover:border-white/20"
                 title="Configurações"
@@ -194,9 +193,9 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
                 <Settings className="h-5 w-5" />
               </button>
             )}
-            
+
             {/* Logout Button */}
-            <button 
+            <button
               onClick={handleLogout}
               className="p-2.5 text-gray-400 hover:text-red-400 transition-all rounded-xl hover:bg-red-500/10 border border-transparent hover:border-red-400/20"
               title="Sair"
@@ -209,7 +208,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
-        
+
         {/* Title Section */}
         <div className="text-center mb-12 max-w-3xl">
           <h1 className="text-4xl md:text-5xl font-black text-[#0a192f] mb-4 tracking-tight">
@@ -218,7 +217,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           <p className="text-base text-gray-500 font-medium">
             Selecione o módulo que deseja acessar para começar
           </p>
-          
+
           {/* Decorative line */}
           <div className="mt-6 flex items-center justify-center gap-2">
             <div className="h-0.5 w-12 bg-gradient-to-r from-transparent to-[#1e3a8a]"></div>
@@ -229,57 +228,57 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
         {/* Modules Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl w-full">
-          
+
           {renderCard(
-            'crm', 
-            'Brindes de Clientes', 
-            'Gestão de clientes e controle de brindes de final de ano', 
-            Gift, 
+            'crm',
+            'Brindes de Clientes',
+            'Gestão de clientes e controle de brindes de final de ano',
+            Gift,
             'from-blue-600',
             'to-blue-700'
           )}
 
           {renderCard(
-            'executive', 
-            'Secretaria Executiva', 
-            'Suporte e gestão de agendas, viagens e demandas dos sócios', 
-            Briefcase, 
+            'executive',
+            'Secretaria Executiva',
+            'Suporte e gestão de agendas, viagens e demandas dos sócios',
+            Briefcase,
             'from-purple-600',
             'to-purple-700'
           )}
 
           {renderCard(
-            'collaborators', 
-            'Recursos Humanos', 
-            'Gestão estratégica de pessoas, benefícios e departamento pessoal', 
-            UserCog, 
+            'collaborators',
+            'Recursos Humanos',
+            'Gestão estratégica de pessoas, benefícios e departamento pessoal',
+            UserCog,
             'from-green-600',
             'to-green-700'
           )}
 
           {renderCard(
-            'operational', 
-            'Operacional', 
-            'Gestão de insumos, papelaria e operacional do escritório', 
-            Package, 
+            'operational',
+            'Operacional',
+            'Gestão de insumos, papelaria e operacional do escritório',
+            Package,
             'from-orange-600',
             'to-orange-700'
           )}
 
           {renderCard(
-            'financial', 
-            'Financeiro', 
-            'Controle de notas fiscais, emissão de boletos e gestão financeira', 
-            Banknote, 
+            'financial',
+            'Financeiro',
+            'Controle de notas fiscais, emissão de boletos e gestão financeira',
+            Banknote,
             'from-emerald-600',
             'to-emerald-700'
           )}
 
           {renderCard(
-            'legal-control', 
-            'Controladoria Jurídica', 
-            'Análise e controle estratégico de processos e métricas jurídicas', 
-            Scale, 
+            'legal-control',
+            'Controladoria Jurídica',
+            'Análise e controle estratégico de processos e métricas jurídicas',
+            Scale,
             'from-[#1e3a8a]',
             'to-[#112240]'
           )}

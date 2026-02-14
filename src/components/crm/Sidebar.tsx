@@ -113,9 +113,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* 1. HEADER - BRAND + MÓDULO */}
         <div className="p-6 pb-2">
           <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 bg-[#1e3a8a] rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20 border border-blue-700/50">
-              <img src="/logo-branca.png" alt="S" className="h-6 w-6 drop-shadow-md" />
-            </div>
+            <img src="/so_logo-branca.png" alt="S" className="h-6 w-6 drop-shadow-md" />
             <div>
               <h2 className="text-sm font-bold text-white leading-none tracking-wide">GESTÃO</h2>
               <h2 className="text-xl font-black text-white leading-none tracking-wide mt-0.5">CLIENTES</h2>
