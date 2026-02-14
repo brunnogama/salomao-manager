@@ -23,9 +23,10 @@ import {
   LogOut,
   Grid
 } from 'lucide-react'
-import { NewClientModal } from './NewClientModal'
+import { ClientFormModal } from '../controladoria/clients/ClientFormModal'
 import { getBrindeColors, mapDbToClient } from '../../types/client'
 import type { ClientData, ClientDataLegacy } from '../../types/client'
+import type { Client } from '../../types/controladoria'
 import { logAction } from '../../lib/logger'
 
 interface ClientsProps {
@@ -47,7 +48,7 @@ export function Clients({
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [clientToEdit, setClientToEdit] = useState<ClientDataLegacy | null>(null)
+  const [clientToEdit, setClientToEdit] = useState<Client | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<ClientDataLegacy | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -135,12 +136,15 @@ export function Clients({
         } catch (err: any) { alert(err.message) } finally { setImporting(false) }
       }} className="hidden" />
 
-      <NewClientModal
+      <ClientFormModal
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setClientToEdit(null) }}
-        onSave={fetchClients}
-        clientToEdit={clientToEdit}
-        tableName={tableName}
+        onSave={() => {
+          fetchClients();
+          setIsModalOpen(false);
+          setClientToEdit(null);
+        }}
+        client={clientToEdit || undefined}
       />
 
       {/* Delete Confirmation Modal */}
