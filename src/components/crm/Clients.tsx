@@ -3,17 +3,17 @@ import { useEffect, useState, useMemo, useRef, Fragment } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Menu, Transition } from '@headlessui/react'
 import { utils, writeFile, read } from 'xlsx'
-import { 
-  Search, 
-  MessageCircle, 
-  Trash2, 
-  Pencil, 
-  Mail, 
-  Briefcase, 
+import {
+  Search,
+  MessageCircle,
+  Trash2,
+  Pencil,
+  Mail,
+  Briefcase,
   FileSpreadsheet,
-  Upload, 
-  Loader2, 
-  AlertTriangle, 
+  Upload,
+  Loader2,
+  AlertTriangle,
   Plus,
   X,
   Users,
@@ -35,8 +35,8 @@ interface ClientsProps {
   onLogout?: () => void;
 }
 
-export function Clients({ 
-  initialFilters, 
+export function Clients({
+  initialFilters,
   tableName = 'clientes',
   userName = 'Usuário',
   onModuleHome,
@@ -48,7 +48,7 @@ export function Clients({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [clientToEdit, setClientToEdit] = useState<ClientData | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<ClientData | null>(null)
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterSocio, setFilterSocio] = useState<string>('')
@@ -56,10 +56,10 @@ export function Clients({
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest')
 
   // Ajustado para garantir que os sócios disponíveis no filtro venham da lista carregada de clientes
-  const availableSocios = useMemo(() => 
+  const availableSocios = useMemo(() =>
     Array.from(new Set(clients.map(c => c.socio).filter(Boolean))).sort(), [clients]
   )
-  const availableBrindes = useMemo(() => 
+  const availableBrindes = useMemo(() =>
     Array.from(new Set(clients.map(c => c.tipo_brinde).filter(Boolean))), [clients]
   )
 
@@ -71,7 +71,10 @@ export function Clients({
 
   const fetchClients = async () => {
     setLoading(true)
-    const { data, error } = await supabase.from(tableName).select('*')
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*, contracts!inner(status)')
+      .in('contracts.status', ['proposal_sent', 'closed'])
     if (!error && data) setClients(data as ClientData[])
     setLoading(false)
   }
@@ -120,12 +123,12 @@ export function Clients({
         } catch (err: any) { alert(err.message) } finally { setImporting(false) }
       }} className="hidden" />
 
-      <NewClientModal 
-        isOpen={isModalOpen} 
-        onClose={() => { setIsModalOpen(false); setClientToEdit(null) }} 
-        onSave={fetchClients} 
-        clientToEdit={clientToEdit} 
-        tableName={tableName} 
+      <NewClientModal
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setClientToEdit(null) }}
+        onSave={fetchClients}
+        clientToEdit={clientToEdit}
+        tableName={tableName}
       />
 
       {/* Delete Confirmation Modal */}
@@ -134,14 +137,14 @@ export function Clients({
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-200">
             <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 text-white flex items-center justify-between">
               <h2 className="text-lg font-black">Confirmar Exclusão</h2>
-              <button 
-                onClick={() => setDeleteConfirm(null)} 
+              <button
+                onClick={() => setDeleteConfirm(null)}
                 className="p-2 hover:bg-white/10 rounded-lg transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
+
             <div className="p-6">
               <div className="flex items-start gap-4 mb-6">
                 <div className="p-3 rounded-xl bg-red-50 border-2 border-red-200">
@@ -207,8 +210,8 @@ export function Clients({
             <UserCircle className="h-5 w-5" />
           </div>
           {onModuleHome && (
-            <button 
-              onClick={onModuleHome} 
+            <button
+              onClick={onModuleHome}
               className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#1e3a8a] rounded-lg transition-all"
               title="Voltar aos módulos"
             >
@@ -216,8 +219,8 @@ export function Clients({
             </button>
           )}
           {onLogout && (
-            <button 
-              onClick={onLogout} 
+            <button
+              onClick={onLogout}
               className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
               title="Sair"
             >
@@ -229,7 +232,7 @@ export function Clients({
 
       {/* CONTENT */}
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-        
+
         {/* Barra de Filtros Reorganizada */}
         <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
           <div className="flex items-center gap-3 overflow-x-auto">
@@ -248,12 +251,12 @@ export function Clients({
             <div className="flex-1 min-w-[300px]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input 
-                  type="text" 
-                  value={searchTerm} 
-                  onChange={e => setSearchTerm(e.target.value)} 
-                  placeholder="Buscar cliente..." 
-                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all hover:border-[#1e3a8a]/30" 
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  placeholder="Buscar cliente..."
+                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all hover:border-[#1e3a8a]/30"
                 />
               </div>
             </div>
@@ -261,9 +264,9 @@ export function Clients({
             {/* Filtro Sócio */}
             <div className="relative min-w-[160px] flex-shrink-0">
               <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
-              <select 
-                value={filterSocio} 
-                onChange={e => setFilterSocio(e.target.value)} 
+              <select
+                value={filterSocio}
+                onChange={e => setFilterSocio(e.target.value)}
                 className="w-full pl-9 pr-8 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all appearance-none cursor-pointer hover:border-[#1e3a8a]/30"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
@@ -280,9 +283,9 @@ export function Clients({
             {/* Filtro Brinde */}
             <div className="relative min-w-[160px] flex-shrink-0">
               <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
-              <select 
-                value={filterBrinde} 
-                onChange={e => setFilterBrinde(e.target.value)} 
+              <select
+                value={filterBrinde}
+                onChange={e => setFilterBrinde(e.target.value)}
                 className="w-full pl-9 pr-8 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none bg-white transition-all appearance-none cursor-pointer hover:border-[#1e3a8a]/30"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
@@ -297,25 +300,25 @@ export function Clients({
             </div>
 
             {hasActiveFilters && (
-              <button 
-                onClick={() => {setSearchTerm(''); setFilterSocio(''); setFilterBrinde('')}} 
+              <button
+                onClick={() => { setSearchTerm(''); setFilterSocio(''); setFilterBrinde('') }}
                 className="flex items-center gap-2 px-3 py-2.5 text-[9px] font-black text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all uppercase tracking-[0.2em] flex-shrink-0"
               >
-                <X className="h-3.5 w-3.5"/> Limpar
+                <X className="h-3.5 w-3.5" /> Limpar
               </button>
             )}
 
             {/* Actions - Importar, Exportar, Novo */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button 
+              <button
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95"
                 title="Importar"
               >
                 <Upload className="h-5 w-5" />
               </button>
-              
-              <button 
+
+              <button
                 onClick={handleExportExcel}
                 className="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95"
                 title="Exportar"
@@ -323,8 +326,8 @@ export function Clients({
                 <FileSpreadsheet className="h-5 w-5" />
               </button>
 
-              <button 
-                onClick={() => {setClientToEdit(null); setIsModalOpen(true)}} 
+              <button
+                onClick={() => { setClientToEdit(null); setIsModalOpen(true) }}
                 className="flex items-center gap-2 px-4 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
               >
                 <Plus className="h-4 w-4" /> Novo
@@ -357,12 +360,12 @@ export function Clients({
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white">
                   {processedClients.map(c => (
-                    <ClientRow 
-                      key={c.id} 
-                      client={c} 
-                      onEdit={setClientToEdit} 
-                      onOpenModal={() => setIsModalOpen(true)} 
-                      onDelete={setDeleteConfirm} 
+                    <ClientRow
+                      key={c.id}
+                      client={c}
+                      onEdit={setClientToEdit}
+                      onOpenModal={() => setIsModalOpen(true)}
+                      onDelete={setDeleteConfirm}
                     />
                   ))}
                 </tbody>
@@ -379,8 +382,8 @@ export function Clients({
 function ClientRow({ client, onEdit, onOpenModal, onDelete }: any) {
   const colors = getBrindeColors(client.tipo_brinde)
   return (
-    <tr 
-      onClick={() => { onEdit(client); onOpenModal(); }} 
+    <tr
+      onClick={() => { onEdit(client); onOpenModal(); }}
       className="hover:bg-blue-50/40 cursor-pointer transition-all duration-200 group"
     >
       <td className="px-6 py-4">
@@ -414,8 +417,8 @@ function ClientRow({ client, onEdit, onOpenModal, onDelete }: any) {
       <td className="px-6 py-4">
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           {client.email && (
-            <button 
-              onClick={() => window.open(`mailto:${client.email}`)} 
+            <button
+              onClick={() => window.open(`mailto:${client.email}`)}
               className="p-2 rounded-full border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-500 hover:shadow-sm transition-all"
               title="E-mail"
             >
@@ -426,15 +429,15 @@ function ClientRow({ client, onEdit, onOpenModal, onDelete }: any) {
       </td>
       <td className="px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-          <button 
-            onClick={() => { onEdit(client); onOpenModal(); }} 
+          <button
+            onClick={() => { onEdit(client); onOpenModal(); }}
             className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
             title="Editar"
           >
             <Pencil className="h-4 w-4" />
           </button>
-          <button 
-            onClick={() => onDelete(client)} 
+          <button
+            onClick={() => onDelete(client)}
             className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"
             title="Excluir"
           >
