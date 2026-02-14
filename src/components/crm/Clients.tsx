@@ -75,7 +75,17 @@ export function Clients({
       .from(tableName)
       .select('*, contracts!inner(status)')
       .in('contracts.status', ['proposal_sent', 'closed'])
-    if (!error && data) setClients(data as ClientData[])
+
+    if (error) {
+      console.error('Error fetching clients:', error)
+      console.log('Using table:', tableName)
+    }
+
+    if (!error && data) {
+      console.log('Fetched clients:', data.length)
+      setClients(data as ClientData[])
+    }
+
     setLoading(false)
   }
 
