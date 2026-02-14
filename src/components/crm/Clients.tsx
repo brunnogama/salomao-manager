@@ -74,7 +74,7 @@ export function Clients({
     setLoading(true)
     const { data, error } = await supabase
       .from(tableName)
-      .select('*')
+      .select('*, partner:partners(name)')
 
     if (error) {
       console.error('Error fetching clients:', error)
