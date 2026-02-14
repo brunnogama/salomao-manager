@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Plus, Search, Filter, Calendar, DollarSign, User, Briefcase,
-  CheckCircle2, Clock, Scale, Tag, Loader2,
-  LayoutGrid, List, Download, ArrowUpDown, Edit, Trash2, Bell, ArrowDownAZ, ArrowUpAZ,
-  FileSignature, ChevronDown, X, FileSearch, Paperclip, Eye
+  Plus, Search, Filter, Calendar, User, Briefcase,
+  Loader2,
+  Download, Edit, Trash2, Bell,
+  FileSignature, ChevronDown, X, FileSearch, Eye
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import * as XLSX from 'xlsx';
@@ -126,9 +126,7 @@ export function Contracts() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const [sortBy, setSortBy] = useState<'name' | 'date'>('name');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('asc');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -422,16 +420,6 @@ export function Contracts() {
     }
 
     return matchesSearch && matchesStatus && matchesPartner && matchesDate;
-  }).sort((a: Contract, b: Contract) => {
-    if (sortBy === 'name') {
-      const nameA = a.client_name || '';
-      const nameB = b.client_name || '';
-      return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-    } else {
-      const dateA = safeDate(getRelevantDate(a))?.getTime() || 0;
-      const dateB = safeDate(getRelevantDate(b))?.getTime() || 0;
-      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-    }
   });
 
   const exportToExcel = () => {
@@ -583,39 +571,36 @@ export function Contracts() {
 
   return (
     <div className="p-8 animate-in fade-in duration-500">
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        {/* Esquerda: Título */}
-        <div>
-          <h1 className="text-3xl font-bold text-salomao-blue flex items-center gap-2">
-            <FileSignature className="w-8 h-8" /> Casos
-          </h1>
-          <div className="flex items-center mt-1">
-            <p className="text-gray-500 mr-3">Gestão completa de casos e propostas.</p>
+        {/* Esquerda: Ícone + Título */}
+        <div className="flex items-center gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
+            <FileSignature className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Casos</h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão completa de casos e propostas</p>
           </div>
         </div>
 
-        {/* Direita: Filtros de Status/Sócio, Botão Novo, Notificações */}
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterSelect
-            icon={Filter}
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={statusOptions}
-            placeholder="Status"
-          />
+        {/* Direita: Exportar XLSX, Novo Caso, Notificações */}
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          {/* Exportar XLSX (Verde) */}
+          <button
+            onClick={exportToExcel}
+            className="flex items-center gap-2 px-6 py-2.5 bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95"
+          >
+            <Download className="h-4 w-4" /> Exportar XLS
+          </button>
 
-          <FilterSelect
-            icon={User}
-            value={partnerFilter}
-            onChange={setPartnerFilter}
-            options={partnerOptions}
-            placeholder="Sócios"
-          />
-
-          {/* Botão Novo Caso */}
+          {/* Novo Caso (Azul Royal) */}
           {userRole !== 'viewer' && (
-            <button onClick={handleNew} className="bg-salomao-gold hover:bg-yellow-600 text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center font-bold h-[40px] whitespace-nowrap">
-              <Plus className="w-5 h-5 mr-2" /> Novo Caso
+            <button
+              onClick={handleNew}
+              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            >
+              <Plus className="h-4 w-4" /> Novo Caso
             </button>
           )}
 
@@ -665,122 +650,87 @@ export function Contracts() {
         </div>
       </div>
 
-      {/* Barra de Controles Inferior (Card Total + Ferramentas) */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm items-center justify-between">
+      {/* Toolbar: Total | Busca | Filtros | Período */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div className="flex flex-col lg:flex-row items-center gap-4">
 
-        {/* Esquerda: Card de Total (FIXO) */}
-        <div className="flex items-center gap-3 pr-4 border-r border-gray-100 mr-2 min-w-[200px]">
-          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-            <Briefcase className="w-5 h-5" />
+          {/* Card de Total */}
+          <div className="flex items-center gap-3 pr-4 border-r border-gray-100">
+            <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Total</p>
+              <p className="text-xl font-black text-[#0a192f] leading-none">{contracts.length}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Total de Casos</p>
-            <p className="text-xl font-bold text-gray-800 leading-none">{contracts.length}</p>
-          </div>
-        </div>
 
-        {/* Grupo da Direita: Busca Animada, Datas, Ações */}
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end flex-1">
-
-          {/* Busca Animada Expandível */}
-          <div
-            ref={searchRef}
-            className={`
-              flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-white
-              ${isSearchOpen ? 'w-64 border border-gray-200 shadow-sm px-3 rounded-lg' : 'w-10 border border-transparent justify-center cursor-pointer hover:bg-gray-50 rounded-lg'}
-              h-[42px]
-            `}
-            onClick={() => !isSearchOpen && setIsSearchOpen(true)}
-          >
-            <Search className={`w-5 h-5 text-gray-400 shrink-0 ${!isSearchOpen && 'cursor-pointer'}`} />
-
+          {/* Barra de Busca (flex-1, sempre visível) */}
+          <div className="relative flex-1 w-full lg:w-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar..."
-              className={`ml-2 bg-transparent outline-none text-sm w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
+              placeholder="Buscar por cliente, HON, processo..."
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              autoFocus={isSearchOpen}
+            />
+          </div>
+
+          {/* Filtros: Sócios e Status */}
+          <div className="flex flex-wrap items-center gap-2">
+            <FilterSelect
+              icon={User}
+              value={partnerFilter}
+              onChange={setPartnerFilter}
+              options={partnerOptions}
+              placeholder="Sócios"
             />
 
-            {isSearchOpen && searchTerm && (
+            <FilterSelect
+              icon={Filter}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={statusOptions}
+              placeholder="Status"
+            />
+
+            {/* Período: De - Até */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
+                />
+              </div>
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
+                />
+              </div>
+            </div>
+
+            {/* Limpar Filtros */}
+            {hasActiveFilters && (
               <button
-                onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }}
-                className="ml-1 text-gray-400 hover:text-red-500"
+                onClick={clearFilters}
+                className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"
+                title="Limpar filtros"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             )}
           </div>
-
-          {/* Separador Visual */}
-          <div className="h-6 w-px bg-gray-200 mx-1 hidden md:block"></div>
-
-          {/* Filtros de Data */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
-              <span className="text-xs text-gray-400 mr-2">De</span>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent text-sm text-gray-700 outline-none w-[110px]"
-              />
-            </div>
-            <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[42px]">
-              <span className="text-xs text-gray-400 mr-2">Até</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent text-sm text-gray-700 outline-none w-[110px]"
-              />
-            </div>
-          </div>
-
-          {/* Ordenação */}
-          <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200 h-[42px] items-center">
-            <button
-              onClick={() => { if (sortBy !== 'name') { setSortBy('name'); setSortOrder('asc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-              className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all h-full ${sortBy === 'name' ? 'bg-white shadow text-salomao-blue' : 'text-gray-500 hover:text-gray-700'}`}
-              title="Ordenar por Nome"
-            >
-              Nome
-              {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowDownAZ className="w-3 h-3 ml-1" /> : <ArrowUpAZ className="w-3 h-3 ml-1" />)}
-            </button>
-            <button
-              onClick={() => { if (sortBy !== 'date') { setSortBy('date'); setSortOrder('desc'); } else { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); } }}
-              className={`flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all h-full ${sortBy === 'date' ? 'bg-white shadow text-salomao-blue' : 'text-gray-500 hover:text-gray-700'}`}
-              title="Ordenar por Data do Status Atual"
-            >
-              Data
-              {sortBy === 'date' && <ArrowUpDown className="w-3 h-3 ml-1" />}
-            </button>
-          </div>
-
-          {/* Visualização */}
-          <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-200 h-[42px] items-center">
-            <button onClick={() => setViewMode('grid')} className={`p-1.5 h-full flex items-center rounded ${viewMode === 'grid' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid className="w-4 h-4" /></button>
-            <button onClick={() => setViewMode('list')} className={`p-1.5 h-full flex items-center rounded ${viewMode === 'list' ? 'bg-white shadow-sm text-salomao-blue' : 'text-gray-400 hover:text-gray-600'}`}><List className="w-4 h-4" /></button>
-          </div>
-
-          {/* Exportar */}
-          <button onClick={exportToExcel} className="flex items-center px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium whitespace-nowrap h-[42px]">
-            <Download className="w-4 h-4 mr-2" /> XLS
-          </button>
-
-          {/* Limpar (se houver filtros) */}
-          {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="flex items-center px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors h-[42px]"
-              title="Limpar todos os filtros"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
         </div>
       </div>
+
       {/* 3. Área de Conteúdo */}
       <div className="flex-1">
         {loading ? (
@@ -799,115 +749,52 @@ export function Contracts() {
             />
           </div>
         ) : (
-          <>
-            {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredContracts.map((contract) => {
-                  const totalExito = calculateTotalSuccess(contract);
-                  return (
-                    <div key={contract.id} onClick={() => handleView(contract)} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group relative overflow-hidden">
-                      <div className={`absolute right-0 top-0 h-full w-1 ${getStatusColor(contract.status).split(' ')[0].replace('bg-', 'bg-').replace('-50', '-500')}`}></div>
-
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1 min-w-0 pr-8">
-                          <span className="text-[10px] font-black text-gray-400 font-mono mb-1 block uppercase tracking-widest">{contract.display_id}</span>
-                          <h3 className="font-black text-[#0a192f] text-sm truncate uppercase tracking-tight" title={contract.client_name}>{contract.client_name}</h3>
-                          <span className={`inline-block px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest mt-2 border ${getStatusColor(contract.status)}`}>
-                            {getStatusLabel(contract.status)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 mt-4">
-                        <div className="flex items-center text-[11px] font-semibold text-gray-600">
-                          <Scale className="w-3.5 h-3.5 mr-2 text-gray-400" />
-                          <span className="truncate">
-                            {contract.processes && contract.processes.length > 0
-                              ? contract.processes.map((p) => p.process_number).join(', ')
-                              : 'Sem processos'}
-                          </span>
-                        </div>
-                        <div className="flex items-center text-[11px] font-semibold text-gray-600">
-                          <User className="w-3.5 h-3.5 mr-2 text-[#1e3a8a]" />
-                          <span className="truncate">{contract.partner_name || 'Sem sócio'}</span>
-                        </div>
-                        {contract.status === 'active' && contract.hon_number && (
-                          <div className="flex items-center text-[11px] font-semibold text-gray-600">
-                            <Tag className="w-3.5 h-3.5 mr-2 text-gray-400" />
-                            <span className="font-mono bg-gray-50 px-1.5 py-0.5 rounded text-[10px] border border-gray-100">{contract.hon_number}</span>
-                          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Processos</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Sócio</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">HON</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Data</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredContracts.map(contract => (
+                  <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
+                    <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{contract.display_id}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
+                        {getStatusLabel(contract.status)}
+                      </span>
+                    </td>
+                    <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
+                    <td className="p-4 text-[11px] font-semibold text-gray-500 max-w-[180px] truncate">
+                      {contract.processes && contract.processes.length > 0 ? contract.processes.map(p => p.process_number).join(', ') : '-'}
+                    </td>
+                    <td className="p-4 text-[11px] font-semibold text-gray-600">{contract.partner_name || '-'}</td>
+                    <td className="p-4 font-mono text-[10px] font-bold text-gray-400">{contract.hon_number || '-'}</td>
+                    <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}</td>
+                    <td className="p-4">
+                      <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>
+                        {userRole !== 'viewer' && (
+                          <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"><Edit className="w-4 h-4" /></button>
+                        )}
+                        {userRole === 'admin' && (
+                          <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
                         )}
                       </div>
-
-                      <div className="mt-5 pt-3 border-t border-gray-50 flex justify-between items-center">
-                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}
-                        </div>
-                        {contract.status === 'active' && (
-                          <div className="text-right">
-                            {contract.pro_labore && parseCurrency(contract.pro_labore) > 0 && (
-                              <div className="text-xs font-black text-emerald-700">{formatMoney(contract.pro_labore)}</div>
-                            )}
-                            {totalExito > 0 && (
-                              <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider">+ {formatMoney(totalExito)} êxito</div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50/50 border-b border-gray-100">
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID</th>
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos</th>
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Sócio</th>
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">HON</th>
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Data</th>
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {filteredContracts.map(contract => (
-                      <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
-                        <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{contract.display_id}</td>
-                        <td className="p-4">
-                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
-                            {getStatusLabel(contract.status)}
-                          </span>
-                        </td>
-                        <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
-                        <td className="p-4 text-[11px] font-semibold text-gray-500 max-w-[180px] truncate">
-                          {contract.processes && contract.processes.length > 0 ? contract.processes.map(p => p.process_number).join(', ') : '-'}
-                        </td>
-                        <td className="p-4 text-[11px] font-semibold text-gray-600">{contract.partner_name || '-'}</td>
-                        <td className="p-4 font-mono text-[10px] font-bold text-gray-400">{contract.hon_number || '-'}</td>
-                        <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}</td>
-                        <td className="p-4">
-                          <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>
-                            {userRole !== 'viewer' && (
-                              <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"><Edit className="w-4 h-4" /></button>
-                            )}
-                            {userRole === 'admin' && (
-                              <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
