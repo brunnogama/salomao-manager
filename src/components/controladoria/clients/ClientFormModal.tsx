@@ -146,6 +146,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
       delete (payload as any).contracts;
       delete (payload as any).active_contracts_count;
       delete (payload as any).partner_name;
+      delete (payload as any).partner;
 
       // Limpeza de dados
       if (payload.cnpj) payload.cnpj = payload.cnpj.replace(/\D/g, '');
