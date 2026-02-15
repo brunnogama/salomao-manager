@@ -60,11 +60,11 @@ export function IncompleteClients({
         `)
 
       if (data) {
-        // Filter contacts from clients with active contracts (proposal_sent or closed)
+        // Filter contacts from clients with active contracts (active, proposal, probono)
         const contactsWithActiveContracts = data.filter((c: any) => {
           const contracts = c.client?.contracts || []
           return contracts.some((contractByClient: any) =>
-            ['proposal_sent', 'closed'].includes(contractByClient.status)
+            ['active', 'proposal', 'probono'].includes(contractByClient.status)
           )
         })
 

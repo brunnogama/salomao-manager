@@ -57,11 +57,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         `)
 
       if (contacts) {
-        // Filter contacts from clients with active contracts (proposal_sent or closed)
+        // Filter contacts from clients with active contracts (active, proposal, probono)
         const contactsWithActiveContracts = contacts.filter((c: any) => {
           const contractsByClient = c.client?.contracts || []
           return contractsByClient.some((contract: any) =>
-            ['proposal_sent', 'closed'].includes(contract.status)
+            ['active', 'proposal', 'probono'].includes(contract.status)
           )
         })
 
