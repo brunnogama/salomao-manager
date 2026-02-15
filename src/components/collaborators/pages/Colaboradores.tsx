@@ -919,14 +919,14 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1 flex flex-col">
         <div className="overflow-auto h-full custom-scrollbar">
           <table className="w-full">
-            <thead className="bg-gray-50/50 border-b border-gray-100">
-              <tr>
-                <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Colaborador</th>
-                <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cargo</th>
-                <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Sócio</th>
-                <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Líder</th>
-                <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                <th className="px-6 py-5 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
+            <thead>
+              <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Colaborador</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Cargo</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Sócio</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Líder</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Status</th>
+                <th className="px-6 py-5 text-right text-[9px] font-black text-white uppercase tracking-[0.2em]">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

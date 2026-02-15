@@ -29,9 +29,9 @@ export function UserManagement({ users, isAdmin, onOpenModal, onDeleteUser }: Us
           </div>
           <h3 className="font-bold text-gray-900 text-base">Gestão de Usuários</h3>
         </div>
-        <button 
-          onClick={() => onOpenModal()} 
-          disabled={!isAdmin} 
+        <button
+          onClick={() => onOpenModal()}
+          disabled={!isAdmin}
           className="bg-gray-900 text-white px-3 py-2 rounded-lg font-bold flex items-center gap-2 text-xs hover:bg-gray-800 disabled:opacity-50 transition-all"
         >
           <UserPlus className="h-4 w-4" /> Novo Usuário
@@ -41,12 +41,12 @@ export function UserManagement({ users, isAdmin, onOpenModal, onDeleteUser }: Us
       <div className="overflow-x-auto">
         <table className="w-full text-left font-sans">
           <thead>
-            <tr className="border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              <th className="py-2 px-2">Email</th>
-              <th className="py-2 px-2">Role</th>
-              <th className="py-2 px-2">Módulos</th>
-              <th className="py-2 px-2">Status</th>
-              <th className="py-2 px-2 text-right">Ações</th>
+            <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+              <th className="py-2 px-2 text-[10px] font-black text-white uppercase tracking-widest">Email</th>
+              <th className="py-2 px-2 text-[10px] font-black text-white uppercase tracking-widest">Role</th>
+              <th className="py-2 px-2 text-[10px] font-black text-white uppercase tracking-widest">Módulos</th>
+              <th className="py-2 px-2 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+              <th className="py-2 px-2 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
             </tr>
           </thead>
           <tbody className="text-sm">

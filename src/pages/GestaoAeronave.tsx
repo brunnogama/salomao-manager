@@ -766,12 +766,12 @@ export function GestaoAeronave() {
         ) : activeTab === 'faturas' ? (
           <div className="overflow-x-auto custom-scrollbar pb-4">
             <table className="w-full text-left border-separate border-spacing-y-2 px-4 table-fixed">
-              <thead>
-                <tr className="text-[#112240]">
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-[15%]">Doc. Fiscal</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-[15%]">Número</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-[20%] text-right">Valor Total Doc</th>
-                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-[50%]">Observação</th>
+              <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[15%]">Doc. Fiscal</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[15%]">Número</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[20%] text-right">Valor Total Doc</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest w-[50%]">Observação</th>
                 </tr>
               </thead>
               <tbody>

@@ -408,16 +408,16 @@ export function FinanceContasReceber({
             filteredFaturas.length > 0 ? (
               <div className="overflow-auto h-full custom-scrollbar">
                 <table className="w-full">
-                  <thead className="bg-gray-50/50 border-b border-gray-100 sticky top-0 z-10 backdrop-blur-sm">
-                    <tr>
-                      <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] w-28">ID</th>
-                      <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cliente</th>
-                      <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Assunto</th>
-                      <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Envio</th>
-                      <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Resposta</th>
-                      <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Prazo Fatal</th>
-                      <th className="px-6 py-5 text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                      <th className="px-6 py-5 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
+                  <thead>
+                    <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10 backdrop-blur-sm">
+                      <th className="px-6 py-5 text-center text-[9px] font-black text-white uppercase tracking-[0.2em] w-28">ID</th>
+                      <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Cliente</th>
+                      <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Assunto</th>
+                      <th className="px-6 py-5 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Envio</th>
+                      <th className="px-6 py-5 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Resposta</th>
+                      <th className="px-6 py-5 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Prazo Fatal</th>
+                      <th className="px-6 py-5 text-center text-[9px] font-black text-white uppercase tracking-[0.2em]">Status</th>
+                      <th className="px-6 py-5 text-right text-[9px] font-black text-white uppercase tracking-[0.2em]">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { 
-  BarChart3, 
-  TrendingUp, 
+import {
+  BarChart3,
+  TrendingUp,
   TrendingDown,
   Info,
   Plane,
@@ -10,13 +10,13 @@ import {
   ChevronDown,
   X
 } from 'lucide-react'
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Legend
 } from 'recharts'
@@ -27,12 +27,12 @@ interface AeronaveComparativoProps {
 }
 
 export function AeronaveComparativoComercialParticular({ data }: AeronaveComparativoProps) {
-  
+
   const [filtroCentroCusto, setFiltroCentroCusto] = useState<string>('todos')
   const [filtroGraficoCC, setFiltroGraficoCC] = useState<string>('todos')
-  
+
   // --- Formatadores ---
-  const formatCurrency = (val: number) => 
+  const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
 
   const formatCompact = (val: number) => {
@@ -46,10 +46,10 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return '-'
     const date = new Date(dateString)
-    return date.toLocaleDateString('pt-BR', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
     })
   }
 
@@ -66,52 +66,52 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
   // --- Separação de Dados: Comercial vs Particular (CORRIGIDO) ---
   const { comercialData, particularData } = useMemo(() => {
     // Aplicar filtro do gráfico se selecionado
-    const filteredBaseData = filtroGraficoCC === 'todos' 
-      ? data 
+    const filteredBaseData = filtroGraficoCC === 'todos'
+      ? data
       : data.filter(item => item.centro_custo === filtroGraficoCC)
 
     const comercial = filteredBaseData.filter(item => {
       const aeronave = (item.aeronave || '').toLowerCase().trim()
       return aeronave.includes('comercial') && item.data_pagamento && item.valor_pago
     })
-    
+
     const particular = filteredBaseData.filter(item => {
       const aeronave = (item.aeronave || '').toLowerCase().trim()
       return !aeronave.includes('comercial') && aeronave !== '' && item.data_pagamento && item.valor_pago
     })
-    
+
     // Debug
     console.log('Comercial:', comercial.length, 'registros')
     console.log('Particular:', particular.length, 'registros')
-    
+
     return { comercialData: comercial, particularData: particular }
   }, [data, filtroGraficoCC])
 
   // --- Cálculo de Médias Mensais ---
   const mediaMensalComercial = useMemo(() => {
     if (comercialData.length === 0) return 0
-    
+
     const mesesUnicos = new Set(
       comercialData.map(item => {
         const date = new Date(item.data_pagamento!)
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
       })
     )
-    
+
     const totalGasto = comercialData.reduce((acc, item) => acc + (item.valor_pago || 0), 0)
     return mesesUnicos.size > 0 ? totalGasto / mesesUnicos.size : 0
   }, [comercialData])
 
   const mediaMensalParticular = useMemo(() => {
     if (particularData.length === 0) return 0
-    
+
     const mesesUnicos = new Set(
       particularData.map(item => {
         const date = new Date(item.data_pagamento!)
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
       })
     )
-    
+
     const totalGasto = particularData.reduce((acc, item) => acc + (item.valor_pago || 0), 0)
     return mesesUnicos.size > 0 ? totalGasto / mesesUnicos.size : 0
   }, [particularData])
@@ -136,16 +136,16 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
     })
 
     const allKeys = new Set([...Object.keys(comercialPorMes), ...Object.keys(particularPorMes)])
-    
+
     return Array.from(allKeys)
       .sort()
       .map(key => {
         const [ano, mes] = key.split('-')
-        const mesLabel = new Date(parseInt(ano), parseInt(mes) - 1).toLocaleDateString('pt-BR', { 
-          month: 'short', 
-          year: '2-digit' 
+        const mesLabel = new Date(parseInt(ano), parseInt(mes) - 1).toLocaleDateString('pt-BR', {
+          month: 'short',
+          year: '2-digit'
         }).replace('.', '')
-        
+
         return {
           name: mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1),
           comercial: comercialPorMes[key] || 0,
@@ -162,10 +162,10 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
     data.forEach(item => {
       const cc = (item.centro_custo || '').trim()
       const valorPago = item.valor_pago || 0
-      
+
       // Ignorar se não tem centro de custo OU não tem valor pago
       if (!cc || valorPago === 0) return
-      
+
       if (!grupos[cc]) {
         grupos[cc] = { despesas: new Set(), total: 0 }
       }
@@ -180,10 +180,10 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
         total: dados.total
       }))
       .sort((a, b) => b.total - a.total)
-    
+
     // Debug
     console.log('Centros de Custo encontrados:', resultado.length)
-    
+
     return resultado
   }, [data])
 
@@ -193,10 +193,10 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
     const agenciaData = data.filter(item => {
       const despesa = (item.despesa || '').trim()
       const tipo = (item.tipo || '').trim()
-      
+
       const isAgencia = despesa === 'Agência'
       const isPassagem = tipo === 'Passagem' // Corrigido para 2 s's
-      
+
       return isAgencia && isPassagem
     })
 
@@ -217,7 +217,7 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
       .filter(Boolean)
       .filter((value, index, self) => self.indexOf(value) === index)
       .sort()
-    
+
     return centros as string[]
   }, [casosAgencia])
 
@@ -232,8 +232,8 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
   // --- Insights Automáticos ---
   const insights = useMemo(() => {
     const economia = mediaMensalComercial - mediaMensalParticular
-    const percentual = mediaMensalComercial > 0 
-      ? ((economia / mediaMensalComercial) * 100) 
+    const percentual = mediaMensalComercial > 0
+      ? ((economia / mediaMensalComercial) * 100)
       : 0
 
     const economizando = economia > 0
@@ -272,9 +272,9 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
   const CustomLabel = ({ x, y, value, color }: any) => {
     if (!value || value === 0) return null
     return (
-      <text 
-        x={x} 
-        y={y - 10} 
+      <text
+        x={x}
+        y={y - 10}
         fill={color}
         fontSize={9}
         fontWeight={900}
@@ -287,10 +287,10 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
 
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-full">
-      
+
       {/* Linha: Gráfico + Tabela */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Gráfico (2 colunas) */}
         <div className="lg:col-span-2 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 flex flex-col h-[480px]">
           <div className="mb-6 pb-5 border-b border-gray-100 flex items-center justify-between">
@@ -339,22 +339,22 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="0" vertical={false} stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 900 }} 
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 900 }}
                   dy={15}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fill: '#6b7280', fontSize: 11, fontWeight: 900 }}
                   tickFormatter={(val) => formatCompact(val)}
                   width={60}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#e5e7eb', strokeWidth: 2 }} />
-                <Legend 
+                <Legend
                   wrapperStyle={{ paddingTop: '20px' }}
                   iconType="line"
                   formatter={(value) => (
@@ -363,19 +363,19 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
                     </span>
                   )}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="comercial" 
-                  stroke="#3b82f6" 
+                <Line
+                  type="monotone"
+                  dataKey="comercial"
+                  stroke="#3b82f6"
                   strokeWidth={3}
                   dot={{ r: 5, fill: '#ffffff', stroke: '#3b82f6', strokeWidth: 3 }}
                   activeDot={{ r: 7, fill: '#3b82f6', strokeWidth: 0 }}
                   label={<CustomLabel color="#3b82f6" />}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="particular" 
-                  stroke="#10b981" 
+                <Line
+                  type="monotone"
+                  dataKey="particular"
+                  stroke="#10b981"
                   strokeWidth={3}
                   dot={{ r: 5, fill: '#ffffff', stroke: '#10b981', strokeWidth: 3 }}
                   activeDot={{ r: 7, fill: '#10b981', strokeWidth: 0 }}
@@ -445,14 +445,14 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
             <p className="text-xs text-blue-700 leading-relaxed">
               {insights.economizando ? (
                 <>
-                  A aeronave particular está gerando uma <strong>economia média mensal de {formatCurrency(insights.economia)}</strong> ({insights.percentual.toFixed(1)}%) 
-                  em comparação aos voos comerciais. Considerando os períodos distintos de operação, a transição para aeronave própria 
+                  A aeronave particular está gerando uma <strong>economia média mensal de {formatCurrency(insights.economia)}</strong> ({insights.percentual.toFixed(1)}%)
+                  em comparação aos voos comerciais. Considerando os períodos distintos de operação, a transição para aeronave própria
                   demonstra redução significativa de custos operacionais.
                 </>
               ) : (
                 <>
-                  A aeronave particular representa um <strong>custo adicional médio mensal de {formatCurrency(insights.economia)}</strong> ({insights.percentual.toFixed(1)}%) 
-                  em relação aos voos comerciais. Este investimento adicional pode ser justificado por ganhos em flexibilidade operacional, 
+                  A aeronave particular representa um <strong>custo adicional médio mensal de {formatCurrency(insights.economia)}</strong> ({insights.percentual.toFixed(1)}%)
+                  em relação aos voos comerciais. Este investimento adicional pode ser justificado por ganhos em flexibilidade operacional,
                   produtividade e conveniência não capturados apenas pela análise financeira.
                 </>
               )}
@@ -513,23 +513,23 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider whitespace-nowrap">
+                <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-white tracking-wider whitespace-nowrap first:rounded-l-xl">
                     Data
                   </th>
-                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider whitespace-nowrap">
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-white tracking-wider whitespace-nowrap">
                     Centro de Custo
                   </th>
-                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider whitespace-nowrap">
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-white tracking-wider whitespace-nowrap">
                     Fornecedor
                   </th>
-                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider whitespace-nowrap">
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-white tracking-wider whitespace-nowrap">
                     Tipo
                   </th>
-                  <th className="px-4 py-3 text-right text-[10px] font-black uppercase text-gray-500 tracking-wider whitespace-nowrap">
+                  <th className="px-4 py-3 text-right text-[10px] font-black uppercase text-white tracking-wider whitespace-nowrap">
                     Valor
                   </th>
-                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                  <th className="px-4 py-3 text-left text-[10px] font-black uppercase text-white tracking-wider last:rounded-r-xl">
                     Observações
                   </th>
                 </tr>
@@ -564,12 +564,12 @@ export function AeronaveComparativoComercialParticular({ data }: AeronaveCompara
           <div className="flex flex-col items-center justify-center py-12 text-gray-400">
             <Plane className="w-12 h-12 mb-3 opacity-30" />
             <p className="text-sm font-semibold">
-              {casosAgencia.length === 0 
-                ? 'Nenhum voo comercial encontrado' 
+              {casosAgencia.length === 0
+                ? 'Nenhum voo comercial encontrado'
                 : 'Nenhum registro para o filtro selecionado'}
             </p>
             <p className="text-xs mt-1">
-              {casosAgencia.length === 0 
+              {casosAgencia.length === 0
                 ? 'Os registros serão exibidos aqui quando disponíveis'
                 : 'Selecione outro centro de custo ou "Todos" para ver mais registros'}
             </p>

@@ -25,35 +25,35 @@ export function DescriptiveTable({ descriptiveData, socioMap }: DescriptiveTable
   return (
     <div className="flex-1 overflow-auto">
       <table className="w-full text-left border-collapse">
-        
+
         {/* THEAD - Design System */}
-        <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10">
-          <tr className="border-b-2 border-gray-200">
-            <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
+        <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
+          <tr>
+            <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
               Colaborador
             </th>
-            <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
+            <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
               Sócio
-            </th> 
-            <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
+            </th>
+            <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
               Data
             </th>
-            <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
+            <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
               Dia da Semana
             </th>
           </tr>
         </thead>
-        
+
         {/* TBODY - Design System */}
         <tbody className="divide-y divide-gray-100">
           {descriptiveData.map((record, idx) => {
             // Ajustado para refletir os campos se a interface PresenceRecord for atualizada
             // Caso contrário, mantemos record.nome_colaborador se ele vier de uma View específica
-            const collaboratorName = record.nome_colaborador || record.name; 
+            const collaboratorName = record.nome_colaborador || record.name;
             const normName = normalizeKey(collaboratorName)
             const socioRaw = socioMap.get(normName) || '-'
             const socioFormatted = toTitleCase(socioRaw)
-            
+
             // Tratamento para data_hora ou created_at
             const dateValue = record.data_hora || record.created_at;
             const dateObj = new Date(dateValue)
@@ -61,7 +61,7 @@ export function DescriptiveTable({ descriptiveData, socioMap }: DescriptiveTable
 
             return (
               <tr key={record.id || idx} className="hover:bg-blue-50/40 transition-colors">
-                
+
                 {/* Colaborador com Avatar Navy */}
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -73,21 +73,21 @@ export function DescriptiveTable({ descriptiveData, socioMap }: DescriptiveTable
                     </div>
                   </div>
                 </td>
-                
+
                 {/* Sócio */}
                 <td className="px-6 py-4">
                   <span className="text-gray-700 text-sm font-semibold">
                     {socioFormatted !== '-' ? socioFormatted : <span className="text-red-500 italic font-medium">Sem Sócio</span>}
                   </span>
                 </td>
-                
+
                 {/* Data */}
                 <td className="px-6 py-4">
                   <span className="text-[#0a192f] font-bold text-sm">
                     {dateObj.toLocaleDateString('pt-BR')}
                   </span>
                 </td>
-                
+
                 {/* Dia da Semana */}
                 <td className="px-6 py-4">
                   <span className="text-gray-500 text-sm font-medium capitalize">

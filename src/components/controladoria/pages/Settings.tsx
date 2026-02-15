@@ -401,12 +401,12 @@ export function Settings({
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-gray-50/50 border-b border-gray-100">
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Membro</th>
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</th>
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Perfil</th>
-                      <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                      {['admin', 'editor'].includes(currentUserRole || '') && <th className="p-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Ações</th>}
+                    <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Membro</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Email</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Perfil</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                      {['admin', 'editor'].includes(currentUserRole || '') && <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">

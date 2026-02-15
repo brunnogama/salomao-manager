@@ -11,20 +11,20 @@ interface AeronaveViewModalProps {
   onDelete: () => void;
 }
 
-export function AeronaveViewModal({ 
-  isOpen, 
-  onClose, 
-  item, 
-  itemsGroup = [], 
-  onEdit, 
-  onDelete 
+export function AeronaveViewModal({
+  isOpen,
+  onClose,
+  item,
+  itemsGroup = [],
+  onEdit,
+  onDelete
 }: AeronaveViewModalProps) {
   if (!isOpen || !item) return null
 
   const isGroup = itemsGroup && itemsGroup.length > 0
   const isMissao = item.origem === 'missao'
 
-  const formatMoney = (val: number | undefined | null) => 
+  const formatMoney = (val: number | undefined | null) =>
     val ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) : 'R$ 0,00'
 
   const formatDate = (val: string | undefined | null) => {
@@ -68,7 +68,7 @@ export function AeronaveViewModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 print:p-0 print:bg-white">
       <div id="printable-modal" className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300 print:shadow-none print:max-h-none print:rounded-none">
-        
+
         {/* Header */}
         <div className={`px-6 py-5 border-b border-gray-100 flex items-center justify-between ${isMissao ? 'bg-blue-50/50' : 'bg-emerald-50/50'} print:bg-white print:border-b-2`}>
           <div>
@@ -85,7 +85,7 @@ export function AeronaveViewModal({
             </h2>
           </div>
           <div className="flex items-center gap-2 print:hidden">
-            <button 
+            <button
               onClick={handlePrint}
               className="p-2 bg-white rounded-lg text-gray-500 hover:text-[#1e3a8a] border border-gray-100 shadow-sm transition-all"
               title="Imprimir / Salvar PDF"
@@ -99,7 +99,7 @@ export function AeronaveViewModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar print:overflow-visible">
-          
+
           {isGroup ? (
             /* VISUALIZAÇÃO AGRUPADA (ITENS DA FATURA) */
             <section className="space-y-4">
@@ -129,16 +129,16 @@ export function AeronaveViewModal({
                   </div>
                 </div>
               )}
-              
+
               <div className="overflow-hidden border border-gray-100 rounded-xl">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-gray-50 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-100">
+                  <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
                     <tr>
-                      <th className="px-4 py-3">ID Missão</th>
-                      <th className="px-4 py-3">Missão</th>
-                      <th className="px-4 py-3">Fornecedor</th>
-                      <th className="px-4 py-3">Tipo / Descrição</th>
-                      <th className="px-4 py-3 text-right">Valor Pago</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest">ID Missão</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest">Missão</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest">Fornecedor</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest">Tipo / Descrição</th>
+                      <th className="px-4 py-3 text-right text-[10px] font-black uppercase text-white tracking-widest">Valor Pago</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -166,7 +166,7 @@ export function AeronaveViewModal({
                 </table>
               </div>
               <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                 <InfoRow label="Observação Geral" value={item.observacao} />
+                <InfoRow label="Observação Geral" value={item.observacao} />
               </div>
             </section>
           ) : (
@@ -228,7 +228,7 @@ export function AeronaveViewModal({
 
         {/* Footer */}
         <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center print:hidden">
-          <button 
+          <button
             onClick={handleDelete}
             className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
           >
@@ -236,7 +236,7 @@ export function AeronaveViewModal({
           </button>
 
           {!isGroup && (
-            <button 
+            <button
               onClick={() => onEdit(item)}
               className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white hover:bg-[#112240] rounded-lg text-xs font-bold uppercase tracking-widest shadow-md transition-all active:scale-95"
             >
@@ -247,7 +247,8 @@ export function AeronaveViewModal({
 
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @media print {
           body * { visibility: hidden; }
           #printable-modal, #printable-modal * { visibility: visible; }

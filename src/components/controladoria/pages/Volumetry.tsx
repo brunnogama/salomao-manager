@@ -75,7 +75,7 @@ export function Volumetry() {
   };
 
   // Lógica de Filtragem (Idêntica à de Contratos)
-  const filteredContracts = contracts.filter(contract => {
+  const filteredContracts = contracts.filter((contract: Contract) => {
     const matchesSearch =
       contract.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (contract.cnpj && contract.cnpj.includes(searchTerm));
@@ -87,13 +87,13 @@ export function Volumetry() {
   });
 
   // Lógica de Agrupamento por Sócio
-  const metricsByPartner = partners.map(partner => {
+  const metricsByPartner = partners.map((partner: any) => {
     // Filtra os contratos (já filtrados pelos inputs) que pertencem a este sócio
-    const partnerContracts = filteredContracts.filter(c => c.partner_id === partner.id);
+    const partnerContracts = filteredContracts.filter((c: Contract) => c.partner_id === partner.id);
 
     const contractCount = partnerContracts.length;
     // Soma a quantidade de processos de todos os contratos desse sócio
-    const processCount = partnerContracts.reduce((acc, curr) => acc + (curr.process_count || 0), 0);
+    const processCount = partnerContracts.reduce((acc: number, curr: Contract) => acc + (curr.process_count || 0), 0);
 
     return {
       id: partner.id,
@@ -101,14 +101,14 @@ export function Volumetry() {
       contractCount,
       processCount,
     };
-  }).sort((a, b) => b.contractCount - a.contractCount); // Ordena por quem tem mais contratos
+  }).sort((a: any, b: any) => b.contractCount - a.contractCount); // Ordena por quem tem mais contratos
 
   // Totais Gerais (Baseado nos filtros atuais)
   const totalContracts = filteredContracts.length;
-  const totalProcesses = filteredContracts.reduce((acc, c) => acc + (c.process_count || 0), 0);
+  const totalProcesses = filteredContracts.reduce((acc: number, c: Contract) => acc + (c.process_count || 0), 0);
 
   const handleExport = () => {
-    const exportData = metricsByPartner.map(m => ({
+    const exportData = metricsByPartner.map((m: any) => ({
       'Sócio': m.name,
       'Qtd. Contratos': m.contractCount,
       'Qtd. Processos': m.processCount
@@ -217,11 +217,11 @@ export function Volumetry() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-100">
-                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Sócio Responsável</th>
-                  <th className="p-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Contratos</th>
-                  <th className="p-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Processos</th>
-                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Representatividade</th>
+                <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Sócio Responsável</th>
+                  <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Contratos</th>
+                  <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Processos</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Representatividade</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">

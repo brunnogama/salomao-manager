@@ -36,14 +36,14 @@ export function ContractTable({ contracts, onEdit, onDelete, getStatusColor, get
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <table className="w-full text-left">
-        <thead className="bg-gray-50 border-b border-gray-200">
+        <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] border-b border-gray-200">
           <tr>
-            <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">Status</th>
-            <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">Cliente</th>
-            <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">Sócio Responsável</th>
+            <th className="px-6 py-4 text-xs font-semibold text-white uppercase whitespace-nowrap">Status</th>
+            <th className="px-6 py-4 text-xs font-semibold text-white uppercase whitespace-nowrap">Cliente</th>
+            <th className="px-6 py-4 text-xs font-semibold text-white uppercase whitespace-nowrap">Sócio Responsável</th>
             {/* Coluna Ações: Apenas se não for Viewer */}
             {userRole !== 'viewer' && (
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase text-right whitespace-nowrap">Ações</th>
+              <th className="px-6 py-4 text-xs font-semibold text-white uppercase text-right whitespace-nowrap">Ações</th>
             )}
           </tr>
         </thead>
