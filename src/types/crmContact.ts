@@ -31,6 +31,7 @@ export interface CRMContact {
     // Timestamps
     created_at?: string;
     updated_at?: string;
+    ignored_fields?: string[];
 
     // Relations (from JOIN)
     client?: {

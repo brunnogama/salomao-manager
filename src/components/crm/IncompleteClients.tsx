@@ -4,11 +4,11 @@ import {
   CheckCircle, Pencil, XCircle, Search, X,
   Check, FileSpreadsheet, Users, Gift,
   AlertCircle, AlertTriangle, UserCircle,
-  Grid, LogOut, ArrowUpDown
+  Grid, LogOut, ArrowUpDown, Building2
 } from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
-import { NewClientModal } from './NewClientModal'
-import { ClientData } from '../../types/client'
+import { CRMContactModal } from './CRMContactModal'
+import { CRMContact } from '../../types/crmContact'
 import * as XLSX from 'xlsx'
 
 interface IncompleteClientsProps {
@@ -55,8 +55,16 @@ export function IncompleteClients({
   const fetchIncompleteClients = async () => {
     setLoading(true)
     const { data } = await supabase
-      .from('clients')
-      .select('*, contracts!inner(status)')
+      .from('client_contacts')
+      .select(`
+        *,
+        client:clients!inner(
+          id, name,
+          partner:partners(id, name),
+          contracts!inner(status)
+        )
+      `)
+      .in('client.contracts.status', ['proposal_sent', 'closed'])
       .in('contracts.status', ['proposal_sent', 'closed'])
 
     if (data) {

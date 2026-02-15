@@ -44,28 +44,48 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   }
 
   const fetchCount = async () => {
-    const { data } = await supabase
-      .from('clients')
-      .select('*, contracts!inner(status)')
-      .in('contracts.status', ['proposal_sent', 'closed'])
-    if (data) {
-      const count = data.filter((c: any) => {
-        const ignored = c.ignored_fields || []
-        const missing = []
-        if (!c.nome) missing.push('Nome')
-        if (!c.empresa) missing.push('Empresa')
-        if (!c.cargo) missing.push('Cargo')
-        if (!c.tipo_brinde) missing.push('Tipo Brinde')
-        if (!c.cep) missing.push('CEP')
-        if (!c.endereco) missing.push('Endereço')
-        if (!c.numero) missing.push('Número')
-        if (!c.bairro) missing.push('Bairro')
-        if (!c.cidade) missing.push('Cidade')
-        if (!c.estado) missing.push('UF')
-        if (!c.email) missing.push('Email')
-        return missing.filter(f => !ignored.includes(f)).length > 0
-      }).length
-      setIncompleteCount(count)
+    try {
+      const { data: contacts } = await supabase
+        .from('client_contacts')
+        .select(`
+          *,
+          client:clients!inner(
+            id, name,
+            partner:partners(id, name),
+            contracts!inner(status)
+          )
+        `)
+        .in('client.contracts.status', ['proposal_sent', 'closed'])
+
+      if (contacts) {
+        const REQUIRED_FIELDS = [
+          'email', 'phone', 'zip_code', 'address', 'address_number',
+          'neighborhood', 'city', 'uf', 'gift_type'
+        ]
+
+        const count = contacts.filter((c: any) => {
+          const ignored = c.ignored_fields || []
+          return REQUIRED_FIELDS.some(field => {
+            const value = c[field]
+            const isEmpty = !value || value.toString().trim() === '' || (field === 'uf' && value === 'Selecione')
+            const fieldLabel = field === 'zip_code' ? 'CEP' :
+              field === 'address' ? 'Logradouro' :
+                field === 'address_number' ? 'Número' :
+                  field === 'neighborhood' ? 'Bairro' :
+                    field === 'city' ? 'Cidade' :
+                      field === 'uf' ? 'Estado' :
+                        field === 'gift_type' ? 'Tipo de Brinde' :
+                          field.charAt(0).toUpperCase() + field.slice(1)
+
+            const isIgnored = ignored.includes(fieldLabel)
+            return isEmpty && !isIgnored
+          })
+        }).length
+
+        setIncompleteCount(count)
+      }
+    } catch (error) {
+      console.error('Error fetching incomplete count:', error)
     }
   }
 
