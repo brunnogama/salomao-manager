@@ -372,6 +372,7 @@ export function IncompleteClients({
         onClose={() => setIsModalOpen(false)}
         contact={contactToEdit || undefined}
         onSave={() => { setIsModalOpen(false); fetchIncompleteContacts(); }}
+        initialMode="view"
       />
     </div>
   )

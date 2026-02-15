@@ -2,7 +2,7 @@
 // Focused on contact details, delivery address, and gift preferences
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Search, Loader2, MapPin, Gift, User, Building2, History } from 'lucide-react';
+import { X, Save, Search, Loader2, MapPin, Gift, User, Building2, History, Pencil, Trash, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { CRMContact, GIFT_TYPES } from '../../types/crmContact';
 import { Client, Partner } from '../../types/controladoria';
@@ -16,12 +16,15 @@ interface Props {
     onClose: () => void;
     contact?: CRMContact;
     onSave: () => void;
+    initialMode?: 'view' | 'edit' | 'create';
 }
 
-export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
+export function CRMContactModal({ isOpen, onClose, contact, onSave, initialMode = 'create' }: Props) {
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState<Client[]>([]);
     const [activeTab, setActiveTab] = useState('contato');
+    const [mode, setMode] = useState<'view' | 'edit' | 'create'>(initialMode);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const emptyContact: CRMContact = {
         client_id: '',
@@ -44,10 +47,12 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
     useEffect(() => {
         if (isOpen) {
             setFormData(contact || emptyContact);
-            setActiveTab('empresa');
+            setMode(initialMode);
+            setActiveTab(initialMode === 'view' ? 'contato' : 'empresa');
             fetchClients();
+            setShowDeleteConfirm(false);
         }
-    }, [isOpen, contact]);
+    }, [isOpen, contact, initialMode]);
 
     // Handle ESC key
     useEffect(() => {
@@ -97,6 +102,26 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
         }
     };
 
+    const handleDelete = async () => {
+        if (!contact?.id) return;
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('client_contacts')
+                .delete()
+                .eq('id', contact.id);
+
+            if (error) throw error;
+
+            onSave(); // Refresh list
+            onClose();
+        } catch (error: any) {
+            alert('Erro ao excluir: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleCEPSearch = async () => {
         if (!formData.zip_code) return;
         const cep = formData.zip_code.replace(/\D/g, '');
@@ -132,15 +157,17 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
 
     if (!isOpen) return null;
 
+    const isViewMode = mode === 'view';
+
     return (
-        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
             <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl h-[85vh] flex overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
 
                 {/* Left Sidebar */}
                 <div className="w-72 bg-white border-r border-gray-100 flex flex-col py-8 px-5 shrink-0 overflow-y-auto">
                     <div className="mb-8 px-2">
                         <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight">
-                            {contact ? 'Editar Contato' : 'Novo Contato'}
+                            {mode === 'create' ? 'Novo Contato' : mode === 'edit' ? 'Editar Contato' : 'Visualizar Contato'}
                         </h2>
                         <p className="text-xs text-gray-400 mt-1 font-medium">
                             Cadastro para distribuição de brindes
@@ -188,7 +215,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo *</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                        disabled={isViewMode}
+                                        className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                         value={formData.name}
                                         onChange={e => setFormData({ ...formData, name: toTitleCase(e.target.value) })}
                                         placeholder="Ex: Maria Silva"
@@ -199,7 +227,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cargo / Posição</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                        disabled={isViewMode}
+                                        className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                         value={formData.role || ''}
                                         onChange={e => setFormData({ ...formData, role: toTitleCase(e.target.value) })}
                                         placeholder="Ex: Diretora Financeira"
@@ -211,7 +240,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">E-mail</label>
                                         <input
                                             type="email"
-                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                            disabled={isViewMode}
+                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                             value={formData.email || ''}
                                             onChange={e => setFormData({ ...formData, email: e.target.value })}
                                             placeholder="contato@email.com"
@@ -221,7 +251,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Telefone</label>
                                         <input
                                             type="text"
-                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                            disabled={isViewMode}
+                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                             value={formData.phone || ''}
                                             onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                             placeholder="(00) 00000-0000"
@@ -236,17 +267,23 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Empresa (Cliente) *</label>
-                                    <CustomSelect
-                                        value={formData.client_id}
-                                        onChange={val => setFormData({ ...formData, client_id: val })}
-                                        options={[
-                                            { label: 'Selecione a empresa', value: '' },
-                                            ...clients.map(c => ({
-                                                label: `${c.name}${c.partner?.name ? ` - ${c.partner.name}` : ''}`,
-                                                value: c.id!
-                                            }))
-                                        ]}
-                                    />
+                                    {isViewMode ? (
+                                        <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-500">
+                                            {clients.find(c => c.id === formData.client_id)?.name || 'Nenhuma empresa selecionada'}
+                                        </div>
+                                    ) : (
+                                        <CustomSelect
+                                            value={formData.client_id}
+                                            onChange={val => setFormData({ ...formData, client_id: val })}
+                                            options={[
+                                                { label: 'Selecione a empresa', value: '' },
+                                                ...clients.map(c => ({
+                                                    label: `${c.name}${c.partner?.name ? ` - ${c.partner.name}` : ''}`,
+                                                    value: c.id!
+                                                }))
+                                            ]}
+                                        />
+                                    )}
                                     <p className="text-xs text-gray-400 mt-2 ml-1">Selecione a empresa onde este contato trabalha</p>
                                 </div>
 
@@ -274,19 +311,22 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
-                                            className="flex-1 bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                            disabled={isViewMode}
+                                            className="flex-1 bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                             value={formData.zip_code || ''}
                                             onChange={e => setFormData({ ...formData, zip_code: e.target.value })}
                                             placeholder="00000-000"
                                             maxLength={9}
                                         />
-                                        <button
-                                            onClick={handleCEPSearch}
-                                            disabled={loading}
-                                            className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-all"
-                                        >
-                                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                                        </button>
+                                        {!isViewMode && (
+                                            <button
+                                                onClick={handleCEPSearch}
+                                                disabled={loading}
+                                                className="p-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-all"
+                                            >
+                                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -295,7 +335,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Logradouro</label>
                                         <input
                                             type="text"
-                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                            disabled={isViewMode}
+                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                             value={formData.address || ''}
                                             onChange={e => setFormData({ ...formData, address: toTitleCase(e.target.value) })}
                                             placeholder="Rua, Avenida..."
@@ -305,7 +346,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Número</label>
                                         <input
                                             type="text"
-                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                            disabled={isViewMode}
+                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                             value={formData.address_number || ''}
                                             onChange={e => setFormData({ ...formData, address_number: e.target.value })}
                                             placeholder="123"
@@ -317,7 +359,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Complemento</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                        disabled={isViewMode}
+                                        className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                         value={formData.address_complement || ''}
                                         onChange={e => setFormData({ ...formData, address_complement: toTitleCase(e.target.value) })}
                                         placeholder="Sala, Apto..."
@@ -329,7 +372,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Bairro</label>
                                         <input
                                             type="text"
-                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                            disabled={isViewMode}
+                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                             value={formData.neighborhood || ''}
                                             onChange={e => setFormData({ ...formData, neighborhood: toTitleCase(e.target.value) })}
                                             placeholder="Bairro"
@@ -339,7 +383,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cidade</label>
                                         <input
                                             type="text"
-                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                            disabled={isViewMode}
+                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                             value={formData.city || ''}
                                             onChange={e => setFormData({ ...formData, city: toTitleCase(e.target.value) })}
                                             placeholder="Cidade"
@@ -347,11 +392,17 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Estado</label>
-                                        <CustomSelect
-                                            value={formData.uf || ''}
-                                            onChange={val => setFormData({ ...formData, uf: val })}
-                                            options={UFS.map(u => ({ label: u.nome, value: u.sigla }))}
-                                        />
+                                        {isViewMode ? (
+                                            <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-500">
+                                                {UFS.find(u => u.sigla === formData.uf)?.nome || formData.uf || '-'}
+                                            </div>
+                                        ) : (
+                                            <CustomSelect
+                                                value={formData.uf || ''}
+                                                onChange={val => setFormData({ ...formData, uf: val })}
+                                                options={UFS.map(u => ({ label: u.nome, value: u.sigla }))}
+                                            />
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -363,26 +414,32 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                 <div className="grid grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Tipo de Brinde</label>
-                                        <CustomSelect
-                                            value={formData.gift_type || ''}
-                                            onChange={val => setFormData({ ...formData, gift_type: val })}
-                                            options={[
-                                                { label: 'Selecione', value: '' },
-                                                ...GIFT_TYPES.map(t => ({ label: t, value: t }))
-                                            ]}
-                                        />
+                                        {isViewMode ? (
+                                            <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-500">
+                                                {formData.gift_type || 'Selecione'}
+                                            </div>
+                                        ) : (
+                                            <CustomSelect
+                                                value={formData.gift_type || ''}
+                                                onChange={val => setFormData({ ...formData, gift_type: val })}
+                                                options={[
+                                                    { label: 'Selecione', value: '' },
+                                                    ...GIFT_TYPES.map(t => ({ label: t, value: t }))
+                                                ]}
+                                            />
+                                        )}
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Quantidade</label>
                                         <input
                                             type="number"
                                             min="1"
-                                            disabled={formData.gift_type === 'Não recebe'}
-                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                            disabled={isViewMode || formData.gift_type === 'Não recebe'}
+                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                                             value={formData.gift_type === 'Não recebe' ? 0 : (formData.gift_quantity || 1)}
                                             onChange={e => setFormData({ ...formData, gift_quantity: parseInt(e.target.value) || 1 })}
                                         />
-                                        {formData.gift_type === 'Não recebe' && (
+                                        {formData.gift_type === 'Não recebe' && !isViewMode && (
                                             <p className="text-xs text-gray-400 mt-1 ml-1">Quantidade desativada para "Não recebe"</p>
                                         )}
                                     </div>
@@ -393,7 +450,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Especifique o Brinde</label>
                                         <input
                                             type="text"
-                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                                            disabled={isViewMode}
+                                            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all disabled:bg-gray-50 disabled:text-gray-500"
                                             value={formData.gift_other || ''}
                                             onChange={e => setFormData({ ...formData, gift_other: e.target.value })}
                                             placeholder="Descreva o brinde"
@@ -404,7 +462,8 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Observações sobre Preferências</label>
                                     <textarea
-                                        className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all resize-none h-32"
+                                        disabled={isViewMode}
+                                        className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all resize-none h-32 disabled:bg-gray-50 disabled:text-gray-500"
                                         value={formData.gift_notes || ''}
                                         onChange={e => setFormData({ ...formData, gift_notes: e.target.value })}
                                         placeholder="Preferências, restrições, observações..."
@@ -446,18 +505,88 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
 
                     {/* Footer */}
                     <div className="px-10 py-6 border-t border-gray-100 flex justify-end gap-3 bg-white shrink-0">
-                        <button onClick={onClose} className="px-6 py-2.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
-                        <button
-                            onClick={handleSave}
-                            disabled={loading}
-                            className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] hover:shadow-xl active:scale-95 disabled:opacity-50 transition-all"
-                        >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            Salvar Contato
-                        </button>
+                        {isViewMode ? (
+                            <>
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="px-6 py-2.5 text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-700 hover:bg-red-50 rounded-xl transition-all"
+                                >
+                                    Excluir
+                                </button>
+                                <button
+                                    onClick={onClose}
+                                    className="px-6 py-2.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors"
+                                >
+                                    Fechar
+                                </button>
+                                <button
+                                    onClick={() => setMode('edit')}
+                                    className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] hover:shadow-xl active:scale-95 transition-all"
+                                >
+                                    <Pencil className="w-4 h-4" />
+                                    Editar
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={() => {
+                                        if (mode === 'edit') setMode('view');
+                                        else onClose();
+                                    }}
+                                    className="px-6 py-2.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={loading}
+                                    className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] hover:shadow-xl active:scale-95 disabled:opacity-50 transition-all"
+                                >
+                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    Salvar Contato
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Overlay */}
+            {showDeleteConfirm && (
+                <div className="absolute inset-0 z-[70] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 text-white flex items-center gap-3">
+                            <AlertTriangle className="h-5 w-5" />
+                            <h3 className="text-lg font-black">Excluir Contato?</h3>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-gray-600 text-sm leading-relaxed mb-1">
+                                Tem certeza que deseja excluir o contato <strong>{formData.name}</strong>?
+                            </p>
+                            <p className="text-xs text-red-500 font-bold">
+                                Esta ação não pode ser desfeita.
+                            </p>
+                        </div>
+                        <div className="px-6 pb-6 flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={loading}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-xs shadow-lg hover:bg-red-700 transition-all active:scale-95 disabled:opacity-50"
+                            >
+                                {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash className="w-3 h-3" />}
+                                Excluir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
