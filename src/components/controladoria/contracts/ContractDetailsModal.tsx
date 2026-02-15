@@ -471,7 +471,7 @@ export function ContractDetailsModal({
                             </span>
                             <p className="text-sm font-bold text-gray-700 flex items-center justify-center gap-1.5">
                               <CalendarCheck className="w-4 h-4 text-gray-400" />
-                              {new Date(event.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                              {safeDate(event.date)?.toLocaleDateString('pt-BR') || '-'}
                             </p>
                           </div>
 
