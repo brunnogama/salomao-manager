@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Gift, UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale } from 'lucide-react'
+import { Gift, UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
@@ -104,8 +104,8 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
         {/* Icon Container */}
         <div className={`relative z-10 p-5 rounded-2xl mb-6 transition-all duration-300 ${allowed
-            ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl`
-            : 'bg-gray-200 text-gray-400'
+          ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl`
+          : 'bg-gray-200 text-gray-400'
           }`}>
           <Icon className="h-10 w-10" />
         </div>
@@ -231,9 +231,9 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
           {renderCard(
             'crm',
-            'Brindes de Clientes',
+            'Gestão de Clientes',
             'Gestão de clientes e controle de brindes de final de ano',
-            Gift,
+            Users,
             'from-blue-600',
             'to-blue-700'
           )}

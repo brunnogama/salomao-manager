@@ -284,28 +284,28 @@ export function Clients({
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             {/* Table Header */}
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+            <div className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] border-b border-gray-200">
               <div className="grid grid-cols-12 gap-4 px-6 py-4">
                 <div className="col-span-3">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Empresa</p>
+                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em]">Empresa</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Sócio</p>
+                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em]">Sócio</p>
                 </div>
                 <div className="col-span-1">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Contatos</p>
+                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] text-center">Contatos</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Brinde VIP</p>
+                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] text-center">Brinde VIP</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Brinde Médio</p>
+                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] text-center">Brinde Médio</p>
                 </div>
                 <div className="col-span-1">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Outros</p>
+                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] text-center">Outros</p>
                 </div>
                 <div className="col-span-1">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">Ações</p>
+                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] text-right">Ações</p>
                 </div>
               </div>
             </div>

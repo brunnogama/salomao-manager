@@ -194,7 +194,7 @@ export function IncompleteClients({
       {/* PAGE HEADER */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-red-600 to-red-800 shadow-lg">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
             <AlertTriangle className="h-7 w-7 text-white" />
           </div>
           <div>
@@ -207,25 +207,9 @@ export function IncompleteClients({
           </div>
         </div>
 
-        {/* User Actions */}
+        {/* User Actions - Empty to match Clients.tsx or strictly follow design */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && (
-            <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all" title="Módulos">
-              <Grid className="h-5 w-5" />
-            </button>
-          )}
-          {onLogout && (
-            <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Sair">
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
+          {/* Actions removed to match Clients.tsx layout which handles auth in layout */}
         </div>
       </div>
 
