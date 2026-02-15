@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Filter, User, Tag, Building2, X } from 'lucide-react'
-import { FilterSelect } from '../../controladoria/ui/FilterSelect'
+import { FilterSelect } from '../controladoria/ui/FilterSelect'
 
 interface FamiliaFiltersProps {
   data: any[]
