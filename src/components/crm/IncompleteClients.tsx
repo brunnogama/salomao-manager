@@ -283,8 +283,8 @@ export function IncompleteClients({
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead className="sticky top-0 z-10">
               <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white">
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Nome (Contato)</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Nome Cliente</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Contato</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Sócio Responsável</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-center">Campos Vazios</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-right">Ações</th>
@@ -314,6 +314,12 @@ export function IncompleteClients({
                   return (
                     <tr key={contact.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-gray-300" />
+                          <span className="text-sm font-semibold text-gray-600">{contact.client?.name || 'Sem Cliente'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 font-black text-sm">
                             {contact.name ? contact.name[0].toUpperCase() : '?'}
@@ -322,12 +328,6 @@ export function IncompleteClients({
                             <p className="font-bold text-sm text-[#0a192f]">{contact.name || 'Sem Nome'}</p>
                             <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{contact.role || 'Sem Cargo'}</p>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-gray-300" />
-                          <span className="text-sm font-semibold text-gray-600">{contact.client?.name || 'Sem Cliente'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
