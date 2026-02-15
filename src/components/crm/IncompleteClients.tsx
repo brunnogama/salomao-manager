@@ -283,7 +283,7 @@ export function IncompleteClients({
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead className="sticky top-0 z-10">
               <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white">
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Nome Cliente</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Cliente</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Contato</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Sócio Responsável</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-center">Campos Vazios</th>
