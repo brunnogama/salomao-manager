@@ -175,37 +175,21 @@ export function Clients() {
 
           {/* Filtros: Clientes e Sócios */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Filtro de Cliente */}
-            <div className="relative">
-              <select
-                value={clientFilter}
-                onChange={(e) => setClientFilter(e.target.value)}
-                className="appearance-none pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 outline-none focus:border-[#1e3a8a] transition-all cursor-pointer h-[40px]"
-              >
-                <option value="todos">Todos os Clientes</option>
-                {uniqueClients.map(client => (
-                  <option key={client} value={client}>{client}</option>
-                ))}
-              </select>
-              <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
+            <FilterSelect
+              icon={Building}
+              value={clientFilter}
+              onChange={setClientFilter}
+              options={uniqueClients.map(c => ({ label: c, value: c }))}
+              placeholder="Todos os Clientes"
+            />
 
-            {/* Filtro de Sócio */}
-            <div className="relative">
-              <select
-                value={partnerFilter}
-                onChange={(e) => setPartnerFilter(e.target.value)}
-                className="appearance-none pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 outline-none focus:border-[#1e3a8a] transition-all cursor-pointer h-[40px]"
-              >
-                <option value="todos">Todos os Sócios</option>
-                {uniquePartners.map(partner => (
-                  <option key={partner} value={partner}>{partner}</option>
-                ))}
-              </select>
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
-
-
+            <FilterSelect
+              icon={User}
+              value={partnerFilter}
+              onChange={setPartnerFilter}
+              options={uniquePartners.map(p => ({ label: p, value: p }))}
+              placeholder="Todos os Sócios"
+            />
           </div>
         </div>
       </div>
