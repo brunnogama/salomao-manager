@@ -207,9 +207,15 @@ export function IncompleteClients({
           </div>
         </div>
 
-        {/* User Actions - Empty to match Clients.tsx or strictly follow design */}
+        {/* User Actions - Moved from toolbar */}
         <div className="flex items-center gap-3 shrink-0">
-          {/* Actions removed to match Clients.tsx layout which handles auth in layout */}
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg hover:bg-emerald-700 active:scale-95"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Exportar XLSX
+          </button>
         </div>
       </div>
 
@@ -260,13 +266,7 @@ export function IncompleteClients({
               </Transition>
             </Menu>
 
-            <button
-              onClick={handleExport}
-              className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all active:scale-95"
-              title="Exportar XLSX"
-            >
-              <FileSpreadsheet className="h-5 w-5" />
-            </button>
+            {/* Export button moved to header */}
 
             {hasActiveFilters && (
               <button onClick={clearFilters} className="p-2.5 text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-all">
