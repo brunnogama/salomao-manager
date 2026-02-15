@@ -37,8 +37,8 @@ export function Clients() {
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
 
   // Novos filtros
-  const [clientFilter, setClientFilter] = useState('todos');
-  const [partnerFilter, setPartnerFilter] = useState('todos');
+  const [clientFilter, setClientFilter] = useState('');
+  const [partnerFilter, setPartnerFilter] = useState('');
 
   useEffect(() => {
 
