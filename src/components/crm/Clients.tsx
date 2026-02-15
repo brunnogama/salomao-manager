@@ -218,9 +218,10 @@ export function Clients({
         </div>
 
         {/* Gift Type Cards with matching icon colors */}
-        {Object.entries(giftStats)
-          .sort((a, b) => b[1] - a[1])
-          .map(([tipo, qtd]) => (
+        {/* Gift Type Cards with matching icon colors */}
+        {['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno'].map((tipo) => {
+          const qtd = giftStats[tipo] || 0;
+          return (
             <div
               key={tipo}
               onClick={() => setFilterGiftType(tipo === filterGiftType ? '' : tipo)}
@@ -237,7 +238,8 @@ export function Clients({
                 </div>
               </div>
             </div>
-          ))}
+          );
+        })}
       </div>
 
       {/* Toolbar */}
