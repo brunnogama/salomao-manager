@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, MapPin, Loader2, Mail, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Users, MapPin, Loader2, Mail } from 'lucide-react';
 
 interface DashboardHeaderProps {
   userRole: 'admin' | 'editor' | 'viewer' | null;
@@ -15,6 +15,8 @@ interface DashboardHeaderProps {
   className?: string;
 }
 
+import { FilterSelect } from '../ui/FilterSelect';
+
 export function DashboardHeader({
   userRole,
   selectedPartner,
@@ -28,6 +30,17 @@ export function DashboardHeader({
   hideTitle = false,
   className = ""
 }: DashboardHeaderProps) {
+
+  const partnerOptions = [
+    { label: 'Todos os Sócios', value: '' },
+    ...partnersList.map(p => ({ label: p.name, value: p.id }))
+  ];
+
+  const locationOptions = [
+    { label: 'Todos os Locais', value: '' },
+    ...locationsList.map(l => ({ label: l, value: l }))
+  ];
+
   return (
     <div className={`bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 ${className}`}>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -53,40 +66,22 @@ export function DashboardHeader({
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
 
           {/* Filtro de Sócio */}
-          <div className="relative min-w-[200px]" id="dashboard-filters">
-            <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
-            <select
-              value={selectedPartner}
-              onChange={(e) => setSelectedPartner(e.target.value)}
-              className="w-full pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer text-gray-700 shadow-sm"
-            >
-              <option value="">Todos os Sócios</option>
-              {partnersList.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
-          </div>
+          <FilterSelect
+            icon={Users}
+            value={selectedPartner}
+            onChange={setSelectedPartner}
+            options={partnerOptions}
+            placeholder="Sócios"
+          />
 
           {/* Filtro de Localização */}
-          <div className="relative min-w-[200px]" id="dashboard-filters">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
-            <select
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
-              className="w-full pl-9 pr-10 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-semibold outline-none appearance-none focus:bg-white focus:border-blue-500 transition-all cursor-pointer text-gray-700 shadow-sm"
-            >
-              <option value="">Todos os Locais</option>
-              {locationsList.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
-          </div>
+          <FilterSelect
+            icon={MapPin}
+            value={selectedLocation}
+            onChange={setSelectedLocation}
+            options={locationOptions}
+            placeholder="Locais"
+          />
 
           {/* Botão de Exportar */}
           <div id="export-button-container">
