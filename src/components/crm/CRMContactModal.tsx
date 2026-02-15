@@ -35,7 +35,7 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave }: Props) {
         address_number: '',
         neighborhood: '',
         city: '',
-        uf: 'RJ',
+        uf: '',
         zip_code: ''
     };
 
