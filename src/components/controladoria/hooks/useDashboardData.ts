@@ -337,24 +337,43 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       }
 
       // Mapas Financeiros (Gráficos)
+      // 1. Fechamentos (Evolução Financeira)
+      // Considera TODOS que tem data de contrato e status active (fechado)
       if (c.status === 'active' && c.contract_date) {
-        const dContrato = new Date(c.contract_date + 'T12:00:00');
-        if (isValidDate(dContrato)) {
+        const dContrato = safeDate(c.contract_date);
+        if (dContrato) {
           dContrato.setDate(1); dContrato.setHours(0, 0, 0, 0);
           if (dContrato >= dataLimite12Meses) {
             const key = dContrato.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-            if (financeiroMap[key]) { financeiroMap[key].pl += pl; financeiroMap[key].fixo += mensal; financeiroMap[key].exito += exito; }
+            // Soma TUDO: PL + Fixo + Êxito + Extras
+            if (financeiroMap[key]) {
+              financeiroMap[key].pl += pl;
+              financeiroMap[key].fixo += mensal; // Fixo mensal inicial
+              financeiroMap[key].fixo += fixoPontual; // Somar fixo pontual aqui também para o gráfico mostrar o valor "ganho" no mês
+              financeiroMap[key].exito += exito;
+              financeiroMap[key].exito += outros; // Somar outros aqui ou num campo separado? Vamos somar ao êxito ou criar um campo "outros" no map se precisasse, mas por hora vamos agrupar em exito ou fixo.
+              // O gráfico usa pl, fixo, exito. Vamos somar 'outros' e 'fixoPontual' ao 'fixo' para simplificar a visualização ou dividir.
+              // Melhor: somar outros ao exito (variável) e fixoPontual ao fixo.
+            }
           }
         }
       }
 
-      if (c.status === 'proposal' && c.proposal_date) {
-        const dProposta = new Date(c.proposal_date + 'T12:00:00');
-        if (isValidDate(dProposta)) {
+      // 2. Propostas (Evolução de Propostas)
+      // Considera TODOS que tiveram proposta (active, proposal, rejected com data)
+      if (c.proposal_date) {
+        const dProposta = safeDate(c.proposal_date);
+        if (dProposta) {
           dProposta.setDate(1); dProposta.setHours(0, 0, 0, 0);
           if (dProposta >= dataLimite12Meses) {
             const key = dProposta.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-            if (propostasMap[key]) { propostasMap[key].pl += pl; propostasMap[key].fixo += mensal; propostasMap[key].exito += exito; }
+            if (propostasMap[key]) {
+              propostasMap[key].pl += pl;
+              propostasMap[key].fixo += mensal;
+              propostasMap[key].fixo += fixoPontual;
+              propostasMap[key].exito += exito;
+              propostasMap[key].exito += outros;
+            }
           }
         }
       }
