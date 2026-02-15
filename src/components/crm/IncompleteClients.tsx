@@ -52,16 +52,23 @@ export function IncompleteClients({
         .from('client_contacts')
         .select(`
           *,
-          client:clients!inner(
+          client:clients(
             id, name,
             partner:partners(id, name),
-            contracts!inner(status)
+            contracts(status)
           )
         `)
-        .in('client.contracts.status', ['proposal_sent', 'closed'])
 
       if (data) {
-        const incomplete = data.filter((c: any) => {
+        // Filter contacts from clients with active contracts (proposal_sent or closed)
+        const contactsWithActiveContracts = data.filter((c: any) => {
+          const contracts = c.client?.contracts || []
+          return contracts.some((contractByClient: any) =>
+            ['proposal_sent', 'closed'].includes(contractByClient.status)
+          )
+        })
+
+        const incomplete = contactsWithActiveContracts.filter((c: any) => {
           const ignored = c.ignored_fields || []
 
           const hasMissing = REQUIRED_FIELDS.some(field => {
