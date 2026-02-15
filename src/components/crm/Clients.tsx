@@ -393,7 +393,7 @@ export function Clients({
 
       {/* Company View Modal */}
       {viewingCompany && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] px-6 py-5 text-white flex items-center justify-between">
