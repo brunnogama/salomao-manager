@@ -13,6 +13,7 @@ import { Collaborator, Partner } from '../../../types/controladoria'
 
 // Importar componentes modulares
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
+import { formatDateToDisplay, formatDateToISO } from '../../../lib/dateUtils'
 import { DadosPessoaisSection } from '../components/DadosPessoaisSection'
 import { EnderecoSection } from '../components/EnderecoSection'
 import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
@@ -150,11 +151,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     return str.toLowerCase().split(' ').map(word => (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word).join(' ');
   }
 
-  const formatDateDisplay = (str?: string) => {
-    if (!str) return '-'
-    const date = new Date(str)
-    return new Date(date.valueOf() + date.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR')
-  }
+
 
   const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
   const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14)
@@ -315,11 +312,23 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     } catch (error) { alert('Erro ao excluir documento.') }
   }
 
+
+
   const handleSave = async (closeModal = true) => {
     try {
       if (!formData.name || !formData.cpf) return alert('Campos obrigatórios: Nome e CPF')
       setLoading(true)
       let photoUrl = formData.photo_url
+
+      // Prepare data for save: Convert DD/MM/YYYY back to YYYY-MM-DD
+      const dataToSave = {
+        ...formData,
+        birthday: formatDateToISO(formData.birthday),
+        hire_date: formatDateToISO(formData.hire_date),
+        termination_date: formatDateToISO(formData.termination_date),
+        oab_emissao: formatDateToISO(formData.oab_emissao),
+        escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao)
+      };
 
       if (formData.id) {
         // Update
@@ -337,7 +346,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           teams,
           photo_url,
           ...cleanData
-        } = formData;
+        } = dataToSave;
 
         const { error } = await supabase.from('collaborators').update({
           ...cleanData, foto_url: photoUrl
@@ -359,7 +368,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           teams,
           photo_url,
           ...cleanData
-        } = formData;
+        } = dataToSave;
 
         const { data, error } = await supabase.from('collaborators').insert({
           ...cleanData, foto_url: photoUrl
@@ -400,7 +409,17 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   }
 
   const handleEdit = (colaborador: Collaborator) => {
-    setFormData(colaborador)
+    // Format dates for display (DD/MM/YYYY)
+    const formattedColaborador = {
+      ...colaborador,
+      birthday: formatDateToDisplay(colaborador.birthday),
+      hire_date: formatDateToDisplay(colaborador.hire_date),
+      termination_date: formatDateToDisplay(colaborador.termination_date),
+      oab_emissao: formatDateToDisplay(colaborador.oab_emissao),
+      escolaridade_previsao_conclusao: formatDateToDisplay(colaborador.escolaridade_previsao_conclusao)
+    };
+
+    setFormData(formattedColaborador)
     setPhotoPreview(colaborador.photo_url || null)
     setActiveFormTab(1)
     setShowFormModal(true)
@@ -433,7 +452,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       Equipe: (c as any).teams?.name || c.equipe,
       Local: (c as any).locations?.name || c.local,
       Status: c.status === 'active' ? 'Ativo' : 'Inativo',
-      Admissão: formatDateDisplay(c.hire_date)
+      Admissão: formatDateToDisplay(c.hire_date)
     }));
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
@@ -454,7 +473,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               <div className="grid grid-cols-2 gap-4">
                 <DetailRow label="CPF" value={data.cpf} />
                 <DetailRow label="Identidade (RG)" value={data.rg} />
-                <DetailRow label="Nascimento" value={formatDateDisplay(data.birthday)} icon={Calendar} />
+                <DetailRow label="Nascimento" value={formatDateToDisplay(data.birthday)} icon={Calendar} />
                 <DetailRow label="Gênero" value={data.gender} />
                 <DetailRow label="Est. Civil" value={data.civil_status} />
               </div>
@@ -526,7 +545,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   <DetailRow label="Número OAB" value={data.oab_numero} />
                   <DetailRow label="Estado OAB" value={data.oab_uf} />
                   {/* Renamed Label to Emissão OAB */}
-                  <DetailRow label="Emissão OAB" value={formatDateDisplay(data.oab_emissao)} icon={Calendar} />
+                  <DetailRow label="Emissão OAB" value={formatDateToDisplay(data.oab_emissao)} icon={Calendar} />
                 </div>
                 {data.oab_tipo && <DetailRow label="Tipo de Inscrição" value={data.oab_tipo} />}
               </div>
@@ -583,7 +602,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               </div>
               <DetailRow label="Matrícula" value={data.escolaridade_matricula} />
               <DetailRow label="Semestre" value={data.escolaridade_semestre} />
-              <DetailRow label="Previsão de Conclusão" value={formatDateDisplay(data.escolaridade_previsao_conclusao)} icon={Calendar} />
+              <DetailRow label="Previsão de Conclusão" value={formatDateToDisplay(data.escolaridade_previsao_conclusao)} icon={Calendar} />
             </div>
           </div>
         )
@@ -620,8 +639,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                 <DetailRow label="Local de Trabalho" value={(data as any).locations?.name || data.local} icon={Building2} />
               </div>
               <div className="grid grid-cols-4 gap-4 md:col-span-2">
-                <DetailRow label="Admissão" value={formatDateDisplay(data.hire_date)} icon={Calendar} />
-                <DetailRow label="Desligamento" value={formatDateDisplay(data.termination_date)} icon={Calendar} />
+                <DetailRow label="Admissão" value={formatDateToDisplay(data.hire_date)} icon={Calendar} />
+                <DetailRow label="Desligamento" value={formatDateToDisplay(data.termination_date)} icon={Calendar} />
                 <DetailRow label="Motivo Desligamento" value={data.motivo_desligamento} />
                 <DetailRow label="Status" value={data.status === 'active' ? 'Ativo' : 'Inativo'} />
               </div>
