@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { contractService } from '../services/contractService';
 import { partnerService } from '../services/partnerService';
 import { Contract, Partner, ContractCase } from '../../../types/controladoria';
+import { safeDate } from '../utils/masks';
 
 // --- Funções Auxiliares de Parsing e Data ---
 
@@ -32,15 +33,47 @@ const isValidDate = (d: any): boolean => {
   return d instanceof Date && !isNaN(d.getTime());
 };
 
-const isDateInCurrentWeek = (dateString?: string) => { if (!dateString) return false; const d = new Date(dateString + 'T12:00:00'); if (!isValidDate(d)) return false; const t = new Date(); const cd = t.getDay(); const s = new Date(t); s.setDate(t.getDate() - cd); s.setHours(0, 0, 0, 0); const e = new Date(s); e.setDate(s.getDate() + 6); e.setHours(23, 59, 59, 999); return d >= s && d <= e; };
-const isDateInPreviousWeek = (dateString?: string) => { if (!dateString) return false; const d = new Date(dateString + 'T12:00:00'); if (!isValidDate(d)) return false; const t = new Date(); const cd = t.getDay(); const sc = new Date(t); sc.setDate(t.getDate() - cd); sc.setHours(0, 0, 0, 0); const sp = new Date(sc); sp.setDate(sc.getDate() - 7); const ep = new Date(sp); ep.setDate(sp.getDate() + 6); ep.setHours(23, 59, 59, 999); return d >= sp && d <= ep; };
-const isDateInCurrentMonth = (dateString?: string) => { if (!dateString) return false; const d = new Date(dateString + 'T12:00:00'); if (!isValidDate(d)) return false; const t = new Date(); return d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear(); };
+const isDateInCurrentWeek = (dateString?: string) => {
+  const d = safeDate(dateString);
+  if (!d) return false;
+  const t = new Date();
+  const cd = t.getDay();
+  const s = new Date(t);
+  s.setDate(t.getDate() - cd);
+  s.setHours(0, 0, 0, 0);
+  const e = new Date(s);
+  e.setDate(s.getDate() + 6);
+  e.setHours(23, 59, 59, 999);
+  return d >= s && d <= e;
+};
+
+const isDateInPreviousWeek = (dateString?: string) => {
+  const d = safeDate(dateString);
+  if (!d) return false;
+  const t = new Date();
+  const cd = t.getDay();
+  const sc = new Date(t);
+  sc.setDate(t.getDate() - cd);
+  sc.setHours(0, 0, 0, 0);
+  const sp = new Date(sc);
+  sp.setDate(sc.getDate() - 7);
+  const ep = new Date(sp);
+  ep.setDate(sp.getDate() + 6);
+  ep.setHours(23, 59, 59, 999);
+  return d >= sp && d <= ep;
+};
+
+const isDateInCurrentMonth = (dateString?: string) => {
+  const d = safeDate(dateString);
+  if (!d) return false;
+  const t = new Date();
+  return d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
+};
 
 // Nova lógica MTD (Month to Date)
 const isDateInLastMonthMTD = (dateString?: string) => {
-  if (!dateString) return false;
-  const d = new Date(dateString + 'T12:00:00');
-  if (!isValidDate(d)) return false;
+  const d = safeDate(dateString);
+  if (!d) return false;
   const today = new Date();
 
   // Define o mês anterior
@@ -219,24 +252,22 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
         });
       }
 
-      // 3. DATAS E FLUXO
+      // 3. DATAS E FLUXO (USANDO safeDate)
       const statusDates = [c.prospect_date, c.proposal_date, c.contract_date, c.rejection_date, c.probono_date]
-        .filter(d => d && d !== '')
-        .map(d => new Date(d + 'T12:00:00'))
-        .filter(d => isValidDate(d));
+        .map(d => safeDate(d))
+        .filter((d): d is Date => d !== null);
 
-      let dataEntradaReal = null;
+      let dataEntradaReal: Date;
       if (statusDates.length > 0) {
+        // Encontra a menor data válida
         dataEntradaReal = new Date(Math.min(...statusDates.map(d => d.getTime())));
       } else {
-        dataEntradaReal = c.created_at ? new Date(c.created_at) : new Date();
+        // Fallback para created_at ou hoje, garantindo safeDate se possível
+        const createdAt = safeDate(c.created_at);
+        dataEntradaReal = createdAt || new Date();
       }
 
-      // Fallback final se mesmo com created_at der inválido (caso raro)
-      if (!isValidDate(dataEntradaReal)) {
-        dataEntradaReal = new Date();
-      }
-
+      // Setup para gráficos/mapas usando dataEntradaReal
       const mesAnoEntrada = dataEntradaReal.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
       if (mapaMeses[mesAnoEntrada] !== undefined) mapaMeses[mesAnoEntrada]++;
       else { if (!mapaMeses[mesAnoEntrada]) mapaMeses[mesAnoEntrada] = 0; mapaMeses[mesAnoEntrada]++; }
