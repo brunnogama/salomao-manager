@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { 
-  History as HistoryIcon, 
-  Search, 
-  Filter, 
-  Clock, 
-  User, 
-  FileText, 
-  Trash2, 
-  PlusCircle, 
-  Edit3, 
-  ArrowRight, 
+import {
+  History as HistoryIcon,
+  Search,
+  Filter,
+  Clock,
+  User,
+  FileText,
+  Trash2,
+  PlusCircle,
+  Edit3,
+  ArrowRight,
   Database,
   Shield,
   Ban,
@@ -19,6 +19,7 @@ import {
   LogOut,
   Grid
 } from 'lucide-react';
+import { FilterSelect } from '../ui/FilterSelect';
 
 interface LogItem {
   id: string;
@@ -38,10 +39,10 @@ interface HistoryProps {
   onLogout?: () => void;
 }
 
-export function History({ 
-  userName = 'Usuário', 
-  onModuleHome, 
-  onLogout 
+export function History({
+  userName = 'Usuário',
+  onModuleHome,
+  onLogout
 }: HistoryProps) {
   // --- ROLE STATE ---
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
@@ -49,7 +50,7 @@ export function History({
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterAction, setFilterAction] = useState('ALL');
+  const [filterAction, setFilterAction] = useState('');
 
   useEffect(() => {
     checkUserRole();
@@ -58,7 +59,7 @@ export function History({
   // Busca histórico apenas se for admin
   useEffect(() => {
     if (userRole === 'admin') {
-        fetchHistory();
+      fetchHistory();
     }
   }, [userRole]);
 
@@ -66,14 +67,14 @@ export function History({
   const checkUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-        const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-        if (profile) {
-            setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
-        }
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      if (profile) {
+        setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
+      }
     }
   };
 
@@ -119,7 +120,7 @@ export function History({
     if (log.action === 'DELETE') {
       return <span className="text-gray-500 italic font-medium uppercase text-[10px] tracking-widest">Item excluído permanentemente do banco de dados.</span>;
     }
-    
+
     if (log.action === 'INSERT') {
       const name = log.new_data?.client_name || log.new_data?.title || log.new_data?.name || 'Novo Registro';
       return <span className="font-black text-[#0a192f] uppercase text-xs tracking-tight">Novo item criado: "{name}"</span>;
@@ -152,16 +153,16 @@ export function History({
   };
 
   const filteredLogs = logs.filter(log => {
-    const matchesSearch = 
+    const matchesSearch =
       log.table_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (log.record_id && log.record_id.includes(searchTerm));
-    const matchesFilter = filterAction === 'ALL' || log.action === filterAction;
+    const matchesFilter = filterAction === '' || log.action === filterAction;
     return matchesSearch && matchesFilter;
   });
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
-      
+
       {/* 1. Header - Salomão Design System */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -210,29 +211,28 @@ export function History({
             <div className="flex flex-col md:flex-row justify-between gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar por módulo ou ID do registro..." 
+                <input
+                  type="text"
+                  placeholder="Buscar por módulo ou ID do registro..."
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
-              
-              <div className="flex gap-2 bg-gray-100/50 p-1 rounded-xl">
-                {['ALL', 'INSERT', 'UPDATE', 'DELETE'].map(type => (
-                  <button
-                    key={type}
-                    onClick={() => setFilterAction(type)}
-                    className={`flex-1 flex items-center justify-center px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                      filterAction === type 
-                        ? 'bg-[#1e3a8a] text-white shadow-md' 
-                        : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    {type === 'ALL' ? 'Todos' : type === 'INSERT' ? 'Criações' : type === 'UPDATE' ? 'Edições' : 'Exclusões'}
-                  </button>
-                ))}
+
+              <div className="flex gap-2">
+                <FilterSelect
+                  icon={Filter}
+                  value={filterAction}
+                  onChange={setFilterAction}
+                  options={[
+                    { label: 'Todos', value: '' },
+                    { label: 'Criações', value: 'INSERT' },
+                    { label: 'Edições', value: 'UPDATE' },
+                    { label: 'Exclusões', value: 'DELETE' }
+                  ]}
+                  placeholder="Filtrar por Ação"
+                />
               </div>
             </div>
           </div>
@@ -252,11 +252,11 @@ export function History({
               filteredLogs.map((log) => {
                 const style = getActionStyle(log.action);
                 const date = new Date(log.changed_at);
-                
+
                 return (
                   <div key={log.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
                     <div className={`absolute right-0 top-0 h-full w-1 ${style.bg.replace('bg-', 'bg-').replace('50', '600')}`}></div>
-                    
+
                     <div className="flex flex-col md:flex-row gap-6 items-start">
                       {/* Data/Hora Side */}
                       <div className="flex-shrink-0 flex flex-col items-center min-w-[120px] bg-gray-50/50 p-3 rounded-xl border border-gray-100">
@@ -281,7 +281,7 @@ export function History({
                               {formatTableName(log.table_name)}
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center text-[10px] font-black text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100 uppercase tracking-widest">
                             <UserCircle className="w-3.5 h-3.5 mr-2 text-[#1e3a8a]" />
                             <span className="truncate max-w-[200px]" title={log.user_id}>

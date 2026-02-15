@@ -6,7 +6,7 @@ import {
   AlertTriangle, UserCircle,
   Grid, LogOut, Building2
 } from 'lucide-react'
-import { Menu, Transition } from '@headlessui/react'
+import { FilterSelect } from '../controladoria/ui/FilterSelect'
 import { CRMContactModal } from './CRMContactModal'
 import { CRMContact } from '../../types/crmContact'
 import * as XLSX from 'xlsx'
@@ -235,36 +235,17 @@ export function IncompleteClients({
           </div>
 
           <div className="flex items-center gap-2">
-            <Menu as="div" className="relative">
-              <Menu.Button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white text-gray-700 hover:bg-gray-50 hover:border-[#1e3a8a]/30 transition-all">
-                <Users className="h-4 w-4" />
-                <span>{filterSocio || 'Sócios'}</span>
-              </Menu.Button>
-              <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100">
-                <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl border border-gray-200 focus:outline-none z-20 max-h-60 overflow-y-auto custom-scrollbar">
-                  <div className="p-1.5">
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button onClick={() => setFilterSocio('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-xs text-gray-700 rounded-lg font-bold`}>
-                          <span>Todos os Sócios</span>
-                          {filterSocio === '' && <Check className="h-4 w-4 text-[#1e3a8a]" />}
-                        </button>
-                      )}
-                    </Menu.Item>
-                    {availableSocios.map((s) => (
-                      <Menu.Item key={s}>
-                        {({ active }) => (
-                          <button onClick={() => setFilterSocio(s)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-xs text-gray-700 rounded-lg`}>
-                            <span className="truncate">{s}</span>
-                            {filterSocio === s && <Check className="h-4 w-4 text-[#1e3a8a]" />}
-                          </button>
-                        )}
-                      </Menu.Item>
-                    ))}
-                  </div>
-                </Menu.Items>
-              </Transition>
-            </Menu>
+            {/* Sócio Filter */}
+            <FilterSelect
+              icon={Users}
+              value={filterSocio}
+              onChange={setFilterSocio}
+              options={[
+                { label: 'Todos os Sócios', value: '' },
+                ...availableSocios.map(s => ({ label: s, value: s }))
+              ]}
+              placeholder="Sócios"
+            />
 
             {/* Export button moved to header */}
 

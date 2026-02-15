@@ -1,13 +1,14 @@
 // src/components/collaborators/pages/Colaboradores.tsx
 import React, { useState, useEffect, useRef } from 'react'
 import {
-  Search, Plus, X, Trash2, Pencil, Save, Users, UserMinus, CheckCircle, UserX,
-  Calendar, Building2, Mail, FileText, ExternalLink, Loader2, Link as LinkIcon,
-  Grid, LogOut, UserCircle, GraduationCap, Briefcase, Files, History, User, Check, BookOpen, AlertCircle, FileSpreadsheet
+  Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
+  Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
+  GraduationCap, Briefcase, Files, History, User, BookOpen, FileSpreadsheet
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
-import { SearchableSelect } from '../../crm/SearchableSelect'
+
+import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { Collaborator, Partner } from '../../../types/controladoria'
 
 // Importar componentes modulares
@@ -49,6 +50,8 @@ interface ColaboradoresProps {
 export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }: ColaboradoresProps) {
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
   const [partners, setPartners] = useState<Partner[]>([])
+  const [roles, setRoles] = useState<any[]>([])
+  const [locations, setLocations] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
@@ -60,6 +63,27 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const [filterPartner, setFilterPartner] = useState('')
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
+
+  // Options for FilterSelect
+  const liderOptions = React.useMemo(() => [
+    { label: 'Todos Líderes', value: '' },
+    ...colaboradores.map(c => ({ label: c.name, value: String(c.id) })).sort((a, b) => a.label.localeCompare(b.label))
+  ], [colaboradores])
+
+  const partnerOptions = React.useMemo(() => [
+    { label: 'Todos Sócios', value: '' },
+    ...partners.map(p => ({ label: p.name, value: String(p.id) })).sort((a, b) => a.label.localeCompare(b.label))
+  ], [partners])
+
+  const locationOptions = React.useMemo(() => [
+    { label: 'Todos Locais', value: '' },
+    ...locations.map(l => ({ label: l.name, value: String(l.id) })).sort((a, b) => a.label.localeCompare(b.label))
+  ], [locations])
+
+  const roleOptions = React.useMemo(() => [
+    { label: 'Todos Cargos', value: '' },
+    ...roles.map(r => ({ label: r.name, value: String(r.id) })).sort((a, b) => a.label.localeCompare(b.label))
+  ], [roles])
 
   // Inicializa estado vazio por padrão conforme solicitado
   const [formData, setFormData] = useState<Partial<Collaborator>>({ status: 'active', state: '' })
@@ -167,6 +191,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       ])
 
       if (colabRes.error) throw colabRes.error
+
+      if (rolesRes.data) setRoles(rolesRes.data)
+      if (locsRes.data) setLocations(locsRes.data)
 
       const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
       const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
@@ -878,38 +905,33 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
           {/* Filters Row - Expanded & Auto-sizing */}
           <div className="flex items-center gap-3 w-full overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
-            <SearchableSelect
-              label=""
-              placeholder="Líder"
+            <FilterSelect
+              icon={User}
               value={filterLider}
               onChange={setFilterLider}
-              table="collaborators"
-              options={colaboradores.map(c => ({ id: c.id, name: c.name }))}
-              className="flex-1 min-w-[200px]"
+              options={liderOptions}
+              placeholder="Líder"
             />
-            <SearchableSelect
-              label=""
-              placeholder="Sócio"
+            <FilterSelect
+              icon={Users}
               value={filterPartner}
               onChange={setFilterPartner}
-              table="partners"
-              className="flex-1 min-w-[200px]"
+              options={partnerOptions}
+              placeholder="Sócio"
             />
-            <SearchableSelect
-              label=""
-              placeholder="Local"
+            <FilterSelect
+              icon={Building2}
               value={filterLocal}
               onChange={setFilterLocal}
-              table="locations"
-              className="flex-1 min-w-[200px]"
+              options={locationOptions}
+              placeholder="Local"
             />
-            <SearchableSelect
-              label=""
-              placeholder="Cargo"
+            <FilterSelect
+              icon={Briefcase}
               value={filterCargo}
               onChange={setFilterCargo}
-              table="roles"
-              className="flex-1 min-w-[200px]"
+              options={roleOptions}
+              placeholder="Cargo"
             />
           </div>
         </div>

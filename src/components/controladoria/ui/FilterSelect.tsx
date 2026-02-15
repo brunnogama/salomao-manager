@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 
 interface FilterSelectProps {
     icon?: React.ElementType;
@@ -33,7 +33,19 @@ export function FilterSelect({ icon: Icon, value, onChange, options, placeholder
             >
                 {Icon && <Icon className="w-4 h-4 text-gray-400 mr-2 shrink-0" />}
                 <span className="text-xs font-bold text-gray-600 flex-1 truncate uppercase tracking-wider">{displayValue}</span>
-                <ChevronDown className={`w-3 h-3 text-gray-400 ml-2 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                {value && (
+                    <div
+                        role="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onChange('');
+                        }}
+                        className="mr-2 p-0.5 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                        <X className="w-3 h-3 text-gray-400 hover:text-red-500" />
+                    </div>
+                )}
+                <ChevronDown className={`w-3 h-3 text-gray-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
 
             {isOpen && (

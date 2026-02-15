@@ -1,8 +1,9 @@
 // src/components/crm/History.tsx
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Search, RefreshCw, Calendar, XCircle } from 'lucide-react'
+import { Search, RefreshCw, Calendar, XCircle, LayoutGrid } from 'lucide-react'
 import { utils, writeFile } from 'xlsx'
+import { FilterSelect } from '../controladoria/ui/FilterSelect'
 
 interface LogItem {
   id: number
@@ -114,17 +115,19 @@ export function History() {
           </div>
 
           {/* Filtro Módulo */}
-          <select
-            className="w-full md:w-auto px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#112240]"
+          <FilterSelect
+            icon={LayoutGrid}
             value={moduleFilter}
-            onChange={e => setModuleFilter(e.target.value)}
-          >
-            <option value="TODOS">Todos Módulos</option>
-            <option value="CLIENTES">Clientes</option>
-            <option value="KANBAN">Kanban</option>
-            <option value="CONFIG">Configurações</option>
-            <option value="INCOMPLETOS">Incompletos</option>
-          </select>
+            onChange={setModuleFilter}
+            options={[
+              { label: 'Todos Módulos', value: 'TODOS' },
+              { label: 'Clientes', value: 'CLIENTES' },
+              { label: 'Kanban', value: 'KANBAN' },
+              { label: 'Configurações', value: 'CONFIG' },
+              { label: 'Incompletos', value: 'INCOMPLETOS' }
+            ]}
+            placeholder="Módulo"
+          />
 
           {/* Filtros de Data */}
           <div className="flex items-center gap-2 w-full md:w-auto bg-white border border-gray-200 rounded-lg p-1 px-2">
