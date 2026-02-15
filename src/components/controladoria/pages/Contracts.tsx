@@ -759,7 +759,7 @@ export function Contracts() {
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">HON</th>
                   <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Data</th>
-                  <th className="p-4 sticky right-0 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
+                  <th className="p-4 sticky right-0 bg-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)]">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
