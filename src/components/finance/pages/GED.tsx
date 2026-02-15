@@ -121,11 +121,7 @@ export function GED() {
     })
   }, [documentos, searchTerm, selectedCategoria, selectedTipo])
 
-  const resetFilters = () => {
-    setSearchTerm('')
-    setSelectedCategoria('todas')
-    setSelectedTipo('todos')
-  }
+
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '---'
@@ -220,12 +216,7 @@ export function GED() {
               {tiposDocumento.map(tipo => <option key={tipo} value={tipo.toLowerCase()}>{tipo}</option>)}
             </select>
           </div>
-          {(searchTerm || selectedCategoria !== 'todas' || selectedTipo !== 'todos') && (
-            <button onClick={resetFilters} className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border border-red-100 animate-in zoom-in duration-300">
-              <XCircle className="h-4 w-4" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Limpar Filtros</span>
-            </button>
-          )}
+
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">

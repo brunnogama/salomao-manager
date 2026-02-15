@@ -10,7 +10,6 @@ import {
   Building2,
   Users,
   Check,
-  X,
   ChevronDown,
   Filter
 } from 'lucide-react'
@@ -296,15 +295,7 @@ export function Clients({
            But `hasActiveFilters` variable is not defined in `Clients.tsx`.
            I'll define it inside the render or just inline the check.
            */}
-          {(filterSocio || filterGiftType) && (
-            <button
-              onClick={() => { setFilterSocio(''); setFilterGiftType(''); }}
-              className="p-2.5 text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-all"
-              title="Limpar filtros"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          )}
+
         </div>
       </div>
 

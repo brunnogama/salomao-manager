@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
   DollarSign, Search, Download, CheckCircle2, Circle, Clock, Loader2,
-  CalendarDays, Receipt, X, Filter, MapPin, Hash,
+  CalendarDays, Receipt, Filter, MapPin, Hash,
   AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
 } from 'lucide-react';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
@@ -535,16 +535,7 @@ export function Finance() {
               </div>
             </div>
 
-            {/* Limpar Filtros */}
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"
-                title="Limpar filtros"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
+
           </div>
 
         </div>

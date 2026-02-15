@@ -77,7 +77,7 @@ export function Contracts() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('');
   const [partnerFilter, setPartnerFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -341,7 +341,7 @@ export function Contracts() {
         (Array.isArray(p.magistrates) && p.magistrates.some(m => m.name.toLowerCase().includes(term)))
       ));
 
-    const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
+    const matchesStatus = statusFilter === '' || c.status === statusFilter;
     const matchesPartner = partnerFilter === '' || c.partner_id === partnerFilter;
 
     let matchesDate = true;
@@ -492,7 +492,7 @@ export function Contracts() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Contratos");
 
-    const statusName = statusFilter === 'all' ? 'Geral' : getStatusLabel(statusFilter).replace(/ /g, '_');
+    const statusName = statusFilter === '' ? 'Geral' : getStatusLabel(statusFilter).replace(/ /g, '_');
     const dateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
     const fileName = `Salomão_${statusName}_${dateStr}.xlsx`;
 
@@ -502,17 +502,17 @@ export function Contracts() {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setStatusFilter('all');
+    setStatusFilter('');
     setPartnerFilter('');
     setStartDate('');
     setEndDate('');
     setIsSearchOpen(false);
   };
 
-  const hasActiveFilters = searchTerm !== '' || statusFilter !== 'all' || partnerFilter !== '' || startDate !== '' || endDate !== '';
+  const hasActiveFilters = searchTerm !== '' || statusFilter !== '' || partnerFilter !== '' || startDate !== '' || endDate !== '';
 
   const statusOptions = [
-    { label: 'Todos Status', value: 'all' },
+    { label: 'Todos Status', value: '' },
     { label: 'Sob Análise', value: 'analysis' },
     { label: 'Proposta Enviada', value: 'proposal' },
     { label: 'Contrato Fechado', value: 'active' },
@@ -673,16 +673,7 @@ export function Contracts() {
               </div>
             </div>
 
-            {/* Limpar Filtros */}
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"
-                title="Limpar filtros"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
+
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Filter, User, Tag, Building2, X } from 'lucide-react'
+import { Filter, User, Tag, Building2 } from 'lucide-react'
 import { FilterSelect } from '../controladoria/ui/FilterSelect'
 
 interface FamiliaFiltersProps {
@@ -78,16 +78,7 @@ export function FamiliaFilters({
       />
 
       {/* Botão Limpar */}
-      {hasActiveFilters && (
-        <button
-          onClick={clearAll}
-          className="flex items-center gap-2 px-3 py-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all border border-red-100 shadow-sm group"
-          title="Limpar filtros"
-        >
-          <X className="w-4 h-4 group-hover:rotate-90 transition-transform" />
-          <span className="text-xs font-bold uppercase tracking-wider">Limpar</span>
-        </button>
-      )}
+
     </div>
   )
 }

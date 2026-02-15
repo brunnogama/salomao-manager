@@ -9,7 +9,7 @@ import {
   Building,
   User,
   Briefcase,
-  X,
+
   Mail,
   Phone,
   MapPin,
@@ -118,10 +118,7 @@ export function Clients() {
 
   const hasActiveFilters = clientFilter !== 'todos' || partnerFilter !== 'todos';
 
-  const clearFilters = () => {
-    setClientFilter('todos');
-    setPartnerFilter('todos');
-  };
+
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
@@ -207,16 +204,7 @@ export function Clients() {
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
 
-            {/* Limpar Filtros */}
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"
-                title="Limpar filtros"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
+
           </div>
         </div>
       </div>
