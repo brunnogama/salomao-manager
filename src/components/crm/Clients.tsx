@@ -8,8 +8,13 @@ import {
   Trash,
   Gift,
   Building2,
-  Users
+  Users,
+  Check,
+  X,
+  ChevronDown
 } from 'lucide-react'
+import { Menu, Transition } from '@headlessui/react'
+import { Fragment } from 'react'
 import { CRMContactModal } from './CRMContactModal'
 import { CRMContact, getGiftBadgeColor, getGiftIconColor } from '../../types/crmContact'
 
@@ -245,27 +250,91 @@ export function Clients({
             />
           </div>
 
-          <select
-            className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent bg-white"
-            value={filterSocio}
-            onChange={(e) => setFilterSocio(e.target.value)}
-          >
-            <option value="">Todos os sócios</option>
-            {availableSocios.map((socio: any) => (
-              <option key={socio} value={socio}>{socio}</option>
-            ))}
-          </select>
+          {/* Sócio Filter */}
+          <Menu as="div" className="relative">
+            <Menu.Button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white text-gray-700 hover:bg-gray-50 hover:border-[#1e3a8a]/30 transition-all">
+              <Users className="h-4 w-4" />
+              <span>{filterSocio || 'Sócios'}</span>
+            </Menu.Button>
+            <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100">
+              <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl border border-gray-200 focus:outline-none z-20 max-h-60 overflow-y-auto custom-scrollbar">
+                <div className="p-1.5">
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button onClick={() => setFilterSocio('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-xs text-gray-700 rounded-lg font-bold`}>
+                        <span>Sócios</span>
+                        {filterSocio === '' && <Check className="h-4 w-4 text-[#1e3a8a]" />}
+                      </button>
+                    )}
+                  </Menu.Item>
+                  {availableSocios.map((s: any) => (
+                    <Menu.Item key={s}>
+                      {({ active }) => (
+                        <button onClick={() => setFilterSocio(s)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-xs text-gray-700 rounded-lg`}>
+                          <span className="truncate">{s}</span>
+                          {filterSocio === s && <Check className="h-4 w-4 text-[#1e3a8a]" />}
+                        </button>
+                      )}
+                    </Menu.Item>
+                  ))}
+                </div>
+              </Menu.Items>
+            </Transition>
+          </Menu>
 
-          <select
-            className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent bg-white"
-            value={filterGiftType}
-            onChange={(e) => setFilterGiftType(e.target.value)}
-          >
-            <option value="">Todos os brindes</option>
-            {availableGiftTypes.map((type: any) => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
+          {/* Brinde Filter */}
+          <Menu as="div" className="relative">
+            <Menu.Button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white text-gray-700 hover:bg-gray-50 hover:border-[#1e3a8a]/30 transition-all">
+              <Gift className="h-4 w-4" />
+              <span>{filterGiftType || 'Brindes'}</span>
+            </Menu.Button>
+            <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100">
+              <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl border border-gray-200 focus:outline-none z-20 max-h-60 overflow-y-auto custom-scrollbar">
+                <div className="p-1.5">
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button onClick={() => setFilterGiftType('')} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-xs text-gray-700 rounded-lg font-bold`}>
+                        <span>Brindes</span>
+                        {filterGiftType === '' && <Check className="h-4 w-4 text-[#1e3a8a]" />}
+                      </button>
+                    )}
+                  </Menu.Item>
+                  {availableGiftTypes.map((type: any) => (
+                    <Menu.Item key={type}>
+                      {({ active }) => (
+                        <button onClick={() => setFilterGiftType(type)} className={`${active ? 'bg-gray-50' : ''} group flex w-full items-center justify-between px-3 py-2.5 text-xs text-gray-700 rounded-lg`}>
+                          <span className="truncate">{type}</span>
+                          {filterGiftType === type && <Check className="h-4 w-4 text-[#1e3a8a]" />}
+                        </button>
+                      )}
+                    </Menu.Item>
+                  ))}
+                </div>
+              </Menu.Items>
+            </Transition>
+          </Menu>
+
+          {/* Add Clear Filters button which was missing or needs to be adapted? IncompleteClients has it.
+           Clients.tsx code I saw earlier didn't seem to have a clear button in the viewed logic,
+           Wait, I see `hasActiveFilters` logic isn't there in `Clients.tsx` original code I read.
+           Let me check if I should add it.
+           The user said: "use o filtro de sócios da pagina Incompletos como paramentro".
+           In `IncompleteClients`, there is a clear button.
+           I'll add it if there isn't one. The original `Clients.tsx` didn't show a clear button.
+           But I should focus on replacing the selects first.
+           I will add the clear button if `filterSocio` or `filterGiftType` or `searchTerm` is active.
+           But `hasActiveFilters` variable is not defined in `Clients.tsx`.
+           I'll define it inside the render or just inline the check.
+           */}
+          {(filterSocio || filterGiftType) && (
+            <button
+              onClick={() => { setFilterSocio(''); setFilterGiftType(''); }}
+              className="p-2.5 text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-all"
+              title="Limpar filtros"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
