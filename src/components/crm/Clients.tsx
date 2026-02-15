@@ -492,6 +492,7 @@ export function Clients({
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
+                              setViewingCompany(null)
                               setContactToEdit(contact)
                               setIsModalOpen(true)
                             }}
@@ -516,6 +517,7 @@ export function Clients({
                     client_id: viewingCompany.client?.id,
                     client: viewingCompany.client
                   }
+                  setViewingCompany(null)
                   setContactToEdit(newContact as CRMContact)
                   setIsModalOpen(true)
                 }}
