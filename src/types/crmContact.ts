@@ -48,7 +48,7 @@ export interface CRMContact {
 export const GIFT_TYPES = [
     'Brinde VIP',
     'Brinde Médio',
-    'Outro',
+    'Outros',
     'Não recebe'
 ] as const;
 
@@ -64,6 +64,7 @@ export const getGiftBadgeColor = (giftType?: string): string => {
         case 'Brinde Médio':
             return 'bg-blue-100 text-blue-700 border-blue-200';
         case 'Outro':
+        case 'Outros':
             return 'bg-amber-100 text-amber-700 border-amber-200';
         case 'Não recebe':
             return 'bg-gray-100 text-gray-500 border-gray-200';
@@ -80,6 +81,7 @@ export const getGiftIconColor = (giftType: string): string => {
         case 'Brinde Médio':
             return 'from-blue-500 to-blue-600';
         case 'Outro':
+        case 'Outros':
             return 'from-amber-500 to-amber-600';
         case 'Não recebe':
             return 'from-gray-400 to-gray-500';

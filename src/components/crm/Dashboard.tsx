@@ -93,12 +93,14 @@ export function Dashboard({
       const partnerStats: Record<string, { clients: number, contacts: number, gifts: Record<string, number> }> = {};
       const ufGiftStats: Record<string, Record<string, number>> = {};
 
-      ['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno'].forEach(t => brindeCounts[t] = 0);
+      ['Brinde VIP', 'Brinde Médio', 'Outros'].forEach(t => brindeCounts[t] = 0);
 
       clients?.forEach(client => {
         totalClients++;
 
-        const type = client.tipo_brinde;
+        let type = client.tipo_brinde;
+        if (type === 'Brinde Pequeno' || type === 'Outro') type = 'Outros';
+
         if (type && type !== 'Não recebe') {
           brindeCounts[type] = (brindeCounts[type] || 0) + 1;
         }
@@ -106,7 +108,7 @@ export function Dashboard({
         const partnerName = client.partner?.name || 'Sem Sócio';
         if (!partnerStats[partnerName]) {
           partnerStats[partnerName] = { clients: 0, contacts: 0, gifts: {} };
-          ['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno'].forEach(t => partnerStats[partnerName].gifts[t] = 0);
+          ['Brinde VIP', 'Brinde Médio', 'Outros'].forEach(t => partnerStats[partnerName].gifts[t] = 0);
         }
         partnerStats[partnerName].clients++;
         const contactCount = client.client_contacts?.[0]?.count || 0;
@@ -119,7 +121,7 @@ export function Dashboard({
         const uf = client.uf ? client.uf.toUpperCase().trim() : 'ND';
         if (!ufGiftStats[uf]) {
           ufGiftStats[uf] = {};
-          ['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno'].forEach(t => ufGiftStats[uf][t] = 0);
+          ['Brinde VIP', 'Brinde Médio', 'Outros'].forEach(t => ufGiftStats[uf][t] = 0);
         }
         if (type && type !== 'Não recebe') {
           ufGiftStats[uf][type] = (ufGiftStats[uf][type] || 0) + 1;
@@ -218,7 +220,7 @@ export function Dashboard({
 
         {/* 1. GIFT CARDS ROW */}
         <div className="flex flex-wrap gap-4">
-          {['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno'].map((tipo) => {
+          {['Brinde VIP', 'Brinde Médio', 'Outros'].map((tipo) => {
             const qtd = stats.brindeCounts[tipo] || 0;
             return (
               <div
@@ -227,7 +229,7 @@ export function Dashboard({
                 className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col gap-3 cursor-pointer hover:border-[#1e3a8a]/30 hover:shadow-md transition-all flex-1 min-w-[200px] active:scale-95"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br ${getGiftIconColor(tipo)} shadow-lg`}>
+                  <div className="p-3 rounded-xl bg-gradient-to-br shadow-lg" style={{ background: getBrindeColor(tipo) }}>
                     <Gift className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
@@ -282,7 +284,7 @@ export function Dashboard({
                   <Legend />
                   <Bar dataKey="Brinde VIP" stackId="a" fill="#1e3a8a" />
                   <Bar dataKey="Brinde Médio" stackId="a" fill="#059669" />
-                  <Bar dataKey="Brinde Pequeno" stackId="a" fill="#d97706" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Outros" stackId="a" fill="#d97706" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -306,7 +308,7 @@ export function Dashboard({
                 <Legend />
                 <Bar dataKey="Brinde VIP" stackId="a" fill="#1e3a8a" />
                 <Bar dataKey="Brinde Médio" stackId="a" fill="#059669" />
-                <Bar dataKey="Brinde Pequeno" stackId="a" fill="#d97706" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Outros" stackId="a" fill="#d97706" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -155,9 +155,12 @@ export function Clients({
   const giftStats = useMemo(() => {
     const stats: Record<string, number> = {}
     contacts.forEach((c: CRMContact) => {
-      if (c.gift_type && c.gift_type !== 'Não recebe') {
+      let type = c.gift_type;
+      if (type === 'Brinde Pequeno' || type === 'Outro') type = 'Outros';
+
+      if (type && type !== 'Não recebe') {
         const qty = c.gift_quantity || 1
-        stats[c.gift_type] = (stats[c.gift_type] || 0) + qty
+        stats[type] = (stats[type] || 0) + qty
       }
     })
     return stats
@@ -219,7 +222,7 @@ export function Clients({
 
         {/* Gift Type Cards with matching icon colors */}
         {/* Gift Type Cards with matching icon colors */}
-        {['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno'].map((tipo) => {
+        {['Brinde VIP', 'Brinde Médio', 'Outros'].map((tipo) => {
           const qtd = giftStats[tipo] || 0;
           return (
             <div

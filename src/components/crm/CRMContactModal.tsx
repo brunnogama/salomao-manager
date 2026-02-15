@@ -46,7 +46,12 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave, initialMode 
 
     useEffect(() => {
         if (isOpen) {
-            setFormData(contact || emptyContact);
+            const initialData = contact ? { ...contact } : { ...emptyContact };
+            // Normalize legacy gift types
+            if (initialData.gift_type === 'Brinde Pequeno' || initialData.gift_type === 'Outro') {
+                initialData.gift_type = 'Outros';
+            }
+            setFormData(initialData);
             setMode(initialMode);
             setActiveTab(initialMode === 'view' ? 'contato' : 'empresa');
             fetchClients();
@@ -445,7 +450,7 @@ export function CRMContactModal({ isOpen, onClose, contact, onSave, initialMode 
                                     </div>
                                 </div>
 
-                                {formData.gift_type === 'Outro' && (
+                                {formData.gift_type === 'Outros' && (
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Especifique o Brinde</label>
                                         <input
