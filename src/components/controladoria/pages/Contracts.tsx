@@ -754,12 +754,11 @@ export function Contracts() {
               <thead>
                 <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Renovação</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável</th>
-                  <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Valor</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">HON</th>
+                  <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Data</th>
                   <th className="p-4 sticky right-0 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
                 </tr>
               </thead>
@@ -773,9 +772,6 @@ export function Contracts() {
                       </span>
                     </td>
                     <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
-                    <td className="p-4 text-[11px] font-semibold text-gray-500 max-w-[180px] truncate">
-                      {contract.processes && contract.processes.length > 0 ? contract.processes.map(p => p.process_number).join(', ') : '-'}
-                    </td>
                     <td className="p-4 text-[11px] font-semibold text-gray-600">{contract.partner_name || '-'}</td>
                     <td className="p-4 font-mono text-[10px] font-bold text-gray-400">{contract.hon_number || '-'}</td>
                     <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}</td>
