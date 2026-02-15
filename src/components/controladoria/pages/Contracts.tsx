@@ -754,13 +754,13 @@ export function Contracts() {
               <thead>
                 <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
                   <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Processos</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Sócio</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">HON</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Data</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest text-center">Ações</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Renovação</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável</th>
+                  <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Valor</th>
+                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                  <th className="p-4 sticky right-0 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
