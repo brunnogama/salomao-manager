@@ -111,13 +111,13 @@ export function Clients() {
       c.email?.toLowerCase().includes(searchTerm) ||
       c.partner_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesClient = clientFilter === 'todos' || c.name === clientFilter;
-    const matchesPartner = partnerFilter === 'todos' || c.partner_name === partnerFilter;
+    const matchesClient = !clientFilter || c.name === clientFilter;
+    const matchesPartner = !partnerFilter || c.partner_name === partnerFilter;
 
     return matchesSearch && matchesClient && matchesPartner;
   });
 
-  const hasActiveFilters = clientFilter !== 'todos' || partnerFilter !== 'todos';
+  const hasActiveFilters = !!clientFilter || !!partnerFilter;
 
 
 
