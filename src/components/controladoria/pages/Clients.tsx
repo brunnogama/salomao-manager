@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Client } from '../../../types/controladoria';
 import { ClientFormModal } from '../clients/ClientFormModal';
+import { FilterSelect } from '../ui/FilterSelect';
 
 // CAMINHO CORRIGIDO: saindo de /pages e entrando em /utils (dentro de controladoria)
 import { maskCNPJ } from '../utils/masks';

@@ -348,8 +348,7 @@ export function Presencial() {
     fetchRecords()
   }
 
-  const clearFilters = () => { setFilterSocio(''); setFilterColaborador(''); setFilterMes(''); setSearchText(''); }
-  const hasActiveFilters = filterSocio !== '' || filterColaborador !== '' || filterMes !== '' || searchText !== '';
+
 
   const handleExportXLSX = () => {
     if (viewMode !== 'horas' || registrosHoras.length === 0) return;
@@ -444,14 +443,7 @@ export function Presencial() {
           {/* Right: Filtros */}
           <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
             {/* Botão Limpar - Aparece quando há filtros ativos */}
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1.5 px-3 py-2 text-[9px] font-black uppercase tracking-[0.2em] text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all whitespace-nowrap"
-              >
-                <Eraser className="h-3.5 w-3.5" /> Limpar
-              </button>
-            )}
+            {/* Botão Limpar removido - UI unificada */}
 
             {/* Filtro por Mês - Menu suspenso */}
             {(viewMode === 'descriptive' || viewMode === 'horas') && (

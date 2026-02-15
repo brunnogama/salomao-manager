@@ -904,7 +904,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           </div>
 
           {/* Filters Row - Expanded & Auto-sizing */}
-          <div className="flex items-center gap-3 w-full overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
+          <div className="flex flex-wrap items-center gap-3 w-full">
             <FilterSelect
               icon={User}
               value={filterLider}

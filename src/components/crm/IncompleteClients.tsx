@@ -249,11 +249,7 @@ export function IncompleteClients({
 
             {/* Export button moved to header */}
 
-            {hasActiveFilters && (
-              <button onClick={clearFilters} className="p-2.5 text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-all">
-                <X className="h-5 w-5" />
-              </button>
-            )}
+            {/* Export button moved to header */}
           </div>
         </div>
       </div>
