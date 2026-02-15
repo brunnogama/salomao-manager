@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  LabelList,
+  Legend
+} from 'recharts';
 import {
   Users,
   Gift,
@@ -11,52 +21,30 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-interface SocioData {
-  name: string;
-  total: number;
-  brindes: { tipo: string; qtd: number }[];
-}
-
-interface StateData {
-  name: string;
-  value: number;
-}
-
 interface DashboardStats {
   totalClients: number;
   totalMagistrados: number;
   brindeCounts: Record<string, number>;
   lastClients: any[];
-  socioData: SocioData[];
-  stateData: StateData[];
+  socioData: any[]; // Extended for charts
+  partnerGiftData: any[]; // New: Gifts per Partner
+  giftByUFData: any[]; // New: Gifts per UF
 }
 
 interface DashboardProps {
   onNavigateWithFilter: (page: string, filters: { socio?: string; brinde?: string }) => void;
-  // Removed unused props
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    const data = payload[0];
-    const color = data.payload.fill || data.color || '#1e3a8a';
-
     return (
-      <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-lg min-w-[120px]">
-        <p className="text-[9px] font-black text-[#0a192f] uppercase tracking-[0.2em] border-b border-gray-100 pb-1 mb-2">
-          {label}
-        </p>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs text-gray-600 font-semibold capitalize">
-              {data.name || 'Quantidade'}:
-            </span>
-          </div>
-          <span className="text-sm font-black text-[#0a192f]">
-            {data.value}
-          </span>
-        </div>
+      <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-xl">
+        <p className="font-bold text-[#0a192f] text-xs mb-1">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="text-xs font-semibold" style={{ color: entry.color }}>
+            {entry.name}: {entry.value}
+          </p>
+        ))}
       </div>
     );
   }
@@ -83,68 +71,100 @@ export function Dashboard({
   };
 
   const fetchDashboardData = async () => {
-    setLoading(true);
     try {
-      const { data: lastClients } = await supabase
+      setLoading(true);
+
+      const { data: clients, error } = await supabase
         .from('clients')
-        .select('*, partner:partners(name)')
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .select(`
+          id,
+          name,
+          uf,
+          tipo_brinde,
+          created_at,
+          partner:partners(name),
+          client_contacts(count)
+        `);
 
-      const { data: allData } = await supabase
-        .from('clients')
-        .select('tipo_brinde, uf, partner:partners(name)');
+      if (error) throw error;
 
-      const { data: magistradosData } = await supabase
-        .from('magistrados')
-        .select('id');
-
+      let totalClients = 0;
       const brindeCounts: Record<string, number> = {};
-      const socioMap: Record<string, any> = {};
-      const stateMap: Record<string, number> = {};
+      const partnerStats: Record<string, { clients: number, contacts: number, gifts: Record<string, number> }> = {};
+      const ufGiftStats: Record<string, Record<string, number>> = {};
 
-      allData?.forEach((item: any) => {
-        if (item.tipo_brinde) {
-          brindeCounts[item.tipo_brinde] = (brindeCounts[item.tipo_brinde] || 0) + 1;
+      ['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno'].forEach(t => brindeCounts[t] = 0);
+
+      clients?.forEach(client => {
+        totalClients++;
+
+        const type = client.tipo_brinde;
+        if (type && type !== 'Não recebe') {
+          brindeCounts[type] = (brindeCounts[type] || 0) + 1;
         }
 
-        const socioName = item.partner?.name || 'Sem Sócio';
-        if (socioName) {
-          if (!socioMap[socioName]) {
-            socioMap[socioName] = { name: socioName, total: 0, brindes: {} };
-          }
-          socioMap[socioName].total += 1;
-          const tBrinde = item.tipo_brinde || 'Outro';
-          socioMap[socioName].brindes[tBrinde] = (socioMap[socioName].brindes[tBrinde] || 0) + 1;
+        const partnerName = client.partner?.name || 'Sem Sócio';
+        if (!partnerStats[partnerName]) {
+          partnerStats[partnerName] = { clients: 0, contacts: 0, gifts: {} };
+          ['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno'].forEach(t => partnerStats[partnerName].gifts[t] = 0);
+        }
+        partnerStats[partnerName].clients++;
+        const contactCount = client.client_contacts?.[0]?.count || 0;
+        partnerStats[partnerName].contacts += contactCount;
+
+        if (type && type !== 'Não recebe') {
+          partnerStats[partnerName].gifts[type] = (partnerStats[partnerName].gifts[type] || 0) + 1;
         }
 
-        const uf = item.uf ? item.uf.toUpperCase().trim() : 'ND';
-        stateMap[uf] = (stateMap[uf] || 0) + 1;
+        const uf = client.uf ? client.uf.toUpperCase().trim() : 'ND';
+        if (!ufGiftStats[uf]) {
+          ufGiftStats[uf] = {};
+          ['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno'].forEach(t => ufGiftStats[uf][t] = 0);
+        }
+        if (type && type !== 'Não recebe') {
+          ufGiftStats[uf][type] = (ufGiftStats[uf][type] || 0) + 1;
+        }
       });
 
-      const formattedSocioData = Object.values(socioMap).map((s: any) => ({
-        name: s.name,
-        total: s.total,
-        brindes: Object.entries(s.brindes).map(([tipo, qtd]) => ({
-          tipo,
-          qtd: qtd as number
-        }))
-      })).sort((a: any, b: any) => b.total - a.total);
+      const { count: magistradosCount } = await supabase
+        .from('clients')
+        .select('*', { count: 'exact', head: true })
+        .ilike('cargo', '%Magistrado%');
 
-      const formattedStateData = Object.entries(stateMap)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value);
+      const socioData = Object.entries(partnerStats).map(([name, data]) => ({
+        name,
+        Clientes: data.clients,
+        Contatos: data.contacts
+      })).sort((a, b) => b.Clientes - a.Clientes);
+
+      const partnerGiftData = Object.entries(partnerStats).map(([name, data]) => ({
+        name,
+        ...data.gifts
+      })).sort((a, b) => (b['Brinde VIP'] + b['Brinde Médio']) - (a['Brinde VIP'] + a['Brinde Médio']));
+
+      const giftByUFData = Object.entries(ufGiftStats).map(([name, gifts]) => ({
+        name,
+        Total: Object.values(gifts).reduce((a, b) => a + b, 0),
+        ...gifts
+      })).sort((a, b) => b.Total - a.Total);
+
+      const lastClients = [...(clients || [])]
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 10);
 
       setStats({
-        totalClients: allData?.length || 0,
-        totalMagistrados: magistradosData?.length || 0,
+        totalClients,
+        totalMagistrados: magistradosCount || 0,
         brindeCounts,
-        lastClients: lastClients || [],
-        socioData: formattedSocioData,
-        stateData: formattedStateData
+        lastClients,
+        socioData,
+        stateData: [],
+        partnerGiftData,
+        giftByUFData
       });
-    } catch (err) {
-      console.error("Erro ao carregar dashboard:", err);
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -196,6 +216,101 @@ export function Dashboard({
       {/* CONTENT */}
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-10">
 
+        {/* 1. GIFT CARDS ROW */}
+        <div className="flex flex-wrap gap-4">
+          {['Brinde VIP', 'Brinde Médio', 'Brinde Pequeno'].map((tipo) => {
+            const qtd = stats.brindeCounts[tipo] || 0;
+            return (
+              <div
+                key={tipo}
+                onClick={() => onNavigateWithFilter('clientes', { brinde: tipo })}
+                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col gap-3 cursor-pointer hover:border-[#1e3a8a]/30 hover:shadow-md transition-all flex-1 min-w-[200px] active:scale-95"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`p-3 rounded-xl bg-gradient-to-br ${getGiftIconColor(tipo)} shadow-lg`}>
+                    <Gift className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] line-clamp-1">{tipo}</p>
+                    <p className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none mt-1">{qtd}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 2. CHARTS ROW 1: Clients/Contacts per Partner & Gifts per Partner */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+          {/* Chart: Clients & Contacts per Partner */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[400px]">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-blue-100 text-blue-800">
+                <Users className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-[#0a192f]">Clientes e Contatos por Sócio</h3>
+            </div>
+            <div className="flex-1 w-full min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.socioData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <XAxis dataKey="name" fontSize={10} tick={{ fill: '#64748b' }} interval={0} angle={-45} textAnchor="end" height={60} />
+                  <YAxis fontSize={10} tick={{ fill: '#64748b' }} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+                  <Legend />
+                  <Bar dataKey="Clientes" fill="#1e3a8a" radius={[4, 4, 0, 0]} name="Clientes" />
+                  <Bar dataKey="Contatos" fill="#60a5fa" radius={[4, 4, 0, 0]} name="Contatos" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Chart: Gifts per Partner */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[400px]">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-emerald-100 text-emerald-800">
+                <Award className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-[#0a192f]">Brindes por Sócio</h3>
+            </div>
+            <div className="flex-1 w-full min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.partnerGiftData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <XAxis dataKey="name" fontSize={10} tick={{ fill: '#64748b' }} interval={0} angle={-45} textAnchor="end" height={60} />
+                  <YAxis fontSize={10} tick={{ fill: '#64748b' }} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+                  <Legend />
+                  <Bar dataKey="Brinde VIP" stackId="a" fill="#1e3a8a" />
+                  <Bar dataKey="Brinde Médio" stackId="a" fill="#059669" />
+                  <Bar dataKey="Brinde Pequeno" stackId="a" fill="#d97706" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. CHARTS ROW 2: Gifts per UF (Full Width) */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-[400px]">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-lg bg-purple-100 text-purple-800">
+              <Map className="h-5 w-5" />
+            </div>
+            <h3 className="text-lg font-bold text-[#0a192f]">Total de Brindes por UF</h3>
+          </div>
+          <div className="flex-1 w-full min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.giftByUFData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <XAxis dataKey="name" fontSize={10} tick={{ fill: '#64748b' }} />
+                <YAxis fontSize={10} tick={{ fill: '#64748b' }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+                <Legend />
+                <Bar dataKey="Brinde VIP" stackId="a" fill="#1e3a8a" />
+                <Bar dataKey="Brinde Médio" stackId="a" fill="#059669" />
+                <Bar dataKey="Brinde Pequeno" stackId="a" fill="#d97706" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
       </div>
     </div>
