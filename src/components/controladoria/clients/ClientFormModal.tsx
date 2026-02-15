@@ -39,7 +39,6 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
     city: '',
     uf: 'RJ',
     is_person: false,
-    active: true,
     notes: ''
   };
 
@@ -140,16 +139,23 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
 
     setLoading(true);
     try {
-      const payload = { ...formData };
-      // Remove computed/virtual fields that don't exist in database
-      delete (payload as any).contacts;
-      delete (payload as any).contracts;
-      delete (payload as any).active_contracts_count;
-      delete (payload as any).partner_name;
-      delete (payload as any).partner;
+      // Construct payload explicitly to avoid sending joined/virtual fields
+      const payload: any = {
+        name: formData.name,
+        cnpj: formData.cnpj ? formData.cnpj.replace(/\D/g, '') : null,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        number: formData.number,
+        complement: formData.complement,
+        city: formData.city,
+        uf: formData.uf,
+        is_person: formData.is_person,
+        partner_id: formData.partner_id,
+        notes: formData.notes
+      };
 
-      // Limpeza de dados
-      if (payload.cnpj) payload.cnpj = payload.cnpj.replace(/\D/g, '');
+      // Remove undefined/null keys if necessary, or let Supabase handle nulls
       if (!payload.cnpj) delete payload.cnpj;
 
       let clientId = client?.id;

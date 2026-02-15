@@ -13,7 +13,8 @@ import {
   Mail,
   Phone,
   MapPin,
-  Filter
+  Filter,
+  X
 } from 'lucide-react';
 import { Client } from '../../../types/controladoria';
 import { ClientFormModal } from '../clients/ClientFormModal';

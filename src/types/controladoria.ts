@@ -249,6 +249,11 @@ export interface Client {
   created_at?: string;
   updated_at?: string;
 
+  // Campos de endereço
+  address?: string;
+  number?: string;
+  complement?: string;
+
   // Campos unificados para Brindes/CRM
   company?: string;
   gift_type?: string;
