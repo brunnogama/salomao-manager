@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Gift, UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ChevronRight, ShieldCheck } from 'lucide-react'
+import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ChevronRight, ShieldCheck } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
@@ -76,8 +76,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
     description: string,
     Icon: any,
     gradientFrom: string,
-    gradientTo: string,
-    delay: number
+    gradientTo: string
   ) => {
     const allowed = isModuleAllowed(key)
     const isHovered = hoveredCard === key
@@ -88,9 +87,8 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         onMouseEnter={() => setHoveredCard(key)}
         onMouseLeave={() => setHoveredCard(null)}
         onClick={() => allowed && onSelect(key)}
-        style={{ animationDelay: `${delay}ms` }}
         className={`
-          relative overflow-hidden rounded-2xl border transition-all duration-500 flex flex-col items-center text-center justify-between group animate-in fade-in slide-in-from-bottom-8 fill-mode-forwards opacity-0
+          relative overflow-hidden rounded-2xl border transition-all duration-300 flex flex-col items-center text-center justify-between group
           ${allowed
             ? 'bg-white/80 backdrop-blur-xl shadow-lg border-white/50 hover:shadow-2xl hover:-translate-y-2 cursor-pointer hover:border-[#d4af37]/30'
             : 'bg-gray-100/50 backdrop-blur-sm border-gray-200/50 opacity-70 cursor-not-allowed grayscale-[0.5]'
@@ -248,7 +246,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-start pt-12 pb-20 px-6 animate-in fade-in duration-700">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-start pt-12 pb-20 px-6">
 
         {/* Hero Section */}
         <div className="text-center mb-16 max-w-4xl w-full">
@@ -269,8 +267,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             'Gestão completa de relacionamento com clientes, controle de brindes e histórico de interações.',
             Users,
             'from-blue-600',
-            'to-blue-700',
-            100
+            'to-blue-700'
           )}
 
           {renderCard(
@@ -279,8 +276,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             'Gerenciamento de agendas executivas, viagens corporativas e demandas administrativas dos sócios.',
             Briefcase,
             'from-purple-600',
-            'to-purple-700',
-            200
+            'to-purple-700'
           )}
 
           {renderCard(
@@ -289,8 +285,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             'Gestão estratégica de pessoas, administração de benefícios e processos de departamento pessoal.',
             UserCog,
             'from-green-600',
-            'to-green-700',
-            300
+            'to-green-700'
           )}
 
           {renderCard(
@@ -299,8 +294,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             'Controle de insumos de escritório, gestão de papelaria e processos operacionais do dia a dia.',
             Package,
             'from-orange-600',
-            'to-orange-700',
-            400
+            'to-orange-700'
           )}
 
           {renderCard(
@@ -309,8 +303,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             'Gestão financeira completa, incluindo controle de notas fiscais, emissão de boletos e fluxo de caixa.',
             Banknote,
             'from-emerald-600',
-            'to-emerald-700',
-            500
+            'to-emerald-700'
           )}
 
           {renderCard(
@@ -319,8 +312,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             'Análise de dados jurídicos, controle de prazos processuais e métricas de desempenho da banca.',
             Scale,
             'from-[#1e3a8a]',
-            'to-[#0a192f]',
-            600
+            'to-[#0a192f]'
           )}
         </div>
       </main>
