@@ -181,11 +181,10 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   }
 
   return (
-    <div className="h-screen w-screen bg-[#f8fafc] flex flex-col relative overflow-hidden">
+    <div className="h-screen w-screen bg-[#0a192f] flex flex-col relative overflow-hidden">
 
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-[55vh] bg-gradient-to-b from-[#0a192f] to-[#112240] z-0" />
-      <div className="absolute top-[45vh] left-0 right-0 h-32 bg-gradient-to-b from-[#112240] to-[#f8fafc] z-0" />
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#0a192f] to-[#112240] z-0" />
 
       {/* Header */}
       <header className="relative z-50 px-6 lg:px-8 h-20 flex items-center justify-between w-full shrink-0">
@@ -318,9 +317,9 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
       </main>
 
       {/* Footer */}
-      <footer className="py-4 border-t border-gray-200 bg-white/50 backdrop-blur-sm relative z-10 shrink-0">
+      <footer className="py-4 border-t border-white/10 bg-[#0a192f]/50 backdrop-blur-sm relative z-10 shrink-0">
         <div className="text-center">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] hover:text-[#1e3a8a] transition-colors cursor-default">
+          <p className="text-[10px] font-black text-blue-200/50 uppercase tracking-[0.3em] hover:text-[#d4af37] transition-colors cursor-default">
             © 2026 Salomão Advogados
           </p>
         </div>
