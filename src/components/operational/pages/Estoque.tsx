@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Package, Plus, Filter, Search, Boxes, Coffee, Building2, UserCircle, Sparkles, Flag, Calendar, Trash2, Minus } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { ConfirmationModal } from '../../ui/ConfirmationModal'
 
 interface InventoryItem {
     id: string
@@ -15,6 +16,7 @@ export function Estoque() {
     const [activeCategory, setActiveCategory] = useState('Todos')
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
     const [loading, setLoading] = useState(false)
+    const [itemToDelete, setItemToDelete] = useState<string | null>(null)
 
     const categories = [
         { id: 'Todos', label: 'Todos', icon: Boxes },
@@ -56,13 +58,13 @@ export function Estoque() {
     }
 
     const handleQuantityChange = async (id: string, delta: number) => {
-        const item = inventoryItems.find(i => i.id === id)
+        const item = inventoryItems.find((i: InventoryItem) => i.id === id)
         if (!item) return
 
         const newQuantity = Math.max(0, item.quantity + delta)
 
         // Optimistic update
-        setInventoryItems(prev => prev.map(i => i.id === id ? { ...i, quantity: newQuantity } : i))
+        setInventoryItems((prev: InventoryItem[]) => prev.map((i: InventoryItem) => i.id === id ? { ...i, quantity: newQuantity } : i))
 
         try {
             const { error } = await supabase
@@ -79,7 +81,7 @@ export function Estoque() {
 
     const handleUpdateItem = async (id: string, field: keyof InventoryItem, value: string | number) => {
         // Optimistic update
-        setInventoryItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i))
+        setInventoryItems((prev: InventoryItem[]) => prev.map((i: InventoryItem) => i.id === id ? { ...i, [field]: value } : i))
 
         try {
             const { error } = await supabase
@@ -110,34 +112,40 @@ export function Estoque() {
                 .single()
 
             if (error) throw error
-            if (data) setInventoryItems(prev => [...prev, data])
+            if (data) setInventoryItems((prev: InventoryItem[]) => [...prev, data])
         } catch (error) {
             console.error('Error adding item:', error)
         }
     }
 
-    const handleRemoveItem = async (id: string) => {
-        if (!confirm('Tem certeza que deseja remover este item?')) return
+    const handleRemoveItem = (id: string) => {
+        setItemToDelete(id)
+    }
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return
 
         // Optimistic update
-        setInventoryItems(prev => prev.filter(i => i.id !== id))
+        setInventoryItems((prev: InventoryItem[]) => prev.filter((i: InventoryItem) => i.id !== itemToDelete))
 
         try {
             const { error } = await supabase
                 .from('operational_items')
                 .delete()
-                .eq('id', id)
+                .eq('id', itemToDelete)
 
             if (error) throw error
         } catch (error) {
             console.error('Error deleting item:', error)
             fetchItems() // Revert on error
+        } finally {
+            setItemToDelete(null)
         }
     }
 
     const filteredItems = activeCategory === 'Todos'
         ? inventoryItems
-        : inventoryItems.filter(item => item.category === activeCategory)
+        : inventoryItems.filter((item: InventoryItem) => item.category === activeCategory)
 
     return (
         <div className="p-8">
@@ -289,6 +297,17 @@ export function Estoque() {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={!!itemToDelete}
+                onClose={() => setItemToDelete(null)}
+                onConfirm={confirmDelete}
+                title="Excluir Item"
+                description="Tem certeza que deseja remover este item do estoque? Esta ação não pode ser desfeita."
+                variant="danger"
+                confirmText="Excluir"
+                cancelText="Cancelar"
+            />
         </div>
     )
 }
