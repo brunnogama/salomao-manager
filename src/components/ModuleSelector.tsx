@@ -90,10 +90,10 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
         className={`
           relative overflow-hidden rounded-xl border transition-all duration-300 flex flex-col items-center text-center justify-between group
           ${allowed
-            ? 'bg-white/80 backdrop-blur-xl shadow-md border-white/50 hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:border-[#d4af37]/30'
+            ? 'bg-white/90 backdrop-blur-xl shadow-md border-white/50 hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:border-[#d4af37]/30'
             : 'bg-gray-100/50 backdrop-blur-sm border-gray-200/50 opacity-70 cursor-not-allowed grayscale-[0.5]'
           }
-          h-[200px] w-full
+          h-[240px] w-full
         `}
       >
         {/* Background Gradients */}
@@ -106,22 +106,22 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
         {/* Lock Badge */}
         {!allowed && (
-          <div className="absolute top-3 right-3 p-1.5 rounded-lg bg-gray-200/50 backdrop-blur-md">
-            <Lock className="h-3 w-3 text-gray-500" />
+          <div className="absolute top-4 right-4 p-1.5 rounded-lg bg-gray-200/50 backdrop-blur-md">
+            <Lock className="h-3.5 w-3.5 text-gray-500" />
           </div>
         )}
 
         {/* Content Container */}
-        <div className="flex flex-col items-center justify-center flex-1 p-4 w-full z-10">
+        <div className="flex flex-col items-center justify-center flex-1 p-5 w-full z-10">
 
           {/* Icon Container with Glow */}
           <div className={`
-            relative p-3 rounded-xl mb-3 transition-all duration-300 group-hover:scale-105
+            relative p-3.5 rounded-xl mb-3.5 transition-all duration-300 group-hover:scale-105
             ${allowed
               ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-md shadow-${gradientFrom}/20`
               : 'bg-gray-200 text-gray-400'}
           `}>
-            <Icon className="h-6 w-6" strokeWidth={1.5} />
+            <Icon className="h-7 w-7" strokeWidth={1.5} />
 
             {/* Inner Glow Effect */}
             {allowed && (
@@ -129,28 +129,28 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             )}
           </div>
 
-          <h2 className="text-sm font-black text-[#0a192f] mb-2 tracking-tight group-hover:text-[#1e3a8a] transition-colors">
+          <h2 className="text-base font-black text-[#0a192f] mb-2.5 tracking-tight group-hover:text-[#1e3a8a] transition-colors">
             {title}
           </h2>
 
-          <p className="text-[10px] text-gray-500 font-medium leading-relaxed max-w-[200px] line-clamp-2 group-hover:text-gray-600 transition-colors">
+          <p className="text-[11px] text-gray-500 font-medium leading-relaxed max-w-[220px] line-clamp-2 group-hover:text-gray-600 transition-colors">
             {description}
           </p>
         </div>
 
         {/* Bottom Action Area */}
         <div className={`
-          w-full py-2.5 px-4 border-t border-gray-100/50 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.2em] transition-colors duration-300
+          w-full py-3 px-5 border-t border-gray-100/50 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300
           ${allowed ? 'bg-gray-50/50 group-hover:bg-blue-50/30 text-gray-400 group-hover:text-[#1e3a8a]' : 'bg-gray-100/50 text-gray-400'}
         `}>
           {allowed ? (
             <>
               <span>Acessar</span>
-              <ChevronRight className={`w-3 h-3 transition-transform duration-300 ${isHovered ? 'translate-x-1 text-[#d4af37]' : ''}`} />
+              <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-300 ${isHovered ? 'translate-x-1 text-[#d4af37]' : ''}`} />
             </>
           ) : (
             <span className="text-red-400 flex items-center gap-1.5 mx-auto">
-              <Lock className="w-2.5 h-2.5" />
+              <Lock className="w-3 h-3" />
               Restrito
             </span>
           )}
@@ -184,11 +184,11 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
     <div className="h-screen w-screen bg-[#f8fafc] flex flex-col relative overflow-hidden">
 
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-[#0a192f] to-[#112240] z-0" />
-      <div className="absolute top-[200px] left-0 right-0 h-32 bg-gradient-to-b from-[#112240] to-[#f8fafc] z-0" />
+      <div className="absolute top-0 left-0 w-full h-[55vh] bg-gradient-to-b from-[#0a192f] to-[#112240] z-0" />
+      <div className="absolute top-[45vh] left-0 right-0 h-32 bg-gradient-to-b from-[#112240] to-[#f8fafc] z-0" />
 
       {/* Header */}
-      <header className="relative z-50 px-6 lg:px-8 h-16 flex items-center justify-between w-full shrink-0">
+      <header className="relative z-50 px-6 lg:px-8 h-20 flex items-center justify-between w-full shrink-0">
         {/* Logo */}
         <div className="flex items-center gap-4 group cursor-default">
           <div className="relative">
@@ -196,27 +196,27 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             <img
               src="/logo-salomao.png"
               alt="Salomão Advogados"
-              className="h-10 w-auto object-contain filter brightness-0 invert drop-shadow-lg transition-transform duration-500 group-hover:scale-105"
+              className="h-11 w-auto object-contain filter brightness-0 invert drop-shadow-lg transition-transform duration-500 group-hover:scale-105"
             />
           </div>
         </div>
 
         {/* User Controls */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 shadow-lg transition-all hover:bg-white/20">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#d4af37] to-amber-700 flex items-center justify-center shadow-inner ring-1 ring-white/20">
+          <div className="flex items-center gap-2 pl-2 pr-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 shadow-lg transition-all hover:bg-white/20">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#d4af37] to-amber-700 flex items-center justify-center shadow-inner ring-1 ring-white/20">
               <span className="text-[10px] font-black text-white">
                 {userName.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="flex flex-col pr-1">
-              <span className="text-white text-[10px] font-bold tracking-wide leading-tight">
+              <span className="text-white text-xs font-bold tracking-wide leading-tight">
                 {userName}
               </span>
               {isAdmin && (
-                <div className="flex items-center gap-0.5 text-[#d4af37]">
-                  <ShieldCheck className="w-2.5 h-2.5" />
-                  <span className="text-[8px] font-black uppercase tracking-wider leading-tight">
+                <div className="flex items-center gap-1 text-[#d4af37]">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span className="text-[9px] font-black uppercase tracking-wider leading-tight">
                     Admin
                   </span>
                 </div>
@@ -227,20 +227,20 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           {isAdmin && (
             <button
               onClick={() => onSelect('settings')}
-              className="p-2 text-white/70 hover:text-white transition-all rounded-full hover:bg-white/10 active:scale-95"
+              className="p-2.5 text-white/70 hover:text-white transition-all rounded-full hover:bg-white/10 active:scale-95"
               title="Configurações"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-5 w-5" />
             </button>
           )}
 
           <button
             onClick={handleLogout}
-            className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-red-500/30 text-red-100 hover:bg-red-500/20 hover:text-white hover:border-red-500/50 transition-all active:scale-95 ml-1"
+            className="group flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/30 text-red-100 hover:bg-red-500/20 hover:text-white hover:border-red-500/50 transition-all active:scale-95 ml-1"
             title="Sair"
           >
-            <LogOut className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span className="text-[9px] font-black uppercase tracking-widest hidden md:inline-block">Sair</span>
+            <LogOut className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline-block">Sair</span>
           </button>
         </div>
       </header>
@@ -249,17 +249,17 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 h-full min-h-0">
 
         {/* Hero Section */}
-        <div className="text-center mb-6 shrink-0">
-          <h1 className="text-3xl md:text-5xl font-black text-white mb-2 tracking-tight drop-shadow-xl">
+        <div className="text-center mb-8 shrink-0">
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight drop-shadow-2xl">
             Ecossistema <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] to-[#fcc200]">Salomão</span>
           </h1>
-          <p className="text-sm text-blue-100/80 font-medium max-w-xl mx-auto leading-relaxed">
+          <p className="text-sm text-blue-100/90 font-medium max-w-xl mx-auto leading-relaxed shadow-sm">
             Selecione um módulo para acessar suas ferramentas.
           </p>
         </div>
 
         {/* Modules Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl w-full">
 
           {renderCard(
             'crm',
@@ -320,7 +320,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
       {/* Footer */}
       <footer className="py-4 border-t border-gray-200 bg-white/50 backdrop-blur-sm relative z-10 shrink-0">
         <div className="text-center">
-          <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] hover:text-[#1e3a8a] transition-colors cursor-default">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] hover:text-[#1e3a8a] transition-colors cursor-default">
             © 2026 Salomão Advogados
           </p>
         </div>
