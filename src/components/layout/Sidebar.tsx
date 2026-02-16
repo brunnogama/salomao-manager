@@ -11,7 +11,8 @@ import {
   KanbanSquare,
   FolderOpen,
   Share2,
-  X
+  X,
+  ShoppingCart
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -58,6 +59,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { label: 'Clientes', path: '/controladoria/clientes', icon: Users },
     { label: 'Kanban', path: '/controladoria/kanban', icon: KanbanSquare },
     { label: 'GED', path: '/controladoria/ged', icon: FolderOpen },
+    { label: 'Compras', path: '/operational/compras', icon: ShoppingCart },
   ];
 
   const isActive = (path: string) => activePage === path;

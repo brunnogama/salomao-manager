@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Package, Plus, Filter, Search, Boxes, Coffee, Building2, UserCircle, Sparkles, Flag, Calendar, Trash2, Minus } from 'lucide-react'
+import { Package, Plus, Filter, Search, Boxes, Coffee, Building2, UserCircle, Sparkles, Flag, Calendar, Trash2, Minus, ShoppingCart } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
+import { AlertModal } from '../../ui/AlertModal'
 
 interface InventoryItem {
     id: string
@@ -17,6 +18,21 @@ export function Estoque() {
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
     const [loading, setLoading] = useState(false)
     const [itemToDelete, setItemToDelete] = useState<string | null>(null)
+    const [alertConfig, setAlertConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        description: string;
+        variant: 'success' | 'error' | 'info';
+    }>({
+        isOpen: false,
+        title: '',
+        description: '',
+        variant: 'info'
+    })
+
+    const showAlert = (title: string, description: string, variant: 'success' | 'error' | 'info' = 'info') => {
+        setAlertConfig({ isOpen: true, title, description, variant })
+    }
 
     const categories = [
         { id: 'Todos', label: 'Todos', icon: Boxes },
@@ -138,8 +154,28 @@ export function Estoque() {
         } catch (error) {
             console.error('Error deleting item:', error)
             fetchItems() // Revert on error
+            showAlert('Erro', 'Erro ao excluir item.', 'error')
         } finally {
             setItemToDelete(null)
+        }
+    }
+
+    const handleBuyItem = async (item: InventoryItem) => {
+        try {
+            const { error } = await supabase
+                .from('shopping_list_items')
+                .insert({
+                    name: item.name,
+                    brand: item.brand,
+                    quantity: 1,
+                    status: 'pending'
+                })
+
+            if (error) throw error
+            showAlert('Sucesso', `"${item.name}" adicionado à lista de compras.`, 'success')
+        } catch (error) {
+            console.error('Error adding to shopping list:', error)
+            showAlert('Erro', 'Erro ao adicionar à lista de compras.', 'error')
         }
     }
 
@@ -212,7 +248,7 @@ export function Estoque() {
                         <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
                                 <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quantidade</th>
+                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estoque</th>
                                 <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
                                 <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unitário</th>
                                 <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
@@ -274,6 +310,13 @@ export function Estoque() {
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
+                                        <button
+                                            onClick={() => handleBuyItem(item)}
+                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                            title="Comprar"
+                                        >
+                                            <ShoppingCart className="w-4 h-4" />
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -306,7 +349,16 @@ export function Estoque() {
                 description="Tem certeza que deseja remover este item do estoque? Esta ação não pode ser desfeita."
                 variant="danger"
                 confirmText="Excluir"
+                confirmText="Excluir"
                 cancelText="Cancelar"
+            />
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                description={alertConfig.description}
+                variant={alertConfig.variant}
             />
         </div>
     )
