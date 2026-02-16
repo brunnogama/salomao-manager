@@ -15,13 +15,14 @@ interface Props {
   client?: Client;
   onSave: (savedClient?: Client) => void;
   showGiftsTab?: boolean;
+  initialTab?: string;
 }
 
-export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab = false }: Props) {
+export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab = false, initialTab = 'dados' }: Props) {
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
-  const [activeTab, setActiveTab] = useState('dados');
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Estado para duplicidade
   const [duplicateClients, setDuplicateClients] = useState<Client[]>([]);
@@ -49,7 +50,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
     if (isOpen) {
       setFormData(client ? { ...client, notes: client.notes || '' } : emptyClient);
       setDuplicateClients([]);
-      setActiveTab('dados');
+      setActiveTab(initialTab);
       fetchPartners();
       if (client?.id) {
         fetchContacts(client.id);
@@ -57,7 +58,7 @@ export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab 
         setContacts([]);
       }
     }
-  }, [isOpen, client]);
+  }, [isOpen, client, initialTab]);
 
   // Handle ESC key
   useEffect(() => {

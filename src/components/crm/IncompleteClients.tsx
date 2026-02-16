@@ -7,7 +7,8 @@ import {
   Grid, LogOut, Building2
 } from 'lucide-react'
 import { FilterSelect } from '../controladoria/ui/FilterSelect'
-import { CRMContactModal } from './CRMContactModal'
+import { ClientFormModal } from '../controladoria/clients/ClientFormModal'
+import { Client } from '../../types/controladoria'
 import { CRMContact } from '../../types/crmContact'
 import * as XLSX from 'xlsx'
 
@@ -25,7 +26,8 @@ export function IncompleteClients({
   const [contacts, setContacts] = useState<CRMContact[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [contactToEdit, setContactToEdit] = useState<CRMContact | null>(null)
+  const [clientToEdit, setClientToEdit] = useState<Client | undefined>(undefined)
+  const [initialTab, setInitialTab] = useState('dados');
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterSocio, setFilterSocio] = useState<string>('')
@@ -123,9 +125,32 @@ export function IncompleteClients({
     return result
   }, [contacts, searchTerm, filterSocio, sortOrder])
 
-  const handleEdit = (contact: CRMContact) => {
-    setContactToEdit(contact)
-    setIsModalOpen(true)
+  const handleEdit = async (contact: CRMContact) => {
+    if (!contact.client_id) return;
+
+    // Determine initial tab based on missing fields
+    const missing = REQUIRED_FIELDS.filter(f => {
+      const val = contact[f.key as keyof CRMContact] as string;
+      const isEmpty = !val || val.toString().trim() === '' || (f.key === 'uf' && (val === 'Selecione' || val === ''));
+      return isEmpty && !(contact.ignored_fields || []).includes(f.label);
+    });
+
+    const isGiftMissing = missing.some(f => f.key === 'gift_type');
+    setInitialTab(isGiftMissing ? 'brindes' : 'contatos');
+
+    // Fetch full client data because IncompleteClients query fetches partial client
+    const { data: clientData, error } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', contact.client_id)
+      .single();
+
+    if (clientData && !error) {
+      setClientToEdit(clientData);
+      setIsModalOpen(true);
+    } else {
+      alert('Erro ao carregar dados do cliente.');
+    }
   }
 
   const handleIgnore = async (contact: any) => {
@@ -246,10 +271,6 @@ export function IncompleteClients({
               ]}
               placeholder="Sócios"
             />
-
-            {/* Export button moved to header */}
-
-            {/* Export button moved to header */}
           </div>
         </div>
       </div>
@@ -344,12 +365,16 @@ export function IncompleteClients({
         </div>
       </div>
 
-      <CRMContactModal
+      <ClientFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        contact={contactToEdit || undefined}
-        onSave={() => { setIsModalOpen(false); fetchIncompleteContacts(); }}
-        initialMode="view"
+        client={clientToEdit}
+        onSave={(updatedClient) => {
+          setIsModalOpen(false);
+          fetchIncompleteContacts();
+        }}
+        showGiftsTab={true}
+        initialTab={initialTab}
       />
     </div>
   )
