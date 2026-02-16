@@ -5,7 +5,8 @@ import {
     Package,
     X,
     LayoutGrid,
-    Armchair
+    Armchair,
+    ShoppingCart
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -47,6 +48,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         { path: '/operational/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/operational/estoque', label: 'Estoque', icon: Package },
         { path: '/operational/imobiliario', label: 'Imobiliário', icon: Armchair },
+        { path: '/operational/compras', label: 'Compras', icon: ShoppingCart },
     ]
 
     const isActive = (path: string) => activePage === path
