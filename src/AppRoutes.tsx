@@ -64,6 +64,7 @@ import { Settings as ControlSettings } from './components/controladoria/pages/Se
 // Operational Components
 import { Dashboard as OperationalDashboard } from './components/operational/pages/Dashboard';
 import { Estoque as OperationalEstoque } from './components/operational/pages/Estoque';
+import { Imobiliario as OperationalImobiliario } from './components/operational/pages/Imobiliario';
 
 import { useState } from 'react';
 
@@ -218,6 +219,7 @@ export function AppRoutes() {
                 <Route path="/operational">
                     <Route path="dashboard" element={<WithProps Component={OperationalDashboard} />} />
                     <Route path="estoque" element={<WithProps Component={OperationalEstoque} />} />
+                    <Route path="imobiliario" element={<WithProps Component={OperationalImobiliario} />} />
                 </Route>
 
                 {/* Fallback for under construction modules */}
