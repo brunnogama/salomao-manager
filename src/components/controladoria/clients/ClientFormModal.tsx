@@ -1,7 +1,7 @@
 // brunnogama/salomao-manager/salomao-manager-3e743876de4fb5af74c8aedf5b89ce1e3913c795/src/components/controladoria/clients/ClientFormModal.tsx
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Search, Loader2, AlertTriangle, Plus, Trash2, UserPlus, User, MapPin, Users, FileText } from 'lucide-react';
+import { X, Save, Search, Loader2, AlertTriangle, Plus, Trash2, UserPlus, User, MapPin, Users, FileText, Gift } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Client, Partner, ClientContact } from '../../../types/controladoria';
 import { maskCNPJ, toTitleCase } from '../utils/masks';
@@ -14,9 +14,10 @@ interface Props {
   onClose: () => void;
   client?: Client;
   onSave: (savedClient?: Client) => void;
+  showGiftsTab?: boolean;
 }
 
-export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
+export function ClientFormModal({ isOpen, onClose, client, onSave, showGiftsTab = false }: Props) {
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -179,7 +180,11 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
             email: c.email || '',
             phone: c.phone || '',
             role: c.role || '',
-            is_main_contact: c.is_main_contact || false
+            is_main_contact: c.is_main_contact || false,
+            gift_type: c.gift_type,
+            gift_quantity: c.gift_quantity,
+            gift_other: c.gift_other,
+            gift_notes: c.gift_notes
           }));
           const { error: contactsError } = await supabase.from('client_contacts').insert(contactsPayload);
           if (contactsError) throw contactsError;
@@ -230,6 +235,10 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
     { id: 'contatos', label: 'Contatos', icon: Users },
     { id: 'obs', label: 'Observações', icon: FileText },
   ];
+
+  if (showGiftsTab) {
+    tabs.splice(3, 0, { id: 'brindes', label: 'Brindes', icon: Gift });
+  }
 
   if (!isOpen) return null;
 
@@ -537,6 +546,90 @@ export function ClientFormModal({ isOpen, onClose, client, onSave }: Props) {
                     placeholder="Adicione observações importantes sobre este cliente..."
                   />
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'brindes' && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[#0a192f]">Gestão de Brindes</h3>
+                    <p className="text-[11px] text-gray-400 font-medium">Defina quais contatos recebem brindes</p>
+                  </div>
+                </div>
+
+                {contacts.length === 0 ? (
+                  <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                    <Gift className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                    <p className="text-xs text-gray-400 font-bold">Adicione contatos na aba "Contatos" primeiro</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {contacts.map((contact, index) => (
+                      <div key={index} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+                        <div className="flex items-center gap-3 pb-3 border-b border-gray-50">
+                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                            <User className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-800">{contact.name || 'Sem nome'}</p>
+                            <p className="text-[10px] text-gray-500 font-medium">{contact.role || 'Cargo não informado'}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Tipo de Brinde</label>
+                            <CustomSelect
+                              value={contact.gift_type || ''}
+                              onChange={(val) => handleContactChange(index, 'gift_type', val)}
+                              options={[
+                                { label: 'Selecione...', value: '' },
+                                { label: 'Brinde VIP', value: 'Brinde VIP' },
+                                { label: 'Brinde Médio', value: 'Brinde Médio' },
+                                { label: 'Outros', value: 'Outros' },
+                                { label: 'Não recebe', value: 'Não recebe' }
+                              ]}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Quantidade</label>
+                            <input
+                              type="number"
+                              min="1"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
+                              value={contact.gift_quantity || 1}
+                              onChange={e => handleContactChange(index, 'gift_quantity', parseInt(e.target.value) || 1)}
+                              disabled={!contact.gift_type || contact.gift_type === 'Não recebe'}
+                            />
+                          </div>
+                          {contact.gift_type === 'Outros' && (
+                            <div className="col-span-2">
+                              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Especificar Outro</label>
+                              <input
+                                type="text"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
+                                value={contact.gift_other || ''}
+                                onChange={e => handleContactChange(index, 'gift_other', e.target.value)}
+                                placeholder="Descreva o brinde..."
+                              />
+                            </div>
+                          )}
+                          <div className="col-span-2">
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Observações de Brinde</label>
+                            <input
+                              type="text"
+                              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-[#1e3a8a] focus:bg-white transition-all"
+                              value={contact.gift_notes || ''}
+                              onChange={e => handleContactChange(index, 'gift_notes', e.target.value)}
+                              placeholder="Ex: Entregar na recepção..."
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

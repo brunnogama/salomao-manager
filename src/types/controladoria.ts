@@ -229,6 +229,13 @@ export interface ClientContact {
   phone?: string;
   role?: string;
   is_main_contact?: boolean;
+
+  // CRM / Brindes
+  gift_type?: string;
+  gift_other?: string;
+  gift_quantity?: number;
+  gift_notes?: string;
+
   created_at?: string;
   updated_at?: string;
 }

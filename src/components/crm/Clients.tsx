@@ -1,217 +1,161 @@
 // src/components/crm/Clients.tsx
-import { useEffect, useState, useMemo } from 'react'
-import { supabase } from '../../lib/supabase'
+import { useState, useEffect, useMemo } from 'react';
+import { supabase } from '../../lib/supabase';
 import {
+  Users,
   Search,
   Plus,
-  Pencil,
-  Trash,
-  Gift,
-  Building2,
-  Users,
-  Check,
-  ChevronDown,
-  Filter
-} from 'lucide-react'
-import { Fragment } from 'react'
-import { FilterSelect } from '../controladoria/ui/FilterSelect'
-import { CRMContactModal } from './CRMContactModal'
-import { CRMContact, getGiftBadgeColor, getGiftIconColor } from '../../types/crmContact'
+  Edit,
+  Trash2,
+  Building,
+  User,
+  Briefcase,
+  Mail,
+  Phone,
+  MapPin,
+  X,
+  Gift
+} from 'lucide-react';
+import { Client, ClientContact } from '../../types/controladoria';
+import { ClientFormModal } from '../controladoria/clients/ClientFormModal';
+import { FilterSelect } from '../controladoria/ui/FilterSelect';
+import { maskCNPJ } from '../controladoria/utils/masks';
+import { getGiftIconColor } from '../../types/crmContact';
 
-interface ClientsProps {
-  initialFilters?: { socio?: string; brinde?: string };
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
-}
+export function Clients() {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [clientToEdit, setClientToEdit] = useState<Client | undefined>(undefined);
+  const [viewingClient, setViewingClient] = useState<Client | null>(null);
 
-interface CompanyRow {
-  client: any;
-  contacts: CRMContact[];
-  contactCount: number;
-  giftByType: {
-    vip: number;
-    medio: number;
-    outros: number;
-  };
-}
+  // Filters
+  const [clientFilter, setClientFilter] = useState('');
+  const [partnerFilter, setPartnerFilter] = useState('');
+  const [filterGiftType, setFilterGiftType] = useState<string>('');
 
-export function Clients({
-  initialFilters,
-}: ClientsProps) {
-  /* State */
-  const [contacts, setContacts] = useState<CRMContact[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<'view' | 'edit' | 'create'>('view')
-  const [contactToEdit, setContactToEdit] = useState<CRMContact | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<CompanyRow | null>(null)
-  const [viewingCompany, setViewingCompany] = useState<CompanyRow | null>(null)
-
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterSocio, setFilterSocio] = useState<string>('')
-  const [filterGiftType, setFilterGiftType] = useState<string>('')
-
-  useEffect(() => { fetchContacts() }, [])
   useEffect(() => {
-    if (initialFilters?.socio) setFilterSocio(initialFilters.socio)
-    if (initialFilters?.brinde) setFilterGiftType(initialFilters.brinde)
-  }, [initialFilters])
+    fetchData();
+  }, []);
 
-  const fetchContacts = async () => {
-    setLoading(true)
+  const fetchData = async () => {
+    setLoading(true);
     const { data, error } = await supabase
-      .from('client_contacts')
+      .from('clients')
       .select(`
         *,
-        client:clients(
-          id, name,
-          partner:partners(id, name)
-        )
+        partner:partners(name),
+        contracts:contracts(count),
+        contacts:client_contacts(*)
       `)
-      .order('client(name), name')
-
-    if (error) {
-      console.error('Error fetching contacts:', error)
-    }
+      .order('name');
 
     if (!error && data) {
-      setContacts(data as unknown as CRMContact[])
+      const formatted = data.map((c: any) => ({
+        ...c,
+        partner_name: c.partner?.name,
+        active_contracts_count: c.contracts?.[0]?.count || 0
+      }));
+      setClients(formatted);
     }
+    setLoading(false);
+  };
 
-    setLoading(false)
-  }
+  const handleEdit = (client: Client) => {
+    setClientToEdit(client);
+    setViewingClient(null);
+    setIsModalOpen(true);
+  };
 
-  const handleDeleteCompany = async (company: CompanyRow) => {
-    // Delete all contacts of this company
-    if (company.client?.id) {
-      await supabase.from('client_contacts').delete().eq('client_id', company.client.id)
-      setDeleteConfirm(null)
-      fetchContacts()
-    }
-  }
+  const handleNew = () => {
+    setClientToEdit(undefined);
+    setIsModalOpen(true);
+  };
 
-  // Group contacts by company and calculate statistics
-  const companyRows = useMemo(() => {
-    let filtered = contacts.filter((c: CRMContact) => {
-      const matchSearch = !searchTerm ||
-        [c.name, c.role, c.client?.name, c.email].some(f =>
-          f?.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      const matchSocio = !filterSocio || c.client?.partner?.name === filterSocio
-      const matchGift = !filterGiftType || c.gift_type === filterGiftType
-      return matchSearch && matchSocio && matchGift
-    })
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este cliente?')) return;
+    const { error } = await supabase.from('clients').delete().eq('id', id);
+    if (!error) {
+      fetchData();
+      setViewingClient(null);
+    } else alert('Erro ao excluir: ' + error.message);
+  };
 
-    // Group by client and calculate stats
-    const grouped = filtered.reduce((acc: any, contact: CRMContact) => {
-      const clientId = contact.client?.id || 'no-client'
-      if (!acc[clientId]) {
-        acc[clientId] = {
-          client: contact.client,
-          contacts: [],
-          contactCount: 0,
-          giftByType: {
-            vip: 0,
-            medio: 0,
-            outros: 0
-          }
+  const handleView = (client: Client) => {
+    setViewingClient(client);
+  };
+
+  // Filter Options
+  const uniqueClients = useMemo(() => Array.from(new Set(clients.map(c => c.name))).sort(), [clients]);
+  const uniquePartners = useMemo(() => Array.from(new Set(clients.map(c => c.partner_name).filter(Boolean))).sort(), [clients]);
+
+  // CRM: Calculate Gift Stats
+  const { giftStats, totalGifts } = useMemo(() => {
+    const stats: Record<string, number> = {};
+    let total = 0;
+
+    clients.forEach(client => {
+      client.contacts?.forEach((contact: ClientContact) => {
+        let type = contact.gift_type;
+        if (type === 'Brinde Pequeno' || type === 'Outro') type = 'Outros';
+
+        if (type && type !== 'Não recebe') {
+          const qty = contact.gift_quantity || 1;
+          stats[type] = (stats[type] || 0) + qty;
+          total += qty;
         }
-      }
-      acc[clientId].contacts.push(contact)
-      acc[clientId].contactCount++
+      });
+    });
+    return { giftStats: stats, totalGifts: total };
+  }, [clients]);
 
-      // Count gifts by type
-      if (contact.gift_type && contact.gift_type !== 'Não recebe') {
-        const qty = contact.gift_quantity || 1
-        if (contact.gift_type === 'Brinde VIP') {
-          acc[clientId].giftByType.vip += qty
-        } else if (contact.gift_type === 'Brinde Médio') {
-          acc[clientId].giftByType.medio += qty
-        } else {
-          // "Outro" and any other types
-          acc[clientId].giftByType.outros += qty
-        }
-      }
-      return acc
-    }, {} as Record<string, CompanyRow>)
+  const filteredClients = clients.filter(c => {
+    const matchesSearch =
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.cnpj?.includes(searchTerm) ||
+      c.email?.toLowerCase().includes(searchTerm) ||
+      c.partner_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return Object.values(grouped).sort((a: any, b: any) =>
-      (a.client?.name || '').localeCompare(b.client?.name || '')
-    )
-  }, [contacts, searchTerm, filterSocio, filterGiftType])
+    const matchesClient = !clientFilter || c.name === clientFilter;
+    const matchesPartner = !partnerFilter || c.partner_name === partnerFilter;
 
-  const socioOptions = useMemo(() => [
-    { label: 'Todos os Sócios', value: '' },
-    ...Array.from(new Set(contacts.map((c: CRMContact) => c.client?.partner?.name).filter(Boolean))).sort().map(s => ({
-      label: s,
-      value: s
-    }))
-  ], [contacts])
-
-  const giftOptions = useMemo(() => [
-    { label: 'Todos os Brindes', value: '' },
-    ...Array.from(new Set(contacts.map((c: CRMContact) => c.gift_type).filter(Boolean))).sort().map(t => ({
-      label: t,
-      value: t
-    }))
-  ], [contacts])
-
-  // Calculate gift statistics
-  const giftStats = useMemo(() => {
-    const stats: Record<string, number> = {}
-    contacts.forEach((c: CRMContact) => {
-      let type = c.gift_type;
+    // CRM Filter: Show client if ANY contact matches the gift type
+    const matchesGift = !filterGiftType || c.contacts?.some((contact: ClientContact) => {
+      let type = contact.gift_type;
       if (type === 'Brinde Pequeno' || type === 'Outro') type = 'Outros';
+      return type === filterGiftType;
+    });
 
-      if (type && type !== 'Não recebe') {
-        const qty = c.gift_quantity || 1
-        stats[type] = (stats[type] || 0) + qty
-      }
-    })
-    return stats
-  }, [contacts])
-
-  const totalGifts = useMemo(() =>
-    Object.values(giftStats).reduce((sum, count) => sum + count, 0),
-    [giftStats]
-  )
+    return matchesSearch && matchesClient && matchesPartner && matchesGift;
+  });
 
   return (
-    <div className="flex flex-col h-full space-y-6 p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* PAGE HEADER - Matching Dashboard */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
+
+      {/* 1. Header - Matching Controladoria Style */}
+      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
             <Gift className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Clientes
-            </h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">
-              Gestão de contatos para distribuição de brindes
-            </p>
+            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Clientes</h1>
+            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão de contatos e brindes</p>
           </div>
         </div>
 
-        {/* Right: Actions */}
         <div className="flex items-center gap-3 shrink-0">
           <button
-            onClick={() => {
-              setModalMode('create')
-              setContactToEdit(null)
-              setIsModalOpen(true)
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-[#1e3a8a] to-[#112240] hover:from-[#2a4a9a] hover:to-[#213250] text-white rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg hover:shadow-xl active:scale-95"
+            onClick={handleNew}
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
           >
-            <Plus className="h-4 w-4" />
-            Novo Contato
+            <Plus className="h-4 w-4" /> Novo Cliente
           </button>
         </div>
       </div>
 
-      {/* Gift Statistics Cards */}
+      {/* CRM: Gift Statistics Cards */}
       <div className="flex flex-wrap gap-4">
         {/* Total Gifts Card */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col gap-3 flex-1 min-w-[180px] transition-all hover:shadow-md">
@@ -226,8 +170,7 @@ export function Clients({
           </div>
         </div>
 
-        {/* Gift Type Cards with matching icon colors */}
-        {/* Gift Type Cards with matching icon colors */}
+        {/* Gift Type Cards */}
         {['Brinde VIP', 'Brinde Médio', 'Outros'].map((tipo) => {
           const qtd = giftStats[tipo] || 0;
           return (
@@ -251,167 +194,157 @@ export function Clients({
         })}
       </div>
 
-      {/* Toolbar */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
-        <div className="flex gap-3 items-center flex-wrap">
-          <div className="flex-1 min-w-[300px] relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      {/* 2. Toolbar: Total | Busca | Filtros */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex flex-col lg:flex-row items-center gap-4">
+
+          {/* Card de Total */}
+          <div className="flex items-center gap-3 pr-4 border-r border-gray-100">
+            <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Empresas</p>
+              <p className="text-xl font-black text-[#0a192f] leading-none">{filteredClients.length}</p>
+            </div>
+          </div>
+
+          {/* Barra de Busca (flex-1, sempre visível) */}
+          <div className="relative flex-1 w-full lg:w-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar por empresa, sócio, contato..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+              placeholder="Buscar por nome, CNPJ, email ou sócio..."
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
 
-          {/* Sócio Filter */}
-          <FilterSelect
-            icon={Users}
-            value={filterSocio}
-            onChange={setFilterSocio}
-            options={socioOptions}
-            placeholder="Sócios"
-          />
+          {/* Filtros: Clientes e Sócios */}
+          <div className="flex flex-wrap items-center gap-2">
+            <FilterSelect
+              icon={Building}
+              value={clientFilter}
+              onChange={setClientFilter}
+              options={uniqueClients.map(c => ({ label: c, value: c }))}
+              placeholder="Todos os Clientes"
+            />
 
-          {/* Brinde Filter */}
-          <FilterSelect
-            icon={Gift}
-            value={filterGiftType}
-            onChange={setFilterGiftType}
-            options={giftOptions}
-            placeholder="Brindes"
-          />
-
-          {/* Add Clear Filters button which was missing or needs to be adapted? IncompleteClients has it.
-           Clients.tsx code I saw earlier didn't seem to have a clear button in the viewed logic,
-           Wait, I see `hasActiveFilters` logic isn't there in `Clients.tsx` original code I read.
-           Let me check if I should add it.
-           The user said: "use o filtro de sócios da pagina Incompletos como paramentro".
-           In `IncompleteClients`, there is a clear button.
-           I'll add it if there isn't one. The original `Clients.tsx` didn't show a clear button.
-           But I should focus on replacing the selects first.
-           I will add the clear button if `filterSocio` or `filterGiftType` or `searchTerm` is active.
-           But `hasActiveFilters` variable is not defined in `Clients.tsx`.
-           I'll define it inside the render or just inline the check.
-           */}
-
+            <FilterSelect
+              icon={User}
+              value={partnerFilter}
+              onChange={setPartnerFilter}
+              options={uniquePartners.map(p => ({ label: p, value: p }))}
+              placeholder="Todos os Sócios"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Main Content - Company List Table */}
-      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-10">
+      {/* 3. Área de Conteúdo - Table View */}
+      <div className="flex-1">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#1e3a8a]/20 border-t-[#1e3a8a]"></div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-400 font-bold uppercase text-xs tracking-widest">
+            Carregando base de dados...
           </div>
-        ) : companyRows.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
-            <Gift className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-700 mb-2">Nenhuma empresa encontrada</h3>
-            <p className="text-gray-500">Adicione contatos para organizar a distribuição de brindes</p>
+        ) : filteredClients.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-700 mb-2">Nenhum cliente encontrado</h3>
+            <p className="text-gray-500">Tente ajustar os filtros ou adicione um novo cliente</p>
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             {/* Table Header */}
-            <div className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] border-b border-gray-200">
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
               <div className="grid grid-cols-12 gap-4 px-6 py-4">
+                <div className="col-span-4">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Cliente</p>
+                </div>
                 <div className="col-span-3">
-                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em]">Empresa</p>
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Sócio Responsável</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em]">Sócio</p>
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Contratos Vinculados</p>
                 </div>
                 <div className="col-span-1">
-                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] text-center">Contatos</p>
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">UF</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] text-center">Brinde VIP</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] text-center">Brinde Médio</p>
-                </div>
-                <div className="col-span-1">
-                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] text-center">Outros</p>
-                </div>
-                <div className="col-span-1">
-                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] text-right">Ações</p>
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">Ações</p>
                 </div>
               </div>
             </div>
 
             {/* Table Body */}
             <div className="divide-y divide-gray-100">
-              {companyRows.map((row: CompanyRow, idx: number) => (
+              {filteredClients.map(client => (
                 <div
-                  key={idx}
+                  key={client.id}
                   className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => setViewingCompany(row)}
+                  onClick={() => handleView(client)}
                 >
-                  {/* Company Name */}
-                  <div className="col-span-3 flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-[#1e3a8a] to-[#112240] rounded-lg shadow-sm">
-                      <Building2 className="w-4 h-4 text-white" />
+                  {/* Cliente Column */}
+                  <div className="col-span-4 flex items-center gap-3">
+                    <div className={`p-2 rounded-xl ${client.is_person ? 'bg-blue-50 text-blue-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                      {client.is_person ? <User className="w-4 h-4" /> : <Building className="w-4 h-4" />}
                     </div>
-                    <span className="font-bold text-gray-800">{row.client?.name || 'Sem empresa'}</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-[#0a192f] truncate">{client.name}</h3>
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide truncate">
+                        {client.cnpj ? maskCNPJ(client.cnpj) : 'Sem documento'}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Partner */}
-                  <div className="col-span-2 flex items-center">
-                    <span className="text-sm text-gray-600 font-semibold">
-                      {row.client?.partner?.name || '-'}
+                  {/* Sócio Responsável Column */}
+                  <div className="col-span-3 flex items-center">
+                    <span className="text-sm text-gray-700 font-semibold truncate">
+                      {client.partner_name || '-'}
                     </span>
                   </div>
 
-                  {/* Contact Count */}
-                  <div className="col-span-1 flex items-center justify-center">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg">
-                      <Users className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-black text-blue-700">{row.contactCount}</span>
-                    </div>
-                  </div>
-
-                  {/* Brinde VIP Count */}
+                  {/* Contratos Vinculados Column */}
                   <div className="col-span-2 flex items-center justify-center">
-                    <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${row.giftByType.vip > 0 ? 'bg-purple-50' : 'bg-gray-50'}`}>
-                      <Gift className={`w-4 h-4 ${row.giftByType.vip > 0 ? 'text-purple-600' : 'text-gray-400'}`} />
-                      <span className={`text-sm font-black ${row.giftByType.vip > 0 ? 'text-purple-700' : 'text-gray-400'}`}>
-                        {row.giftByType.vip}
-                      </span>
-                    </div>
+                    {client.active_contracts_count !== undefined && client.active_contracts_count > 0 ? (
+                      <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-lg">
+                        <Briefcase className="w-4 h-4 text-emerald-600" />
+                        <span className="text-sm font-black text-emerald-700">{client.active_contracts_count}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400 font-semibold">-</span>
+                    )}
                   </div>
 
-                  {/* Brinde Médio Count */}
-                  <div className="col-span-2 flex items-center justify-center">
-                    <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${row.giftByType.medio > 0 ? 'bg-blue-50' : 'bg-gray-50'}`}>
-                      <Gift className={`w-4 h-4 ${row.giftByType.medio > 0 ? 'text-blue-600' : 'text-gray-400'}`} />
-                      <span className={`text-sm font-black ${row.giftByType.medio > 0 ? 'text-blue-700' : 'text-gray-400'}`}>
-                        {row.giftByType.medio}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Outros Count */}
+                  {/* UF Column */}
                   <div className="col-span-1 flex items-center justify-center">
-                    <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${row.giftByType.outros > 0 ? 'bg-amber-50' : 'bg-gray-50'}`}>
-                      <Gift className={`w-4 h-4 ${row.giftByType.outros > 0 ? 'text-amber-600' : 'text-gray-400'}`} />
-                      <span className={`text-sm font-black ${row.giftByType.outros > 0 ? 'text-amber-700' : 'text-gray-400'}`}>
-                        {row.giftByType.outros}
-                      </span>
-                    </div>
+                    <span className="text-sm font-bold text-gray-700">
+                      {client.uf || '-'}
+                    </span>
                   </div>
 
-                  {/* Actions */}
-                  <div className="col-span-1 flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                  {/* Ações Column */}
+                  <div className="col-span-2 flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={(e) => {
-                        e.stopPropagation()
-                        setDeleteConfirm(row)
+                        e.stopPropagation();
+                        handleEdit(client);
+                      }}
+                      className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all"
+                      title="Gestão de Brindes (Editar)"
+                    >
+                      <Gift className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(client.id!);
                       }}
                       className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
-                      title="Excluir empresa e contatos"
+                      title="Excluir cliente"
                     >
-                      <Trash className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -421,204 +354,147 @@ export function Clients({
         )}
       </div>
 
-      {/* Company View Modal */}
-      {viewingCompany && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] px-6 py-5 text-white flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/10 rounded-xl">
-                  <Building2 className="h-6 w-6" />
+      {/* Modal de Formulário - With Gifts Tab */}
+      <ClientFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        client={clientToEdit}
+        onSave={fetchData}
+        showGiftsTab={true}
+      />
+
+      {/* Modal de Visualização */}
+      {viewingClient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-200">
+            {/* Header */}
+            <div className="flex justify-between items-center px-6 py-4 bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${viewingClient.is_person ? 'bg-blue-400/20' : 'bg-indigo-400/20'}`}>
+                  {viewingClient.is_person ? <User className="w-6 h-6 text-white" /> : <Building className="w-6 h-6 text-white" />}
                 </div>
                 <div>
-                  <h3 className="text-xl font-black">{viewingCompany.client?.name || 'Empresa'}</h3>
-                  <p className="text-sm text-white/70 font-medium">
-                    Sócio: {viewingCompany.client?.partner?.name || 'Não definido'}
-                  </p>
+                  <h2 className="text-xl font-black text-white">{viewingClient.name}</h2>
+                  <p className="text-sm text-white/80 font-semibold">{viewingClient.cnpj ? maskCNPJ(viewingClient.cnpj) : 'Sem documento'}</p>
                 </div>
               </div>
               <button
-                onClick={() => setViewingCompany(null)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                onClick={() => setViewingClient(null)}
+                className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
               >
-                <span className="text-2xl">×</span>
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="mb-6">
-                <h4 className="text-sm font-black text-gray-500 uppercase tracking-wide mb-4">
-                  Contatos da Empresa ({viewingCompany.contactCount})
-                </h4>
-
-                {viewingCompany.contacts.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                    <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-semibold">Nenhum contato cadastrado</p>
+            {/* Content - Showing Gifts Summary if any */}
+            <div className="p-6 max-h-[70vh] overflow-y-auto">
+              <div className="space-y-6">
+                {/* Gift Summary */}
+                {viewingClient.contacts?.some((c: ClientContact) => c.gift_type) && (
+                  <div>
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Resumo de Brindes</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {viewingClient.contacts?.filter((c: ClientContact) => c.gift_type && c.gift_type !== 'Não recebe').map((c: ClientContact, idx: number) => (
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                          <div className={`p-2 rounded-lg bg-gradient-to-br ${getGiftIconColor(c.gift_type || '')}`}>
+                            <Gift className="w-3 h-3 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-gray-800">{c.name}</p>
+                            <div className="flex gap-2 text-[10px] text-gray-500">
+                              <span>{c.gift_type}</span>
+                              {c.gift_quantity && <span>(x{c.gift_quantity})</span>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {viewingCompany.contacts.map((contact: CRMContact, idx: number) => (
-                      <div
-                        key={idx}
-                        className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-[#1e3a8a]/30 transition-all cursor-pointer group"
-                        onClick={() => {
-                          setModalMode('view');
-                          setContactToEdit(contact);
-                          setIsModalOpen(true);
-                        }}
-                      >
-                        <div className="grid grid-cols-12 gap-4 items-center">
-                          {/* Contact Info */}
-                          <div className="col-span-4">
-                            <p className="font-bold text-gray-800 text-base group-hover:text-[#1e3a8a] transition-colors">{contact.name}</p>
-                            <p className="text-sm text-gray-500 font-medium">{contact.role || 'Cargo não informado'}</p>
-                            {contact.email && (
-                              <p className="text-xs text-gray-400 mt-1">{contact.email}</p>
-                            )}
-                          </div>
+                )}
 
-                          {/* Gift Type */}
-                          <div className="col-span-3">
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">
-                              Tipo de Brinde
-                            </p>
-                            {contact.gift_type ? (
-                              <div className="flex items-center gap-2">
-                                <div className={`p-2 rounded-lg bg-gradient-to-br ${getGiftIconColor(contact.gift_type)}`}>
-                                  <Gift className="w-3 h-3 text-white" />
-                                </div>
-                                <span className="text-sm font-bold text-gray-700">{contact.gift_type}</span>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-gray-400">-</span>
-                            )}
-                          </div>
-
-                          {/* Gift Quantity */}
-                          <div className="col-span-2 text-center">
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">
-                              Quantidade
-                            </p>
-                            <p className="text-lg font-black text-gray-800">
-                              {contact.gift_type === 'Não recebe' ? '-' : (contact.gift_quantity || 1)}
-                            </p>
-                          </div>
-
-                          {/* Gift Details */}
-                          <div className="col-span-3">
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">
-                              Observações
-                            </p>
-                            {contact.gift_type === 'Outro' && contact.gift_other ? (
-                              <p className="text-xs font-semibold text-gray-600 line-clamp-2">
-                                {contact.gift_other}
-                              </p>
-                            ) : (
-                              <span className="text-sm text-gray-400">-</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="mt-3 pt-3 border-t border-gray-100 flex gap-2 justify-end">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setModalMode('view')
-                              setContactToEdit(contact)
-                              setIsModalOpen(true)
-                            }}
-                            className="px-3 py-1.5 text-xs font-bold text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1"
-                          >
-                            <Pencil className="w-3 h-3" />
-                            Editar
-                          </button>
-                        </div>
+                {/* Informações Básicas */}
+                <div>
+                  <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Informações Básicas</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                      <Mail className="w-4 h-4 text-gray-400" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-500">Email</p>
+                        <p className="text-sm font-bold text-gray-800 truncate">{viewingClient.email || '-'}</p>
                       </div>
-                    ))}
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-500">Telefone</p>
+                        <p className="text-sm font-bold text-gray-800">{viewingClient.phone || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Endereço */}
+                {viewingClient.address && (
+                  <div>
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Endereço</h3>
+                    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-800">
+                          {viewingClient.address}, {viewingClient.number}
+                          {viewingClient.complement && ` - ${viewingClient.complement}`}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {viewingClient.city}, {viewingClient.uf}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Sócio Responsável */}
+                {viewingClient.partner_name && (
+                  <div>
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Sócio Responsável</h3>
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
+                      <User className="w-4 h-4 text-blue-600" />
+                      <p className="text-sm font-bold text-blue-900">{viewingClient.partner_name}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Observações */}
+                {viewingClient.notes && (
+                  <div>
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Observações</h3>
+                    <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{viewingClient.notes}</p>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+            {/* Footer com Botões */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
               <button
-                onClick={() => {
-                  const newContact: Partial<CRMContact> = {
-                    client_id: viewingCompany.client?.id,
-                    client: viewingCompany.client
-                  }
-                  setModalMode('create')
-                  setContactToEdit(newContact as CRMContact)
-                  setIsModalOpen(true)
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-[#1e3a8a] to-[#112240] hover:from-[#2a4a9a] hover:to-[#213250] text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg hover:shadow-xl active:scale-95"
-              >
-                <Plus className="h-4 w-4" />
-                Adicionar Contato
-              </button>
-              <button
-                onClick={() => setViewingCompany(null)}
-                className="px-6 py-2 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors"
+                onClick={() => setViewingClient(null)}
+                className="px-6 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors"
               >
                 Fechar
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CRM Contact Modal */}
-      <CRMContactModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        contact={contactToEdit || undefined}
-        initialMode={modalMode}
-        onSave={() => {
-          setIsModalOpen(false);
-          setViewingCompany(null); // Close company modal to avoid stale data
-          fetchContacts();
-        }}
-      />
-
-      {/* Delete Confirmation */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 text-white">
-              <h3 className="text-lg font-black">Confirmar Exclusão</h3>
-            </div>
-            <div className="p-6">
-              <p className="text-gray-700 mb-4">
-                Tem certeza que deseja excluir a empresa <strong>{deleteConfirm.client?.name}</strong>?
-              </p>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-sm text-amber-800 font-semibold">
-                  ⚠️ Isso excluirá <strong>{deleteConfirm.contactCount} contato(s)</strong> vinculado(s) a esta empresa.
-                </p>
-              </div>
-            </div>
-            <div className="px-6 pb-6 flex gap-3 justify-end">
               <button
-                onClick={() => setDeleteConfirm(null)}
-                className="px-6 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors"
+                onClick={() => handleEdit(viewingClient)}
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
               >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleDeleteCompany(deleteConfirm)}
-                className="px-6 py-2.5 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg"
-              >
-                Excluir Empresa
+                <Gift className="w-4 h-4" />
+                Gerenciar Brindes
               </button>
             </div>
           </div>
         </div>
-      )}
+      )
+      }
     </div>
-  )
+  );
 }
