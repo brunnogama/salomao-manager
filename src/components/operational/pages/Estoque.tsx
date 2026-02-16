@@ -168,7 +168,9 @@ export function Estoque() {
                     name: item.name,
                     brand: item.brand,
                     quantity: 1,
-                    status: 'pending'
+                    status: 'pending',
+                    category: item.category,
+                    unit_price: item.unit_price
                 })
 
             if (error) throw error

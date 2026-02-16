@@ -18,6 +18,7 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const navigate = useNavigate()
     const [userName, setUserName] = useState('Carregando...')
+    const [pendingCount, setPendingCount] = useState(0)
     const location = useLocation()
     const activePage = location.pathname
 
@@ -40,8 +41,35 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         navigate('/login')
     }
 
+    const fetchPendingCount = async () => {
+        try {
+            const { count, error } = await supabase
+                .from('shopping_list_items')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending')
+
+            if (error) throw error
+            setPendingCount(count || 0)
+        } catch (error) {
+            console.error('Error fetching pending count:', error)
+        }
+    }
+
     useEffect(() => {
         fetchUserProfile()
+        fetchPendingCount()
+
+        // Optional: subscribe to changes
+        const channel = supabase
+            .channel('shopping_list_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_list_items' }, () => {
+                fetchPendingCount()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
     }, [])
 
     const mainItems = [
@@ -104,12 +132,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 : 'text-gray-300 hover:bg-white/5 hover:text-white'
                                 }`}
                         >
-                            <div className="flex items-center">
-                                <item.icon
-                                    className={`h-5 w-5 mr-3 transition-colors ${isActive(item.path) ? 'text-white' : 'text-gray-400 group-hover:text-white'
-                                        }`}
-                                />
-                                <span className="text-sm">{item.label}</span>
+                            <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center">
+                                    <item.icon
+                                        className={`h-5 w-5 mr-3 transition-colors ${isActive(item.path) ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                                            }`}
+                                    />
+                                    <span className="text-sm">{item.label}</span>
+                                </div>
+                                {item.path === '/operational/compras' && pendingCount > 0 && (
+                                    <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                        {pendingCount}
+                                    </span>
+                                )}
                             </div>
                         </Link>
                     ))}

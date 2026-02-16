@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, ShoppingCart, Check, Filter } from 'lucide-react'
+import { Plus, Trash2, ShoppingCart, Check, Filter, X, ChevronRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { AlertModal } from '../../ui/AlertModal'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
@@ -9,6 +9,8 @@ interface ShoppingItem {
     name: string
     quantity: number
     brand?: string
+    unit_price: number
+    category: string
     status: 'pending' | 'purchased'
     created_at: string
 }
@@ -16,8 +18,18 @@ interface ShoppingItem {
 export function Compras() {
     const [items, setItems] = useState<ShoppingItem[]>([])
     const [loading, setLoading] = useState(false)
-    const [newItemName, setNewItemName] = useState('')
     const [itemToDelete, setItemToDelete] = useState<ShoppingItem | null>(null)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [modalStep, setModalStep] = useState(1) // 1: Category, 2: Details
+    const [newItem, setNewItem] = useState({
+        name: '',
+        category: '',
+        quantity: 1,
+        brand: '',
+        unit_price: 0
+    })
+    const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
+
     const [alertConfig, setAlertConfig] = useState<{
         isOpen: boolean;
         title: string;
@@ -29,6 +41,18 @@ export function Compras() {
         description: '',
         variant: 'info'
     })
+
+    const categories = [
+        'Suprimentos',
+        'Facility',
+        'Papelaria',
+        'Copa',
+        'Sócios',
+        'Limpeza',
+        'Material Institucional',
+        'Eventos',
+        'Outros'
+    ]
 
     const showAlert = (title: string, description: string, variant: 'success' | 'error' | 'info' = 'info') => {
         setAlertConfig({ isOpen: true, title, description, variant })
@@ -47,7 +71,16 @@ export function Compras() {
                 .order('created_at', { ascending: false })
 
             if (error) throw error
-            if (data) setItems(data)
+            if (data) {
+                setItems(data)
+                // Initialize all categories as expanded
+                const initialExpanded: Record<string, boolean> = {}
+                data.forEach((item: ShoppingItem) => {
+                    const cat = item.category || 'Outros'
+                    initialExpanded[cat] = true
+                })
+                setExpandedCategories(initialExpanded)
+            }
         } catch (error) {
             console.error('Error fetching shopping list:', error)
             showAlert('Erro', 'Erro ao carregar lista de compras.', 'error')
@@ -56,27 +89,39 @@ export function Compras() {
         }
     }
 
-    const handleAddItem = async (e?: React.FormEvent) => {
-        if (e) e.preventDefault()
-        if (!newItemName.trim()) return
+    const resetModal = () => {
+        setIsModalOpen(false)
+        setModalStep(1)
+        setNewItem({ name: '', category: '', quantity: 1, brand: '', unit_price: 0 })
+    }
 
-        const newItem = {
-            name: newItemName.trim(),
-            quantity: 1,
-            status: 'pending'
-        }
+    const handleCategorySelect = (category: string) => {
+        setNewItem(prev => ({ ...prev, category }))
+        setModalStep(2)
+    }
+
+    const handleAddItem = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!newItem.name.trim()) return
 
         try {
             const { data, error } = await supabase
                 .from('shopping_list_items')
-                .insert(newItem)
+                .insert({
+                    ...newItem,
+                    status: 'pending'
+                })
                 .select()
                 .single()
 
             if (error) throw error
             if (data) {
                 setItems(prev => [data, ...prev])
-                setNewItemName('')
+                // Ensure category is expanded
+                const cat = data.category || 'Outros'
+                setExpandedCategories(prev => ({ ...prev, [cat]: true }))
+
+                resetModal()
                 showAlert('Sucesso', 'Item adicionado à lista.', 'success')
             }
         } catch (error) {
@@ -126,6 +171,17 @@ export function Compras() {
         }
     }
 
+    const toggleCategory = (category: string) => {
+        setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }))
+    }
+
+    const groupedItems = items.reduce((acc, item) => {
+        const cat = item.category || 'Outros'
+        if (!acc[cat]) acc[cat] = []
+        acc[cat].push(item)
+        return acc
+    }, {} as Record<string, ShoppingItem[]>)
+
     return (
         <div className="p-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -138,77 +194,91 @@ export function Compras() {
                         <p className="text-gray-500">Gerencie itens a serem adquiridos.</p>
                     </div>
                 </div>
-            </div>
-
-            {/* Add Item Form */}
-            <form onSubmit={handleAddItem} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex gap-2">
-                <input
-                    type="text"
-                    value={newItemName}
-                    onChange={(e) => setNewItemName(e.target.value)}
-                    placeholder="Adicionar novo item à lista..."
-                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
                 <button
-                    type="submit"
-                    disabled={!newItemName.trim()}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                    onClick={() => setIsModalOpen(true)}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
                 >
                     <Plus className="w-4 h-4" />
-                    Adicionar
+                    Adicionar Item
                 </button>
-            </form>
+            </div>
 
             {/* List */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 {items.length > 0 ? (
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Status</th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quantidade</th>
-                                <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {items.map((item) => (
-                                <tr key={item.id} className={`hover:bg-gray-50/50 transition-colors ${item.status === 'purchased' ? 'bg-gray-50' : ''}`}>
-                                    <td className="py-4 px-6">
-                                        <button
-                                            onClick={() => toggleItemStatus(item)}
-                                            className={`w-6 h-6 rounded border flex items-center justify-center transition-colors ${item.status === 'purchased'
-                                                    ? 'bg-green-500 border-green-500 text-white'
-                                                    : 'border-gray-300 hover:border-blue-500 text-transparent hover:text-blue-200'
-                                                }`}
-                                        >
-                                            <Check className="w-4 h-4" />
-                                        </button>
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <span className={`font-medium ${item.status === 'purchased' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                                            {item.name}
+                    <div className="divide-y divide-gray-100">
+                        {Object.entries(groupedItems).map(([category, categoryItems]) => (
+                            <div key={category} className="bg-white">
+                                <button
+                                    onClick={() => toggleCategory(category)}
+                                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                                >
+                                    <div className="flex items-center gap-2 font-semibold text-gray-700">
+                                        {expandedCategories[category] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                        {category}
+                                        <span className="text-xs font-normal text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">
+                                            {categoryItems.length}
                                         </span>
-                                        {item.brand && (
-                                            <span className="ml-2 text-xs text-gray-500">({item.brand})</span>
-                                        )}
-                                    </td>
-                                    <td className="py-4 px-6 text-sm text-gray-600">
-                                        {item.quantity}
-                                    </td>
-                                    <td className="py-4 px-6 text-right">
-                                        <button
-                                            onClick={() => setItemToDelete(item)}
-                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                            title="Remover"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                    </div>
+                                </button>
+
+                                {expandedCategories[category] && (
+                                    <table className="w-full">
+                                        <thead className="bg-white border-b border-gray-100">
+                                            <tr>
+                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Status</th>
+                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
+                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
+                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qtd</th>
+                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unit.</th>
+                                                <th className="text-right py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {categoryItems.map((item) => (
+                                                <tr key={item.id} className={`hover:bg-gray-50/50 transition-colors ${item.status === 'purchased' ? 'bg-gray-50' : ''}`}>
+                                                    <td className="py-3 px-6">
+                                                        <button
+                                                            onClick={() => toggleItemStatus(item)}
+                                                            className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${item.status === 'purchased'
+                                                                ? 'bg-green-500 border-green-500 text-white'
+                                                                : 'border-gray-300 hover:border-blue-500 text-transparent hover:text-blue-200'
+                                                                }`}
+                                                        >
+                                                            <Check className="w-3 h-3" />
+                                                        </button>
+                                                    </td>
+                                                    <td className="py-3 px-6">
+                                                        <span className={`font-medium ${item.status === 'purchased' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                                                            {item.name}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 px-6 text-sm text-gray-600">
+                                                        {item.brand || '-'}
+                                                    </td>
+                                                    <td className="py-3 px-6 text-sm text-gray-600">
+                                                        {item.quantity}
+                                                    </td>
+                                                    <td className="py-3 px-6 text-sm text-gray-600">
+                                                        {item.unit_price ? `R$ ${item.unit_price.toFixed(2)}` : '-'}
+                                                    </td>
+                                                    <td className="py-3 px-6 text-right">
+                                                        <button
+                                                            onClick={() => setItemToDelete(item)}
+                                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                            title="Remover"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 ) : (
                     <div className="p-12 text-center text-gray-500">
                         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -216,9 +286,114 @@ export function Compras() {
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">Lista vazia</h3>
                         <p className="mb-6 max-w-sm mx-auto">Sua lista de compras está vazia.</p>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="text-blue-600 font-medium hover:underline text-sm"
+                        >
+                            Adicionar primeiro item
+                        </button>
                     </div>
                 )}
             </div>
+
+            {/* Add Item Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h2 className="text-lg font-bold text-gray-800">
+                                {modalStep === 1 ? 'Selecione a Categoria' : 'Detalhes do Item'}
+                            </h2>
+                            <button onClick={resetModal} className="p-1 hover:bg-gray-200 rounded-lg text-gray-500">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            {modalStep === 1 ? (
+                                <div className="grid grid-cols-2 gap-3">
+                                    {categories.map(cat => (
+                                        <button
+                                            key={cat}
+                                            onClick={() => handleCategorySelect(cat)}
+                                            className="p-3 border border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-medium text-sm transition-all text-left"
+                                        >
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <form onSubmit={handleAddItem} className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Categoria</label>
+                                        <div className="text-sm font-semibold text-gray-800 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 flex justify-between items-center">
+                                            {newItem.category}
+                                            <button type="button" onClick={() => setModalStep(1)} className="text-blue-600 text-xs hover:underline">Alterar</button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Nome do Item *</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            value={newItem.name}
+                                            onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            placeholder="Ex: Detergente"
+                                            autoFocus
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Quantidade</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={newItem.quantity}
+                                                onChange={e => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 1 })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Preço Unit. (R$)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={newItem.unit_price}
+                                                onChange={e => setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Marca (Opcional)</label>
+                                        <input
+                                            type="text"
+                                            value={newItem.brand}
+                                            onChange={e => setNewItem({ ...newItem, brand: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            placeholder="Ex: Ypê"
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={!newItem.name.trim()}
+                                        className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 font-bold shadow-lg shadow-blue-500/20 transition-all mt-2"
+                                    >
+                                        Salvar Item
+                                    </button>
+                                </form>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <AlertModal
                 isOpen={alertConfig.isOpen}
