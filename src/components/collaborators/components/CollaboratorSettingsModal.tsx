@@ -188,12 +188,15 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         termination_date: parseDate(row['Data Desligamento']),
                         termination_initiative_id: findId(terminationInitiatives, String(row['Iniciativa Desligamento'] || '')),
                         termination_type_id: findId(terminationTypes, String(row['Tipo Desligamento'] || '')),
-                        termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
+                        // termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
 
                         // Professional
                         oab_numero: String(row['OAB Número'] || ''),
-                        oab_uf: row['OAB UF']?.toUpperCase(),
+                        oab_uf: row['OAB UF']?.trim().toUpperCase(),
                         oab_emissao: parseDate(row['OAB Emissão']),
+
+                        // Temporarily commented out as column appears missing in DB
+                        // termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
 
 
 
