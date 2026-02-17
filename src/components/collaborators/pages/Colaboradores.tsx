@@ -399,11 +399,11 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       // Prepare data for save: Convert DD/MM/YYYY back to YYYY-MM-DD
       const dataToSave = {
         ...formData,
-        birthday: formatDateToISO(formData.birthday),
-        hire_date: formatDateToISO(formData.hire_date),
-        termination_date: formatDateToISO(formData.termination_date),
-        oab_emissao: formatDateToISO(formData.oab_emissao),
-        escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao)
+        birthday: formatDateToISO(formData.birthday) || null,
+        hire_date: formatDateToISO(formData.hire_date) || null,
+        termination_date: formatDateToISO(formData.termination_date) || null,
+        oab_emissao: formatDateToISO(formData.oab_emissao) || null,
+        escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null
       };
 
       if (formData.id) {
