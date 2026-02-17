@@ -99,22 +99,18 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   // Options for FilterSelect
   const liderOptions = React.useMemo(() => [
-    { label: 'Todos Líderes', value: '' },
     ...colaboradores.map((c: Collaborator) => ({ label: c.name, value: String(c.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [colaboradores])
 
   const partnerOptions = React.useMemo(() => [
-    { label: 'Todos Sócios', value: '' },
     ...partners.map((p) => ({ label: p.name || '', value: String(p.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [partners])
 
   const locationOptions = React.useMemo(() => [
-    { label: 'Todos Locais', value: '' },
     ...locations.map((l: Location) => ({ label: l.name, value: String(l.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [locations])
 
   const roleOptions = React.useMemo(() => [
-    { label: 'Todos Cargos', value: '' },
     ...roles.map((r: Role) => ({ label: r.name, value: String(r.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [roles])
 
@@ -1090,8 +1086,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
         <div className="flex flex-col xl:flex-row items-center gap-4">
 
-          {/* Search Bar - Compact */}
-          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full md:w-64 shrink-0 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+          {/* Search Bar - Expanded */}
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
             <Search className="h-4 w-4 text-gray-400 mr-3" />
             <input
               type="text"
@@ -1102,8 +1098,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             />
           </div>
 
-          {/* Filters Row - Expanded & Auto-sizing */}
-          <div className="flex flex-wrap items-center gap-3 w-full">
+          {/* Filters Row - Auto-sizing */}
+          <div className="flex flex-wrap items-center gap-3 w-auto justify-end">
             <FilterSelect
               icon={User}
               value={filterLider}
