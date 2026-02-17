@@ -192,7 +192,7 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
 
                         // Professional
                         oab_numero: String(row['OAB Número'] || ''),
-                        oab_uf: row['OAB UF'],
+                        oab_uf: row['OAB UF']?.toUpperCase(),
                         oab_emissao: parseDate(row['OAB Emissão']),
 
 
@@ -200,8 +200,12 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         observacoes: row['Observações']
                     }
 
-                    // Clean undefined/null values
-                    Object.keys(dbRow).forEach(key => (dbRow[key] === undefined || dbRow[key] === null) && delete dbRow[key])
+                    // Clean undefined/null keys/values
+                    Object.keys(dbRow).forEach(key => {
+                        if (dbRow[key] === undefined || dbRow[key] === null || dbRow[key] === '') {
+                            delete dbRow[key]
+                        }
+                    })
 
                     // Check if CPF already exists (only if CPF is provided)
                     const existingCollaborator = rowCpf ? collaborators?.find(c => c.cpf?.replace(/\D/g, '') === rowCpf) : null
