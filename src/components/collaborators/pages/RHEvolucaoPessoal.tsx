@@ -120,13 +120,7 @@ export function RHEvolucaoPessoal() {
 
   // --- Charts Data Preparation ---
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
-      </div>
-    )
-  }
+
 
   // 1. Headcount Evolution (Accumulated)
   const headcountChartData = useMemo(() => {
@@ -300,6 +294,14 @@ export function RHEvolucaoPessoal() {
       )
     }
     return null
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+      </div>
+    )
   }
 
   return (
