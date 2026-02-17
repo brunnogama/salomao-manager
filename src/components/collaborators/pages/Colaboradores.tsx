@@ -133,6 +133,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     { id: 5, label: 'Histórico', icon: History },
     { id: 6, label: 'GED', icon: Files }
   ]
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [, setRefreshKey] = useState(0)
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null)
