@@ -353,3 +353,14 @@ export interface TimelineEvent {
   changed_by?: string;
   changed_at: string;
 }
+
+export interface GEDDocument {
+  id: string;
+  colaborador_id: string;
+  nome_arquivo: string;
+  url: string;
+  categoria: string;
+  tamanho: number;
+  tipo_arquivo: string;
+  created_at: string;
+}

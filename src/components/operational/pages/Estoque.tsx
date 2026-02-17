@@ -351,7 +351,6 @@ export function Estoque() {
                 description="Tem certeza que deseja remover este item do estoque? Esta ação não pode ser desfeita."
                 variant="danger"
                 confirmText="Excluir"
-                confirmText="Excluir"
                 cancelText="Cancelar"
             />
 

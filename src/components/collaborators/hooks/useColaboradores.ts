@@ -1,7 +1,7 @@
 // src/hooks/useColaboradores.ts
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase' // Caminho de importação ajustado para o padrão do projeto
-import { Collaborator, GEDDocument } from '../types/controladoria' // Caminho de importação ajustado
+import { supabase } from '../../../lib/supabase' // Caminho de importação ajustado para o padrão do projeto
+import { Collaborator, GEDDocument } from '../../../types/controladoria' // Caminho de importação ajustado
 
 export function useColaboradores() {
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
@@ -20,7 +20,7 @@ export function useColaboradores() {
         leader:collaborators!collaborators_leader_id_fkey(id, name)
       `)
       .order('name')
-    
+
     if (data) setColaboradores(data)
     setLoading(false)
   }
@@ -36,12 +36,12 @@ export function useColaboradores() {
 
   const deleteColaborador = async (id: string, photoUrl?: string) => {
     if (!confirm('Excluir este colaborador?')) return false
-    
+
     if (photoUrl) {
       const path = photoUrl.split('/fotos-colaboradores/')[1]
       if (path) await supabase.storage.from('fotos-colaboradores').remove([`colaboradores/${path}`])
     }
-    
+
     await supabase.from('collaborators').delete().eq('id', id)
     await fetchColaboradores()
     return true

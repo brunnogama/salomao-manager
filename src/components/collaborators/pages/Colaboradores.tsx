@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
 
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
-import { Collaborator, Partner } from '../../../types/controladoria'
+import { Collaborator, Partner, GEDDocument } from '../../../types/controladoria'
 import { AlertModal } from '../../ui/AlertModal'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { SearchableSelect } from '../../crm/SearchableSelect'
@@ -34,16 +34,7 @@ interface ColaboradoresProps {
   onModuleHome?: () => void
   onLogout?: () => void
 }
-interface GEDDocument {
-  id: string
-  colaborador_id: string
-  nome_arquivo: string
-  url: string
-  categoria: string
-  tamanho: number
-  tipo_arquivo: string
-  created_at: string
-}
+
 
 const ESTADOS_BRASIL = [
   { sigla: 'AC', nome: 'Acre' },
