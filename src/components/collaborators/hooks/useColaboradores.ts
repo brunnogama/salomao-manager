@@ -11,38 +11,67 @@ export function useColaboradores() {
 
   const fetchColaboradores = async () => {
     setLoading(true)
-    // Atualizado para realizar join com sócios e líderes usando UUID
-    const [
-      colabRes,
-      rolesRes,
-      teamsRes,
-      locsRes
-    ] = await Promise.all([
-      supabase.from('collaborators').select(`
-        *,
-        partner:partners(id, name),
-        leader:collaborators!collaborators_leader_id_fkey(id, name)
-      `).order('name'),
-      supabase.from('roles').select('id, name'),
-      supabase.from('teams').select('id, name'),
-      supabase.from('locations').select('id, name')
-    ])
+    try {
+      // Fetches collaborators and related tables in parallel to avoid join errors
+      const [
+        colabRes,
+        rolesRes,
+        teamsRes,
+        locsRes,
+        partnersRes,
+        leadersRes
+      ] = await Promise.all([
+        supabase.from('collaborators').select('*').order('name'),
+        supabase.from('roles').select('id, name'),
+        supabase.from('teams').select('id, name'),
+        supabase.from('locations').select('id, name'),
+        supabase.from('partners').select('id, name'),
+        supabase.from('collaborators').select('id, name') // For leaders
+      ])
 
-    if (colabRes.data) {
-      const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
-      const teamsMap = new Map(teamsRes.data?.map(t => [String(t.id), t.name]) || [])
-      const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
+      if (colabRes.error) {
+        console.error('Error fetching collaborators:', colabRes.error)
+        throw colabRes.error
+      }
 
-      const enrichedData = colabRes.data.map(c => ({
-        ...c,
-        roles: { name: rolesMap.get(String(c.role)) || c.role },
-        teams: { name: teamsMap.get(String(c.equipe)) || c.equipe },
-        locations: { name: locsMap.get(String(c.local)) || c.local }
-      }))
+      if (colabRes.data) {
+        // Create Lookups
+        const createMap = (list: any[]) => new Map(list?.map(i => [String(i.id), i.name]) || [])
 
-      setColaboradores(enrichedData)
+        const rolesMap = createMap(rolesRes.data || [])
+        const teamsMap = createMap(teamsRes.data || [])
+        const locsMap = createMap(locsRes.data || [])
+        const partnersMap = createMap(partnersRes.data || [])
+        const leadersMap = createMap(leadersRes.data || [])
+
+        // Helper to try to resolve partner if partner_id is missing but 'socio' field exists
+        const getPartnerNameFromLegacy = (c: any, map: Map<string, string>) => {
+          if (c.partner_id && map.has(String(c.partner_id))) return map.get(String(c.partner_id))
+          return c.socio || c.partner // Fallback to textual fields if any
+        }
+
+        const enrichedData = colabRes.data.map(c => ({
+          ...c,
+          roles: { name: rolesMap.get(String(c.role)) || c.role },
+          role: rolesMap.get(String(c.role)) || c.role, // Populate role name directly too
+
+          teams: { name: teamsMap.get(String(c.equipe)) || c.equipe },
+
+          locations: { name: locsMap.get(String(c.local)) || c.local },
+          local: locsMap.get(String(c.local)) || c.local, // Populate local name directly too
+
+          partner: { name: partnersMap.get(String(c.partner_id)) || getPartnerNameFromLegacy(c, partnersMap) },
+
+          leader: { name: leadersMap.get(String(c.leader_id)) }
+        }))
+
+        setColaboradores(enrichedData)
+      }
+    } catch (error) {
+      console.error('Failed to load collaborators:', error)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const fetchGedDocs = async (colabId: string) => {
