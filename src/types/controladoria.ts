@@ -95,6 +95,16 @@ export interface Collaborator {
   observacoes?: string;
   oab_emissao?: string;
 
+  // Novos Campos (Rateio e Desligamento)
+  rateio_id?: string;
+  rateios?: { id: string; name: string };
+  hiring_reason_id?: string;
+  hiring_reasons?: { id: string; name: string };
+  termination_initiative_id?: string;
+  termination_initiatives?: { id: string; name: string };
+  termination_type_id?: string;
+  termination_types?: { id: string; name: string };
+
   local?: string;
   locations?: { name: string }; // Joined field
   equipe?: string;
