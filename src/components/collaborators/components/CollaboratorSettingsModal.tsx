@@ -173,7 +173,7 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
 
                         // Corporate
                         hire_date: parseDate(row['Admissão']),
-                        status: (row['Status (Ativo/Inativo)'] || 'Ativo').toLowerCase() === 'ativo' ? 'active' : 'inactive',
+                        status: String(row['Status (Ativo/Inativo)'] || '').trim().toLowerCase() === 'inativo' ? 'inactive' : 'active',
                         contract_type: row['Tipo Contratação'],
 
                         // Foreign Keys mapping
@@ -191,14 +191,12 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         termination_date: parseDate(row['Data Desligamento']),
                         termination_initiative_id: findId(terminationInitiatives, String(row['Iniciativa Desligamento'] || '')),
                         termination_type_id: findId(terminationTypes, String(row['Tipo Desligamento'] || '')),
-                        // termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
+                        termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
 
                         // Professional
                         oab_numero: String(row['Número da OAB'] || ''),
                         oab_uf: row['OAB UF']?.trim().toUpperCase().substring(0, 2),
                         oab_emissao: parseDate(row['OAB Emissão']),
-
-                        // termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
 
 
 
