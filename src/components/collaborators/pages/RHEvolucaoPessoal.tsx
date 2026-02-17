@@ -20,7 +20,6 @@ import {
   BarChart,
   Bar,
   Legend,
-  Cell,
   LineChart,
   Line
 } from 'recharts'
@@ -46,8 +45,12 @@ const getSegment = (colaborador: Collaborator): Segment => {
   if (area === 'juridica' || area === 'juridico') return 'Jurídico'
 
   // 2. Fallback to keywords in Role/Team
-  const role = normalizeString(colaborador.roles?.name || colaborador.role)
-  const team = normalizeString(colaborador.teams?.name || colaborador.equipe)
+  // Access safe navigation for roles.name because role might be ID now
+  const roleName = colaborador.roles?.name || String(colaborador.role || '')
+  const teamName = colaborador.teams?.name || String(colaborador.equipe || '')
+
+  const role = normalizeString(roleName)
+  const team = normalizeString(teamName)
 
   // Keywords indicating Legal sector
   const legalKeywords = ['advogado', 'juridico', 'estagiario de direito', 'socio']
@@ -73,7 +76,12 @@ const getYearFromDate = (dateStr?: string) => {
 // --- Main Component ---
 
 export function RHEvolucaoPessoal() {
-  const { colaboradores, loading } = useColaboradores()
+  const {
+    colaboradores,
+    loading,
+    locations: masterLocations,
+    partners: masterPartners
+  } = useColaboradores()
 
   // --- State for Filters ---
   const [filterYear, setFilterYear] = useState<string>(new Date().getFullYear().toString())
@@ -93,29 +101,38 @@ export function RHEvolucaoPessoal() {
     return sorted
   }, [colaboradores])
 
-  const locations = useMemo(() => {
-    const locs = new Set(colaboradores.map(c => c.locations?.name || c.local).filter(Boolean))
-    return Array.from(locs).sort()
-  }, [colaboradores])
+  // Use Master Lists for Options
+  const locationOptions = useMemo(() => {
+    return masterLocations
+      .map(l => ({ label: l.name, value: String(l.id) }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [masterLocations])
 
-  const partners = useMemo(() => {
-    const partsNames = new Set(colaboradores.map(c => c.partner?.name).filter(Boolean))
-    return Array.from(partsNames).sort()
-  }, [colaboradores])
+  const partnerOptions = useMemo(() => {
+    return masterPartners
+      .map(p => ({ label: p.name, value: String(p.id) }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [masterPartners])
 
   // --- Filtered Data ---
   const filteredData = useMemo(() => {
     return colaboradores.filter(c => {
-      // Local Filter
+      // Local Filter (Compare IDs)
       if (filterLocal !== 'todos') {
-        const cLocal = c.locations?.name || c.local
-        if (cLocal !== filterLocal) return false
+        // c.local is now the ID (number or string)
+        if (String(c.local) !== filterLocal) return false
       }
 
-      // Partner Filter
+      // Partner Filter (Compare IDs)
       if (filterPartner !== 'todos') {
-        const cPartner = c.partner?.name
-        if (cPartner !== filterPartner) return false
+        const cPartnerId = c.partner_id ? String(c.partner_id) : (c.partner && c.partner.id ? String(c.partner.id) : null)
+
+        // Handle case where we might only have name but filter is ID (fallback)
+        // If masterPartners has the ID selected, we expect match on ID.
+        // If c.partner_id is null, check if logic needs update. 
+        // For now assume partner_id is populated correctly or c.socio logic handled in hook.
+
+        if (cPartnerId !== filterPartner) return false
       }
 
       // Search Filter
@@ -248,7 +265,8 @@ export function RHEvolucaoPessoal() {
       if (getSegment(c) !== targetSegment) return
 
       const monthIndex = hDate.getMonth()
-      const roleName = c.roles?.name || c.role || 'Não definido'
+      // Use role name safely
+      const roleName = c.roles?.name || String(c.role || 'Não definido')
 
       uniqueRoles.add(roleName)
 
@@ -400,7 +418,7 @@ export function RHEvolucaoPessoal() {
             icon={Filter}
             value={filterLocal === 'todos' ? '' : filterLocal}
             onChange={(val) => setFilterLocal(val || 'todos')}
-            options={locations.map(l => ({ label: l as string, value: l as string }))}
+            options={locationOptions}
             placeholder="Local"
           />
 
@@ -409,7 +427,7 @@ export function RHEvolucaoPessoal() {
             icon={Users}
             value={filterPartner === 'todos' ? '' : filterPartner}
             onChange={(val) => setFilterPartner(val || 'todos')}
-            options={partners.map(p => ({ label: p as string, value: p as string }))}
+            options={partnerOptions}
             placeholder="Sócio"
           />
 

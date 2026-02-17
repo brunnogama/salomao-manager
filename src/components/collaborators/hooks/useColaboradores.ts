@@ -9,6 +9,12 @@ export function useColaboradores() {
   const [gedDocs, setGedDocs] = useState<GEDDocument[]>([])
   const [uploadingGed, setUploadingGed] = useState(false)
 
+  // Master lists
+  const [roles, setRoles] = useState<{ id: string; name: string }[]>([])
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
+  const [locations, setLocations] = useState<{ id: string; name: string }[]>([])
+  const [partners, setPartners] = useState<{ id: string; name: string }[]>([])
+
   const fetchColaboradores = async () => {
     setLoading(true)
     try {
@@ -35,6 +41,12 @@ export function useColaboradores() {
       }
 
       if (colabRes.data) {
+        // Set Master Lists
+        setRoles(rolesRes.data || [])
+        setTeams(teamsRes.data || [])
+        setLocations(locsRes.data || [])
+        setPartners(partnersRes.data || [])
+
         // Create Lookups
         const createMap = (list: any[]) => new Map(list?.map(i => [String(i.id), i.name]) || [])
 
@@ -53,12 +65,12 @@ export function useColaboradores() {
         const enrichedData = colabRes.data.map(c => ({
           ...c,
           roles: { name: rolesMap.get(String(c.role)) || c.role },
-          role: rolesMap.get(String(c.role)) || c.role, // Populate role name directly too
+          // role: rolesMap.get(String(c.role)) || c.role, // REMOVED: Keep ID
 
           teams: { name: teamsMap.get(String(c.equipe)) || c.equipe },
 
           locations: { name: locsMap.get(String(c.local)) || c.local },
-          local: locsMap.get(String(c.local)) || c.local, // Populate local name directly too
+          // local: locsMap.get(String(c.local)) || c.local, // REMOVED: Keep ID
 
           partner: { name: partnersMap.get(String(c.partner_id)) || getPartnerNameFromLegacy(c, partnersMap) },
 
@@ -106,6 +118,11 @@ export function useColaboradores() {
     setUploadingGed,
     fetchColaboradores,
     fetchGedDocs,
-    deleteColaborador
+    deleteColaborador,
+    // Export Master Lists
+    roles,
+    teams,
+    locations,
+    partners
   }
 }
