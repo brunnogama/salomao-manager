@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
   TrendingUp,
   Filter,
@@ -7,8 +7,7 @@ import {
   UserMinus,
   UserPlus,
   Calendar,
-  X,
-  ChevronDown
+  X
 } from 'lucide-react'
 import {
   AreaChart,
@@ -25,6 +24,7 @@ import {
 } from 'recharts'
 import { useColaboradores } from '../hooks/useColaboradores'
 import { Collaborator } from '../../../types/controladoria'
+import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 
 // --- Types & Interfaces ---
 
@@ -119,6 +119,14 @@ export function RHEvolucaoPessoal() {
   }, [filteredData])
 
   // --- Charts Data Preparation ---
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+      </div>
+    )
+  }
 
   // 1. Headcount Evolution (Accumulated)
   const headcountChartData = useMemo(() => {
@@ -322,45 +330,31 @@ export function RHEvolucaoPessoal() {
           </div>
 
           {/* Filter: Year */}
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-            <select
-              value={filterYear}
-              onChange={e => setFilterYear(e.target.value)}
-              className="pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-wide text-gray-700 outline-none focus:border-blue-500 appearance-none cursor-pointer hover:bg-white transition-all"
-            >
-              {years.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
-          </div>
+          <FilterSelect
+            icon={Calendar}
+            value={filterYear}
+            onChange={setFilterYear}
+            options={years.map(y => ({ label: y, value: y }))}
+            placeholder="Ano"
+          />
 
           {/* Filter: Local */}
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-            <select
-              value={filterLocal}
-              onChange={e => setFilterLocal(e.target.value)}
-              className="pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-wide text-gray-700 outline-none focus:border-blue-500 appearance-none cursor-pointer hover:bg-white transition-all min-w-[140px]"
-            >
-              <option value="todos">Todos Locais</option>
-              {locations.map(l => <option key={l} value={l as string}>{l as string}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
-          </div>
+          <FilterSelect
+            icon={Filter}
+            value={filterLocal === 'todos' ? '' : filterLocal}
+            onChange={(val) => setFilterLocal(val || 'todos')}
+            options={locations.map(l => ({ label: l as string, value: l as string }))}
+            placeholder="Local"
+          />
 
           {/* Filter: Partner */}
-          <div className="relative">
-            <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-            <select
-              value={filterPartner}
-              onChange={e => setFilterPartner(e.target.value)}
-              className="pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-wide text-gray-700 outline-none focus:border-blue-500 appearance-none cursor-pointer hover:bg-white transition-all min-w-[140px]"
-            >
-              <option value="todos">Todos Sócios</option>
-              {partners.map(p => <option key={p} value={p as string}>{p as string}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
-          </div>
+          <FilterSelect
+            icon={Users}
+            value={filterPartner === 'todos' ? '' : filterPartner}
+            onChange={(val) => setFilterPartner(val || 'todos')}
+            options={partners.map(p => ({ label: p as string, value: p as string }))}
+            placeholder="Sócio"
+          />
 
           {(filterLocal !== 'todos' || filterPartner !== 'todos' || searchTerm) && (
             <button
@@ -478,7 +472,7 @@ export function RHEvolucaoPessoal() {
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="value" name="Contratações" radius={[0, 4, 4, 0]} barSize={20}>
-                  {hiringByRoleData.map((entry, index) => (
+                  {hiringByRoleData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={index % 2 === 0 ? COLORS.primary : COLORS.secondary} />
                   ))}
                 </Bar>

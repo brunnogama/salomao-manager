@@ -12,16 +12,36 @@ export function useColaboradores() {
   const fetchColaboradores = async () => {
     setLoading(true)
     // Atualizado para realizar join com sócios e líderes usando UUID
-    const { data } = await supabase
-      .from('collaborators')
-      .select(`
+    const [
+      colabRes,
+      rolesRes,
+      teamsRes,
+      locsRes
+    ] = await Promise.all([
+      supabase.from('collaborators').select(`
         *,
         partner:partners(id, name),
         leader:collaborators!collaborators_leader_id_fkey(id, name)
-      `)
-      .order('name')
+      `).order('name'),
+      supabase.from('roles').select('id, name'),
+      supabase.from('teams').select('id, name'),
+      supabase.from('locations').select('id, name')
+    ])
 
-    if (data) setColaboradores(data)
+    if (colabRes.data) {
+      const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
+      const teamsMap = new Map(teamsRes.data?.map(t => [String(t.id), t.name]) || [])
+      const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
+
+      const enrichedData = colabRes.data.map(c => ({
+        ...c,
+        roles: { name: rolesMap.get(String(c.role)) || c.role },
+        teams: { name: teamsMap.get(String(c.equipe)) || c.equipe },
+        locations: { name: locsMap.get(String(c.local)) || c.local }
+      }))
+
+      setColaboradores(enrichedData)
+    }
     setLoading(false)
   }
 
