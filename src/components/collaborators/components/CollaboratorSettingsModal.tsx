@@ -43,11 +43,7 @@ interface ImportRow {
     'OAB Número': string
     'OAB UF': string
     'OAB Emissão': string | number
-    'Banco': string
-    'Agência': string
-    'Conta': string
-    'Tipo Conta': string
-    'PIX': string
+
     'Observações': string
     [key: string]: string | number | undefined
 }
@@ -69,7 +65,6 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
             'Cargo', 'Equipe', 'Sócio', 'Líder', 'Local', 'Centro de Custo',
             'Rateio', 'Motivo Contratação', 'Tipo Contratação',
             'OAB Número', 'OAB UF', 'OAB Emissão',
-            'Banco', 'Agência', 'Conta', 'Tipo Conta', 'PIX',
             'Observações',
             'Data Desligamento', 'Iniciativa Desligamento', 'Tipo Desligamento', 'Motivo Desligamento'
         ]
@@ -200,12 +195,7 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         oab_uf: row['OAB UF'],
                         oab_emissao: parseDate(row['OAB Emissão']),
 
-                        // Bank
-                        banco: row['Banco'],
-                        agencia: String(row['Agência'] || ''),
-                        conta: String(row['Conta'] || ''),
-                        tipo_conta: row['Tipo Conta'],
-                        pix_key: String(row['PIX'] || ''),
+
 
                         observacoes: row['Observações']
                     }
