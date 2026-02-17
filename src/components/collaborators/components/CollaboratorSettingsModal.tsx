@@ -142,10 +142,10 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
 
                 try {
                     const rowNome = row['Nome']
-                    const rowCpf = row['CPF'] ? String(row['CPF']).replace(/\D/g, '') : ''
+                    const rowCpf = row['CPF'] ? String(row['CPF']).replace(/\D/g, '') : null
 
-                    if (!rowNome || !rowCpf) {
-                        throw new Error(`Linha ${rowNum}: Nome e CPF são obrigatórios.`)
+                    if (!rowNome) {
+                        throw new Error(`Linha ${rowNum}: Nome é obrigatório.`)
                     }
 
                     // Map CSV/Excel fields to DB fields
@@ -213,8 +213,8 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                     // Clean undefined/null values
                     Object.keys(dbRow).forEach(key => (dbRow[key] === undefined || dbRow[key] === null) && delete dbRow[key])
 
-                    // Check if CPF already exists
-                    const existingCollaborator = collaborators?.find(c => c.cpf?.replace(/\D/g, '') === rowCpf)
+                    // Check if CPF already exists (only if CPF is provided)
+                    const existingCollaborator = rowCpf ? collaborators?.find(c => c.cpf?.replace(/\D/g, '') === rowCpf) : null
 
                     if (existingCollaborator) {
                         // Update

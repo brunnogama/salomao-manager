@@ -401,7 +401,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const handleSave = async (closeModal = true) => {
     try {
-      if (!formData.name || !formData.cpf) return alert('Campos obrigatórios: Nome e CPF')
+      if (!formData.name) return alert('Campos obrigatórios: Nome')
       setLoading(true)
       let photoUrl = formData.photo_url
 
