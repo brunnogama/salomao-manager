@@ -26,20 +26,20 @@ create table if not exists termination_types (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Link Termination Reasons to Initiatives (Optional but good for structure, or just use name matching if preferred, but let's add a loose coupling or just keep reason standalone for now as requested dynamics are frontend based)
--- The user request implies a hierarchy: Initiative -> Reason. 
--- Let's add initiative_id to termination_reasons to support this filtering if we want strict relation,
--- OR we can just rely on the frontend filtering if the lists are somewhat static or managed independently.
--- Requirement: "todos menus suspensos deverão ter botão de gerenciamento".
--- If we manage reasons, we need to know which initiative they belong to.
--- Let's add initiative_id to termination_reasons.
-alter table termination_reasons add column if not exists initiative_id uuid references termination_initiatives(id);
+-- Create table for Termination Reasons
+create table if not exists termination_reasons (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  initiative_id uuid references termination_initiatives(id),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
 
 -- Add new columns to collaborators
 alter table collaborators add column if not exists rateio_id uuid references rateios(id);
 alter table collaborators add column if not exists hiring_reason_id uuid references hiring_reasons(id);
 alter table collaborators add column if not exists termination_initiative_id uuid references termination_initiatives(id);
 alter table collaborators add column if not exists termination_type_id uuid references termination_types(id);
+alter table collaborators add column if not exists termination_reason_id uuid references termination_reasons(id);
 
 -- Seed Data
 
@@ -104,6 +104,7 @@ alter table rateios enable row level security;
 alter table hiring_reasons enable row level security;
 alter table termination_initiatives enable row level security;
 alter table termination_types enable row level security;
+alter table termination_reasons enable row level security;
 
 -- Policies (Public read, Authenticated write for simplicity as per current pattern)
 create policy "Enable read access for all users" on rateios for select using (true);
@@ -125,3 +126,8 @@ create policy "Enable read access for all users" on termination_types for select
 create policy "Enable insert for authenticated users only" on termination_types for insert with check (auth.role() = 'authenticated');
 create policy "Enable update for authenticated users only" on termination_types for update using (auth.role() = 'authenticated');
 create policy "Enable delete for authenticated users only" on termination_types for delete using (auth.role() = 'authenticated');
+
+create policy "Enable read access for all users" on termination_reasons for select using (true);
+create policy "Enable insert for authenticated users only" on termination_reasons for insert with check (auth.role() = 'authenticated');
+create policy "Enable update for authenticated users only" on termination_reasons for update using (auth.role() = 'authenticated');
+create policy "Enable delete for authenticated users only" on termination_reasons for delete using (auth.role() = 'authenticated');

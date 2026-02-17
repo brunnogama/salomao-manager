@@ -112,12 +112,19 @@ export interface Collaborator {
   reservista?: string;
   pis?: string;
   oab_tipo?: string;
+
+  // Filhos
+  has_children?: boolean;
+  children_count?: number;
+
   hiring_reason_id?: string;
   hiring_reasons?: { id: string; name: string };
   termination_initiative_id?: string;
   termination_initiatives?: { id: string; name: string };
   termination_type_id?: string;
   termination_types?: { id: string; name: string };
+  termination_reason_id?: string;
+  termination_reasons?: { id: string; name: string };
 
   local?: string;
   locations?: { name: string }; // Joined field

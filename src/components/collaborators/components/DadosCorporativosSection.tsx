@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Briefcase, Calendar, Clock } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
@@ -9,15 +9,12 @@ interface DadosCorporativosSectionProps {
   formData: Partial<Collaborator>
   setFormData: (data: Partial<Collaborator>) => void
   maskDate: (value: string) => string
-  handleRefresh: () => void
 }
 
 export function DadosCorporativosSection({
   formData,
   setFormData,
-  maskDate,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  handleRefresh
+  maskDate
 }: DadosCorporativosSectionProps) {
   const [activeTab, setActiveTab] = useState<'contratacao' | 'desligamento'>('contratacao')
 
@@ -219,7 +216,7 @@ export function DadosCorporativosSection({
                     setFormData({
                       ...formData,
                       termination_initiative_id: v,
-                      motivo_desligamento: '',
+                      termination_reason_id: '',
                     })
                   }}
                   tableName="termination_initiatives"
@@ -234,8 +231,8 @@ export function DadosCorporativosSection({
 
                 <ManagedSelect
                   label="Motivo"
-                  value={formData.motivo_desligamento || ''}
-                  onChange={v => setFormData({ ...formData, motivo_desligamento: v })}
+                  value={formData.termination_reason_id || ''}
+                  onChange={v => setFormData({ ...formData, termination_reason_id: v })}
                   tableName="termination_reasons"
                   filter={formData.termination_initiative_id ? {
                     column: 'initiative_id',

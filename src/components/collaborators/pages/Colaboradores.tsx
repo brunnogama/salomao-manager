@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
-  GraduationCap, Briefcase, Files, History, User, BookOpen, FileSpreadsheet, Settings
+  GraduationCap, Briefcase, Files, History, User, BookOpen, FileSpreadsheet, Settings, Clock
 } from 'lucide-react'
+import { differenceInMonths, differenceInYears } from 'date-fns'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
 
@@ -26,7 +27,7 @@ import { PhotoUploadSection } from '../components/PhotoUploadSection'
 
 interface Role { id: string | number; name: string }
 interface Location { id: string | number; name: string }
-interface Team { id: string | number; name: string }
+
 
 interface ColaboradoresProps {
   userName?: string
@@ -76,9 +77,17 @@ const ESTADOS_BRASIL = [
 
 export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }: ColaboradoresProps) {
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
-  const [partners, setPartners] = useState<Partner[]>([])
+  const [partners, setPartners] = useState<Partial<Partner>[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [locations, setLocations] = useState<Location[]>([])
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
+
+  // Lookup Tables State
+  const [rateios, setRateios] = useState<{ id: string; name: string }[]>([])
+  const [hiringReasons, setHiringReasons] = useState<{ id: string; name: string }[]>([])
+  const [terminationInitiatives, setTerminationInitiatives] = useState<{ id: string; name: string }[]>([])
+  const [terminationTypes, setTerminationTypes] = useState<{ id: string; name: string }[]>([])
+  const [terminationReasons, setTerminationReasons] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false) // New State
@@ -95,22 +104,22 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   // Options for FilterSelect
   const liderOptions = React.useMemo(() => [
     { label: 'Todos Líderes', value: '' },
-    ...colaboradores.map((c: Collaborator) => ({ label: c.name, value: String(c.id) })).sort((a, b) => a.label.localeCompare(b.label))
+    ...colaboradores.map((c: Collaborator) => ({ label: c.name, value: String(c.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [colaboradores])
 
   const partnerOptions = React.useMemo(() => [
     { label: 'Todos Sócios', value: '' },
-    ...partners.map((p: Partner) => ({ label: p.name, value: String(p.id) })).sort((a, b) => a.label.localeCompare(b.label))
+    ...partners.map((p) => ({ label: p.name || '', value: String(p.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [partners])
 
   const locationOptions = React.useMemo(() => [
     { label: 'Todos Locais', value: '' },
-    ...locations.map((l: Location) => ({ label: l.name, value: String(l.id) })).sort((a, b) => a.label.localeCompare(b.label))
+    ...locations.map((l: Location) => ({ label: l.name, value: String(l.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [locations])
 
   const roleOptions = React.useMemo(() => [
     { label: 'Todos Cargos', value: '' },
-    ...roles.map((r: Role) => ({ label: r.name, value: String(r.id) })).sort((a, b) => a.label.localeCompare(b.label))
+    ...roles.map((r: Role) => ({ label: r.name, value: String(r.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [roles])
 
   // Inicializa estado vazio por padrão conforme solicitado
@@ -124,13 +133,12 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     { id: 5, label: 'Histórico', icon: History },
     { id: 6, label: 'GED', icon: Files }
   ]
-  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [, setRefreshKey] = useState(0)
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null)
 
   const [gedDocs, setGedDocs] = useState<GEDDocument[]>([])
-  const [uploadingGed, setUploadingGed] = useState(false)
+  const [, setUploadingGed] = useState(false)
   const [selectedGedCategory, setSelectedGedCategory] = useState('')
   const [atestadoDatas, setAtestadoDatas] = useState({ inicio: '', fim: '' })
   const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string }[]>([])
@@ -241,17 +249,30 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const fetchColaboradores = async () => {
     setLoading(true)
     try {
-      const [colabRes, rolesRes, locsRes, teamsRes] = await Promise.all([
+      const [colabRes, rolesRes, locsRes, teamsRes, rateiosRes, hiringReasonsRes, termInitiativesRes, termTypesRes, termReasonsRes] = await Promise.all([
         supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name)`).order('name'),
         supabase.from('roles').select('id, name'),
         supabase.from('locations').select('id, name'),
-        supabase.from('teams').select('id, name')
+        supabase.from('teams').select('id, name'),
+        supabase.from('rateios').select('id, name'),
+        supabase.from('hiring_reasons').select('id, name'),
+        supabase.from('termination_initiatives').select('id, name'),
+        supabase.from('termination_types').select('id, name'),
+        supabase.from('termination_reasons').select('id, name')
       ])
 
       if (colabRes.error) throw colabRes.error
 
       if (rolesRes.data) setRoles(rolesRes.data)
       if (locsRes.data) setLocations(locsRes.data)
+      if (teamsRes.data) {
+        setTeams(teamsRes.data)
+      }
+      if (rateiosRes.data) setRateios(rateiosRes.data)
+      if (hiringReasonsRes.data) setHiringReasons(hiringReasonsRes.data)
+      if (termInitiativesRes.data) setTerminationInitiatives(termInitiativesRes.data)
+      if (termTypesRes.data) setTerminationTypes(termTypesRes.data)
+      if (termReasonsRes.data) setTerminationReasons(termReasonsRes.data)
 
       const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
       const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
@@ -287,25 +308,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1)
     fetchColaboradores()
-  }
-
-  const uploadPhoto = async (file: File, id: string) => {
-    try {
-      setUploadingPhoto(true)
-      const fileName = `${id}_${Date.now()}.${file.name.split('.').pop()}`
-      const { error: upErr } = await supabase.storage.from('fotos-colaboradores').upload(`colaboradores/${fileName}`, file)
-      if (upErr) throw upErr
-      const { data } = supabase.storage.from('fotos-colaboradores').getPublicUrl(`colaboradores/${fileName}`)
-      return data.publicUrl
-    } catch (error) {
-      showAlert('Erro', 'Erro ao fazer upload da foto.', 'error')
-      return null
-    } finally { setUploadingPhoto(false) }
-  }
-
-  const deleteFoto = async (url: string) => {
-    const path = url.split('/fotos-colaboradores/')[1]
-    if (path) await supabase.storage.from('fotos-colaboradores').remove([`colaboradores/${path}`])
   }
 
   const handleGedUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -529,7 +531,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       Equipe: (c as any).teams?.name || c.equipe,
       Local: (c as any).locations?.name || c.local,
       Status: c.status === 'active' ? 'Ativo' : 'Inativo',
-      Admissão: formatDateToDisplay(c.hire_date)
+      Admissão: formatDateToDisplay(c.hire_date),
+      'Filhos': c.has_children ? 'Sim' : 'Não',
+      'Quantidade de Filhos': c.children_count || 0
     }));
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
@@ -700,28 +704,129 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     // 4. CORPORATIVO
     if (activeTab === 4) {
       if (isViewMode) {
+        // Helpers
+        const getLookupName = (list: any[], id?: string | number) => list.find(item => String(item.id) === String(id))?.name || id
+
+        // Calculate Duration
+        let duration = null
+        if (data.hire_date && data.termination_date) {
+          try {
+            const parseDate = (dString: string) => {
+              // Handle ISO YYYY-MM-DD
+              if (dString.includes('-')) {
+                const [year, month, day] = dString.split('-').map(Number)
+                return new Date(year, month - 1, day)
+              }
+              // Handle DD/MM/YYYY
+              if (dString.includes('/')) {
+                const [day, month, year] = dString.split('/').map(Number)
+                return new Date(year, month - 1, day)
+              }
+              return new Date()
+            }
+
+            const start = parseDate(data.hire_date)
+            const end = parseDate(data.termination_date)
+
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+              const years = differenceInYears(end, start)
+              const months = differenceInMonths(end, start) % 12
+              duration = { years, months }
+            }
+          } catch (e) { }
+        }
+
         return (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-6">Informações da Empresa</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-              <DetailRow label="Email Corporativo" value={data.email} icon={Mail} />
-              <DetailRow label="Cargo" value={(data as any).roles?.name || data.role} />
-              <DetailRow label="Centro de Custo" value={data.centro_custo} />
-              <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="Sócio Responsável" value={(data as any).partner?.name} />
-                <DetailRow label="Líder" value={(data as any).leader?.name} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="Equipe/Área" value={(data as any).teams?.name || data.equipe} />
-                <DetailRow label="Local de Trabalho" value={(data as any).locations?.name || data.local} icon={Building2} />
-              </div>
-              <div className="grid grid-cols-4 gap-4 md:col-span-2">
-                <DetailRow label="Admissão" value={formatDateToDisplay(data.hire_date)} icon={Calendar} />
-                <DetailRow label="Desligamento" value={formatDateToDisplay(data.termination_date)} icon={Calendar} />
-                <DetailRow label="Motivo Desligamento" value={data.motivo_desligamento} />
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+
+            {/* RATEIO & STATUS */}
+            <div>
+              <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-4">Rateio & Status</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <DetailRow label="Rateio" value={getLookupName(rateios, data.rateio_id)} />
                 <DetailRow label="Status" value={data.status === 'active' ? 'Ativo' : 'Inativo'} />
               </div>
             </div>
+
+            {/* CONTRATAÇÃO */}
+            <div>
+              <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-4">Contratação</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-6">
+                <DetailRow label="Data de Admissão" value={formatDateToDisplay(data.hire_date)} icon={Calendar} />
+                <DetailRow label="Motivo Contratação" value={getLookupName(hiringReasons, data.hiring_reason_id)} />
+                <DetailRow label="Tipo Contrato" value={data.contract_type} />
+
+                <div className="md:col-span-1"><DetailRow label="Email Corporativo" value={data.email} icon={Mail} /></div>
+                <DetailRow label="Sócio Responsável" value={(data as any).partner?.name || getLookupName(partners, data.partner_id)} />
+                <DetailRow label="Líder Direto" value={(data as any).leader?.name || getLookupName(colaboradores, data.leader_id)} />
+
+                <DetailRow label="Equipe/Área" value={(data as any).teams?.name || getLookupName(teams, data.equipe)} />
+                <DetailRow label="Cargo" value={(data as any).roles?.name || getLookupName(roles, data.role)} />
+                <DetailRow label="Centro de Custo" value={data.centro_custo} />
+
+                <DetailRow label="Local" value={(data as any).locations?.name || getLookupName(locations, data.local)} icon={Building2} />
+              </div>
+            </div>
+
+            {/* DESLIGAMENTO */}
+            {data.termination_date && (
+              <div>
+                <h3 className="text-[9px] font-black text-red-300 uppercase tracking-widest border-b border-red-100 pb-2 mb-4">Desligamento</h3>
+                <div className="bg-red-50/50 p-4 rounded-xl border border-red-100 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <DetailRow label="Data Desligamento" value={formatDateToDisplay(data.termination_date)} icon={Calendar} />
+                    <DetailRow label="Iniciativa" value={getLookupName(terminationInitiatives, data.termination_initiative_id)} />
+                    <DetailRow label="Tipo" value={getLookupName(terminationTypes, data.termination_type_id)} />
+                    <DetailRow label="Motivo" value={getLookupName(terminationReasons, data.termination_reason_id) || data.termination_reason_id} />
+                  </div>
+                </div>
+
+                {/* TIMELINE */}
+                {duration && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-in zoom-in-95 duration-500">
+                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                      <Clock className="h-4 w-4" /> Linha do Tempo
+                    </h4>
+
+                    <div className="relative pt-2 pb-6 px-4">
+                      {/* Bar */}
+                      <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -translate-y-1/2 rounded-full" />
+                      <div className="absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-[#1e3a8a] to-red-500 -translate-y-1/2 rounded-full opacity-20" />
+
+                      <div className="flex justify-between relative z-10">
+                        {/* Start Point */}
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-[#1e3a8a] shadow ring-4 ring-white" />
+                          <div className="text-center">
+                            <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Admissão</p>
+                            <p className="text-xs font-bold text-[#1e3a8a]">{formatDateToDisplay(data.hire_date)}</p>
+                          </div>
+                        </div>
+
+                        {/* Mid Duration */}
+                        <div className="bg-white px-4 py-1 rounded-full border border-gray-200 shadow-sm">
+                          <p className="text-xs font-bold text-gray-600">
+                            {duration.years > 0 && `${duration.years} ano${duration.years > 1 ? 's' : ''}`}
+                            {duration.years > 0 && duration.months > 0 && ' e '}
+                            {duration.months > 0 && `${duration.months} m${duration.months > 1 ? 'eses' : 'ês'}`}
+                            {duration.years === 0 && duration.months === 0 && 'Recente'}
+                          </p>
+                        </div>
+
+                        {/* End Point */}
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-red-500 shadow ring-4 ring-white" />
+                          <div className="text-center">
+                            <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Desligamento</p>
+                            <p className="text-xs font-bold text-red-600">{formatDateToDisplay(data.termination_date)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )
       } else {
@@ -731,7 +836,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               formData={formData}
               setFormData={setFormData}
               maskDate={maskDate}
-              handleRefresh={handleRefresh}
             />
           </div>
         )

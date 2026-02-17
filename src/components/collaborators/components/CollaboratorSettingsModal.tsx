@@ -17,6 +17,8 @@ interface ImportRow {
     'Data Nascimento': string | number
     'Gênero': string
     'Estado Civil': string
+    'Filhos (Sim/Não)': string
+    'Quantidade de Filhos': string | number
     'CEP': string | number
     'Endereço': string
     'Número': string | number
@@ -60,6 +62,7 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
         // Define headers matching the database schema or mapped names
         const headers = [
             'Nome', 'Email', 'CPF', 'RG', 'Data Nascimento', 'Gênero', 'Estado Civil',
+            'Filhos (Sim/Não)', 'Quantidade de Filhos',
             'CEP', 'Endereço', 'Número', 'Complemento', 'Bairro', 'Cidade', 'Estado',
             'Nome Emergência', 'Telefone Emergência', 'Parentesco Emergência',
             'Admissão', 'Status (Ativo/Inativo)',
@@ -147,6 +150,8 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         birthday: parseDate(row['Data Nascimento']),
                         gender: row['Gênero'],
                         civil_status: row['Estado Civil'],
+                        has_children: String(row['Filhos (Sim/Não)'] || '').toLowerCase() === 'sim',
+                        children_count: Number(row['Quantidade de Filhos']) || 0,
 
                         // Address
                         zip_code: String(row['CEP'] || '').replace(/\D/g, ''),
