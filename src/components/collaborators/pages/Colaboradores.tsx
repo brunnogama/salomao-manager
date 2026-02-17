@@ -512,6 +512,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       'Email Corporativo': c.email,
       CPF: c.cpf,
       Cargo: (c as any).roles?.name || c.role,
+      'Área': c.area,
       Equipe: (c as any).teams?.name || c.equipe,
       Local: (c as any).locations?.name || c.local,
       Status: c.status === 'active' ? 'Ativo' : 'Inativo',

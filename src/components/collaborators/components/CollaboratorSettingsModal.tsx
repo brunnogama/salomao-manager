@@ -34,6 +34,7 @@ interface ImportRow {
     'Status (Ativo/Inativo)': string
     'Cargo': string
     'Equipe': string
+    'Área': string
     'Sócio': string
     'Líder': string
     'Local': string
@@ -63,7 +64,7 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
             'CEP', 'Endereço', 'Número', 'Complemento', 'Bairro', 'Cidade', 'Estado',
             'Nome Emergência', 'Telefone Emergência', 'Parentesco Emergência',
             'Admissão', 'Status (Ativo/Inativo)',
-            'Cargo', 'Equipe', 'Sócio', 'Líder', 'Local', 'Centro de Custo',
+            'Cargo', 'Área', 'Equipe', 'Sócio', 'Líder', 'Local', 'Centro de Custo',
             'Rateio', 'Motivo Contratação', 'Tipo Contratação',
             'OAB Número', 'OAB UF', 'OAB Emissão',
             'Observações',
@@ -177,6 +178,7 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
 
                         // Foreign Keys mapping
                         role: findId(roles, row['Cargo']),
+                        area: (row['Área'] === 'Administrativa' || row['Área'] === 'Jurídica') ? row['Área'] : undefined,
                         equipe: findId(teams, row['Equipe']),
                         partner_id: findId(partners, row['Sócio']),
                         leader_id: findId(collaborators, row['Líder']),
