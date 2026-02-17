@@ -146,6 +146,18 @@ export function DadosCorporativosSection({
               />
 
               {/* Row 3 */}
+              <SearchableSelect
+                label="Área"
+                value={formData.area || ''}
+                onChange={(v) => setFormData({ ...formData, area: v as any })}
+                options={[
+                  { id: 'Administrativa', name: 'Administrativa' },
+                  { id: 'Jurídica', name: 'Jurídica' }
+                ]}
+                uppercase={false}
+              />
+
+
               <ManagedSelect
                 label="Equipe"
                 value={formData.equipe || ''}
@@ -165,10 +177,10 @@ export function DadosCorporativosSection({
                 value={formData.contract_type || ''}
                 onChange={(v) => setFormData({ ...formData, contract_type: v })}
                 options={[
-                  { id: 'Advogado', name: 'Advogado' },
+                  { id: 'ADVOGADO', name: 'ADVOGADO' },
                   { id: 'CLT', name: 'CLT' },
-                  { id: 'Estagiário', name: 'Estagiário' },
-                  { id: 'Jovem Aprendiz', name: 'Jovem Aprendiz' },
+                  { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' },
+                  { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' },
                   { id: 'PJ', name: 'PJ' }
                 ]}
                 uppercase={false}
