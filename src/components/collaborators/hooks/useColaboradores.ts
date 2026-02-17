@@ -47,19 +47,16 @@ export function useColaboradores() {
         setLocations(locsRes.data || [])
         setPartners(partnersRes.data || [])
 
-        // Create Lookups
-        const createMap = (list: any[]) => new Map(list?.map(i => [String(i.id), i.name]) || [])
+        const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
+        const teamsMap = new Map(teamsRes.data?.map(t => [String(t.id), t.name]) || [])
+        const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
+        const partnersMap = new Map(partnersRes.data?.map(p => [String(p.id), p.name]) || [])
+        const leadersMap = new Map(leadersRes.data?.map(l => [String(l.id), l.name]) || [])
 
-        const rolesMap = createMap(rolesRes.data || [])
-        const teamsMap = createMap(teamsRes.data || [])
-        const locsMap = createMap(locsRes.data || [])
-        const partnersMap = createMap(partnersRes.data || [])
-        const leadersMap = createMap(leadersRes.data || [])
-
-        // Helper to try to resolve partner if partner_id is missing but 'socio' field exists
+        // Helper
         const getPartnerNameFromLegacy = (c: any, map: Map<string, string>) => {
           if (c.partner_id && map.has(String(c.partner_id))) return map.get(String(c.partner_id))
-          return c.socio || c.partner // Fallback to textual fields if any
+          return c.socio || c.partner
         }
 
         const enrichedData = colabRes.data.map(c => ({
