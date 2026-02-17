@@ -10,6 +10,7 @@ interface CollaboratorSettingsModalProps {
 }
 
 interface ImportRow {
+    'ID'?: string
     'Nome': string
     'Email': string
     'CPF': string
@@ -57,7 +58,7 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
     const handleDownloadTemplate = () => {
         // Define headers matching the database schema or mapped names
         const headers = [
-            'Nome', 'Email', 'CPF', 'RG', 'Data Nascimento', 'Gênero', 'Estado Civil',
+            'ID', 'Nome', 'Email', 'CPF', 'RG', 'Data Nascimento', 'Gênero', 'Estado Civil',
             'Filhos (Sim/Não)', 'Quantidade de Filhos',
             'CEP', 'Endereço', 'Número', 'Complemento', 'Bairro', 'Cidade', 'Estado',
             'Nome Emergência', 'Telefone Emergência', 'Parentesco Emergência',
@@ -209,8 +210,22 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         }
                     })
 
-                    // Check if CPF already exists (only if CPF is provided)
-                    const existingCollaborator = rowCpf ? collaborators?.find(c => c.cpf?.replace(/\D/g, '') === rowCpf) : null
+                    // Check if ID is provided for Update
+                    const rowId = row['ID']
+                    let existingCollaborator = null
+
+                    if (rowId) {
+                        // Try to find by ID first
+                        const { data: foundById } = await supabase.from('collaborators').select('id').eq('id', rowId).single()
+                        if (foundById) {
+                            existingCollaborator = foundById
+                        }
+                    }
+
+                    // Fallback to CPF check if no ID or ID not found (and CPF is provided)
+                    if (!existingCollaborator && rowCpf) {
+                        existingCollaborator = collaborators?.find(c => c.cpf?.replace(/\D/g, '') === rowCpf)
+                    }
 
                     if (existingCollaborator) {
                         // Update

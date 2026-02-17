@@ -507,6 +507,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const handleExportXLSX = () => {
     const dataToExport = filtered.map(c => ({
+      ID: c.id,
       Nome: c.name,
       'Email Corporativo': c.email,
       CPF: c.cpf,
