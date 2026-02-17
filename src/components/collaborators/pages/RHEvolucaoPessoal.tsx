@@ -20,7 +20,9 @@ import {
   BarChart,
   Bar,
   Legend,
-  Cell
+  Cell,
+  LineChart,
+  Line
 } from 'recharts'
 import { useColaboradores } from '../hooks/useColaboradores'
 import { Collaborator } from '../../../types/controladoria'
@@ -33,6 +35,11 @@ type Segment = 'Administrativo' | 'Jurídico'
 // --- Helper Functions ---
 
 const getSegment = (colaborador: Collaborator): Segment => {
+  // 1. Try to use the explicit 'area' field if available
+  if (colaborador.area === 'Administrativa') return 'Administrativo'
+  if (colaborador.area === 'Jurídica') return 'Jurídico'
+
+  // 2. Fallback to keywords in Role/Team
   const role = (colaborador.roles?.name || colaborador.role || '').toLowerCase()
   const team = (colaborador.teams?.name || colaborador.equipe || '').toLowerCase()
 
@@ -114,47 +121,54 @@ export function RHEvolucaoPessoal() {
   }, [colaboradores, filterLocal, filterPartner, searchTerm])
 
   // --- KPI Calculations ---
+
   const totalActive = useMemo(() => {
-    return filteredData.filter(c => c.status === 'active').length
+    return filteredData.filter(c => c.status === 'active' || c.status === 'ativo').length
+  }, [filteredData])
+
+  const totalActiveAdmin = useMemo(() => {
+    return filteredData.filter(c => (c.status === 'active' || c.status === 'ativo') && getSegment(c) === 'Administrativo').length
+  }, [filteredData])
+
+  const totalActiveLegal = useMemo(() => {
+    return filteredData.filter(c => (c.status === 'active' || c.status === 'ativo') && getSegment(c) === 'Jurídico').length
   }, [filteredData])
 
   // --- Charts Data Preparation ---
 
-
-
-  // 1. Headcount Evolution (Accumulated)
+  // 1. Headcount Evolution (Accumulated) - Monthly for Selected Year
   const headcountChartData = useMemo(() => {
     const months = Array.from({ length: 12 }, (_, i) => i) // 0..11
-
-    // Calculate initial headcount before the selected year
     const selectedYearInt = parseInt(filterYear)
+
+    // Calculate initial headcount (jan 1st of selected year)
     let currentAdmin = 0
     let currentLegal = 0
 
-    // Count active people before Jan 1st of selected year
+    // Count people active before Jan 1st
     filteredData.forEach(c => {
-      const hireYear = getYearFromDate(c.hire_date)
-      if (!hireYear) return
-
-      const segment = getSegment(c)
-      const hireDate = new Date(c.hire_date!)
+      const hireDate = c.hire_date ? new Date(c.hire_date) : null
       const termDate = c.termination_date ? new Date(c.termination_date) : null
+      const segment = getSegment(c)
 
-      const startOfYear = new Date(selectedYearInt, 0, 1)
-
-      if (hireDate < startOfYear) {
-        // Hired before this year
-        // Still active or terminated after start of this year?
-        if (!termDate || termDate >= startOfYear) {
-          if (segment === 'Administrativo') currentAdmin++
-          else currentLegal++
+      if (hireDate) {
+        const startOfYear = new Date(selectedYearInt, 0, 1)
+        // Hired before start of year
+        if (hireDate < startOfYear) {
+          // Not terminated OR terminated after start of year
+          if (!termDate || termDate >= startOfYear) {
+            if (segment === 'Administrativo') currentAdmin++
+            else currentLegal++
+          }
         }
       }
     })
 
     const data = months.map(monthIndex => {
-      const monthDate = new Date(selectedYearInt, monthIndex, 1)
+      const monthDate = new Date(selectedYearInt, monthIndex, 1) // 1st day of month
+      const nextMonthDate = new Date(selectedYearInt, monthIndex + 1, 1) // 1st day of next month
 
+      // Transactions within this month
       let hiresAdmin = 0
       let hiresLegal = 0
       let termsAdmin = 0
@@ -163,23 +177,28 @@ export function RHEvolucaoPessoal() {
       filteredData.forEach(c => {
         const segment = getSegment(c)
 
+        // Hires in this month
         if (c.hire_date) {
           const hDate = new Date(c.hire_date)
-          if (hDate.getFullYear() === selectedYearInt && hDate.getMonth() === monthIndex) {
+          // Check if hire date is within this month
+          if (hDate >= monthDate && hDate < nextMonthDate) {
             if (segment === 'Administrativo') hiresAdmin++
             else hiresLegal++
           }
         }
 
+        // Terminations in this month
         if (c.termination_date) {
           const tDate = new Date(c.termination_date)
-          if (tDate.getFullYear() === selectedYearInt && tDate.getMonth() === monthIndex) {
+          // Check if termination date is within this month
+          if (tDate >= monthDate && tDate < nextMonthDate) {
             if (segment === 'Administrativo') termsAdmin++
             else termsLegal++
           }
         }
       })
 
+      // Update cumulative counts
       currentAdmin += (hiresAdmin - termsAdmin)
       currentLegal += (hiresLegal - termsLegal)
 
@@ -194,87 +213,104 @@ export function RHEvolucaoPessoal() {
     return data
   }, [filteredData, filterYear])
 
-  // 2. Hiring Volume by Role (Top 10)
-  const hiringByRoleData = useMemo(() => {
-    const counts: Record<string, number> = {}
 
-    filteredData.forEach(c => {
-      if (!c.hire_date) return
-      const hDate = new Date(c.hire_date)
-      if (hDate.getFullYear().toString() !== filterYear) return
+  // 2. Continuous Hiring by Role (Stacked Bar) - Admin & Legal Separate
+  // Data Structure: [{ month: 'Jan', 'Advogado': 2, 'Paralegal': 1, ... }, ...]
 
-      const roleName = c.roles?.name || c.role || 'Não definido'
-      counts[roleName] = (counts[roleName] || 0) + 1
-    })
-
-    return Object.entries(counts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10)
-  }, [filteredData, filterYear])
-
-  // 3. Monthly Hiring Flow
-  const monthlyHiringData = useMemo(() => {
+  const processHiringByRole = (targetSegment: Segment) => {
     const months = Array.from({ length: 12 }, (_, i) => {
       const d = new Date(parseInt(filterYear), i, 1)
       return {
-        month: i,
+        monthIndex: i,
         name: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
-        Administrativo: 0,
-        Jurídico: 0
+        total: 0
       }
-    })
+    }) as any[]
+
+    const uniqueRoles = new Set<string>()
 
     filteredData.forEach(c => {
       if (!c.hire_date) return
       const hDate = new Date(c.hire_date)
       if (hDate.getFullYear().toString() !== filterYear) return
+
+      if (getSegment(c) !== targetSegment) return
 
       const monthIndex = hDate.getMonth()
-      const segment = getSegment(c)
+      const roleName = c.roles?.name || c.role || 'Não definido'
 
-      if (segment === 'Administrativo') months[monthIndex].Administrativo++
-      else months[monthIndex].Jurídico++
+      uniqueRoles.add(roleName)
+
+      // Increment count for this role in this month
+      months[monthIndex][roleName] = (months[monthIndex][roleName] || 0) + 1
+      months[monthIndex].total++
     })
 
-    return months
-  }, [filteredData, filterYear])
+    return { data: months, roles: Array.from(uniqueRoles) }
+  }
 
-  // 4. Monthly Termination Flow
-  const monthlyTerminationData = useMemo(() => {
-    const months = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(parseInt(filterYear), i, 1)
-      return {
-        month: i,
-        name: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
-        Administrativo: 0,
-        Jurídico: 0
-      }
+  const hiringAdmin = useMemo(() => processHiringByRole('Administrativo'), [filteredData, filterYear])
+  const hiringLegal = useMemo(() => processHiringByRole('Jurídico'), [filteredData, filterYear])
+
+  // Generate colors for roles
+  const roleColors = [
+    '#1e3a8a', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+    '#ec4899', '#06b6d4', '#84cc16', '#6366f1', '#14b8a6'
+  ]
+
+
+  // 3. Yearly Hiring Flow (Fluxo de Contratações) - Line Chart
+  const yearlyHiringFlow = useMemo(() => {
+    // Get range of years from data or default to recent
+    const yearsMap = new Map<number, { admin: number, legal: number }>()
+
+    filteredData.forEach(c => {
+      if (!c.hire_date) return
+      const year = new Date(c.hire_date).getFullYear()
+      if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0 })
+
+      const counts = yearsMap.get(year)!
+      if (getSegment(c) === 'Administrativo') counts.admin++
+      else counts.legal++
     })
+
+    const sortedYears = Array.from(yearsMap.keys()).sort((a, b) => a - b)
+    // If empty, show at least current year
+    if (sortedYears.length === 0) sortedYears.push(new Date().getFullYear())
+
+    // Fill gaps? Or just show data points. Let's just show present years.
+    return sortedYears.map(year => ({
+      name: year.toString(),
+      Administrativo: yearsMap.get(year)?.admin || 0,
+      Jurídico: yearsMap.get(year)?.legal || 0
+    }))
+  }, [filteredData]) // Not dependent on filterYear, shows historical trend
+
+
+  // 4. Yearly Turnover Flow (Fluxo de Desligamentos) - Line Chart
+  const yearlyTurnoverFlow = useMemo(() => {
+    const yearsMap = new Map<number, { admin: number, legal: number }>()
 
     filteredData.forEach(c => {
       if (!c.termination_date) return
-      const tDate = new Date(c.termination_date)
-      if (tDate.getFullYear().toString() !== filterYear) return
+      const year = new Date(c.termination_date).getFullYear()
+      if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0 })
 
-      const monthIndex = tDate.getMonth()
-      const segment = getSegment(c)
-
-      if (segment === 'Administrativo') months[monthIndex].Administrativo++
-      else months[monthIndex].Jurídico++
+      const counts = yearsMap.get(year)!
+      if (getSegment(c) === 'Administrativo') counts.admin++
+      else counts.legal++
     })
 
-    return months
-  }, [filteredData, filterYear])
+    const sortedYears = Array.from(yearsMap.keys()).sort((a, b) => a - b)
+    if (sortedYears.length === 0) sortedYears.push(new Date().getFullYear())
 
-  // --- Charts Branding ---
-  const COLORS = {
-    primary: '#1e3a8a',
-    secondary: '#10b981', // Emerald
-    tertiary: '#f59e0b', // Amber
-    text: '#6b7280',
-    grid: '#e5e7eb'
-  }
+    return sortedYears.map(year => ({
+      name: year.toString(),
+      Administrativo: yearsMap.get(year)?.admin || 0,
+      Jurídico: yearsMap.get(year)?.legal || 0
+    }))
+  }, [filteredData])
+
 
   // --- Custom Tooltip ---
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -294,6 +330,14 @@ export function RHEvolucaoPessoal() {
       )
     }
     return null
+  }
+
+  const COLORS = {
+    primary: '#1e3a8a',
+    secondary: '#10b981', // Emerald
+    tertiary: '#f59e0b', // Amber
+    text: '#6b7280',
+    grid: '#e5e7eb'
   }
 
   if (loading) {
@@ -370,15 +414,41 @@ export function RHEvolucaoPessoal() {
       </div>
 
       {/* 2. KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        {/* Total Active - Admin */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
           <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Ativos</p>
-            <p className="text-3xl font-black text-blue-900 mt-1">{totalActive}</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Administrativo</p>
+            <p className="text-3xl font-black text-blue-900 mt-1">{totalActiveAdmin}</p>
           </div>
           <div className="p-3 bg-blue-50 rounded-xl">
             <Users className="h-6 w-6 text-blue-600" />
+          </div>
+        </div>
+
+        {/* Total Active - Legal */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Jurídico</p>
+            <p className="text-3xl font-black text-emerald-900 mt-1">{totalActiveLegal}</p>
+          </div>
+          <div className="p-3 bg-emerald-50 rounded-xl">
+            <ScaleIcon className="h-6 w-6 text-emerald-600" />
+          </div>
+        </div>
+
+        {/* Total Active - General */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-gray-800"></div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Ativos</p>
+            <p className="text-3xl font-black text-gray-800 mt-1">{totalActive}</p>
+          </div>
+          <div className="p-3 bg-gray-100 rounded-xl">
+            <Users className="h-6 w-6 text-gray-600" />
           </div>
         </div>
       </div>
@@ -394,7 +464,7 @@ export function RHEvolucaoPessoal() {
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-800 tracking-tight">Evolução Acumulada do Headcount</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Administrativo vs Jurídico</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Administrativo vs Jurídico ({filterYear})</p>
             </div>
           </div>
         </div>
@@ -447,87 +517,136 @@ export function RHEvolucaoPessoal() {
         </div>
       </div>
 
+      {/* Chart 2: Hiring by Role (Administrative & Legal) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* Chart 2: Hiring by Role */}
+        {/* Administrative Hiring */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
+            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Top 10 no período</p>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Adm)</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{filterYear}</p>
             </div>
           </div>
           <div className="flex-1 w-full min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart layout="vertical" data={hiringByRoleData} margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={COLORS.grid} />
-                <XAxis type="number" hide />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={120}
-                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 700 }}
-                  interval={0}
-                />
+              <BarChart data={hiringAdmin.data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" name="Contratações" radius={[0, 4, 4, 0]} barSize={20}>
-                  {hiringByRoleData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={index % 2 === 0 ? COLORS.primary : COLORS.secondary} />
-                  ))}
-                </Bar>
+                <Legend />
+                {hiringAdmin.roles.map((role, idx) => (
+                  <Bar key={role} dataKey={role} stackId="a" fill={roleColors[idx % roleColors.length]} radius={[0, 0, 0, 0]} />
+                ))}
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Chart 3 & 4 Container */}
-        <div className="flex flex-col gap-6">
-
-          {/* Chart 3: Monthly Hiring Flow */}
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
-            <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-emerald-600" />
-              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Contratações</h3>
+        {/* Legal Hiring */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+              <Briefcase className="w-5 h-5" />
             </div>
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyHiringData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="Administrativo" fill={COLORS.primary} stackId="a" radius={[0, 0, 4, 4]} />
-                  <Bar dataKey="Jurídico" fill={COLORS.secondary} stackId="a" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Jur)</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{filterYear}</p>
             </div>
           </div>
-
-          {/* Chart 4: Monthly Termination Flow */}
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
-            <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-              <UserMinus className="w-4 h-4 text-red-600" />
-              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Desligamentos</h3>
-            </div>
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyTerminationData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="Administrativo" fill={COLORS.primary} stackId="a" radius={[0, 0, 4, 4]} />
-                  <Bar dataKey="Jurídico" fill={COLORS.secondary} stackId="a" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="flex-1 w-full min-h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={hiringLegal.data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                {hiringLegal.roles.map((role, idx) => (
+                  <Bar key={role} dataKey={role} stackId="a" fill={roleColors[idx % roleColors.length]} radius={[0, 0, 0, 0]} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
           </div>
+        </div>
 
+      </div>
+
+
+      {/* Flow Charts Trend (Yearly) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Chart 3: Hiring Flow (Historical) */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
+          <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+            <UserPlus className="w-4 h-4 text-emerald-600" />
+            <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Contratações (Anual)</h3>
+          </div>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={yearlyHiringFlow}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Line type="monotone" dataKey="Administrativo" stroke={COLORS.primary} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="Jurídico" stroke={COLORS.secondary} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart 4: Turnover Flow (Historical) */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
+          <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+            <UserMinus className="w-4 h-4 text-red-600" />
+            <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Desligamentos (Anual)</h3>
+          </div>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={yearlyTurnoverFlow}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Line type="monotone" dataKey="Administrativo" stroke={COLORS.primary} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="Jurídico" stroke={COLORS.secondary} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
       </div>
 
     </div>
+  )
+}
+
+function ScaleIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+      <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+      <path d="M7 21h10" />
+      <path d="M12 3v18" />
+      <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
+    </svg>
   )
 }
