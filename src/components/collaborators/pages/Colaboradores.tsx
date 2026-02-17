@@ -101,6 +101,11 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
 
+  const getLookupName = (list: { id: string; name: string }[], id?: string) => {
+    if (!id) return ''
+    return list.find(i => i.id === id)?.name || ''
+  }
+
   // Options for FilterSelect
   const liderOptions = React.useMemo(() => [
     { label: 'Todos Líderes', value: '' },
@@ -414,15 +419,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         // Update
         // Remove nested objects that are not columns
         const {
-          // @ts-ignore
           leader,
-          // @ts-ignore
           partner,
-          // @ts-ignore
           roles,
-          // @ts-ignore
           locations,
-          // @ts-ignore
           teams,
           photo_url,
           ...cleanData
@@ -436,15 +436,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         // Insert
         // Remove nested objects that are not columns
         const {
-          // @ts-ignore
           leader,
-          // @ts-ignore
           partner,
-          // @ts-ignore
           roles,
-          // @ts-ignore
           locations,
-          // @ts-ignore
           teams,
           photo_url,
           ...cleanData
@@ -534,7 +529,11 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       Status: c.status === 'active' ? 'Ativo' : 'Inativo',
       Admissão: formatDateToDisplay(c.hire_date),
       'Filhos': c.has_children ? 'Sim' : 'Não',
-      'Quantidade de Filhos': c.children_count || 0
+      'Quantidade de Filhos': c.children_count || 0,
+      'Data Desligamento': formatDateToDisplay(c.termination_date),
+      'Iniciativa Desligamento': getLookupName(terminationInitiatives, c.termination_initiative_id),
+      'Tipo Desligamento': getLookupName(terminationTypes, c.termination_type_id),
+      'Motivo Desligamento': getLookupName(terminationReasons, c.termination_reason_id)
     }));
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);

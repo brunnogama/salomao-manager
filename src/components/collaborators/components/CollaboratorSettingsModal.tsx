@@ -70,7 +70,8 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
             'Rateio', 'Motivo Contratação', 'Tipo Contratação',
             'OAB Número', 'OAB UF', 'OAB Emissão',
             'Banco', 'Agência', 'Conta', 'Tipo Conta', 'PIX',
-            'Observações'
+            'Observações',
+            'Data Desligamento', 'Iniciativa Desligamento', 'Tipo Desligamento', 'Motivo Desligamento'
         ]
 
         const ws = XLSX.utils.aoa_to_sheet([headers])
@@ -106,6 +107,9 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                 { data: centers },
                 { data: rateios },
                 { data: hiringReasons },
+                { data: terminationInitiatives },
+                { data: terminationTypes },
+                { data: terminationReasons },
                 { data: collaborators } // For leaders and checking existing CPFs
             ] = await Promise.all([
                 supabase.from('roles').select('id, name'),
@@ -115,6 +119,9 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                 supabase.from('cost_centers').select('id, name'),
                 supabase.from('rateios').select('id, name'),
                 supabase.from('hiring_reasons').select('id, name'),
+                supabase.from('termination_initiatives').select('id, name'),
+                supabase.from('termination_types').select('id, name'),
+                supabase.from('termination_reasons').select('id, name'),
                 supabase.from('collaborators').select('id, name, cpf')
             ])
 
@@ -181,6 +188,12 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         centro_custo: findId(centers, row['Centro de Custo']),
                         rateio_id: findId(rateios, row['Rateio']),
                         hiring_reason_id: findId(hiringReasons, row['Motivo Contratação']),
+
+                        // Termination
+                        termination_date: parseDate(row['Data Desligamento']),
+                        termination_initiative_id: findId(terminationInitiatives, String(row['Iniciativa Desligamento'] || '')),
+                        termination_type_id: findId(terminationTypes, String(row['Tipo Desligamento'] || '')),
+                        termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
 
                         // Professional
                         oab_numero: String(row['OAB Número'] || ''),

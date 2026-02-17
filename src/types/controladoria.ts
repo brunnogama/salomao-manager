@@ -38,7 +38,9 @@ export interface Collaborator {
   id: string;
   name: string;
   partner_id?: string; // Vínculo com o Sócio Responsável (tabela partners)
+  partner?: { id: string; name: string }; // Joined field
   leader_id?: string; // Vínculo com o Líder Direto
+  leader?: { id: string; name: string }; // Joined field
   email?: string;
   phone?: string;
   status: 'active' | 'inactive';
