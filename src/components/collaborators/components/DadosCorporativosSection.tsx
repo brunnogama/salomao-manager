@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react'
-import { Briefcase, Calendar, Clock, AlertTriangle } from 'lucide-react'
+import React, { useState, useMemo } from 'react'
+import { Briefcase, Calendar, Clock } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
-import { differenceInMonths, differenceInYears, parseISO } from 'date-fns'
+import { differenceInMonths, differenceInYears } from 'date-fns'
 
 interface DadosCorporativosSectionProps {
   formData: Partial<Collaborator>
@@ -16,6 +16,7 @@ export function DadosCorporativosSection({
   formData,
   setFormData,
   maskDate,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleRefresh
 }: DadosCorporativosSectionProps) {
   const [activeTab, setActiveTab] = useState<'contratacao' | 'desligamento'>('contratacao')
@@ -69,8 +70,8 @@ export function DadosCorporativosSection({
           type="button"
           onClick={() => setActiveTab('contratacao')}
           className={`flex-1 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${activeTab === 'contratacao'
-              ? 'bg-white text-[#1e3a8a] shadow-sm'
-              : 'text-gray-400 hover:text-gray-600'
+            ? 'bg-white text-[#1e3a8a] shadow-sm'
+            : 'text-gray-400 hover:text-gray-600'
             }`}
         >
           Contratação
@@ -79,8 +80,8 @@ export function DadosCorporativosSection({
           type="button"
           onClick={() => setActiveTab('desligamento')}
           className={`flex-1 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${activeTab === 'desligamento'
-              ? 'bg-white text-red-700 shadow-sm'
-              : 'text-gray-400 hover:text-gray-600'
+            ? 'bg-white text-red-700 shadow-sm'
+            : 'text-gray-400 hover:text-gray-600'
             }`}
         >
           Desligamento
@@ -96,7 +97,7 @@ export function DadosCorporativosSection({
               <SearchableSelect
                 label="Status"
                 value={formData.status || 'active'}
-                onChange={v => setFormData({ ...formData, status: v as 'active' | 'inactive' })}
+                onChange={(v) => setFormData({ ...formData, status: v as 'active' | 'inactive' })}
                 options={[{ name: 'Ativo', id: 'active' }, { name: 'Inativo', id: 'inactive' }]}
                 uppercase={false}
               />
@@ -165,7 +166,7 @@ export function DadosCorporativosSection({
               <SearchableSelect
                 label="Tipo da Contratação"
                 value={formData.contract_type || ''}
-                onChange={v => setFormData({ ...formData, contract_type: v })}
+                onChange={(v) => setFormData({ ...formData, contract_type: v })}
                 options={[
                   { id: 'Advogado', name: 'Advogado' },
                   { id: 'CLT', name: 'CLT' },

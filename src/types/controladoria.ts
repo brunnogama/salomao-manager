@@ -98,6 +98,20 @@ export interface Collaborator {
   // Novos Campos (Rateio e Desligamento)
   rateio_id?: string;
   rateios?: { id: string; name: string };
+
+  // Campos Adicionais para evitar erros de lint (UI/Form)
+  civil_status?: string;
+  nacionalidade?: string;
+  naturalidade_cidade?: string;
+  naturalidade_uf?: string;
+  mae?: string;
+  pai?: string;
+  ctps?: string;
+  cnh?: string;
+  tituloseleitor?: string;
+  reservista?: string;
+  pis?: string;
+  oab_tipo?: string;
   hiring_reason_id?: string;
   hiring_reasons?: { id: string; name: string };
   termination_initiative_id?: string;

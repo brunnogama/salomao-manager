@@ -1,9 +1,8 @@
-// src/components/collaborators/pages/Colaboradores.tsx
 import React, { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
-  GraduationCap, Briefcase, Files, History, User, BookOpen, FileSpreadsheet
+  GraduationCap, Briefcase, Files, History, User, BookOpen, FileSpreadsheet, Settings
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
@@ -14,50 +13,75 @@ import { AlertModal } from '../../ui/AlertModal'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 
-// Importar componentes modulares
-import { PhotoUploadSection } from '../components/PhotoUploadSection'
-import { formatDateToDisplay, formatDateToISO } from '../../../lib/dateUtils'
+import { CollaboratorSettingsModal } from '../components/CollaboratorSettingsModal'
 import { DadosPessoaisSection } from '../components/DadosPessoaisSection'
 import { EnderecoSection } from '../components/EnderecoSection'
-import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
 import { InformacoesProfissionaisSection } from '../components/InformacoesProfissionaisSection'
 import { DadosEscolaridadeSection } from '../components/DadosEscolaridadeSection'
+import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
 import { HistoricoSection } from '../components/HistoricoSection'
+import { PhotoUploadSection } from '../components/PhotoUploadSection'
 
-// --- ESTADOS ---
-const ESTADOS_BRASIL = [
-  { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },
-  { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' },
-  { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' },
-  { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' },
-  { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' },
-  { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' },
-  { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' },
-  { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' },
-  { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }
-];
+// ... existing imports
 
-interface GEDDocument {
-  id: string;
-  nome_arquivo: string;
-  url: string;
-  categoria: string;
-  created_at: string;
-}
+interface Role { id: string | number; name: string }
+interface Location { id: string | number; name: string }
+interface Team { id: string | number; name: string }
 
 interface ColaboradoresProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
+  userName?: string
+  onModuleHome?: () => void
+  onLogout?: () => void
 }
+interface GEDDocument {
+  id: string
+  colaborador_id: string
+  nome_arquivo: string
+  url: string
+  categoria: string
+  tamanho: number
+  tipo_arquivo: string
+  created_at: string
+}
+
+const ESTADOS_BRASIL = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' }
+]
 
 export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }: ColaboradoresProps) {
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
   const [partners, setPartners] = useState<Partner[]>([])
-  const [roles, setRoles] = useState<any[]>([])
-  const [locations, setLocations] = useState<any[]>([])
+  const [roles, setRoles] = useState<Role[]>([])
+  const [locations, setLocations] = useState<Location[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
+  const [showSettingsModal, setShowSettingsModal] = useState(false) // New State
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
   const [activeDetailTab, setActiveDetailTab] = useState(1)
   const [activeFormTab, setActiveFormTab] = useState(1)
@@ -71,22 +95,22 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   // Options for FilterSelect
   const liderOptions = React.useMemo(() => [
     { label: 'Todos Líderes', value: '' },
-    ...colaboradores.map(c => ({ label: c.name, value: String(c.id) })).sort((a, b) => a.label.localeCompare(b.label))
+    ...colaboradores.map((c: Collaborator) => ({ label: c.name, value: String(c.id) })).sort((a, b) => a.label.localeCompare(b.label))
   ], [colaboradores])
 
   const partnerOptions = React.useMemo(() => [
     { label: 'Todos Sócios', value: '' },
-    ...partners.map(p => ({ label: p.name, value: String(p.id) })).sort((a, b) => a.label.localeCompare(b.label))
+    ...partners.map((p: Partner) => ({ label: p.name, value: String(p.id) })).sort((a, b) => a.label.localeCompare(b.label))
   ], [partners])
 
   const locationOptions = React.useMemo(() => [
     { label: 'Todos Locais', value: '' },
-    ...locations.map(l => ({ label: l.name, value: String(l.id) })).sort((a, b) => a.label.localeCompare(b.label))
+    ...locations.map((l: Location) => ({ label: l.name, value: String(l.id) })).sort((a, b) => a.label.localeCompare(b.label))
   ], [locations])
 
   const roleOptions = React.useMemo(() => [
     { label: 'Todos Cargos', value: '' },
-    ...roles.map(r => ({ label: r.name, value: String(r.id) })).sort((a, b) => a.label.localeCompare(b.label))
+    ...roles.map((r: Role) => ({ label: r.name, value: String(r.id) })).sort((a, b) => a.label.localeCompare(b.label))
   ], [roles])
 
   // Inicializa estado vazio por padrão conforme solicitado
@@ -179,6 +203,20 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
   const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14)
   const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
+
+  const formatDateToDisplay = (isoDate: string | undefined | null) => {
+    if (!isoDate) return ''
+    if (isoDate.includes('/')) return isoDate
+    const [y, m, d] = isoDate.split('-')
+    return `${d}/${m}/${y}`
+  }
+
+  const formatDateToISO = (displayDate: string | undefined | null) => {
+    if (!displayDate) return ''
+    if (displayDate.includes('-')) return displayDate
+    const [d, m, y] = displayDate.split('/')
+    return `${y}-${m}-${d}`
+  }
 
   const handleCepBlur = async () => {
     const cep = formData.zip_code?.replace(/\D/g, '')
@@ -925,6 +963,14 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         {/* Right: Actions */}
         <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0">
           <button
+            onClick={() => setShowSettingsModal(true)}
+            className="p-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl transition-all border border-gray-200 shadow-sm hover:shadow-md"
+            title="Configurações (Importar/Exportar)"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
+
+          <button
             onClick={handleExportXLSX}
             className="flex items-center gap-2 px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 whitespace-nowrap"
           >
@@ -1202,6 +1248,15 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         confirmText="Excluir"
         cancelText="Cancelar"
         variant="danger"
+      />
+
+      <CollaboratorSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onSuccess={() => {
+          fetchColaboradores();
+          showAlert('Sucesso', 'Importação concluída com sucesso!', 'success');
+        }}
       />
     </div>
   )
