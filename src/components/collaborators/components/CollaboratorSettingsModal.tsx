@@ -173,7 +173,13 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
 
                         // Corporate
                         hire_date: parseDate(row['Admissão']),
-                        status: String(row['Status (Ativo/Inativo)'] || '').trim().toLowerCase() === 'inativo' ? 'inactive' : 'active',
+                        // Logic update: Support 'Status' or 'Status (Ativo/Inativo)'
+                        // Only set status if one of the columns is present
+                        status: (() => {
+                            const rawStatus = row['Status (Ativo/Inativo)'] || row['Status'];
+                            if (rawStatus === undefined || rawStatus === null || String(rawStatus).trim() === '') return undefined;
+                            return String(rawStatus).trim().toLowerCase() === 'inativo' ? 'inactive' : 'active';
+                        })(),
                         contract_type: row['Tipo Contratação'],
 
                         // Foreign Keys mapping
