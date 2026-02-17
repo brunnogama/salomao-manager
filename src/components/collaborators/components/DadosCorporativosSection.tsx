@@ -44,10 +44,10 @@ export function DadosCorporativosSection({
         </div>
       </div>
 
-      {/* 2. Grupo Contratação */}
+      {/* 2. Contratação */}
       <div className="bg-blue-50/30 p-4 rounded-xl space-y-4 border border-blue-100/50">
         <h4 className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest flex items-center gap-2">
-          Grupo Contratação
+          Contratação
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -164,10 +164,10 @@ export function DadosCorporativosSection({
         </div>
       </div>
 
-      {/* 3. Grupo Desligamento */}
+      {/* 3. Desligamento */}
       <div className="bg-red-50/30 p-4 rounded-xl space-y-4 border border-red-100/50">
         <h4 className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
-          Grupo Desligamento
+          Desligamento
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
