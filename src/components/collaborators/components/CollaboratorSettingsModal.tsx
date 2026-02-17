@@ -191,11 +191,10 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         // termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
 
                         // Professional
-                        oab_numero: String(row['OAB Número'] || ''),
-                        oab_uf: row['OAB UF']?.trim().toUpperCase(),
+                        oab_numero: String(row['Número da OAB'] || ''),
+                        oab_uf: row['OAB UF']?.trim().toUpperCase().substring(0, 2),
                         oab_emissao: parseDate(row['OAB Emissão']),
 
-                        // Temporarily commented out as column appears missing in DB
                         // termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
 
 
