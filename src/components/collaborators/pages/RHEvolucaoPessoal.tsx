@@ -34,17 +34,23 @@ type Segment = 'Administrativo' | 'Jurídico'
 
 // --- Helper Functions ---
 
+const normalizeString = (str?: string) => {
+  if (!str) return ''
+  return str.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
 const getSegment = (colaborador: Collaborator): Segment => {
   // 1. Try to use the explicit 'area' field if available
-  if (colaborador.area === 'Administrativa') return 'Administrativo'
-  if (colaborador.area === 'Jurídica') return 'Jurídico'
+  const area = normalizeString(colaborador.area)
+  if (area === 'administrativa' || area === 'administrativo') return 'Administrativo'
+  if (area === 'juridica' || area === 'juridico') return 'Jurídico'
 
   // 2. Fallback to keywords in Role/Team
-  const role = (colaborador.roles?.name || colaborador.role || '').toLowerCase()
-  const team = (colaborador.teams?.name || colaborador.equipe || '').toLowerCase()
+  const role = normalizeString(colaborador.roles?.name || colaborador.role)
+  const team = normalizeString(colaborador.teams?.name || colaborador.equipe)
 
   // Keywords indicating Legal sector
-  const legalKeywords = ['advogado', 'juridico', 'jurídico', 'estagiário de direito', 'sócio', 'socio']
+  const legalKeywords = ['advogado', 'juridico', 'estagiario de direito', 'socio']
 
   // Checks
   if (legalKeywords.some(k => role.includes(k) || team.includes(k))) {
@@ -52,6 +58,11 @@ const getSegment = (colaborador: Collaborator): Segment => {
   }
 
   return 'Administrativo'
+}
+
+const isActive = (c: Collaborator) => {
+  const status = normalizeString(c.status)
+  return status === 'active' || status === 'ativo'
 }
 
 const getYearFromDate = (dateStr?: string) => {
@@ -123,15 +134,15 @@ export function RHEvolucaoPessoal() {
   // --- KPI Calculations ---
 
   const totalActive = useMemo(() => {
-    return filteredData.filter(c => c.status === 'active' || c.status === 'ativo').length
+    return filteredData.filter(c => isActive(c)).length
   }, [filteredData])
 
   const totalActiveAdmin = useMemo(() => {
-    return filteredData.filter(c => (c.status === 'active' || c.status === 'ativo') && getSegment(c) === 'Administrativo').length
+    return filteredData.filter(c => isActive(c) && getSegment(c) === 'Administrativo').length
   }, [filteredData])
 
   const totalActiveLegal = useMemo(() => {
-    return filteredData.filter(c => (c.status === 'active' || c.status === 'ativo') && getSegment(c) === 'Jurídico').length
+    return filteredData.filter(c => isActive(c) && getSegment(c) === 'Jurídico').length
   }, [filteredData])
 
   // --- Charts Data Preparation ---
