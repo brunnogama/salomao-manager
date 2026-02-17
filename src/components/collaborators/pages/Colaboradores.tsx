@@ -12,6 +12,7 @@ import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { Collaborator, Partner } from '../../../types/controladoria'
 import { AlertModal } from '../../ui/AlertModal'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
+import { SearchableSelect } from '../../crm/SearchableSelect'
 
 // Importar componentes modulares
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
