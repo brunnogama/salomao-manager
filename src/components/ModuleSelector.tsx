@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ChevronRight, ShieldCheck } from 'lucide-react'
+import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck } from 'lucide-react'
+
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
@@ -11,7 +12,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   const [allowedModules, setAllowedModules] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
+
 
   useEffect(() => {
     async function fetchPermissions() {
@@ -79,35 +80,34 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
     gradientTo: string
   ) => {
     const allowed = isModuleAllowed(key)
-    const isHovered = hoveredCard === key
+
 
     return (
       <div
         key={key}
-        onMouseEnter={() => setHoveredCard(key)}
-        onMouseLeave={() => setHoveredCard(null)}
+
         onClick={() => allowed && onSelect(key)}
         className={`
           relative overflow-hidden rounded-xl border transition-all duration-300 flex flex-col items-center text-center justify-between group
           ${allowed
-            ? 'bg-white/90 backdrop-blur-xl shadow-md border-white/50 hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:border-[#d4af37]/30'
-            : 'bg-gray-100/50 backdrop-blur-sm border-gray-200/50 opacity-70 cursor-not-allowed grayscale-[0.5]'
+            ? 'bg-white/5 backdrop-blur-md shadow-lg border-white/10 hover:shadow-2xl hover:bg-white/10 hover:-translate-y-1 cursor-pointer hover:border-[#d4af37]/50'
+            : 'bg-gray-100/5 backdrop-blur-sm border-white/5 opacity-50 cursor-not-allowed grayscale'
           }
-          h-[240px] w-full
+          h-[180px] w-full
         `}
       >
         {/* Background Gradients */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300`} />
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-0 group-hover:opacity-20 transition-opacity duration-300`} />
 
         {/* Top Highlight Line */}
         {allowed && (
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         )}
 
         {/* Lock Badge */}
         {!allowed && (
-          <div className="absolute top-4 right-4 p-1.5 rounded-lg bg-gray-200/50 backdrop-blur-md">
-            <Lock className="h-3.5 w-3.5 text-gray-500" />
+          <div className="absolute top-4 right-4 p-1.5 rounded-lg bg-gray-900/50 backdrop-blur-md">
+            <Lock className="h-3.5 w-3.5 text-gray-400" />
           </div>
         )}
 
@@ -118,10 +118,10 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           <div className={`
             relative p-3.5 rounded-xl mb-3.5 transition-all duration-300 group-hover:scale-105
             ${allowed
-              ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-md shadow-${gradientFrom}/20`
-              : 'bg-gray-200 text-gray-400'}
+              ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-lg shadow-${gradientFrom}/20`
+              : 'bg-gray-800/50 text-gray-500'}
           `}>
-            <Icon className="h-7 w-7" strokeWidth={1.5} />
+            <Icon className="h-6 w-6" strokeWidth={1.5} />
 
             {/* Inner Glow Effect */}
             {allowed && (
@@ -129,31 +129,13 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             )}
           </div>
 
-          <h2 className="text-base font-black text-[#0a192f] mb-2.5 tracking-tight group-hover:text-[#1e3a8a] transition-colors">
+          <h2 className="text-sm font-bold text-white mb-2 tracking-wide group-hover:text-[#d4af37] transition-colors">
             {title}
           </h2>
 
-          <p className="text-[11px] text-gray-500 font-medium leading-relaxed max-w-[220px] line-clamp-2 group-hover:text-gray-600 transition-colors">
+          <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-[200px] line-clamp-2 group-hover:text-gray-300 transition-colors">
             {description}
           </p>
-        </div>
-
-        {/* Bottom Action Area */}
-        <div className={`
-          w-full py-3 px-5 border-t border-gray-100/50 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300
-          ${allowed ? 'bg-gray-50/50 group-hover:bg-blue-50/30 text-gray-400 group-hover:text-[#1e3a8a]' : 'bg-gray-100/50 text-gray-400'}
-        `}>
-          {allowed ? (
-            <>
-              <span>Acessar</span>
-              <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-300 ${isHovered ? 'translate-x-1 text-[#d4af37]' : ''}`} />
-            </>
-          ) : (
-            <span className="text-red-400 flex items-center gap-1.5 mx-auto">
-              <Lock className="w-3 h-3" />
-              Restrito
-            </span>
-          )}
         </div>
       </div>
     )
