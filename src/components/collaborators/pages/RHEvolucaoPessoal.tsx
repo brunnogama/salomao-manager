@@ -22,6 +22,7 @@ import {
   Legend,
   LabelList
 } from 'recharts'
+import { Scale } from 'lucide-react'
 import { useColaboradores } from '../hooks/useColaboradores'
 import { Collaborator } from '../../../types/controladoria'
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
@@ -288,146 +289,50 @@ export function RHEvolucaoPessoal() {
 
         return {
           name: year.toString(),
-          Administrativo: activeAdmin,
-          Jurídico: activeLegal,
           Total: activeAdmin + activeLegal
         }
       })
     }
   }, [filteredData, filterYear, filterMonth])
+  // 2. Hiring Ranking by Role (Horizontal Bar)
+  const processHiringRanking = (targetSegment: Segment) => {
+    const roleCounts = new Map<string, number>()
 
-
-  // 2. Continuous Hiring by Role (Stacked Bar) - Admin & Legal Separate
-  // Data Structure: [{ month: 'Jan', 'Advogado': 2, 'Paralegal': 1, ... }, ...]
-
-  const processHiringByRole = (targetSegment: Segment) => {
-    const currentYear = new Date().getFullYear()
-    // If 'todos' is selected, default to current year for the chart
-    const selectedYearInt = (filterYear === 'todos' || filterYear === 'Anos')
-      ? currentYear
-      : parseInt(filterYear)
-
-    // 1. Initialize 12 months structure
-    const months = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(selectedYearInt, i, 1)
-      return {
-        monthIndex: i,
-        name: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
-        total: 0
-      }
-    }) as any[]
-
-    const uniqueRoles = new Set<string>()
-
-    // 2. Populate data
+    // Aggregation based on current filters
     filteredData.forEach(c => {
-      if (!c.hire_date) return
-      // Use time to avoid timezone shifts
-      const hDate = new Date(c.hire_date + 'T12:00:00')
-      if (hDate.getFullYear() !== selectedYearInt) return
+      // Apply filters first (Year/Month logic mirroring Headcount)
+      const hDate = c.hire_date ? new Date(c.hire_date + 'T12:00:00') : null
+      if (!hDate) return
+
+      // Year Filter
+      if (filterYear !== 'todos' && filterYear !== 'Todos os anos' && filterYear !== 'Anos') {
+        if (hDate.getFullYear() !== parseInt(filterYear)) return
+      }
+
+      // Month Filter
+      if (filterMonth !== 'todos') {
+        if (hDate.getMonth() !== parseInt(filterMonth)) return
+      }
 
       if (getSegment(c) !== targetSegment) return
 
-      const monthIndex = hDate.getMonth()
-      // Use role name safely
       const roleName = c.roles?.name || String(c.role || 'Não definido')
-
-      uniqueRoles.add(roleName)
-
-      // Increment count for this role in this month
-      if (months[monthIndex]) {
-        months[monthIndex][roleName] = (months[monthIndex][roleName] || 0) + 1
-        months[monthIndex].total++
-      }
+      roleCounts.set(roleName, (roleCounts.get(roleName) || 0) + 1)
     })
 
-    // 3. Filter for display based on logic
-    // If Year Selected -> Show 12 months of that year (Filtered above by year check, so just return all months processed)
-    // BUT we need to handle "Todos" + "Month" filter?? 
-    // Wait, the "Hiring By Role" is a Stacked Bar. Usually this is for a specific period.
-    // If Year='Todos', showing 12 months (Jan-Dec) combining all years? Or showing Years on X-Axis?
-    // User request: "Conserte o filtro de ano... quando escolher algum mes especifico, mostrar aquele mes em todos os anos"
-    // This implies the Bar Chart should ALSO be X-Axis = Years if Year='Todos'?
-    // CURRENTLY: `processHiringByRole` creates 12 months buckets.
-    // I will adapt: 
-    // - If Year Selected: X-Axis = Months (Jan-Dec)
-    // - If Year='Todos': X-Axis = Years (Aggregated by Role)
+    // Convert to array and sort
+    const data = Array.from(roleCounts.entries())
+      .map(([role, count]) => ({ role, count }))
+      .sort((a, b) => b.count - a.count) // Descending
+    // Take top 10? Or all? Let's show all for now, scroll if needed or just grow.
+    // User didn't specify limit, but chart size is fixed.
+    // Let's name it 'y' and 'x' for simple charting
 
-    // REDEFINING Logic for Bar Chart:
-    if (filterYear !== 'todos' && filterYear !== 'Anos') {
-      // ... (Existing Monthly Logic) ...
-      const currentYear = new Date().getFullYear()
-      let maxMonthIndex = 11
-      if (selectedYearInt === currentYear) maxMonthIndex = new Date().getMonth()
-      else if (selectedYearInt > currentYear) maxMonthIndex = -1
-
-      return {
-        data: months.filter(m => m.monthIndex <= maxMonthIndex),
-        roles: Array.from(uniqueRoles)
-      }
-    } else {
-      // Year='Todos' -> Group by YEAR
-      const yearsMap = new Map<string, any>()
-      const allYearsSet = new Set<string>()
-
-      filteredData.forEach(c => {
-        if (!c.hire_date) return
-        const hDate = new Date(c.hire_date + 'T12:00:00')
-
-        // Check Month Filter
-        if (filterMonth !== 'todos') {
-          if (hDate.getMonth() !== parseInt(filterMonth)) return
-        }
-
-        if (getSegment(c) !== targetSegment) return
-
-        const yearStr = hDate.getFullYear().toString()
-        const roleName = c.roles?.name || String(c.role || 'Não definido')
-        uniqueRoles.add(roleName)
-        allYearsSet.add(yearStr)
-
-        if (!yearsMap.has(yearStr)) yearsMap.set(yearStr, { name: yearStr, total: 0 })
-        const entry = yearsMap.get(yearStr)
-        entry[roleName] = (entry[roleName] || 0) + 1
-        entry.total++
-      })
-
-      const sortedYears = Array.from(allYearsSet).sort()
-      const data = sortedYears.map(y => yearsMap.get(y))
-      return { data, roles: Array.from(uniqueRoles) }
-    }
+    return data
   }
 
-  const hiringAdmin = useMemo(() => processHiringByRole('Administrativo'), [filteredData, filterYear, filterMonth])
-  const hiringLegal = useMemo(() => processHiringByRole('Jurídico'), [filteredData, filterYear, filterMonth])
-
-  // Generate colors for roles
-  const adminColors = [
-    '#ea580c', // Orange 600
-    '#fb923c', // Orange 400
-    '#f97316', // Orange 500
-    '#fdba74', // Orange 300
-    '#c2410c', // Orange 700
-    '#ffedd5', // Orange 100
-    '#9a3412', // Orange 800
-    '#fdba74', // Orange 300
-    '#fed7aa', // Orange 200
-    '#fff7ed'  // Orange 50
-  ]
-
-  const legalColors = [
-    '#1e3a8a', // Blue 900
-    '#1e40af', // Blue 800
-    '#172554', // Blue 950
-    '#1d4ed8', // Blue 700
-    '#2563eb', // Blue 600
-    '#312e81', // Indigo 900
-    '#3730a3', // Indigo 800
-    '#4338ca', // Indigo 700
-    '#1e1b4b', // Indigo 950
-    '#0f172a'  // Slate 900
-  ]
-
+  const hiringAdminRanking = useMemo(() => processHiringRanking('Administrativo'), [filteredData, filterYear, filterMonth])
+  const hiringLegalRanking = useMemo(() => processHiringRanking('Jurídico'), [filteredData, filterYear, filterMonth])
 
   // 3. Hiring Flow (Line Area)
   const yearlyHiringFlow = useMemo(() => {
@@ -577,10 +482,9 @@ export function RHEvolucaoPessoal() {
 
   // --- Custom Label (Replicação do balão azul do Datalabels) ---
   const CustomDataLabel = (props: any) => {
-    const { x, y, value, fill, index, dataKey, chartWidth } = props;
+    const { x, y, value, fill, dataKey } = props;
     // Basic Offset Logic
     let yOffset = -25 // Default Up
-    let xOffset = -15 // Center (Assuming width 30)
 
     // 1. Avoid Start/End Clipping
     // Assuming 'props.chartWidth' isn't directly available unless we pass payload length.
@@ -840,10 +744,8 @@ export function RHEvolucaoPessoal() {
         </div>
       </div>
 
-      {/* Chart 2: Hiring by Role (Administrative & Legal) */}
+      {/* Administrative Hiring Ranking */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Administrative Hiring */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#ea580c]/10 text-[#ea580c]">
@@ -851,52 +753,89 @@ export function RHEvolucaoPessoal() {
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Adm)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{filterYear === 'todos' ? new Date().getFullYear() : filterYear}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
             </div>
           </div>
-          <div className="flex-1 w-full min-h-[300px]">
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hiringAdmin.data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                {hiringAdmin.roles.map((role, idx) => (
-                  <Bar key={role} dataKey={role} stackId="a" fill={adminColors[idx % adminColors.length]} radius={[0, 0, 0, 0]} />
-                ))}
+              <BarChart data={hiringAdminRanking} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="role"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  width={100}
+                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                />
+                <Tooltip
+                  cursor={{ fill: '#f3f4f6' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white p-2 border border-blue-100 shadow-lg rounded-lg">
+                          <p className="text-xs font-bold text-gray-700">{payload[0].payload.role}</p>
+                          <p className="text-sm font-black text-[#ea580c]">{payload[0].value} contratações</p>
+                        </div>
+                      )
+                    }
+                    return null
+                  }}
+                />
+                <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20}>
+                  <LabelList dataKey="count" position="right" fill={COLORS.primary} fontSize={10} fontWeight={700} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Legal Hiring */}
+        {/* Legal Hiring Ranking */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
-              <Briefcase className="w-5 h-5" />
+              <Scale className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Jur)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{filterYear === 'todos' ? new Date().getFullYear() : filterYear}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
             </div>
           </div>
-          <div className="flex-1 w-full min-h-[300px]">
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hiringLegal.data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                {hiringLegal.roles.map((role, idx) => (
-                  <Bar key={role} dataKey={role} stackId="a" fill={legalColors[idx % legalColors.length]} radius={[0, 0, 0, 0]} />
-                ))}
+              <BarChart data={hiringLegalRanking} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="role"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  width={100}
+                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                />
+                <Tooltip
+                  cursor={{ fill: '#f3f4f6' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white p-2 border border-blue-100 shadow-lg rounded-lg">
+                          <p className="text-xs font-bold text-gray-700">{payload[0].payload.role}</p>
+                          <p className="text-sm font-black text-[#1e3a8a]">{payload[0].value} contratações</p>
+                        </div>
+                      )
+                    }
+                    return null
+                  }}
+                />
+                <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 4, 4, 0]} barSize={20}>
+                  <LabelList dataKey="count" position="right" fill={COLORS.secondary} fontSize={10} fontWeight={700} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-
       </div>
 
 
