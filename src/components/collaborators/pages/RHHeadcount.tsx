@@ -485,6 +485,7 @@ export function RHHeadcount() {
             </div>
           </div>
           <div className="flex-1 flex items-center justify-center min-h-[300px]">
+            {/*
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -496,16 +497,16 @@ export function RHHeadcount() {
                   paddingAngle={5}
                   dataKey="value"
                   label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-                    const RADIAN = Math.PI / 180;
-                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                     const RADIAN = Math.PI / 180;
+                     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-                    return (
-                      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
-                        {`${(percent * 100).toFixed(0)}%`}
-                      </text>
-                    );
+                     return (
+                       <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+                         {`${(percent * 100).toFixed(0)}%`}
+                       </text>
+                     );
                   }}
                   labelLine={false}
                 >
@@ -520,6 +521,10 @@ export function RHHeadcount() {
                 <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
+            */}
+            <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+              Gráfico de Gênero Temporariamente Desativado para Debug
+            </div>
           </div>
         </div>
       </div>
