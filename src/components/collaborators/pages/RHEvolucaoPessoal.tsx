@@ -377,9 +377,30 @@ export function RHEvolucaoPessoal() {
   const hiringLegal = useMemo(() => processHiringByRole('Jurídico'), [filteredData, filterYear])
 
   // Generate colors for roles
-  const roleColors = [
-    '#4169E1', '#556B2F', '#10b981', '#f59e0b', '#ef4444',
-    '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1', '#14b8a6'
+  const adminColors = [
+    '#60a5fa', // Blue 400
+    '#93c5fd', // Blue 300
+    '#3b82f6', // Blue 500
+    '#bfdbfe', // Blue 200
+    '#2563eb', // Blue 600
+    '#dbeafe', // Blue 100
+    '#1d4ed8', // Blue 700 (Used sparingly for contrast if many roles)
+    '#7dd3fc', // Sky 300
+    '#0ea5e9', // Sky 500
+    '#38bdf8'  // Sky 400
+  ]
+
+  const legalColors = [
+    '#1e3a8a', // Blue 900
+    '#1e40af', // Blue 800
+    '#172554', // Blue 950
+    '#1d4ed8', // Blue 700
+    '#2563eb', // Blue 600
+    '#312e81', // Indigo 900
+    '#3730a3', // Indigo 800
+    '#4338ca', // Indigo 700
+    '#1e1b4b', // Indigo 950
+    '#0f172a'  // Slate 900
   ]
 
 
@@ -486,8 +507,8 @@ export function RHEvolucaoPessoal() {
   };
 
   const COLORS = {
-    primary: '#374151',   // Admin (Graphite)
-    secondary: '#4169E1', // Jurídico (Royal Blue)
+    primary: '#60a5fa',   // Admin (Light Blue)
+    secondary: '#1e3a8a', // Jurídico (Dark Blue)
     tertiary: '#f59e0b',  // Amber
     text: '#6b7280',
     grid: '#e5e7eb'
@@ -590,25 +611,25 @@ export function RHEvolucaoPessoal() {
 
         {/* Total Active - Legal */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-[#4169E1]"></div>
+          <div className="absolute right-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Jurídico</p>
-            <p className="text-3xl font-black text-[#4169E1] mt-1">{totalActiveLegal}</p>
+            <p className="text-3xl font-black text-[#1e3a8a] mt-1">{totalActiveLegal}</p>
           </div>
-          <div className="p-3 bg-[#4169E1]/10 rounded-xl">
-            <TrendingUp className="h-6 w-6 text-[#4169E1]" />
+          <div className="p-3 bg-[#1e3a8a]/10 rounded-xl">
+            <TrendingUp className="h-6 w-6 text-[#1e3a8a]" />
           </div>
         </div>
 
         {/* Total Active - Admin */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-[#374151]"></div>
+          <div className="absolute right-0 top-0 h-full w-1 bg-[#60a5fa]"></div>
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Administrativo</p>
-            <p className="text-3xl font-black text-[#374151] mt-1">{totalActiveAdmin}</p>
+            <p className="text-3xl font-black text-[#60a5fa] mt-1">{totalActiveAdmin}</p>
           </div>
-          <div className="p-3 bg-[#374151]/10 rounded-xl">
-            <Briefcase className="h-6 w-6 text-[#374151]" />
+          <div className="p-3 bg-[#60a5fa]/10 rounded-xl">
+            <Briefcase className="h-6 w-6 text-[#60a5fa]" />
           </div>
         </div>
 
@@ -620,7 +641,7 @@ export function RHEvolucaoPessoal() {
       <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#4169E1]/10 text-[#4169E1]">
+            <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
@@ -692,7 +713,7 @@ export function RHEvolucaoPessoal() {
         {/* Administrative Hiring */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#374151]/10 text-[#374151]">
+            <div className="p-2 rounded-xl bg-[#60a5fa]/10 text-[#60a5fa]">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
@@ -709,7 +730,7 @@ export function RHEvolucaoPessoal() {
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 {hiringAdmin.roles.map((role, idx) => (
-                  <Bar key={role} dataKey={role} stackId="a" fill={roleColors[idx % roleColors.length]} radius={[0, 0, 0, 0]} />
+                  <Bar key={role} dataKey={role} stackId="a" fill={adminColors[idx % adminColors.length]} radius={[0, 0, 0, 0]} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -719,7 +740,7 @@ export function RHEvolucaoPessoal() {
         {/* Legal Hiring */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#4169E1]/10 text-[#4169E1]">
+            <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
@@ -736,7 +757,7 @@ export function RHEvolucaoPessoal() {
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 {hiringLegal.roles.map((role, idx) => (
-                  <Bar key={role} dataKey={role} stackId="a" fill={roleColors[idx % roleColors.length]} radius={[0, 0, 0, 0]} />
+                  <Bar key={role} dataKey={role} stackId="a" fill={legalColors[idx % legalColors.length]} radius={[0, 0, 0, 0]} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -752,7 +773,7 @@ export function RHEvolucaoPessoal() {
         {/* Chart 3: Hiring Flow (Historical) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
           <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-            <UserPlus className="w-4 h-4 text-[#374151]" />
+            <UserPlus className="w-4 h-4 text-[#60a5fa]" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Contratações (Anual)</h3>
           </div>
           <div className="h-[250px] w-full">
@@ -805,7 +826,7 @@ export function RHEvolucaoPessoal() {
         {/* Chart 4: Turnover Flow (Historical) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
           <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-            <UserMinus className="w-4 h-4 text-[#4169E1]" />
+            <UserMinus className="w-4 h-4 text-[#1e3a8a]" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Desligamentos (Anual)</h3>
           </div>
           <div className="h-[250px] w-full">
