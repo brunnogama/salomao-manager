@@ -174,24 +174,39 @@ export function RHEvolucaoPessoal() {
 
   // 1. Headcount Evolution (Accumulated) - Monthly for Selected Year
   const headcountChartData = useMemo(() => {
-    const months = Array.from({ length: 12 }, (_, i) => i) // 0..11
+    const today = new Date()
+    const currentYear = today.getFullYear()
+    const currentMonth = today.getMonth() // 0-indexed (0=Jan, 1=Feb, etc.)
+
     const selectedYearInt = parseInt(filterYear)
+    const isCurrentYear = selectedYearInt === currentYear
+
+    // Determine how many months to show
+    let maxMonthIndex = 11
+    if (isCurrentYear) {
+      maxMonthIndex = currentMonth
+    } else if (selectedYearInt > currentYear) {
+      maxMonthIndex = -1 // Don't show anything for future years
+    }
+
+    const months = Array.from({ length: 12 }, (_, i) => i).filter(m => m <= maxMonthIndex)
 
     // Calculate initial headcount (jan 1st of selected year)
     let currentAdmin = 0
     let currentLegal = 0
 
-    // Count people active before Jan 1st
+    // PRE-CALCULATION: Count people active BEFORE Jan 1st of selected year
     filteredData.forEach(c => {
-      const hireDate = c.hire_date ? new Date(c.hire_date) : null
-      const termDate = c.termination_date ? new Date(c.termination_date) : null
+      // Add time to ensure it falls on the correct local day
+      const hireDate = c.hire_date ? new Date(c.hire_date + 'T12:00:00') : null
+      const termDate = c.termination_date ? new Date(c.termination_date + 'T12:00:00') : null
       const segment = getSegment(c)
 
       if (hireDate) {
         const startOfYear = new Date(selectedYearInt, 0, 1)
-        // Hired before start of year
+        // Hired strictly before start of year
         if (hireDate < startOfYear) {
-          // Not terminated OR terminated after start of year
+          // Rule: Active if NOT terminated OR terminated ON or AFTER start of year
           if (!termDate || termDate >= startOfYear) {
             if (segment === 'Administrativo') currentAdmin++
             else currentLegal++
@@ -201,10 +216,13 @@ export function RHEvolucaoPessoal() {
     })
 
     const data = months.map(monthIndex => {
-      const monthDate = new Date(selectedYearInt, monthIndex, 1) // 1st day of month
-      const nextMonthDate = new Date(selectedYearInt, monthIndex + 1, 1) // 1st day of next month
+      // Define limits for this month
+      // Start: 1st day of month
+      const monthStart = new Date(selectedYearInt, monthIndex, 1)
+      // End: Start of next month
+      const nextMonthStart = new Date(selectedYearInt, monthIndex + 1, 1)
 
-      // Transactions within this month
+      // Transactions within this specific month
       let hiresAdmin = 0
       let hiresLegal = 0
       let termsAdmin = 0
@@ -215,9 +233,8 @@ export function RHEvolucaoPessoal() {
 
         // Hires in this month
         if (c.hire_date) {
-          const hDate = new Date(c.hire_date)
-          // Check if hire date is within this month
-          if (hDate >= monthDate && hDate < nextMonthDate) {
+          const hDate = new Date(c.hire_date + 'T12:00:00')
+          if (hDate >= monthStart && hDate < nextMonthStart) {
             if (segment === 'Administrativo') hiresAdmin++
             else hiresLegal++
           }
@@ -225,9 +242,8 @@ export function RHEvolucaoPessoal() {
 
         // Terminations in this month
         if (c.termination_date) {
-          const tDate = new Date(c.termination_date)
-          // Check if termination date is within this month
-          if (tDate >= monthDate && tDate < nextMonthDate) {
+          const tDate = new Date(c.termination_date + 'T12:00:00')
+          if (tDate >= monthStart && tDate < nextMonthStart) {
             if (segment === 'Administrativo') termsAdmin++
             else termsLegal++
           }
@@ -239,7 +255,7 @@ export function RHEvolucaoPessoal() {
       currentLegal += (hiresLegal - termsLegal)
 
       return {
-        name: monthDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+        name: monthStart.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
         Administrativo: currentAdmin,
         Jurídico: currentLegal,
         Total: currentAdmin + currentLegal
