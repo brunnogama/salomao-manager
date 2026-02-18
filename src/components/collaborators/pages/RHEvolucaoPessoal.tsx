@@ -289,6 +289,8 @@ export function RHEvolucaoPessoal() {
 
         return {
           name: year.toString(),
+          Administrativo: activeAdmin,
+          Jurídico: activeLegal,
           Total: activeAdmin + activeLegal
         }
       })
@@ -647,7 +649,7 @@ export function RHEvolucaoPessoal() {
             <p className="text-3xl font-black text-[#1e3a8a] mt-1">{totalActiveLegal}</p>
           </div>
           <div className="p-3 bg-[#1e3a8a]/10 rounded-xl">
-            <TrendingUp className="h-6 w-6 text-[#1e3a8a]" />
+            <Scale className="h-6 w-6 text-[#1e3a8a]" />
           </div>
         </div>
 
