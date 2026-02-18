@@ -91,7 +91,8 @@ const formatYears = (years: number) => {
 }
 
 // --- Custom Label (Replicação do balão azul do Datalabels) ---
-const CustomDataLabel = (props: any) => {
+// --- Custom Label (Replicação do balão azul do Datalabels) ---
+const renderCustomDataLabel = (props: any) => {
   const { x, y, value, fill, position } = props;
 
   // Explicit positioning logic
@@ -129,7 +130,7 @@ const CustomDataLabel = (props: any) => {
   );
 };
 
-const CustomPieLabel = (props: any) => {
+const renderCustomPieLabel = (props: any) => {
   const { cx, cy, midAngle, outerRadius, value, fill } = props;
 
   if (!cx || !cy) return null;
@@ -164,7 +165,7 @@ const CustomPieLabel = (props: any) => {
 };
 
 // --- Custom Tooltip ---
-const CustomTooltip = ({ active, payload, label }: any) => {
+const renderCustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-3 border border-gray-200 shadow-xl rounded-xl min-w-[140px] z-50">
@@ -611,7 +612,7 @@ export function RHTempoCasa() {
                 tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }}
                 unit="a"
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={renderCustomTooltip} />
               <Legend />
               <Area
                 type="monotone"
@@ -622,7 +623,7 @@ export function RHTempoCasa() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} position="top" />} />
+                <LabelList dataKey="Administrativo" content={(props) => renderCustomDataLabel({ ...props, fill: COLORS.primary, position: "top" })} />
               </Area>
               <Area
                 type="monotone"
@@ -633,7 +634,7 @@ export function RHTempoCasa() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="bottom" />} />
+                <LabelList dataKey="Jurídico" content={(props) => renderCustomDataLabel({ ...props, fill: COLORS.secondary, position: "bottom" })} />
               </Area>
             </AreaChart>
           </ResponsiveContainer>
@@ -667,7 +668,7 @@ export function RHTempoCasa() {
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                   width={120}
                 />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                <Tooltip cursor={{ fill: '#f3f4f6' }} content={renderCustomTooltip} />
                 <Bar dataKey="avg" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
                   {tenureByAreaData.map((entry, index) => {
                     const normalized = normalizeString(entry.name)
@@ -705,7 +706,7 @@ export function RHTempoCasa() {
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                   width={120}
                 />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                <Tooltip cursor={{ fill: '#f3f4f6' }} content={renderCustomTooltip} />
                 <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
                   <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
                 </Bar>
@@ -738,14 +739,14 @@ export function RHTempoCasa() {
                 outerRadius={110}
                 paddingAngle={5}
                 dataKey="value"
-                label={(props) => <CustomPieLabel {...props} />}
+                label={renderCustomPieLabel}
                 labelLine={false}
               >
                 {legalExperienceData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS.pie[index % COLORS.pie.length]} />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={renderCustomTooltip} />
               <Legend verticalAlign="bottom" height={36} />
             </PieChart>
           </ResponsiveContainer>
