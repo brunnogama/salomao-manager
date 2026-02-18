@@ -1089,291 +1089,292 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             </button>
           </div>
         </div>
+      </div>
 
-        {/* CONTROLS CARD - Search | Filters */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
-          <div className="flex flex-col xl:flex-row items-center gap-4">
+      {/* CONTROLS CARD - Search | Filters */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
+        <div className="flex flex-col xl:flex-row items-center gap-4">
 
-            {/* Search Bar - Expanded */}
-            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
-              <Search className="h-4 w-4 text-gray-400 mr-3" />
-              <input
-                type="text"
-                placeholder="Buscar..."
-                className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          {/* Search Bar - Expanded */}
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+            <Search className="h-4 w-4 text-gray-400 mr-3" />
+            <input
+              type="text"
+              placeholder="Buscar..."
+              className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
-            {/* Filters Row - Auto-sizing */}
-            <div className="flex flex-wrap items-center gap-3 w-auto justify-end">
-              <FilterSelect
-                icon={User}
-                value={filterLider}
-                onChange={setFilterLider}
-                options={liderOptions}
-                placeholder="Líder"
-              />
-              <FilterSelect
-                icon={Users}
-                value={filterPartner}
-                onChange={setFilterPartner}
-                options={partnerOptions}
-                placeholder="Sócio"
-              />
-              <FilterSelect
-                icon={Building2}
-                value={filterLocal}
-                onChange={setFilterLocal}
-                options={locationOptions}
-                placeholder="Local"
-              />
-              <FilterSelect
-                icon={Briefcase}
-                value={filterCargo}
-                onChange={setFilterCargo}
-                options={roleOptions}
-                placeholder="Cargo"
-              />
-            </div>
+          {/* Filters Row - Auto-sizing */}
+          <div className="flex flex-wrap items-center gap-3 w-auto justify-end">
+            <FilterSelect
+              icon={User}
+              value={filterLider}
+              onChange={setFilterLider}
+              options={liderOptions}
+              placeholder="Líder"
+            />
+            <FilterSelect
+              icon={Users}
+              value={filterPartner}
+              onChange={setFilterPartner}
+              options={partnerOptions}
+              placeholder="Sócio"
+            />
+            <FilterSelect
+              icon={Building2}
+              value={filterLocal}
+              onChange={setFilterLocal}
+              options={locationOptions}
+              placeholder="Local"
+            />
+            <FilterSelect
+              icon={Briefcase}
+              value={filterCargo}
+              onChange={setFilterCargo}
+              options={roleOptions}
+              placeholder="Cargo"
+            />
           </div>
         </div>
+      </div>
 
-        {/* Table/Grid */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1 flex flex-col">
-          <div className="overflow-auto h-full custom-scrollbar">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                  <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Colaborador</th>
-                  <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Cargo</th>
-                  <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Sócio</th>
-                  <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Líder</th>
-                  <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-6 py-5 text-right text-[9px] font-black text-white uppercase tracking-[0.2em]">Ações</th>
+      {/* Table/Grid */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1 flex flex-col">
+        <div className="overflow-auto h-full custom-scrollbar">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Colaborador</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Cargo</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Sócio</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Líder</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Status</th>
+                <th className="px-6 py-5 text-right text-[9px] font-black text-white uppercase tracking-[0.2em]">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <Loader2 className="h-8 w-8 text-[#1e3a8a] animate-spin mx-auto mb-2" />
+                    <p className="text-gray-400 text-xs font-medium">Carregando colaboradores...</p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
-                      <Loader2 className="h-8 w-8 text-[#1e3a8a] animate-spin mx-auto mb-2" />
-                      <p className="text-gray-400 text-xs font-medium">Carregando colaboradores...</p>
-                    </td>
-                  </tr>
-                ) : filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                      <UserX className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-xs font-medium">Nenhum colaborador encontrado.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  <>
-                    {filtered.filter(c => c.status === 'active').map((c) => (
-                      <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab(1); }} className="hover:bg-blue-50/30 cursor-pointer transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
-                            <div>
-                              <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
-                              <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
-                            </div>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                    <UserX className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-xs font-medium">Nenhum colaborador encontrado.</p>
+                  </td>
+                </tr>
+              ) : (
+                <>
+                  {filtered.filter(c => c.status === 'active').map((c) => (
+                    <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab(1); }} className="hover:bg-blue-50/30 cursor-pointer transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
+                          <div>
+                            <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
-                          <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).teams?.name || c.equipe || '')}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                            {c.status === 'active' ? 'Ativo' : 'Inativo'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).teams?.name || c.equipe || '')}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
+                          {c.status === 'active' ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filtered.some(c => c.status !== 'active') && (
+                    <tr className="bg-gray-50/50">
+                      <td colSpan={6} className="px-6 py-3 border-y border-gray-100">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inativos</p>
+                      </td>
+                    </tr>
+                  )}
+                  {filtered.filter(c => c.status !== 'active').map(c => (
+                    <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab(1); }} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
+                          <div>
+                            <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {filtered.some(c => c.status !== 'active') && (
-                      <tr className="bg-gray-50/50">
-                        <td colSpan={6} className="px-6 py-3 border-y border-gray-100">
-                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inativos</p>
-                        </td>
-                      </tr>
-                    )}
-                    {filtered.filter(c => c.status !== 'active').map(c => (
-                      <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab(1); }} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
-                            <div>
-                              <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                            {c.status === 'active' ? 'Ativo' : 'Inativo'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </>
-                )}
-              </tbody>
-            </table>
-          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
+                          {c.status === 'active' ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              )}
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        {/* VIEW MODAL */}
-        {selectedColaborador && renderModalLayout(
-          toTitleCase(selectedColaborador.name),
-          () => setSelectedColaborador(null),
-          activeDetailTab,
-          setActiveDetailTab,
-          renderModalContent(activeDetailTab, true, selectedColaborador),
-          (
-            <>
-              <button
-                onClick={() => handleDelete(selectedColaborador.id)}
-                className="px-6 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all flex items-center gap-2"
-              >
-                <Trash2 className="h-4 w-4" /> Excluir
-              </button>
-              <button
-                onClick={() => handleEdit(selectedColaborador)}
-                className="px-6 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
-              >
-                <Pencil className="h-4 w-4" /> Editar
-              </button>
-            </>
-          ),
-          // Sidebar Content (Display Photo)
-          <div className="w-48 h-48 rounded-full overflow-hidden border-[6px] border-white shadow-xl bg-gray-50 flex items-center justify-center cursor-pointer transition-transform hover:scale-105" onClick={() => selectedColaborador.photo_url && setViewingPhoto(selectedColaborador.photo_url)}>
-            {selectedColaborador.photo_url ? (
-              <img src={selectedColaborador.photo_url} className="w-full h-full object-cover" alt={selectedColaborador.name} />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center">
-                <span className="text-5xl font-black text-white opacity-50">{selectedColaborador.name?.charAt(0).toUpperCase()}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* FORM MODAL */}
-        {showFormModal && renderModalLayout(
-          formData.id ? 'Editar Colaborador' : 'Novo Colaborador',
-          () => setShowFormModal(false),
-          activeFormTab,
-          setActiveFormTab,
-          renderModalContent(activeFormTab, false, formData),
-          (
-            <>
-              <button
-                onClick={() => setShowFormModal(false)}
-                className="px-6 py-2.5 text-[9px] font-black text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleSave(true)}
-                className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-              >
-                <Save className="h-4 w-4" /> Salvar
-              </button>
-            </>
-          ),
-          // Sidebar Content (Photo Upload)
-          <PhotoUploadSection
-            photoPreview={photoPreview}
-            uploadingPhoto={uploadingPhoto}
-            photoInputRef={photoInputRef}
-            setPhotoPreview={setPhotoPreview}
-          />
-        )}
-
-        {viewingPhoto && (
-          <div className="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setViewingPhoto(null)}>
-            <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors" onClick={() => setViewingPhoto(null)}>
-              <X className="h-8 w-8" />
+      {/* VIEW MODAL */}
+      {selectedColaborador && renderModalLayout(
+        toTitleCase(selectedColaborador.name),
+        () => setSelectedColaborador(null),
+        activeDetailTab,
+        setActiveDetailTab,
+        renderModalContent(activeDetailTab, true, selectedColaborador),
+        (
+          <>
+            <button
+              onClick={() => handleDelete(selectedColaborador.id)}
+              className="px-6 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" /> Excluir
             </button>
-            <img src={viewingPhoto} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default" onClick={e => e.stopPropagation()} alt="Visualização" />
-          </div>
-        )}
+            <button
+              onClick={() => handleEdit(selectedColaborador)}
+              className="px-6 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
+            >
+              <Pencil className="h-4 w-4" /> Editar
+            </button>
+          </>
+        ),
+        // Sidebar Content (Display Photo)
+        <div className="w-48 h-48 rounded-full overflow-hidden border-[6px] border-white shadow-xl bg-gray-50 flex items-center justify-center cursor-pointer transition-transform hover:scale-105" onClick={() => selectedColaborador.photo_url && setViewingPhoto(selectedColaborador.photo_url)}>
+          {selectedColaborador.photo_url ? (
+            <img src={selectedColaborador.photo_url} className="w-full h-full object-cover" alt={selectedColaborador.name} />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center">
+              <span className="text-5xl font-black text-white opacity-50">{selectedColaborador.name?.charAt(0).toUpperCase()}</span>
+            </div>
+          )}
+        </div>
+      )}
 
-        <AlertModal
-          isOpen={alertConfig.isOpen}
-          onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
-          title={alertConfig.title}
-          description={alertConfig.description}
-          variant={alertConfig.variant}
-          confirmText="OK"
+      {/* FORM MODAL */}
+      {showFormModal && renderModalLayout(
+        formData.id ? 'Editar Colaborador' : 'Novo Colaborador',
+        () => setShowFormModal(false),
+        activeFormTab,
+        setActiveFormTab,
+        renderModalContent(activeFormTab, false, formData),
+        (
+          <>
+            <button
+              onClick={() => setShowFormModal(false)}
+              className="px-6 py-2.5 text-[9px] font-black text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all uppercase tracking-[0.2em]"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => handleSave(true)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            >
+              <Save className="h-4 w-4" /> Salvar
+            </button>
+          </>
+        ),
+        // Sidebar Content (Photo Upload)
+        <PhotoUploadSection
+          photoPreview={photoPreview}
+          uploadingPhoto={uploadingPhoto}
+          photoInputRef={photoInputRef}
+          setPhotoPreview={setPhotoPreview}
         />
+      )}
 
-        <ConfirmationModal
-          isOpen={!!gedToDelete}
-          onClose={() => setGedToDelete(null)}
-          onConfirm={confirmDeleteGed}
-          title="Excluir Documento"
-          description="Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita."
-          confirmText="Excluir"
-          cancelText="Cancelar"
-          variant="danger"
-        />
-      </div>
-      )
+      {viewingPhoto && (
+        <div className="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in" onClick={() => setViewingPhoto(null)}>
+          <button className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors" onClick={() => setViewingPhoto(null)}>
+            <X className="h-8 w-8" />
+          </button>
+          <img src={viewingPhoto} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default" onClick={e => e.stopPropagation()} alt="Visualização" />
+        </div>
+      )}
+
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        title={alertConfig.title}
+        description={alertConfig.description}
+        variant={alertConfig.variant}
+        confirmText="OK"
+      />
+
+      <ConfirmationModal
+        isOpen={!!gedToDelete}
+        onClose={() => setGedToDelete(null)}
+        onConfirm={confirmDeleteGed}
+        title="Excluir Documento"
+        description="Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="danger"
+      />
+    </div>
+  )
 }
 
-      // --- SUB-COMPONENTS ---
+// --- SUB-COMPONENTS ---
 
-      function Avatar({src, name, size = 'sm', onImageClick}: any) {
+function Avatar({ src, name, size = 'sm', onImageClick }: any) {
   const sz = size === 'lg' ? 'w-20 h-20 text-xl' : 'w-10 h-10 text-sm'
-      const clickableClass = onImageClick && src ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
+  const clickableClass = onImageClick && src ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
 
-      if (src) return <img src={src} onClick={onImageClick} className={`${sz} rounded-full object-cover border-2 border-white shadow-sm ${clickableClass}`} alt={name} />
-      return (
-      <div className={`${sz} rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center font-black text-white shadow-md`}>
-        {name?.charAt(0).toUpperCase()}
-      </div>
-      )
+  if (src) return <img src={src} onClick={onImageClick} className={`${sz} rounded-full object-cover border-2 border-white shadow-sm ${clickableClass}`} alt={name} />
+  return (
+    <div className={`${sz} rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center font-black text-white shadow-md`}>
+      {name?.charAt(0).toUpperCase()}
+    </div>
+  )
 }
 
-      function DetailRow({label, value, icon: Icon }: any) {
+function DetailRow({ label, value, icon: Icon }: any) {
   return (
-      <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 transition-all hover:bg-white hover:shadow-sm">
-        <p className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-1 mb-1 tracking-widest">
-          {Icon && <Icon className="h-3 w-3" />}
-          {label}
-        </p>
-        <p className="text-sm font-bold text-[#0a192f] break-all">{value || '-'}</p>
-      </div>
-      )
+    <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 transition-all hover:bg-white hover:shadow-sm">
+      <p className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-1 mb-1 tracking-widest">
+        {Icon && <Icon className="h-3 w-3" />}
+        {label}
+      </p>
+      <p className="text-sm font-bold text-[#0a192f] break-all">{value || '-'}</p>
+    </div>
+  )
 }
