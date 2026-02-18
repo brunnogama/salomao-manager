@@ -401,10 +401,12 @@ export function RHTempoCasa() {
 
   const CustomPieLabel = (props: any) => {
     const { cx, cy, midAngle, innerRadius, outerRadius, value, fill } = props;
+
+    if (!cx || !cy) return null;
+
     const RADIAN = Math.PI / 180;
-    // radius was unused
-    const x = cx + (outerRadius + 20) * Math.cos(-midAngle * RADIAN);
-    const y = cy + (outerRadius + 20) * Math.sin(-midAngle * RADIAN);
+    const x = cx + (outerRadius + 30) * Math.cos(-midAngle * RADIAN);
+    const y = cy + (outerRadius + 30) * Math.sin(-midAngle * RADIAN);
 
     return (
       <g>
@@ -622,7 +624,7 @@ export function RHTempoCasa() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} position="bottom" />} />
+                <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} position="top" />} />
               </Area>
               <Area
                 type="monotone"
@@ -633,7 +635,7 @@ export function RHTempoCasa() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="top" />} />
+                <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="bottom" />} />
               </Area>
             </AreaChart>
           </ResponsiveContainer>
@@ -668,8 +670,8 @@ export function RHTempoCasa() {
                   width={120}
                 />
                 <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
-                <Bar dataKey="avg" fill="#64748b" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
-                  <LabelList dataKey="avg" position="right" fill="#64748b" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
+                <Bar dataKey="avg" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20} name="Anos">
+                  <LabelList dataKey="avg" position="right" fill={COLORS.primary} fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
