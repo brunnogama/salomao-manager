@@ -577,21 +577,53 @@ export function RHEvolucaoPessoal() {
 
   // --- Custom Label (Replicação do balão azul do Datalabels) ---
   const CustomDataLabel = (props: any) => {
-    const { x, y, value, fill } = props;
-    // Se o valor for zero, talvez não exibir? Ou exibir. Aero exibe sempre.
+    const { x, y, value, fill, index, dataKey, chartWidth } = props;
+    // Basic Offset Logic
+    let yOffset = -25 // Default Up
+    let xOffset = -15 // Center (Assuming width 30)
+
+    // 1. Avoid Start/End Clipping
+    // Assuming 'props.chartWidth' isn't directly available unless we pass payload length.
+    // But index is 0, we can push right. If index is last, push left.
+    // However, Recharts doesn't easily expose 'total length' here without extra Props.
+    // We can rely on X coordinate. If X is very small (< 30), push right.
+    // If X is very large (> width - 30), push left.
+
+    // Instead of complex width logic, let's just use margins effectively and shift slightly.
+    // Or check index if we knew total length. We can't know total length easily here.
+
+    // Adjust Y based on Series to minimize overlap
+    // Admin (Orange) -> Shift Down slightly if values are close? Or keep standard?
+    // In the print, Admin is below Legal. So shifting Admin down might help separation.
+
+    if (dataKey === 'Administrativo') {
+      yOffset = 10 // Shift down below the point
+    } else {
+      yOffset = -35 // Shift up above the point
+    }
+
+    // Adjust X to avoid clipping at ends
+    // We can use a simple prop passed down, or just hardcode some safe zones if margin is tight.
+    // Better strategy: Increase Chart Margin. But users asked to "Conserte".
+    // Let's implement dynamic anchor.
+
+    // A simpler visual fix for overlap:
+    // Admin: Below point.
+    // Legal: Above point.
+
     return (
       <g>
         <rect
           x={x - 15}
-          y={y - 25}
+          y={y + yOffset} // Adjusted Y
           width={30}
           height={18}
           rx={4}
-          fill={fill} // Usa a cor da série (Admin=Orange, Legal=Royal)
+          fill={fill}
         />
         <text
           x={x}
-          y={y - 13}
+          y={y + yOffset + 12} // Centered in rect
           fill="white"
           textAnchor="middle"
           fontSize="10px"
@@ -752,14 +784,14 @@ export function RHEvolucaoPessoal() {
         </div>
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={headcountChartData} margin={{ top: 30, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={headcountChartData} margin={{ top: 30, right: 30, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorAdmin" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3} />
+                  <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.1} />
                   <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorLegal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.3} />
+                  <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.1} />
                   <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -768,8 +800,9 @@ export function RHEvolucaoPessoal() {
                 dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }}
+                tick={{ fill: COLORS.text, fontSize: 11 }}
                 dy={10}
+                padding={{ left: 20, right: 20 }} // Add padding to X-axis to prevent label clipping
               />
               <YAxis
                 axisLine={false}
