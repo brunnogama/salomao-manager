@@ -307,47 +307,7 @@ export function RHHeadcount() {
     );
   };
 
-  const CustomPieLabel = (props: any) => {
-    const { cx, cy, midAngle, outerRadius, value, fill, name } = props;
-    if (!cx || !cy) return null;
 
-    const RADIAN = Math.PI / 180;
-    const x = cx + (outerRadius + 30) * Math.cos(-midAngle * RADIAN);
-    const y = cy + (outerRadius + 30) * Math.sin(-midAngle * RADIAN);
-
-    return (
-      <g>
-        <text
-          x={x}
-          y={y - 12}
-          fill="#374151"
-          textAnchor="middle"
-          fontSize="10px"
-          fontWeight="bold"
-        >
-          {name}
-        </text>
-        <rect
-          x={x - 12}
-          y={y - 8}
-          width={24}
-          height={16}
-          rx={4}
-          fill={fill}
-        />
-        <text
-          x={x}
-          y={y + 4}
-          fill="white"
-          textAnchor="middle"
-          fontSize="10px"
-          fontWeight="bold"
-        >
-          {value}
-        </text>
-      </g>
-    );
-  };
 
   // --- Constants ---
   const COLORS = {
@@ -535,7 +495,19 @@ export function RHHeadcount() {
                   outerRadius={90}
                   paddingAngle={5}
                   dataKey="value"
-                  label={CustomPieLabel}
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                    return (
+                      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+                        {`${(percent * 100).toFixed(0)}%`}
+                      </text>
+                    );
+                  }}
+                  labelLine={false}
                 >
                   {genderData.map((entry, index) => {
                     let color = COLORS.pieGender[2]
