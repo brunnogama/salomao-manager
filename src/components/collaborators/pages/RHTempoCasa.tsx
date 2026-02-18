@@ -359,12 +359,77 @@ export function RHTempoCasa() {
   }, [activeDataAtRefDate, referenceDate])
 
 
-  const activePartnerOptions = useMemo(() => {
-    return masterPartners
-      .map(p => ({ label: p.name, value: String(p.id) }))
-      .sort((a, b) => a.label.localeCompare(b.label))
-  }, [masterPartners])
 
+  // --- Custom Label (Replicação do balão azul do Datalabels) ---
+  const CustomDataLabel = (props: any) => {
+    const { x, y, value, fill, position } = props;
+
+    // Explicit positioning logic
+    let yOffset = -35 // Default Up (Top)
+
+    if (position === 'bottom') {
+      yOffset = 15 // Shift down below the point
+    } else {
+      yOffset = -35 // Shift up above the point
+    }
+
+    const formattedValue = typeof value === 'number' ? value.toFixed(1).replace('.', ',') : value
+
+    return (
+      <g>
+        <rect
+          x={x - 17}
+          y={y + yOffset} // Adjusted Y
+          width={34}
+          height={18}
+          rx={4}
+          fill={fill}
+        />
+        <text
+          x={x}
+          y={y + yOffset + 12} // Centered in rect
+          fill="white"
+          textAnchor="middle"
+          fontSize="10px"
+          fontWeight="bold"
+        >
+          {formattedValue}
+        </text>
+      </g>
+    );
+  };
+
+  const CustomPieLabel = (props: any) => {
+    const { cx, cy, midAngle, innerRadius, outerRadius, value, fill } = props;
+    const RADIAN = Math.PI / 180;
+    // radius was unused
+    const x = cx + (outerRadius + 20) * Math.cos(-midAngle * RADIAN);
+    const y = cy + (outerRadius + 20) * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <g>
+        <rect
+          x={x - 12}
+          y={y - 9}
+          width={24}
+          height={18}
+          rx={4}
+          fill={fill} // Use slice color
+        />
+        <text
+          x={x}
+          y={y + 4}
+          fill="white"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize="10px"
+          fontWeight="bold"
+        >
+          {value}
+        </text>
+      </g>
+    );
+  };
 
   // --- Custom Tooltip ---
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -521,7 +586,7 @@ export function RHTempoCasa() {
         </div>
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={stabilityEvolutionData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+            <AreaChart data={stabilityEvolutionData} margin={{ top: 30, right: 30, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradAdmin" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.1} />
@@ -554,16 +619,22 @@ export function RHTempoCasa() {
                 stroke={COLORS.primary}
                 fill="url(#gradAdmin)"
                 strokeWidth={3}
-                activeDot={{ r: 6 }}
-              />
+                dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
+              >
+                <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} position="bottom" />} />
+              </Area>
               <Area
                 type="monotone"
                 dataKey="Jurídico"
                 stroke={COLORS.secondary}
                 fill="url(#gradLegal)"
                 strokeWidth={3}
-                activeDot={{ r: 6 }}
-              />
+                dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
+              >
+                <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="top" />} />
+              </Area>
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -663,10 +734,14 @@ export function RHTempoCasa() {
                 paddingAngle={5}
                 dataKey="value"
               >
-                {legalExperienceData.map((entry, index) => (
+                {legalExperienceData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS.pie[index % COLORS.pie.length]} />
                 ))}
-                <LabelList dataKey="value" position="outside" offset={15} fontSize={12} fontWeight={700} formatter={(val: number) => val > 0 ? val : ''} />
+                <LabelList
+                  dataKey="value"
+                  position="outside"
+                  content={<CustomPieLabel />}
+                />
               </Pie>
               <Tooltip content={<CustomTooltip />} />
               <Legend verticalAlign="bottom" height={36} />

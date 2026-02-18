@@ -672,7 +672,7 @@ export function RHEvolucaoPessoal() {
         </div>
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={headcountChartData} margin={{ top: 30, right: 30, left: 0, bottom: 0 }}>
+            <AreaChart data={headcountChartData} margin={{ top: 30, right: 30, left: 0, bottom: 35 }}>
               <defs>
                 <linearGradient id="colorAdmin" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.1} />
