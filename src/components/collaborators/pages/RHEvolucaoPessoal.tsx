@@ -111,7 +111,7 @@ export function RHEvolucaoPessoal() {
       if (c.termination_date) yearsSet.add(getYearFromDate(c.termination_date)!.toString())
     })
     const sorted = Array.from(yearsSet).sort().reverse()
-    return ['Todos os anos', ...sorted]
+    return sorted
   }, [colaboradores])
 
   const months = [
@@ -212,101 +212,89 @@ export function RHEvolucaoPessoal() {
 
   // --- Charts Data Preparation ---
 
-  // 1. Headcount Evolution (Accumulated) - Monthly for Selected Year
+  // 1. Headcount Evolution (Accumulated)
   const headcountChartData = useMemo(() => {
-    const today = new Date()
-    const currentYear = today.getFullYear()
-    const currentMonth = today.getMonth() // 0-indexed (0=Jan, 1=Feb, etc.)
+    // SCENARIO 1: Specific Year Selected -> Show Monthly Evolution (Jan-Dec)
+    if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
+      const selectedYearInt = parseInt(filterYear)
+      const months = Array.from({ length: 12 }, (_, i) => i)
 
-    // If 'todos' is selected, default to current year for the chart
-    const selectedYearInt = (filterYear === 'todos' || filterYear === 'Todos os anos')
-      ? currentYear
-      : parseInt(filterYear)
-    const isCurrentYear = selectedYearInt === currentYear
+      const today = new Date()
+      const currentYear = today.getFullYear()
+      const currentMonth = today.getMonth()
 
-    // Determine how many months to show
-    let maxMonthIndex = 11
-    if (isCurrentYear) {
-      maxMonthIndex = currentMonth
-    } else if (selectedYearInt > currentYear) {
-      maxMonthIndex = -1 // Don't show anything for future years
-    }
+      let maxMonthIndex = 11
+      if (selectedYearInt === currentYear) maxMonthIndex = currentMonth
+      else if (selectedYearInt > currentYear) maxMonthIndex = -1
 
-    const months = Array.from({ length: 12 }, (_, i) => i).filter(m => m <= maxMonthIndex)
+      const visibleMonths = months.filter(m => m <= maxMonthIndex)
 
-    // Calculate initial headcount (jan 1st of selected year)
-    let currentAdmin = 0
-    let currentLegal = 0
+      return visibleMonths.map(monthIndex => {
+        // Date reference: End of Month
+        const date = new Date(selectedYearInt, monthIndex + 1, 0, 23, 59, 59)
 
-    // PRE-CALCULATION: Count people active BEFORE Jan 1st of selected year
-    filteredData.forEach(c => {
-      // Add time to ensure it falls on the correct local day
-      const hireDate = c.hire_date ? new Date(c.hire_date + 'T12:00:00') : null
-      const termDate = c.termination_date ? new Date(c.termination_date + 'T12:00:00') : null
-      const segment = getSegment(c)
+        const activeAdmin = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Administrativo').length
+        const activeLegal = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Jurídico').length
 
-      if (hireDate) {
-        const startOfYear = new Date(selectedYearInt, 0, 1)
-        // Hired strictly before start of year
-        if (hireDate < startOfYear) {
-          // Rule: Active if NOT terminated OR terminated ON or AFTER start of year
-          if (!termDate || termDate >= startOfYear) {
-            if (segment === 'Administrativo') currentAdmin++
-            else currentLegal++
-          }
-        }
-      }
-    })
-
-    const data = months.map(monthIndex => {
-      // Define limits for this month
-      // Start: 1st day of month
-      const monthStart = new Date(selectedYearInt, monthIndex, 1)
-      // End: Start of next month
-      const nextMonthStart = new Date(selectedYearInt, monthIndex + 1, 1)
-
-      // Transactions within this specific month
-      let hiresAdmin = 0
-      let hiresLegal = 0
-      let termsAdmin = 0
-      let termsLegal = 0
-
-      filteredData.forEach(c => {
-        const segment = getSegment(c)
-
-        // Hires in this month
-        if (c.hire_date) {
-          const hDate = new Date(c.hire_date + 'T12:00:00')
-          if (hDate >= monthStart && hDate < nextMonthStart) {
-            if (segment === 'Administrativo') hiresAdmin++
-            else hiresLegal++
-          }
-        }
-
-        // Terminations in this month
-        if (c.termination_date) {
-          const tDate = new Date(c.termination_date + 'T12:00:00')
-          if (tDate >= monthStart && tDate < nextMonthStart) {
-            if (segment === 'Administrativo') termsAdmin++
-            else termsLegal++
-          }
+        return {
+          name: date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+          Administrativo: activeAdmin,
+          Jurídico: activeLegal,
+          Total: activeAdmin + activeLegal
         }
       })
+    }
 
-      // Update cumulative counts
-      currentAdmin += (hiresAdmin - termsAdmin)
-      currentLegal += (hiresLegal - termsLegal)
+    // SCENARIO 2 & 3: All Years -> Show Yearly Evolution (X-Axis = Years)
+    // If Month Selected -> Show that Month for each Year
+    // If Month NOT Selected -> Show End of Year (Dec) for each Year
+    else {
+      // Get all unique years from data + current year
+      const yearsSet = new Set<number>()
+      filteredData.forEach(c => {
+        if (c.hire_date) yearsSet.add(new Date(c.hire_date).getFullYear())
+        if (c.termination_date) yearsSet.add(new Date(c.termination_date).getFullYear())
+      })
+      yearsSet.add(new Date().getFullYear())
+      const sortedYears = Array.from(yearsSet).sort((a, b) => a - b)
 
-      return {
-        name: monthStart.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
-        Administrativo: currentAdmin,
-        Jurídico: currentLegal,
-        Total: currentAdmin + currentLegal
-      }
-    })
+      return sortedYears.map(year => {
+        let date: Date
 
-    return data
-  }, [filteredData, filterYear])
+        if (filterMonth !== 'todos') {
+          // Scenario 3: Specific Month across years
+          // End of selected month for that year
+          const monthIndex = parseInt(filterMonth)
+          date = new Date(year, monthIndex + 1, 0, 23, 59, 59)
+
+          // If date is in future, maybe cap?
+          // For now, allow it (will likely be 0 if hired later)
+          // But if year is current year and month is future, it will show 0 or partial?
+          // Logic isActiveAtDate handles future: if hire_date > date -> false.
+        } else {
+          // Scenario 2: End of Year (Dec 31)
+          // If Current Year, maybe use Today? Or Dec 31 is fine (will capture everyone hired so far)
+          // User requested "Evolução Acumulada", typically End of Year.
+          const today = new Date()
+          if (year === today.getFullYear()) {
+            date = today // Use today for current year availability
+          } else {
+            date = new Date(year, 11, 31, 23, 59, 59)
+          }
+        }
+
+        const activeAdmin = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Administrativo').length
+        const activeLegal = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Jurídico').length
+
+        return {
+          name: year.toString(),
+          Administrativo: activeAdmin,
+          Jurídico: activeLegal,
+          Total: activeAdmin + activeLegal
+        }
+      })
+    }
+  }, [filteredData, filterYear, filterMonth])
 
 
   // 2. Continuous Hiring by Role (Stacked Bar) - Admin & Legal Separate
@@ -354,23 +342,62 @@ export function RHEvolucaoPessoal() {
       }
     })
 
-    // 3. Filter for display if needed
-    const today = new Date()
-    const currentYear = today.getFullYear()
-    const currentMonth = today.getMonth()
-    const selectedYearInt = targetYear
-    const isCurrentYear = selectedYearInt === currentYear
+    // 3. Filter for display based on logic
+    // If Year Selected -> Show 12 months of that year (Filtered above by year check, so just return all months processed)
+    // BUT we need to handle "Todos" + "Month" filter?? 
+    // Wait, the "Hiring By Role" is a Stacked Bar. Usually this is for a specific period.
+    // If Year='Todos', showing 12 months (Jan-Dec) combining all years? Or showing Years on X-Axis?
+    // User request: "Conserte o filtro de ano... quando escolher algum mes especifico, mostrar aquele mes em todos os anos"
+    // This implies the Bar Chart should ALSO be X-Axis = Years if Year='Todos'?
+    // CURRENTLY: `processHiringByRole` creates 12 months buckets.
+    // I will adapt: 
+    // - If Year Selected: X-Axis = Months (Jan-Dec)
+    // - If Year='Todos': X-Axis = Years (Aggregated by Role)
 
-    let maxMonthIndex = 11
-    if (isCurrentYear) {
-      maxMonthIndex = currentMonth
-    } else if (selectedYearInt > currentYear) {
-      maxMonthIndex = -1
+    // REDEFINING Logic for Bar Chart:
+    if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
+      // ... (Existing Monthly Logic) ...
+      const currentYear = new Date().getFullYear()
+      const selectedYearInt = targetYear
+      let maxMonthIndex = 11
+      if (selectedYearInt === currentYear) maxMonthIndex = new Date().getMonth()
+      else if (selectedYearInt > currentYear) maxMonthIndex = -1
+
+      return {
+        data: months.filter(m => m.monthIndex <= maxMonthIndex),
+        roles: Array.from(uniqueRoles)
+      }
+    } else {
+      // Year='Todos' -> Group by YEAR
+      const yearsMap = new Map<string, any>()
+      const allYearsSet = new Set<string>()
+
+      filteredData.forEach(c => {
+        if (!c.hire_date) return
+        const hDate = new Date(c.hire_date + 'T12:00:00')
+
+        // Check Month Filter
+        if (filterMonth !== 'todos') {
+          if (hDate.getMonth() !== parseInt(filterMonth)) return
+        }
+
+        if (getSegment(c) !== targetSegment) return
+
+        const yearStr = hDate.getFullYear().toString()
+        const roleName = c.roles?.name || String(c.role || 'Não definido')
+        uniqueRoles.add(roleName)
+        allYearsSet.add(yearStr)
+
+        if (!yearsMap.has(yearStr)) yearsMap.set(yearStr, { name: yearStr, total: 0 })
+        const entry = yearsMap.get(yearStr)
+        entry[roleName] = (entry[roleName] || 0) + 1
+        entry.total++
+      })
+
+      const sortedYears = Array.from(allYearsSet).sort()
+      const data = sortedYears.map(y => yearsMap.get(y))
+      return { data, roles: Array.from(uniqueRoles) }
     }
-
-    const finalMonths = months.filter(m => m.monthIndex <= maxMonthIndex)
-
-    return { data: finalMonths, roles: Array.from(uniqueRoles) }
   }
 
   const hiringAdmin = useMemo(() => processHiringByRole('Administrativo'), [filteredData, filterYear])
@@ -404,58 +431,130 @@ export function RHEvolucaoPessoal() {
   ]
 
 
-  // 3. Yearly Hiring Flow (Fluxo de Contratações) - Line Chart
+  // 3. Hiring Flow (Line Area)
   const yearlyHiringFlow = useMemo(() => {
-    // Get range of years from data or default to recent
-    const yearsMap = new Map<number, { admin: number, legal: number }>()
+    // If Year Selected -> Monthly Flow for that year
+    if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
+      const year = parseInt(filterYear)
+      const months = Array.from({ length: 12 }, (_, i) => i)
 
-    filteredData.forEach(c => {
-      if (!c.hire_date) return
-      // Use time to avoid timezone shifts
-      const year = new Date(c.hire_date + 'T12:00:00').getFullYear()
-      if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0 })
+      const today = new Date()
+      // Limit if current year?
+      let limit = 11
+      if (year === today.getFullYear()) limit = today.getMonth()
 
-      const counts = yearsMap.get(year)!
-      if (getSegment(c) === 'Administrativo') counts.admin++
-      else counts.legal++
-    })
+      return months.filter(m => m <= limit).map(mIndex => {
+        const mStart = new Date(year, mIndex, 1)
+        const mEnd = new Date(year, mIndex + 1, 1)
 
-    const sortedYears = Array.from(yearsMap.keys()).sort((a, b) => a - b)
-    // If empty, show at least current year
-    if (sortedYears.length === 0) sortedYears.push(new Date().getFullYear())
+        let adm = 0, leg = 0
+        filteredData.forEach(c => {
+          if (!c.hire_date) return
+          const h = new Date(c.hire_date + 'T12:00:00')
+          if (h >= mStart && h < mEnd) {
+            if (getSegment(c) === 'Administrativo') adm++
+            else leg++
+          }
+        })
+        return {
+          name: mStart.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+          Administrativo: adm,
+          Jurídico: leg
+        }
+      })
+    } else {
+      // Year='Todos' -> Yearly Flow
+      // If Month Filter exists -> Comparison of that Month across Years
+      const yearsMap = new Map<number, { admin: number, legal: number }>()
 
-    // Fill gaps? Or just show data points. Let's just show present years.
-    return sortedYears.map(year => ({
-      name: year.toString(),
-      Administrativo: yearsMap.get(year)?.admin || 0,
-      Jurídico: yearsMap.get(year)?.legal || 0
-    }))
-  }, [filteredData]) // Not dependent on filterYear, shows historical trend
+      filteredData.forEach(c => {
+        if (!c.hire_date) return
+        const hDate = new Date(c.hire_date + 'T12:00:00')
+
+        // Filter Month if selected
+        if (filterMonth !== 'todos') {
+          if (hDate.getMonth() !== parseInt(filterMonth)) return
+        }
+
+        const year = hDate.getFullYear()
+        if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0 })
+
+        const counts = yearsMap.get(year)!
+        if (getSegment(c) === 'Administrativo') counts.admin++
+        else counts.legal++
+      })
+
+      const sortedYears = Array.from(yearsMap.keys()).sort((a, b) => a - b)
+      if (sortedYears.length === 0) sortedYears.push(new Date().getFullYear())
+
+      return sortedYears.map(year => ({
+        name: year.toString(),
+        Administrativo: yearsMap.get(year)?.admin || 0,
+        Jurídico: yearsMap.get(year)?.legal || 0
+      }))
+    }
+  }, [filteredData, filterYear, filterMonth])
 
 
-  // 4. Yearly Turnover Flow (Fluxo de Desligamentos) - Line Chart
+  // 4. Turnover Flow (Line Area)
   const yearlyTurnoverFlow = useMemo(() => {
-    const yearsMap = new Map<number, { admin: number, legal: number }>()
+    // Logic mirrors Hiring Flow
+    if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
+      const year = parseInt(filterYear)
+      const months = Array.from({ length: 12 }, (_, i) => i)
 
-    filteredData.forEach(c => {
-      if (!c.termination_date) return
-      const year = new Date(c.termination_date).getFullYear()
-      if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0 })
+      const today = new Date()
+      let limit = 11
+      if (year === today.getFullYear()) limit = today.getMonth()
 
-      const counts = yearsMap.get(year)!
-      if (getSegment(c) === 'Administrativo') counts.admin++
-      else counts.legal++
-    })
+      return months.filter(m => m <= limit).map(mIndex => {
+        const mStart = new Date(year, mIndex, 1)
+        const mEnd = new Date(year, mIndex + 1, 1)
 
-    const sortedYears = Array.from(yearsMap.keys()).sort((a, b) => a - b)
-    if (sortedYears.length === 0) sortedYears.push(new Date().getFullYear())
+        let adm = 0, leg = 0
+        filteredData.forEach(c => {
+          if (!c.termination_date) return
+          const t = new Date(c.termination_date + 'T12:00:00')
+          if (t >= mStart && t < mEnd) {
+            if (getSegment(c) === 'Administrativo') adm++
+            else leg++
+          }
+        })
+        return {
+          name: mStart.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+          Administrativo: adm,
+          Jurídico: leg
+        }
+      })
+    } else {
+      const yearsMap = new Map<number, { admin: number, legal: number }>()
 
-    return sortedYears.map(year => ({
-      name: year.toString(),
-      Administrativo: yearsMap.get(year)?.admin || 0,
-      Jurídico: yearsMap.get(year)?.legal || 0
-    }))
-  }, [filteredData])
+      filteredData.forEach(c => {
+        if (!c.termination_date) return
+        const tDate = new Date(c.termination_date + 'T12:00:00')
+
+        if (filterMonth !== 'todos') {
+          if (tDate.getMonth() !== parseInt(filterMonth)) return
+        }
+
+        const year = tDate.getFullYear()
+        if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0 })
+
+        const counts = yearsMap.get(year)!
+        if (getSegment(c) === 'Administrativo') counts.admin++
+        else counts.legal++
+      })
+
+      const sortedYears = Array.from(yearsMap.keys()).sort((a, b) => a - b)
+      if (sortedYears.length === 0) sortedYears.push(new Date().getFullYear())
+
+      return sortedYears.map(year => ({
+        name: year.toString(),
+        Administrativo: yearsMap.get(year)?.admin || 0,
+        Jurídico: yearsMap.get(year)?.legal || 0
+      }))
+    }
+  }, [filteredData, filterYear, filterMonth])
 
 
   // --- Custom Tooltip ---
@@ -551,13 +650,10 @@ export function RHEvolucaoPessoal() {
           {/* Filter: Year */}
           <FilterSelect
             icon={Calendar}
-            value={filterYear === 'todos' ? 'Todos os anos' : filterYear}
-            onChange={(val) => {
-              const value = val === 'Todos os anos' ? 'todos' : val
-              setFilterYear(value)
-            }}
-            options={years.map(y => ({ label: y, value: y === 'Todos os anos' ? 'todos' : y }))}
-            placeholder="Ano"
+            value={filterYear}
+            onChange={(val) => setFilterYear(val)}
+            options={[{ label: 'Todos os anos', value: 'todos' }, ...years.map(y => ({ label: y, value: y }))]}
+            placeholder="Todos os anos"
           />
 
           {/* Filter: Local */}
@@ -646,7 +742,13 @@ export function RHEvolucaoPessoal() {
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-800 tracking-tight">Evolução Acumulada do Headcount</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Administrativo vs Jurídico ({filterYear})</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                {filterYear !== 'todos' && filterYear !== 'Todos os anos'
+                  ? `Mês a Mês (${filterYear})`
+                  : filterMonth !== 'todos'
+                    ? `Comparativo (${months.find(m => m.value === filterMonth)?.label})`
+                    : 'Anual (Histórico)'}
+              </p>
             </div>
           </div>
         </div>
