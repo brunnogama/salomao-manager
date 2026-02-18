@@ -261,42 +261,41 @@ export function DadosCorporativosSection({
 
             {/* TIMELINE */}
             {formData.termination_date && duration && (
-              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-in zoom-in-95 duration-500">
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-in zoom-in-95 duration-500 mt-6">
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-8 flex items-center gap-2">
                   <Clock className="h-4 w-4" /> Linha do Tempo
                 </h4>
 
-                <div className="relative pt-2 pb-6 px-4">
-                  {/* Bar */}
-                  <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -translate-y-1/2 rounded-full" />
-                  <div className="absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-[#1e3a8a] to-red-500 -translate-y-1/2 rounded-full opacity-20" />
+                <div className="relative px-4 pb-2">
+                  {/* Line Background */}
+                  <div className="absolute top-2.5 left-0 w-full h-0.5 bg-gray-200 rounded-full" />
 
-                  <div className="flex justify-between relative z-10">
+                  {/* Duration Badge (Centered) */}
+                  <div className="absolute top-2.5 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm z-10">
+                    <p className="text-[10px] font-black uppercase text-gray-500 whitespace-nowrap">
+                      {duration.years > 0 && `${duration.years} ano${duration.years > 1 ? 's' : ''}`}
+                      {duration.years > 0 && duration.months > 0 && ' e '}
+                      {duration.months > 0 && `${duration.months} m${duration.months > 1 ? 'eses' : 'ês'}`}
+                      {duration.years === 0 && duration.months === 0 && 'Recente'}
+                    </p>
+                  </div>
+
+                  <div className="flex justify-between relative z-0">
                     {/* Start Point */}
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-4 h-4 rounded-full bg-[#1e3a8a] shadow ring-4 ring-white" />
-                      <div className="text-center">
-                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Admissão</p>
-                        <p className="text-xs font-bold text-[#1e3a8a]">{formData.hire_date}</p>
+                    <div className="flex flex-col items-start gap-4">
+                      <div className="w-5 h-5 rounded-full bg-[#1e3a8a] ring-4 ring-white relative z-10 shadow-sm" />
+                      <div className="text-left">
+                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Admissão</p>
+                        <p className="text-sm font-bold text-[#1e3a8a]">{formData.hire_date}</p>
                       </div>
                     </div>
 
-                    {/* Mid Duration */}
-                    <div className="bg-white px-4 py-1 rounded-full border border-gray-200 shadow-sm">
-                      <p className="text-xs font-bold text-gray-600">
-                        {duration.years > 0 && `${duration.years} ano${duration.years > 1 ? 's' : ''}`}
-                        {duration.years > 0 && duration.months > 0 && ' e '}
-                        {duration.months > 0 && `${duration.months} m${duration.months > 1 ? 'eses' : 'ês'}`}
-                        {duration.years === 0 && duration.months === 0 && 'Recente'}
-                      </p>
-                    </div>
-
                     {/* End Point */}
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-4 h-4 rounded-full bg-red-500 shadow ring-4 ring-white" />
-                      <div className="text-center">
-                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Desligamento</p>
-                        <p className="text-xs font-bold text-red-600">{formData.termination_date}</p>
+                    <div className="flex flex-col items-end gap-4">
+                      <div className="w-5 h-5 rounded-full bg-red-500 ring-4 ring-white relative z-10 shadow-sm" />
+                      <div className="text-right">
+                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Desligamento</p>
+                        <p className="text-sm font-bold text-red-600">{formData.termination_date}</p>
                       </div>
                     </div>
                   </div>
