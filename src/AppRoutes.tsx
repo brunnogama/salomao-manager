@@ -130,8 +130,10 @@ export function AppRoutes() {
             <Route element={<AuthLayout />}>
                 <Route path="/login" element={<Login />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/ficha-cadastral" element={<FichaCadastral />} />
             </Route>
+
+            {/* Public Routes accessible by everyone (including logged in users) */}
+            <Route path="/ficha-cadastral" element={<FichaCadastral />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>

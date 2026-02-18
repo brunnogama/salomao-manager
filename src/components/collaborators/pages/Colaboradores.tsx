@@ -1058,8 +1058,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               <button
                 onClick={() => {
                   const url = window.location.origin + '/ficha-cadastral';
-                  navigator.clipboard.writeText(url);
-                  alert('Link da Ficha Cadastral copiado!');
+                  window.open(url, '_blank');
                 }}
                 className="p-2 text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors border border-blue-100"
                 title="Copiar Link Ficha Cadastral"
