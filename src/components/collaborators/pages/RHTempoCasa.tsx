@@ -670,8 +670,12 @@ export function RHTempoCasa() {
                   width={120}
                 />
                 <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
-                <Bar dataKey="avg" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20} name="Anos">
-                  <LabelList dataKey="avg" position="right" fill={COLORS.primary} fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
+                <Bar dataKey="avg" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
+                  {tenureByAreaData.map((entry, index) => {
+                    const isLegal = entry.name.toLowerCase().includes('juridico') || entry.name.toLowerCase().includes('jurídico')
+                    return <Cell key={`cell-${index}`} fill={isLegal ? COLORS.secondary : COLORS.primary} />
+                  })}
+                  <LabelList dataKey="avg" position="right" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -735,15 +739,12 @@ export function RHTempoCasa() {
                 outerRadius={110}
                 paddingAngle={5}
                 dataKey="value"
+                label={CustomPieLabel}
+                labelLine={false}
               >
                 {legalExperienceData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS.pie[index % COLORS.pie.length]} />
                 ))}
-                <LabelList
-                  dataKey="value"
-                  position="outside"
-                  content={<CustomPieLabel />}
-                />
               </Pie>
               <Tooltip content={<CustomTooltip />} />
               <Legend verticalAlign="bottom" height={36} />
