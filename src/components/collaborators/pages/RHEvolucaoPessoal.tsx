@@ -269,7 +269,11 @@ export function RHEvolucaoPessoal() {
   // 2. Continuous Hiring by Role (Stacked Bar) - Admin & Legal Separate
   // Data Structure: [{ month: 'Jan', 'Advogado': 2, 'Paralegal': 1, ... }, ...]
 
+  // 2. Continuous Hiring by Role (Stacked Bar) - Admin & Legal Separate
+  // Data Structure: [{ month: 'Jan', 'Advogado': 2, 'Paralegal': 1, ... }, ...]
+
   const processHiringByRole = (targetSegment: Segment) => {
+    // 1. Initialize 12 months structure
     const months = Array.from({ length: 12 }, (_, i) => {
       const d = new Date(parseInt(filterYear), i, 1)
       return {
@@ -281,9 +285,11 @@ export function RHEvolucaoPessoal() {
 
     const uniqueRoles = new Set<string>()
 
+    // 2. Populate data
     filteredData.forEach(c => {
       if (!c.hire_date) return
-      const hDate = new Date(c.hire_date)
+      // Use time to avoid timezone shifts
+      const hDate = new Date(c.hire_date + 'T12:00:00')
       if (hDate.getFullYear().toString() !== filterYear) return
 
       if (getSegment(c) !== targetSegment) return
@@ -295,11 +301,29 @@ export function RHEvolucaoPessoal() {
       uniqueRoles.add(roleName)
 
       // Increment count for this role in this month
-      months[monthIndex][roleName] = (months[monthIndex][roleName] || 0) + 1
-      months[monthIndex].total++
+      if (months[monthIndex]) {
+        months[monthIndex][roleName] = (months[monthIndex][roleName] || 0) + 1
+        months[monthIndex].total++
+      }
     })
 
-    return { data: months, roles: Array.from(uniqueRoles) }
+    // 3. Filter for display if needed
+    const today = new Date()
+    const currentYear = today.getFullYear()
+    const currentMonth = today.getMonth()
+    const selectedYearInt = parseInt(filterYear)
+    const isCurrentYear = selectedYearInt === currentYear
+
+    let maxMonthIndex = 11
+    if (isCurrentYear) {
+      maxMonthIndex = currentMonth
+    } else if (selectedYearInt > currentYear) {
+      maxMonthIndex = -1
+    }
+
+    const finalMonths = months.filter(m => m.monthIndex <= maxMonthIndex)
+
+    return { data: finalMonths, roles: Array.from(uniqueRoles) }
   }
 
   const hiringAdmin = useMemo(() => processHiringByRole('Administrativo'), [filteredData, filterYear])
@@ -319,7 +343,8 @@ export function RHEvolucaoPessoal() {
 
     filteredData.forEach(c => {
       if (!c.hire_date) return
-      const year = new Date(c.hire_date).getFullYear()
+      // Use time to avoid timezone shifts
+      const year = new Date(c.hire_date + 'T12:00:00').getFullYear()
       if (!yearsMap.has(year)) yearsMap.set(year, { admin: 0, legal: 0 })
 
       const counts = yearsMap.get(year)!
