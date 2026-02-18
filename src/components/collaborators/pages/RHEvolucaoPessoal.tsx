@@ -79,7 +79,8 @@ const getYearFromDate = (dateStr?: string) => {
   return new Date(dateStr + 'T12:00:00').getFullYear()
 }
 
-const formatCompact = (val: number) => {
+const formatCompact = (val: number | undefined | null) => {
+  if (val === undefined || val === null || isNaN(val)) return '0'
   if (val === 0) return '0'
   return new Intl.NumberFormat('pt-BR', {
     notation: 'compact',
@@ -709,7 +710,7 @@ export function RHEvolucaoPessoal() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} position="bottom" />} />
+                <LabelList dataKey="Administrativo" content={(props) => <CustomDataLabel {...props} fill={COLORS.primary} position="bottom" />} />
               </Area>
               <Area
                 type="monotone"
@@ -721,7 +722,7 @@ export function RHEvolucaoPessoal() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="top" />} />
+                <LabelList dataKey="Jurídico" content={(props) => <CustomDataLabel {...props} fill={COLORS.secondary} position="top" />} />
               </Area>
             </AreaChart>
           </ResponsiveContainer>

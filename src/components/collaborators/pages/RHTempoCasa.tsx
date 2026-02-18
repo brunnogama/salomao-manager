@@ -84,7 +84,8 @@ const calculateTenure = (hireDateStr: string, refDate: Date = new Date()) => {
   return diffYears
 }
 
-const formatYears = (years: number) => {
+const formatYears = (years: number | undefined | null) => {
+  if (years === undefined || years === null || isNaN(years)) return '0 anos'
   if (years === 0) return '0 anos'
   if (years < 1) return '< 1 ano'
   return `${years.toFixed(1)} anos`.replace('.', ',')
