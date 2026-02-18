@@ -488,38 +488,16 @@ export function RHEvolucaoPessoal() {
 
   // --- Custom Label (Replicação do balão azul do Datalabels) ---
   const CustomDataLabel = (props: any) => {
-    const { x, y, value, fill, dataKey } = props;
-    // Basic Offset Logic
-    let yOffset = -25 // Default Up
+    const { x, y, value, fill, position } = props;
 
-    // 1. Avoid Start/End Clipping
-    // Assuming 'props.chartWidth' isn't directly available unless we pass payload length.
-    // But index is 0, we can push right. If index is last, push left.
-    // However, Recharts doesn't easily expose 'total length' here without extra Props.
-    // We can rely on X coordinate. If X is very small (< 30), push right.
-    // If X is very large (> width - 30), push left.
+    // Explicit positioning logic
+    let yOffset = -35 // Default Up (Top)
 
-    // Instead of complex width logic, let's just use margins effectively and shift slightly.
-    // Or check index if we knew total length. We can't know total length easily here.
-
-    // Adjust Y based on Series to minimize overlap
-    // Admin (Orange) -> Shift Down slightly if values are close? Or keep standard?
-    // In the print, Admin is below Legal. So shifting Admin down might help separation.
-
-    if (dataKey === 'Administrativo') {
-      yOffset = 10 // Shift down below the point
+    if (position === 'bottom') {
+      yOffset = 15 // Shift down below the point
     } else {
       yOffset = -35 // Shift up above the point
     }
-
-    // Adjust X to avoid clipping at ends
-    // We can use a simple prop passed down, or just hardcode some safe zones if margin is tight.
-    // Better strategy: Increase Chart Margin. But users asked to "Conserte".
-    // Let's implement dynamic anchor.
-
-    // A simpler visual fix for overlap:
-    // Admin: Below point.
-    // Legal: Above point.
 
     return (
       <g>
@@ -731,7 +709,7 @@ export function RHEvolucaoPessoal() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} />} />
+                <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} position="bottom" />} />
               </Area>
               <Area
                 type="monotone"
@@ -743,7 +721,7 @@ export function RHEvolucaoPessoal() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} />} />
+                <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="top" />} />
               </Area>
             </AreaChart>
           </ResponsiveContainer>
@@ -772,8 +750,8 @@ export function RHEvolucaoPessoal() {
                   type="category"
                   axisLine={false}
                   tickLine={false}
-                  width={100}
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                  width={100}
                 />
                 <Tooltip
                   cursor={{ fill: '#f3f4f6' }}
@@ -818,8 +796,8 @@ export function RHEvolucaoPessoal() {
                   type="category"
                   axisLine={false}
                   tickLine={false}
-                  width={100}
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                  width={100}
                 />
                 <Tooltip
                   cursor={{ fill: '#f3f4f6' }}
@@ -882,7 +860,7 @@ export function RHEvolucaoPessoal() {
                   dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
                   activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
                 >
-                  <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} />} />
+                  <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} position="bottom" />} />
                 </Area>
                 <Area
                   type="monotone"
@@ -894,7 +872,7 @@ export function RHEvolucaoPessoal() {
                   dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
                   activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
                 >
-                  <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} />} />
+                  <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="top" />} />
                 </Area>
               </AreaChart>
             </ResponsiveContainer>
@@ -935,7 +913,7 @@ export function RHEvolucaoPessoal() {
                   dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
                   activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
                 >
-                  <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} />} />
+                  <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} position="bottom" />} />
                 </Area>
                 <Area
                   type="monotone"
@@ -947,7 +925,7 @@ export function RHEvolucaoPessoal() {
                   dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
                   activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
                 >
-                  <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} />} />
+                  <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} position="top" />} />
                 </Area>
               </AreaChart>
             </ResponsiveContainer>
