@@ -115,7 +115,7 @@ export function RHEvolucaoPessoal() {
   }, [colaboradores])
 
   const months = [
-    { label: 'Todos os meses', value: 'todos' },
+    { label: 'Meses', value: 'todos' },
     { label: 'Janeiro', value: '0' },
     { label: 'Fevereiro', value: '1' },
     { label: 'Março', value: '2' },
@@ -300,17 +300,16 @@ export function RHEvolucaoPessoal() {
   // 2. Continuous Hiring by Role (Stacked Bar) - Admin & Legal Separate
   // Data Structure: [{ month: 'Jan', 'Advogado': 2, 'Paralegal': 1, ... }, ...]
 
-  // 2. Continuous Hiring by Role (Stacked Bar) - Admin & Legal Separate
-  // Data Structure: [{ month: 'Jan', 'Advogado': 2, 'Paralegal': 1, ... }, ...]
-
   const processHiringByRole = (targetSegment: Segment) => {
-    // 1. Initialize 12 months structure
-    const targetYear = (filterYear === 'todos' || filterYear === 'Todos os anos')
-      ? new Date().getFullYear()
+    const currentYear = new Date().getFullYear()
+    // If 'todos' is selected, default to current year for the chart
+    const selectedYearInt = (filterYear === 'todos' || filterYear === 'Anos')
+      ? currentYear
       : parseInt(filterYear)
 
+    // 1. Initialize 12 months structure
     const months = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(targetYear, i, 1)
+      const d = new Date(selectedYearInt, i, 1)
       return {
         monthIndex: i,
         name: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
@@ -325,7 +324,7 @@ export function RHEvolucaoPessoal() {
       if (!c.hire_date) return
       // Use time to avoid timezone shifts
       const hDate = new Date(c.hire_date + 'T12:00:00')
-      if (hDate.getFullYear() !== targetYear) return
+      if (hDate.getFullYear() !== selectedYearInt) return
 
       if (getSegment(c) !== targetSegment) return
 
@@ -355,10 +354,9 @@ export function RHEvolucaoPessoal() {
     // - If Year='Todos': X-Axis = Years (Aggregated by Role)
 
     // REDEFINING Logic for Bar Chart:
-    if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
+    if (filterYear !== 'todos' && filterYear !== 'Anos') {
       // ... (Existing Monthly Logic) ...
       const currentYear = new Date().getFullYear()
-      const selectedYearInt = targetYear
       let maxMonthIndex = 11
       if (selectedYearInt === currentYear) maxMonthIndex = new Date().getMonth()
       else if (selectedYearInt > currentYear) maxMonthIndex = -1
@@ -400,21 +398,21 @@ export function RHEvolucaoPessoal() {
     }
   }
 
-  const hiringAdmin = useMemo(() => processHiringByRole('Administrativo'), [filteredData, filterYear])
-  const hiringLegal = useMemo(() => processHiringByRole('Jurídico'), [filteredData, filterYear])
+  const hiringAdmin = useMemo(() => processHiringByRole('Administrativo'), [filteredData, filterYear, filterMonth])
+  const hiringLegal = useMemo(() => processHiringByRole('Jurídico'), [filteredData, filterYear, filterMonth])
 
   // Generate colors for roles
   const adminColors = [
-    '#60a5fa', // Blue 400
-    '#93c5fd', // Blue 300
-    '#3b82f6', // Blue 500
-    '#bfdbfe', // Blue 200
-    '#2563eb', // Blue 600
-    '#dbeafe', // Blue 100
-    '#1d4ed8', // Blue 700 (Used sparingly for contrast if many roles)
-    '#7dd3fc', // Sky 300
-    '#0ea5e9', // Sky 500
-    '#38bdf8'  // Sky 400
+    '#ea580c', // Orange 600
+    '#fb923c', // Orange 400
+    '#f97316', // Orange 500
+    '#fdba74', // Orange 300
+    '#c2410c', // Orange 700
+    '#ffedd5', // Orange 100
+    '#9a3412', // Orange 800
+    '#fdba74', // Orange 300
+    '#fed7aa', // Orange 200
+    '#fff7ed'  // Orange 50
   ]
 
   const legalColors = [
@@ -434,7 +432,7 @@ export function RHEvolucaoPessoal() {
   // 3. Hiring Flow (Line Area)
   const yearlyHiringFlow = useMemo(() => {
     // If Year Selected -> Monthly Flow for that year
-    if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
+    if (filterYear !== 'todos' && filterYear !== 'Anos') {
       const year = parseInt(filterYear)
       const months = Array.from({ length: 12 }, (_, i) => i)
 
@@ -499,7 +497,7 @@ export function RHEvolucaoPessoal() {
   // 4. Turnover Flow (Line Area)
   const yearlyTurnoverFlow = useMemo(() => {
     // Logic mirrors Hiring Flow
-    if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
+    if (filterYear !== 'todos' && filterYear !== 'Anos') {
       const year = parseInt(filterYear)
       const months = Array.from({ length: 12 }, (_, i) => i)
 
@@ -606,7 +604,7 @@ export function RHEvolucaoPessoal() {
   };
 
   const COLORS = {
-    primary: '#60a5fa',   // Admin (Light Blue)
+    primary: '#ea580c',   // Admin (Dark Orange)
     secondary: '#1e3a8a', // Jurídico (Dark Blue)
     tertiary: '#f59e0b',  // Amber
     text: '#6b7280',
@@ -644,16 +642,16 @@ export function RHEvolucaoPessoal() {
             value={filterMonth}
             onChange={setFilterMonth}
             options={months}
-            placeholder="Mês"
+            placeholder="Meses"
           />
 
           {/* Filter: Year */}
           <FilterSelect
             icon={Calendar}
-            value={filterYear}
-            onChange={(val) => setFilterYear(val)}
-            options={[{ label: 'Todos os anos', value: 'todos' }, ...years.map(y => ({ label: y, value: y }))]}
-            placeholder="Todos os anos"
+            value={filterYear === 'todos' ? 'Anos' : filterYear}
+            onChange={(val) => setFilterYear(val === 'Anos' ? 'todos' : val)}
+            options={[{ label: 'Anos', value: 'todos' }, ...years.map(y => ({ label: y, value: y }))]}
+            placeholder="Anos"
           />
 
           {/* Filter: Local */}
@@ -719,13 +717,13 @@ export function RHEvolucaoPessoal() {
 
         {/* Total Active - Admin */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-[#60a5fa]"></div>
+          <div className="absolute right-0 top-0 h-full w-1 bg-[#ea580c]"></div>
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Administrativo</p>
-            <p className="text-3xl font-black text-[#60a5fa] mt-1">{totalActiveAdmin}</p>
+            <p className="text-3xl font-black text-[#ea580c] mt-1">{totalActiveAdmin}</p>
           </div>
-          <div className="p-3 bg-[#60a5fa]/10 rounded-xl">
-            <Briefcase className="h-6 w-6 text-[#60a5fa]" />
+          <div className="p-3 bg-[#ea580c]/10 rounded-xl">
+            <Briefcase className="h-6 w-6 text-[#ea580c]" />
           </div>
         </div>
 
@@ -743,7 +741,7 @@ export function RHEvolucaoPessoal() {
             <div>
               <h3 className="text-lg font-black text-gray-800 tracking-tight">Evolução Acumulada do Headcount</h3>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                {filterYear !== 'todos' && filterYear !== 'Todos os anos'
+                {filterYear !== 'todos' && filterYear !== 'Anos'
                   ? `Mês a Mês (${filterYear})`
                   : filterMonth !== 'todos'
                     ? `Comparativo (${months.find(m => m.value === filterMonth)?.label})`
@@ -815,7 +813,7 @@ export function RHEvolucaoPessoal() {
         {/* Administrative Hiring */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#60a5fa]/10 text-[#60a5fa]">
+            <div className="p-2 rounded-xl bg-[#ea580c]/10 text-[#ea580c]">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
@@ -875,7 +873,7 @@ export function RHEvolucaoPessoal() {
         {/* Chart 3: Hiring Flow (Historical) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
           <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-            <UserPlus className="w-4 h-4 text-[#60a5fa]" />
+            <UserPlus className="w-4 h-4 text-[#ea580c]" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Contratações (Anual)</h3>
           </div>
           <div className="h-[250px] w-full">
