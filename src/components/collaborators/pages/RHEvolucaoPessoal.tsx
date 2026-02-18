@@ -76,7 +76,7 @@ const isActiveAtDate = (c: Collaborator, date: Date) => {
 
 const getYearFromDate = (dateStr?: string) => {
   if (!dateStr) return null
-  return new Date(dateStr).getFullYear()
+  return new Date(dateStr + 'T12:00:00').getFullYear()
 }
 
 const formatCompact = (val: number) => {
@@ -215,20 +215,23 @@ export function RHEvolucaoPessoal() {
 
   // 1. Headcount Evolution (Accumulated)
   const headcountChartData = useMemo(() => {
-    // SCENARIO 1: Specific Year Selected -> Show Monthly Evolution (Jan-Dec)
-    if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
+    // SCENARIO 1: Specific Year Selected -> Show Monthly Evolution (Jan-Dec) for that year
+    if (filterYear !== 'todos' && filterYear !== 'Todos os anos' && filterYear !== 'Anos') {
       const selectedYearInt = parseInt(filterYear)
-      const months = Array.from({ length: 12 }, (_, i) => i)
+      const monthsList = Array.from({ length: 12 }, (_, i) => i)
 
       const today = new Date()
       const currentYear = today.getFullYear()
       const currentMonth = today.getMonth()
 
+      // Determine how many months to show
       let maxMonthIndex = 11
+      // If viewing current year, only show up to current month?
+      // Or show full year if we want to show 0s? Usually up to current month is better for specific year view.
       if (selectedYearInt === currentYear) maxMonthIndex = currentMonth
-      else if (selectedYearInt > currentYear) maxMonthIndex = -1
+      else if (selectedYearInt > currentYear) maxMonthIndex = -1 // Future year -> empty? or just show 0s? Let's show empty to be clean.
 
-      const visibleMonths = months.filter(m => m <= maxMonthIndex)
+      const visibleMonths = monthsList.filter(m => m <= maxMonthIndex)
 
       return visibleMonths.map(monthIndex => {
         // Date reference: End of Month
@@ -246,39 +249,37 @@ export function RHEvolucaoPessoal() {
       })
     }
 
-    // SCENARIO 2 & 3: All Years -> Show Yearly Evolution (X-Axis = Years)
-    // If Month Selected -> Show that Month for each Year
-    // If Month NOT Selected -> Show End of Year (Dec) for each Year
+    // SCENARIO 2: All Years (Historical Evolution)
     else {
       // Get all unique years from data + current year
       const yearsSet = new Set<number>()
       filteredData.forEach(c => {
-        if (c.hire_date) yearsSet.add(new Date(c.hire_date).getFullYear())
-        if (c.termination_date) yearsSet.add(new Date(c.termination_date).getFullYear())
+        if (c.hire_date) yearsSet.add(new Date(c.hire_date + 'T12:00:00').getFullYear())
+        // Include termination years too? Not strictly necessary for headcount (active), but good for range.
+        if (c.termination_date) yearsSet.add(new Date(c.termination_date + 'T12:00:00').getFullYear())
       })
-      yearsSet.add(new Date().getFullYear())
-      const sortedYears = Array.from(yearsSet).sort((a, b) => a - b)
+
+      const currentYear = new Date().getFullYear()
+      yearsSet.add(currentYear)
+
+      // Filter out crazy years if any (e.g. 1900?)
+      const sortedYears = Array.from(yearsSet).filter(y => y >= 2000 && y <= currentYear + 5).sort((a, b) => a - b)
 
       return sortedYears.map(year => {
         let date: Date
 
         if (filterMonth !== 'todos') {
-          // Scenario 3: Specific Month across years
-          // End of selected month for that year
+          // Sub-scenario: Specific Month selected -> Show that month's snapshot for each year
           const monthIndex = parseInt(filterMonth)
+          // Last day of that month in that year
           date = new Date(year, monthIndex + 1, 0, 23, 59, 59)
-
-          // If date is in future, maybe cap?
-          // For now, allow it (will likely be 0 if hired later)
-          // But if year is current year and month is future, it will show 0 or partial?
-          // Logic isActiveAtDate handles future: if hire_date > date -> false.
         } else {
-          // Scenario 2: End of Year (Dec 31)
-          // If Current Year, maybe use Today? Or Dec 31 is fine (will capture everyone hired so far)
-          // User requested "Evolução Acumulada", typically End of Year.
-          const today = new Date()
-          if (year === today.getFullYear()) {
-            date = today // Use today for current year availability
+          // Sub-scenario: No Month selected -> Show Annual (End of Year)
+          // Exception: For Current Year, use Today (to show current status), or End of Year (projected/current)?
+          // Using Today for current year allows "Real-time" view. 
+          // Using Dec 31 for past years ensures we capture the final state.
+          if (year === currentYear) {
+            date = new Date() // Right now
           } else {
             date = new Date(year, 11, 31, 23, 59, 59)
           }
@@ -286,6 +287,9 @@ export function RHEvolucaoPessoal() {
 
         const activeAdmin = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Administrativo').length
         const activeLegal = filteredData.filter(c => isActiveAtDate(c, date) && getSegment(c) === 'Jurídico').length
+
+        // If future year (e.g. 2028 from some data anomaly) and values are just carry-over, it might look flat.
+        // But logic holds: if hired before 2028 and not fired, they are active.
 
         return {
           name: year.toString(),
