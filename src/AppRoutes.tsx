@@ -6,6 +6,7 @@ import { ModuleSelector } from './components/ModuleSelector';
 import Login from './Login';
 import ResetPassword from './ResetPassword';
 import { UnderConstruction } from './components/UnderConstruction';
+import FichaCadastral from './pages/FichaCadastral';
 
 // CRM Components
 import { Dashboard as CrmDashboard } from './components/crm/Dashboard';
@@ -129,6 +130,7 @@ export function AppRoutes() {
             <Route element={<AuthLayout />}>
                 <Route path="/login" element={<Login />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/ficha-cadastral" element={<FichaCadastral />} />
             </Route>
 
             {/* Protected Routes */}

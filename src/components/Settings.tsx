@@ -14,6 +14,7 @@ import { UserManagement } from './settings/UserManagement'
 import { UserModal } from './settings/UserModal'
 import { CRMSection } from './settings/CRMSection'
 import { MaintenanceSection } from './settings/MaintenanceSection'
+import { RHSection } from './settings/RHSection'
 import { SystemSection } from './settings/SystemSection'
 import { ControladoriaSection } from './settings/ControladoriaSection'
 
@@ -552,8 +553,8 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
           )}
 
           {activeModule === 'rh' && (
-            <MaintenanceSection
-              type="rh" isAdmin={isAdmin}
+            <RHSection
+              isAdmin={isAdmin}
               onReset={() => openResetModal('presenca_portaria', 'Presencial', 'Resetou presenças', 'Remove todos os registros de presença da portaria')}
               onResetSecondary={() => openResetModal('colaboradores', 'Colaboradores', 'Resetou colaboradores', 'Remove todos os dados cadastrais de colaboradores')}
               onResetTertiary={() => openResetModal('marcacoes_ponto', 'Controle de Horas', 'Resetou marcações de ponto', 'Remove todos os registros de marcações de ponto')}
