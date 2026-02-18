@@ -20,8 +20,7 @@ import {
   BarChart,
   Bar,
   Legend,
-  LineChart,
-  Line
+  LabelList
 } from 'recharts'
 import { useColaboradores } from '../hooks/useColaboradores'
 import { Collaborator } from '../../../types/controladoria'
@@ -53,7 +52,7 @@ const getSegment = (colaborador: Collaborator): Segment => {
   const team = normalizeString(teamName)
 
   // Keywords indicating Legal sector
-  const legalKeywords = ['advogado', 'juridico', 'estagiario de direito', 'socio']
+  const legalKeywords = ['advogado', 'juridico', 'estagiario de direito', 'estagiario', 'socio']
 
   // Checks
   if (legalKeywords.some(k => role.includes(k) || team.includes(k))) {
@@ -71,6 +70,15 @@ const isActive = (c: Collaborator) => {
 const getYearFromDate = (dateStr?: string) => {
   if (!dateStr) return null
   return new Date(dateStr).getFullYear()
+}
+
+const formatCompact = (val: number) => {
+  if (val === 0) return '0'
+  return new Intl.NumberFormat('pt-BR', {
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: 1
+  }).format(val);
 }
 
 // --- Main Component ---
@@ -361,10 +369,38 @@ export function RHEvolucaoPessoal() {
     return null
   }
 
+  // --- Custom Label (Replicação do balão azul do Datalabels) ---
+  const CustomDataLabel = (props: any) => {
+    const { x, y, value, fill } = props;
+    // Se o valor for zero, talvez não exibir? Ou exibir. Aero exibe sempre.
+    return (
+      <g>
+        <rect
+          x={x - 15}
+          y={y - 25}
+          width={30}
+          height={18}
+          rx={4}
+          fill={fill} // Usa a cor da série (Admin=Orange, Legal=Royal)
+        />
+        <text
+          x={x}
+          y={y - 13}
+          fill="white"
+          textAnchor="middle"
+          fontSize="10px"
+          fontWeight="bold"
+        >
+          {formatCompact(value)}
+        </text>
+      </g>
+    );
+  };
+
   const COLORS = {
-    primary: '#1e3a8a',
-    secondary: '#10b981', // Emerald
-    tertiary: '#f59e0b', // Amber
+    primary: '#f97316',   // Admin (Orange 500)
+    secondary: '#1e3a8a', // Jurídico (Royal Blue / Blue 900)
+    tertiary: '#f59e0b',  // Amber
     text: '#6b7280',
     grid: '#e5e7eb'
   }
@@ -447,25 +483,25 @@ export function RHEvolucaoPessoal() {
 
         {/* Total Active - Admin */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
+          <div className="absolute right-0 top-0 h-full w-1 bg-orange-500"></div>
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Administrativo</p>
-            <p className="text-3xl font-black text-blue-900 mt-1">{totalActiveAdmin}</p>
+            <p className="text-3xl font-black text-orange-600 mt-1">{totalActiveAdmin}</p>
           </div>
-          <div className="p-3 bg-blue-50 rounded-xl">
-            <Users className="h-6 w-6 text-blue-600" />
+          <div className="p-3 bg-orange-50 rounded-xl">
+            <Users className="h-6 w-6 text-orange-500" />
           </div>
         </div>
 
         {/* Total Active - Legal */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
+          <div className="absolute right-0 top-0 h-full w-1 bg-[#1e3a8a]"></div>
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Jurídico</p>
-            <p className="text-3xl font-black text-emerald-900 mt-1">{totalActiveLegal}</p>
+            <p className="text-3xl font-black text-[#1e3a8a] mt-1">{totalActiveLegal}</p>
           </div>
-          <div className="p-3 bg-emerald-50 rounded-xl">
-            <ScaleIcon className="h-6 w-6 text-emerald-600" />
+          <div className="p-3 bg-blue-50 rounded-xl">
+            <ScaleIcon className="h-6 w-6 text-[#1e3a8a]" />
           </div>
         </div>
 
@@ -488,7 +524,7 @@ export function RHEvolucaoPessoal() {
       <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div className="mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+            <div className="p-2 rounded-xl bg-blue-50 text-[#1e3a8a]">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
@@ -499,14 +535,14 @@ export function RHEvolucaoPessoal() {
         </div>
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={headcountChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={headcountChartData} margin={{ top: 30, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorAdmin" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.1} />
+                  <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3} />
                   <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorLegal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.1} />
+                  <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.3} />
                   <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -532,7 +568,11 @@ export function RHEvolucaoPessoal() {
                 fillOpacity={1}
                 fill="url(#colorAdmin)"
                 strokeWidth={3}
-              />
+                dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
+              >
+                <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} />} />
+              </Area>
               <Area
                 type="monotone"
                 dataKey="Jurídico"
@@ -540,7 +580,11 @@ export function RHEvolucaoPessoal() {
                 fillOpacity={1}
                 fill="url(#colorLegal)"
                 strokeWidth={3}
-              />
+                dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
+              >
+                <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} />} />
+              </Area>
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -552,7 +596,7 @@ export function RHEvolucaoPessoal() {
         {/* Administrative Hiring */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+            <div className="p-2 rounded-xl bg-orange-50 text-orange-500">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
@@ -579,7 +623,7 @@ export function RHEvolucaoPessoal() {
         {/* Legal Hiring */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+            <div className="p-2 rounded-xl bg-blue-50 text-[#1e3a8a]">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
@@ -612,20 +656,52 @@ export function RHEvolucaoPessoal() {
         {/* Chart 3: Hiring Flow (Historical) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
           <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-            <UserPlus className="w-4 h-4 text-emerald-600" />
+            <UserPlus className="w-4 h-4 text-orange-500" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Contratações (Anual)</h3>
           </div>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={yearlyHiringFlow}>
+              <AreaChart data={yearlyHiringFlow} margin={{ top: 30, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorAdminFlow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorLegalFlow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                <Line type="monotone" dataKey="Administrativo" stroke={COLORS.primary} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="Jurídico" stroke={COLORS.secondary} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-              </LineChart>
+                <Area
+                  type="monotone"
+                  dataKey="Administrativo"
+                  stroke={COLORS.primary}
+                  fillOpacity={1}
+                  fill="url(#colorAdminFlow)"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
+                >
+                  <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} />} />
+                </Area>
+                <Area
+                  type="monotone"
+                  dataKey="Jurídico"
+                  stroke={COLORS.secondary}
+                  fillOpacity={1}
+                  fill="url(#colorLegalFlow)"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
+                >
+                  <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} />} />
+                </Area>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -633,20 +709,52 @@ export function RHEvolucaoPessoal() {
         {/* Chart 4: Turnover Flow (Historical) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
           <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-            <UserMinus className="w-4 h-4 text-red-600" />
+            <UserMinus className="w-4 h-4 text-[#1e3a8a]" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Desligamentos (Anual)</h3>
           </div>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={yearlyTurnoverFlow}>
+              <AreaChart data={yearlyTurnoverFlow} margin={{ top: 30, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorAdminTurn" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorLegalTurn" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                <Line type="monotone" dataKey="Administrativo" stroke={COLORS.primary} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="Jurídico" stroke={COLORS.secondary} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-              </LineChart>
+                <Area
+                  type="monotone"
+                  dataKey="Administrativo"
+                  stroke={COLORS.primary}
+                  fillOpacity={1}
+                  fill="url(#colorAdminTurn)"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
+                >
+                  <LabelList dataKey="Administrativo" content={<CustomDataLabel fill={COLORS.primary} />} />
+                </Area>
+                <Area
+                  type="monotone"
+                  dataKey="Jurídico"
+                  stroke={COLORS.secondary}
+                  fillOpacity={1}
+                  fill="url(#colorLegalTurn)"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
+                >
+                  <LabelList dataKey="Jurídico" content={<CustomDataLabel fill={COLORS.secondary} />} />
+                </Area>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
