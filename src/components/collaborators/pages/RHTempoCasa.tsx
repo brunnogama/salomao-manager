@@ -400,7 +400,7 @@ export function RHTempoCasa() {
   };
 
   const CustomPieLabel = (props: any) => {
-    const { cx, cy, midAngle, innerRadius, outerRadius, value, fill } = props;
+    const { cx, cy, midAngle, outerRadius, value, fill } = props;
 
     if (!cx || !cy) return null;
 
@@ -420,7 +420,7 @@ export function RHTempoCasa() {
         />
         <text
           x={x}
-          y={y + 4}
+          y={y}
           fill="white"
           textAnchor="middle"
           dominantBaseline="central"
@@ -672,7 +672,8 @@ export function RHTempoCasa() {
                 <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
                 <Bar dataKey="avg" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
                   {tenureByAreaData.map((entry, index) => {
-                    const isLegal = entry.name.toLowerCase().includes('juridico') || entry.name.toLowerCase().includes('jurídico')
+                    const normalized = normalizeString(entry.name)
+                    const isLegal = normalized.includes('juridic') // Match juridico or juridica
                     return <Cell key={`cell-${index}`} fill={isLegal ? COLORS.secondary : COLORS.primary} />
                   })}
                   <LabelList dataKey="avg" position="right" fill={COLORS.text} fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
