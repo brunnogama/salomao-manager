@@ -90,6 +90,101 @@ const formatYears = (years: number) => {
   return `${years.toFixed(1)} anos`.replace('.', ',')
 }
 
+// --- Custom Label (Replicação do balão azul do Datalabels) ---
+const CustomDataLabel = (props: any) => {
+  const { x, y, value, fill, position } = props;
+
+  // Explicit positioning logic
+  let yOffset = -35 // Default Up (Top)
+
+  if (position === 'bottom') {
+    yOffset = 15 // Shift down below the point
+  } else {
+    yOffset = -35 // Shift up above the point
+  }
+
+  const formattedValue = typeof value === 'number' ? value.toFixed(1).replace('.', ',') : value
+
+  return (
+    <g>
+      <rect
+        x={x - 17}
+        y={y + yOffset} // Adjusted Y
+        width={34}
+        height={18}
+        rx={4}
+        fill={fill}
+      />
+      <text
+        x={x}
+        y={y + yOffset + 12} // Centered in rect
+        fill="white"
+        textAnchor="middle"
+        fontSize="10px"
+        fontWeight="bold"
+      >
+        {formattedValue}
+      </text>
+    </g>
+  );
+};
+
+const CustomPieLabel = (props: any) => {
+  const { cx, cy, midAngle, outerRadius, value, fill } = props;
+
+  if (!cx || !cy) return null;
+
+  const RADIAN = Math.PI / 180;
+  const x = cx + (outerRadius + 30) * Math.cos(-midAngle * RADIAN);
+  const y = cy + (outerRadius + 30) * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <g>
+      <rect
+        x={x - 12}
+        y={y - 9}
+        width={24}
+        height={18}
+        rx={4}
+        fill={fill} // Use slice color
+      />
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="10px"
+        fontWeight="bold"
+      >
+        {value}
+      </text>
+    </g>
+  );
+};
+
+// --- Custom Tooltip ---
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 shadow-xl rounded-xl min-w-[140px] z-50">
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center justify-between gap-3 mb-1">
+            <span className="text-[10px] font-bold uppercase" style={{ color: entry.color }}>
+              {entry.name}
+            </span>
+            <span className="text-xs font-black text-gray-700">
+              {typeof entry.value === 'number' ? entry.value.toFixed(1) + ' anos' : entry.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
+
 // --- Main Component ---
 
 export function RHTempoCasa() {
@@ -357,103 +452,6 @@ export function RHTempoCasa() {
 
     return Object.entries(buckets).map(([name, value]) => ({ name, value }))
   }, [activeDataAtRefDate, referenceDate])
-
-
-
-  // --- Custom Label (Replicação do balão azul do Datalabels) ---
-  const CustomDataLabel = (props: any) => {
-    const { x, y, value, fill, position } = props;
-
-    // Explicit positioning logic
-    let yOffset = -35 // Default Up (Top)
-
-    if (position === 'bottom') {
-      yOffset = 15 // Shift down below the point
-    } else {
-      yOffset = -35 // Shift up above the point
-    }
-
-    const formattedValue = typeof value === 'number' ? value.toFixed(1).replace('.', ',') : value
-
-    return (
-      <g>
-        <rect
-          x={x - 17}
-          y={y + yOffset} // Adjusted Y
-          width={34}
-          height={18}
-          rx={4}
-          fill={fill}
-        />
-        <text
-          x={x}
-          y={y + yOffset + 12} // Centered in rect
-          fill="white"
-          textAnchor="middle"
-          fontSize="10px"
-          fontWeight="bold"
-        >
-          {formattedValue}
-        </text>
-      </g>
-    );
-  };
-
-  const CustomPieLabel = (props: any) => {
-    const { cx, cy, midAngle, outerRadius, value, fill } = props;
-
-    if (!cx || !cy) return null;
-
-    const RADIAN = Math.PI / 180;
-    const x = cx + (outerRadius + 30) * Math.cos(-midAngle * RADIAN);
-    const y = cy + (outerRadius + 30) * Math.sin(-midAngle * RADIAN);
-
-    return (
-      <g>
-        <rect
-          x={x - 12}
-          y={y - 9}
-          width={24}
-          height={18}
-          rx={4}
-          fill={fill} // Use slice color
-        />
-        <text
-          x={x}
-          y={y}
-          fill="white"
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize="10px"
-          fontWeight="bold"
-        >
-          {value}
-        </text>
-      </g>
-    );
-  };
-
-  // --- Custom Tooltip ---
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border border-gray-200 shadow-xl rounded-xl min-w-[140px] z-50">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center justify-between gap-3 mb-1">
-              <span className="text-[10px] font-bold uppercase" style={{ color: entry.color }}>
-                {entry.name}
-              </span>
-              <span className="text-xs font-black text-gray-700">
-                {typeof entry.value === 'number' ? entry.value.toFixed(1) + ' anos' : entry.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      )
-    }
-    return null
-  }
 
   // --- Constants ---
   const COLORS = {
@@ -740,7 +738,7 @@ export function RHTempoCasa() {
                 outerRadius={110}
                 paddingAngle={5}
                 dataKey="value"
-                label={CustomPieLabel}
+                label={(props) => <CustomPieLabel {...props} />}
                 labelLine={false}
               >
                 {legalExperienceData.map((_, index) => (
