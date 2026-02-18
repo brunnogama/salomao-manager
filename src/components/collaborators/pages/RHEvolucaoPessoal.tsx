@@ -62,9 +62,15 @@ const getSegment = (colaborador: Collaborator): Segment => {
   return 'Administrativo'
 }
 
-const isActive = (c: Collaborator) => {
-  const status = normalizeString(c.status)
-  return status === 'active' || status === 'ativo'
+const isActiveAtDate = (c: Collaborator, date: Date) => {
+  const hireDate = c.hire_date ? new Date(c.hire_date + 'T12:00:00') : null
+  const termDate = c.termination_date ? new Date(c.termination_date + 'T12:00:00') : null
+
+  if (!hireDate) return false
+  if (hireDate > date) return false
+  if (termDate && termDate <= date) return false
+
+  return true
 }
 
 const getYearFromDate = (dateStr?: string) => {
@@ -92,10 +98,10 @@ export function RHEvolucaoPessoal() {
   } = useColaboradores()
 
   // --- State for Filters ---
-  const [filterYear, setFilterYear] = useState<string>(new Date().getFullYear().toString())
+  const [filterYear, setFilterYear] = useState<string>('todos')
+  const [filterMonth, setFilterMonth] = useState<string>('todos')
   const [filterLocal, setFilterLocal] = useState<string>('todos')
   const [filterPartner, setFilterPartner] = useState<string>('todos')
-  const [searchTerm, setSearchTerm] = useState('')
 
   // --- Derived Data / Lists for Filters ---
   const years = useMemo(() => {
@@ -105,9 +111,24 @@ export function RHEvolucaoPessoal() {
       if (c.termination_date) yearsSet.add(getYearFromDate(c.termination_date)!.toString())
     })
     const sorted = Array.from(yearsSet).sort().reverse()
-    if (sorted.length === 0) return [new Date().getFullYear().toString()]
-    return sorted
+    return ['Todos os anos', ...sorted]
   }, [colaboradores])
+
+  const months = [
+    { label: 'Todos os meses', value: 'todos' },
+    { label: 'Janeiro', value: '0' },
+    { label: 'Fevereiro', value: '1' },
+    { label: 'Março', value: '2' },
+    { label: 'Abril', value: '3' },
+    { label: 'Maio', value: '4' },
+    { label: 'Junho', value: '5' },
+    { label: 'Julho', value: '6' },
+    { label: 'Agosto', value: '7' },
+    { label: 'Setembro', value: '8' },
+    { label: 'Outubro', value: '9' },
+    { label: 'Novembro', value: '10' },
+    { label: 'Dezembro', value: '11' }
+  ]
 
   // Use Master Lists for Options
   const locationOptions = useMemo(() => {
@@ -143,32 +164,51 @@ export function RHEvolucaoPessoal() {
         if (cPartnerId !== filterPartner) return false
       }
 
-      // Search Filter
-      if (searchTerm) {
-        const lowerSearch = searchTerm.toLowerCase()
-        return (
-          c.name.toLowerCase().includes(lowerSearch) ||
-          c.email?.toLowerCase().includes(lowerSearch)
-        )
-      }
-
       return true
     })
-  }, [colaboradores, filterLocal, filterPartner, searchTerm])
+  }, [colaboradores, filterLocal, filterPartner])
 
   // --- KPI Calculations ---
+  // Determine reference date for KPIs
+  const referenceDate = useMemo(() => {
+    const now = new Date()
+    let year = now.getFullYear()
+    let month = now.getMonth()
+
+    if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
+      year = parseInt(filterYear)
+      // If specific year selected, check month
+      if (filterMonth !== 'todos') {
+        month = parseInt(filterMonth)
+        // Set to last day of that month
+        return new Date(year, month + 1, 0, 23, 59, 59)
+      } else {
+        // If only year selected, use end of year (or current date if current year?)
+        // Usually "2023" means "End of 2023" for stats
+        if (year === now.getFullYear()) return now
+        return new Date(year, 11, 31, 23, 59, 59)
+      }
+    } else {
+      // If "Todos" years selected, but specific month? (Weird case, assume current year's month)
+      if (filterMonth !== 'todos') {
+        month = parseInt(filterMonth)
+        return new Date(year, month + 1, 0, 23, 59, 59)
+      }
+    }
+    return now
+  }, [filterYear, filterMonth])
 
   const totalActive = useMemo(() => {
-    return filteredData.filter(c => isActive(c)).length
-  }, [filteredData])
+    return filteredData.filter(c => isActiveAtDate(c, referenceDate)).length
+  }, [filteredData, referenceDate])
 
   const totalActiveAdmin = useMemo(() => {
-    return filteredData.filter(c => isActive(c) && getSegment(c) === 'Administrativo').length
-  }, [filteredData])
+    return filteredData.filter(c => isActiveAtDate(c, referenceDate) && getSegment(c) === 'Administrativo').length
+  }, [filteredData, referenceDate])
 
   const totalActiveLegal = useMemo(() => {
-    return filteredData.filter(c => isActive(c) && getSegment(c) === 'Jurídico').length
-  }, [filteredData])
+    return filteredData.filter(c => isActiveAtDate(c, referenceDate) && getSegment(c) === 'Jurídico').length
+  }, [filteredData, referenceDate])
 
   // --- Charts Data Preparation ---
 
@@ -178,7 +218,10 @@ export function RHEvolucaoPessoal() {
     const currentYear = today.getFullYear()
     const currentMonth = today.getMonth() // 0-indexed (0=Jan, 1=Feb, etc.)
 
-    const selectedYearInt = parseInt(filterYear)
+    // If 'todos' is selected, default to current year for the chart
+    const selectedYearInt = (filterYear === 'todos' || filterYear === 'Todos os anos')
+      ? currentYear
+      : parseInt(filterYear)
     const isCurrentYear = selectedYearInt === currentYear
 
     // Determine how many months to show
@@ -274,8 +317,12 @@ export function RHEvolucaoPessoal() {
 
   const processHiringByRole = (targetSegment: Segment) => {
     // 1. Initialize 12 months structure
+    const targetYear = (filterYear === 'todos' || filterYear === 'Todos os anos')
+      ? new Date().getFullYear()
+      : parseInt(filterYear)
+
     const months = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(parseInt(filterYear), i, 1)
+      const d = new Date(targetYear, i, 1)
       return {
         monthIndex: i,
         name: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
@@ -290,7 +337,7 @@ export function RHEvolucaoPessoal() {
       if (!c.hire_date) return
       // Use time to avoid timezone shifts
       const hDate = new Date(c.hire_date + 'T12:00:00')
-      if (hDate.getFullYear().toString() !== filterYear) return
+      if (hDate.getFullYear() !== targetYear) return
 
       if (getSegment(c) !== targetSegment) return
 
@@ -311,7 +358,7 @@ export function RHEvolucaoPessoal() {
     const today = new Date()
     const currentYear = today.getFullYear()
     const currentMonth = today.getMonth()
-    const selectedYearInt = parseInt(filterYear)
+    const selectedYearInt = targetYear
     const isCurrentYear = selectedYearInt === currentYear
 
     let maxMonthIndex = 11
@@ -439,7 +486,7 @@ export function RHEvolucaoPessoal() {
   };
 
   const COLORS = {
-    primary: '#556B2F',   // Admin (Olive Green)
+    primary: '#374151',   // Admin (Graphite)
     secondary: '#4169E1', // Jurídico (Royal Blue)
     tertiary: '#f59e0b',  // Amber
     text: '#6b7280',
@@ -469,24 +516,26 @@ export function RHEvolucaoPessoal() {
           </div>
         </div>
 
+        {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Search Bar */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Buscar..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-3 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-none focus:border-blue-500 transition-all w-[150px]"
-            />
-          </div>
+          {/* Filter: Month */}
+          <FilterSelect
+            icon={Calendar}
+            value={filterMonth}
+            onChange={setFilterMonth}
+            options={months}
+            placeholder="Mês"
+          />
 
           {/* Filter: Year */}
           <FilterSelect
             icon={Calendar}
-            value={filterYear}
-            onChange={setFilterYear}
-            options={years.map(y => ({ label: y, value: y }))}
+            value={filterYear === 'todos' ? 'Todos os anos' : filterYear}
+            onChange={(val) => {
+              const value = val === 'Todos os anos' ? 'todos' : val
+              setFilterYear(value)
+            }}
+            options={years.map(y => ({ label: y, value: y === 'Todos os anos' ? 'todos' : y }))}
             placeholder="Ano"
           />
 
@@ -508,9 +557,14 @@ export function RHEvolucaoPessoal() {
             placeholder="Sócio"
           />
 
-          {(filterLocal !== 'todos' || filterPartner !== 'todos' || searchTerm) && (
+          {(filterLocal !== 'todos' || filterPartner !== 'todos' || filterYear !== 'todos' || filterMonth !== 'todos') && (
             <button
-              onClick={() => { setFilterLocal('todos'); setFilterPartner('todos'); setSearchTerm(''); }}
+              onClick={() => {
+                setFilterLocal('todos');
+                setFilterPartner('todos');
+                setFilterYear('todos');
+                setFilterMonth('todos');
+              }}
               className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
             >
               <X className="w-4 h-4" />
@@ -521,30 +575,6 @@ export function RHEvolucaoPessoal() {
 
       {/* 2. KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        {/* Total Active - Admin */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-[#556B2F]"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Administrativo</p>
-            <p className="text-3xl font-black text-[#556B2F] mt-1">{totalActiveAdmin}</p>
-          </div>
-          <div className="p-3 bg-[#556B2F]/10 rounded-xl">
-            <Users className="h-6 w-6 text-[#556B2F]" />
-          </div>
-        </div>
-
-        {/* Total Active - Legal */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-[#4169E1]"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Jurídico</p>
-            <p className="text-3xl font-black text-[#4169E1] mt-1">{totalActiveLegal}</p>
-          </div>
-          <div className="p-3 bg-[#4169E1]/10 rounded-xl">
-            <ScaleIcon className="h-6 w-6 text-[#4169E1]" />
-          </div>
-        </div>
 
         {/* Total Active - General */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
@@ -557,6 +587,31 @@ export function RHEvolucaoPessoal() {
             <Users className="h-6 w-6 text-gray-600" />
           </div>
         </div>
+
+        {/* Total Active - Legal */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-[#4169E1]"></div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Jurídico</p>
+            <p className="text-3xl font-black text-[#4169E1] mt-1">{totalActiveLegal}</p>
+          </div>
+          <div className="p-3 bg-[#4169E1]/10 rounded-xl">
+            <TrendingUp className="h-6 w-6 text-[#4169E1]" />
+          </div>
+        </div>
+
+        {/* Total Active - Admin */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute right-0 top-0 h-full w-1 bg-[#374151]"></div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ativos Administrativo</p>
+            <p className="text-3xl font-black text-[#374151] mt-1">{totalActiveAdmin}</p>
+          </div>
+          <div className="p-3 bg-[#374151]/10 rounded-xl">
+            <Briefcase className="h-6 w-6 text-[#374151]" />
+          </div>
+        </div>
+
       </div>
 
       {/* 3. Charts Section */}
@@ -637,12 +692,12 @@ export function RHEvolucaoPessoal() {
         {/* Administrative Hiring */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#556B2F]/10 text-[#556B2F]">
+            <div className="p-2 rounded-xl bg-[#374151]/10 text-[#374151]">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Adm)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{filterYear}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{filterYear === 'todos' ? new Date().getFullYear() : filterYear}</p>
             </div>
           </div>
           <div className="flex-1 w-full min-h-[300px]">
@@ -669,7 +724,7 @@ export function RHEvolucaoPessoal() {
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-800 tracking-tight">Contratações por Cargo (Jur)</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{filterYear}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{filterYear === 'todos' ? new Date().getFullYear() : filterYear}</p>
             </div>
           </div>
           <div className="flex-1 w-full min-h-[300px]">
@@ -697,7 +752,7 @@ export function RHEvolucaoPessoal() {
         {/* Chart 3: Hiring Flow (Historical) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex-1">
           <div className="mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-            <UserPlus className="w-4 h-4 text-[#556B2F]" />
+            <UserPlus className="w-4 h-4 text-[#374151]" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Contratações (Anual)</h3>
           </div>
           <div className="h-[250px] w-full">
