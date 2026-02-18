@@ -575,8 +575,8 @@ export function RHEvolucaoPessoal() {
           {/* Filter: Month */}
           <FilterSelect
             icon={Calendar}
-            value={filterMonth}
-            onChange={setFilterMonth}
+            value={filterMonth === 'todos' ? '' : filterMonth}
+            onChange={(val) => setFilterMonth(val || 'todos')}
             options={months}
             placeholder="Meses"
           />
@@ -584,8 +584,8 @@ export function RHEvolucaoPessoal() {
           {/* Filter: Year */}
           <FilterSelect
             icon={Calendar}
-            value={filterYear === 'todos' ? 'Anos' : filterYear}
-            onChange={(val) => setFilterYear(val === 'Anos' ? 'todos' : val)}
+            value={(filterYear === 'todos' || filterYear === 'Anos') ? '' : filterYear}
+            onChange={(val) => setFilterYear(val || 'todos')}
             options={[{ label: 'Anos', value: 'todos' }, ...years.map(y => ({ label: y, value: y }))]}
             placeholder="Anos"
           />
