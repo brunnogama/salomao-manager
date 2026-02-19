@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
-  X, Save, FileText, Plus, Search, AlertTriangle, AlertCircle,
-  Trash2, Edit, Check, CalendarCheck, Hourglass, Upload,
-  Settings, History as HistoryIcon, ArrowRight, Download, Link as LinkIcon,
-  MapPin, Tag, Eye, TrendingUp, TrendingDown, Pencil, ChevronDown, Clock,
+  X, Save,
   User, DollarSign, Gavel, Files, Loader2
 } from 'lucide-react';
-import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst, Magistrate } from '../../../types/controladoria';
-import { maskCNPJ, maskMoney, maskHon, maskCNJ, toTitleCase, parseCurrency } from '../utils/masks';
+import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst } from '../../../types/controladoria';
+import { maskCNPJ, maskMoney, maskHon, toTitleCase } from '../utils/masks';
 import { decodeCNJ } from '../utils/cnjDecoder';
-import { addDays, addMonths } from 'date-fns';
+import { addDays } from 'date-fns';
+import { toast } from 'sonner';
 
 // Componentes Modularizados
 import { OptionManager } from './components/OptionManager';
@@ -39,7 +37,7 @@ export function ContractFormModal(props: Props) {
     isOpen, onClose, formData, setFormData, onSave, loading: parentLoading, isEditing,
     partners, onOpenPartnerManager, analysts, onOpenAnalystManager,
     processes, currentProcess, setCurrentProcess, editingProcessIndex, handleProcessAction, editProcess, removeProcess,
-    newIntermediateFee, setNewIntermediateFee, addIntermediateFee, removeIntermediateFee, getStatusLabel
+    newIntermediateFee, setNewIntermediateFee, addIntermediateFee, getStatusLabel
   } = props;
 
   const [localLoading, setLocalLoading] = useState(false);
@@ -611,7 +609,9 @@ export function ContractFormModal(props: Props) {
       if (savedId && tempFiles.length > 0) {
         for (const item of tempFiles) {
           try {
-            const filePath = `${savedId}/${Date.now()}_${item.file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
+            const sanitizedName = item.file.name.replace(/[^a-z0-9.]/gi, '_').replace(/_{2,}/g, '_').replace(/\.{2,}/g, '.').toLowerCase();
+            const finalName = sanitizedName.length > 100 ? sanitizedName.substring(sanitizedName.length - 100) : sanitizedName;
+            const filePath = `${savedId}/${Date.now()}_${finalName}`;
             await supabase.storage.from('contract-documents').upload(filePath, item.file);
             await supabase.from('contract_documents').insert({
               contract_id: savedId,
@@ -746,7 +746,9 @@ export function ContractFormModal(props: Props) {
 
     setUploading(true);
     try {
-      const filePath = `${formData.id}/${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
+      const sanitizedName = file.name.replace(/[^a-z0-9.]/gi, '_').replace(/_{2,}/g, '_').replace(/\.{2,}/g, '.').toLowerCase();
+      const finalName = sanitizedName.length > 100 ? sanitizedName.substring(sanitizedName.length - 100) : sanitizedName;
+      const filePath = `${formData.id}/${Date.now()}_${finalName}`;
       const { error: uploadError } = await supabase.storage.from('contract-documents').upload(filePath, file);
       if (uploadError) throw uploadError;
       const { data: docData, error: dbError } = await supabase.from('contract_documents').insert({ contract_id: formData.id, file_name: file.name, file_path: filePath, file_type: type }).select().single();

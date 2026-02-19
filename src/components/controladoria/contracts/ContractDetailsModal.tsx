@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Edit, Trash2, Calendar, User, FileText, Briefcase, MapPin, History as HistoryIcon, Hourglass, CalendarCheck, ArrowDown, Calculator, Paperclip, CheckCircle2, ArrowRight, Clock, ChevronsRight, Download } from 'lucide-react';
+import { X, Edit, Trash2, User, FileText, Briefcase, MapPin, History as HistoryIcon, Hourglass, CalendarCheck, Calculator, Paperclip, CheckCircle2, Clock, ChevronsRight, Download } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
 
