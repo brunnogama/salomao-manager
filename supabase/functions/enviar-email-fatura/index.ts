@@ -17,7 +17,18 @@ interface EmailPayload {
   fatura_id: string
 }
 
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
   try {
     const payload: EmailPayload = await req.json()
 
@@ -29,8 +40,10 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from: payload.remetente,
+        from: 'Salomão Manager <financeiro@salomao.com>', // Idealmente usar um domínio verificado. Se payload.remetente for aceito, ótimo, senão fixar um no-reply
         to: [payload.destinatario],
+        bcc: [payload.remetente], // Cópia oculta para o remetente (usuário)
+        reply_to: payload.remetente, // Responder para o remetente original
         subject: payload.assunto,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -70,7 +83,7 @@ serve(async (req) => {
 
     // Registrar log de envio no Supabase
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    
+
     await supabase
       .from('finance_faturas')
       .update({
@@ -78,21 +91,25 @@ serve(async (req) => {
       })
       .eq('id', payload.fatura_id)
 
-    return new Response(
-      JSON.stringify({ success: true, message: 'E-mail enviado com sucesso' }),
-      {
-        headers: { 'Content-Type': 'application/json' },
-        status: 200
-      }
-    )
+    if (emailResponse.ok) {
+      const data = await emailResponse.json();
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    } else {
+      const errorText = await emailResponse.text();
+      return new Response(JSON.stringify({ error: errorText }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
+
   } catch (error) {
     console.error('Erro ao enviar e-mail:', error)
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      {
-        headers: { 'Content-Type': 'application/json' },
-        status: 500
-      }
-    )
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    })
   }
 })

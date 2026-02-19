@@ -1,10 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { 
-  Folder, 
-  UserCircle, 
-  LogOut, 
-  Grid, 
-  Plus, 
+import {
+  Folder,
+  Plus,
   Search,
   Download,
   Upload,
@@ -23,8 +20,6 @@ import { supabase } from '../../../lib/supabase'
 
 interface GEDProps {
   userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
 }
 
 interface Documento {
@@ -42,11 +37,8 @@ interface Documento {
   origem?: 'ged' | 'aeronave'; // Campo para controle interno
 }
 
-export function GED({ 
-  userName = 'Usuário', 
-  onModuleHome, 
-  onLogout 
-}: GEDProps) {
+export function GED() {
+  const [userName, setUserName] = useState('Usuário')
   const [documentos, setDocumentos] = useState<Documento[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -61,7 +53,7 @@ export function GED({
 
   const fetchDocumentos = async () => {
     setLoading(true)
-    
+
     try {
       // Busca documentos da tabela GED e documentos vinculados à Aeronave simultaneamente
       const [resGed, resAeronave] = await Promise.all([
@@ -70,7 +62,7 @@ export function GED({
       ])
 
       const gedDocs = (resGed.data || []).map(doc => ({ ...doc, origem: 'ged' }))
-      
+
       // Mapeia os documentos que vêm da tabela de aeronaves para o formato do GED
       const aeronaveDocs = (resAeronave.data || []).map(item => ({
         id: item.id,
@@ -87,7 +79,7 @@ export function GED({
         origem: 'aeronave'
       }))
 
-      setDocumentos([...gedDocs, ...aeronaveDocs].sort((a, b) => 
+      setDocumentos([...gedDocs, ...aeronaveDocs].sort((a, b) =>
         new Date(b.data_upload).getTime() - new Date(a.data_upload).getTime()
       ))
 
@@ -99,12 +91,25 @@ export function GED({
   }
 
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user && user.email) {
+          const emailName = user.email.split('@')[0]
+          const formattedName = emailName.split('.').map((part: string) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+          setUserName(formattedName)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar usuário:', error)
+      }
+    }
+    fetchUser()
     fetchDocumentos()
   }, [])
 
   const filteredData = useMemo(() => {
     return documentos.filter(doc => {
-      const matchSearch = 
+      const matchSearch =
         doc.nome_arquivo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doc.tipo_documento.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (doc.entidade_vinculada && doc.entidade_vinculada.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -116,11 +121,7 @@ export function GED({
     })
   }, [documentos, searchTerm, selectedCategoria, selectedTipo])
 
-  const resetFilters = () => {
-    setSearchTerm('')
-    setSelectedCategoria('todas')
-    setSelectedTipo('todos')
-  }
+
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '---'
@@ -139,13 +140,13 @@ export function GED({
     try {
       // Define o bucket correto baseado na origem do documento
       const bucket = doc.origem === 'aeronave' ? 'aeronave-documentos' : 'ged-documentos'
-      
+
       const { data, error } = await supabase.storage
         .from(bucket)
         .download(doc.url_documento)
-      
+
       if (error) throw error
-      
+
       const url = URL.createObjectURL(data)
       const a = document.createElement('a')
       a.href = url
@@ -166,7 +167,7 @@ export function GED({
     try {
       const bucket = doc.origem === 'aeronave' ? 'aeronave-documentos' : 'ged-documentos'
       await supabase.storage.from(bucket).remove([doc.url_documento])
-      
+
       if (doc.origem === 'aeronave') {
         await supabase.from('financeiro_aeronave').update({ documento_url: null, tipo_documento: null }).eq('id', doc.id)
       } else {
@@ -185,7 +186,7 @@ export function GED({
 
   return (
     <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
-      
+
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
@@ -198,15 +199,9 @@ export function GED({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white shadow-md">
-            <UserCircle className="h-5 w-5" />
-          </div>
-          {onModuleHome && <button onClick={onModuleHome} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"><Grid className="h-5 w-5" /></button>}
-          {onLogout && <button onClick={onLogout} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><LogOut className="h-5 w-5" /></button>}
+          <button onClick={() => setIsUploadModalOpen(true)} className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95">
+            <Plus className="h-3.5 w-3.5" /> Novo Documento
+          </button>
         </div>
       </div>
 
@@ -221,12 +216,7 @@ export function GED({
               {tiposDocumento.map(tipo => <option key={tipo} value={tipo.toLowerCase()}>{tipo}</option>)}
             </select>
           </div>
-          {(searchTerm || selectedCategoria !== 'todas' || selectedTipo !== 'todos') && (
-            <button onClick={resetFilters} className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border border-red-100 animate-in zoom-in duration-300">
-              <XCircle className="h-4 w-4" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Limpar Filtros</span>
-            </button>
-          )}
+
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-50">
@@ -234,9 +224,7 @@ export function GED({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input type="text" placeholder="Buscar documentos por nome, tipo ou entidade..." className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
-          <button onClick={() => setIsUploadModalOpen(true)} className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95">
-            <Plus className="h-3.5 w-3.5" /> Novo Documento
-          </button>
+          {/* Button moved to header */}
         </div>
       </div>
 
@@ -339,7 +327,7 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
       const nomeOriginal = selectedFile.name
       const filePath = `${formData.categoria}/${nomeOriginal}`
 
-      const { data: uploadData, error: uploadError } = await supabase.storage.from('ged-documentos').upload(filePath, selectedFile)
+      const { error: uploadError } = await supabase.storage.from('ged-documentos').upload(filePath, selectedFile)
       if (uploadError) throw uploadError
 
       const documentoData = {
@@ -392,7 +380,7 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
           <div className="grid grid-cols-2 gap-4">
             <label className="block">
               <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Categoria *</span>
-              <select value={formData.categoria} onChange={(e) => setFormData({...formData, categoria: e.target.value})} className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium">
+              <select value={formData.categoria} onChange={(e) => setFormData({ ...formData, categoria: e.target.value })} className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium">
                 <option value="">Selecione...</option>
                 <option value="Aeronave">Aeronave</option>
                 <option value="Clientes">Clientes</option>
@@ -404,7 +392,7 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
             </label>
             <label className="block">
               <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Tipo de Documento *</span>
-              <select value={formData.tipo_documento} onChange={(e) => setFormData({...formData, tipo_documento: e.target.value})} className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium">
+              <select value={formData.tipo_documento} onChange={(e) => setFormData({ ...formData, tipo_documento: e.target.value })} className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium">
                 <option value="">Selecione...</option>
                 <option value="Nota Fiscal">Nota Fiscal</option>
                 <option value="Contrato">Contrato</option>
@@ -420,12 +408,12 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
 
           <label className="block">
             <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Entidade Vinculada</span>
-            <input type="text" value={formData.entidade_vinculada} onChange={(e) => setFormData({...formData, entidade_vinculada: e.target.value})} placeholder="Cliente, fornecedor, projeto..." className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" />
+            <input type="text" value={formData.entidade_vinculada} onChange={(e) => setFormData({ ...formData, entidade_vinculada: e.target.value })} placeholder="Cliente, fornecedor, projeto..." className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium" />
           </label>
 
           <label className="block">
             <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Observações</span>
-            <textarea rows={3} value={formData.observacoes} onChange={(e) => setFormData({...formData, observacoes: e.target.value})} placeholder="Informações adicionais..." className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium resize-none" />
+            <textarea rows={3} value={formData.observacoes} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} placeholder="Informações adicionais..." className="w-full bg-gray-100/50 border border-gray-200 text-sm rounded-xl p-2.5 outline-none font-medium resize-none" />
           </label>
 
           <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-all">

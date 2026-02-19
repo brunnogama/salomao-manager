@@ -6,6 +6,7 @@ import { ModuleSelector } from './components/ModuleSelector';
 import Login from './Login';
 import ResetPassword from './ResetPassword';
 import { UnderConstruction } from './components/UnderConstruction';
+import FichaCadastral from './pages/FichaCadastral';
 
 // CRM Components
 import { Dashboard as CrmDashboard } from './components/crm/Dashboard';
@@ -60,6 +61,13 @@ import { Jurimetria as ControlJurimetria } from './components/controladoria/page
 import { Volumetry as ControlVolumetry } from './components/controladoria/pages/Volumetry';
 import { History as ControlHistory } from './components/controladoria/pages/History';
 import { Settings as ControlSettings } from './components/controladoria/pages/Settings';
+
+// Operational Components
+import { Dashboard as OperationalDashboard } from './components/operational/pages/Dashboard';
+import { Estoque as OperationalEstoque } from './components/operational/pages/Estoque';
+import { Imobiliario as OperationalImobiliario } from './components/operational/pages/Imobiliario';
+import { Compras } from './components/operational/pages/Compras';
+
 import { useState } from 'react';
 
 // Wrapper for Protected Routes to inject props
@@ -123,6 +131,9 @@ export function AppRoutes() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
             </Route>
+
+            {/* Public Routes accessible by everyone (including logged in users) */}
+            <Route path="/ficha-cadastral" element={<FichaCadastral />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
@@ -209,9 +220,16 @@ export function AppRoutes() {
                     <Route path="configuracoes" element={<WithProps Component={ControlSettings} />} />
                 </Route>
 
+                {/* Operational */}
+                <Route path="/operational">
+                    <Route path="dashboard" element={<WithProps Component={OperationalDashboard} />} />
+                    <Route path="estoque" element={<WithProps Component={OperationalEstoque} />} />
+                    <Route path="imobiliario" element={<WithProps Component={OperationalImobiliario} />} />
+                    <Route path="compras" element={<WithProps Component={Compras} />} />
+                </Route>
+
                 {/* Fallback for under construction modules */}
                 <Route path="/family/*" element={<UnderConstruction moduleName="family" onBack={() => navigate('/')} />} />
-                <Route path="/operational/*" element={<UnderConstruction moduleName="operational" onBack={() => navigate('/')} />} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
 

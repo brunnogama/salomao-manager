@@ -9,9 +9,9 @@ interface AeronaveTableProps {
 }
 
 export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps) {
-  
+
   // --- Formatters ---
-  const formatCurrency = (val: number | null | undefined) => 
+  const formatCurrency = (val: number | null | undefined) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0)
 
   const formatDate = (dateString: string | null | undefined) => {
@@ -37,12 +37,12 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
     return [...data].sort((a, b) => {
       const dateA = a.data_pagamento || ''
       const dateB = b.data_pagamento || ''
-      
+
       // Datas vazias vão para o final
       if (!dateA && !dateB) return 0
       if (!dateA) return 1
       if (!dateB) return -1
-      
+
       // Ordem decrescente (mais recente primeiro)
       return dateB.localeCompare(dateA)
     })
@@ -74,17 +74,17 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
     <div className="overflow-x-auto custom-scrollbar pb-4">
       <table className="w-full text-left border-separate border-spacing-y-2 px-4">
         <thead>
-          <tr className="text-[#112240]">
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest w-24">ID</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Data Missão</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Missão</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Despesa</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Tipo</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Fornecedor</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-center">Pagamento</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-right">Valor Pago</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Tipo Documento</th>
-            <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest">Número</th>
+          <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest w-24 first:rounded-l-xl">ID</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest">Data Missão</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest">Missão</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest">Despesa</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest">Fornecedor</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest text-center">Pagamento</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest text-right">Valor Pago</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest">Tipo Documento</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest last:rounded-r-xl">Número</th>
           </tr>
         </thead>
         <tbody>
@@ -92,8 +92,8 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
             const isMissao = item.origem === 'missao'
 
             return (
-              <tr 
-                key={item.id} 
+              <tr
+                key={item.id}
                 onClick={() => onRowClick(item)}
                 className="group bg-white hover:bg-blue-50/40 border border-gray-100 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer"
               >
@@ -123,11 +123,10 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
 
                 {/* Tipo (Sub-categoria) */}
                 <td className="px-4 py-4">
-                  <span className={`inline-flex px-2 py-1 rounded text-[10px] font-black uppercase tracking-wide border ${
-                    item.origem === 'missao' 
-                      ? 'bg-blue-50 text-blue-700 border-blue-100' 
+                  <span className={`inline-flex px-2 py-1 rounded text-[10px] font-black uppercase tracking-wide border ${item.origem === 'missao'
+                      ? 'bg-blue-50 text-blue-700 border-blue-100'
                       : 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                  }`}>
+                    }`}>
                     {item.tipo || 'Geral'}
                   </span>
                 </td>
@@ -149,9 +148,9 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
                 {/* Valor Pago */}
                 <td className="px-4 py-4 text-sm font-black text-right">
                   {item.valor_pago && item.valor_pago > 0 ? (
-                     <span className="text-emerald-600">{formatCurrency(item.valor_pago)}</span>
+                    <span className="text-emerald-600">{formatCurrency(item.valor_pago)}</span>
                   ) : (
-                     <span className="text-gray-300">-</span>
+                    <span className="text-gray-300">-</span>
                   )}
                 </td>
 

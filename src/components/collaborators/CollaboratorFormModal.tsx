@@ -19,7 +19,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
   const [loading, setLoading] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [leaders, setLeaders] = useState<Collaborator[]>([]);
-  
+
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const [isLeaderModalOpen, setIsLeaderModalOpen] = useState(false);
 
@@ -53,7 +53,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
         supabase.from('partners').select('id, name').eq('status', 'active').order('name'),
         supabase.from('collaborators').select('id, name').eq('status', 'active').order('name')
       ]);
-      
+
       if (partnersRes.data) setPartners(partnersRes.data);
       if (leadersRes.data) setLeaders(leadersRes.data);
     } catch (error) {
@@ -63,14 +63,32 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
 
   const handleSave = async () => {
     if (!formData.name) return alert("Nome é obrigatório");
-    
+
     setLoading(true);
     try {
+      // Remove campos relacionais que não existem na tabela
+      const {
+        // @ts-ignore
+        leader,
+        // @ts-ignore
+        partner,
+        // @ts-ignore
+        roles,
+        // @ts-ignore
+        locations,
+        // @ts-ignore
+        teams,
+        ...rest
+      } = formData;
+
       const payload = {
-        ...formData,
+        ...rest,
         partner_id: formData.partner_id || null,
         leader_id: formData.leader_id || null
       };
+
+      console.log('DEBUG: Payload being sent:', payload);
+
 
       if (collaborator?.id) {
         const { error } = await supabase.from('collaborators').update(payload).eq('id', collaborator.id);
@@ -93,7 +111,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
   return (
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-        
+
         <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
             {collaborator ? 'Editar Colaborador' : 'Novo Colaborador'}
@@ -107,11 +125,11 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
           {/* Nome */}
           <div>
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
-            <input 
+            <input
               type="text"
               className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a]"
               value={formData.name || ''}
-              onChange={e => setFormData({...formData, name: e.target.value})}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
 
@@ -120,7 +138,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
             <div className="flex flex-col">
               <div className="flex items-center justify-between mb-2 ml-1">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sócio Responsável</label>
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsPartnerModalOpen(true)}
                   className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-tighter flex items-center gap-1 hover:underline"
@@ -128,10 +146,10 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
                   <Settings2 className="w-3 h-3" /> Gerenciar
                 </button>
               </div>
-              <SearchableSelect 
+              <SearchableSelect
                 placeholder="Selecione o Sócio"
                 value={formData.partner_id || ''}
-                onChange={(val) => setFormData({...formData, partner_id: val})}
+                onChange={(val) => setFormData({ ...formData, partner_id: val })}
                 options={partners.map(p => ({ id: p.id, name: p.name }))}
               />
             </div>
@@ -140,7 +158,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
             <div className="flex flex-col">
               <div className="flex items-center justify-between mb-2 ml-1">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Líder Direto</label>
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsLeaderModalOpen(true)}
                   className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-tighter flex items-center gap-1 hover:underline"
@@ -148,10 +166,10 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
                   <Settings2 className="w-3 h-3" /> Gerenciar
                 </button>
               </div>
-              <SearchableSelect 
+              <SearchableSelect
                 placeholder="Selecione o Líder"
                 value={formData.leader_id || ''}
-                onChange={(val) => setFormData({...formData, leader_id: val})}
+                onChange={(val) => setFormData({ ...formData, leader_id: val })}
                 options={leaders
                   .filter(l => l.id !== collaborator?.id)
                   .map(l => ({ id: l.id, name: l.name }))
@@ -163,11 +181,11 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
           {/* Cargo */}
           <div>
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Cargo / Função</label>
-            <input 
+            <input
               type="text"
               className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a]"
               value={formData.role || ''}
-              onChange={e => setFormData({...formData, role: e.target.value})}
+              onChange={e => setFormData({ ...formData, role: e.target.value })}
               placeholder="Ex: Advogado Pleno"
             />
           </div>
@@ -175,8 +193,8 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
 
         <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
           <button onClick={onClose} className="px-6 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cancelar</button>
-          <button 
-            onClick={handleSave} 
+          <button
+            onClick={handleSave}
             disabled={loading}
             className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 disabled:opacity-50"
           >
@@ -186,16 +204,16 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
         </div>
       </div>
 
-      <PartnerManagerModal 
-        isOpen={isPartnerModalOpen} 
-        onClose={() => setIsPartnerModalOpen(false)} 
-        onUpdate={fetchData} 
+      <PartnerManagerModal
+        isOpen={isPartnerModalOpen}
+        onClose={() => setIsPartnerModalOpen(false)}
+        onUpdate={fetchData}
       />
 
-      <CollaboratorManagerModal 
-        isOpen={isLeaderModalOpen} 
-        onClose={() => setIsLeaderModalOpen(false)} 
-        onUpdate={fetchData} 
+      <CollaboratorManagerModal
+        isOpen={isLeaderModalOpen}
+        onClose={() => setIsLeaderModalOpen(false)}
+        onUpdate={fetchData}
       />
     </div>
   );

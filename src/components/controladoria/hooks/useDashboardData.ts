@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { contractService } from '../services/contractService';
 import { partnerService } from '../services/partnerService';
 import { Contract, Partner, ContractCase } from '../../../types/controladoria';
+import { safeDate } from '../utils/masks';
 
 // --- Funções Auxiliares de Parsing e Data ---
 
@@ -11,9 +12,9 @@ import { Contract, Partner, ContractCase } from '../../../types/controladoria';
 const safeParseMoney = (value: string | number | undefined | null): number => {
   if (value === undefined || value === null || value === '') return 0;
   if (typeof value === 'number') return value;
-  
+
   const strVal = String(value).trim();
-  
+
   // Se já for um número em string simples (ex: "1000.50"), retorna direto
   if (!strVal.includes('R$') && !strVal.includes(',') && !isNaN(Number(strVal))) {
     return parseFloat(strVal);
@@ -22,39 +23,79 @@ const safeParseMoney = (value: string | number | undefined | null): number => {
   // Remove tudo que não for dígito, vírgula ou sinal de menos
   // Ex: "R$ 1.500,00" -> "1500,00"
   const cleanStr = strVal.replace(/[^\d,-]/g, '').replace(',', '.');
-  
+
   const floatVal = parseFloat(cleanStr);
   return isNaN(floatVal) ? 0 : floatVal;
 };
 
 // Helpers de Data
-const isDateInCurrentWeek = (dateString?: string) => { if (!dateString) return false; const d = new Date(dateString + 'T12:00:00'); const t = new Date(); const cd = t.getDay(); const s = new Date(t); s.setDate(t.getDate() - cd); s.setHours(0,0,0,0); const e = new Date(s); e.setDate(s.getDate() + 6); e.setHours(23,59,59,999); return d >= s && d <= e; };
-const isDateInPreviousWeek = (dateString?: string) => { if (!dateString) return false; const d = new Date(dateString + 'T12:00:00'); const t = new Date(); const cd = t.getDay(); const sc = new Date(t); sc.setDate(t.getDate() - cd); sc.setHours(0,0,0,0); const sp = new Date(sc); sp.setDate(sc.getDate() - 7); const ep = new Date(sp); ep.setDate(sp.getDate() + 6); ep.setHours(23,59,59,999); return d >= sp && d <= ep; };
-const isDateInCurrentMonth = (dateString?: string) => { if (!dateString) return false; const d = new Date(dateString + 'T12:00:00'); const t = new Date(); return d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear(); };
+const isValidDate = (d: any): boolean => {
+  return d instanceof Date && !isNaN(d.getTime());
+};
+
+const isDateInCurrentWeek = (dateString?: string) => {
+  const d = safeDate(dateString);
+  if (!d) return false;
+  const t = new Date();
+  const cd = t.getDay();
+  const s = new Date(t);
+  s.setDate(t.getDate() - cd);
+  s.setHours(0, 0, 0, 0);
+  const e = new Date(s);
+  e.setDate(s.getDate() + 6);
+  e.setHours(23, 59, 59, 999);
+  return d >= s && d <= e;
+};
+
+const isDateInPreviousWeek = (dateString?: string) => {
+  const d = safeDate(dateString);
+  if (!d) return false;
+  const t = new Date();
+  const cd = t.getDay();
+  const sc = new Date(t);
+  sc.setDate(t.getDate() - cd);
+  sc.setHours(0, 0, 0, 0);
+  const sp = new Date(sc);
+  sp.setDate(sc.getDate() - 7);
+  const ep = new Date(sp);
+  ep.setDate(sp.getDate() + 6);
+  ep.setHours(23, 59, 59, 999);
+  return d >= sp && d <= ep;
+};
+
+const isDateInCurrentMonth = (dateString?: string) => {
+  const d = safeDate(dateString);
+  if (!d) return false;
+  const t = new Date();
+  return d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
+};
 
 // Nova lógica MTD (Month to Date)
 const isDateInLastMonthMTD = (dateString?: string) => {
-    if (!dateString) return false;
-    const d = new Date(dateString + 'T12:00:00');
-    const today = new Date();
-    
-    // Define o mês anterior
-    let lastMonth = today.getMonth() - 1;
-    let lastYear = today.getFullYear();
-    if (lastMonth < 0) { lastMonth = 11; lastYear--; }
+  const d = safeDate(dateString);
+  if (!d) return false;
+  const today = new Date();
 
-    // Verifica se é do mês/ano anterior
-    const isSameMonth = d.getMonth() === lastMonth && d.getFullYear() === lastYear;
-    
-    // Verifica se o dia é menor ou igual ao dia de hoje (Lógica MTD)
-    // Ex: Se hoje é dia 15, considera apenas datas até dia 15 do mês anterior
-    const isWithinDayLimit = d.getDate() <= today.getDate();
+  // Define o mês anterior
+  let lastMonth = today.getMonth() - 1;
+  let lastYear = today.getFullYear();
+  if (lastMonth < 0) { lastMonth = 11; lastYear--; }
 
-    return isSameMonth && isWithinDayLimit;
+  // Verifica se é do mês/ano anterior
+  const isSameMonth = d.getMonth() === lastMonth && d.getFullYear() === lastYear;
+
+  // Verifica se o dia é menor ou igual ao dia de hoje (Lógica MTD)
+  // Ex: Se hoje é dia 15, considera apenas datas até dia 15 do mês anterior
+  const isWithinDayLimit = d.getDate() <= today.getDate();
+
+  return isSameMonth && isWithinDayLimit;
 };
 
 // Formata data curta (ex: 01/jan)
-const formatDateShort = (d: Date) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+const formatDateShort = (d: Date) => {
+  if (!isValidDate(d)) return '-';
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+};
 
 // ATUALIZAÇÃO: Hook aceita filtros opcionais
 export function useDashboardData(selectedPartner?: string, selectedLocation?: string) {
@@ -65,9 +106,9 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [ contratosData, sociosData ] = await Promise.all([
-          contractService.getAll(),
-          partnerService.getAll()
+      const [contratosData, sociosData] = await Promise.all([
+        contractService.getAll(),
+        partnerService.getAll()
       ]);
 
       setContracts(contratosData);
@@ -88,13 +129,13 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
   const dashboardData = useMemo(() => {
     const hoje = new Date();
     // Data de início para gráficos de 12 meses
-    const dataInicioFixo = new Date(2025, 5, 1); 
-    
+    const dataInicioFixo = new Date(2025, 5, 1);
+
     // --- FILTRAGEM DOS DADOS ---
     const filteredContracts = contracts.filter(c => {
-        const matchesPartner = selectedPartner ? c.partner_id === selectedPartner : true;
-        const matchesLocation = selectedLocation ? c.billing_location === selectedLocation : true;
-        return matchesPartner && matchesLocation;
+      const matchesPartner = selectedPartner ? c.partner_id === selectedPartner : true;
+      const matchesLocation = selectedLocation ? c.billing_location === selectedLocation : true;
+      return matchesPartner && matchesLocation;
     });
     // ---------------------------
 
@@ -105,57 +146,57 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     let lastMonth = hoje.getMonth() - 1;
     let lastYear = hoje.getFullYear();
     if (lastMonth < 0) { lastMonth = 11; lastYear--; }
-    
+
     const primeiroDiaMesAnterior = new Date(lastYear, lastMonth, 1);
     const diaLimiteMesAnterior = new Date(lastYear, lastMonth, hoje.getDate());
-    
+
     // Ajuste para não estourar o mês (ex: hoje é 31, e mês passado só tem 28)
     const maxDaysInLastMonth = new Date(lastYear, lastMonth + 1, 0).getDate();
     if (diaLimiteMesAnterior.getDate() > maxDaysInLastMonth) {
-        diaLimiteMesAnterior.setDate(maxDaysInLastMonth);
+      diaLimiteMesAnterior.setDate(maxDaysInLastMonth);
     }
-    
+
     const periodoAnteriorStr = `${formatDateShort(primeiroDiaMesAnterior)} - ${formatDateShort(diaLimiteMesAnterior)}`;
     // -------------------------------------
 
     const partnerMap = partners.reduce((acc: any, s: Partner) => {
-        acc[s.id] = s.name; // Atualizado para usar s.name
-        return acc;
+      acc[s.id] = s.name; // Atualizado para usar s.name
+      return acc;
     }, {});
 
     // Inicialização das Métricas
     let mSemana = { novos: 0, propQtd: 0, propPL: 0, propExito: 0, propMensal: 0, fechQtd: 0, fechPL: 0, fechExito: 0, fechMensal: 0, rejeitados: 0, probono: 0, totalUnico: 0 };
     let mSemanaAnterior = { propPL: 0, propExito: 0, propMensal: 0, fechPL: 0, fechExito: 0, fechMensal: 0 };
     let mMes = { novos: 0, propQtd: 0, propPL: 0, propExito: 0, propMensal: 0, fechQtd: 0, fechPL: 0, fechExito: 0, fechMensal: 0, totalUnico: 0, analysis: 0, rejected: 0, probono: 0 };
-    
+
     // Adicionados os labels de período no objeto executivo
-    let mExecutivo = { 
-        mesAtual: { novos: 0, propQtd: 0, propPL: 0, propExito: 0, propMensal: 0, fechQtd: 0, fechPL: 0, fechExito: 0, fechMensal: 0 }, 
-        mesAnterior: { novos: 0, propQtd: 0, propPL: 0, propExito: 0, propMensal: 0, fechQtd: 0, fechPL: 0, fechExito: 0, fechMensal: 0 },
-        periodoAtualLabel: periodoAtualStr,
-        periodoAnteriorLabel: periodoAnteriorStr
+    let mExecutivo = {
+      mesAtual: { novos: 0, propQtd: 0, propPL: 0, propExito: 0, propMensal: 0, fechQtd: 0, fechPL: 0, fechExito: 0, fechMensal: 0 },
+      mesAnterior: { novos: 0, propQtd: 0, propPL: 0, propExito: 0, propMensal: 0, fechQtd: 0, fechPL: 0, fechExito: 0, fechMensal: 0 },
+      periodoAtualLabel: periodoAtualStr,
+      periodoAnteriorLabel: periodoAnteriorStr
     };
 
     // Estrutura atualizada com todos os campos necessários para a view detalhada
-    let mGeral = { 
-        totalCasos: 0, emAnalise: 0, propostasAtivas: 0, fechados: 0, rejeitados: 0, probono: 0, 
-        
-        // Propostas
-        valorEmNegociacaoPL: 0, 
-        valorEmNegociacaoExito: 0, 
-        valorEmNegociacaoMensal: 0, // Novo
-        valorEmNegociacaoOutros: 0, // Novo (Outros + Fixo Pontual)
+    let mGeral = {
+      totalCasos: 0, emAnalise: 0, propostasAtivas: 0, fechados: 0, rejeitados: 0, probono: 0,
 
-        // Fechados
-        receitaRecorrenteAtiva: 0, // Fixo Mensal
-        totalFechadoPL: 0, 
-        totalFechadoExito: 0, 
-        totalFechadoOutros: 0, // Novo (Outros + Fixo Pontual)
-        totalFechadoFixo: 0, // Legado
+      // Propostas
+      valorEmNegociacaoPL: 0,
+      valorEmNegociacaoExito: 0,
+      valorEmNegociacaoMensal: 0, // Novo
+      valorEmNegociacaoOutros: 0, // Novo (Outros + Fixo Pontual)
 
-        assinados: 0, naoAssinados: 0, 
-        mediaMensalNegociacaoPL: 0, mediaMensalNegociacaoExito: 0, 
-        mediaMensalCarteiraPL: 0, mediaMensalCarteiraExito: 0 
+      // Fechados
+      receitaRecorrenteAtiva: 0, // Fixo Mensal
+      totalFechadoPL: 0,
+      totalFechadoExito: 0,
+      totalFechadoOutros: 0, // Novo (Outros + Fixo Pontual)
+      totalFechadoFixo: 0, // Legado
+
+      assinados: 0, naoAssinados: 0,
+      mediaMensalNegociacaoPL: 0, mediaMensalNegociacaoExito: 0,
+      mediaMensalCarteiraPL: 0, mediaMensalCarteiraExito: 0
     };
 
     let fTotal = 0; let fQualificados = 0; let fFechados = 0;
@@ -166,7 +207,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const mapaMeses: Record<string, number> = {};
     const financeiroMap: Record<string, { pl: number, fixo: number, exito: number, data: Date }> = {};
     const propostasMap: Record<string, { pl: number, fixo: number, exito: number, data: Date }> = {};
-    
+
     const reasonCounts: Record<string, number> = {};
     const sourceCounts: Record<string, number> = {};
     let totalRejected = 0;
@@ -189,7 +230,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       let exito = safeParseMoney(c.final_success_fee);
       let mensal = safeParseMoney(c.fixed_monthly_fee);
       let outros = safeParseMoney(c.other_fees);
-      
+
       // Tenta ler honorário fixo pontual
       let fixoPontual = safeParseMoney((c as any).fixed_fee);
       if (fixoPontual === 0) fixoPontual = safeParseMoney((c as any).honorarios_fixos);
@@ -199,10 +240,10 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       if (c.final_success_extras && Array.isArray(c.final_success_extras)) exito += c.final_success_extras.reduce((acc, val) => acc + safeParseMoney(val), 0);
       if (c.fixed_monthly_extras && Array.isArray(c.fixed_monthly_extras)) mensal += c.fixed_monthly_extras.reduce((acc, val) => acc + safeParseMoney(val), 0);
       if (c.other_fees_extras && Array.isArray(c.other_fees_extras)) outros += c.other_fees_extras.reduce((acc, val) => acc + safeParseMoney(val), 0);
-      
+
       // Extras Intermediários somam ao Êxito
       if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) exito += c.intermediate_fees.reduce((acc, val) => acc + safeParseMoney(val), 0);
-      
+
       // Soma de casos anexados (se houver)
       if (c.cases && Array.isArray(c.cases)) {
         c.cases.forEach((caseItem: ContractCase) => {
@@ -211,12 +252,22 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
         });
       }
 
-      // 3. DATAS E FLUXO
-      const statusDates = [c.prospect_date, c.proposal_date, c.contract_date, c.rejection_date, c.probono_date].filter(d => d && d !== '').map(d => new Date(d + 'T12:00:00'));
-      let dataEntradaReal = null;
-      if (statusDates.length > 0) dataEntradaReal = new Date(Math.min(...statusDates.map(d => d.getTime())));
-      else dataEntradaReal = c.created_at ? new Date(c.created_at) : new Date();
+      // 3. DATAS E FLUXO (USANDO safeDate)
+      const statusDates = [c.prospect_date, c.proposal_date, c.contract_date, c.rejection_date, c.probono_date]
+        .map(d => safeDate(d))
+        .filter((d): d is Date => d !== null);
 
+      let dataEntradaReal: Date;
+      if (statusDates.length > 0) {
+        // Encontra a menor data válida
+        dataEntradaReal = new Date(Math.min(...statusDates.map(d => d.getTime())));
+      } else {
+        // Fallback para created_at ou hoje, garantindo safeDate se possível
+        const createdAt = safeDate(c.created_at);
+        dataEntradaReal = createdAt || new Date();
+      }
+
+      // Setup para gráficos/mapas usando dataEntradaReal
       const mesAnoEntrada = dataEntradaReal.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
       if (mapaMeses[mesAnoEntrada] !== undefined) mapaMeses[mesAnoEntrada]++;
       else { if (!mapaMeses[mesAnoEntrada]) mapaMeses[mesAnoEntrada] = 0; mapaMeses[mesAnoEntrada]++; }
@@ -228,79 +279,102 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
       // 4. MÉTODOS DE CÁLCULO POR STATUS - LOGICA MTD
       if (c.proposal_date) {
-         if (isDateInCurrentMonth(c.proposal_date)) { 
-             mExecutivo.mesAtual.propQtd++; 
-             mExecutivo.mesAtual.propPL += pl; 
-             mExecutivo.mesAtual.propExito += exito; 
-             mExecutivo.mesAtual.propMensal += mensal; 
-         }
-         if (isDateInLastMonthMTD(c.proposal_date)) { 
-             mExecutivo.mesAnterior.propQtd++; 
-             mExecutivo.mesAnterior.propPL += pl; 
-             mExecutivo.mesAnterior.propExito += exito; 
-             mExecutivo.mesAnterior.propMensal += mensal; 
-         }
+        if (isDateInCurrentMonth(c.proposal_date)) {
+          mExecutivo.mesAtual.propQtd++;
+          mExecutivo.mesAtual.propPL += pl;
+          mExecutivo.mesAtual.propExito += exito;
+          mExecutivo.mesAtual.propMensal += mensal;
+        }
+        if (isDateInLastMonthMTD(c.proposal_date)) {
+          mExecutivo.mesAnterior.propQtd++;
+          mExecutivo.mesAnterior.propPL += pl;
+          mExecutivo.mesAnterior.propExito += exito;
+          mExecutivo.mesAnterior.propMensal += mensal;
+        }
       }
-      
+
       if (c.status === 'active' && c.contract_date) {
-         if (isDateInCurrentMonth(c.contract_date)) { 
-             mExecutivo.mesAtual.fechQtd++; 
-             mExecutivo.mesAtual.fechPL += pl; 
-             mExecutivo.mesAtual.fechExito += exito; 
-             mExecutivo.mesAtual.fechMensal += mensal; 
-         }
-         if (isDateInLastMonthMTD(c.contract_date)) { 
-             mExecutivo.mesAnterior.fechQtd++; 
-             mExecutivo.mesAnterior.fechPL += pl; 
-             mExecutivo.mesAnterior.fechExito += exito; 
-             mExecutivo.mesAnterior.fechMensal += mensal; 
-         }
+        if (isDateInCurrentMonth(c.contract_date)) {
+          mExecutivo.mesAtual.fechQtd++;
+          mExecutivo.mesAtual.fechPL += pl;
+          mExecutivo.mesAtual.fechExito += exito;
+          mExecutivo.mesAtual.fechMensal += mensal;
+        }
+        if (isDateInLastMonthMTD(c.contract_date)) {
+          mExecutivo.mesAnterior.fechQtd++;
+          mExecutivo.mesAnterior.fechPL += pl;
+          mExecutivo.mesAnterior.fechExito += exito;
+          mExecutivo.mesAnterior.fechMensal += mensal;
+        }
       }
 
       // Contagem por Sócio e Financeiro
       const pName = (c.partner_id && partnerMap[c.partner_id]) || c.responsavel_socio || 'Não Informado';
-      if (!partnerCounts[pName]) partnerCounts[pName] = { 
-          total: 0, analysis: 0, proposal: 0, active: 0, rejected: 0, probono: 0,
-          pl: 0, exito: 0, fixo: 0 
+      if (!partnerCounts[pName]) partnerCounts[pName] = {
+        total: 0, analysis: 0, proposal: 0, active: 0, rejected: 0, probono: 0,
+        pl: 0, exito: 0, fixo: 0
       };
-      
+
       partnerCounts[pName].total++;
       if (c.status === 'analysis') partnerCounts[pName].analysis++;
       else if (c.status === 'proposal') partnerCounts[pName].proposal++;
       else if (c.status === 'active') {
-          partnerCounts[pName].active++;
-          partnerCounts[pName].pl += pl;
-          partnerCounts[pName].exito += exito;
-          partnerCounts[pName].fixo += mensal;
+        partnerCounts[pName].active++;
+        partnerCounts[pName].pl += pl;
+        partnerCounts[pName].exito += exito;
+        partnerCounts[pName].fixo += mensal;
       }
       else if (c.status === 'rejected') partnerCounts[pName].rejected++;
       else if (c.status === 'probono') partnerCounts[pName].probono++;
 
       // Rejeições
       if (c.status === 'rejected') {
-          totalRejected++;
-          const reason = c.rejection_reason || 'Não informado';
-          const source = c.rejection_source || c.rejection_by || 'Não informado';
-          reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
-          sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+        totalRejected++;
+        const reason = c.rejection_reason || 'Não informado';
+        const source = c.rejection_source || c.rejection_by || 'Não informado';
+        reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
+        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
       }
 
       // Mapas Financeiros (Gráficos)
+      // 1. Fechamentos (Evolução Financeira)
+      // Considera TODOS que tem data de contrato e status active (fechado)
       if (c.status === 'active' && c.contract_date) {
-        const dContrato = new Date(c.contract_date + 'T12:00:00');
-        dContrato.setDate(1); dContrato.setHours(0,0,0,0);
-        if (dContrato >= dataLimite12Meses) {
-          const key = dContrato.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-          if (financeiroMap[key]) { financeiroMap[key].pl += pl; financeiroMap[key].fixo += mensal; financeiroMap[key].exito += exito; }
+        const dContrato = safeDate(c.contract_date);
+        if (dContrato) {
+          dContrato.setDate(1); dContrato.setHours(0, 0, 0, 0);
+          if (dContrato >= dataLimite12Meses) {
+            const key = dContrato.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+            // Soma TUDO: PL + Fixo + Êxito + Extras
+            if (financeiroMap[key]) {
+              financeiroMap[key].pl += pl;
+              financeiroMap[key].fixo += mensal; // Fixo mensal inicial
+              financeiroMap[key].fixo += fixoPontual; // Somar fixo pontual aqui também para o gráfico mostrar o valor "ganho" no mês
+              financeiroMap[key].exito += exito;
+              financeiroMap[key].exito += outros; // Somar outros aqui ou num campo separado? Vamos somar ao êxito ou criar um campo "outros" no map se precisasse, mas por hora vamos agrupar em exito ou fixo.
+              // O gráfico usa pl, fixo, exito. Vamos somar 'outros' e 'fixoPontual' ao 'fixo' para simplificar a visualização ou dividir.
+              // Melhor: somar outros ao exito (variável) e fixoPontual ao fixo.
+            }
+          }
         }
       }
 
-      if (c.status === 'proposal' && c.proposal_date) {
-        const dProposta = new Date(c.proposal_date + 'T12:00:00');
-        dProposta.setDate(1); dProposta.setHours(0,0,0,0);
-        if (dProposta >= dataLimite12Meses) {
-              const key = dProposta.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-              if (propostasMap[key]) { propostasMap[key].pl += pl; propostasMap[key].fixo += mensal; propostasMap[key].exito += exito; }
+      // 2. Propostas (Evolução de Propostas)
+      // Considera TODOS que tiveram proposta (active, proposal, rejected com data)
+      if (c.proposal_date) {
+        const dProposta = safeDate(c.proposal_date);
+        if (dProposta) {
+          dProposta.setDate(1); dProposta.setHours(0, 0, 0, 0);
+          if (dProposta >= dataLimite12Meses) {
+            const key = dProposta.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+            if (propostasMap[key]) {
+              propostasMap[key].pl += pl;
+              propostasMap[key].fixo += mensal;
+              propostasMap[key].fixo += fixoPontual;
+              propostasMap[key].exito += exito;
+              propostasMap[key].exito += outros;
+            }
+          }
         }
       }
 
@@ -309,15 +383,15 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       const dProposal = c.proposal_date ? new Date(c.proposal_date + 'T12:00:00') : null;
       const dContract = c.contract_date ? new Date(c.contract_date + 'T12:00:00') : null;
 
-      if (dProspect && dProposal && dProposal >= dProspect) {
-          const diffTime = Math.abs(dProposal.getTime() - dProspect.getTime());
-          somaDiasProspectProposta += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          qtdProspectProposta++;
+      if (dProspect && isValidDate(dProspect) && dProposal && isValidDate(dProposal) && dProposal >= dProspect) {
+        const diffTime = Math.abs(dProposal.getTime() - dProspect.getTime());
+        somaDiasProspectProposta += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        qtdProspectProposta++;
       }
-      if (dProposal && dContract && dContract >= dProposal) {
-          const diffTime = Math.abs(dContract.getTime() - dProposal.getTime());
-          somaDiasPropostaFechamento += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          qtdPropostaFechamento++;
+      if (dProposal && isValidDate(dProposal) && dContract && isValidDate(dContract) && dContract >= dProposal) {
+        const diffTime = Math.abs(dContract.getTime() - dProposal.getTime());
+        somaDiasPropostaFechamento += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        qtdPropostaFechamento++;
       }
 
       // Totais Gerais
@@ -325,28 +399,28 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       if (c.status === 'analysis') mGeral.emAnalise++;
       if (c.status === 'rejected') mGeral.rejeitados++;
       if (c.status === 'probono') mGeral.probono++;
-      
-      if (c.status === 'proposal') { 
-          mGeral.propostasAtivas++; 
-          
-          mGeral.valorEmNegociacaoPL += pl;
-          mGeral.valorEmNegociacaoExito += exito;
-          mGeral.valorEmNegociacaoMensal += mensal;
-          mGeral.valorEmNegociacaoOutros += (outros + fixoPontual); 
+
+      if (c.status === 'proposal') {
+        mGeral.propostasAtivas++;
+
+        mGeral.valorEmNegociacaoPL += pl;
+        mGeral.valorEmNegociacaoExito += exito;
+        mGeral.valorEmNegociacaoMensal += mensal;
+        mGeral.valorEmNegociacaoOutros += (outros + fixoPontual);
       }
-      
-      if (c.status === 'active') { 
-          mGeral.fechados++; 
-          
-          mGeral.receitaRecorrenteAtiva += mensal; 
-          mGeral.totalFechadoPL += pl; 
-          mGeral.totalFechadoExito += exito; 
-          
-          // Agrupamento de Outros + Fixo Pontual
-          mGeral.totalFechadoOutros += (outros + fixoPontual); 
-          mGeral.totalFechadoFixo += fixoPontual; // Mantido para legado se necessário
-          
-          c.physical_signature === true ? mGeral.assinados++ : mGeral.naoAssinados++; 
+
+      if (c.status === 'active') {
+        mGeral.fechados++;
+
+        mGeral.receitaRecorrenteAtiva += mensal;
+        mGeral.totalFechadoPL += pl;
+        mGeral.totalFechadoExito += exito;
+
+        // Agrupamento de Outros + Fixo Pontual
+        mGeral.totalFechadoOutros += (outros + fixoPontual);
+        mGeral.totalFechadoFixo += fixoPontual; // Mantido para legado se necessário
+
+        c.physical_signature === true ? mGeral.assinados++ : mGeral.naoAssinados++;
       }
 
       // Semana Atual

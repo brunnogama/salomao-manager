@@ -4,10 +4,6 @@ import jsPDF from 'jspdf';
 import { supabase } from '../../../lib/supabase';
 import {
   Loader2,
-  TrendingUp,
-  FileText,
-  DollarSign,
-  Users,
   LayoutDashboard
 } from 'lucide-react';
 
@@ -29,15 +25,6 @@ interface Props {
 }
 
 export function Dashboard({ }: Props) {
-  // --- ESTADOS ORIGINAIS MANTIDOS ---
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [stats, setStats] = useState({
-    totalContracts: 0,
-    activeContracts: 0,
-    totalClients: 0,
-    totalRevenue: 0
-  });
-
   // --- NOVOS ESTADOS PARA FUNCIONALIDADES DA CONTROLADORIA ---
   const [selectedPartner, setSelectedPartner] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
@@ -55,30 +42,8 @@ export function Dashboard({ }: Props) {
   } = useDashboardData(selectedPartner, selectedLocation);
 
   useEffect(() => {
-    fetchStats();
     fetchFilterOptions();
   }, []);
-
-  // Lógica de busca original mantida
-  const fetchStats = async () => {
-    setLoadingStats(true);
-    try {
-      const { data: contracts } = await supabase.from('contracts').select('*');
-      const { data: clients } = await supabase.from('clients').select('id');
-      const totalContracts = contracts?.length || 0;
-      const activeContracts = contracts?.filter(c => c.status === 'active').length || 0;
-      const totalClients = clients?.length || 0;
-      const totalRevenue = contracts
-        ?.filter(c => c.status === 'active')
-        .reduce((acc, c) => acc + (parseFloat(c.pro_labore) || 0), 0) || 0;
-
-      setStats({ totalContracts, activeContracts, totalClients, totalRevenue });
-    } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
-    } finally {
-      setLoadingStats(false);
-    }
-  };
 
   // Busca de opções para os novos filtros
   const fetchFilterOptions = async () => {
@@ -132,7 +97,7 @@ export function Dashboard({ }: Props) {
     }
   };
 
-  if (loadingStats || loadingData) {
+  if (loadingData) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50 gap-4">
         <Loader2 className="w-10 h-10 text-[#1e3a8a] animate-spin" />
@@ -174,58 +139,7 @@ export function Dashboard({ }: Props) {
         </div>
       </div>
 
-      {/* 2. Cards de Estatísticas - Salomão Design System */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total de Casos */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-blue-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Casos</p>
-            <p className="text-2xl font-black text-blue-900 mt-1">{stats.totalContracts}</p>
-          </div>
-          <div className="p-3 bg-blue-50 rounded-xl">
-            <FileText className="h-6 w-6 text-blue-600" />
-          </div>
-        </div>
 
-        {/* Contratos Ativos */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-emerald-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contratos Ativos</p>
-            <p className="text-2xl font-black text-emerald-900 mt-1">{stats.activeContracts}</p>
-          </div>
-          <div className="p-3 bg-emerald-50 rounded-xl">
-            <TrendingUp className="h-6 w-6 text-emerald-600" />
-          </div>
-        </div>
-
-        {/* Total de Clientes */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-indigo-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total de Clientes</p>
-            <p className="text-2xl font-black text-indigo-900 mt-1">{stats.totalClients}</p>
-          </div>
-          <div className="p-3 bg-indigo-50 rounded-xl">
-            <Users className="h-6 w-6 text-indigo-600" />
-          </div>
-        </div>
-
-        {/* Receita Total */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-amber-600"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Receita (Pró-Labore)</p>
-            <p className="text-2xl font-black text-amber-900 mt-1">
-              {stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </p>
-          </div>
-          <div className="p-3 bg-amber-50 rounded-xl">
-            <DollarSign className="h-6 w-6 text-amber-600" />
-          </div>
-        </div>
-      </div>
 
       {/* 3. Mensagem de Boas-vindas */}
 

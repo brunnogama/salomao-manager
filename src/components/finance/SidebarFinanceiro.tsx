@@ -109,8 +109,8 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
     { path: '/financeiro/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/financeiro/calendario', label: 'Calendário', icon: Calendar },
     { path: '/financeiro/contas-pagar', label: 'Contas a Pagar', icon: ArrowUpCircle },
-    { path: '/financeiro/oab', label: 'OAB', icon: GraduationCap },
     { path: '/financeiro/contas-receber', label: 'Contas a Receber', icon: ArrowDownCircle },
+    { path: '/financeiro/oab', label: 'OAB', icon: GraduationCap },
     { path: '/financeiro/gestao-aeronave', label: 'Gestão da Aeronave', icon: Plane },
     { path: '/financeiro/ged', label: 'GED', icon: Folder },
   ]
@@ -146,9 +146,7 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
         {/* 1. HEADER - BRAND + MÓDULO */}
         <div className="p-6 pb-2">
           <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 bg-[#1e3a8a] rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20 border border-blue-700/50">
-              <img src="/favicon.png" alt="S" className="h-6 w-6 drop-shadow-md" />
-            </div>
+            <img src="/so_logo-branca.png" alt="S" className="h-6 w-6 drop-shadow-md" />
             <div>
               <h2 className="text-sm font-bold text-white leading-none tracking-wide">DEPARTAMENTO</h2>
               <h2 className="text-xl font-black text-white leading-none tracking-wide mt-0.5">FINANCEIRO</h2>
@@ -165,9 +163,9 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
               key={item.path}
               to={item.path}
               onClick={onClose}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group relative ${isActive(item.path)
-                ? 'bg-[#1e3a8a] text-white font-medium shadow-md'
-                : 'text-gray-300 hover:bg-white/5 hover:text-white'
+              className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all group ${isActive(item.path)
+                ? 'bg-[#1e3a8a] text-white font-medium shadow-md border-l-4 border-salomao-gold'
+                : 'hover:bg-white/5 hover:text-white border-l-4 border-transparent'
                 }`}
             >
               <div className="flex items-center">

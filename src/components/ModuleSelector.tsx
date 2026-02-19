@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Gift, UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale } from 'lucide-react'
+import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck } from 'lucide-react'
+
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
@@ -12,24 +13,25 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
+
   useEffect(() => {
     async function fetchPermissions() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        
+
         if (user) {
           const { data, error } = await supabase
-            .from('user_profiles') // Tabela correta
+            .from('user_profiles')
             .select('allowed_modules, role')
             .eq('id', user.id)
-            .maybeSingle() // CORREÇÃO: maybeSingle evita o erro "Uncaught Error" se o perfil for nulo
+            .maybeSingle()
 
           if (data && !error) {
             const userRole = data.role || ''
             const isUserAdmin = userRole.toLowerCase() === 'admin'
-            
+
             setIsAdmin(isUserAdmin)
-            
+
             if (isUserAdmin) {
               setAllowedModules(['crm', 'family', 'collaborators', 'operational', 'financial', 'executive', 'legal-control'])
             } else {
@@ -52,7 +54,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
     fetchPermissions()
   }, [])
-  
+
   const handleLogout = async () => {
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
     localStorage.clear()
@@ -79,218 +81,228 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   ) => {
     const allowed = isModuleAllowed(key)
 
+
     return (
-      <div 
+      <div
         key={key}
+
         onClick={() => allowed && onSelect(key)}
-        className={`relative overflow-hidden rounded-xl border transition-all duration-300 h-64 flex flex-col items-center text-center justify-center group
-          ${allowed 
-            ? 'bg-white shadow-sm border-gray-100 hover:shadow-2xl hover:-translate-y-2 cursor-pointer hover:border-gray-200' 
-            : 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed'
+        className={`
+          relative overflow-hidden rounded-xl border transition-all duration-300 flex flex-col items-center text-center justify-between group
+          ${allowed
+            ? 'bg-white/5 backdrop-blur-md shadow-lg border-white/10 hover:shadow-2xl hover:bg-white/10 hover:-translate-y-1 cursor-pointer hover:border-[#d4af37]/50'
+            : 'bg-gray-100/5 backdrop-blur-sm border-white/5 opacity-50 cursor-not-allowed grayscale'
           }
+          h-[180px] w-full
         `}
       >
-        {/* Gradiente de fundo sutil no hover */}
+        {/* Background Gradients */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientTo} opacity-0 group-hover:opacity-20 transition-opacity duration-300`} />
+
+        {/* Top Highlight Line */}
         {allowed && (
-          <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300 bg-gradient-to-br ${gradientFrom} ${gradientTo}`} />
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         )}
 
         {/* Lock Badge */}
         {!allowed && (
-          <div className="absolute top-4 right-4 p-2 rounded-lg bg-gray-200">
-            <Lock className="h-4 w-4 text-gray-500" />
+          <div className="absolute top-4 right-4 p-1.5 rounded-lg bg-gray-900/50 backdrop-blur-md">
+            <Lock className="h-3.5 w-3.5 text-gray-400" />
           </div>
         )}
 
-        {/* Icon Container */}
-        <div className={`relative z-10 p-5 rounded-2xl mb-6 transition-all duration-300 ${
-          allowed 
-            ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl` 
-            : 'bg-gray-200 text-gray-400'
-        }`}>
-          <Icon className="h-10 w-10" />
-        </div>
+        {/* Content Container */}
+        <div className="flex flex-col items-center justify-center flex-1 p-5 w-full z-10">
 
-        {/* Content */}
-        <div className="relative z-10 px-6">
-          <h2 className="text-lg font-black text-[#0a192f] mb-2 tracking-tight">
+          {/* Icon Container with Glow */}
+          <div className={`
+            relative p-3.5 rounded-xl mb-3.5 transition-all duration-300 group-hover:scale-105
+            ${allowed
+              ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-lg shadow-${gradientFrom}/20`
+              : 'bg-gray-800/50 text-gray-500'}
+          `}>
+            <Icon className="h-6 w-6" strokeWidth={1.5} />
+
+            {/* Inner Glow Effect */}
+            {allowed && (
+              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
+            )}
+          </div>
+
+          <h2 className="text-sm font-bold text-white mb-2 tracking-wide group-hover:text-[#d4af37] transition-colors">
             {title}
           </h2>
-          <p className="text-xs text-gray-500 leading-relaxed font-medium line-clamp-3">
+
+          <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-[200px] line-clamp-2 group-hover:text-gray-300 transition-colors">
             {description}
           </p>
         </div>
-        
-        {/* Status Badge */}
-        {!allowed && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-            <span className="text-[9px] font-black text-red-500 uppercase tracking-[0.2em] bg-red-50 px-3 py-1 rounded-full border border-red-200">
-              Bloqueado
-            </span>
-          </div>
-        )}
-
-        {/* Active indicator */}
-        {allowed && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gray-200 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        )}
       </div>
     )
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 text-[#1e3a8a] animate-spin" />
-          <p className="text-sm font-semibold text-gray-500">Carregando módulos...</p>
+      <div className="h-screen w-screen bg-[#f8fafc] flex flex-col items-center justify-center overflow-hidden">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
+            <img
+              src="/logo-salomao.png"
+              alt="Carregando..."
+              className="h-16 w-auto relative z-10 animate-pulse grayscale opacity-50"
+            />
+          </div>
+          <div className="flex items-center gap-3 text-[#0a192f]">
+            <Loader2 className="h-5 w-5 animate-spin text-[#d4af37]" />
+            <p className="text-sm font-bold tracking-widest uppercase">Carregando Ecossistema</p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
-      
-      {/* Header - Design System Navy */}
-      <header className="bg-gradient-to-r from-[#0a192f] to-[#112240] border-b border-white/10 shadow-xl">
-        <div className="max-w-[1920px] mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
-          
-          {/* Logo - Esquerda */}
-          <img 
-            src="/logo-branca.png" 
-            alt="Salomão Advogados" 
-            className="h-11 w-auto object-contain" 
-          />
-          
-          {/* Controles - Direita */}
-          <div className="flex items-center gap-3">
-            {/* User Info */}
-            <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center shadow-lg">
-                <span className="text-xs font-black text-white">
-                  {userName.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-white text-sm font-bold tracking-tight">
-                  {userName}
-                </span>
-                {isAdmin && (
-                  <span className="text-[#d4af37] text-[9px] font-black uppercase tracking-[0.15em]">
-                    Administrador
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            {/* Settings Button (Admin only) */}
-            {isAdmin && (
-              <button 
-                onClick={() => onSelect('settings')}
-                className="p-2.5 text-gray-400 hover:text-white transition-all rounded-xl hover:bg-white/10 border border-transparent hover:border-white/20"
-                title="Configurações"
-              >
-                <Settings className="h-5 w-5" />
-              </button>
-            )}
-            
-            {/* Logout Button */}
-            <button 
-              onClick={handleLogout}
-              className="p-2.5 text-gray-400 hover:text-red-400 transition-all rounded-xl hover:bg-red-500/10 border border-transparent hover:border-red-400/20"
-              title="Sair"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
+    <div className="h-screen w-screen bg-[#0a192f] flex flex-col relative overflow-hidden">
+
+      {/* Decorative Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#0a192f] to-[#112240] z-0" />
+
+      {/* Header */}
+      <header className="relative z-50 px-6 lg:px-8 h-20 flex items-center justify-between w-full shrink-0">
+        {/* Logo */}
+        <div className="flex items-center gap-4 group cursor-default">
+          <div className="relative">
+            <div className="absolute inset-0 bg-white/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            <img
+              src="/logo-salomao.png"
+              alt="Salomão Advogados"
+              className="h-11 w-auto object-contain filter brightness-0 invert drop-shadow-lg transition-transform duration-500 group-hover:scale-105"
+            />
           </div>
+        </div>
+
+        {/* User Controls */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 pl-2 pr-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 shadow-lg transition-all hover:bg-white/20">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#d4af37] to-amber-700 flex items-center justify-center shadow-inner ring-1 ring-white/20">
+              <span className="text-[10px] font-black text-white">
+                {userName.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex flex-col pr-1">
+              <span className="text-white text-xs font-bold tracking-wide leading-tight">
+                {userName}
+              </span>
+              {isAdmin && (
+                <div className="flex items-center gap-1 text-[#d4af37]">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span className="text-[9px] font-black uppercase tracking-wider leading-tight">
+                    Admin
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {isAdmin && (
+            <button
+              onClick={() => onSelect('settings')}
+              className="p-2.5 text-white/70 hover:text-white transition-all rounded-full hover:bg-white/10 active:scale-95"
+              title="Configurações"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
+          )}
+
+          <button
+            onClick={handleLogout}
+            className="group flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/30 text-red-100 hover:bg-red-500/20 hover:text-white hover:border-red-500/50 transition-all active:scale-95 ml-1"
+            title="Sair"
+          >
+            <LogOut className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline-block">Sair</span>
+          </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
-        
-        {/* Title Section */}
-        <div className="text-center mb-12 max-w-3xl">
-          <h1 className="text-4xl md:text-5xl font-black text-[#0a192f] mb-4 tracking-tight">
-            Ecossistema Salomão
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 h-full min-h-0">
+
+        {/* Hero Section */}
+        <div className="text-center mb-8 shrink-0">
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight drop-shadow-2xl">
+            Ecossistema <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] to-[#fcc200]">Salomão</span>
           </h1>
-          <p className="text-base text-gray-500 font-medium">
-            Selecione o módulo que deseja acessar para começar
+          <p className="text-sm text-blue-100/90 font-medium max-w-xl mx-auto leading-relaxed shadow-sm">
+            Selecione um módulo para acessar suas ferramentas.
           </p>
-          
-          {/* Decorative line */}
-          <div className="mt-6 flex items-center justify-center gap-2">
-            <div className="h-0.5 w-12 bg-gradient-to-r from-transparent to-[#1e3a8a]"></div>
-            <div className="w-2 h-2 rounded-full bg-[#d4af37]"></div>
-            <div className="h-0.5 w-12 bg-gradient-to-l from-transparent to-[#1e3a8a]"></div>
-          </div>
         </div>
 
         {/* Modules Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl w-full">
-          
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl w-full">
+
           {renderCard(
-            'crm', 
-            'Brindes de Clientes', 
-            'Gestão de clientes e controle de brindes de final de ano', 
-            Gift, 
+            'crm',
+            'Gestão de Clientes',
+            'Gestão completa de relacionamento com clientes e brindes.',
+            Users,
             'from-blue-600',
             'to-blue-700'
           )}
 
           {renderCard(
-            'executive', 
-            'Secretaria Executiva', 
-            'Suporte e gestão de agendas, viagens e demandas dos sócios', 
-            Briefcase, 
+            'executive',
+            'Secretaria Executiva',
+            'Gerenciamento de agendas, viagens e demandas dos sócios.',
+            Briefcase,
             'from-purple-600',
             'to-purple-700'
           )}
 
           {renderCard(
-            'collaborators', 
-            'Recursos Humanos', 
-            'Gestão estratégica de pessoas, benefícios e departamento pessoal', 
-            UserCog, 
+            'collaborators',
+            'Recursos Humanos',
+            'Gestão estratégica de pessoas, benefícios e departamento pessoal.',
+            UserCog,
             'from-green-600',
             'to-green-700'
           )}
 
           {renderCard(
-            'operational', 
-            'Operacional', 
-            'Gestão de insumos, papelaria e operacional do escritório', 
-            Package, 
+            'operational',
+            'Operacional',
+            'Controle de insumos, papelaria e processos operacionais.',
+            Package,
             'from-orange-600',
             'to-orange-700'
           )}
 
           {renderCard(
-            'financial', 
-            'Financeiro', 
-            'Controle de notas fiscais, emissão de boletos e gestão financeira', 
-            Banknote, 
+            'financial',
+            'Financeiro',
+            'Gestão financeira, notas fiscais, boletos e fluxo de caixa.',
+            Banknote,
             'from-emerald-600',
             'to-emerald-700'
           )}
 
           {renderCard(
-            'legal-control', 
-            'Controladoria Jurídica', 
-            'Análise e controle estratégico de processos e métricas jurídicas', 
-            Scale, 
+            'legal-control',
+            'Controladoria Jurídica',
+            'Análise indicativa e controle de prazos processuais.',
+            Scale,
             'from-[#1e3a8a]',
-            'to-[#112240]'
+            'to-[#0a192f]'
           )}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="py-6 border-t border-gray-200 bg-white/50 backdrop-blur-sm">
+      <footer className="py-4 border-t border-white/10 bg-[#0a192f]/50 backdrop-blur-sm relative z-10 shrink-0">
         <div className="text-center">
-          <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
-            © 2026 Salomão Advogados · Todos os direitos reservados
+          <p className="text-[10px] font-black text-blue-200/50 uppercase tracking-[0.3em] hover:text-[#d4af37] transition-colors cursor-default">
+            © 2026 Salomão Advogados
           </p>
         </div>
       </footer>

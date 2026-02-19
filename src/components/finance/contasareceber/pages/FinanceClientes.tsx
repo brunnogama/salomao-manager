@@ -1,9 +1,9 @@
 // src/components/finance/pages/FinanceClientes.tsx
 import { useState, useEffect } from 'react'
-import { 
-  Users, 
-  UserCircle, 
-  Grid, 
+import {
+  Users,
+  UserCircle,
+  Grid,
   LogOut,
   Search,
   Plus,
@@ -31,10 +31,10 @@ interface Cliente {
   created_at: string;
 }
 
-export function FinanceClientes({ 
-  userName = 'Usuário', 
-  onModuleHome, 
-  onLogout 
+export function FinanceClientes({
+  userName = 'Usuário',
+  onModuleHome,
+  onLogout
 }: FinanceClientesProps) {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
@@ -98,7 +98,7 @@ export function FinanceClientes({
     loadClientes()
   }
 
-  const filteredClientes = clientes.filter(c => 
+  const filteredClientes = clientes.filter(c =>
     c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.cnpj?.includes(searchTerm)
@@ -106,7 +106,7 @@ export function FinanceClientes({
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
-      
+
       {/* PAGE HEADER */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -132,8 +132,8 @@ export function FinanceClientes({
             <UserCircle className="h-5 w-5" />
           </div>
           {onModuleHome && (
-            <button 
-              onClick={onModuleHome} 
+            <button
+              onClick={onModuleHome}
               className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
               title="Voltar aos módulos"
             >
@@ -141,8 +141,8 @@ export function FinanceClientes({
             </button>
           )}
           {onLogout && (
-            <button 
-              onClick={onLogout} 
+            <button
+              onClick={onLogout}
               className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
               title="Sair"
             >
@@ -153,12 +153,12 @@ export function FinanceClientes({
       </div>
 
       <div className="max-w-7xl mx-auto space-y-6 w-full">
-        
+
         {/* TOOLBAR */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input 
+            <input
               type="text"
               placeholder="Buscar por nome, e-mail ou CNPJ..."
               value={searchTerm}
@@ -167,7 +167,7 @@ export function FinanceClientes({
             />
           </div>
 
-          <button 
+          <button
             onClick={handleNovoCliente}
             className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
           >
@@ -234,20 +234,20 @@ export function FinanceClientes({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gray-50/50 border-b border-gray-100">
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">
                       Cliente
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">
                       CNPJ
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">
                       E-mail
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest">
                       Cadastro
                     </th>
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">
                       Ações
                     </th>
                   </tr>
@@ -282,14 +282,14 @@ export function FinanceClientes({
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          <button 
+                          <button
                             onClick={() => handleEditCliente(cliente)}
                             className="p-2 text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-all"
                             title="Editar cliente"
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDeleteCliente(cliente.id, cliente.nome)}
                             className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
                             title="Excluir cliente"
@@ -312,13 +312,13 @@ export function FinanceClientes({
                 {searchTerm ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
               </h2>
               <p className="text-gray-500 max-w-sm mt-2">
-                {searchTerm 
+                {searchTerm
                   ? 'Tente ajustar sua busca ou cadastrar um novo cliente'
                   : 'Comece cadastrando seu primeiro cliente'
                 }
               </p>
               {!searchTerm && (
-                <button 
+                <button
                   onClick={handleNovoCliente}
                   className="flex items-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 mt-4"
                 >

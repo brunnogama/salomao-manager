@@ -35,18 +35,18 @@ export function ReportTable({ reportData, reportRef, startDate, endDate }: Repor
         {/* Table */}
         <table className="w-full text-left border-collapse">
           {/* Header */}
-          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10">
-            <tr className="border-b-2 border-gray-200">
-              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
+          <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
+            <tr>
+              <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
                 Colaborador
               </th>
-              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
+              <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
                 Sócio
-              </th> 
-              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">
+              </th>
+              <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em] text-center">
                 Frequência
               </th>
-              <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
+              <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
                 Distribuição Semanal
               </th>
             </tr>
@@ -56,7 +56,7 @@ export function ReportTable({ reportData, reportRef, startDate, endDate }: Repor
           <tbody className="divide-y divide-gray-100">
             {reportData.map((item, idx) => (
               <tr key={idx} className="hover:bg-blue-50/30 transition-colors group">
-                
+
                 {/* Colaborador */}
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -92,14 +92,13 @@ export function ReportTable({ reportData, reportRef, startDate, endDate }: Repor
                       <span className="text-xs text-gray-500 font-bold">dias</span>
                     </div>
                     <div className="w-full max-w-[120px] h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all ${
-                          item.diasPresentes >= 20 ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 
-                          item.diasPresentes >= 15 ? 'bg-gradient-to-r from-[#1e3a8a] to-blue-500' : 
-                          item.diasPresentes >= 10 ? 'bg-gradient-to-r from-yellow-500 to-amber-500' :
-                          'bg-gradient-to-r from-red-500 to-rose-500'
-                        }`} 
-                        style={{ width: `${Math.min((item.diasPresentes / 22) * 100, 100)}%` }} 
+                      <div
+                        className={`h-full rounded-full transition-all ${item.diasPresentes >= 20 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                            item.diasPresentes >= 15 ? 'bg-gradient-to-r from-[#1e3a8a] to-blue-500' :
+                              item.diasPresentes >= 10 ? 'bg-gradient-to-r from-yellow-500 to-amber-500' :
+                                'bg-gradient-to-r from-red-500 to-rose-500'
+                          }`}
+                        style={{ width: `${Math.min((item.diasPresentes / 22) * 100, 100)}%` }}
                       />
                     </div>
                   </div>
@@ -109,22 +108,19 @@ export function ReportTable({ reportData, reportRef, startDate, endDate }: Repor
                 <td className="px-6 py-4">
                   <div className="flex gap-2">
                     {['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].map(day => (
-                      <div 
-                        key={day} 
-                        className={`flex flex-col items-center justify-center min-w-[44px] h-14 rounded-xl border-2 transition-all ${
-                          item.diasSemana[day] 
-                            ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-sm' 
+                      <div
+                        key={day}
+                        className={`flex flex-col items-center justify-center min-w-[44px] h-14 rounded-xl border-2 transition-all ${item.diasSemana[day]
+                            ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-sm'
                             : 'bg-gray-50 border-gray-100'
-                        }`}
+                          }`}
                       >
-                        <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${
-                          item.diasSemana[day] ? 'text-green-700' : 'text-gray-400'
-                        }`}>
+                        <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${item.diasSemana[day] ? 'text-green-700' : 'text-gray-400'
+                          }`}>
                           {day}
                         </span>
-                        <span className={`text-lg font-black ${
-                          item.diasSemana[day] ? 'text-green-600' : 'text-gray-300'
-                        }`}>
+                        <span className={`text-lg font-black ${item.diasSemana[day] ? 'text-green-600' : 'text-gray-300'
+                          }`}>
                           {item.diasSemana[day] || '–'}
                         </span>
                       </div>

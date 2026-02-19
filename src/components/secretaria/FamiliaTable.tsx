@@ -21,15 +21,15 @@ export function FamiliaTable({ data, onEditClick, onDeleteClick }: FamiliaTableP
     <div className="overflow-x-auto custom-scrollbar">
       <table className="w-full text-left border-separate border-spacing-y-2 px-2">
         <thead>
-          <tr className="text-[#112240]">
-            <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.15em] whitespace-nowrap">Vencimento</th>
-            <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.15em] whitespace-nowrap">Fornecedor</th>
-            <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.15em]">Descrição</th>
-            <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.15em] whitespace-nowrap">Titular</th>
-            <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.15em] whitespace-nowrap">Categoria</th>
-            <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.15em] whitespace-nowrap">Valor</th>
-            <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.15em] whitespace-nowrap">Status</th>
-            <th className="px-4 py-4 text-[11px] font-black uppercase tracking-[0.15em] text-right">Ações</th>
+          <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+            <th className="px-4 py-4 text-[11px] font-black text-white uppercase tracking-[0.15em] whitespace-nowrap first:rounded-l-xl">Vencimento</th>
+            <th className="px-4 py-4 text-[11px] font-black text-white uppercase tracking-[0.15em] whitespace-nowrap">Fornecedor</th>
+            <th className="px-4 py-4 text-[11px] font-black text-white uppercase tracking-[0.15em]">Descrição</th>
+            <th className="px-4 py-4 text-[11px] font-black text-white uppercase tracking-[0.15em] whitespace-nowrap">Titular</th>
+            <th className="px-4 py-4 text-[11px] font-black text-white uppercase tracking-[0.15em] whitespace-nowrap">Categoria</th>
+            <th className="px-4 py-4 text-[11px] font-black text-white uppercase tracking-[0.15em] whitespace-nowrap">Valor</th>
+            <th className="px-4 py-4 text-[11px] font-black text-white uppercase tracking-[0.15em] whitespace-nowrap">Status</th>
+            <th className="px-4 py-4 text-[11px] font-black text-white uppercase tracking-[0.15em] text-right last:rounded-r-xl">Ações</th>
           </tr>
         </thead>
         <tbody className="space-y-2">
@@ -44,8 +44,8 @@ export function FamiliaTable({ data, onEditClick, onDeleteClick }: FamiliaTableP
             </tr>
           ) : (
             data.map((item) => (
-              <tr 
-                key={item.id} 
+              <tr
+                key={item.id}
                 className="group bg-white hover:bg-blue-50/40 border border-gray-100 rounded-xl transition-all shadow-sm hover:shadow-md"
               >
                 {/* Vencimento */}
@@ -93,11 +93,10 @@ export function FamiliaTable({ data, onEditClick, onDeleteClick }: FamiliaTableP
 
                 {/* Status */}
                 <td className="px-4 py-4 whitespace-nowrap">
-                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
-                    item.status === 'Pago' 
-                      ? 'bg-green-50 text-green-700 border-green-100' 
+                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${item.status === 'Pago'
+                      ? 'bg-green-50 text-green-700 border-green-100'
                       : 'bg-amber-50 text-amber-700 border-amber-100'
-                  }`}>
+                    }`}>
                     <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'Pago' ? 'bg-green-500' : 'bg-amber-500'}`} />
                     {item.status}
                   </div>
@@ -106,13 +105,13 @@ export function FamiliaTable({ data, onEditClick, onDeleteClick }: FamiliaTableP
                 {/* Ações */}
                 <td className="px-4 py-4 text-right last:rounded-r-xl whitespace-nowrap">
                   <div className="flex items-center justify-end gap-2">
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); onEditClick(item); }}
                       className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all shadow-sm border border-blue-100"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); onDeleteClick(item); }}
                       className="p-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-all shadow-sm border border-red-100"
                     >

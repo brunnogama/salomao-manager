@@ -48,12 +48,12 @@ export function CollaboratorsList() {
     <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="bg-gray-50/50 border-b border-gray-100">
-            <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Colaborador</th>
-            <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Sócio Responsável</th>
-            <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Líder Direto</th>
-            <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-            <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Ações</th>
+          <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+            <th className="p-5 text-[10px] font-black text-white uppercase tracking-widest">Colaborador</th>
+            <th className="p-5 text-[10px] font-black text-white uppercase tracking-widest">Sócio Responsável</th>
+            <th className="p-5 text-[10px] font-black text-white uppercase tracking-widest">Líder Direto</th>
+            <th className="p-5 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+            <th className="p-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Ações</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50">
@@ -83,15 +83,14 @@ export function CollaboratorsList() {
                 </div>
               </td>
               <td className="p-5">
-                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                  collab.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${collab.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                  }`}>
                   {collab.status === 'active' ? 'Ativo' : 'Inativo'}
                 </span>
               </td>
               <td className="p-5">
                 <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
+                  <button
                     onClick={() => handleEdit(collab)}
                     className="p-2 hover:bg-white rounded-lg text-blue-600 shadow-sm border border-transparent hover:border-gray-100 transition-all"
                   >
@@ -104,7 +103,7 @@ export function CollaboratorsList() {
         </tbody>
       </table>
 
-      <CollaboratorFormModal 
+      <CollaboratorFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         collaborator={selectedCollab}

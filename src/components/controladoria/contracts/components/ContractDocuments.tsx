@@ -15,14 +15,14 @@ interface ContractDocumentsProps {
   onDelete: (id: string, path: string) => void;
 }
 
-export function ContractDocuments({ 
-  documents, 
-  isEditing, 
-  uploading, 
-  status, 
-  onUpload, 
-  onDownload, 
-  onDelete 
+export function ContractDocuments({
+  documents,
+  isEditing,
+  uploading,
+  status,
+  onUpload,
+  onDownload,
+  onDelete
 }: ContractDocumentsProps) {
   return (
     <div className="mb-8 mt-6">
@@ -44,17 +44,17 @@ export function ContractDocuments({
                 <Upload className="w-3 h-3 mr-2" /> Anexar PDF
               </>
             )}
-            <input 
-              type="file" 
-              accept="application/pdf" 
-              className="hidden" 
-              disabled={uploading} 
-              onChange={(e) => onUpload(e, status === 'active' ? 'contract' : 'proposal')} 
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              disabled={uploading}
+              onChange={(e) => onUpload(e, status === 'active' ? 'contract' : 'proposal')}
             />
           </label>
         )}
       </div>
-      
+
       {documents.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {documents.map((doc) => (
@@ -64,7 +64,7 @@ export function ContractDocuments({
                   <FileText className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-700 truncate" title={doc.file_name}>
+                  <p className="text-xs font-medium text-gray-700 break-all" title={doc.file_name}>
                     {doc.file_name}
                   </p>
                   <div className="flex items-center text-[10px] text-gray-400 mt-0.5">

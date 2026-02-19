@@ -1,12 +1,13 @@
+import { useState } from 'react'
 import {
   LayoutDashboard
 } from 'lucide-react'
 
 interface FinanceDashboardProps {
-  // Props removed as they are unused
+  userName?: string;
 }
 
-export function FinanceDashboard({ }: FinanceDashboardProps) {
+export function FinanceDashboard({ userName = 'Usuário' }: FinanceDashboardProps) {
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
@@ -28,7 +29,8 @@ export function FinanceDashboard({ }: FinanceDashboardProps) {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          {/* Action buttons will go here if added in future */}
+          {/* User info removed */}
+          {/* Navigation buttons removed as per new UI requirements */}
         </div>
       </div>
 

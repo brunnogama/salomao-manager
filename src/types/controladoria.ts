@@ -38,6 +38,9 @@ export interface Collaborator {
   id: string;
   name: string;
   partner_id?: string; // Vínculo com o Sócio Responsável (tabela partners)
+  partner?: { id: string; name: string }; // Joined field
+  leader_id?: string; // Vínculo com o Líder Direto
+  leader?: { id: string; name: string }; // Joined field
   email?: string;
   phone?: string;
   status: 'active' | 'inactive';
@@ -94,10 +97,44 @@ export interface Collaborator {
   observacoes?: string;
   oab_emissao?: string;
 
+  // Novos Campos (Rateio e Desligamento)
+  rateio_id?: string;
+  hiring_reason_id?: string;
+  termination_initiative_id?: string;
+  termination_type_id?: string;
+  termination_reason_id?: string;
+
+  // New Field: Area
+  area?: 'Administrativa' | 'Jurídica';
+
+  // Campos Adicionais para evitar erros de lint (UI/Form)
+  civil_status?: string;
+  nacionalidade?: string;
+  naturalidade_cidade?: string;
+  naturalidade_uf?: string;
+  mae?: string;
+  pai?: string;
+  ctps?: string;
+  cnh?: string;
+  tituloseleitor?: string;
+  reservista?: string;
+  pis?: string;
+  oab_tipo?: string;
+
+  // Filhos
+  has_children?: boolean;
+  children_count?: number;
+
+  hiring_reasons?: { id: string; name: string };
+  termination_initiatives?: { id: string; name: string };
+  termination_types?: { id: string; name: string };
+  termination_reasons?: { id: string; name: string };
+
   local?: string;
   locations?: { name: string }; // Joined field
   equipe?: string;
   teams?: { name: string }; // Joined field
+  rateios?: { id: string; name: string };
 
   created_at?: string;
   updated_at?: string;
@@ -127,6 +164,14 @@ export interface ContractProcess {
   comarca?: string;
   subject?: string;
   magistrates?: Magistrate[];
+
+  // UI/Form fields
+  position?: string;
+  uf?: string;
+  author_cnpj?: string;
+  opponent_cnpj?: string;
+  cause_value?: string;
+  value_of_cause?: number;
 }
 
 export interface ContractDocument {
@@ -136,6 +181,7 @@ export interface ContractDocument {
   file_path: string;
   file_type: 'proposal' | 'contract';
   uploaded_at: string;
+  hon_number_ref?: string;
 }
 
 export interface Contract {
@@ -183,6 +229,32 @@ export interface Contract {
   created_at?: string;
   updated_at?: string;
   documents?: ContractDocument[];
+
+  // Missing fields added for ContractFormModal
+  client_id?: string;
+  timesheet?: boolean;
+
+  pro_labore_installments?: string;
+  final_success_fee_installments?: string;
+  fixed_monthly_fee_installments?: string;
+  other_fees_installments?: string;
+
+  pro_labore_breakdown?: any[];
+  final_success_fee_breakdown?: any[];
+  fixed_monthly_fee_breakdown?: any[];
+  other_fees_breakdown?: any[];
+  interim_breakdown?: any[];
+
+  pro_labore_extras_installments?: string[];
+  final_success_extras_installments?: string[];
+  fixed_monthly_extras_installments?: string[];
+  other_fees_extras_installments?: string[];
+  intermediate_fees_installments?: string[];
+
+  percent_extras?: string[];
+  percent_extras_clauses?: string[];
+  final_success_percent?: string;
+  final_success_percent_clause?: string;
 }
 
 export interface ClientContact {
@@ -193,6 +265,13 @@ export interface ClientContact {
   phone?: string;
   role?: string;
   is_main_contact?: boolean;
+
+  // CRM / Brindes
+  gift_type?: string;
+  gift_other?: string;
+  gift_quantity?: number;
+  gift_notes?: string;
+
   created_at?: string;
   updated_at?: string;
 }
@@ -212,6 +291,11 @@ export interface Client {
   contacts?: ClientContact[];
   created_at?: string;
   updated_at?: string;
+
+  // Campos de endereço
+  address?: string;
+  number?: string;
+  complement?: string;
 
   // Campos unificados para Brindes/CRM
   company?: string;
@@ -271,4 +355,15 @@ export interface TimelineEvent {
   new_value?: any;
   changed_by?: string;
   changed_at: string;
+}
+
+export interface GEDDocument {
+  id: string;
+  colaborador_id: string;
+  nome_arquivo: string;
+  url: string;
+  categoria: string;
+  tamanho: number;
+  tipo_arquivo: string;
+  created_at: string;
 }

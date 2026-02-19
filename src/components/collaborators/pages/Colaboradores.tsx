@@ -1,54 +1,83 @@
-// src/components/collaborators/pages/Colaboradores.tsx
 import React, { useState, useEffect, useRef } from 'react'
 import {
-  Search, Plus, X, Trash2, Pencil, Save, Users, UserMinus, CheckCircle, UserX,
-  Calendar, Building2, Mail, FileText, ExternalLink, Loader2, Link as LinkIcon,
-  Grid, LogOut, UserCircle, GraduationCap, Briefcase, Files, History, User, Check, BookOpen, AlertCircle, FileSpreadsheet
+  Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
+  Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
+  GraduationCap, Briefcase, Files, History, User, BookOpen, FileSpreadsheet, Settings, Clock
 } from 'lucide-react'
+import { differenceInMonths, differenceInYears } from 'date-fns'
 import * as XLSX from 'xlsx'
 import { supabase } from '../../../lib/supabase'
-import { SearchableSelect } from '../../crm/SearchableSelect'
-import { Collaborator, Partner } from '../../../types/controladoria'
 
-// Importar componentes modulares
-import { PhotoUploadSection } from '../components/PhotoUploadSection'
+import { FilterSelect } from '../../controladoria/ui/FilterSelect'
+import { Collaborator, Partner, GEDDocument } from '../../../types/controladoria'
+import { AlertModal } from '../../ui/AlertModal'
+import { ConfirmationModal } from '../../ui/ConfirmationModal'
+import { SearchableSelect } from '../../crm/SearchableSelect'
+
 import { DadosPessoaisSection } from '../components/DadosPessoaisSection'
 import { EnderecoSection } from '../components/EnderecoSection'
-import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
 import { InformacoesProfissionaisSection } from '../components/InformacoesProfissionaisSection'
 import { DadosEscolaridadeSection } from '../components/DadosEscolaridadeSection'
+import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
 import { HistoricoSection } from '../components/HistoricoSection'
+import { PhotoUploadSection } from '../components/PhotoUploadSection'
 
-// --- ESTADOS ---
-const ESTADOS_BRASIL = [
-  { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },
-  { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' },
-  { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' },
-  { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' },
-  { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' },
-  { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' },
-  { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' },
-  { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' },
-  { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }
-];
+// ... existing imports
 
-interface GEDDocument {
-  id: string;
-  nome_arquivo: string;
-  url: string;
-  categoria: string;
-  created_at: string;
-}
+interface Role { id: string | number; name: string }
+interface Location { id: string | number; name: string }
+
 
 interface ColaboradoresProps {
-  userName?: string;
-  onModuleHome?: () => void;
-  onLogout?: () => void;
+  userName?: string
+  onModuleHome?: () => void
+  onLogout?: () => void
 }
+
+
+const ESTADOS_BRASIL = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' }
+]
 
 export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }: ColaboradoresProps) {
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
-  const [partners, setPartners] = useState<Partner[]>([])
+  const [partners, setPartners] = useState<Partial<Partner>[]>([])
+  const [roles, setRoles] = useState<Role[]>([])
+  const [locations, setLocations] = useState<Location[]>([])
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
+
+  // Lookup Tables State
+  const [rateios, setRateios] = useState<{ id: string; name: string }[]>([])
+  const [hiringReasons, setHiringReasons] = useState<{ id: string; name: string }[]>([])
+  const [terminationInitiatives, setTerminationInitiatives] = useState<{ id: string; name: string }[]>([])
+  const [terminationTypes, setTerminationTypes] = useState<{ id: string; name: string }[]>([])
+  const [terminationReasons, setTerminationReasons] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
@@ -60,6 +89,28 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const [filterPartner, setFilterPartner] = useState('')
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
+
+  const getLookupName = (list: { id: string; name: string }[], id?: string) => {
+    if (!id) return ''
+    return list.find(i => i.id === id)?.name || ''
+  }
+
+  // Options for FilterSelect
+  const liderOptions = React.useMemo(() => [
+    ...colaboradores.map((c: Collaborator) => ({ label: c.name, value: String(c.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+  ], [colaboradores])
+
+  const partnerOptions = React.useMemo(() => [
+    ...partners.map((p) => ({ label: p.name || '', value: String(p.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+  ], [partners])
+
+  const locationOptions = React.useMemo(() => [
+    ...locations.map((l: Location) => ({ label: l.name, value: String(l.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+  ], [locations])
+
+  const roleOptions = React.useMemo(() => [
+    ...roles.map((r: Role) => ({ label: r.name, value: String(r.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+  ], [roles])
 
   // Inicializa estado vazio por padrão conforme solicitado
   const [formData, setFormData] = useState<Partial<Collaborator>>({ status: 'active', state: '' })
@@ -74,11 +125,11 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   ]
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [, setRefreshKey] = useState(0)
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null)
 
   const [gedDocs, setGedDocs] = useState<GEDDocument[]>([])
-  const [uploadingGed, setUploadingGed] = useState(false)
+  const [, setUploadingGed] = useState(false)
   const [selectedGedCategory, setSelectedGedCategory] = useState('')
   const [atestadoDatas, setAtestadoDatas] = useState({ inicio: '', fim: '' })
   const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string }[]>([])
@@ -97,6 +148,26 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   ]
 
   const photoInputRef = useRef<HTMLInputElement>(null)
+
+  // Alert Modal State
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    variant: 'success' | 'error' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    variant: 'info'
+  })
+
+  // Confirmation Modal State
+  const [gedToDelete, setGedToDelete] = useState<GEDDocument | null>(null)
+
+  const showAlert = (title: string, description: string, variant: 'success' | 'error' | 'info' = 'info') => {
+    setAlertConfig({ isOpen: true, title, description, variant })
+  }
 
   useEffect(() => {
     fetchColaboradores()
@@ -126,15 +197,25 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     return str.toLowerCase().split(' ').map(word => (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word).join(' ');
   }
 
-  const formatDateDisplay = (str?: string) => {
-    if (!str) return '-'
-    const date = new Date(str)
-    return new Date(date.valueOf() + date.getTimezoneOffset() * 60000).toLocaleDateString('pt-BR')
-  }
+
 
   const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
   const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14)
   const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
+
+  const formatDateToDisplay = (isoDate: string | undefined | null) => {
+    if (!isoDate) return ''
+    if (isoDate.includes('/')) return isoDate
+    const [y, m, d] = isoDate.split('-')
+    return `${d}/${m}/${y}`
+  }
+
+  const formatDateToISO = (displayDate: string | undefined | null) => {
+    if (!displayDate) return ''
+    if (displayDate.includes('-')) return displayDate
+    const [d, m, y] = displayDate.split('/')
+    return `${y}-${m}-${d}`
+  }
 
   const handleCepBlur = async () => {
     const cep = formData.zip_code?.replace(/\D/g, '')
@@ -159,14 +240,30 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   const fetchColaboradores = async () => {
     setLoading(true)
     try {
-      const [colabRes, rolesRes, locsRes, teamsRes] = await Promise.all([
+      const [colabRes, rolesRes, locsRes, teamsRes, rateiosRes, hiringReasonsRes, termInitiativesRes, termTypesRes, termReasonsRes] = await Promise.all([
         supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name)`).order('name'),
         supabase.from('roles').select('id, name'),
         supabase.from('locations').select('id, name'),
-        supabase.from('teams').select('id, name')
+        supabase.from('teams').select('id, name'),
+        supabase.from('rateios').select('id, name'),
+        supabase.from('hiring_reasons').select('id, name'),
+        supabase.from('termination_initiatives').select('id, name'),
+        supabase.from('termination_types').select('id, name'),
+        supabase.from('termination_reasons').select('id, name')
       ])
 
       if (colabRes.error) throw colabRes.error
+
+      if (rolesRes.data) setRoles(rolesRes.data)
+      if (locsRes.data) setLocations(locsRes.data)
+      if (teamsRes.data) {
+        setTeams(teamsRes.data)
+      }
+      if (rateiosRes.data) setRateios(rateiosRes.data)
+      if (hiringReasonsRes.data) setHiringReasons(hiringReasonsRes.data)
+      if (termInitiativesRes.data) setTerminationInitiatives(termInitiativesRes.data)
+      if (termTypesRes.data) setTerminationTypes(termTypesRes.data)
+      if (termReasonsRes.data) setTerminationReasons(termReasonsRes.data)
 
       const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
       const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
@@ -204,26 +301,10 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     fetchColaboradores()
   }
 
-  const uploadPhoto = async (file: File, id: string) => {
-    try {
-      setUploadingPhoto(true)
-      const fileName = `${id}_${Date.now()}.${file.name.split('.').pop()}`
-      const { error: upErr } = await supabase.storage.from('fotos-colaboradores').upload(`colaboradores/${fileName}`, file)
-      if (upErr) throw upErr
-      const { data } = supabase.storage.from('fotos-colaboradores').getPublicUrl(`colaboradores/${fileName}`)
-      return data.publicUrl
-    } catch (error) { alert('Erro no upload'); return null } finally { setUploadingPhoto(false) }
-  }
-
-  const deleteFoto = async (url: string) => {
-    const path = url.split('/fotos-colaboradores/')[1]
-    if (path) await supabase.storage.from('fotos-colaboradores').remove([`colaboradores/${path}`])
-  }
-
   const handleGedUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !selectedGedCategory) {
-      if (!selectedGedCategory) alert('Selecione uma categoria primeiro.')
+      if (!selectedGedCategory) showAlert('Atenção', 'Selecione uma categoria primeiro.', 'warning' as any) // Type cast for now or update AlertModal to support warning
       return
     }
 
@@ -259,7 +340,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
         setSelectedGedCategory('');
         setAtestadoDatas({ inicio: '', fim: '' })
         if (gedInputRef.current) gedInputRef.current.value = ''
-      } catch (error: any) { alert('Erro no upload do GED: ' + error.message) } finally { setUploadingGed(false) }
+      } catch (error: any) {
+        showAlert('Erro', 'Erro no upload do GED: ' + error.message, 'error')
+      } finally { setUploadingGed(false) }
     } else {
       let categoryLabel = selectedGedCategory;
       if (selectedGedCategory === 'Atestado Médico' && atestadoDatas.inicio && atestadoDatas.fim) {
@@ -274,36 +357,81 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       setPendingGedDocs(prev => [...prev, newItem])
       setSelectedGedCategory('')
       setAtestadoDatas({ inicio: '', fim: '' })
-      if (gedInputRef.current) gedInputRef.current.value = ''
+
+      // Add AlertModal render
+    }
+    if (gedInputRef.current) gedInputRef.current.value = ''
+  }
+
+  const handleDeleteGed = (doc: GEDDocument) => {
+    setGedToDelete(doc)
+  }
+
+  const confirmDeleteGed = async () => {
+    if (!gedToDelete) return
+    try {
+      const path = gedToDelete.url.split('/ged-colaboradores/')[1]
+      await supabase.storage.from('ged-colaboradores').remove([path])
+      await supabase.from('ged_colaboradores').delete().eq('id', gedToDelete.id)
+      fetchGedDocs(selectedColaborador!.id)
+      showAlert('Sucesso', 'Documento excluído com sucesso.', 'success')
+    } catch (error) {
+      showAlert('Erro', 'Erro ao excluir documento.', 'error')
+    } finally {
+      setGedToDelete(null)
     }
   }
 
-  const handleDeleteGed = async (doc: GEDDocument) => {
-    if (!confirm('Excluir este documento?')) return
-    try {
-      const path = doc.url.split('/ged-colaboradores/')[1]
-      await supabase.storage.from('ged-colaboradores').remove([path])
-      await supabase.from('ged_colaboradores').delete().eq('id', doc.id)
-      fetchGedDocs(selectedColaborador!.id)
-    } catch (error) { alert('Erro ao excluir documento.') }
-  }
+
 
   const handleSave = async (closeModal = true) => {
     try {
-      if (!formData.name || !formData.cpf) return alert('Campos obrigatórios: Nome e CPF')
+      if (!formData.name) return alert('Campos obrigatórios: Nome')
       setLoading(true)
       let photoUrl = formData.photo_url
 
+      // Prepare data for save: Convert DD/MM/YYYY back to YYYY-MM-DD
+      const dataToSave = {
+        ...formData,
+        birthday: formatDateToISO(formData.birthday) || null,
+        hire_date: formatDateToISO(formData.hire_date) || null,
+        termination_date: formatDateToISO(formData.termination_date) || null,
+        oab_emissao: formatDateToISO(formData.oab_emissao) || null,
+        escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null
+      };
+
       if (formData.id) {
         // Update
+        // Remove nested objects that are not columns
+        const {
+          leader,
+          partner,
+          roles,
+          locations,
+          teams,
+          photo_url,
+          ...cleanData
+        } = dataToSave;
+
         const { error } = await supabase.from('collaborators').update({
-          ...formData, photo_url: photoUrl
+          ...cleanData, foto_url: photoUrl
         }).eq('id', formData.id)
         if (error) throw error
       } else {
         // Insert
+        // Remove nested objects that are not columns
+        const {
+          leader,
+          partner,
+          roles,
+          locations,
+          teams,
+          photo_url,
+          ...cleanData
+        } = dataToSave;
+
         const { data, error } = await supabase.from('collaborators').insert({
-          ...formData, photo_url: photoUrl
+          ...cleanData, foto_url: photoUrl
         }).select().single()
         if (error) throw error
 
@@ -341,7 +469,17 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   }
 
   const handleEdit = (colaborador: Collaborator) => {
-    setFormData(colaborador)
+    // Format dates for display (DD/MM/YYYY)
+    const formattedColaborador = {
+      ...colaborador,
+      birthday: formatDateToDisplay(colaborador.birthday),
+      hire_date: formatDateToDisplay(colaborador.hire_date),
+      termination_date: formatDateToDisplay(colaborador.termination_date),
+      oab_emissao: formatDateToDisplay(colaborador.oab_emissao),
+      escolaridade_previsao_conclusao: formatDateToDisplay(colaborador.escolaridade_previsao_conclusao)
+    };
+
+    setFormData(formattedColaborador)
     setPhotoPreview(colaborador.photo_url || null)
     setActiveFormTab(1)
     setShowFormModal(true)
@@ -367,14 +505,22 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const handleExportXLSX = () => {
     const dataToExport = filtered.map(c => ({
+      ID: c.id,
       Nome: c.name,
       'Email Corporativo': c.email,
       CPF: c.cpf,
       Cargo: (c as any).roles?.name || c.role,
+      'Área': c.area,
       Equipe: (c as any).teams?.name || c.equipe,
       Local: (c as any).locations?.name || c.local,
       Status: c.status === 'active' ? 'Ativo' : 'Inativo',
-      Admissão: formatDateDisplay(c.hire_date)
+      Admissão: formatDateToDisplay(c.hire_date),
+      'Filhos': c.has_children ? 'Sim' : 'Não',
+      'Quantidade de Filhos': c.children_count || 0,
+      'Data Desligamento': formatDateToDisplay(c.termination_date),
+      'Iniciativa Desligamento': getLookupName(terminationInitiatives, c.termination_initiative_id),
+      'Tipo Desligamento': getLookupName(terminationTypes, c.termination_type_id),
+      'Motivo Desligamento': getLookupName(terminationReasons, c.termination_reason_id)
     }));
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
@@ -395,7 +541,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               <div className="grid grid-cols-2 gap-4">
                 <DetailRow label="CPF" value={data.cpf} />
                 <DetailRow label="Identidade (RG)" value={data.rg} />
-                <DetailRow label="Nascimento" value={formatDateDisplay(data.birthday)} icon={Calendar} />
+                <DetailRow label="Nascimento" value={formatDateToDisplay(data.birthday)} icon={Calendar} />
                 <DetailRow label="Gênero" value={data.gender} />
                 <DetailRow label="Est. Civil" value={data.civil_status} />
               </div>
@@ -467,7 +613,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
                   <DetailRow label="Número OAB" value={data.oab_numero} />
                   <DetailRow label="Estado OAB" value={data.oab_uf} />
                   {/* Renamed Label to Emissão OAB */}
-                  <DetailRow label="Emissão OAB" value={formatDateDisplay(data.oab_emissao)} icon={Calendar} />
+                  <DetailRow label="Emissão OAB" value={formatDateToDisplay(data.oab_emissao)} icon={Calendar} />
                 </div>
                 {data.oab_tipo && <DetailRow label="Tipo de Inscrição" value={data.oab_tipo} />}
               </div>
@@ -524,7 +670,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               </div>
               <DetailRow label="Matrícula" value={data.escolaridade_matricula} />
               <DetailRow label="Semestre" value={data.escolaridade_semestre} />
-              <DetailRow label="Previsão de Conclusão" value={formatDateDisplay(data.escolaridade_previsao_conclusao)} icon={Calendar} />
+              <DetailRow label="Previsão de Conclusão" value={formatDateToDisplay(data.escolaridade_previsao_conclusao)} icon={Calendar} />
             </div>
           </div>
         )
@@ -545,28 +691,129 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     // 4. CORPORATIVO
     if (activeTab === 4) {
       if (isViewMode) {
+        // Helpers
+        const getLookupName = (list: any[], id?: string | number) => list.find(item => String(item.id) === String(id))?.name || id
+
+        // Calculate Duration
+        let duration = null
+        if (data.hire_date && data.termination_date) {
+          try {
+            const parseDate = (dString: string) => {
+              // Handle ISO YYYY-MM-DD
+              if (dString.includes('-')) {
+                const [year, month, day] = dString.split('-').map(Number)
+                return new Date(year, month - 1, day)
+              }
+              // Handle DD/MM/YYYY
+              if (dString.includes('/')) {
+                const [day, month, year] = dString.split('/').map(Number)
+                return new Date(year, month - 1, day)
+              }
+              return new Date()
+            }
+
+            const start = parseDate(data.hire_date)
+            const end = parseDate(data.termination_date)
+
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+              const years = differenceInYears(end, start)
+              const months = differenceInMonths(end, start) % 12
+              duration = { years, months }
+            }
+          } catch (e) { }
+        }
+
         return (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-6">Informações da Empresa</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-              <DetailRow label="Email Corporativo" value={data.email} icon={Mail} />
-              <DetailRow label="Cargo" value={(data as any).roles?.name || data.role} />
-              <DetailRow label="Centro de Custo" value={data.centro_custo} />
-              <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="Sócio Responsável" value={(data as any).partner?.name} />
-                <DetailRow label="Líder" value={(data as any).leader?.name} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="Equipe/Área" value={(data as any).teams?.name || data.equipe} />
-                <DetailRow label="Local de Trabalho" value={(data as any).locations?.name || data.local} icon={Building2} />
-              </div>
-              <div className="grid grid-cols-4 gap-4 md:col-span-2">
-                <DetailRow label="Admissão" value={formatDateDisplay(data.hire_date)} icon={Calendar} />
-                <DetailRow label="Desligamento" value={formatDateDisplay(data.termination_date)} icon={Calendar} />
-                <DetailRow label="Motivo Desligamento" value={data.motivo_desligamento} />
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+
+            {/* RATEIO & STATUS */}
+            <div>
+              <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-4">Rateio & Status</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <DetailRow label="Rateio" value={getLookupName(rateios, data.rateio_id)} />
                 <DetailRow label="Status" value={data.status === 'active' ? 'Ativo' : 'Inativo'} />
               </div>
             </div>
+
+            {/* CONTRATAÇÃO */}
+            <div>
+              <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-4">Contratação</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-6">
+                <DetailRow label="Data de Admissão" value={formatDateToDisplay(data.hire_date)} icon={Calendar} />
+                <DetailRow label="Motivo Contratação" value={getLookupName(hiringReasons, data.hiring_reason_id)} />
+                <DetailRow label="Tipo Contrato" value={data.contract_type} />
+
+                <div className="md:col-span-1"><DetailRow label="Email Corporativo" value={data.email} icon={Mail} /></div>
+                <DetailRow label="Sócio Responsável" value={(data as any).partner?.name || getLookupName(partners, data.partner_id)} />
+                <DetailRow label="Líder Direto" value={(data as any).leader?.name || getLookupName(colaboradores, data.leader_id)} />
+
+                <DetailRow label="Equipe/Área" value={(data as any).teams?.name || getLookupName(teams, data.equipe)} />
+                <DetailRow label="Cargo" value={(data as any).roles?.name || getLookupName(roles, data.role)} />
+                <DetailRow label="Centro de Custo" value={data.centro_custo} />
+
+                <DetailRow label="Local" value={(data as any).locations?.name || getLookupName(locations, data.local)} icon={Building2} />
+              </div>
+            </div>
+
+            {/* DESLIGAMENTO */}
+            {data.termination_date && (
+              <div>
+                <h3 className="text-[9px] font-black text-red-300 uppercase tracking-widest border-b border-red-100 pb-2 mb-4">Desligamento</h3>
+                <div className="bg-red-50/50 p-4 rounded-xl border border-red-100 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <DetailRow label="Data Desligamento" value={formatDateToDisplay(data.termination_date)} icon={Calendar} />
+                    <DetailRow label="Iniciativa" value={getLookupName(terminationInitiatives, data.termination_initiative_id)} />
+                    <DetailRow label="Tipo" value={getLookupName(terminationTypes, data.termination_type_id)} />
+                    <DetailRow label="Motivo" value={getLookupName(terminationReasons, data.termination_reason_id) || data.termination_reason_id} />
+                  </div>
+                </div>
+
+                {/* TIMELINE */}
+                {duration && (
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-in zoom-in-95 duration-500">
+                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                      <Clock className="h-4 w-4" /> Linha do Tempo
+                    </h4>
+
+                    <div className="relative pt-2 pb-6 px-4">
+                      {/* Bar */}
+                      <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -translate-y-1/2 rounded-full" />
+                      <div className="absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-[#1e3a8a] to-red-500 -translate-y-1/2 rounded-full opacity-20" />
+
+                      <div className="flex justify-between relative z-10">
+                        {/* Start Point */}
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-[#1e3a8a] shadow ring-4 ring-white" />
+                          <div className="text-center">
+                            <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Admissão</p>
+                            <p className="text-xs font-bold text-[#1e3a8a]">{formatDateToDisplay(data.hire_date)}</p>
+                          </div>
+                        </div>
+
+                        {/* Mid Duration */}
+                        <div className="bg-white px-4 py-1 rounded-full border border-gray-200 shadow-sm">
+                          <p className="text-xs font-bold text-gray-600">
+                            {duration.years > 0 && `${duration.years} ano${duration.years > 1 ? 's' : ''}`}
+                            {duration.years > 0 && duration.months > 0 && ' e '}
+                            {duration.months > 0 && `${duration.months} m${duration.months > 1 ? 'eses' : 'ês'}`}
+                            {duration.years === 0 && duration.months === 0 && 'Recente'}
+                          </p>
+                        </div>
+
+                        {/* End Point */}
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-red-500 shadow ring-4 ring-white" />
+                          <div className="text-center">
+                            <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Desligamento</p>
+                            <p className="text-xs font-bold text-red-600">{formatDateToDisplay(data.termination_date)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )
       } else {
@@ -576,7 +823,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
               formData={formData}
               setFormData={setFormData}
               maskDate={maskDate}
-              handleRefresh={handleRefresh}
             />
           </div>
         )
@@ -807,24 +1053,40 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0">
-          <button
-            onClick={handleExportXLSX}
-            className="flex items-center gap-2 px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 whitespace-nowrap"
-          >
-            <FileSpreadsheet className="h-4 w-4" /> Exportar XLSX
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const url = window.location.origin + '/ficha-cadastral';
+                  window.open(url, '_blank');
+                }}
+                className="p-2 text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors border border-blue-100"
+                title="Copiar Link Ficha Cadastral"
+              >
+                <Users className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleExportXLSX}
+                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-100"
+                title="Exportar Excel"
+              >
+                <FileSpreadsheet className="h-5 w-5" />
+              </button>
+            </div>
 
-          <button
-            onClick={() => {
-              setFormData({ status: 'active', state: '' })
-              setPhotoPreview(null)
-              setActiveFormTab(1)
-              setShowFormModal(true)
-            }}
-            className="flex items-center gap-2 px-5 py-3 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 whitespace-nowrap"
-          >
-            <Plus className="h-4 w-4" /> Novo Colaborador
-          </button>
+            <button
+              onClick={() => {
+                setFormData({ status: 'active', state: '' })
+                setPhotoPreview(null)
+                setActiveFormTab(1)
+                setShowFormModal(true)
+              }}
+              className="hidden md:flex bg-[#1e3a8a] text-white px-4 py-2.5 rounded-xl font-bold uppercase tracking-wider hover:bg-[#112240] transition-all shadow-lg shadow-blue-900/20 items-center gap-2 text-xs"
+            >
+              <Plus className="h-4 w-4" />
+              Novo Colaborador
+            </button>
+          </div>
         </div>
       </div>
 
@@ -832,8 +1094,8 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
         <div className="flex flex-col xl:flex-row items-center gap-4">
 
-          {/* Search Bar - Compact */}
-          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full md:w-64 shrink-0 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+          {/* Search Bar - Expanded */}
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
             <Search className="h-4 w-4 text-gray-400 mr-3" />
             <input
               type="text"
@@ -844,40 +1106,35 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
             />
           </div>
 
-          {/* Filters Row - Expanded & Auto-sizing */}
-          <div className="flex items-center gap-3 w-full overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
-            <SearchableSelect
-              label=""
-              placeholder="Líder"
+          {/* Filters Row - Auto-sizing */}
+          <div className="flex flex-wrap items-center gap-3 w-auto justify-end">
+            <FilterSelect
+              icon={User}
               value={filterLider}
               onChange={setFilterLider}
-              table="collaborators"
-              options={colaboradores.map(c => ({ id: c.id, name: c.name }))}
-              className="flex-1 min-w-[200px]"
+              options={liderOptions}
+              placeholder="Líder"
             />
-            <SearchableSelect
-              label=""
-              placeholder="Sócio"
+            <FilterSelect
+              icon={Users}
               value={filterPartner}
               onChange={setFilterPartner}
-              table="partners"
-              className="flex-1 min-w-[200px]"
+              options={partnerOptions}
+              placeholder="Sócio"
             />
-            <SearchableSelect
-              label=""
-              placeholder="Local"
+            <FilterSelect
+              icon={Building2}
               value={filterLocal}
               onChange={setFilterLocal}
-              table="locations"
-              className="flex-1 min-w-[200px]"
+              options={locationOptions}
+              placeholder="Local"
             />
-            <SearchableSelect
-              label=""
-              placeholder="Cargo"
+            <FilterSelect
+              icon={Briefcase}
               value={filterCargo}
               onChange={setFilterCargo}
-              table="roles"
-              className="flex-1 min-w-[200px]"
+              options={roleOptions}
+              placeholder="Cargo"
             />
           </div>
         </div>
@@ -887,14 +1144,14 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1 flex flex-col">
         <div className="overflow-auto h-full custom-scrollbar">
           <table className="w-full">
-            <thead className="bg-gray-50/50 border-b border-gray-100">
-              <tr>
-                <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Colaborador</th>
-                <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Cargo</th>
-                <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Sócio</th>
-                <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Líder</th>
-                <th className="px-6 py-5 text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                <th className="px-6 py-5 text-right text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Ações</th>
+            <thead>
+              <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Colaborador</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Cargo</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Sócio</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Líder</th>
+                <th className="px-6 py-5 text-left text-[9px] font-black text-white uppercase tracking-[0.2em]">Status</th>
+                <th className="px-6 py-5 text-right text-[9px] font-black text-white uppercase tracking-[0.2em]">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -1071,6 +1328,26 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           <img src={viewingPhoto} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default" onClick={e => e.stopPropagation()} alt="Visualização" />
         </div>
       )}
+
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        title={alertConfig.title}
+        description={alertConfig.description}
+        variant={alertConfig.variant}
+        confirmText="OK"
+      />
+
+      <ConfirmationModal
+        isOpen={!!gedToDelete}
+        onClose={() => setGedToDelete(null)}
+        onConfirm={confirmDeleteGed}
+        title="Excluir Documento"
+        description="Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="danger"
+      />
     </div>
   )
 }

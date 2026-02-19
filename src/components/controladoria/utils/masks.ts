@@ -106,3 +106,35 @@ export const maskCEP = (value: string) => {
     .replace(/^(\d{5})(\d)/, '$1-$2')
     .slice(0, 9);
 };
+
+export const safeDate = (dateStr: string | undefined | null): Date | null => {
+  if (!dateStr) return null;
+
+  // Force YYYY-MM-DD extraction to ensure Local Date interpretation (noon)
+  // This avoids timezone shifts (e.g. UTC 00:00 -> Local 21:00 prev day)
+  if (typeof dateStr === 'string') {
+    // Extract YYYY-MM-DD if present
+    const isoDateMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (isoDateMatch) {
+      return new Date(isoDateMatch[1] + 'T12:00:00');
+    }
+  }
+
+  // If it's already a clean YYYY-MM-DD (redundant but safe)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return new Date(dateStr + 'T12:00:00');
+  }
+
+  // Handle DD/MM/YYYY
+  const ptBrMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (ptBrMatch) {
+    const [_, day, month, year] = ptBrMatch;
+    return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T12:00:00`);
+  }
+
+  // Try creating date directly (ISO etc)
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return d;
+
+  return null;
+};

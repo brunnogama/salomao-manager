@@ -9,16 +9,17 @@ import {
   Loader2,
   Info,
   Plus,
-  Save,
-  Users,
-  DollarSign
+  Trash2,
+  FileText
 } from 'lucide-react';
+import { NumericFormat } from 'react-number-format';
 import { SearchableSelect } from '../../../SearchableSelect';
 import { useFinanceContasReceber } from '../hooks/useFinanceContasReceber';
 import { supabase } from '../../../../lib/supabase';
 
-import { Client, Partner } from '../../../../types/controladoria';
-import { toTitleCase } from '../../../controladoria/utils/masks';
+import { Client } from '../../../../types/controladoria';
+import { ClientFormModal } from '../../../controladoria/clients/ClientFormModal';
+import { SuccessModal } from '../../../controladoria/ui/SuccessModal';
 
 interface FinanceModalEnviarFaturaProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const [loading, setLoading] = useState(false);
   const [clienteNome, setClienteNome] = useState('');
   const [clienteEmail, setClienteEmail] = useState('');
+  const [clienteId, setClienteId] = useState<string | undefined>(undefined);
   const [valor, setValor] = useState('');
   const [remetente, setRemetente] = useState(userEmail);
   const [assunto, setAssunto] = useState('');
@@ -39,27 +41,37 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Estados para adicionar cliente
-  const [showAdicionar, setShowAdicionar] = useState(false);
-  const [clienteCNPJ, setClienteCNPJ] = useState('');
-  const [novoClienteNome, setNovoClienteNome] = useState('');
-  const [novoClienteEmail, setNovoClienteEmail] = useState('');
-  const [novoClientePartnerId, setNovoClientePartnerId] = useState(''); // New State
-  const [savingCliente, setSavingCliente] = useState(false);
-  const [searchingCNPJ, setSearchingCNPJ] = useState(false);
+  const [showClientModal, setShowClientModal] = useState(false);
   const [clientes, setClientes] = useState<Client[]>([]);
-  const [partners, setPartners] = useState<Partner[]>([]); // New State
+
+  // Estado Modal Sucesso
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       loadClientes();
-      loadPartners();
     }
   }, [isOpen]);
 
-  const loadPartners = async () => {
-    const { data } = await supabase.from('partners').select('*').eq('status', 'active').order('name');
-    if (data) setPartners(data);
-  };
+  // Handle ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // Only close if ClientFormModal is NOT open
+        if (!showClientModal && !showSuccessModal) {
+          onClose();
+        }
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose, showClientModal, showSuccessModal]);
 
   const loadClientes = async () => {
     const { data } = await supabase
@@ -72,112 +84,38 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     }
   };
 
-  const formatCNPJ = (value: string) => {
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length <= 14) {
-      return cleaned
-        .replace(/^(\d{2})(\d)/, '$1.$2')
-        .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-        .replace(/\.(\d{3})(\d)/, '.$1/$2')
-        .replace(/(\d{4})(\d)/, '$1-$2');
-    }
-    return value;
-  };
+  const handleClienteChange = (valor: string) => {
+    // 1. Tentar encontrar por ID (comportamento do SearchableSelect ao clicar)
+    const clientePorId = clientes.find(c => c.id?.toString() === valor);
 
-  const handleCNPJChange = async (value: string) => {
-    const formatted = formatCNPJ(value);
-    setClienteCNPJ(formatted);
-
-    // Busca automática se CNPJ estiver completo
-    const cleaned = formatted.replace(/\D/g, '');
-    if (cleaned.length === 14) {
-      setSearchingCNPJ(true);
-
-      // Buscar no banco primeiro
-      const { data: existing } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('cnpj', cleaned) // Assuming 'cnpj' is stored raw in 'clients' based on other files, or adjust if needed. Usually raw.
-        .maybeSingle();
-
-      if (existing) {
-        setNovoClienteNome(existing.nome);
-        setNovoClienteEmail(existing.email);
-        alert('Cliente já cadastrado! Carregando dados...');
-      } else {
-        // Buscar em API externa
-        try {
-          const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleaned}`);
-          if (response.ok) {
-            const empresa = await response.json();
-            setNovoClienteNome(toTitleCase(empresa.razao_social || empresa.nome_fantasia || ''));
-          }
-        } catch (error) {
-          console.error('Erro ao buscar CNPJ:', error);
-        }
-      }
-
-      setSearchingCNPJ(false);
-    }
-  };
-
-  const handleSaveCliente = async () => {
-    if (!clienteCNPJ || !novoClienteNome || !novoClienteEmail) {
-      alert('Preencha os campos obrigatórios do cliente');
+    if (clientePorId) {
+      setClienteNome(clientePorId.name); // Garante que o estado tenha o NOME, não o UUID
+      setClienteEmail(clientePorId.email || '');
+      setClienteId(clientePorId.id);
       return;
     }
 
-    setSavingCliente(true);
+    // 2. Fallback: Tentar encontrar por Nome (caso venha texto ou limpeza)
+    setClienteNome(valor);
+    const termoBusca = valor.trim().toLowerCase();
+    const clientePorNome = clientes.find(c => c.name.trim().toLowerCase() === termoBusca);
 
-    try {
-      const payload = {
-        cnpj: clienteCNPJ.replace(/\D/g, ''),
-        name: toTitleCase(novoClienteNome),
-        email: novoClienteEmail,
-        partner_id: novoClientePartnerId || null
-      };
-
-      const { data, error } = await supabase
-        .from('clients')
-        .upsert(payload, {
-          onConflict: 'cnpj'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Atualizar lista de clientes
-      await loadClientes();
-
-      // Selecionar o cliente recém-criado
-      setClienteNome(data.name);
-      setClienteEmail(data.email);
-
-      // Limpar campos e fechar painel
-      setClienteCNPJ('');
-      setNovoClienteNome('');
-      setNovoClienteEmail('');
-      setNovoClientePartnerId('');
-      setShowAdicionar(false);
-
-      alert('Cliente salvo com sucesso na base geral!');
-    } catch (error: any) {
-      alert('Erro ao salvar cliente: ' + error.message);
-    } finally {
-      setSavingCliente(false);
+    if (clientePorNome) {
+      setClienteEmail(clientePorNome.email || '');
+      setClienteId(clientePorNome.id);
+    } else {
+      setClienteId(undefined);
     }
   };
 
-  const handleClienteChange = (nome: string) => {
-    setClienteNome(nome);
-    // Buscar email do cliente selecionado
-    setClienteNome(nome);
-    // Buscar email do cliente selecionado
-    const cliente = clientes.find(c => c.name === nome);
-    if (cliente) {
-      setClienteEmail(cliente.email || '');
+  const handleClientSaved = (savedClient?: Client) => {
+    loadClientes();
+    if (savedClient) {
+      setClienteNome(savedClient.name);
+      setClienteEmail(savedClient.email || '');
+      setClienteId(savedClient.id);
     }
+    setShowClientModal(false);
   };
 
   if (!isOpen) return null;
@@ -190,9 +128,16 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setArquivos(Array.from(e.target.files));
+    if (e.target.files && e.target.files.length > 0) {
+      // Append files instead of replacing
+      setArquivos(prev => [...prev, ...Array.from(e.target.files || [])]);
+      // Reset input value to allow selecting the same file again if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const removeArquivo = (index: number) => {
+    setArquivos(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -203,28 +148,39 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       if (!confirmSend) return;
     }
 
+    if (!clienteId) {
+      alert("Por favor, selecione um cliente válido da lista. Se for um novo cliente, cadastre-o primeiro.");
+      return;
+    }
+
     setLoading(true);
     try {
       await enviarFatura({
         cliente_nome: clienteNome,
         cliente_email: clienteEmail,
-        valor: parseFloat(valor.replace(',', '.')),
+        cliente_id: clienteId,
+        valor: parseFloat(valor),
         remetente,
         assunto,
         corpo,
         arquivos
       });
-      alert("Fatura enviada com sucesso! O acompanhamento de 2d + 2d foi iniciado.");
-      onClose();
+      setShowSuccessModal(true);
     } catch (error: any) {
       alert("Erro ao processar envio: " + error.message);
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only set loading false on error, keep true on success until reload/close
     }
   };
 
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    onClose();
+    window.location.reload();
+  };
+
   return (
-    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+    // Lowered z-index to 50 to allow ClientFormModal (z-60) to appear on top
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[50] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-gray-200">
 
         {/* HEADER */}
@@ -263,11 +219,8 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               Selecionar Cliente
               <button
                 type="button"
-                onClick={() => setShowAdicionar(!showAdicionar)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAdicionar
-                  ? 'bg-[#1e3a8a] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                onClick={() => setShowClientModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all bg-gray-100 text-gray-600 hover:bg-gray-200"
               >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </button>
@@ -276,126 +229,12 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               value={clienteNome}
               onChange={handleClienteChange}
               placeholder="Pesquisar cliente..."
-              table="clients"
+              options={clientes}
+              nameField="name"
               className="w-full"
             />
-            {isExternalDomain(clienteEmail) && (
-              <div className="flex items-center gap-2 mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
-                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-                <p className="text-[11px] text-amber-800 font-bold italic">
-                  Domínio externo detectado.
-                </p>
-              </div>
-            )}
+
           </div>
-
-          {/* PAINEL DE ADICIONAR CLIENTE */}
-          {showAdicionar && (
-            <div className="bg-blue-50 border-2 border-[#1e3a8a] rounded-xl p-5 space-y-4 animate-in slide-in-from-top duration-200">
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="h-5 w-5 text-[#1e3a8a]" />
-                <h4 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">
-                  Cadastro de Cliente
-                </h4>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* CNPJ */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
-                    CNPJ *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={clienteCNPJ}
-                      onChange={(e) => handleCNPJChange(e.target.value)}
-                      placeholder="00.000.000/0000-00"
-                      maxLength={18}
-                      className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
-                    />
-                    {searchingCNPJ && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <Loader2 className="h-4 w-4 animate-spin text-[#1e3a8a]" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* NOME */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
-                    Nome/Razão Social *
-                  </label>
-                  <input
-                    type="text"
-                    value={novoClienteNome}
-                    onChange={(e) => setNovoClienteNome(e.target.value)}
-                    placeholder="Nome do cliente"
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
-                  />
-                </div>
-
-                {/* E-MAIL */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
-                    E-mail *
-                  </label>
-                  <input
-                    type="email"
-                    value={novoClienteEmail}
-                    onChange={(e) => setNovoClienteEmail(e.target.value)}
-                    placeholder="cliente@empresa.com.br"
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
-                  />
-                </div>
-
-                {/* SÓCIO RESPONSÁVEL */}
-                <div className="md:col-span-3 space-y-1.5">
-                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
-                    Sócio Responsável
-                  </label>
-                  <select
-                    value={novoClientePartnerId}
-                    onChange={(e) => setNovoClientePartnerId(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
-                  >
-                    <option value="">Selecione um sócio...</option>
-                    {partners.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setClienteCNPJ('');
-                    setNovoClienteNome('');
-                    setNovoClienteEmail('');
-                  }}
-                  className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  Limpar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveCliente}
-                  disabled={savingCliente || !clienteCNPJ || !novoClienteNome || !novoClienteEmail}
-                  className="flex items-center gap-2 px-5 py-2 bg-[#1e3a8a] text-white rounded-lg font-black text-[10px] uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {savingCliente ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Save className="h-3 w-3" />
-                  )}
-                  Salvar Cliente
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* E-MAIL CLIENTE E VALOR - LADO A LADO */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -419,12 +258,17 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
             <div className="space-y-1.5">
               <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Valor da Fatura (R$)</label>
               <div className="relative">
-                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-black">
+                  R$
+                </div>
+                <NumericFormat
                   value={valor}
-                  onChange={(e) => setValor(e.target.value)}
+                  onValueChange={(values) => setValor(values.value)}
                   placeholder="0,00"
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  decimalScale={2}
+                  fixedDecimalScale
                   className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium"
                   required
                 />
@@ -459,24 +303,66 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
           {/* ANEXOS */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Anexos (PDF)</label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center bg-gray-50 hover:bg-white hover:border-[#1e3a8a] cursor-pointer transition-all group"
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                multiple
-                accept=".pdf"
-              />
-              <Paperclip className="h-6 w-6 text-gray-400 group-hover:text-[#1e3a8a] mb-2" />
-              <span className="text-xs font-bold text-gray-500">
-                {arquivos.length > 0 ? `${arquivos.length} arquivo(s) selecionado(s)` : 'Clique para selecionar a fatura ou arraste aqui'}
-              </span>
+            <div className="flex justify-between items-center px-1">
+              <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider">Anexos (PDF)</label>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-[10px] flex items-center gap-1 font-bold text-[#1e3a8a] hover:underline uppercase tracking-wider bg-blue-50 px-2 py-1 rounded-lg"
+              >
+                <Plus className="h-3 w-3" /> Adicionar Arquivo
+              </button>
             </div>
+
+            <div className="border border-gray-200 rounded-xl bg-gray-50 min-h-[80px] p-3 flex flex-col gap-2">
+              {arquivos.length === 0 ? (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-full flex flex-col items-center justify-center py-6 text-gray-400 cursor-pointer hover:bg-gray-100 rounded-lg transition-all border-2 border-dashed border-gray-200 hover:border-[#1e3a8a]"
+                >
+                  <Paperclip className="h-6 w-6 mb-2" />
+                  <span className="text-xs font-medium">Nenhum arquivo selecionado</span>
+                  <span className="text-[10px] opacity-70">Clique ou arraste para adicionar</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {arquivos.map((arq, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm group">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="p-2 bg-red-50 rounded-lg">
+                          <FileText className="h-4 w-4 text-red-500" />
+                        </div>
+                        <span className="text-xs font-bold text-gray-700 truncate">{arq.name}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeArquivo(idx)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title="Remover anexo"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-3 text-center border-2 border-dashed border-gray-200 rounded-lg text-xs font-bold text-gray-400 hover:text-[#1e3a8a] hover:border-[#1e3a8a] hover:bg-white transition-all uppercase tracking-wider"
+                  >
+                    + Adicionar Outro Arquivo
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              multiple
+              accept=".pdf"
+            />
           </div>
 
           {/* INFO BOX FLUXO */}
@@ -506,6 +392,24 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           </button>
         </div>
       </div>
+
+      {/* Integration of ClientFormModal */}
+      {showClientModal && (
+        <ClientFormModal
+          isOpen={showClientModal}
+          onClose={() => setShowClientModal(false)}
+          onSave={handleClientSaved}
+        />
+      )}
+
+      {/* SUCCESS MODAL */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessClose}
+        title="Fatura Enviada!"
+        description="A fatura foi enviada com sucesso e o fluxo de acompanhamento automático (2d + 2d) foi iniciado."
+        confirmText="OK, Entendi"
+      />
     </div>
   );
 }

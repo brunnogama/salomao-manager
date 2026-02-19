@@ -1,254 +1,309 @@
-import React, { useState } from 'react'
-import { Briefcase, Plus, Save, Loader2, AlertTriangle } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Briefcase, Calendar, Clock } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
-import { supabase } from '../../../lib/supabase'
-import { toTitleCase } from '../../controladoria/utils/masks'
+import { ManagedSelect } from '../../crm/ManagedSelect'
+import { differenceInMonths, differenceInYears } from 'date-fns'
 
 interface DadosCorporativosSectionProps {
   formData: Partial<Collaborator>
   setFormData: (data: Partial<Collaborator>) => void
   maskDate: (value: string) => string
-  handleRefresh: () => void
 }
 
 export function DadosCorporativosSection({
   formData,
   setFormData,
-  maskDate,
-  handleRefresh
+  maskDate
 }: DadosCorporativosSectionProps) {
-  const [showAddMotivo, setShowAddMotivo] = useState(false)
-  const [newMotivo, setNewMotivo] = useState('')
-  const [savingMotivo, setSavingMotivo] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [activeTab, setActiveTab] = useState<'contratacao' | 'desligamento'>('contratacao')
 
-  const handleSaveMotivo = async () => {
-    if (!newMotivo) return
+  // Calculate duration if dates are available
+  const duration = useMemo(() => {
+    if (!formData.hire_date || !formData.termination_date) return null
+    if (formData.hire_date.length !== 10 || formData.termination_date.length !== 10) return null
 
-    setSavingMotivo(true)
     try {
-      const { data, error } = await supabase
-        .from('termination_reasons')
-        .insert({ name: newMotivo })
-        .select()
-        .single()
+      // Assuming dd/mm/yyyy format from input mask
+      const [hDay, hMonth, hYear] = formData.hire_date.split('/').map(Number)
+      const [tDay, tMonth, tYear] = formData.termination_date.split('/').map(Number)
 
-      if (error) throw error
+      const start = new Date(hYear, hMonth - 1, hDay)
+      const end = new Date(tYear, tMonth - 1, tDay)
 
-      if (data) {
-        setFormData({ ...formData, motivo_desligamento: data.id })
-        setNewMotivo('')
-        setShowAddMotivo(false)
-        setRefreshKey(prev => prev + 1)
-        if (handleRefresh) handleRefresh()
-      }
-    } catch (error) {
-      console.error('Erro ao salvar motivo:', error)
-      alert('Erro ao salvar motivo. Verifique se a tabela existe.')
-    } finally {
-      setSavingMotivo(false)
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return null
+
+      const years = differenceInYears(end, start)
+      const months = differenceInMonths(end, start) % 12
+
+      return { years, months }
+    } catch (e) {
+      return null
     }
-  }
+  }, [formData.hire_date, formData.termination_date])
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-6">
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
         <Briefcase className="h-4 w-4" /> Dados Corporativos
       </h3>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* E-mail Corporativo */}
-        <div className="md:col-span-2">
-          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-            E-mail Corporativo
-          </label>
-          <input
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
-            value={formData.email || ''}
-            onChange={e => setFormData({ ...formData, email: e.target.value })}
+      {/* 1. Rateio (Always Visible) */}
+      <div className="bg-gray-50/50 p-4 rounded-xl space-y-4 border border-gray-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ManagedSelect
+            label="Rateio"
+            value={formData.rateio_id || ''}
+            onChange={v => setFormData({ ...formData, rateio_id: v })}
+            tableName="rateios"
+            placeholder="Selecione o Rateio..."
           />
         </div>
+      </div>
 
-        {/* Status */}
-        <SearchableSelect
-          label="Status"
-          value={formData.status || ''}
-          onChange={v => setFormData({ ...formData, status: v as 'active' | 'inactive' })}
-          options={[{ name: 'Ativo', id: 'active' }, { name: 'Inativo', id: 'inactive' }]}
-        />
+      {/* TABS */}
+      <div className="flex p-1 bg-gray-100 rounded-xl gap-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab('contratacao')}
+          className={`flex-1 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${activeTab === 'contratacao'
+            ? 'bg-white text-[#1e3a8a] shadow-sm'
+            : 'text-gray-400 hover:text-gray-600'
+            }`}
+        >
+          Contratação
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('desligamento')}
+          className={`flex-1 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${activeTab === 'desligamento'
+            ? 'bg-white text-red-700 shadow-sm'
+            : 'text-gray-400 hover:text-gray-600'
+            }`}
+        >
+          Desligamento
+        </button>
+      </div>
 
-        {/* Sócio Responsável */}
-        <SearchableSelect
-          label="Sócio Responsável"
-          value={formData.partner_id || ''}
-          onChange={v => setFormData({ ...formData, partner_id: v })}
-          table="partners"
-          onRefresh={handleRefresh}
-        />
+      {/* CONTENT AREA */}
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        {activeTab === 'contratacao' ? (
+          /* CONTRATAÇÃO TAB */
+          <div className="bg-blue-50/30 p-6 rounded-xl space-y-6 border border-blue-100/50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <SearchableSelect
+                label="Status"
+                value={formData.status || 'active'}
+                onChange={(v) => setFormData({ ...formData, status: v as 'active' | 'inactive' })}
+                options={[{ name: 'Ativo', id: 'active' }, { name: 'Inativo', id: 'inactive' }]}
+                uppercase={false}
+              />
 
-        {/* Líder Direto */}
-        <SearchableSelect
-          label="Líder Direto"
-          value={formData.leader_id || ''}
-          onChange={v => setFormData({ ...formData, leader_id: v })}
-          table="collaborators"
-          onRefresh={handleRefresh}
-        />
-
-        {/* Equipe - Atualizado para tabela 'teams' */}
-        <SearchableSelect
-          label="Equipe"
-          value={formData.equipe || ''}
-          onChange={v => setFormData({ ...formData, equipe: v })}
-          table="teams"
-          onRefresh={handleRefresh}
-        />
-
-        {/* Cargo - Atualizado para tabela 'roles' */}
-        <SearchableSelect
-          label="Cargo"
-          value={formData.role || ''}
-          onChange={v => setFormData({ ...formData, role: v })}
-          table="roles"
-          onRefresh={handleRefresh}
-        />
-
-        {/* Tipo de Contrato */}
-        <SearchableSelect
-          label="Tipo"
-          value={formData.contract_type || ''}
-          onChange={v => setFormData({ ...formData, contract_type: v })}
-          options={[
-            { id: 'Advogado', name: 'Advogado' },
-            { id: 'CLT', name: 'CLT' },
-            { id: 'Estagiário', name: 'Estagiário' },
-            { id: 'Jovem Aprendiz', name: 'Jovem Aprendiz' },
-            { id: 'PJ', name: 'PJ' }
-          ]}
-        />
-
-        {/* Local - Atualizado para tabela 'locations' */}
-        <SearchableSelect
-          label="Local"
-          value={formData.local || ''}
-          onChange={v => setFormData({ ...formData, local: v })}
-          table="locations"
-          onRefresh={handleRefresh}
-        />
-
-        {/* Centro de Custo */}
-        <SearchableSelect
-          label="Centro de Custo"
-          value={formData.centro_custo || ''}
-          onChange={v => setFormData({ ...formData, centro_custo: v })}
-          table="cost_centers"
-          onRefresh={handleRefresh}
-        />
-
-        {/* Data de Admissão */}
-        <div>
-          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-            Admissão
-          </label>
-          <input
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
-            value={formData.hire_date || ''}
-            onChange={e => setFormData({ ...formData, hire_date: maskDate(e.target.value) })}
-            maxLength={10}
-            placeholder="DD/MM/AAAA"
-          />
-        </div>
-
-        {/* Desligamento e Motivo (Agrupados) */}
-        <div className="md:col-span-3 grid grid-cols-[180px_1fr] gap-4 items-start">
-          <div>
-            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-              Desligamento
-            </label>
-            <input
-              className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
-              value={formData.termination_date || ''}
-              onChange={e => setFormData({ ...formData, termination_date: maskDate(e.target.value) })}
-              maxLength={10}
-              placeholder="DD/MM/AAAA"
-            />
-          </div>
-
-          <div className="space-y-1.5" key={`motivo-${refreshKey}`}>
-            <label className="flex items-center justify-between text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-              <span>Motivo</span>
-              <button
-                type="button"
-                onClick={() => setShowAddMotivo(!showAddMotivo)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAddMotivo
-                  ? 'bg-[#1e3a8a] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-              >
-                <Plus className="h-3.5 w-3.5" /> Adicionar
-              </button>
-            </label>
-            <SearchableSelect
-              value={formData.motivo_desligamento || ''}
-              onChange={v => setFormData({ ...formData, motivo_desligamento: v })}
-              table="termination_reasons"
-              onRefresh={handleRefresh}
-              className="w-full"
-            />
-
-            {/* PAINEL DE ADICIONAR MOTIVO */}
-            {showAddMotivo && (
-              <div className="bg-red-50 border-2 border-red-100 rounded-xl p-5 space-y-4 animate-in slide-in-from-top duration-200 mt-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
-                  <h4 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">
-                    Novo Motivo
-                  </h4>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
-                    Descrição do Motivo *
-                  </label>
+              <div>
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Admissão</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
-                    type="text"
-                    value={newMotivo}
-                    onChange={(e) => setNewMotivo(toTitleCase(e.target.value))}
-                    placeholder="Ex: Pedido de Demissão..."
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 outline-none transition-all font-medium"
+                    className="w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                    value={formData.hire_date || ''}
+                    onChange={e => setFormData({ ...formData, hire_date: maskDate(e.target.value) })}
+                    maxLength={10}
+                    placeholder="DD/MM/AAAA"
                   />
                 </div>
+              </div>
 
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNewMotivo('')
-                      setShowAddMotivo(false)
-                    }}
-                    className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveMotivo}
-                    disabled={savingMotivo || !newMotivo}
-                    className="flex items-center gap-2 px-5 py-2 bg-red-600 text-white rounded-lg font-black text-[10px] uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {savingMotivo ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Save className="h-3 w-3" />
-                    )}
-                    Salvar
-                  </button>
+              <ManagedSelect
+                label="Motivo da Contratação"
+                value={formData.hiring_reason_id || ''}
+                onChange={v => setFormData({ ...formData, hiring_reason_id: v })}
+                tableName="hiring_reasons"
+              />
+
+              {/* Row 2 */}
+              <div className="md:col-span-1">
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">E-mail Corporativo</label>
+                <input
+                  className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                  value={formData.email || ''}
+                  onChange={e => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+
+              <ManagedSelect
+                label="Sócio Responsável"
+                value={formData.partner_id || ''}
+                onChange={v => setFormData({ ...formData, partner_id: v })}
+                tableName="partners"
+              />
+
+              <ManagedSelect
+                label="Líder Direto"
+                value={formData.leader_id || ''}
+                onChange={v => setFormData({ ...formData, leader_id: v })}
+                tableName="collaborators"
+              />
+
+              {/* Row 3 */}
+              <SearchableSelect
+                label="Área"
+                value={formData.area || ''}
+                onChange={(v) => setFormData({ ...formData, area: v as any })}
+                options={[
+                  { id: 'Administrativa', name: 'Administrativa' },
+                  { id: 'Jurídica', name: 'Jurídica' }
+                ]}
+                uppercase={false}
+              />
+
+
+              <ManagedSelect
+                label="Equipe"
+                value={formData.equipe || ''}
+                onChange={v => setFormData({ ...formData, equipe: v })}
+                tableName="teams"
+              />
+
+              <ManagedSelect
+                label="Cargo"
+                value={formData.role || ''}
+                onChange={v => setFormData({ ...formData, role: v })}
+                tableName="roles"
+              />
+
+              <SearchableSelect
+                label="Tipo da Contratação"
+                value={formData.contract_type || ''}
+                onChange={(v) => setFormData({ ...formData, contract_type: v })}
+                options={[
+                  { id: 'ADVOGADO', name: 'ADVOGADO' },
+                  { id: 'CLT', name: 'CLT' },
+                  { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' },
+                  { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' },
+                  { id: 'PJ', name: 'PJ' }
+                ]}
+                uppercase={false}
+              />
+
+              {/* Row 4 */}
+              <ManagedSelect
+                label="Local"
+                value={formData.local || ''}
+                onChange={v => setFormData({ ...formData, local: v })}
+                tableName="locations"
+              />
+
+              <ManagedSelect
+                label="Centro de Custo"
+                value={formData.centro_custo || ''}
+                onChange={v => setFormData({ ...formData, centro_custo: v })}
+                tableName="cost_centers"
+              />
+            </div>
+          </div>
+        ) : (
+          /* DESLIGAMENTO TAB */
+          <div className="space-y-6">
+            <div className="bg-red-50/30 p-6 rounded-xl space-y-6 border border-red-100/50">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Data Desligamento</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      className="w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                      value={formData.termination_date || ''}
+                      onChange={e => setFormData({ ...formData, termination_date: maskDate(e.target.value) })}
+                      maxLength={10}
+                      placeholder="DD/MM/AAAA"
+                    />
+                  </div>
+                </div>
+
+                <ManagedSelect
+                  label="Iniciativa do Desligamento"
+                  value={formData.termination_initiative_id || ''}
+                  onChange={v => {
+                    setFormData({
+                      ...formData,
+                      termination_initiative_id: v,
+                      termination_reason_id: '',
+                    })
+                  }}
+                  tableName="termination_initiatives"
+                />
+
+                <ManagedSelect
+                  label="Tipo do Desligamento"
+                  value={formData.termination_type_id || ''}
+                  onChange={v => setFormData({ ...formData, termination_type_id: v })}
+                  tableName="termination_types"
+                />
+
+                <ManagedSelect
+                  label="Motivo"
+                  value={formData.termination_reason_id || ''}
+                  onChange={v => setFormData({ ...formData, termination_reason_id: v })}
+                  tableName="termination_reasons"
+                  filter={formData.termination_initiative_id ? {
+                    column: 'initiative_id',
+                    value: formData.termination_initiative_id
+                  } : undefined}
+                  extraInsertFields={formData.termination_initiative_id ? {
+                    initiative_id: formData.termination_initiative_id
+                  } : undefined}
+                  disabled={!formData.termination_initiative_id}
+                  placeholder={!formData.termination_initiative_id ? "Selecione a Iniciativa primeiro..." : "Selecione o Motivo..."}
+                />
+              </div>
+            </div>
+
+            {/* TIMELINE */}
+            {formData.termination_date && duration && (
+              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-in zoom-in-95 duration-500 mt-6">
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-8 flex items-center gap-2">
+                  <Clock className="h-4 w-4" /> Linha do Tempo
+                </h4>
+
+                <div className="relative px-4 pb-2">
+                  {/* Line Background */}
+                  <div className="absolute top-2.5 left-0 w-full h-0.5 bg-gray-200 rounded-full" />
+
+                  {/* Duration Badge (Centered) */}
+                  <div className="absolute top-2.5 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm z-10">
+                    <p className="text-[10px] font-black uppercase text-gray-500 whitespace-nowrap">
+                      {duration.years > 0 && `${duration.years} ano${duration.years > 1 ? 's' : ''}`}
+                      {duration.years > 0 && duration.months > 0 && ' e '}
+                      {duration.months > 0 && `${duration.months} m${duration.months > 1 ? 'eses' : 'ês'}`}
+                      {duration.years === 0 && duration.months === 0 && 'Recente'}
+                    </p>
+                  </div>
+
+                  <div className="flex justify-between relative z-0">
+                    {/* Start Point */}
+                    <div className="flex flex-col items-start gap-4">
+                      <div className="w-5 h-5 rounded-full bg-[#1e3a8a] ring-4 ring-white relative z-10 shadow-sm" />
+                      <div className="text-left">
+                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Admissão</p>
+                        <p className="text-sm font-bold text-[#1e3a8a]">{formData.hire_date}</p>
+                      </div>
+                    </div>
+
+                    {/* End Point */}
+                    <div className="flex flex-col items-end gap-4">
+                      <div className="w-5 h-5 rounded-full bg-red-500 ring-4 ring-white relative z-10 shadow-sm" />
+                      <div className="text-right">
+                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Desligamento</p>
+                        <p className="text-sm font-bold text-red-600">{formData.termination_date}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
     </section>
   )

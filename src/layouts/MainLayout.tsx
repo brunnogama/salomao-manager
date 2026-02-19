@@ -6,6 +6,7 @@ import { Sidebar as RhSidebar } from '../components/collaborators/Sidebar';
 import { Sidebar as ExecutiveSidebar } from '../components/secretaria/Sidebar';
 import { SidebarFinanceiro } from '../components/finance/SidebarFinanceiro';
 import { Sidebar as ControladoriaSidebar } from '../components/layout/Sidebar';
+import { Sidebar as OperationalSidebar } from '../components/operational/Sidebar';
 import { WelcomeModal } from '../components/WelcomeModal';
 import { Toaster } from 'sonner';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -54,6 +55,14 @@ export function MainLayout() {
         if (path.startsWith('/controladoria')) {
             return (
                 <ControladoriaSidebar
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                />
+            );
+        }
+        if (path.startsWith('/operational')) {
+            return (
+                <OperationalSidebar
                     isOpen={isSidebarOpen}
                     onClose={() => setIsSidebarOpen(false)}
                 />

@@ -1,5 +1,6 @@
 import { Search, List as ListIcon, LayoutGrid, ArrowDownAZ, Calendar, Filter, User } from 'lucide-react';
 import { Partner } from '../../../types/controladoria';
+import { FilterSelect } from '../ui/FilterSelect';
 
 interface Props {
   searchTerm: string;
@@ -21,6 +22,20 @@ export function ContractFilters({
   partnerFilter, setPartnerFilter, partners, sortOrder, setSortOrder,
   viewMode, setViewMode
 }: Props) {
+  const statusOptions = [
+    { label: 'Todos Status', value: '' },
+    { label: 'Sob Análise', value: 'analysis' },
+    { label: 'Proposta Enviada', value: 'proposal' },
+    { label: 'Contrato Fechado', value: 'active' },
+    { label: 'Rejeitado', value: 'rejected' },
+    { label: 'Probono', value: 'probono' }
+  ];
+
+  const partnerOptions = [
+    { label: 'Todos Sócios', value: '' },
+    ...partners.map(p => ({ label: p.name, value: p.id }))
+  ];
+
   return (
     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between">
 
@@ -35,47 +50,27 @@ export function ContractFilters({
             placeholder="Buscar por cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-salomao-blue outline-none text-sm"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-salomao-blue outline-none text-sm font-medium"
           />
         </div>
 
         {/* Filtro Status */}
-        <div className="relative min-w-[160px]">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <select
-            className="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-salomao-blue appearance-none cursor-pointer hover:bg-gray-100 transition-colors text-gray-700"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">Todos Status</option>
-            <option value="analysis">Sob Análise</option>
-            <option value="proposal">Proposta Enviada</option>
-            <option value="active">Contrato Fechado</option>
-            <option value="rejected">Rejeitado</option>
-            <option value="probono">Probono</option>
-          </select>
-          {/* Custom Arrow */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-          </div>
-        </div>
+        <FilterSelect
+          icon={Filter}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={statusOptions}
+          placeholder="Status"
+        />
 
         {/* Filtro Sócios */}
-        <div className="relative min-w-[160px]">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <select
-            className="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-salomao-blue appearance-none cursor-pointer hover:bg-gray-100 transition-colors text-gray-700"
-            value={partnerFilter}
-            onChange={(e) => setPartnerFilter(e.target.value)}
-          >
-            <option value="">Todos Sócios</option>
-            {partners.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
-          </select>
-          {/* Custom Arrow */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-          </div>
-        </div>
+        <FilterSelect
+          icon={User}
+          value={partnerFilter}
+          onChange={setPartnerFilter}
+          options={partnerOptions}
+          placeholder="Sócios"
+        />
 
       </div>
 

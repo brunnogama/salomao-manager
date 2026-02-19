@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
   DollarSign, Search, Download, CheckCircle2, Circle, Clock, Loader2,
-  CalendarDays, Receipt, X, Filter, MapPin, Hash,
+  CalendarDays, Receipt, Filter, MapPin, Hash,
   AlertTriangle, Plus, ChevronDown, FileDown, Briefcase
 } from 'lucide-react';
 import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
@@ -73,8 +73,6 @@ export function Finance() {
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
 
   const [selectedPartner, setSelectedPartner] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
@@ -105,15 +103,7 @@ export function Finance() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        if (!searchTerm) setIsSearchOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [searchRef, searchTerm]);
+
 
   // --- LOGIC ---
 
@@ -137,9 +127,12 @@ export function Finance() {
       .order('due_date', { ascending: true });
 
     if (installmentsData) {
-      const activeInstallments = installmentsData.filter((i: any) => i.contract?.status === 'active');
+      const allowedStatuses = ['proposal_sent', 'closed'];
+      const filteredInstallments = installmentsData.filter((i: any) =>
+        i.contract?.status && allowedStatuses.includes(i.contract.status)
+      );
 
-      const formatted = activeInstallments.map((i: any) => ({
+      const formatted = filteredInstallments.map((i: any) => ({
         ...i,
         contract: {
           ...i.contract,
@@ -184,7 +177,7 @@ export function Finance() {
     setSelectedLocation('');
     setStartDate('');
     setEndDate('');
-    setIsSearchOpen(false);
+
 
     const overdueCount = installments.filter(i => isOverdue(i)).length;
     toast.info(`Filtrando ${overdueCount} parcela${overdueCount !== 1 ? 's' : ''} vencida${overdueCount !== 1 ? 's' : ''}`, {
@@ -385,7 +378,7 @@ export function Finance() {
     setStatusFilter('all');
     setStartDate('');
     setEndDate('');
-    setIsSearchOpen(false);
+
   };
 
   const hasActiveFilters = searchTerm || selectedPartner || selectedLocation || statusFilter !== 'all' || startDate || endDate;
@@ -478,62 +471,73 @@ export function Finance() {
         </div>
       </div>
 
-      {/* 3. Toolbar Principal - Salomão Design System */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-        <div className="flex flex-col lg:flex-row justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
-            <FilterSelect icon={Filter} value={statusFilter} onChange={setStatusFilter} options={statusOptions} placeholder="Status" />
-            <FilterSelect icon={MapPin} value={selectedLocation} onChange={setSelectedLocation} options={locationOptions} placeholder="Locais" />
-            <FilterSelect icon={Briefcase} value={selectedPartner} onChange={setSelectedPartner} options={partnerOptions} placeholder="Sócios" />
+      {/* 3. Toolbar Principal - Padrão Contratos */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div className="flex flex-col lg:flex-row items-center gap-4">
+
+          {/* Barra de Busca (flex-1, sempre visível) */}
+          <div className="relative flex-1 w-full lg:w-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar cliente, HON, ID..."
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="px-4 py-2 bg-gray-100/50 rounded-lg text-[10px] font-black text-gray-500 uppercase tracking-widest border border-gray-200 h-[40px] flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-[#1e3a8a]" /> Total: {filteredInstallments.length}
-            </div>
-
-
-          </div>
-        </div>
-
-        <div className="h-px bg-gray-100 w-full my-2"></div>
-
-        <div className="flex flex-col md:flex-row justify-between gap-4">
+          {/* Filtros: Sócios, Status, Locais e Período */}
           <div className="flex flex-wrap items-center gap-2">
-            <div
-              ref={searchRef}
-              className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out bg-gray-50 border border-gray-200 ${isSearchOpen ? 'w-64 px-3 rounded-lg shadow-inner' : 'w-10 justify-center cursor-pointer hover:bg-gray-100 rounded-lg'} h-[40px]`}
-              onClick={() => !isSearchOpen && setIsSearchOpen(true)}
-            >
-              <Search className={`w-4 h-4 text-gray-400 shrink-0`} />
-              <input
-                type="text"
-                placeholder="Buscar cliente, HON, ID..."
-                className={`ml-2 bg-transparent outline-none text-xs font-semibold w-full text-gray-700 ${!isSearchOpen && 'hidden'}`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                autoFocus={isSearchOpen}
-              />
-              {isSearchOpen && searchTerm && (
-                <button onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }} className="ml-1 text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
-              )}
-            </div>
+            <FilterSelect
+              icon={Briefcase}
+              value={selectedPartner}
+              onChange={setSelectedPartner}
+              options={partnerOptions}
+              placeholder="Sócios"
+            />
 
+            <FilterSelect
+              icon={Filter}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={statusOptions}
+              placeholder="Status"
+            />
+
+            <FilterSelect
+              icon={MapPin}
+              value={selectedLocation}
+              onChange={setSelectedLocation}
+              options={locationOptions}
+              placeholder="Locais"
+            />
+
+            {/* Período: De - Até */}
             <div className="flex items-center gap-2">
               <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
+                />
               </div>
               <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]" />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
+                />
               </div>
             </div>
+
+
           </div>
 
-          {hasActiveFilters && (
-            <button onClick={clearFilters} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors h-[40px] border border-red-100"><X className="w-5 h-5" /></button>
-          )}
         </div>
       </div>
 
@@ -560,15 +564,14 @@ export function Finance() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gray-50/50 border-b border-gray-100">
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vencimento</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Detalhamento</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Origem</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Valor</th>
-                    <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Ações</th>
+                  <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Categoria</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Detalhamento</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Origem</th>
+                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Valor</th>
+                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
