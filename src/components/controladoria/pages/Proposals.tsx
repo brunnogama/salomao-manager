@@ -46,8 +46,8 @@ export function Proposals() {
     // partner_id: '', // REMOVED
     // partner_name: '', // REMOVED
     selectedPartners: [] as (Partner & { collaboratorData?: Collaborator })[], // New: Multiple Partners
-    reference: '', // Referência da Proposta (Top)
-    object: '', // Objeto da Disputa (Clause 1.1)
+    reference: '[incluir objeto da proposta]', // Referência da Proposta (Top)
+    object: '[incluir o objeto da proposta]', // Objeto da Disputa (Clause 1.1)
     contractLocation: 'Rio de Janeiro', // New: Location
 
     // New Structure for multiple clauses with types
@@ -714,7 +714,7 @@ export function Proposals() {
 
             {/* Ref */}
             <div className="mb-4">
-              <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir objeto da proposta]'}</span></p>
+              <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir objeto da proposta]'}</span></p>
               <p><strong>Cód.:</strong> <span className="bg-yellow-200/50 px-1">[código proposta]</span></p>
             </div>
 
@@ -761,7 +761,7 @@ export function Proposals() {
             <p className="text-justify mb-4">
               1.1. O objeto da presente proposta é a assessoria jurídica... em favor do Cliente
               <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
-              no <span className="bg-yellow-200/50 px-1">[incluir objeto da disputa]</span>.
+              no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
             </p>
 
             {/* 2. Honorários */}
