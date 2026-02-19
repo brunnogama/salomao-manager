@@ -137,6 +137,9 @@ export function ContractFormModal(props: Props) {
       msg = "Data de Prospecção é necessária para o status Análise.";
     } else if (formData.status === 'proposal' && !formData.proposal_date) {
       msg = "Data da Proposta é necessária para o status Proposta Enviada.";
+      if (formData.proposal_code) {
+        // proposal_code is valid here
+      }
     } else if (formData.status === 'active' && !formData.contract_date) {
       msg = "Data de Assinatura é necessária para o status Contrato Fechado.";
     }

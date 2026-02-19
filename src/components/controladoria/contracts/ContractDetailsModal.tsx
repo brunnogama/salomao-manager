@@ -222,296 +222,302 @@ export function ContractDetailsModal({
                   HON: {contract.hon_number}
                 </span>
               )}
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 leading-tight">{contract.client_name}</h2>
-            {contract.cnpj && (
-              <div className="text-sm text-gray-500 font-mono mt-1">{contract.cnpj}</div>
-            )}
-            <div className="flex items-center gap-4 mt-2 text-gray-500 text-sm">
-              <span className="flex items-center"><Briefcase className="w-4 h-4 mr-1.5" /> {contract.area}</span>
-              <span className="flex items-center"><MapPin className="w-4 h-4 mr-1.5" /> {contract.uf}</span>
+              {contract.proposal_code && contract.status === 'proposal' && (
+                <span className="font-mono text-xs text-blue-600 bg-blue-50 border border-blue-100 px-2 py-1 rounded ml-1">
+                  Cód: {contract.proposal_code}
+                </span>
+              )}
             </div>
           </div>
-
-          <div className="flex gap-2 items-start">
-            {/* ID FORMATADO 000000 */}
-            <span className="text-gray-300 font-mono text-xs mt-3 mr-2">
-              #{contract.display_id || String(contract.seq_id || 0).padStart(6, '0')}
-            </span>
-
-            {/* BOTÕES DE AÇÃO CONDICIONAIS */}
-            {canEdit && (
-              <button onClick={onEdit} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors" title="Editar">
-                <Edit className="w-5 h-5" />
-              </button>
-            )}
-
-            {canDelete && (
-              <button onClick={onDelete} className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors" title="Excluir">
-                <Trash2 className="w-5 h-5" />
-              </button>
-            )}
-
-            <button onClick={onClose} className="p-3 bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 ml-2 transition-colors">
-              <X className="w-5 h-5" />
-            </button>
+          <h2 className="text-3xl font-bold text-gray-900 leading-tight">{contract.client_name}</h2>
+          {contract.cnpj && (
+            <div className="text-sm text-gray-500 font-mono mt-1">{contract.cnpj}</div>
+          )}
+          <div className="flex items-center gap-4 mt-2 text-gray-500 text-sm">
+            <span className="flex items-center"><Briefcase className="w-4 h-4 mr-1.5" /> {contract.area}</span>
+            <span className="flex items-center"><MapPin className="w-4 h-4 mr-1.5" /> {contract.uf}</span>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Coluna 1: Dados Gerais */}
-            <div className="space-y-6">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">Dados Gerais</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs text-gray-400 block">Sócio Responsável</label>
-                  <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
-                    <User className="w-4 h-4 text-salomao-blue" /> {contract.partner_name || '-'}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 block">Analista</label>
-                  <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
-                    <User className="w-4 h-4 text-purple-500" /> {contract.analyzed_by_name || '-'}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 block">Documento (CNPJ/CPF)</label>
-                  <div className="text-gray-800 font-mono mt-1 mb-2">{contract.cnpj || 'Não informado'}</div>
+        <div className="flex gap-2 items-start">
+          {/* ID FORMATADO 000000 */}
+          <span className="text-gray-300 font-mono text-xs mt-3 mr-2">
+            #{contract.display_id || String(contract.seq_id || 0).padStart(6, '0')}
+          </span>
 
-                  {/* ÍCONE DE CLIPE PARA DOWNLOAD - UI MELHORADA */}
-                  <div className="mt-2">
-                    <button
-                      onClick={handleDownloadLatest}
-                      disabled={!documents || documents.length === 0}
-                      className={`group flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg transition-all border w-full max-w-[250px] ${documents && documents.length > 0
-                        ? 'bg-white border-gray-200 text-gray-700 hover:border-salomao-blue hover:text-salomao-blue hover:shadow-sm cursor-pointer'
-                        : 'bg-gray-50 border-transparent text-gray-400 cursor-not-allowed'
-                        }`}
-                      title={documents && documents.length > 0 ? documents[0].file_name : "Nenhum arquivo anexado"}
-                    >
-                      <div className={`p-1.5 rounded-md shrink-0 ${documents && documents.length > 0 ? 'bg-blue-50 text-salomao-blue group-hover:bg-blue-100' : 'bg-gray-200 text-gray-500'}`}>
-                        <Paperclip className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="truncate text-left flex-1">
-                        {documents && documents.length > 0 ? documents[0].file_name : 'Sem anexo vinculado'}
-                      </span>
-                      {documents && documents.length > 0 && <Download className="w-3.5 h-3.5 text-gray-400 group-hover:text-salomao-blue shrink-0" />}
-                    </button>
-                  </div>
-                </div>
-                {(contract as any).reference_text && (
-                  <div className="mt-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <label className="text-xs text-gray-400 block font-bold mb-1">Referência</label>
-                    <p className="text-xs text-gray-700 italic line-clamp-3">{(contract as any).reference_text}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Coluna 2: Financeiro */}
-            <div className="space-y-6">
-              {financials.showTotals && (
-                <>
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2 flex items-center justify-between">
-                    Financeiro
-                    <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200">Consolidado</span>
-                  </h3>
-
-                  <div className="space-y-4">
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                      <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase flex items-center">
-                        <Calculator className="w-3 h-3 mr-2" /> Composição de Honorários
-                      </div>
-
-                      <div className="divide-y divide-gray-100">
-                        {/* TIMESHEET INDICATOR */}
-                        {contract.timesheet && (
-                          <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50 bg-purple-50/30 border-l-4 border-purple-400">
-                            <div>
-                              <p className="text-xs font-bold text-purple-700">Honorários por Timesheet</p>
-                              <span className="text-[10px] text-purple-500">Cobrança baseada em horas</span>
-                            </div>
-                            <Clock className="w-4 h-4 text-purple-600" />
-                          </div>
-                        )}
-
-                        {/* Pró-Labore */}
-                        <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50">
-                          <div>
-                            <p className="text-xs font-medium text-gray-600">Pró-Labore</p>
-                            {financials.hasProLaboreExtras && <span className="text-[10px] text-gray-400">(Inclui extras)</span>}
-                          </div>
-                          <span className="text-sm font-bold text-gray-800">{formatMoney(financials.totalProLabore)}</span>
-                        </div>
-
-                        {/* Êxito Intermediário */}
-                        {(financials.hasIntermediate) && (
-                          <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50 bg-blue-50/30">
-                            <div>
-                              <p className="text-xs font-medium text-blue-600">Êxito Intermediário</p>
-                              <span className="text-sm font-bold text-blue-800">{formatMoney(financials.intermediateTotal)}</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Êxito Final */}
-                        <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50 bg-green-50/30">
-                          <div>
-                            <p className="text-xs font-medium text-green-600">Êxito Final (Valor)</p>
-                            {financials.hasFinalFeeExtras && <span className="text-[10px] text-green-500">(Inclui extras)</span>}
-                          </div>
-                          <span className="text-sm font-bold text-green-800">{formatMoney(financials.totalFinalFee)}</span>
-                        </div>
-
-                        {/* Outros Honorários */}
-                        {(financials.hasOther) && (
-                          <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50">
-                            <div>
-                              <p className="text-xs font-medium text-gray-600">Outros Honorários</p>
-                              {financials.hasOtherFeesExtras && <span className="text-[10px] text-gray-400">(Inclui extras)</span>}
-                            </div>
-                            <span className="text-sm font-bold text-gray-800">{formatMoney(financials.totalOtherFees)}</span>
-                          </div>
-                        )}
-
-                        {/* Fixo Mensal */}
-                        {(financials.hasFixed) && (
-                          <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50">
-                            <div>
-                              <p className="text-xs font-medium text-gray-600">Fixo Mensal</p>
-                              {financials.hasFixedMonthlyExtras && <span className="text-[10px] text-gray-400">(Inclui extras)</span>}
-                            </div>
-                            <span className="text-sm font-bold text-gray-800">{formatMoney(financials.totalFixedMonthly)}</span>
-                          </div>
-                        )}
-
-                        {/* TOTAL GERAL */}
-                        <div className="px-4 py-4 bg-gray-50 flex justify-between items-center border-t border-gray-200">
-                          <p className="text-sm font-black text-gray-800 uppercase">Total Geral</p>
-                          <span className="text-lg font-black text-salomao-blue">{formatMoney(financials.grandTotal)}</span>
-                        </div>
-                      </div>
-
-                      {(contract.final_success_percent || (contract as any).percent_extras) && (
-                        <div className="px-4 py-2 bg-yellow-50 border-t border-yellow-100 flex flex-wrap gap-2 items-center">
-                          <span className="text-[10px] font-bold text-yellow-700 uppercase">Êxito (%):</span>
-                          {contract.final_success_percent && <span className="text-xs font-bold text-yellow-800 bg-white px-2 py-0.5 rounded border border-yellow-200">{contract.final_success_percent} (Final)</span>}
-
-                          {/* Exibir Extras de Percentual se houver */}
-                          {(contract as any).percent_extras && Array.isArray((contract as any).percent_extras) && (contract as any).percent_extras.map((val: string, idx: number) => (
-                            <span key={idx} className="text-xs font-bold text-yellow-800 bg-white px-2 py-0.5 rounded border border-yellow-200">{val}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Coluna 3: Processos */}
-            <div className="space-y-6">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">Processos ({processes.length})</h3>
-              {processes.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">Nenhum processo vinculado.</p>
-              ) : (
-                <div className="space-y-3">
-                  {processes.map((proc, idx) => (
-                    <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm hover:bg-gray-100 transition-colors flex flex-col gap-1">
-                      <div className="font-mono font-bold text-salomao-blue text-xs flex items-center">
-                        <CheckCircle2 className="w-3 h-3 mr-1.5 text-gray-400" />
-                        {proc.process_number}
-                      </div>
-                      <div className="text-gray-700 font-medium text-xs ml-4">{proc.opponent}</div>
-                      <div className="text-gray-500 text-[10px] ml-4">{proc.court} • {proc.uf} • {proc.vara || 'Vara não inf.'}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {contract.observations && (
-            <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-              <h4 className="text-xs font-bold text-yellow-700 uppercase mb-2 flex items-center">
-                <FileText className="w-4 h-4 mr-1" /> Observações
-              </h4>
-              <p className="text-sm text-yellow-900 leading-relaxed">{contract.observations}</p>
-            </div>
+          {/* BOTÕES DE AÇÃO CONDICIONAIS */}
+          {canEdit && (
+            <button onClick={onEdit} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors" title="Editar">
+              <Edit className="w-5 h-5" />
+            </button>
           )}
 
-          {/* SECTION INFERIOR: TIMELINE EXPANDIDA (FULL WIDTH) */}
-          <div className="border-t border-gray-100 pt-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">
-                <HistoryIcon className="w-4 h-4 mr-2" /> Timeline (Datas do Processo)
-              </h3>
+          {canDelete && (
+            <button onClick={onDelete} className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors" title="Excluir">
+              <Trash2 className="w-5 h-5" />
+            </button>
+          )}
+
+          <button onClick={onClose} className="p-3 bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 ml-2 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-8 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Coluna 1: Dados Gerais */}
+          <div className="space-y-6">
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">Dados Gerais</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-gray-400 block">Sócio Responsável</label>
+                <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
+                  <User className="w-4 h-4 text-salomao-blue" /> {contract.partner_name || '-'}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block">Analista</label>
+                <div className="flex items-center gap-2 mt-1 text-gray-800 font-medium">
+                  <User className="w-4 h-4 text-purple-500" /> {contract.analyzed_by_name || '-'}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block">Documento (CNPJ/CPF)</label>
+                <div className="text-gray-800 font-mono mt-1 mb-2">{contract.cnpj || 'Não informado'}</div>
+
+                {/* ÍCONE DE CLIPE PARA DOWNLOAD - UI MELHORADA */}
+                <div className="mt-2">
+                  <button
+                    onClick={handleDownloadLatest}
+                    disabled={!documents || documents.length === 0}
+                    className={`group flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg transition-all border w-full max-w-[250px] ${documents && documents.length > 0
+                      ? 'bg-white border-gray-200 text-gray-700 hover:border-salomao-blue hover:text-salomao-blue hover:shadow-sm cursor-pointer'
+                      : 'bg-gray-50 border-transparent text-gray-400 cursor-not-allowed'
+                      }`}
+                    title={documents && documents.length > 0 ? documents[0].file_name : "Nenhum arquivo anexado"}
+                  >
+                    <div className={`p-1.5 rounded-md shrink-0 ${documents && documents.length > 0 ? 'bg-blue-50 text-salomao-blue group-hover:bg-blue-100' : 'bg-gray-200 text-gray-500'}`}>
+                      <Paperclip className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="truncate text-left flex-1">
+                      {documents && documents.length > 0 ? documents[0].file_name : 'Sem anexo vinculado'}
+                    </span>
+                    {documents && documents.length > 0 && <Download className="w-3.5 h-3.5 text-gray-400 group-hover:text-salomao-blue shrink-0" />}
+                  </button>
+                </div>
+              </div>
+              {(contract as any).reference_text && (
+                <div className="mt-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                  <label className="text-xs text-gray-400 block font-bold mb-1">Referência</label>
+                  <p className="text-xs text-gray-700 italic line-clamp-3">{(contract as any).reference_text}</p>
+                </div>
+              )}
             </div>
+          </div>
 
-            {timelineEvents.length > 0 ? (
-              <div className="flex items-stretch overflow-x-auto pb-4 px-2 space-x-2 scrollbar-thin scrollbar-thumb-gray-200 w-full">
-                {Array.isArray(timelineEvents) && timelineEvents.map((event, idx) => {
-                  const isLast = idx === timelineEvents.length - 1;
-                  const nextEvent = !isLast ? timelineEvents[idx + 1] : null;
+          {/* Coluna 2: Financeiro */}
+          <div className="space-y-6">
+            {financials.showTotals && (
+              <>
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2 flex items-center justify-between">
+                  Financeiro
+                  <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200">Consolidado</span>
+                </h3>
 
-                  const durationToNext = nextEvent
-                    ? getDurationBetween(event.date, nextEvent.date)
-                    : null;
+                <div className="space-y-4">
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase flex items-center">
+                      <Calculator className="w-3 h-3 mr-2" /> Composição de Honorários
+                    </div>
 
-                  return (
-                    <React.Fragment key={idx}>
-                      <div className="flex-shrink-0 flex flex-col h-full min-w-[200px] flex-1">
-                        {/* Card do Evento */}
-                        <div className={`flex-1 flex flex-col justify-between bg-white p-4 rounded-xl border shadow-sm transition-all w-full text-center relative ${event.status === contract.status ? 'border-salomao-blue ring-1 ring-salomao-blue/20 shadow-md' : 'border-gray-100 hover:border-blue-200'}`}>
+                    <div className="divide-y divide-gray-100">
+                      {/* TIMESHEET INDICATOR */}
+                      {contract.timesheet && (
+                        <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50 bg-purple-50/30 border-l-4 border-purple-400">
                           <div>
-                            <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border mb-3 ${event.color}`}>
-                              {event.label}
-                            </span>
-                            <p className="text-sm font-bold text-gray-700 flex items-center justify-center gap-1.5">
-                              <CalendarCheck className="w-4 h-4 text-gray-400" />
-                              {safeDate(event.date)?.toLocaleDateString('pt-BR') || '-'}
-                            </p>
+                            <p className="text-xs font-bold text-purple-700">Honorários por Timesheet</p>
+                            <span className="text-[10px] text-purple-500">Cobrança baseada em horas</span>
                           </div>
-
-                          <div className="space-y-2 mt-3">
-                            {/* Mostrar Duração Total dentro do card Active (Contrato Fechado) */}
-                            {event.status === 'active' && (
-                              <div className="flex items-center justify-center text-[10px] text-green-700 bg-green-50 px-2 py-1 rounded-lg border border-green-100 w-full font-medium">
-                                <Hourglass className="w-3 h-3 mr-1" />
-                                Total: {getTotalDuration()}
-                              </div>
-                            )}
-
-                            {durationToNext && (
-                              <div className="flex items-center justify-center text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 w-full mx-auto">
-                                <Clock className="w-3 h-3 mr-1" />
-                                {durationToNext}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {!isLast && (
-                        <div className="flex-shrink-0 text-gray-300 self-center">
-                          <ChevronsRight className="w-6 h-6" />
+                          <Clock className="w-4 h-4 text-purple-600" />
                         </div>
                       )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl text-gray-400 text-sm">
-                Nenhuma data interna (Prospect, Proposta, etc.) preenchida.
-              </div>
+
+                      {/* Pró-Labore */}
+                      <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50">
+                        <div>
+                          <p className="text-xs font-medium text-gray-600">Pró-Labore</p>
+                          {financials.hasProLaboreExtras && <span className="text-[10px] text-gray-400">(Inclui extras)</span>}
+                        </div>
+                        <span className="text-sm font-bold text-gray-800">{formatMoney(financials.totalProLabore)}</span>
+                      </div>
+
+                      {/* Êxito Intermediário */}
+                      {(financials.hasIntermediate) && (
+                        <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50 bg-blue-50/30">
+                          <div>
+                            <p className="text-xs font-medium text-blue-600">Êxito Intermediário</p>
+                            <span className="text-sm font-bold text-blue-800">{formatMoney(financials.intermediateTotal)}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Êxito Final */}
+                      <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50 bg-green-50/30">
+                        <div>
+                          <p className="text-xs font-medium text-green-600">Êxito Final (Valor)</p>
+                          {financials.hasFinalFeeExtras && <span className="text-[10px] text-green-500">(Inclui extras)</span>}
+                        </div>
+                        <span className="text-sm font-bold text-green-800">{formatMoney(financials.totalFinalFee)}</span>
+                      </div>
+
+                      {/* Outros Honorários */}
+                      {(financials.hasOther) && (
+                        <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50">
+                          <div>
+                            <p className="text-xs font-medium text-gray-600">Outros Honorários</p>
+                            {financials.hasOtherFeesExtras && <span className="text-[10px] text-gray-400">(Inclui extras)</span>}
+                          </div>
+                          <span className="text-sm font-bold text-gray-800">{formatMoney(financials.totalOtherFees)}</span>
+                        </div>
+                      )}
+
+                      {/* Fixo Mensal */}
+                      {(financials.hasFixed) && (
+                        <div className="px-4 py-3 flex justify-between items-center hover:bg-gray-50">
+                          <div>
+                            <p className="text-xs font-medium text-gray-600">Fixo Mensal</p>
+                            {financials.hasFixedMonthlyExtras && <span className="text-[10px] text-gray-400">(Inclui extras)</span>}
+                          </div>
+                          <span className="text-sm font-bold text-gray-800">{formatMoney(financials.totalFixedMonthly)}</span>
+                        </div>
+                      )}
+
+                      {/* TOTAL GERAL */}
+                      <div className="px-4 py-4 bg-gray-50 flex justify-between items-center border-t border-gray-200">
+                        <p className="text-sm font-black text-gray-800 uppercase">Total Geral</p>
+                        <span className="text-lg font-black text-salomao-blue">{formatMoney(financials.grandTotal)}</span>
+                      </div>
+                    </div>
+
+                    {(contract.final_success_percent || (contract as any).percent_extras) && (
+                      <div className="px-4 py-2 bg-yellow-50 border-t border-yellow-100 flex flex-wrap gap-2 items-center">
+                        <span className="text-[10px] font-bold text-yellow-700 uppercase">Êxito (%):</span>
+                        {contract.final_success_percent && <span className="text-xs font-bold text-yellow-800 bg-white px-2 py-0.5 rounded border border-yellow-200">{contract.final_success_percent} (Final)</span>}
+
+                        {/* Exibir Extras de Percentual se houver */}
+                        {(contract as any).percent_extras && Array.isArray((contract as any).percent_extras) && (contract as any).percent_extras.map((val: string, idx: number) => (
+                          <span key={idx} className="text-xs font-bold text-yellow-800 bg-white px-2 py-0.5 rounded border border-yellow-200">{val}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
           </div>
 
+          {/* Coluna 3: Processos */}
+          <div className="space-y-6">
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">Processos ({processes.length})</h3>
+            {processes.length === 0 ? (
+              <p className="text-sm text-gray-400 italic">Nenhum processo vinculado.</p>
+            ) : (
+              <div className="space-y-3">
+                {processes.map((proc, idx) => (
+                  <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm hover:bg-gray-100 transition-colors flex flex-col gap-1">
+                    <div className="font-mono font-bold text-salomao-blue text-xs flex items-center">
+                      <CheckCircle2 className="w-3 h-3 mr-1.5 text-gray-400" />
+                      {proc.process_number}
+                    </div>
+                    <div className="text-gray-700 font-medium text-xs ml-4">{proc.opponent}</div>
+                    <div className="text-gray-500 text-[10px] ml-4">{proc.court} • {proc.uf} • {proc.vara || 'Vara não inf.'}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+
+        {contract.observations && (
+          <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
+            <h4 className="text-xs font-bold text-yellow-700 uppercase mb-2 flex items-center">
+              <FileText className="w-4 h-4 mr-1" /> Observações
+            </h4>
+            <p className="text-sm text-yellow-900 leading-relaxed">{contract.observations}</p>
+          </div>
+        )}
+
+        {/* SECTION INFERIOR: TIMELINE EXPANDIDA (FULL WIDTH) */}
+        <div className="border-t border-gray-100 pt-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">
+              <HistoryIcon className="w-4 h-4 mr-2" /> Timeline (Datas do Processo)
+            </h3>
+          </div>
+
+          {timelineEvents.length > 0 ? (
+            <div className="flex items-stretch overflow-x-auto pb-4 px-2 space-x-2 scrollbar-thin scrollbar-thumb-gray-200 w-full">
+              {Array.isArray(timelineEvents) && timelineEvents.map((event, idx) => {
+                const isLast = idx === timelineEvents.length - 1;
+                const nextEvent = !isLast ? timelineEvents[idx + 1] : null;
+
+                const durationToNext = nextEvent
+                  ? getDurationBetween(event.date, nextEvent.date)
+                  : null;
+
+                return (
+                  <React.Fragment key={idx}>
+                    <div className="flex-shrink-0 flex flex-col h-full min-w-[200px] flex-1">
+                      {/* Card do Evento */}
+                      <div className={`flex-1 flex flex-col justify-between bg-white p-4 rounded-xl border shadow-sm transition-all w-full text-center relative ${event.status === contract.status ? 'border-salomao-blue ring-1 ring-salomao-blue/20 shadow-md' : 'border-gray-100 hover:border-blue-200'}`}>
+                        <div>
+                          <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border mb-3 ${event.color}`}>
+                            {event.label}
+                          </span>
+                          <p className="text-sm font-bold text-gray-700 flex items-center justify-center gap-1.5">
+                            <CalendarCheck className="w-4 h-4 text-gray-400" />
+                            {safeDate(event.date)?.toLocaleDateString('pt-BR') || '-'}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2 mt-3">
+                          {/* Mostrar Duração Total dentro do card Active (Contrato Fechado) */}
+                          {event.status === 'active' && (
+                            <div className="flex items-center justify-center text-[10px] text-green-700 bg-green-50 px-2 py-1 rounded-lg border border-green-100 w-full font-medium">
+                              <Hourglass className="w-3 h-3 mr-1" />
+                              Total: {getTotalDuration()}
+                            </div>
+                          )}
+
+                          {durationToNext && (
+                            <div className="flex items-center justify-center text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 w-full mx-auto">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {durationToNext}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {!isLast && (
+                      <div className="flex-shrink-0 text-gray-300 self-center">
+                        <ChevronsRight className="w-6 h-6" />
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl text-gray-400 text-sm">
+              Nenhuma data interna (Prospect, Proposta, etc.) preenchida.
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
+    </div >
   );
 }

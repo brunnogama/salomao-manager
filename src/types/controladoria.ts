@@ -228,6 +228,9 @@ export interface Contract {
   reference?: string;
   created_at?: string;
   updated_at?: string;
+  proposal_code?: string;
+  rejection_by?: string;
+  rejection_reason?: string;
   documents?: ContractDocument[];
 
   // Missing fields added for ContractFormModal
