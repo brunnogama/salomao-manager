@@ -71,7 +71,7 @@ export function History({
         .from('user_profiles')
         .select('role')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       if (profile) {
         setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
       }

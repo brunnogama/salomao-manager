@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
-  X, Save, Gavel, AlertTriangle, User,
-  DollarSign, Files, Loader2, Search
+  X, Save, FileText, Plus, Search, AlertTriangle, AlertCircle,
+  Trash2, Edit, Check, CalendarCheck, Hourglass, Upload,
+  Settings, History as HistoryIcon, ArrowRight, Download, Link as LinkIcon,
+  MapPin, Tag, Eye, TrendingUp, TrendingDown, Pencil, ChevronDown, Clock,
+  User, DollarSign, Gavel, Files, Loader2
 } from 'lucide-react';
-import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst } from '../../../types/controladoria';
-import { maskCNPJ, maskMoney, maskHon, toTitleCase } from '../utils/masks';
+import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst, Magistrate } from '../../../types/controladoria';
+import { maskCNPJ, maskMoney, maskHon, maskCNJ, toTitleCase, parseCurrency } from '../utils/masks';
 import { decodeCNJ } from '../utils/cnjDecoder';
-import { addDays } from 'date-fns';
+import { addDays, addMonths } from 'date-fns';
 
 // Componentes Modularizados
 import { OptionManager } from './components/OptionManager';
@@ -162,11 +165,11 @@ export function ContractFormModal(props: Props) {
   useEffect(() => {
     const checkHonDuplicates = async () => {
       if (!formData.hon_number || formData.hon_number.length < 2) return setDuplicateHonCase(null);
-      const { data } = await supabase.from('contracts').select('id, client_name, seq_id, status').eq('hon_number', formData.hon_number).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').maybeSingle();
-      if (data) {
+      const { data } = await supabase.from('contracts').select('id, client_name, seq_id, status').eq('hon_number', formData.hon_number).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').limit(1);
+      if (data && data.length > 0) {
         setDuplicateHonCase({
-          ...data,
-          display_id: String((data as any).seq_id || 0).padStart(6, '0')
+          ...data[0],
+          display_id: String((data[0] as any).seq_id || 0).padStart(6, '0')
         });
       } else {
         setDuplicateHonCase(null);
@@ -237,21 +240,25 @@ export function ContractFormModal(props: Props) {
       if (!currentProcess.process_number || currentProcess.process_number.length < 15 || ['CONSULTORIA', 'ASSESSORIA JURÍDICA', 'PROCESSO ADMINISTRATIVO', 'OUTROS'].includes(currentProcess.process_number)) return setDuplicateProcessData(null);
 
       const { data } = await supabase.from('contract_processes')
-        .select('contract_id, contracts(id, client_name, seq_id)')
+        .select('contract_id, contracts(id, client_name, hon_number, seq_id)')
         .eq('process_number', currentProcess.process_number)
         .neq('contract_id', formData.id || '00000000-0000-0000-0000-000000000000')
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
 
-      if (data && data.contracts) {
-        const contractInfo = Array.isArray(data.contracts) ? data.contracts[0] : data.contracts;
-        setDuplicateProcessData({
-          ...data,
-          contracts: {
-            ...contractInfo,
-            display_id: String(contractInfo.seq_id || 0).padStart(6, '0')
-          }
-        });
+      if (data && data.length > 0) {
+        const firstMatch = data[0];
+        if (firstMatch.contracts) {
+          const contractInfo = Array.isArray(firstMatch.contracts) ? firstMatch.contracts[0] : firstMatch.contracts;
+          setDuplicateProcessData({
+            ...firstMatch,
+            contracts: {
+              ...contractInfo,
+              display_id: String(contractInfo.seq_id || 0).padStart(6, '0')
+            }
+          });
+        } else {
+          setDuplicateProcessData(null);
+        }
       } else {
         setDuplicateProcessData(null);
       }
@@ -585,7 +592,7 @@ export function ContractFormModal(props: Props) {
         }
         if (formData.status === 'active' && formData.physical_signature === false) {
           const { data } = await supabase.from('kanban_tasks').select('id').eq('contract_id', savedId).eq('status', 'signature').maybeSingle();
-          if (!data) await supabase.from('kanban_tasks').insert({ title: `Coletar Assinatura: ${formData.client_name}`, description: `Contrato fechado em ${new Date().toLocaleDateString()}. Coletar assinatura física.`, priority: 'Alta', status: 'signature', contract_id: savedId, due_date: addDays(new Date(), 5).toISOString(), position: 0 });
+          if (!data) await supabase.from('kanban_tasks').insert({ title: `Coletar Assinatura: ${formData.client_name}`, description: `Contrato fechado em ${new Date().toLocaleDateString()}.Coletar assinatura física.`, priority: 'Alta', status: 'signature', contract_id: savedId, due_date: addDays(new Date(), 5).toISOString(), position: 0 });
         }
       }
       onSave();
@@ -594,12 +601,13 @@ export function ContractFormModal(props: Props) {
       if (error.code === '23505' || error.message?.includes('contracts_hon_number_key')) {
         let msg = '⚠️ Duplicidade de Caso Detectada\n\nJá existe um contrato cadastrado com este Número HON.';
         if (duplicateHonCase) {
-          msg += `\n\n- ID: ${duplicateHonCase.display_id}\n- Cliente: ${duplicateHonCase.client_name}\n- Status: ${getStatusLabel(duplicateHonCase.status)}`;
+          msg += `\n\n - ID: ${duplicateHonCase.display_id}\n - Cliente: ${duplicateHonCase.client_name}\n - Status: ${getStatusLabel(duplicateHonCase.status)
+            }`;
         }
         alert(msg);
       }
       else if (error.code === 'PGRST204') alert(`Erro Técnico: Tentativa de salvar campo inválido.\n\nSOLUÇÃO: Rode o SQL fornecido no Supabase.`);
-      else alert(`Não foi possível salvar as alterações.\n\n${error.message}`);
+      else alert(`Não foi possível salvar as alterações.\n\n${error.message} `);
     } finally {
       setLocalLoading(false);
     }

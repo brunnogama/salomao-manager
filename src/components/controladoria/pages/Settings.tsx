@@ -114,7 +114,7 @@ export function Settings({
           .from('user_profiles')
           .select('role')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profile) {
           setCurrentUserRole(profile.role as 'admin' | 'editor' | 'viewer');

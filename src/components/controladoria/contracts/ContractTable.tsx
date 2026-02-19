@@ -22,10 +22,10 @@ export function ContractTable({ contracts, onEdit, onDelete, getStatusColor, get
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: profile } = await supabase
-        .from('profiles')
+        .from('user_profiles')
         .select('role')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (profile) {
         setUserRole(profile.role as 'admin' | 'editor' | 'viewer');

@@ -195,7 +195,7 @@ export function Finance() {
           partners (name)
         `)
         .eq('id', contractId)
-        .single();
+        .maybeSingle();
 
       if (contractError) throw contractError;
 
@@ -216,7 +216,7 @@ export function Finance() {
           .from('user_profiles')
           .select('name')
           .eq('id', contractData.analyzed_by)
-          .single();
+          .maybeSingle();
 
         analyzedByName = profileData?.name;
       }
@@ -636,7 +636,6 @@ export function Finance() {
           onClose={() => {
             setIsContractModalOpen(false);
             setSelectedContractData(null);
-            setSelectedContractId(null);
           }}
           contract={selectedContractData}
           onEdit={() => {
