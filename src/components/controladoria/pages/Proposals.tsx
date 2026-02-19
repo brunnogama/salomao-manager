@@ -8,7 +8,8 @@ import {
   Search,
   Plus,
   Trash2,
-  X
+  X,
+  AlertTriangle
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
@@ -46,8 +47,8 @@ export function Proposals() {
     // partner_id: '', // REMOVED
     // partner_name: '', // REMOVED
     selectedPartners: [] as (Partner & { collaboratorData?: Collaborator })[], // New: Multiple Partners
-    reference: '[incluir objeto da proposta]', // Referência da Proposta (Top)
-    object: '[incluir o objeto da proposta]', // Objeto da Disputa (Clause 1.1)
+    reference: '', // Referência da Proposta (Top)
+    object: '', // Objeto da Disputa (Clause 1.1)
     contractLocation: 'Rio de Janeiro', // New: Location
 
     // New Structure for multiple clauses with types
@@ -527,6 +528,38 @@ export function Proposals() {
     </div>
   );
 
+  // Cancel Confirmation State
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  const handleCloseModalAttempt = () => {
+    setShowCancelConfirm(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!contractFormData.id) {
+      setIsModalOpen(false);
+      setShowCancelConfirm(false);
+      return;
+    }
+
+    const toastId = toast.loading('Cancelando criação do caso...');
+    try {
+      const { error } = await supabase.from('contracts').delete().eq('id', contractFormData.id);
+      if (error) throw error;
+
+      toast.success('Criação do caso cancelada.', { id: toastId });
+      setIsModalOpen(false);
+      setShowCancelConfirm(false);
+      setContractFormData({} as Contract);
+    } catch (error: any) {
+      toast.error(`Erro ao cancelar: ${error.message}`, { id: toastId });
+    }
+  };
+
+  const handleAbortCancel = () => {
+    setShowCancelConfirm(false);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
 
@@ -851,7 +884,7 @@ export function Proposals() {
       {isModalOpen && (
         <ContractFormModal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={handleCloseModalAttempt}
           formData={contractFormData}
           setFormData={setContractFormData}
           onSave={() => { }}
@@ -878,6 +911,38 @@ export function Proposals() {
           getStatusLabel={() => ''}
         />
       )}
+
+      {/* Confirmation Modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full animate-in zoom-in-95 duration-200 border border-gray-100">
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-red-50 p-3 rounded-full mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-lg font-black text-gray-800 mb-2">Cancelar criação do caso?</h3>
+              <p className="text-sm text-gray-500 mb-6 font-medium leading-relaxed">
+                Se você sair agora, o caso recém criado será excluído e todos os dados gerados (incluindo a proposta) serão perdidos permanentemente.
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={handleAbortCancel}
+                  className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs uppercase tracking-wider hover:bg-gray-50 transition-colors"
+                >
+                  Não, continuar editando
+                </button>
+                <button
+                  onClick={handleConfirmCancel}
+                  className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold text-xs uppercase tracking-wider hover:bg-red-600 shadow-lg shadow-red-200 transition-all hover:scale-[1.02]"
+                >
+                  Sim, cancelar e excluir
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
