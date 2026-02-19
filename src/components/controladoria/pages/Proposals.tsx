@@ -50,6 +50,7 @@ export function Proposals() {
     reference: '', // Referência da Proposta (Top)
     object: '', // Objeto da Disputa (Clause 1.1)
     contractLocation: '', // New: Location
+    isPerson: false, // New: Person Type Toggle
 
     // New Structure for multiple clauses with types
     pro_labore_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
@@ -94,6 +95,14 @@ export function Proposals() {
 
     if (name === 'cnpj') {
       setProposalData(prev => ({ ...prev, [name]: maskCNPJ(value) }));
+    } else if (name === 'isPerson') {
+      // Checkbox handling
+      const checked = (e.target as HTMLInputElement).checked;
+      setProposalData(prev => ({
+        ...prev,
+        isPerson: checked,
+        cnpj: checked ? '' : prev.cnpj // Clear CNPJ if person, or keep? User said disable. Let's clear to avoid confusion.
+      }));
     } else {
       setProposalData(prev => ({ ...prev, [name]: value }));
     }
@@ -661,7 +670,26 @@ export function Proposals() {
             </div>
 
             <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">CNPJ [da Empresa Cliente]</label>
+              <div className="flex items-center justify-between mb-1.5 ml-1">
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">CNPJ [da Empresa Cliente]</label>
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="relative flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isPerson"
+                      checked={proposalData.isPerson}
+                      onChange={handleChange}
+                      className="peer h-3 w-3 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all check:bg-[#1e3a8a] checked:border-[#1e3a8a] hover:border-[#1e3a8a]"
+                    />
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-500 group-hover:text-[#1e3a8a] transition-colors select-none">Pessoa Física?</span>
+                </label>
+              </div>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -673,7 +701,12 @@ export function Proposals() {
                 />
                 <button
                   onClick={handleCNPJSearch}
-                  disabled={!proposalData.cnpj}
+                  disabled={proposalData.isPerson}
+                  className={`w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all ${proposalData.isPerson ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
+                />
+                <button
+                  onClick={handleCNPJSearch}
+                  disabled={!proposalData.cnpj || proposalData.isPerson}
                   className="p-3.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
                   title="Buscar CNPJ"
                 >
@@ -817,7 +850,7 @@ export function Proposals() {
               <p><strong>Cód.:</strong> <span className="bg-yellow-200/50 px-1">[código proposta]</span></p>
             </div>
 
-            <p className="mb-4">Prezado Sr.</p>
+            <p className="mb-4">Prezados,</p>
 
             <p className="text-justify mb-4">
               É com grande honra que <strong>SALOMÃO ADVOGADOS</strong>, neste ato representado, respectivamente, por seus sócios

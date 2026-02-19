@@ -194,7 +194,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
             ]
         }),
 
-        createTextParagraph("Prezado Sr.", { spacing: 400 }),
+        createTextParagraph("Prezados,", { spacing: 400 }),
 
         // Introduction
         new Paragraph({
