@@ -327,6 +327,8 @@ export function Proposals() {
         if (clientByCnpj) newContract.client_id = clientByCnpj.id;
       }
 
+      console.log("DEBUG: Final Contract Payload:", JSON.stringify(newContract, null, 2));
+
       const { data: insertedContract, error: insertError } = await supabase
         .from('contracts')
         .insert(newContract)
@@ -335,6 +337,7 @@ export function Proposals() {
 
       if (insertError) {
         console.error("Insert Error Payload:", newContract); // For debugging
+        console.error("Supabase Error Details:", insertError);
         throw insertError;
       }
 
