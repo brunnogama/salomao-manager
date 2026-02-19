@@ -13,6 +13,7 @@ interface CustomSelectProps {
   actionLabel?: string;
   actionIcon?: React.ElementType;
   className?: string;
+  allowCustomValue?: boolean;
 }
 
 export function CustomSelect({
@@ -25,14 +26,15 @@ export function CustomSelect({
   onAction,
   actionLabel,
   actionIcon: ActionIcon = Plus,
-  className = ''
+  className = '',
+  allowCustomValue = false
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const normalizedOptions = options.map(opt => 
+  const normalizedOptions = options.map(opt =>
     typeof opt === 'string' ? { label: opt, value: opt } : opt
   );
 
@@ -98,13 +100,13 @@ export function CustomSelect({
   const displayValue = selectedOption ? selectedOption.label : value;
 
   const dropdownMenu = (
-    <div 
+    <div
       id="select-portal-root"
       className="fixed z-[9999] bg-white border border-gray-200 rounded-lg shadow-xl animate-in fade-in zoom-in-95 origin-top"
-      style={{ 
+      style={{
         top: coords.top + 4 - window.scrollY, // Ajuste para a posição fixa
-        left: coords.left, 
-        width: coords.width 
+        left: coords.left,
+        width: coords.width
       }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -122,8 +124,8 @@ export function CustomSelect({
         </div>
       </div>
 
-      <div 
-        id="select-options-list" 
+      <div
+        id="select-options-list"
         className="max-h-60 overflow-y-auto scrollbar-thin"
       >
         {filteredOptions.length > 0 ? (
@@ -131,9 +133,8 @@ export function CustomSelect({
             <div
               key={opt.value}
               onClick={() => handleSelect(opt.value)}
-              className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 transition-colors flex items-center justify-between ${
-                value === opt.value ? 'bg-blue-50 text-salomao-blue font-medium' : 'text-gray-700'
-              }`}
+              className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 transition-colors flex items-center justify-between ${value === opt.value ? 'bg-blue-50 text-salomao-blue font-medium' : 'text-gray-700'
+                }`}
             >
               {opt.label}
               {value === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-salomao-blue" />}
@@ -144,33 +145,43 @@ export function CustomSelect({
             Nenhuma opção encontrada
           </div>
         )}
+
+        {allowCustomValue && searchTerm && !normalizedOptions.some(opt => opt.label.toLowerCase() === searchTerm.toLowerCase()) && (
+          <div
+            onClick={() => handleSelect(searchTerm)}
+            className="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 text-blue-600 font-medium border-t border-dashed border-gray-200 mt-1"
+          >
+            Usar "{searchTerm}"
+          </div>
+        )}
       </div>
 
-      {onAction && (
-        <div 
-          onClick={() => { onAction(); setIsOpen(false); }}
-          className="border-t border-gray-100 p-2 bg-gray-50 rounded-b-lg cursor-pointer hover:bg-gray-100 transition-colors group"
-        >
-          <div className="flex items-center justify-center text-xs font-medium text-salomao-blue group-hover:text-blue-700">
-            <ActionIcon className="w-3.5 h-3.5 mr-1.5" />
-            {actionLabel || 'Gerenciar'}
+      {
+        onAction && (
+          <div
+            onClick={() => { onAction(); setIsOpen(false); }}
+            className="border-t border-gray-100 p-2 bg-gray-50 rounded-b-lg cursor-pointer hover:bg-gray-100 transition-colors group"
+          >
+            <div className="flex items-center justify-center text-xs font-medium text-salomao-blue group-hover:text-blue-700">
+              <ActionIcon className="w-3.5 h-3.5 mr-1.5" />
+              {actionLabel || 'Gerenciar'}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
       {label && <label className="text-xs font-medium block mb-1 text-gray-600">{label}</label>}
-      
+
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-white focus:border-salomao-blue outline-none flex justify-between items-center transition-all ${
-          disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'hover:border-gray-400'
-        } ${isOpen ? 'border-salomao-blue ring-1 ring-salomao-blue' : ''}`}
+        className={`w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-white focus:border-salomao-blue outline-none flex justify-between items-center transition-all ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'hover:border-gray-400'
+          } ${isOpen ? 'border-salomao-blue ring-1 ring-salomao-blue' : ''}`}
       >
         <span className={`truncate ${!displayValue ? 'text-gray-400' : 'text-gray-700'}`}>
           {displayValue || placeholder}

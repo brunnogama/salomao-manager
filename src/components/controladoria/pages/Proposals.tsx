@@ -1,26 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import {
   FileText,
-  Download,
-  Printer,
   Loader2,
-  RefreshCw,
   Eye,
   CheckCircle,
-  FileSignature
+  FileSignature,
+  Search
 } from 'lucide-react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 import { saveAs } from 'file-saver';
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../../types/controladoria';
 import { ContractFormModal } from '../contracts/ContractFormModal';
-import { generateProposalDocx } from '../../utils/docxGenerator';
-import { maskMoney } from '../utils/masks';
+import { generateProposalDocx } from '../../../utils/docxGenerator';
+import { maskMoney, maskCNPJ } from '../utils/masks';
+import { CustomSelect } from '../ui/CustomSelect';
+
+const toTitleCase = (str: string) => {
+  return str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  );
+};
 
 export function Proposals() {
   const [loading, setLoading] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [clientOptions, setClientOptions] = useState<{ label: string; value: string }[]>([]);
 
   // Form State
   const [proposalData, setProposalData] = useState({
@@ -39,7 +45,7 @@ export function Proposals() {
   const [contractFormData, setContractFormData] = useState<Contract>({} as Contract);
   const [processes, setProcesses] = useState<ContractProcess[]>([]);
   const [currentProcess, setCurrentProcess] = useState<ContractProcess>({ process_number: '' });
-  const [editingProcessIndex, setEditingProcessIndex] = useState<number | null>(null);
+  const [editingProcessIndex] = useState<number | null>(null);
   const [newIntermediateFee, setNewIntermediateFee] = useState('');
   const [timelineData, setTimelineData] = useState<TimelineEvent[]>([]);
   const [analysts, setAnalysts] = useState<Analyst[]>([]);
@@ -47,6 +53,7 @@ export function Proposals() {
   // Fetch Inputs
   useEffect(() => {
     fetchPartners();
+    fetchClients();
   }, []);
 
   const fetchPartners = async () => {
@@ -54,6 +61,13 @@ export function Proposals() {
     if (data) setPartners(data);
     const { data: analystsData } = await supabase.from('analysts').select('*').eq('active', true).order('name');
     if (analystsData) setAnalysts(analystsData as Analyst[]);
+  };
+
+  const fetchClients = async () => {
+    const { data } = await supabase.from('clients').select('name, cnpj').order('name');
+    if (data) {
+      setClientOptions(data.map(c => ({ label: c.name, value: c.name }))); // Value is name for the proposal
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -68,8 +82,45 @@ export function Proposals() {
       }));
     } else if (['pro_labore', 'final_success_fee'].includes(name)) {
       setProposalData(prev => ({ ...prev, [name]: maskMoney(value) }));
+    } else if (name === 'cnpj') {
+      setProposalData(prev => ({ ...prev, [name]: maskCNPJ(value) }));
     } else {
       setProposalData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleClientNameChange = async (name: string) => {
+    setProposalData(prev => ({ ...prev, clientName: name }));
+    // Try to find CNPJ if existing client selected
+    if (name) {
+      const { data } = await supabase.from('clients').select('cnpj').eq('name', name).maybeSingle();
+      if (data && data.cnpj) {
+        setProposalData(prev => ({ ...prev, cnpj: maskCNPJ(data.cnpj) }));
+      }
+    }
+  };
+
+  const handleCNPJSearch = async () => {
+    if (!proposalData.cnpj) return;
+    const cnpjLimpo = proposalData.cnpj.replace(/\D/g, '');
+    if (cnpjLimpo.length !== 14) return toast.error('CNPJ inválido. Digite 14 dígitos.');
+
+    const toastId = toast.loading('Buscando dados da empresa...');
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+      if (!response.ok) throw new Error('CNPJ não encontrado na Receita Federal');
+      const data = await response.json();
+
+      const razaoSocial = toTitleCase(data.razao_social || data.nome_fantasia || '');
+
+      setProposalData(prev => ({
+        ...prev,
+        clientName: razaoSocial,
+        cnpj: maskCNPJ(cnpjLimpo)
+      }));
+      toast.success('Dados encontrados!', { id: toastId });
+    } catch (error: any) {
+      toast.error(`Erro na busca: ${error.message}`, { id: toastId });
     }
   };
 
@@ -98,6 +149,16 @@ export function Proposals() {
 
       // Clean up undefined/empty
       Object.keys(newContract).forEach(k => !newContract[k] && delete newContract[k]);
+
+      // Check if client exists to link ID
+      const { data: existingClient } = await supabase.from('clients').select('id').eq('name', proposalData.clientName).maybeSingle();
+      if (existingClient) {
+        newContract.client_id = existingClient.id;
+      } else if (proposalData.cnpj) {
+        // Try by CNPJ
+        const { data: clientByCnpj } = await supabase.from('clients').select('id').eq('cnpj', proposalData.cnpj.replace(/\D/g, '')).maybeSingle();
+        if (clientByCnpj) newContract.client_id = clientByCnpj.id;
+      }
 
       const { data: insertedContract, error: insertError } = await supabase
         .from('contracts')
@@ -215,27 +276,38 @@ export function Proposals() {
 
           <div className="space-y-5">
             <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cliente [Nome da Empresa]</label>
-              <input
-                type="text"
-                name="clientName"
+              <CustomSelect
+                label="Cliente [Nome da Empresa]"
                 value={proposalData.clientName}
-                onChange={handleChange}
-                placeholder="Razão Social ou Nome Completo"
-                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
+                onChange={handleClientNameChange}
+                options={clientOptions}
+                placeholder="Selecione ou digite o nome"
+                allowCustomValue={true}
+              // No action button needed for now as requested "abrir o menu" implies just the select behavior
+              // If "abrir o menu de Clientes" meant checking details, we can add it later.
               />
             </div>
 
             <div>
               <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">CNPJ [da Empresa Cliente]</label>
-              <input
-                type="text"
-                name="cnpj"
-                value={proposalData.cnpj}
-                onChange={handleChange}
-                placeholder="00.000.000/0000-00"
-                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  name="cnpj"
+                  value={proposalData.cnpj}
+                  onChange={handleChange}
+                  placeholder="00.000.000/0000-00"
+                  className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
+                />
+                <button
+                  onClick={handleCNPJSearch}
+                  disabled={!proposalData.cnpj}
+                  className="p-3.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  title="Buscar CNPJ"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div>
