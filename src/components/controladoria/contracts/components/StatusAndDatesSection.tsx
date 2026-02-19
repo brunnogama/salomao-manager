@@ -447,7 +447,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                         <div className="space-y-2">
                             <label className="text-xs font-medium block mb-1">Êxito %</label>
                             <div className="flex rounded-lg shadow-sm">
-                                <input type="text" className="w-14 border border-gray-300 rounded-l-lg p-2.5 text-sm bg-gray-50 outline-none border-r-0 text-center" value={(formData as any).final_success_percent_clause || ''} onChange={(e) => setFormData({ ...formData, final_success_percent_clause: e.target.value } as any)} placeholder="Cl." />
+                                <input type="text" className="w-40 border border-gray-300 rounded-l-lg p-2.5 text-sm bg-gray-50 outline-none border-r-0 placeholder-gray-400" value={(formData as any).final_success_percent_clause || ''} onChange={(e) => setFormData({ ...formData, final_success_percent_clause: e.target.value } as any)} placeholder="Cláusula" />
                                 <input type="text" className="flex-1 border border-gray-300 p-2.5 text-sm bg-white outline-none" placeholder="Ex: 20%" value={formData.final_success_percent} onChange={e => setFormData({ ...formData, final_success_percent: e.target.value })} />
                                 <button className="bg-salomao-blue text-white px-3 rounded-r-lg hover:bg-blue-900" type="button" onClick={() => handleAddToList('percent_extras', 'final_success_percent')}><Plus className="w-4 h-4" /></button>
                             </div>

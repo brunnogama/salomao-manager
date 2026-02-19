@@ -292,7 +292,7 @@ export function Proposals() {
         final_success_fee: firstCurrencySuccess ? safeParseFloat(firstCurrencySuccess.value) : null,
         final_success_fee_clause: firstCurrencySuccess?.description || null,
 
-        final_success_percent: firstPercentSuccess ? safeParseFloat(firstPercentSuccess.value) : null,
+        final_success_percent: firstPercentSuccess?.value || null,
         final_success_percent_clause: firstPercentSuccess?.description || null,
 
         final_success_extras: currencyExtras.length ? currencyExtras.map(c => safeParseFloat(c.value)) : null,

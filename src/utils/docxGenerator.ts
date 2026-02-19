@@ -57,8 +57,8 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
     const footer1Buffer = await fetchImage('/rodape1.png');
     const footer2Buffer = await fetchImage('/rodape2.png');
 
-    const standardFont = "Inter"; // Using a modern font if possible, fallback to Arial
-    const boldFont = "Inter";
+    const standardFont = "Arial";
+    const boldFont = "Arial";
 
     const createTextParagraph = (text: string, options: { bold?: boolean, size?: number, color?: string, alignment?: any, spacing?: number } = {}) => {
         return new Paragraph({
@@ -100,6 +100,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                     } as any),
                 ],
             }),
+            new Paragraph({ text: "", spacing: { after: 200 } }), // Space between logo and date
         ],
     });
 
@@ -242,7 +243,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         }),
         createTextParagraph("1.2.	Os serviços previstos nesta proposta abrangem a defesa dos interesses do Contratante em toda e qualquer discussão relacionada ao tema tratado.", { spacing: 200 }),
         createTextParagraph("1.3.	Além da análise do caso e definição da estratégia jurídica, o escopo dos serviços profissionais compreende a análise completa dos documentos e informações enviadas pelo Cliente, elaboração das peças processuais, acompanhamento processual, realização de sustentações orais, despachos, bem como todos os atos conexos necessários a atender os interesses do Cliente nos referidos processos.", { spacing: 200 }),
-        createTextParagraph("1.4.	Os serviços aqui propostos incluem a participação em reuniões com o Cliente sempre que necessário para entendimentos, esclarecimentos e discussão de estratégias, sempre objetivando a melhor atuação possível do Escritório em defesa dos interesses do Cliente.", { spacing: 200 }),
+        createTextParagraph("1.4.	Os serviços aqui propostos compreende a participação em reuniões com o Cliente sempre que necessário para entendimentos, esclarecimentos e discussão de estratégias, sempre objetivando a melhor atuação possível do Escritório em defesa dos interesses do Cliente.", { spacing: 200 }),
         createTextParagraph("1.5.	Também está incluída a assessoria jurídica na interlocução com a contraparte, para fins de autocomposição.", { spacing: 200 }),
         createTextParagraph("1.6.	Os serviços aqui propostos não incluem consultoria geral ou outra que não possua correlação com o objeto da proposta.", { spacing: 400 }),
 
@@ -335,22 +336,40 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         createTextParagraph("3.15.	As partes elegem o foro da Comarca da Capital da Cidade do Rio de Janeiro para dirimir todas as controvérsias oriundas do presente instrumento, com renúncia expressa a qualquer outro.", { spacing: 200 }),
         createTextParagraph("O Cliente e o Escritório concordam que esta proposta poderá ser firmada de maneira digital por todos os seus signatários. Para este fim, serão utilizados serviços disponíveis no mercado e amplamente utilizados que possibilitam a segurança de assinatura digital por meio de sistemas de certificação capazes de validar a autoria de assinatura eletrônica, bem como de certificar sua integridade, através de certificado digital emitido no padrão ICP-Brasil, autorizando, inclusive, a sua assinatura digital por meio de plataformas digitais.", { spacing: 400 }),
 
-        createTextParagraph("Cordialmente,", { alignment: AlignmentType.CENTER, spacing: 100 }),
+        createTextParagraph("Cordialmente,", { alignment: AlignmentType.CENTER, spacing: 300 }), // Increased spacing (two enters = roughly 300-400)
 
         // Signatures
-        ...partners.map(p =>
-            new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 200 },
-                children: [
-                    new TextRun({ text: p.name.toUpperCase(), font: boldFont, size: 22, bold: true }),
-                ]
-            })
-        ),
-        createTextParagraph("SALOMÃO ADVOGADOS", { bold: true, alignment: AlignmentType.CENTER, spacing: 400 }),
+        ...partners.map(p => {
+            const underline = "_".repeat(Math.max(p.name.length + 10, 30));
+            return [
+                new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 400 },
+                    children: [new TextRun({ text: underline, font: standardFont, size: 22 })]
+                }),
+                new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    children: [
+                        new TextRun({ text: p.name.toUpperCase(), font: boldFont, size: 22, bold: true }),
+                    ]
+                })
+            ];
+        }).flat(),
+
+        new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+                new TextRun({ text: "SALOMÃO ADVOGADOS", font: boldFont, size: 22, bold: true }),
+            ]
+        }),
 
         new Paragraph({ text: "", spacing: { after: 600 } }),
 
+        new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 400 },
+            children: [new TextRun({ text: "_".repeat(Math.max((data.client_name || "").length + 10, 40)), font: standardFont, size: 22 })]
+        }),
         createTextParagraph((data.client_name || "[CLIENTE]").toUpperCase(), { bold: true, alignment: AlignmentType.CENTER, spacing: 200 }),
         new Paragraph({
             alignment: AlignmentType.CENTER,
