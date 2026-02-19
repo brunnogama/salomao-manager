@@ -1,19 +1,19 @@
 import { useState, useEffect, useMemo } from 'react'
-import { 
-  LayoutDashboard, 
-  Database, 
-  Home, 
-  FileSpreadsheet, 
-  Loader2, 
-  Search, 
-  Plus, 
+import {
+  LayoutDashboard,
+  Database,
+  Home,
+  FileSpreadsheet,
+  Loader2,
+  Search,
+  Plus,
   Trash2,
   UserCircle,
   LogOut,
   Grid,
   Briefcase
 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx-js-style'
 import { supabase } from '../../lib/supabase'
 import { FamiliaTable } from './FamiliaTable'
 import { FamiliaFormModal } from './FamiliaFormModal'
@@ -27,10 +27,10 @@ interface GestaoFamiliaProps {
   onLogout?: () => void;
 }
 
-export function GestaoFamilia({ 
-  userName = 'Usuário', 
-  onModuleHome, 
-  onLogout 
+export function GestaoFamilia({
+  userName = 'Usuário',
+  onModuleHome,
+  onLogout
 }: GestaoFamiliaProps) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'dados'>('dashboard')
   const [dadosFamilia, setDadosFamilia] = useState<any[]>([])
@@ -52,7 +52,7 @@ export function GestaoFamilia({
       .from('familia_salomao_dados')
       .select('*')
       .order('vencimento', { ascending: false })
-    
+
     if (!error && data) setDadosFamilia(data)
   }
 
@@ -63,7 +63,7 @@ export function GestaoFamilia({
   // Lógica de Filtragem
   const filteredData = useMemo(() => {
     return dadosFamilia.filter(item => {
-      const matchSearch = searchTerm === '' || 
+      const matchSearch = searchTerm === '' ||
         item.fornecedor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.descricao_servico?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.titular?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -154,7 +154,7 @@ export function GestaoFamilia({
         const wb = XLSX.read(bstr, { type: 'binary', cellDates: false })
         const ws = wb.Sheets[wb.SheetNames[0]]
         const data = XLSX.utils.sheet_to_json(ws)
-        
+
         const formatExcelDateToISO = (excelDate: any) => {
           if (!excelDate) return null;
           if (typeof excelDate === 'number') {
@@ -204,7 +204,7 @@ export function GestaoFamilia({
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
-      
+
       {/* PAGE HEADER - Padrão Salomão */}
       <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
@@ -250,14 +250,14 @@ export function GestaoFamilia({
         </div>
 
         <div className="flex bg-gray-100/80 p-1 rounded-2xl border border-gray-200 shadow-sm w-fit self-start lg:self-center shrink-0">
-          <button 
-            onClick={() => setActiveTab('dashboard')} 
+          <button
+            onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
           </button>
-          <button 
-            onClick={() => setActiveTab('dados')} 
+          <button
+            onClick={() => setActiveTab('dados')}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dados' ? 'bg-[#1e3a8a] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <Database className="h-3.5 w-3.5" /> Dados
@@ -269,17 +269,17 @@ export function GestaoFamilia({
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Buscar lançamentos..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
-            value={searchTerm} 
-            onChange={e => setSearchTerm(e.target.value)} 
+          <input
+            type="text"
+            placeholder="Buscar lançamentos..."
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <FamiliaFilters 
+          <FamiliaFilters
             data={dadosFamilia}
             filterTitular={filterTitular}
             setFilterTitular={setFilterTitular}
@@ -297,8 +297,8 @@ export function GestaoFamilia({
                 <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleImportExcel} disabled={isImporting} />
               </label>
             )}
-            <button 
-              onClick={() => { setSelectedItem(null); setIsModalOpen(true); }} 
+            <button
+              onClick={() => { setSelectedItem(null); setIsModalOpen(true); }}
               className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95 shrink-0"
             >
               <Plus className="h-3.5 w-3.5" /> Novo
@@ -322,8 +322,8 @@ export function GestaoFamilia({
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in zoom-in duration-300">
-            <FamiliaTable 
-              data={filteredData} 
+            <FamiliaTable
+              data={filteredData}
               onEditClick={handleEditItem}
               onDeleteClick={(item) => setItemToDelete(item)}
             />
@@ -331,9 +331,9 @@ export function GestaoFamilia({
         )}
       </div>
 
-      <FamiliaFormModal 
-        isOpen={isModalOpen} 
-        onClose={() => { setIsModalOpen(false); setSelectedItem(null); }} 
+      <FamiliaFormModal
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setSelectedItem(null); }}
         onSave={handleSaveData}
         initialData={selectedItem}
       />
@@ -362,13 +362,13 @@ export function GestaoFamilia({
               </p>
             </div>
             <div className="flex border-t border-gray-50">
-              <button 
+              <button
                 onClick={() => setItemToDelete(null)}
                 className="flex-1 px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 transition-all"
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 onClick={() => handleDelete(itemToDelete.id)}
                 className="flex-1 px-6 py-4 text-[9px] font-black text-red-500 uppercase tracking-widest hover:bg-red-50 transition-all border-l border-gray-50"
               >
