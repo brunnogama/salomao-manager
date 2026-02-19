@@ -46,7 +46,8 @@ export function Proposals() {
     // partner_id: '', // REMOVED
     // partner_name: '', // REMOVED
     selectedPartners: [] as (Partner & { collaboratorData?: Collaborator })[], // New: Multiple Partners
-    object: '', // Objeto da Proposta/Disputa
+    reference: '', // Referência da Proposta (Top)
+    object: '', // Objeto da Disputa (Clause 1.1)
     contractLocation: 'Rio de Janeiro', // New: Location
 
     // New Structure for multiple clauses with types
@@ -280,6 +281,7 @@ export function Proposals() {
         partner_id: primaryPartner.id, // Primary
         status: 'proposal',
         proposal_date: new Date().toISOString(),
+        reference: proposalData.reference,
         observations: proposalData.object,
 
         // Mapped Fields
@@ -366,6 +368,7 @@ export function Proposals() {
         })),
 
         location: proposalData.contractLocation,
+        reference: proposalData.reference,
 
         // Ensure these are arrays for the generator
         pro_labore_extras: proLaboreExtras,
@@ -624,7 +627,19 @@ export function Proposals() {
             </div>
 
             <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ref: [Objeto da Proposta]</label>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Referência [incluir referência da proposta]</label>
+              <input
+                type="text"
+                name="reference"
+                value={proposalData.reference}
+                onChange={handleChange}
+                placeholder="Ex: Contrato de Honorários..."
+                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Objeto da Proposta [incluir objeto da disputa]</label>
               <textarea
                 name="object"
                 value={proposalData.object}

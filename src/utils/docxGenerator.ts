@@ -183,7 +183,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
             spacing: { after: 50 },
             children: [
                 new TextRun({ text: "Ref: ", font: standardFont, size: 22, bold: true }),
-                new TextRun({ text: (data.observations || "[incluir objeto da proposta]"), font: standardFont, size: 22 })
+                new TextRun({ text: (data.reference || "[incluir referência da proposta]"), font: standardFont, size: 22 })
             ]
         }),
         new Paragraph({
@@ -378,17 +378,17 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
             ]
         }),
         new Paragraph({
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 400 },
+            alignment: AlignmentType.LEFT,
+            spacing: { before: 600 },
             children: [
-                new TextRun({ text: "Testemunha 01: __________________________", font: standardFont, size: 20 }),
+                new TextRun({ text: "Testemunha 01: __________________________", font: standardFont, size: 22 }),
             ]
         }),
         new Paragraph({
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 200 },
+            alignment: AlignmentType.LEFT,
+            spacing: { before: 300 },
             children: [
-                new TextRun({ text: "Testemunha 02: __________________________", font: standardFont, size: 20 }),
+                new TextRun({ text: "Testemunha 02: __________________________", font: standardFont, size: 22 }),
             ]
         }),
     ];
