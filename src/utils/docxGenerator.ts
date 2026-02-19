@@ -314,6 +314,19 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                                 const isLast = idx === arr.length - 1;
                                 const connector = arr.length > 1 && isLast ? " e " : (idx > 0 ? ", " : "");
 
+                                const gender = p.gender || 'M';
+                                const isFem = ['F', 'Feminino', 'Female'].includes(gender);
+
+                                const civil = p.civil_status ? p.civil_status.toLowerCase() : 'casado';
+                                const nacionalidade = p.nacionalidade ? p.nacionalidade.toLowerCase() : 'brasileiro';
+
+                                // Inflections
+                                const textNacionalidade = isFem && nacionalidade.includes('brasileir') ? 'brasileira' : nacionalidade;
+                                const textCivil = isFem && civil.includes('casad') ? 'casada' : (isFem && civil.includes('solteir') ? 'solteira' : civil);
+                                const textAdvogado = isFem ? 'advogada' : 'advogado';
+                                const textInscrito = isFem ? 'inscrita' : 'inscrito';
+                                const textPortador = isFem ? 'portadora' : 'portador';
+
                                 return [
                                     new TextRun({ text: connector, font: "Arial", size: 22 }),
                                     new TextRun({
@@ -323,7 +336,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                                         bold: true
                                     }),
                                     new TextRun({
-                                        text: `, ${p.nacionalidade?.toLowerCase()}, ${p.civil_status?.toLowerCase()}, advogado${p.gender === 'F' ? 'a' : ''}, inscrito${p.gender === 'F' ? 'a' : ''} na OAB/${p.oab_uf} sob o nº ${p.oab_numero}, portador${p.gender === 'F' ? 'a' : ''} do CPF/MF nº ${p.cpf}`,
+                                        text: `, ${textNacionalidade}, ${textCivil}, ${textAdvogado}, ${textInscrito} na OAB/${p.oab_uf} sob o nº ${p.oab_numero}, ${textPortador} do CPF/MF nº ${p.cpf}`,
                                         font: "Arial",
                                         size: 22
                                     }),

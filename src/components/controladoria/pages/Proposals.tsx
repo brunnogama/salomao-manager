@@ -358,10 +358,10 @@ export function Proposals() {
           name: p.name,
           civil_status: p.collaboratorData?.civil_status || 'casado(a)', // Default fallback
           nacionalidade: p.collaboratorData?.nacionalidade || 'brasileiro(a)',
-          oab_numero: p.oab_number || p.collaboratorData?.oab_numero || 'XXXXXX',
-          oab_uf: p.oab_state || p.collaboratorData?.oab_uf || 'RJ',
-          cpf: p.cpf || p.collaboratorData?.cpf || 'XXX.XXX.XXX-XX',
-          gender: p.gender || p.collaboratorData?.gender || 'M', // Important for agreement
+          oab_numero: p.collaboratorData?.oab_numero || p.oab_number || 'XXXXXX',
+          oab_uf: p.collaboratorData?.oab_uf || p.oab_state || 'RJ',
+          cpf: p.collaboratorData?.cpf || p.cpf || 'XXX.XXX.XXX-XX',
+          gender: p.collaboratorData?.gender || p.gender || 'M', // Important for agreement
         })),
 
         location: proposalData.contractLocation,
@@ -695,8 +695,28 @@ export function Proposals() {
                 proposalData.selectedPartners.map((p, idx) => (
                   <span key={p.id}>
                     {idx > 0 && ", e "}
-                    <span className="bg-yellow-200/50 px-1 font-bold ml-1">{p.name}</span>,
-                    brasileiro, casado, advogado...
+                    <span className="bg-yellow-200/50 px-1 font-bold ml-1">{p.name}</span>
+                    {(() => {
+                      const data = p.collaboratorData;
+                      const gender = data?.gender || p.gender || 'M';
+                      const isFem = ['F', 'Feminino', 'Female'].includes(gender);
+
+                      const oab = data?.oab_numero || p.oab_number || 'XXXXXX';
+                      const oabUf = data?.oab_uf || p.oab_state || 'RJ';
+                      const cpf = data?.cpf || p.cpf || 'XXX.XXX.XXX-XX';
+
+                      const civil = data?.civil_status ? data.civil_status.toLowerCase() : 'casado';
+                      const nacionalidade = data?.nacionalidade ? data.nacionalidade.toLowerCase() : 'brasileiro';
+
+                      // Inflections
+                      const textNacionalidade = isFem && nacionalidade.includes('brasileir') ? 'brasileira' : nacionalidade;
+                      const textCivil = isFem && civil.includes('casad') ? 'casada' : (isFem && civil.includes('solteir') ? 'solteira' : civil);
+                      const textAdvogado = isFem ? 'advogada' : 'advogado';
+                      const textInscrito = isFem ? 'inscrita' : 'inscrito';
+                      const textPortador = isFem ? 'portadora' : 'portador';
+
+                      return `, ${textNacionalidade}, ${textCivil}, ${textAdvogado}, ${textInscrito} na OAB/${oabUf} sob o nº ${oab}, ${textPortador} do CPF/MF nº ${cpf}`;
+                    })()}
                   </span>
                 ))
               ) : (
