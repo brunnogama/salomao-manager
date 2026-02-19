@@ -5,7 +5,9 @@ import {
   Eye,
   CheckCircle,
   FileSignature,
-  Search
+  Search,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
@@ -23,6 +25,11 @@ const toTitleCase = (str: string) => {
   );
 };
 
+interface FeeClause {
+  value: string;
+  description: string;
+}
+
 export function Proposals() {
   const [loading, setLoading] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -35,9 +42,11 @@ export function Proposals() {
     partner_id: '',
     partner_name: '', // For display/doc
     object: '', // Objeto da Proposta/Disputa
-    pro_labore: '',
-    final_success_fee: '',
-    intermediate_fees: '' // Comma separated for now in simple form
+
+    // New Structure for multiple clauses
+    pro_labore_clauses: [{ value: '', description: '' }] as FeeClause[],
+    success_fee_clauses: [{ value: '', description: '' }] as FeeClause[], // value here is % or R$
+    intermediate_fee_clauses: [{ value: '', description: '' }] as FeeClause[],
   });
 
   // Modal State (for after generation)
@@ -80,13 +89,52 @@ export function Proposals() {
         partner_id: value,
         partner_name: selectedPartner ? selectedPartner.name : ''
       }));
-    } else if (['pro_labore', 'final_success_fee'].includes(name)) {
-      setProposalData(prev => ({ ...prev, [name]: maskMoney(value) }));
     } else if (name === 'cnpj') {
       setProposalData(prev => ({ ...prev, [name]: maskCNPJ(value) }));
     } else {
       setProposalData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  // Helper to update clauses
+  const updateClause = (
+    type: 'pro_labore_clauses' | 'success_fee_clauses' | 'intermediate_fee_clauses',
+    index: number,
+    field: 'value' | 'description',
+    value: string
+  ) => {
+    setProposalData(prev => {
+      const newClauses = [...prev[type]];
+      if (field === 'value') {
+        // Apply masks if needed
+        if (type === 'pro_labore_clauses' || type === 'intermediate_fee_clauses') {
+          newClauses[index][field] = maskMoney(value);
+        } else {
+          // For success fee allow % or currency, generic mask or just raw for now if mixed
+          newClauses[index][field] = value;
+        }
+      } else {
+        newClauses[index][field] = value;
+      }
+      return { ...prev, [type]: newClauses };
+    });
+  };
+
+  const addClause = (type: 'pro_labore_clauses' | 'success_fee_clauses' | 'intermediate_fee_clauses') => {
+    setProposalData(prev => ({
+      ...prev,
+      [type]: [...prev[type], { value: '', description: '' }]
+    }));
+  };
+
+  const removeClause = (type: 'pro_labore_clauses' | 'success_fee_clauses' | 'intermediate_fee_clauses', index: number) => {
+    setProposalData(prev => {
+      if (prev[type].length <= 1) return prev; // Keep at least one
+      return {
+        ...prev,
+        [type]: prev[type].filter((_, i) => i !== index)
+      };
+    });
   };
 
   const handleClientNameChange = async (name: string) => {
@@ -133,29 +181,62 @@ export function Proposals() {
 
     try {
       // 1. Create Contract Record
+      // Map clauses to Contract fields
+      // First clause goes to main fields, others to extras
+
+      const proLaboreMain = proposalData.pro_labore_clauses[0];
+      const proLaboreExtras = proposalData.pro_labore_clauses.slice(1).map(c => c.value);
+      const proLaboreExtrasClauses = proposalData.pro_labore_clauses.slice(1).map(c => c.description);
+
+      const successMain = proposalData.success_fee_clauses[0];
+      const successExtras = proposalData.success_fee_clauses.slice(1).map(c => c.value);
+      const successExtrasClauses = proposalData.success_fee_clauses.slice(1).map(c => c.description);
+
+      // Intermediate fees are array-based in Contract, so we can map all
+      const intermediateValues = proposalData.intermediate_fee_clauses.map(c => c.value).filter(Boolean);
+      const intermediateClauses = proposalData.intermediate_fee_clauses.map(c => c.description).filter(Boolean);
+
       const newContract: any = {
         client_name: proposalData.clientName,
         cnpj: proposalData.cnpj,
         partner_id: proposalData.partner_id,
-        status: 'proposal',
+        status: 'proposal', // Keep as proposal
         proposal_date: new Date().toISOString(),
-        observations: proposalData.object, // "Ref: [incluir objeto da proposta]"
-        pro_labore: proposalData.pro_labore,
-        final_success_fee: proposalData.final_success_fee,
-        intermediate_fees: proposalData.intermediate_fees ? [proposalData.intermediate_fees] : [],
-        has_legal_process: false, // Default
-        uf: 'RJ' // Default
+        observations: proposalData.object,
+
+        // Mapped Fields
+        pro_labore: proLaboreMain.value,
+        pro_labore_clause: proLaboreMain.description,
+        pro_labore_extras: proLaboreExtras.length ? proLaboreExtras : null,
+        pro_labore_extras_clauses: proLaboreExtrasClauses.length ? proLaboreExtrasClauses : null,
+
+        final_success_fee: successMain.value,
+        final_success_fee_clause: successMain.description,
+        final_success_extras: successExtras.length ? successExtras : null,
+        final_success_extras_clauses: successExtrasClauses.length ? successExtrasClauses : null,
+
+        intermediate_fees: intermediateValues.length ? intermediateValues : null,
+        intermediate_fees_clauses: intermediateClauses.length ? intermediateClauses : null,
+
+        has_legal_process: false,
+        uf: 'RJ'
       };
 
       // Clean up undefined/empty
-      Object.keys(newContract).forEach(k => !newContract[k] && delete newContract[k]);
+      Object.keys(newContract).forEach(k => {
+        if (newContract[k] === null || newContract[k] === undefined || newContract[k] === "") {
+          delete newContract[k];
+        }
+      });
 
       // Check if client exists to link ID
+      // Fix 400 error: Ensure we are sending valid data. 
+      // If client doesn't exist, we might need to create it OR just leave client_id null (if allowed)
+
       const { data: existingClient } = await supabase.from('clients').select('id').eq('name', proposalData.clientName).maybeSingle();
       if (existingClient) {
         newContract.client_id = existingClient.id;
       } else if (proposalData.cnpj) {
-        // Try by CNPJ
         const { data: clientByCnpj } = await supabase.from('clients').select('id').eq('cnpj', proposalData.cnpj.replace(/\D/g, '')).maybeSingle();
         if (clientByCnpj) newContract.client_id = clientByCnpj.id;
       }
@@ -166,7 +247,10 @@ export function Proposals() {
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Insert Error Payload:", newContract); // For debugging
+        throw insertError;
+      }
 
       // 2. Generate Proposal Code
       const proposalCode = `PROP - ${String(insertedContract.seq_id).padStart(6, '0')}.1`;
@@ -183,10 +267,14 @@ export function Proposals() {
         ...insertedContract,
         partner_name: proposalData.partner_name,
         proposal_code: proposalCode,
-        intermediate_fees: proposalData.intermediate_fees ? [proposalData.intermediate_fees] : [],
-        final_success_fee: proposalData.final_success_fee,
-        pro_labore: proposalData.pro_labore,
-        observations: proposalData.object
+
+        // Ensure these are arrays for the generator
+        pro_labore_extras: proLaboreExtras,
+        pro_labore_extras_clauses: proLaboreExtrasClauses,
+        final_success_extras: successExtras,
+        final_success_extras_clauses: successExtrasClauses,
+        intermediate_fees: intermediateValues,
+        intermediate_fees_clauses: intermediateClauses,
       };
 
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
@@ -223,14 +311,12 @@ export function Proposals() {
       toast.success("Proposta gerada com sucesso!", { id: toastId });
 
       // 7. Open Modal
-      // Needs to fetch full structure or just pass what we have
-      // We pass what we have plus the new document
       setContractFormData({
         ...insertedContract,
         display_id: String(insertedContract.seq_id).padStart(6, '0'),
         partner_name: proposalData.partner_name,
         proposal_code: proposalCode,
-        documents: [docData] // Pre-load the document into the modal
+        documents: [docData]
       });
       setProcesses([]);
       setTimelineData([]);
@@ -246,6 +332,57 @@ export function Proposals() {
 
   // Helpers for Mock Preview
   const today = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Render Clause Input Helper
+  const renderClauseInputs = (
+    title: string,
+    type: 'pro_labore_clauses' | 'success_fee_clauses' | 'intermediate_fee_clauses',
+    valuePlaceholder: string,
+    descPlaceholder: string
+  ) => (
+    <div className="mb-4">
+      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{title}</label>
+      {proposalData[type].map((clause, index) => (
+        <div key={index} className="flex gap-2 mb-2 items-start">
+          <div className="w-1/3">
+            <input
+              type="text"
+              value={clause.value}
+              onChange={(e) => updateClause(type, index, 'value', e.target.value)}
+              placeholder={valuePlaceholder}
+              className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
+            />
+          </div>
+          <div className="w-2/3 flex gap-2">
+            <input
+              type="text"
+              value={clause.description}
+              onChange={(e) => updateClause(type, index, 'description', e.target.value)}
+              placeholder={descPlaceholder}
+              className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
+            />
+            {index === 0 ? (
+              <button
+                onClick={() => addClause(type)}
+                className="p-3.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
+                title="Adicionar Cláusula"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            ) : (
+              <button
+                onClick={() => removeClause(type, index)}
+                className="p-3.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors"
+                title="Remover Cláusula"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
@@ -283,8 +420,6 @@ export function Proposals() {
                 options={clientOptions}
                 placeholder="Selecione ou digite o nome"
                 allowCustomValue={true}
-              // No action button needed for now as requested "abrir o menu" implies just the select behavior
-              // If "abrir o menu de Clientes" meant checking details, we can add it later.
               />
             </div>
 
@@ -337,41 +472,11 @@ export function Proposals() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Pró-Labore (R$)</label>
-                <input
-                  type="text"
-                  name="pro_labore"
-                  value={proposalData.pro_labore}
-                  onChange={handleChange}
-                  placeholder="R$ 0,00"
-                  className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Êxito Final (R$/%)</label>
-                <input
-                  type="text"
-                  name="final_success_fee"
-                  value={proposalData.final_success_fee}
-                  onChange={handleChange}
-                  placeholder="R$ 0,00 ou %"
-                  className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-bold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Êxito Intermediário (Opcional)</label>
-              <input
-                type="text"
-                name="intermediate_fees"
-                value={proposalData.intermediate_fees}
-                onChange={handleChange}
-                placeholder="Descreva..."
-                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
-              />
-            </div>
+            {/* Fields Refactored */}
+            {renderClauseInputs("Pró-Labore & Condições", "pro_labore_clauses", "R$ 0,00", "Descrição do pró-labore...")}
+            {renderClauseInputs("Êxito Intermediário", "intermediate_fee_clauses", "R$ 0,00", "Descrição do êxito...")}
+            {renderClauseInputs("Êxito Final (%) ou (R$)", "success_fee_clauses", "% ou R$", "Descrição do êxito final...")}
+
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
@@ -398,11 +503,6 @@ export function Proposals() {
             {/* Header Image Placeholder */}
             <div className="flex justify-center mb-8">
               <img src="/logo-salomao.png" alt="Logo" className="h-10 object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
-              {/* Fallback if image fails in preview */}
-              <div className="text-center hidden">
-                <h1 className="text-xl font-bold text-[#1e3a8a]">SALOMÃO</h1>
-                <p className="text-[8px] tracking-[0.5em] uppercase">Advogados</p>
-              </div>
             </div>
 
             {/* Date */}
@@ -443,17 +543,41 @@ export function Proposals() {
             <p className="text-justify mb-2">
               2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
             </p>
-            <p className="text-justify mb-2">
-              2.2. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{proposalData.pro_labore || '[incluir valor]'}</span> para engajamento no caso...
-            </p>
 
-            <p className="text-justify mb-2">
-              2.3. Êxito intermediário de êxito: <span className="bg-yellow-200/50 px-1">{proposalData.intermediate_fees || '[incluir texto]'}</span>
-            </p>
+            {/* Dynamic Clauses Preview */}
+            {/* Pro-Labore (Starts at 2.2) */}
+            {proposalData.pro_labore_clauses.map((clause, idx) => {
+              const num = `2.${2 + idx}`;
+              return (
+                <p key={`pl-${idx}`} className="text-justify mb-2">
+                  {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
+                </p>
+              );
+            })}
 
-            <p className="text-justify mb-8">
-              2.4. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{proposalData.final_success_fee || '[incluir valor]'}</span>, a serem pagos em 10 (dez) dias...
-            </p>
+            {/* Intermediate (Starts after Pro-Labore) */}
+            {proposalData.intermediate_fee_clauses.map((clause, idx) => {
+              // Base index = 2 (previous fixed) + length of previous
+              const base = 2 + proposalData.pro_labore_clauses.length;
+              const num = `2.${base + idx}`;
+              return (
+                <p key={`int-${idx}`} className="text-justify mb-2">
+                  {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
+                </p>
+              );
+            })}
+
+            {/* Final Success (Starts after Intermediate) */}
+            {proposalData.success_fee_clauses.map((clause, idx) => {
+              const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
+              const num = `2.${base + idx}`;
+              if (!clause.value && idx === 0 && proposalData.success_fee_clauses.length === 1) return null; // Skip if empty default
+              return (
+                <p key={`sf-${idx}`} className="text-justify mb-8">
+                  {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
+                </p>
+              );
+            })}
 
             {/* Signatures */}
             <div className="text-center mt-12 space-y-8">
