@@ -600,6 +600,9 @@ export function ContractFormModal(props: Props) {
     } catch (error: any) {
       if (error.code === '23505' || error.message?.includes('contracts_hon_number_key')) {
         let msg = '⚠️ Duplicidade de Caso Detectada\n\nJá existe um contrato cadastrado com este Número HON.';
+        if (error.details) msg += `\n\nDetalhes: ${error.details}`;
+        if (error.message) msg += `\nErro Original: ${error.message}`;
+
         if (duplicateHonCase) {
           msg += `\n\n - ID: ${duplicateHonCase.display_id}\n - Cliente: ${duplicateHonCase.client_name}\n - Status: ${getStatusLabel(duplicateHonCase.status)
             }`;
