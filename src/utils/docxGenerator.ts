@@ -1,6 +1,20 @@
 import { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, Header, Footer, Table, TableRow, TableCell, BorderStyle, WidthType } from 'docx';
 import { Contract } from '../types/controladoria'; // Adjust path if needed
 import { saveAs } from 'file-saver';
+import { moedaPorExtenso, percentualPorExtenso } from './extenso';
+
+interface ProposalData extends Contract {
+    partners_data?: {
+        name: string;
+        civil_status: string;
+        nacionalidade: string;
+        oab_numero: string;
+        oab_uf: string;
+        cpf: string;
+        gender: string;
+    }[];
+    location?: string;
+}
 
 // Helper to fetch image as ArrayBuffer
 const fetchImage = async (url: string): Promise<ArrayBuffer> => {
@@ -9,8 +23,10 @@ const fetchImage = async (url: string): Promise<ArrayBuffer> => {
     return await blob.arrayBuffer();
 };
 
-export const generateProposalDocx = async (data: Contract, proposalCode: string) => {
+export const generateProposalDocx = async (data: ProposalData, proposalCode: string) => {
     const today = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const location = data.location || "Rio de Janeiro";
+    const dateLine = `${location}, ${today}`;
 
     // Fetch images
     // Assuming images are in public folder, we can fetch them by URL (relative to root)
@@ -34,9 +50,33 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                     font: "Arial",
                     size: 22,
                 }),
+                new TextRun({
+                    text: getExtensoText(value),
+                    font: "Arial",
+                    size: 22,
+                }),
                 new TextRun({ text: ` ${description || ""}`, font: "Arial", size: 22 }),
             ]
         });
+    };
+
+    const getExtensoText = (val: string | undefined) => {
+        if (!val) return "";
+        try {
+            if (val.includes("R$")) {
+                const num = parseFloat(val.replace(/[^\d,]/g, '').replace(',', '.'));
+                return ` (${moedaPorExtenso(num)})`;
+            }
+            if (val.includes("%") || val.match(/^\d+$/)) {
+                // Try to guess if it is percent
+                const num = parseFloat(val.replace(',', '.').replace('%', ''));
+                // Assuming it's percent if not R$ for this context, or just fallback
+                return ` (${percentualPorExtenso(num)})`;
+            }
+        } catch (e) {
+            return "";
+        }
+        return "";
     };
 
     const clauseParagraphs: Paragraph[] = [];
@@ -188,7 +228,7 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                         spacing: { before: 400, after: 400 },
                         children: [
                             new TextRun({
-                                text: today,
+                                text: dateLine,
                                 font: "Arial",
                                 size: 22,
                             })
@@ -260,13 +300,37 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                             new TextRun({ text: "É com grande honra que ", font: "Arial", size: 22 }),
                             new TextRun({ text: "SALOMÃO ADVOGADOS", font: "Arial", size: 22, bold: true }),
                             new TextRun({ text: ", neste ato representado, respectivamente, por seus sócios ", font: "Arial", size: 22 }),
-                            new TextRun({
-                                text: (data.partner_name || "[incluir nome do sócio]"),
-                                font: "Arial",
-                                size: 22,
-                                bold: true,
+
+                            // Iterate partners
+                            ...(data.partners_data || [{
+                                name: data.partner_name || "[incluir nome do sócio]",
+                                civil_status: "casado",
+                                nacionalidade: "brasileiro",
+                                oab_numero: "XXXXXX",
+                                oab_uf: "RJ",
+                                cpf: "XXX.XXX.XXX-XX",
+                                gender: "M"
+                            }]).flatMap((p, idx, arr) => {
+                                const isLast = idx === arr.length - 1;
+                                const connector = arr.length > 1 && isLast ? " e " : (idx > 0 ? ", " : "");
+
+                                return [
+                                    new TextRun({ text: connector, font: "Arial", size: 22 }),
+                                    new TextRun({
+                                        text: p.name.toUpperCase(),
+                                        font: "Arial",
+                                        size: 22,
+                                        bold: true
+                                    }),
+                                    new TextRun({
+                                        text: `, ${p.nacionalidade?.toLowerCase()}, ${p.civil_status?.toLowerCase()}, advogado${p.gender === 'F' ? 'a' : ''}, inscrito${p.gender === 'F' ? 'a' : ''} na OAB/${p.oab_uf} sob o nº ${p.oab_numero}, portador${p.gender === 'F' ? 'a' : ''} do CPF/MF nº ${p.cpf}`,
+                                        font: "Arial",
+                                        size: 22
+                                    }),
+                                ];
                             }),
-                            new TextRun({ text: ", brasileiro, casado, advogado... (texto padrão omitido para brevidade)... vem formular a presente proposta...", font: "Arial", size: 22 })
+
+                            new TextRun({ text: ", vem formular a presente proposta...", font: "Arial", size: 22 })
                         ]
                     }),
 
@@ -325,18 +389,23 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                             new TextRun({ text: "Cordialmente,", font: "Arial", size: 22 }),
                         ]
                     }),
-                    new Paragraph({
-                        alignment: AlignmentType.CENTER,
-                        spacing: { before: 400 },
-                        children: [
-                            new TextRun({
-                                text: (data.partner_name || "[Incluir nome do sócio]"),
-                                font: "Arial",
-                                size: 22,
-                                bold: true,
-                            }),
-                        ]
-                    }),
+
+                    // Signatures loop
+                    ...(data.partners_data || [{ name: data.partner_name || "[Nome do Sócio]" }]).map(p =>
+                        new Paragraph({
+                            alignment: AlignmentType.CENTER,
+                            spacing: { before: 200 },
+                            children: [
+                                new TextRun({
+                                    text: p.name ? p.name.toUpperCase() : "",
+                                    font: "Arial",
+                                    size: 22,
+                                    bold: true,
+                                }),
+                            ]
+                        })
+                    ),
+
                     new Paragraph({
                         alignment: AlignmentType.CENTER,
                         children: [

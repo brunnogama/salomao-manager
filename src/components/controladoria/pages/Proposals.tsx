@@ -8,16 +8,16 @@ import {
   Search,
   Plus,
   Trash2,
-  DollarSign,
-  Percent
+  X
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 import { saveAs } from 'file-saver';
-import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../../types/controladoria';
+import { Contract, Partner, ContractProcess, TimelineEvent, Analyst, Collaborator } from '../../../types/controladoria';
 import { ContractFormModal } from '../contracts/ContractFormModal';
 import { generateProposalDocx } from '../../../utils/docxGenerator';
 import { maskMoney, maskCNPJ } from '../utils/masks';
+import { moedaPorExtenso, percentualPorExtenso } from '../../../utils/extenso';
 import { CustomSelect } from '../ui/CustomSelect';
 
 const toTitleCase = (str: string) => {
@@ -42,17 +42,18 @@ export function Proposals() {
   const [proposalData, setProposalData] = useState({
     clientName: '',
     cnpj: '',
-    partner_id: '',
-    partner_name: '', // For display/doc
+    // partner_id: '', // REMOVED
+    // partner_name: '', // REMOVED
+    selectedPartners: [] as (Partner & { collaboratorData?: Collaborator })[], // New: Multiple Partners
     object: '', // Objeto da Proposta/Disputa
+    contractLocation: 'Rio de Janeiro', // New: Location
 
     // New Structure for multiple clauses with types
     pro_labore_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
     intermediate_fee_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
 
-    // Split Success Fees
-    success_fee_fixed: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
-    success_fee_percent: [{ value: '', description: '', type: 'percent' }] as FeeClause[],
+    // Unified Success Fees
+    final_success_fee_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
   });
 
   // Modal State (for after generation)
@@ -88,23 +89,60 @@ export function Proposals() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
-    if (name === 'partner_id') {
-      const selectedPartner = partners.find(p => p.id === value);
-      setProposalData(prev => ({
-        ...prev,
-        partner_id: value,
-        partner_name: selectedPartner ? selectedPartner.name : ''
-      }));
-    } else if (name === 'cnpj') {
+    if (name === 'cnpj') {
       setProposalData(prev => ({ ...prev, [name]: maskCNPJ(value) }));
     } else {
       setProposalData(prev => ({ ...prev, [name]: value }));
     }
   };
 
+  const handlePartnerAdd = async (partnerId: string) => {
+    if (!partnerId) return;
+
+    // Check if already selected
+    if (proposalData.selectedPartners.find(p => p.id === partnerId)) {
+      return toast.error("Este sócio já foi adicionado.");
+    }
+
+    const partner = partners.find(p => p.id === partnerId);
+    if (!partner) return;
+
+    // Fetch details from Collaborators
+    let collaboratorData: Collaborator | undefined;
+
+    // Attempt 1: Search by name (Assuming exact match or close enough)
+    // We should probably rely on a linked ID if it existed, but name is what we have typically
+    const { data: collabData } = await supabase
+      .from('collaborators')
+      .select('*')
+      .ilike('name', partner.name)
+      .eq('status', 'active') // Only active ones?
+      .maybeSingle();
+
+    if (collabData) {
+      collaboratorData = collabData as Collaborator;
+    } else {
+      // Fallback: If partner table has info (it usually doesn't have details like OAB/Civil Status fully populated in types but let's check runtime)
+      // For now, if not found, we just use partner data.
+      toast.warning(`Dados detalhados não encontrados em Colaboradores para ${partner.name}.`);
+    }
+
+    setProposalData(prev => ({
+      ...prev,
+      selectedPartners: [...prev.selectedPartners, { ...partner, collaboratorData }]
+    }));
+  };
+
+  const handlePartnerRemove = (index: number) => {
+    setProposalData(prev => ({
+      ...prev,
+      selectedPartners: prev.selectedPartners.filter((_, i) => i !== index)
+    }));
+  };
+
   // Helper to update clauses
   const updateClause = (
-    type: 'pro_labore_clauses' | 'success_fee_fixed' | 'success_fee_percent' | 'intermediate_fee_clauses',
+    type: 'pro_labore_clauses' | 'final_success_fee_clauses' | 'intermediate_fee_clauses',
     index: number,
     field: 'value' | 'description' | 'type',
     value: string
@@ -128,18 +166,18 @@ export function Proposals() {
     });
   };
 
-  const addClause = (type: 'pro_labore_clauses' | 'success_fee_fixed' | 'success_fee_percent' | 'intermediate_fee_clauses') => {
+  const addClause = (type: 'pro_labore_clauses' | 'final_success_fee_clauses' | 'intermediate_fee_clauses') => {
     setProposalData(prev => ({
       ...prev,
       [type]: [...prev[type], {
         value: '',
         description: '',
-        type: type === 'success_fee_percent' ? 'percent' : 'currency' // Default based on section
+        type: 'currency' // Default to currency, user can toggle
       }]
     }));
   };
 
-  const removeClause = (type: 'pro_labore_clauses' | 'success_fee_fixed' | 'success_fee_percent' | 'intermediate_fee_clauses', index: number) => {
+  const removeClause = (type: 'pro_labore_clauses' | 'final_success_fee_clauses' | 'intermediate_fee_clauses', index: number) => {
     setProposalData(prev => {
       // Allow removing all if needed, but maybe keep 1 for UX? 
       // User requested distinct sections, so maybe empty sections are allowed?
@@ -194,7 +232,7 @@ export function Proposals() {
 
   const handleGenerateProposal = async () => {
     if (!proposalData.clientName) return toast.error("Preencha o Nome do Cliente");
-    if (!proposalData.partner_id) return toast.error("Selecione um Sócio");
+    if (proposalData.selectedPartners.length === 0) return toast.error("Selecione pelo menos um Sócio");
 
     setLoading(true);
     const toastId = toast.loading("Gerando proposta e documentos...");
@@ -206,21 +244,39 @@ export function Proposals() {
       const proLaboreExtras = proposalData.pro_labore_clauses.slice(1).map(c => c.value);
       const proLaboreExtrasClauses = proposalData.pro_labore_clauses.slice(1).map(c => c.description);
 
-      const successFixedMain = proposalData.success_fee_fixed[0];
-      const successFixedExtras = proposalData.success_fee_fixed.slice(1).map(c => c.value);
-      const successFixedExtrasClauses = proposalData.success_fee_fixed.slice(1).map(c => c.description);
+      // Unified Success Fees
+      // We need to map these to the DB structure. 
+      // The DB has `final_success_fee` (string), `final_success_percent` (string), and extras.
+      // We should probably store the first currency one in `final_success_fee`, first percent in `final_success_percent`?
+      // OR, since we are unifying, maybe we just treat them all as a list.
+      // However, the DB/Contract interface expects specific fields. 
+      // For legacy compatibility, let's try to map the first occurrence of each type to the main fields.
 
-      const successPercentMain = proposalData.success_fee_percent[0];
-      const successPercentExtras = proposalData.success_fee_percent.slice(1).map(c => c.value);
-      const successPercentExtrasClauses = proposalData.success_fee_percent.slice(1).map(c => c.description);
+      const firstCurrencySuccess = proposalData.final_success_fee_clauses.find(c => c.type === 'currency');
+      const firstPercentSuccess = proposalData.final_success_fee_clauses.find(c => c.type === 'percent');
+
+      // Extras are those that are NOT the firstCurrency or firstPercent
+      const successExtras = proposalData.final_success_fee_clauses.filter(c => c !== firstCurrencySuccess && c !== firstPercentSuccess);
+
+      // We'll store extras in `final_success_extras` (for currency) and `percent_extras` (for percent)
+      // Actually, let's just dump ALL mixed extras into `final_success_extras` with a marker? 
+      // No, `final_success_extras` is usually just values. `final_success_extras_clauses` is descriptions.
+      // `docxGenerator` needs to know the type to format properly.
+      // Let's separate them:
+      const currencyExtras = successExtras.filter(c => c.type === 'currency');
+      const percentExtras = successExtras.filter(c => c.type === 'percent');
 
       const intermediateValues = proposalData.intermediate_fee_clauses.map(c => c.value).filter(Boolean);
       const intermediateClauses = proposalData.intermediate_fee_clauses.map(c => c.description).filter(Boolean);
 
+      // Prepare Partners Data for JSON storage or Observations (if needed in DB)
+      // The `contracts` table has `partner_id` and `partner_name`. We should set the primary one (first one) there.
+      const primaryPartner = proposalData.selectedPartners[0];
+
       const newContract: any = {
         client_name: proposalData.clientName,
         cnpj: proposalData.cnpj,
-        partner_id: proposalData.partner_id,
+        partner_id: primaryPartner.id, // Primary
         status: 'proposal',
         proposal_date: new Date().toISOString(),
         observations: proposalData.object,
@@ -231,24 +287,28 @@ export function Proposals() {
         pro_labore_extras: proLaboreExtras.length ? proLaboreExtras : null,
         pro_labore_extras_clauses: proLaboreExtrasClauses.length ? proLaboreExtrasClauses : null,
 
-        // Fixed Success Fees 
-        final_success_fee: successFixedMain.value,
-        final_success_fee_clause: successFixedMain.description,
-        final_success_extras: successFixedExtras.length ? successFixedExtras : null,
-        final_success_extras_clauses: successFixedExtrasClauses.length ? successFixedExtrasClauses : null,
+        // Success Fees Mapped
+        final_success_fee: firstCurrencySuccess?.value || null,
+        final_success_fee_clause: firstCurrencySuccess?.description || null,
 
-        // Percent Success Fees (Using 'percent_extras' to store them for simplicity or mapped fields)
-        // We will map main percent to `final_success_percent` and others to `percent_extras`
-        final_success_percent: successPercentMain.value,
-        final_success_percent_clause: successPercentMain.description,
-        percent_extras: successPercentExtras.length ? successPercentExtras : null,
-        percent_extras_clauses: successPercentExtrasClauses.length ? successPercentExtrasClauses : null,
+        final_success_percent: firstPercentSuccess?.value || null,
+        final_success_percent_clause: firstPercentSuccess?.description || null,
+
+        final_success_extras: currencyExtras.length ? currencyExtras.map(c => c.value) : null,
+        final_success_extras_clauses: currencyExtras.length ? currencyExtras.map(c => c.description) : null,
+
+        percent_extras: percentExtras.length ? percentExtras.map(c => c.value) : null,
+        percent_extras_clauses: percentExtras.length ? percentExtras.map(c => c.description) : null,
 
         intermediate_fees: intermediateValues.length ? intermediateValues : null,
         intermediate_fees_clauses: intermediateClauses.length ? intermediateClauses : null,
 
         has_legal_process: false,
-        uf: 'RJ'
+        uf: proposalData.contractLocation || 'RJ', // Use selected location or fallback
+
+        // Store full partner list in a JSON field if possible, or we just rely on the DOCX generation
+        // DB doesn't seem to have `partners_data` column yet. We won't persist other partners in DB for now, just the primary.
+        // But we DO need to generate the doc with ALL of them.
       };
 
       // Clean up undefined/empty
@@ -288,23 +348,42 @@ export function Proposals() {
 
       // 3. Generate DOCX
       // Prepare full data object for generator
-      const fullContractData: Contract = {
+      const fullContractData: Contract & { partners_data: any[], location: string, full_success_clauses: FeeClause[] } = {
         ...insertedContract,
-        partner_name: proposalData.partner_name,
+        partner_name: primaryPartner.name,
         proposal_code: proposalCode,
+
+        // Passing extended data
+        partners_data: proposalData.selectedPartners.map(p => ({
+          name: p.name,
+          civil_status: p.collaboratorData?.civil_status || 'casado(a)', // Default fallback
+          nacionalidade: p.collaboratorData?.nacionalidade || 'brasileiro(a)',
+          oab_numero: p.oab_number || p.collaboratorData?.oab_numero || 'XXXXXX',
+          oab_uf: p.oab_state || p.collaboratorData?.oab_uf || 'RJ',
+          cpf: p.cpf || p.collaboratorData?.cpf || 'XXX.XXX.XXX-XX',
+          gender: p.gender || p.collaboratorData?.gender || 'M', // Important for agreement
+        })),
+
+        location: proposalData.contractLocation,
 
         // Ensure these are arrays for the generator
         pro_labore_extras: proLaboreExtras,
         pro_labore_extras_clauses: proLaboreExtrasClauses,
 
-        final_success_extras: successFixedExtras,
-        final_success_extras_clauses: successFixedExtrasClauses,
+        final_success_extras: currencyExtras.length ? currencyExtras.map(c => c.value) : undefined,
+        final_success_extras_clauses: currencyExtras.length ? currencyExtras.map(c => c.description) : undefined,
 
-        percent_extras: successPercentExtras,
-        percent_extras_clauses: successPercentExtrasClauses,
+        percent_extras: percentExtras.length ? percentExtras.map(c => c.value) : undefined,
+        percent_extras_clauses: percentExtras.length ? percentExtras.map(c => c.description) : undefined,
 
         intermediate_fees: intermediateValues,
         intermediate_fees_clauses: intermediateClauses,
+
+        // Passing the raw mixed list helps the generator output in order if it supports it
+        // But since we mapped to split fields, the generator logic (which iterates separately) might be fine.
+        // Or we should update generator to use a mixed list.
+        // Let's pass the mixed list too, so the generator can use it for exact ordering!
+        full_success_clauses: proposalData.final_success_fee_clauses,
       };
 
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
@@ -344,7 +423,7 @@ export function Proposals() {
       setContractFormData({
         ...insertedContract,
         display_id: String(insertedContract.seq_id).padStart(6, '0'),
-        partner_name: proposalData.partner_name,
+        partner_name: primaryPartner.name,
         proposal_code: proposalCode,
         documents: [docData]
       });
@@ -366,7 +445,7 @@ export function Proposals() {
   // Render Clause Input Helper
   const renderClauseInputs = (
     title: string,
-    type: 'pro_labore_clauses' | 'success_fee_fixed' | 'success_fee_percent' | 'intermediate_fee_clauses',
+    type: 'pro_labore_clauses' | 'final_success_fee_clauses' | 'intermediate_fee_clauses',
     valuePlaceholder: string,
     descPlaceholder: string,
     showTypeToggle: boolean = false
@@ -377,7 +456,7 @@ export function Proposals() {
         <div key={index} className="flex gap-2 mb-2 items-start">
 
           {/* Value Input Group */}
-          <div className="w-1/3 relative">
+          <div className="w-1/3 relative flex flex-col gap-1">
             <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50/50 focus-within:border-[#1e3a8a] transition-all overflow-hidden">
               {showTypeToggle && (
                 <button
@@ -491,18 +570,56 @@ export function Proposals() {
             </div>
 
             <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócio Responsável [Nome do Sócio]</label>
-              <select
-                name="partner_id"
-                value={proposalData.partner_id}
-                onChange={handleChange}
-                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all cursor-pointer"
-              >
-                <option value="">Selecione um sócio...</option>
-                {partners.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócios Responsáveis</label>
+
+              <div className="space-y-2 mb-3">
+                {proposalData.selectedPartners.map((p, idx) => (
+                  <div key={p.id} className="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-blue-900">{p.name}</span>
+                      <span className="text-[10px] text-gray-500">
+                        {p.collaboratorData ? 'Dados em Colaboradores: OK' : 'Sem dados em Colaboradores (usando básico)'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handlePartnerRemove(idx)}
+                      className="p-1 hover:bg-red-100 rounded-full text-red-500 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 ))}
-              </select>
+              </div>
+
+              <div className="flex gap-2">
+                <select
+                  onChange={(e) => handlePartnerAdd(e.target.value)}
+                  value=""
+                  className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all cursor-pointer"
+                >
+                  <option value="">+ Adicionar um sócio...</option>
+                  {partners.filter(p => !proposalData.selectedPartners.some(sp => sp.id === p.id)).map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local do Contrato</label>
+              <CustomSelect
+                label="" // Empty label as we have the header above
+                value={proposalData.contractLocation}
+                onChange={(val) => setProposalData(prev => ({ ...prev, contractLocation: val }))}
+                options={[
+                  { label: 'Rio de Janeiro', value: 'Rio de Janeiro' },
+                  { label: 'São Paulo', value: 'São Paulo' },
+                  { label: 'Brasília', value: 'Brasília' },
+                  { label: 'Vitória', value: 'Vitória' },
+                ]}
+                allowCustomValue={true}
+                placeholder="Selecione ou digite a cidade"
+              />
             </div>
 
             <div>
@@ -518,12 +635,12 @@ export function Proposals() {
             </div>
 
             {/* Fields Refactored */}
+            {/* Fields Refactored */}
             {renderClauseInputs("Pró-Labore & Condições", "pro_labore_clauses", "R$ 0,00", "Descrição do pró-labore...", true)}
             {renderClauseInputs("Êxito Intermediário", "intermediate_fee_clauses", "R$ 0,00", "Descrição do êxito...", true)}
 
-            {/* Split Success Fees */}
-            {renderClauseInputs("Êxito Final (Valores Fixos - R$)", "success_fee_fixed", "R$ 0,00", "Descrição do êxito...", false)}
-            {renderClauseInputs("Êxito Final (Percentual - %)", "success_fee_percent", "% 0", "Descrição (% do benefício econômico...)", false)}
+            {/* Unified Success Fees */}
+            {renderClauseInputs("Êxito Final (R$ ou %)", "final_success_fee_clauses", "Valor", "Descrição do êxito...", true)}
 
           </div>
 
@@ -555,7 +672,7 @@ export function Proposals() {
 
             {/* Date */}
             <div className="text-right mb-6">
-              <span className="bg-yellow-200/50 px-1">{today}</span>.
+              <span className="bg-yellow-200/50 px-1">{proposalData.contractLocation}, {today}</span>.
             </div>
 
             {/* Addressee */}
@@ -574,8 +691,18 @@ export function Proposals() {
 
             <p className="text-justify mb-4">
               É com grande honra que <strong>SALOMÃO ADVOGADOS</strong>, neste ato representado, respectivamente, por seus sócios
-              <span className="bg-yellow-200/50 px-1 font-bold ml-1">{proposalData.partner_name || '[incluir nome do sócio]'}</span>,
-              brasileiro, casado, advogado... vem formular a presente proposta de honorários...
+              {proposalData.selectedPartners.length > 0 ? (
+                proposalData.selectedPartners.map((p, idx) => (
+                  <span key={p.id}>
+                    {idx > 0 && ", e "}
+                    <span className="bg-yellow-200/50 px-1 font-bold ml-1">{p.name}</span>,
+                    brasileiro, casado, advogado...
+                  </span>
+                ))
+              ) : (
+                <span className="bg-yellow-200/50 px-1 font-bold ml-1">[incluir nome do sócio]</span>
+              )}
+              , vem formular a presente proposta de honorários...
             </p>
 
             {/* 1. Objeto */}
@@ -615,26 +742,24 @@ export function Proposals() {
               );
             })}
 
-            {/* Final Success Fixed (Starts after Intermediate) */}
-            {proposalData.success_fee_fixed.map((clause, idx) => {
+            {/* Final Success - Unified */}
+            {proposalData.final_success_fee_clauses.map((clause, idx) => {
               const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
               const num = `2.${base + idx}`;
-              if (!clause.value && idx === 0 && proposalData.success_fee_fixed.length === 1) return null;
-              return (
-                <p key={`sf-fix-${idx}`} className="text-justify mb-2">
-                  {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
-                </p>
-              );
-            })}
 
-            {/* Final Success Percent (Starts after Fixed Success) */}
-            {proposalData.success_fee_percent.map((clause, idx) => {
-              const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length + proposalData.success_fee_fixed.length;
-              const num = `2.${base + idx}`;
-              if (!clause.value && idx === 0 && proposalData.success_fee_percent.length === 1) return null;
+              let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+              let extensoPart = "";
+              if (clause.value) {
+                if (clause.type === 'currency') {
+                  extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
+                } else {
+                  extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
+                }
+              }
+
               return (
-                <p key={`sf-perc-${idx}`} className="text-justify mb-2">
-                  {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{clause.value || '[percentual]'}</span> {clause.description}
+                <p key={`sf-unified-${idx}`} className="text-justify mb-2">
+                  {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
                 </p>
               );
             })}
@@ -643,7 +768,11 @@ export function Proposals() {
             <div className="text-center mt-12 space-y-8">
               <div>
                 <p className="mb-2">Cordialmente,</p>
-                <p className="bg-yellow-200/50 px-1 font-bold inline-block">{proposalData.partner_name || '[Incluir nome do sócio]'}</p>
+                {proposalData.selectedPartners.length > 0 ? proposalData.selectedPartners.map(p => (
+                  <p key={p.id} className="bg-yellow-200/50 px-1 font-bold block">{p.name}</p>
+                )) : (
+                  <p className="bg-yellow-200/50 px-1 font-bold inline-block">[Incluir nome do sócio]</p>
+                )}
                 <p className="font-bold">SALOMÃO ADVOGADOS</p>
               </div>
 
