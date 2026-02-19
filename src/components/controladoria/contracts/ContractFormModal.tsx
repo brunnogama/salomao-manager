@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
-  Plus, X, Save, Settings, Check, ChevronDown, Clock, History as HistoryIcon,
-  ArrowRight, Edit, Trash2, CalendarCheck, Hourglass, Upload, FileText,
-  Download, AlertCircle, Search, Loader2, Link as LinkIcon, MapPin,
-  DollarSign, Tag, Gavel, Eye, AlertTriangle, TrendingUp, TrendingDown,
-  Pencil, Files, User
+  X, Save, Gavel, AlertTriangle, User,
+  DollarSign, Files, Loader2, Search
 } from 'lucide-react';
-import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst, Magistrate } from '../../../types/controladoria';
-import { maskCNPJ, maskMoney, maskHon, maskCNJ, toTitleCase, parseCurrency } from '../utils/masks';
+import { Contract, Partner, ContractProcess, TimelineEvent, ContractDocument, Analyst } from '../../../types/controladoria';
+import { maskCNPJ, maskMoney, maskHon, toTitleCase } from '../utils/masks';
 import { decodeCNJ } from '../utils/cnjDecoder';
-import { addDays, addMonths } from 'date-fns';
+import { addDays } from 'date-fns';
 
 // Componentes Modularizados
 import { OptionManager } from './components/OptionManager';
@@ -149,8 +146,14 @@ export function ContractFormModal(props: Props) {
   useEffect(() => {
     const checkClientDuplicates = async () => {
       if (!formData.client_name || formData.client_name.length < 3) return setDuplicateClientCases([]);
-      const { data } = await supabase.from('contracts').select('id, hon_number, status, display_id').ilike('client_name', `%${formData.client_name}%`).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').limit(5);
-      if (data) setDuplicateClientCases(data);
+      const { data } = await supabase.from('contracts').select('id, hon_number, status, seq_id').ilike('client_name', `%${formData.client_name}%`).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').limit(5);
+      if (data) {
+        const formatted = data.map(c => ({
+          ...c,
+          display_id: String((c as any).seq_id || 0).padStart(6, '0')
+        }));
+        setDuplicateClientCases(formatted);
+      }
     };
     const timer = setTimeout(checkClientDuplicates, 800);
     return () => clearTimeout(timer);
@@ -159,8 +162,15 @@ export function ContractFormModal(props: Props) {
   useEffect(() => {
     const checkHonDuplicates = async () => {
       if (!formData.hon_number || formData.hon_number.length < 2) return setDuplicateHonCase(null);
-      const { data } = await supabase.from('contracts').select('id, client_name, display_id, status').eq('hon_number', formData.hon_number).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').maybeSingle();
-      setDuplicateHonCase(data);
+      const { data } = await supabase.from('contracts').select('id, client_name, seq_id, status').eq('hon_number', formData.hon_number).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').maybeSingle();
+      if (data) {
+        setDuplicateHonCase({
+          ...data,
+          display_id: String((data as any).seq_id || 0).padStart(6, '0')
+        });
+      } else {
+        setDuplicateHonCase(null);
+      }
     };
     const timer = setTimeout(checkHonDuplicates, 800);
     return () => clearTimeout(timer);
@@ -169,11 +179,21 @@ export function ContractFormModal(props: Props) {
   useEffect(() => {
     const checkOpponentDuplicates = async () => {
       if (!currentProcess.opponent || currentProcess.opponent.length < 3) return setDuplicateOpponentCases([]);
-      const { data } = await supabase.from('contract_processes').select('contract_id, contracts(id, client_name, hon_number, display_id)').ilike('opponent', `%${currentProcess.opponent}%`).limit(5);
+      const { data } = await supabase.from('contract_processes').select('contract_id, contracts(id, client_name, hon_number, seq_id)').ilike('opponent', `%${currentProcess.opponent}%`).limit(5);
       if (data) {
         const uniqueCases = data.reduce((acc: any[], current: any) => {
           const x = acc.find(item => item.contracts?.id === current.contracts?.id);
-          return (!x && current.contracts) ? acc.concat([current]) : acc;
+          if (!x && current.contracts) {
+            const formatted = {
+              ...current,
+              contracts: {
+                ...current.contracts,
+                display_id: String(current.contracts.seq_id || 0).padStart(6, '0')
+              }
+            };
+            return acc.concat([formatted]);
+          }
+          return acc;
         }, []);
         setDuplicateOpponentCases(uniqueCases);
       }
@@ -187,12 +207,22 @@ export function ContractFormModal(props: Props) {
       const authorName = (currentProcess as any).author;
       if (!authorName || authorName.length < 3) return setDuplicateAuthorCases([]);
 
-      const { data } = await supabase.from('contract_processes').select('contract_id, contracts(id, client_name, hon_number, display_id)').ilike('author', `%${authorName}%`).limit(5);
+      const { data } = await supabase.from('contract_processes').select('contract_id, contracts(id, client_name, hon_number, seq_id)').ilike('author', `%${authorName}%`).limit(5);
 
       if (data) {
         const uniqueCases = data.reduce((acc: any[], current: any) => {
           const x = acc.find(item => item.contracts?.id === current.contracts?.id);
-          return (!x && current.contracts) ? acc.concat([current]) : acc;
+          if (!x && current.contracts) {
+            const formatted = {
+              ...current,
+              contracts: {
+                ...current.contracts,
+                display_id: String(current.contracts.seq_id || 0).padStart(6, '0')
+              }
+            };
+            return acc.concat([formatted]);
+          }
+          return acc;
         }, []);
         setDuplicateAuthorCases(uniqueCases);
       }
@@ -207,13 +237,24 @@ export function ContractFormModal(props: Props) {
       if (!currentProcess.process_number || currentProcess.process_number.length < 15 || ['CONSULTORIA', 'ASSESSORIA JURÍDICA', 'PROCESSO ADMINISTRATIVO', 'OUTROS'].includes(currentProcess.process_number)) return setDuplicateProcessData(null);
 
       const { data } = await supabase.from('contract_processes')
-        .select('contract_id, contracts(id, client_name, display_id)')
+        .select('contract_id, contracts(id, client_name, seq_id)')
         .eq('process_number', currentProcess.process_number)
         .neq('contract_id', formData.id || '00000000-0000-0000-0000-000000000000')
         .limit(1)
         .maybeSingle();
 
-      setDuplicateProcessData(data);
+      if (data && data.contracts) {
+        const contractInfo = Array.isArray(data.contracts) ? data.contracts[0] : data.contracts;
+        setDuplicateProcessData({
+          ...data,
+          contracts: {
+            ...contractInfo,
+            display_id: String(contractInfo.seq_id || 0).padStart(6, '0')
+          }
+        });
+      } else {
+        setDuplicateProcessData(null);
+      }
     };
     const timer = setTimeout(checkProcessNumber, 800);
     return () => clearTimeout(timer);
@@ -690,7 +731,7 @@ export function ContractFormModal(props: Props) {
     const newName = toTitleCase(name);
     setFormData(prev => ({ ...prev, client_name: newName }));
     if (!newName) return;
-    const { data } = await supabase.from('clients').select('cnpj, id').eq('name', newName).single();
+    const { data } = await supabase.from('clients').select('cnpj, id').eq('name', newName).maybeSingle();
     if (data && data.cnpj) setFormData(prev => ({ ...prev, client_name: newName, client_id: data.id, cnpj: maskCNPJ(data.cnpj) }));
   };
 
