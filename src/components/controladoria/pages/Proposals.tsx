@@ -644,16 +644,13 @@ export function Proposals() {
               </div>
 
               <div className="flex gap-2">
-                <select
-                  onChange={(e) => handlePartnerAdd(e.target.value)}
+                <CustomSelect
                   value=""
-                  className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all cursor-pointer"
-                >
-                  <option value="">+ Adicionar um sócio...</option>
-                  {partners.filter(p => !proposalData.selectedPartners.some(sp => sp.id === p.id)).map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                  onChange={(val) => handlePartnerAdd(val)}
+                  options={partners.filter(p => !proposalData.selectedPartners.some(sp => sp.id === p.id)).map(p => ({ label: p.name, value: p.id }))}
+                  placeholder="+ Adicionar um sócio..."
+                  className="w-full"
+                />
               </div>
             </div>
 
