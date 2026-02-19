@@ -504,7 +504,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   })
 
   const handleExportXLSX = () => {
-<<<<<<< HEAD
     // 1. Sort Data: Active first, then Inactive
     const sortedData = [...filtered].sort((a, b) => {
       if (a.status === b.status) return a.name.localeCompare(b.name);
@@ -512,9 +511,6 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     });
 
     const dataToExport = sortedData.map(c => ({
-=======
-    const dataToExport = filtered.map(c => ({
->>>>>>> 970c4534be1d6c273044affc64c7855f7d8797d2
       // 1. DADOS PESSOAIS
       'Nome Completo': c.name,
       'CPF': c.cpf,
