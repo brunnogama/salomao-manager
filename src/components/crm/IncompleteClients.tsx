@@ -10,7 +10,7 @@ import { FilterSelect } from '../controladoria/ui/FilterSelect'
 import { ClientFormModal } from '../controladoria/clients/ClientFormModal'
 import { Client } from '../../types/controladoria'
 import { CRMContact } from '../../types/crmContact'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx-js-style'
 
 interface IncompleteClientsProps {
   userName?: string;
