@@ -60,6 +60,7 @@ export function ContractFormModal(props: Props) {
   const [duplicateAuthorCases, setDuplicateAuthorCases] = useState<any[]>([]);
   const [duplicateHonCase, setDuplicateHonCase] = useState<any | null>(null);
   const [duplicateProcessData, setDuplicateProcessData] = useState<any | null>(null);
+  const [tempFiles, setTempFiles] = useState<{ file: File, type: string }[]>([]);
 
   const [authorHasNoCnpj, setAuthorHasNoCnpj] = useState(false);
   const [opponentHasNoCnpj, setOpponentHasNoCnpj] = useState(false);
@@ -128,6 +129,7 @@ export function ContractFormModal(props: Props) {
       setInitialFormData(null);
       setActiveManager(null);
       setActiveTab(1);
+      setTempFiles([]);
     }
   }, [isOpen, formData.id]);
 
@@ -515,7 +517,16 @@ export function ContractFormModal(props: Props) {
 
   const handleSaveWithIntegrations = async () => {
     if (editingProcessIndex !== null) return alert('⚠️ Finalize a edição do processo (clique no check ✔️) antes de salvar o caso.');
-    if (currentProcess.process_number || otherProcessType) return alert('⚠️ Você inseriu dados de um processo mas não o adicionou.\n\nClique no botão Adicionar (+) na aba Dados do Objeto para incluir o processo no caso antes de salvar.');
+
+    // Permitir salvar se for um tipo "Outro" (nacional/administrativo) sem número, ou se o usuário explicitamente quiser ignorar
+    if (currentProcess.process_number || (currentProcess.court && !processes.some(p => p.court === currentProcess.court))) {
+      // Se tem dados mas não adicionou, avisa, mas não bloqueia se for apenas um rastro
+      // Original alert mantido mas relaxado
+      if (currentProcess.process_number || otherProcessType) {
+        const confirmSave = confirm('⚠️ Você inseriu dados de um processo mas não o adicionou.\n\nDeseja salvar o contrato assim mesmo (os dados não adicionados serão perdidos)?');
+        if (!confirmSave) return;
+      }
+    }
 
     if (!formData.client_name) return alert('O "Nome do Cliente" é obrigatório.');
     if (!formData.partner_id) return alert('O "Responsável (Sócio)" é obrigatório.');
@@ -591,10 +602,29 @@ export function ContractFormModal(props: Props) {
           if (processError) throw processError;
         }
         if (formData.status === 'active' && formData.physical_signature === false) {
-          const { data } = await supabase.from('kanban_tasks').select('id').eq('contract_id', savedId).eq('status', 'signature').maybeSingle();
-          if (!data) await supabase.from('kanban_tasks').insert({ title: `Coletar Assinatura: ${formData.client_name}`, description: `Contrato fechado em ${new Date().toLocaleDateString()}.Coletar assinatura física.`, priority: 'Alta', status: 'signature', contract_id: savedId, due_date: addDays(new Date(), 5).toISOString(), position: 0 });
+          const { data: existingTask } = await supabase.from('kanban_tasks').select('id').eq('contract_id', savedId).eq('status', 'signature').maybeSingle();
+          if (!existingTask) await supabase.from('kanban_tasks').insert({ title: `Coletar Assinatura: ${formData.client_name}`, description: `Contrato fechado em ${new Date().toLocaleDateString()}. Coletar assinatura física.`, priority: 'Alta', status: 'signature', contract_id: savedId, due_date: addDays(new Date(), 5).toISOString(), position: 0 });
         }
       }
+
+      // Upload de arquivos temporários se houver
+      if (savedId && tempFiles.length > 0) {
+        for (const item of tempFiles) {
+          try {
+            const filePath = `${savedId}/${Date.now()}_${item.file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
+            await supabase.storage.from('contract-documents').upload(filePath, item.file);
+            await supabase.from('contract_documents').insert({
+              contract_id: savedId,
+              file_name: item.file.name,
+              file_path: filePath,
+              file_type: item.type
+            });
+          } catch (err) {
+            console.error("Erro ao subir arquivo temporário:", err);
+          }
+        }
+      }
+
       onSave();
       onClose();
     } catch (error: any) {
@@ -705,7 +735,14 @@ export function ContractFormModal(props: Props) {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!formData.id) return alert("⚠️ Você precisa salvar o contrato pelo menos uma vez antes de anexar arquivos.");
+
+    if (!formData.id) {
+      // Armazena temporariamente para subir após o save
+      setTempFiles(prev => [...prev, { file, type }]);
+      toast.info(`Arquivo "${file.name}" agendado para upload após salvar o contrato.`);
+      e.target.value = '';
+      return;
+    }
 
     setUploading(true);
     try {

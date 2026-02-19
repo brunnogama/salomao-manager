@@ -271,7 +271,9 @@ export function Contracts() {
   };
 
   const handleProcessAction = () => {
-    if (!currentProcess.process_number) return;
+    // Se não tiver número, mas for um tipo não judicial (opcional), podemos permitir ou exigir algo
+    if (!currentProcess.process_number && !currentProcess.court) return;
+
     if (editingProcessIndex !== null) {
       const updated = [...processes];
       updated[editingProcessIndex] = currentProcess;
@@ -280,7 +282,18 @@ export function Contracts() {
     } else {
       setProcesses([...processes, currentProcess]);
     }
-    setCurrentProcess({ process_number: '' });
+    // Limpa o objeto completo, não apenas o número
+    setCurrentProcess({
+      process_number: '',
+      opponent: '',
+      court: '',
+      vara: '',
+      uf: '',
+      position: '',
+      author: '',
+      subject: '',
+      magistrates: []
+    });
   };
 
   const editProcess = (idx: number) => {
