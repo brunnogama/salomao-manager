@@ -33,7 +33,6 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                     text: value || "[incluir valor]",
                     font: "Arial",
                     size: 22,
-                    // highlight: "yellow" // Removed as requested
                 }),
                 new TextRun({ text: ` ${description || ""}`, font: "Arial", size: 22 }),
             ]
@@ -44,15 +43,8 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
 
     // Pro Labore
     let currentIndex = 2; // Starts at 2.2
-    const proLaboreValues = [data.pro_labore, ...(data.pro_labore_extras || [])].filter(v => v !== undefined); // Include null/undefined checks
+    const proLaboreValues = [data.pro_labore, ...(data.pro_labore_extras || [])].filter(v => v !== undefined);
     const proLaboreClauses = [data.pro_labore_clause, ...(data.pro_labore_extras_clauses || [])];
-
-    // We iterate based on the longer array to be safe, or just proLaboreValues
-    // Actually, we should probably rely on the count of items in proposalData which we don't have directly here, 
-    // but we have the data arrays. 
-    // Let's assume proLaboreValues dictates the count (as we always have value + desc)
-
-    // In Proposals.tsx we ensured that for every value we assume there's a description in the parallel array.
 
     if (proLaboreValues.length > 0) {
         proLaboreValues.forEach((val, idx) => {
@@ -61,7 +53,6 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
             currentIndex++;
         });
     } else {
-        // Fallback if empty (shouldn't happen with default state)
         clauseParagraphs.push(createClauseParagraph(`2.${currentIndex}`, "Honorários pró-labore de", "[valor]", ""));
         currentIndex++;
     }
@@ -78,13 +69,28 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
         });
     }
 
-    // Final Success
+    // Final Success - FIXED
     const successValues = [data.final_success_fee, ...(data.final_success_extras || [])].filter(v => v !== undefined && v !== null && v !== "");
     const successClauses = [data.final_success_fee_clause, ...(data.final_success_extras_clauses || [])];
 
     if (successValues.length > 0) {
         successValues.forEach((val, idx) => {
             const desc = successClauses[idx] || "";
+            clauseParagraphs.push(createClauseParagraph(`2.${currentIndex}`, "Honorários finais de êxito de", val!, desc!));
+            currentIndex++;
+        });
+    }
+
+    // Final Success - PERCENT
+    // We use final_success_percent and percent_extras
+    const percentValues = [data.final_success_percent, ...(data.percent_extras || [])].filter(v => v !== undefined && v !== null && v !== "");
+    const percentClauses = [data.final_success_percent_clause, ...(data.percent_extras_clauses || [])];
+
+    if (percentValues.length > 0) {
+        percentValues.forEach((val, idx) => {
+            const desc = percentClauses[idx] || "";
+            // You might vary the text based on preference, e.g. "Honorários finais de êxito na ordem de"
+            // but for consistency with preview we use standard text
             clauseParagraphs.push(createClauseParagraph(`2.${currentIndex}`, "Honorários finais de êxito de", val!, desc!));
             currentIndex++;
         });
@@ -185,7 +191,6 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                                 text: today,
                                 font: "Arial",
                                 size: 22,
-                                // highlight: "yellow", // Removed
                             })
                         ]
                     }),
@@ -200,7 +205,6 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                                 font: "Arial",
                                 size: 22,
                                 bold: true,
-                                // highlight: "yellow" // Removed
                             })
                         ]
                     }),
@@ -213,7 +217,6 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                                 font: "Arial",
                                 size: 22,
                                 bold: true,
-                                // highlight: "yellow" // Removed
                             })
                         ]
                     }),
@@ -229,7 +232,6 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                                 text: (data.observations || "[incluir objeto da proposta]"),
                                 font: "Arial",
                                 size: 22,
-                                // highlight: "yellow" // Removed
                             })
                         ]
                     }),
@@ -241,7 +243,6 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                                 text: proposalCode,
                                 font: "Arial",
                                 size: 22,
-                                // highlight: "yellow" // Removed
                             })
                         ]
                     }),
@@ -264,7 +265,6 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                                 font: "Arial",
                                 size: 22,
                                 bold: true,
-                                // highlight: "yellow" // Removed
                             }),
                             new TextRun({ text: ", brasileiro, casado, advogado... (texto padrão omitido para brevidade)... vem formular a presente proposta...", font: "Arial", size: 22 })
                         ]
@@ -286,14 +286,12 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                                 text: (data.client_name || "[NOME DA EMPRESA CLIENTE]"),
                                 font: "Arial",
                                 size: 22,
-                                // highlight: "yellow" // Removed
                             }),
                             new TextRun({ text: " no ", font: "Arial", size: 22 }),
                             new TextRun({
                                 text: "[incluir objeto da disputa]",
                                 font: "Arial",
                                 size: 22,
-                                // highlight: "yellow" // Removed
                             }),
                             new TextRun({ text: ".", font: "Arial", size: 22 }),
                         ]
@@ -336,7 +334,6 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                                 font: "Arial",
                                 size: 22,
                                 bold: true,
-                                // highlight: "yellow" // Removed
                             }),
                         ]
                     }),
@@ -359,7 +356,6 @@ export const generateProposalDocx = async (data: Contract, proposalCode: string)
                                 font: "Arial",
                                 size: 22,
                                 bold: true,
-                                // highlight: "yellow" // Removed
                             }),
                         ]
                     }),
