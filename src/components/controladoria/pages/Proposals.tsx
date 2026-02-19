@@ -233,6 +233,110 @@ export function Proposals() {
     }
   };
 
+  const getContractDataFromForm = (partnersToUse = proposalData.selectedPartners) => {
+    const proLaboreMain = proposalData.pro_labore_clauses[0];
+    const proLaboreExtras = proposalData.pro_labore_clauses.slice(1).map(c => c.value);
+    const proLaboreExtrasClauses = proposalData.pro_labore_clauses.slice(1).map(c => c.description);
+
+    const firstCurrencySuccess = proposalData.final_success_fee_clauses.find(c => c.type === 'currency');
+    const firstPercentSuccess = proposalData.final_success_fee_clauses.find(c => c.type === 'percent');
+
+    const successExtras = proposalData.final_success_fee_clauses.filter(c => c !== firstCurrencySuccess && c !== firstPercentSuccess);
+
+    const currencyExtras = successExtras.filter(c => c.type === 'currency');
+    const percentExtras = successExtras.filter(c => c.type === 'percent');
+
+    const intermediateValues = proposalData.intermediate_fee_clauses.map(c => c.value).filter(Boolean);
+    const intermediateClauses = proposalData.intermediate_fee_clauses.map(c => c.description).filter(Boolean);
+
+    const primaryPartner = partnersToUse[0];
+
+    const newContract: any = {
+      client_name: proposalData.clientName,
+      cnpj: proposalData.cnpj,
+      partner_id: primaryPartner?.id,
+      status: 'proposal',
+      proposal_date: new Date().toISOString(),
+      reference: proposalData.reference,
+      observations: proposalData.object,
+
+      pro_labore: safeParseFloat(proLaboreMain.value),
+      pro_labore_clause: proLaboreMain.description,
+      pro_labore_extras: proLaboreExtras.length ? proLaboreExtras.map(v => safeParseFloat(v)) : null,
+      pro_labore_extras_clauses: proLaboreExtrasClauses.length ? proLaboreExtrasClauses : null,
+
+      final_success_fee: firstCurrencySuccess ? safeParseFloat(firstCurrencySuccess.value) : null,
+      final_success_fee_clause: firstCurrencySuccess?.description || null,
+
+      final_success_percent: firstPercentSuccess?.value || null,
+      final_success_percent_clause: firstPercentSuccess?.description || null,
+
+      final_success_extras: currencyExtras.length ? currencyExtras.map(c => safeParseFloat(c.value)) : null,
+      final_success_extras_clauses: currencyExtras.length ? currencyExtras.map(c => c.description) : null,
+
+      percent_extras: percentExtras.length ? percentExtras.map(c => safeParseFloat(c.value)) : null,
+      percent_extras_clauses: percentExtras.length ? percentExtras.map(c => c.description) : null,
+
+      intermediate_fees: intermediateValues.length ? intermediateValues.map(v => safeParseFloat(v)) : null,
+      intermediate_fees_clauses: intermediateClauses.length ? intermediateClauses : null,
+
+      has_legal_process: false,
+      uf: proposalData.contractLocation || 'RJ',
+    };
+
+    Object.keys(newContract).forEach(k => {
+      if (newContract[k] === null || newContract[k] === undefined || newContract[k] === "") {
+        delete newContract[k];
+      }
+    });
+
+    return {
+      contractData: newContract,
+      primaryPartner,
+      proLaboreExtras,
+      proLaboreExtrasClauses,
+      currencyExtras,
+      percentExtras,
+      intermediateValues,
+      intermediateClauses
+    };
+  };
+
+  const prepareFullContractData = (contractData: any, primaryPartner: any, proposalCode: string, currencyExtras: FeeClause[], percentExtras: FeeClause[], intermediateValues: string[], intermediateClauses: string[], proLaboreExtras: string[], proLaboreExtrasClauses: string[]) => {
+    return {
+      ...contractData,
+      partner_name: primaryPartner.name,
+      proposal_code: proposalCode,
+
+      partners_data: proposalData.selectedPartners.map(p => ({
+        name: p.name,
+        civil_status: p.collaboratorData?.civil_status || 'casado(a)',
+        nacionalidade: p.collaboratorData?.nacionalidade || 'brasileiro(a)',
+        oab_numero: p.collaboratorData?.oab_numero || p.oab_number || 'XXXXXX',
+        oab_uf: p.collaboratorData?.oab_uf || p.oab_state || 'RJ',
+        cpf: p.collaboratorData?.cpf || p.cpf || 'XXX.XXX.XXX-XX',
+        gender: p.collaboratorData?.gender || p.gender || 'M',
+      })),
+
+      location: proposalData.contractLocation,
+      reference: proposalData.reference,
+
+      pro_labore_extras: proLaboreExtras,
+      pro_labore_extras_clauses: proLaboreExtrasClauses,
+
+      final_success_extras: currencyExtras.length ? currencyExtras.map(c => c.value) : undefined,
+      final_success_extras_clauses: currencyExtras.length ? currencyExtras.map(c => c.description) : undefined,
+
+      percent_extras: percentExtras.length ? percentExtras.map(c => c.value) : undefined,
+      percent_extras_clauses: percentExtras.length ? percentExtras.map(c => c.description) : undefined,
+
+      intermediate_fees: intermediateValues,
+      intermediate_fees_clauses: intermediateClauses,
+
+      full_success_clauses: proposalData.final_success_fee_clauses,
+    };
+  };
+
   const handleGenerateProposal = async () => {
     if (!proposalData.clientName) return toast.error("Preencha o Nome do Cliente");
     if (proposalData.selectedPartners.length === 0) return toast.error("Selecione pelo menos um Sócio");
@@ -243,84 +347,19 @@ export function Proposals() {
     try {
       // 1. Create Contract Record
 
-      const proLaboreMain = proposalData.pro_labore_clauses[0];
-      const proLaboreExtras = proposalData.pro_labore_clauses.slice(1).map(c => c.value);
-      const proLaboreExtrasClauses = proposalData.pro_labore_clauses.slice(1).map(c => c.description);
+      // 1. Create Contract Record
+      const {
+        contractData: newContract,
+        primaryPartner,
+        currencyExtras,
+        percentExtras,
+        intermediateValues,
+        intermediateClauses,
+        proLaboreExtras,
+        proLaboreExtrasClauses
+      } = getContractDataFromForm();
 
-      // Unified Success Fees
-      // We need to map these to the DB structure. 
-      // The DB has `final_success_fee` (string), `final_success_percent` (string), and extras.
-      // We should probably store the first currency one in `final_success_fee`, first percent in `final_success_percent`?
-      // OR, since we are unifying, maybe we just treat them all as a list.
-      // However, the DB/Contract interface expects specific fields. 
-      // For legacy compatibility, let's try to map the first occurrence of each type to the main fields.
 
-      const firstCurrencySuccess = proposalData.final_success_fee_clauses.find(c => c.type === 'currency');
-      const firstPercentSuccess = proposalData.final_success_fee_clauses.find(c => c.type === 'percent');
-
-      // Extras are those that are NOT the firstCurrency or firstPercent
-      const successExtras = proposalData.final_success_fee_clauses.filter(c => c !== firstCurrencySuccess && c !== firstPercentSuccess);
-
-      // We'll store extras in `final_success_extras` (for currency) and `percent_extras` (for percent)
-      // Actually, let's just dump ALL mixed extras into `final_success_extras` with a marker? 
-      // No, `final_success_extras` is usually just values. `final_success_extras_clauses` is descriptions.
-      // `docxGenerator` needs to know the type to format properly.
-      // Let's separate them:
-      const currencyExtras = successExtras.filter(c => c.type === 'currency');
-      const percentExtras = successExtras.filter(c => c.type === 'percent');
-
-      const intermediateValues = proposalData.intermediate_fee_clauses.map(c => c.value).filter(Boolean);
-      const intermediateClauses = proposalData.intermediate_fee_clauses.map(c => c.description).filter(Boolean);
-
-      // Prepare Partners Data for JSON storage or Observations (if needed in DB)
-      // The `contracts` table has `partner_id` and `partner_name`. We should set the primary one (first one) there.
-      const primaryPartner = proposalData.selectedPartners[0];
-
-      const newContract: any = {
-        client_name: proposalData.clientName,
-        cnpj: proposalData.cnpj,
-        partner_id: primaryPartner.id, // Primary
-        status: 'proposal',
-        proposal_date: new Date().toISOString(),
-        reference: proposalData.reference,
-        observations: proposalData.object,
-
-        // Mapped Fields
-        pro_labore: safeParseFloat(proLaboreMain.value),
-        pro_labore_clause: proLaboreMain.description,
-        pro_labore_extras: proLaboreExtras.length ? proLaboreExtras.map(v => safeParseFloat(v)) : null,
-        pro_labore_extras_clauses: proLaboreExtrasClauses.length ? proLaboreExtrasClauses : null,
-
-        // Success Fees Mapped
-        final_success_fee: firstCurrencySuccess ? safeParseFloat(firstCurrencySuccess.value) : null,
-        final_success_fee_clause: firstCurrencySuccess?.description || null,
-
-        final_success_percent: firstPercentSuccess?.value || null,
-        final_success_percent_clause: firstPercentSuccess?.description || null,
-
-        final_success_extras: currencyExtras.length ? currencyExtras.map(c => safeParseFloat(c.value)) : null,
-        final_success_extras_clauses: currencyExtras.length ? currencyExtras.map(c => c.description) : null,
-
-        percent_extras: percentExtras.length ? percentExtras.map(c => safeParseFloat(c.value)) : null,
-        percent_extras_clauses: percentExtras.length ? percentExtras.map(c => c.description) : null,
-
-        intermediate_fees: intermediateValues.length ? intermediateValues.map(v => safeParseFloat(v)) : null,
-        intermediate_fees_clauses: intermediateClauses.length ? intermediateClauses : null,
-
-        has_legal_process: false,
-        uf: proposalData.contractLocation || 'RJ', // Use selected location or fallback
-
-        // Store full partner list in a JSON field if possible, or we just rely on the DOCX generation
-        // DB doesn't seem to have `partners_data` column yet. We won't persist other partners in DB for now, just the primary.
-        // But we DO need to generate the doc with ALL of them.
-      };
-
-      // Clean up undefined/empty
-      Object.keys(newContract).forEach(k => {
-        if (newContract[k] === null || newContract[k] === undefined || newContract[k] === "") {
-          delete newContract[k];
-        }
-      });
 
       const { data: existingClient } = await supabase.from('clients').select('id').eq('name', proposalData.clientName).maybeSingle();
       if (existingClient) {
@@ -352,44 +391,19 @@ export function Proposals() {
 
       // 3. Generate DOCX
       // Prepare full data object for generator
-      const fullContractData: Contract & { partners_data: any[], location: string, full_success_clauses: FeeClause[] } = {
-        ...insertedContract,
-        partner_name: primaryPartner.name,
-        proposal_code: proposalCode,
-
-        // Passing extended data
-        partners_data: proposalData.selectedPartners.map(p => ({
-          name: p.name,
-          civil_status: p.collaboratorData?.civil_status || 'casado(a)', // Default fallback
-          nacionalidade: p.collaboratorData?.nacionalidade || 'brasileiro(a)',
-          oab_numero: p.collaboratorData?.oab_numero || p.oab_number || 'XXXXXX',
-          oab_uf: p.collaboratorData?.oab_uf || p.oab_state || 'RJ',
-          cpf: p.collaboratorData?.cpf || p.cpf || 'XXX.XXX.XXX-XX',
-          gender: p.collaboratorData?.gender || p.gender || 'M', // Important for agreement
-        })),
-
-        location: proposalData.contractLocation,
-        reference: proposalData.reference,
-
-        // Ensure these are arrays for the generator
-        pro_labore_extras: proLaboreExtras,
-        pro_labore_extras_clauses: proLaboreExtrasClauses,
-
-        final_success_extras: currencyExtras.length ? currencyExtras.map(c => c.value) : undefined,
-        final_success_extras_clauses: currencyExtras.length ? currencyExtras.map(c => c.description) : undefined,
-
-        percent_extras: percentExtras.length ? percentExtras.map(c => c.value) : undefined,
-        percent_extras_clauses: percentExtras.length ? percentExtras.map(c => c.description) : undefined,
-
-        intermediate_fees: intermediateValues,
-        intermediate_fees_clauses: intermediateClauses,
-
-        // Passing the raw mixed list helps the generator output in order if it supports it
-        // But since we mapped to split fields, the generator logic (which iterates separately) might be fine.
-        // Or we should update generator to use a mixed list.
-        // Let's pass the mixed list too, so the generator can use it for exact ordering!
-        full_success_clauses: proposalData.final_success_fee_clauses,
-      };
+      // 3. Generate DOCX
+      // Prepare full data object for generator
+      const fullContractData: any = prepareFullContractData(
+        insertedContract,
+        primaryPartner,
+        proposalCode,
+        currencyExtras,
+        percentExtras,
+        intermediateValues,
+        intermediateClauses,
+        proLaboreExtras,
+        proLaboreExtrasClauses
+      );
 
       const docBlob = await generateProposalDocx(fullContractData, proposalCode);
       const fileName = `Proposta_${proposalData.clientName.replace(/[^a-z0-9]/gi, '_')}_${proposalCode}.docx`;
@@ -454,6 +468,53 @@ export function Proposals() {
     } catch (error: any) {
       console.error(error);
       toast.error(`Erro ao gerar proposta: ${error.message}`, { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateProposalOnly = async () => {
+    if (!proposalData.clientName) return toast.error("Preencha o Nome do Cliente");
+    if (proposalData.selectedPartners.length === 0) return toast.error("Selecione pelo menos um Sócio");
+
+    setLoading(true);
+    const toastId = toast.loading("Gerando arquivo da proposta...");
+
+    try {
+      const {
+        contractData,
+        primaryPartner,
+        currencyExtras,
+        percentExtras,
+        intermediateValues,
+        intermediateClauses,
+        proLaboreExtras,
+        proLaboreExtrasClauses
+      } = getContractDataFromForm();
+
+      const proposalCode = "RASCUNHO";
+
+      const fullContractData: any = prepareFullContractData(
+        contractData,
+        primaryPartner,
+        proposalCode,
+        currencyExtras,
+        percentExtras,
+        intermediateValues,
+        intermediateClauses,
+        proLaboreExtras,
+        proLaboreExtrasClauses
+      );
+
+      const docBlob = await generateProposalDocx(fullContractData, proposalCode);
+      const fileName = `Proposta_${proposalData.clientName.replace(/[^a-z0-9]/gi, '_')}_${proposalCode}.docx`;
+
+      saveAs(docBlob, fileName);
+      toast.success("Arquivo gerado com sucesso!", { id: toastId });
+
+    } catch (error: any) {
+      console.error(error);
+      toast.error(`Erro ao gerar arquivo: ${error.message}`, { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -706,6 +767,14 @@ export function Proposals() {
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+            <button
+              onClick={handleGenerateProposalOnly}
+              disabled={loading}
+              className="mr-3 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest px-6 py-4 rounded-xl hover:bg-blue-50 transition-all flex items-center disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Gerar Apenas Arquivo
+            </button>
             <button
               onClick={handleGenerateProposal}
               disabled={loading}
