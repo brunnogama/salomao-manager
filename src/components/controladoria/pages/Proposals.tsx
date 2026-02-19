@@ -49,7 +49,7 @@ export function Proposals() {
     selectedPartners: [] as (Partner & { collaboratorData?: Collaborator })[], // New: Multiple Partners
     reference: '', // Referência da Proposta (Top)
     object: '', // Objeto da Disputa (Clause 1.1)
-    contractLocation: 'Rio de Janeiro', // New: Location
+    contractLocation: '', // New: Location
 
     // New Structure for multiple clauses with types
     pro_labore_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
