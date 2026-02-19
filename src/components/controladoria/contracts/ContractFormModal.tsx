@@ -1,5 +1,3 @@
-// brunnogama/salomao-manager/salomao-manager-3e743876de4fb5af74c8aedf5b89ce1e3913c795/src/components/controladoria/contracts/ContractFormModal.tsx
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
@@ -90,6 +88,7 @@ export function ContractFormModal(props: Props) {
 
   const [dateWarningMessage, setDateWarningMessage] = useState<string | null>(null);
 
+  // --- USE EFFECTS (MANTIDOS) ---
   useEffect(() => {
     if (isOpen) {
       fetchStatuses();
@@ -157,26 +156,8 @@ export function ContractFormModal(props: Props) {
   useEffect(() => {
     const checkHonDuplicates = async () => {
       if (!formData.hon_number || formData.hon_number.length < 2) return setDuplicateHonCase(null);
-
-      // Tentativa via RPC (seguro e bypassa RLS)
-      const { data: rpcData, error: rpcError } = await supabase.rpc('check_contract_duplicate_hon', {
-        hon_input: formData.hon_number,
-        exclude_id: formData.id || '00000000-0000-0000-0000-000000000000'
-      });
-
-      if (!rpcError && rpcData) {
-        setDuplicateHonCase(rpcData.length > 0 ? rpcData[0] : null);
-        return;
-      }
-
-      // Fallback para select direto (para compatibilidade caso a migration não tenha rodado)
-      const { data: selectData } = await supabase.from('contracts')
-        .select('id, client_name, display_id')
-        .eq('hon_number', formData.hon_number)
-        .neq('id', formData.id || '00000000-0000-0000-0000-000000000000')
-        .maybeSingle();
-
-      setDuplicateHonCase(selectData);
+      const { data } = await supabase.from('contracts').select('id, client_name, display_id').eq('hon_number', formData.hon_number).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').maybeSingle();
+      setDuplicateHonCase(data);
     };
     const timer = setTimeout(checkHonDuplicates, 800);
     return () => clearTimeout(timer);
@@ -313,9 +294,36 @@ export function ContractFormModal(props: Props) {
     formData.other_fees, formData.other_fees_installments
   ]);
 
+  // Handle ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  // --- FUNÇÕES AUXILIARES (MANTIDAS) ---
+
   const fetchStatuses = async () => {
     const { data } = await supabase.from('contract_statuses').select('*');
-    if (data) {
+    const defaultStatuses = [
+      { label: 'Sob Análise', value: 'analysis' },
+      { label: 'Proposta Enviada', value: 'proposal' },
+      { label: 'Contrato Fechado', value: 'active' },
+      { label: 'Probono', value: 'probono' },
+      { label: 'Rejeitada', value: 'rejected' }
+    ];
+
+    if (data && data.length > 0) {
       const order = ['analysis', 'proposal', 'active', 'rejected', 'probono'];
       const sortedData = data.sort((a, b) => {
         const iA = order.indexOf(a.value), iB = order.indexOf(b.value);
@@ -323,6 +331,8 @@ export function ContractFormModal(props: Props) {
         return (iA !== -1 ? -1 : (iB !== -1 ? 1 : a.label.localeCompare(b.label)));
       });
       setStatusOptions([{ label: 'Selecione', value: '' }, ...sortedData.map(s => ({ label: s.label, value: s.value }))]);
+    } else {
+      setStatusOptions([{ label: 'Selecione', value: '' }, ...defaultStatuses]);
     }
   };
 
@@ -701,201 +711,218 @@ export function ContractFormModal(props: Props) {
 
   if (!isOpen) return null;
 
+  // --- NOVA UI (SIDEBAR + CONTENT) ---
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[50] p-4">
-      <div className={`w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-200 transition-colors duration-500 ease-in-out ${getThemeBackground(formData.status)}`}>
-        <div className="p-6 border-b border-black/5 flex justify-between items-center bg-white/50 backdrop-blur-sm rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-gray-800">{isEditing ? 'Editar Caso' : 'Novo Caso'}</h2>
-            {(formData as any).display_id && (<span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-sm font-mono font-bold border border-gray-200"> ID: {(formData as any).display_id} </span>)}
+    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-6xl h-[90vh] flex overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
+
+        {/* Left Sidebar */}
+        <div className="w-72 bg-white border-r border-gray-100 flex flex-col py-8 px-5 shrink-0 overflow-y-auto">
+          <div className="mb-8 px-2">
+            <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight">
+              {isEditing ? 'Editar Caso' : 'Novo Caso'}
+            </h2>
+            <p className="text-xs text-gray-400 mt-1 font-medium">
+              {(formData as any).display_id ? `Caso ID: ${(formData as any).display_id}` : 'Insira os dados do caso'}
+            </p>
           </div>
-          <button onClick={onClose}><X className="w-6 h-6 text-gray-400" /></button>
-        </div>
 
-        <div className="flex-1 p-8 space-y-8 overflow-y-auto overflow-x-visible">
-
-          <div className="flex items-center justify-between w-full mb-8 px-4 relative">
-            <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 transform -translate-y-1/2 rounded-full"></div>
-            <div
-              className="absolute top-1/2 left-0 h-1 bg-salomao-blue -z-10 transform -translate-y-1/2 rounded-full transition-all duration-500"
-              style={{ width: `${((activeTab - 1) / (steps.length - 1)) * 100}%` }}
-            ></div>
-
+          <div className="space-y-1 w-full flex-1">
             {steps.map((step) => {
-              const isActive = activeTab === step.id;
-              const isCompleted = activeTab > step.id;
               const Icon = step.icon;
-
+              const isActive = activeTab === step.id;
               return (
-                <div key={step.id} className="flex flex-col items-center cursor-pointer group" onClick={() => setActiveTab(step.id)}>
-                  <div className={`
-                                w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 relative z-10
-                                ${isActive ? 'bg-salomao-blue border-salomao-blue text-white shadow-lg scale-110' :
-                      isCompleted ? 'bg-salomao-blue border-salomao-blue text-white' :
-                        'bg-white border-gray-300 text-gray-400 group-hover:border-salomao-blue group-hover:text-salomao-blue'}
-                            `}>
-                    {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                <button
+                  key={step.id}
+                  onClick={() => setActiveTab(step.id)}
+                  className={`w-full flex items-center gap-3 p-3.5 rounded-xl transition-all text-left relative group ${isActive
+                    ? 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm'
+                    : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                    }`}
+                >
+                  <div className={`p-1 rounded-lg transition-colors ${isActive ? 'text-[#1e3a8a]' : 'text-gray-300 group-hover:text-gray-500'}`}>
+                    <Icon className="h-4 w-4" />
                   </div>
-                  <span className={`
-                                mt-2 text-xs font-bold uppercase tracking-wider transition-colors duration-300
-                                ${isActive ? 'text-salomao-blue' : isCompleted ? 'text-salomao-blue' : 'text-gray-400'}
-                            `}>
-                    {step.label}
-                  </span>
-                </div>
+                  <span className="text-[10px] uppercase tracking-[0.1em] font-bold">{step.label}</span>
+                  {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#1e3a8a] rounded-r-full" />}
+                </button>
               );
             })}
           </div>
 
-          {activeTab === 1 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-left-2 duration-200 overflow-visible">
-              <ClientFormSection
-                formData={formData}
-                setFormData={setFormData}
-                maskCNPJ={maskCNPJ}
-                handleCNPJSearch={handleCNPJSearch}
-                clientSelectOptions={clientSelectOptions}
-                handleClientChange={handleClientChange}
-                setActiveManager={setActiveManager}
-                duplicateClientCases={duplicateClientCases}
-                getStatusLabel={getStatusLabel}
-                areaOptions={areaOptions}
-                partnerSelectOptions={partnerSelectOptions}
-                onOpenPartnerManager={onOpenPartnerManager}
-              />
-            </div>
-          )}
+          <div className="mt-auto pt-6 border-t border-gray-100">
+            <button onClick={onClose} className="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-red-500 hover:bg-red-50 p-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest">
+              <X className="w-4 h-4" /> Fechar
+            </button>
+          </div>
+        </div>
 
-          {activeTab === 2 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-left-2 duration-200 overflow-visible">
-              <StatusAndDatesSection
-                formData={formData}
-                setFormData={setFormData}
-                statusOptions={statusOptions}
-                handleCreateStatus={handleCreateStatus}
-                ensureDateValue={ensureDateValue}
-                analystSelectOptions={analystSelectOptions}
-                onOpenAnalystManager={onOpenAnalystManager}
-                rejectionByOptions={rejectionByOptions}
-                rejectionReasonOptions={rejectionReasonOptions}
-                partnerSelectOptions={partnerSelectOptions}
-                billingOptions={billingOptions}
-                maskHon={maskHon}
-                setActiveManager={setActiveManager}
-                signatureOptions={signatureOptions}
-                formatForInput={formatForInput}
-                handleAddToList={handleAddToList}
-                removeExtra={removeExtra}
-                newIntermediateFee={newIntermediateFee}
-                setNewIntermediateFee={setNewIntermediateFee}
-                interimInstallments={interimInstallments}
-                setInterimInstallments={setInterimInstallments}
-                handleAddIntermediateFee={handleAddIntermediateFee}
-                interimClause={interimClause}
-                setInterimClause={setInterimClause}
-                handleRemoveIntermediateFee={handleRemoveIntermediateFee}
-                ensureArray={ensureArray}
-                duplicateHonCase={duplicateHonCase}
-                dateWarningMessage={dateWarningMessage}
-              />
+        {/* Right Content */}
+        <div className={`flex-1 flex flex-col min-w-0 ${getThemeBackground(formData.status)} transition-colors duration-300`}>
+          {/* Scrollable Body */}
+          <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar">
 
-              {(formData.status === 'analysis' || formData.status === 'proposal' || formData.status === 'active') && (
-                <div className="pt-6 border-t border-black/5 space-y-6">
-                  {(formData.status === 'proposal' || formData.status === 'active') && (
-                    <div className="mb-2">
-                      <label className="text-xs font-medium block mb-1">Referência</label>
-                      <textarea className="w-full border border-gray-300 p-2.5 rounded-lg text-sm bg-white focus:border-salomao-blue outline-none h-24 resize-none" value={(formData as any).reference || ''} onChange={e => setFormData({ ...formData, reference: e.target.value } as any)} placeholder="Ex: Proposta 123/2025" />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 3 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-left-2 duration-200 overflow-visible">
-              <section className="space-y-4 bg-white/60 p-5 rounded-xl border border-white/40 shadow-sm backdrop-blur-sm relative z-30 overflow-visible">
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Casos</h3>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <button onClick={() => { handleTypeChange(''); setIsStandardCNJ(true); }} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!otherProcessType ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Processos Judiciais</button>
-                  <button onClick={() => handleTypeChange('Processo Administrativo')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Processo Administrativo' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Processo Administrativo</button>
-                  <button onClick={() => handleTypeChange('Consultoria')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Consultoria' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Consultoria</button>
-                  <button onClick={() => handleTypeChange('Assessoria Jurídica')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Assessoria Jurídica' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Assessoria Jurídica</button>
-                  <button onClick={() => handleTypeChange('Outros')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Outros' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Outros</button>
-                </div>
-
-                <LegalProcessForm
+            {activeTab === 1 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <ClientFormSection
                   formData={formData}
                   setFormData={setFormData}
-                  currentProcess={currentProcess}
-                  setCurrentProcess={setCurrentProcess}
-                  isStandardCNJ={isStandardCNJ}
-                  setIsStandardCNJ={setIsStandardCNJ}
-                  otherProcessType={otherProcessType}
-                  setOtherProcessType={setOtherProcessType}
-                  searchingCNJ={searchingCNJ}
-                  handleCNJSearch={handleCNJSearch}
-                  handleOpenJusbrasil={handleOpenJusbrasil}
-                  courtSelectOptions={courtSelectOptions}
-                  ufOptions={ufOptions}
-                  positionOptions={positionOptions}
-                  authorOptions={options.authorOptions}
-                  opponentOptions={options.opponentOptions}
-                  duplicateOpponentCases={duplicateOpponentCases}
-                  magistrateTypes={magistrateTypes}
-                  magistrateOptions={options.magistrateOptions}
-                  newMagistrateTitle={newMagistrateTitle}
-                  setNewMagistrateTitle={setNewMagistrateTitle}
-                  newMagistrateName={newMagistrateName}
-                  setNewMagistrateName={setNewMagistrateName}
-                  addMagistrate={addMagistrate}
-                  removeMagistrate={removeMagistrate}
-                  numeralOptions={numeralOptions}
-                  varaSelectOptions={varaSelectOptions}
-                  comarcaSelectOptions={comarcaSelectOptions}
-                  justiceSelectOptions={justiceSelectOptions}
-                  classSelectOptions={classSelectOptions}
-                  subjectSelectOptions={subjectSelectOptions}
-                  newSubject={newSubject}
-                  setNewSubject={setNewSubject}
-                  addSubjectToProcess={addSubjectToProcess}
-                  removeSubject={removeSubject}
-                  editingProcessIndex={editingProcessIndex}
-                  handleProcessAction={handleProcessAction}
-                  handlePartyCNPJSearch={handlePartyCNPJSearch}
-                  localMaskCNJ={localMaskCNJ}
-                  ensureDateValue={ensureDateValue}
+                  maskCNPJ={maskCNPJ}
+                  handleCNPJSearch={handleCNPJSearch}
+                  clientSelectOptions={clientSelectOptions}
+                  handleClientChange={handleClientChange}
                   setActiveManager={setActiveManager}
-                  duplicateProcessData={duplicateProcessData}
-                  duplicateAuthorCases={duplicateAuthorCases}
-                  authorHasNoCnpj={authorHasNoCnpj}
-                  setAuthorHasNoCnpj={setAuthorHasNoCnpj}
-                  opponentHasNoCnpj={opponentHasNoCnpj}
-                  setOpponentHasNoCnpj={setOpponentHasNoCnpj}
+                  duplicateClientCases={duplicateClientCases}
+                  getStatusLabel={getStatusLabel}
+                  areaOptions={areaOptions}
+                  partnerSelectOptions={partnerSelectOptions}
+                  onOpenPartnerManager={onOpenPartnerManager}
                 />
-                <LegalProcessList processes={processes} setViewProcess={setViewProcess} setViewProcessIndex={setViewProcessIndex} editProcess={editProcess} removeProcess={removeProcess} />
-              </section>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Observações Gerais</label>
-                <textarea className="w-full border border-gray-300 rounded-lg p-3 text-sm h-24 focus:border-salomao-blue outline-none bg-white" value={formData.observations} onChange={(e) => setFormData({ ...formData, observations: toTitleCase(e.target.value) })}></textarea>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeTab === 4 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-left-2 duration-200 overflow-visible">
-              <ContractDocuments documents={documents} isEditing={isEditing} uploading={uploading} status={formData.status} onUpload={handleFileUpload} onDownload={handleDownload} onDelete={handleDeleteDocument} />
-            </div>
-          )}
+            {activeTab === 2 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <StatusAndDatesSection
+                  formData={formData}
+                  setFormData={setFormData}
+                  statusOptions={statusOptions}
+                  handleCreateStatus={handleCreateStatus}
+                  ensureDateValue={ensureDateValue}
+                  analystSelectOptions={analystSelectOptions}
+                  onOpenAnalystManager={onOpenAnalystManager}
+                  rejectionByOptions={rejectionByOptions}
+                  rejectionReasonOptions={rejectionReasonOptions}
+                  partnerSelectOptions={partnerSelectOptions}
+                  billingOptions={billingOptions}
+                  maskHon={maskHon}
+                  setActiveManager={setActiveManager}
+                  signatureOptions={signatureOptions}
+                  formatForInput={formatForInput}
+                  handleAddToList={handleAddToList}
+                  removeExtra={removeExtra}
+                  newIntermediateFee={newIntermediateFee}
+                  setNewIntermediateFee={setNewIntermediateFee}
+                  interimInstallments={interimInstallments}
+                  setInterimInstallments={setInterimInstallments}
+                  handleAddIntermediateFee={handleAddIntermediateFee}
+                  interimClause={interimClause}
+                  setInterimClause={setInterimClause}
+                  handleRemoveIntermediateFee={handleRemoveIntermediateFee}
+                  ensureArray={ensureArray}
+                  duplicateHonCase={duplicateHonCase}
+                  dateWarningMessage={dateWarningMessage}
+                />
 
-        </div>
-        <div className="p-6 border-t border-black/5 flex justify-end gap-3 bg-white/50 backdrop-blur-sm rounded-b-2xl">
-          <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors">Cancelar</button>
-          <button onClick={handleSaveWithIntegrations} disabled={isLoading} className="px-6 py-2 bg-salomao-blue text-white rounded-lg hover:bg-blue-900 shadow-lg flex items-center transition-all transform active:scale-95">{isLoading ? 'Salvando...' : <><Save className="w-4 h-4 mr-2" /> Salvar Caso</>}</button>
+                {(formData.status === 'analysis' || formData.status === 'proposal' || formData.status === 'active') && (
+                  <div className="pt-6 border-t border-black/5 space-y-6">
+                    {(formData.status === 'proposal' || formData.status === 'active') && (
+                      <div className="mb-2">
+                        <label className="text-xs font-medium block mb-1">Referência</label>
+                        <textarea className="w-full border border-gray-300 p-2.5 rounded-lg text-sm bg-white focus:border-salomao-blue outline-none h-24 resize-none" value={(formData as any).reference || ''} onChange={e => setFormData({ ...formData, reference: e.target.value } as any)} placeholder="Ex: Proposta 123/2025" />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 3 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <section className="space-y-4 bg-white/60 p-5 rounded-xl border border-white/40 shadow-sm backdrop-blur-sm relative z-30 overflow-visible">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Casos</h3>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <button onClick={() => { handleTypeChange(''); setIsStandardCNJ(true); }} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!otherProcessType ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Processos Judiciais</button>
+                    <button onClick={() => handleTypeChange('Processo Administrativo')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Processo Administrativo' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Processo Administrativo</button>
+                    <button onClick={() => handleTypeChange('Consultoria')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Consultoria' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Consultoria</button>
+                    <button onClick={() => handleTypeChange('Assessoria Jurídica')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Assessoria Jurídica' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Assessoria Jurídica</button>
+                    <button onClick={() => handleTypeChange('Outros')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${otherProcessType === 'Outros' ? 'bg-salomao-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Outros</button>
+                  </div>
+
+                  <LegalProcessForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    currentProcess={currentProcess}
+                    setCurrentProcess={setCurrentProcess}
+                    isStandardCNJ={isStandardCNJ}
+                    setIsStandardCNJ={setIsStandardCNJ}
+                    otherProcessType={otherProcessType}
+                    setOtherProcessType={setOtherProcessType}
+                    searchingCNJ={searchingCNJ}
+                    handleCNJSearch={handleCNJSearch}
+                    handleOpenJusbrasil={handleOpenJusbrasil}
+                    courtSelectOptions={courtSelectOptions}
+                    ufOptions={ufOptions}
+                    positionOptions={positionOptions}
+                    authorOptions={options.authorOptions}
+                    opponentOptions={options.opponentOptions}
+                    duplicateOpponentCases={duplicateOpponentCases}
+                    magistrateTypes={magistrateTypes}
+                    magistrateOptions={options.magistrateOptions}
+                    newMagistrateTitle={newMagistrateTitle}
+                    setNewMagistrateTitle={setNewMagistrateTitle}
+                    newMagistrateName={newMagistrateName}
+                    setNewMagistrateName={setNewMagistrateName}
+                    addMagistrate={addMagistrate}
+                    removeMagistrate={removeMagistrate}
+                    numeralOptions={numeralOptions}
+                    varaSelectOptions={varaSelectOptions}
+                    comarcaSelectOptions={comarcaSelectOptions}
+                    justiceSelectOptions={justiceSelectOptions}
+                    classSelectOptions={classSelectOptions}
+                    subjectSelectOptions={subjectSelectOptions}
+                    newSubject={newSubject}
+                    setNewSubject={setNewSubject}
+                    addSubjectToProcess={addSubjectToProcess}
+                    removeSubject={removeSubject}
+                    editingProcessIndex={editingProcessIndex}
+                    handleProcessAction={handleProcessAction}
+                    handlePartyCNPJSearch={handlePartyCNPJSearch}
+                    localMaskCNJ={localMaskCNJ}
+                    ensureDateValue={ensureDateValue}
+                    setActiveManager={setActiveManager}
+                    duplicateProcessData={duplicateProcessData}
+                    duplicateAuthorCases={duplicateAuthorCases}
+                    authorHasNoCnpj={authorHasNoCnpj}
+                    setAuthorHasNoCnpj={setAuthorHasNoCnpj}
+                    opponentHasNoCnpj={opponentHasNoCnpj}
+                    setOpponentHasNoCnpj={setOpponentHasNoCnpj}
+                  />
+                  <LegalProcessList processes={processes} setViewProcess={setViewProcess} setViewProcessIndex={setViewProcessIndex} editProcess={editProcess} removeProcess={removeProcess} />
+                </section>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Observações Gerais</label>
+                  <textarea className="w-full border border-gray-300 rounded-lg p-3 text-sm h-24 focus:border-salomao-blue outline-none bg-white" value={formData.observations} onChange={(e) => setFormData({ ...formData, observations: toTitleCase(e.target.value) })}></textarea>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 4 && (
+              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <ContractDocuments documents={documents} isEditing={isEditing} uploading={uploading} status={formData.status} onUpload={handleFileUpload} onDownload={handleDownload} onDelete={handleDeleteDocument} />
+              </div>
+            )}
+
+          </div>
+
+          {/* Footer - Moved Inside Content Area */}
+          <div className="px-10 py-6 border-t border-black/5 flex justify-end gap-3 bg-white/50 backdrop-blur-sm shrink-0">
+            <button onClick={onClose} className="px-6 py-2.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
+            <button
+              onClick={handleSaveWithIntegrations}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] hover:shadow-xl active:scale-95 disabled:opacity-50 transition-all"
+            >
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Salvar Caso
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Overlays / Modals */}
       {activeManager && (
         <OptionManager
           title={activeManager === 'area' ? "Gerenciar Áreas" : activeManager === 'position' ? "Gerenciar Posições" : activeManager === 'court' ? "Gerenciar Tribunais" : activeManager === 'vara' ? "Gerenciar Varas" : activeManager === 'comarca' ? "Gerenciar Comarcas" : activeManager === 'class' ? "Gerenciar Classes" : activeManager === 'subject' ? "Gerenciar Assuntos" : activeManager === 'justice' ? "Gerenciar Justiças" : activeManager === 'magistrate' ? "Gerenciar Magistrados" : activeManager === 'opponent' ? "Gerenciar Contrário" : activeManager === 'author' ? "Gerenciar Autores" : activeManager === 'location' ? "Gerenciar Locais de Faturamento" : activeManager === 'client' ? "Gerenciar Clientes" : "Gerenciar"}
