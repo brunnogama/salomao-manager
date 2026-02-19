@@ -609,10 +609,10 @@ export function ContractFormModal(props: Props) {
       if (savedId && tempFiles.length > 0) {
         for (const item of tempFiles) {
           try {
-            const sanitizedName = item.file.name.replace(/[^a-z0-9.]/gi, '_').replace(/_{2,}/g, '_').replace(/\.{2,}/g, '.').toLowerCase();
-            const finalName = sanitizedName.length > 100 ? sanitizedName.substring(sanitizedName.length - 100) : sanitizedName;
+            const sanitizedName = item.file.name.replace(/[^a-z0-9.]/gi, '').replace(/\.{2,}/g, '.').toLowerCase();
+            const finalName = sanitizedName.length > 60 ? sanitizedName.substring(sanitizedName.length - 60) : sanitizedName;
             const filePath = `${savedId}/${Date.now()}_${finalName}`;
-            await supabase.storage.from('contract-documents').upload(filePath, item.file);
+            await supabase.storage.from('ged-documentos').upload(filePath, item.file);
             await supabase.from('contract_documents').insert({
               contract_id: savedId,
               file_name: item.file.name,
@@ -746,10 +746,10 @@ export function ContractFormModal(props: Props) {
 
     setUploading(true);
     try {
-      const sanitizedName = file.name.replace(/[^a-z0-9.]/gi, '_').replace(/_{2,}/g, '_').replace(/\.{2,}/g, '.').toLowerCase();
-      const finalName = sanitizedName.length > 100 ? sanitizedName.substring(sanitizedName.length - 100) : sanitizedName;
+      const sanitizedName = file.name.replace(/[^a-z0-9.]/gi, '').replace(/\.{2,}/g, '.').toLowerCase();
+      const finalName = sanitizedName.length > 60 ? sanitizedName.substring(sanitizedName.length - 60) : sanitizedName;
       const filePath = `${formData.id}/${Date.now()}_${finalName}`;
-      const { error: uploadError } = await supabase.storage.from('contract-documents').upload(filePath, file);
+      const { error: uploadError } = await supabase.storage.from('ged-documentos').upload(filePath, file);
       if (uploadError) throw uploadError;
       const { data: docData, error: dbError } = await supabase.from('contract_documents').insert({ contract_id: formData.id, file_name: file.name, file_path: filePath, file_type: type }).select().single();
       if (dbError) throw dbError;
@@ -759,7 +759,7 @@ export function ContractFormModal(props: Props) {
 
   const handleDownload = async (path: string) => {
     try {
-      const { data, error } = await supabase.storage.from('contract-documents').download(path);
+      const { data, error } = await supabase.storage.from('ged-documentos').download(path);
       if (error) throw error;
       const url = URL.createObjectURL(data), a = document.createElement('a');
       a.href = url; a.download = path.split('_').slice(1).join('_') || 'documento.pdf';
@@ -770,7 +770,7 @@ export function ContractFormModal(props: Props) {
   const handleDeleteDocument = async (id: string, path: string) => {
     if (!confirm("Tem certeza que deseja excluir este documento?")) return;
     try {
-      await supabase.storage.from('contract-documents').remove([path]);
+      await supabase.storage.from('ged-documentos').remove([path]);
       const { error: dbError } = await supabase.from('contract_documents').delete().eq('id', id);
       if (dbError) throw dbError;
       setDocuments(prev => prev.filter(d => d.id !== id));

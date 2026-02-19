@@ -90,7 +90,7 @@ export function GED() {
       const sizesMap = new Map<string, number>();
 
       await Promise.all(uniqueContractIds.map(async (contractId) => {
-        const { data: files } = await supabase.storage.from('contract-documents').list(contractId);
+        const { data: files } = await supabase.storage.from('ged-documentos').list(contractId);
 
         if (files) {
           files.forEach(f => {
@@ -118,7 +118,7 @@ export function GED() {
   };
 
   const handleDownload = async (path: string) => {
-    let { data } = await supabase.storage.from('contract-documents').createSignedUrl(path, 60);
+    let { data } = await supabase.storage.from('ged-documentos').createSignedUrl(path, 60);
 
     if (!data?.signedUrl) {
       const res = await supabase.storage.from('ged').createSignedUrl(path, 60);

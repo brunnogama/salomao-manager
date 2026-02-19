@@ -325,7 +325,7 @@ export function Finance() {
       const doc = documents[0];
 
       const { data: fileData, error: downloadError } = await supabase.storage
-        .from('contract-documents')
+        .from('ged-documentos')
         .download(doc.file_path);
 
       if (downloadError) throw downloadError;
