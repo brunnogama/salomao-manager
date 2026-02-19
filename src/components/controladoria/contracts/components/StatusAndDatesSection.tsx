@@ -342,7 +342,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                     {formData.status === 'active' && (
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end mb-4 animate-in fade-in">
                             <div className="md:col-span-4">
-                                <label className="text-xs font-medium block mb-1 text-green-800">Número HON (Único) <span className="text-red-500">*</span></label>
+                                <label className="text-xs font-medium block mb-1 text-green-800">Número HON <span className="text-red-500">*</span></label>
                                 <input type="text" className={`w-full border-2 p-2.5 rounded-lg font-mono font-bold bg-white outline-none ${duplicateHonCase ? 'border-yellow-400 text-yellow-800 bg-yellow-50' : 'border-green-200 text-green-900 focus:border-green-500'}`} placeholder="00.000.000/000" value={formData.hon_number} onChange={e => setFormData({ ...formData, hon_number: maskHon(e.target.value) })} />
                                 {duplicateHonCase && (
                                     <div className="flex items-center gap-1 mt-1 text-xs text-yellow-700 font-medium whitespace-nowrap overflow-hidden text-ellipsis" title={`ID: ${duplicateHonCase.display_id} - ${duplicateHonCase.client_name} (${getStatusLabel(duplicateHonCase.status)})`}>
