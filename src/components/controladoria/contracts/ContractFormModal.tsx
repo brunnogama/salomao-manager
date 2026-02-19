@@ -159,7 +159,7 @@ export function ContractFormModal(props: Props) {
   useEffect(() => {
     const checkHonDuplicates = async () => {
       if (!formData.hon_number || formData.hon_number.length < 2) return setDuplicateHonCase(null);
-      const { data } = await supabase.from('contracts').select('id, client_name, display_id').eq('hon_number', formData.hon_number).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').maybeSingle();
+      const { data } = await supabase.from('contracts').select('id, client_name, display_id, status').eq('hon_number', formData.hon_number).neq('id', formData.id || '00000000-0000-0000-0000-000000000000').maybeSingle();
       setDuplicateHonCase(data);
     };
     const timer = setTimeout(checkHonDuplicates, 800);
@@ -550,7 +550,13 @@ export function ContractFormModal(props: Props) {
       onSave();
       onClose();
     } catch (error: any) {
-      if (error.code === '23505' || error.message?.includes('contracts_hon_number_key')) alert('⚠️ Duplicidade de Caso Detectada\n\nJá existe um contrato cadastrado com este Número HON.');
+      if (error.code === '23505' || error.message?.includes('contracts_hon_number_key')) {
+        let msg = '⚠️ Duplicidade de Caso Detectada\n\nJá existe um contrato cadastrado com este Número HON.';
+        if (duplicateHonCase) {
+          msg += `\n\n- ID: ${duplicateHonCase.display_id}\n- Cliente: ${duplicateHonCase.client_name}\n- Status: ${getStatusLabel(duplicateHonCase.status)}`;
+        }
+        alert(msg);
+      }
       else if (error.code === 'PGRST204') alert(`Erro Técnico: Tentativa de salvar campo inválido.\n\nSOLUÇÃO: Rode o SQL fornecido no Supabase.`);
       else alert(`Não foi possível salvar as alterações.\n\n${error.message}`);
     } finally {
@@ -816,6 +822,7 @@ export function ContractFormModal(props: Props) {
                   ensureArray={ensureArray}
                   duplicateHonCase={duplicateHonCase}
                   dateWarningMessage={dateWarningMessage}
+                  getStatusLabel={getStatusLabel}
                 />
 
                 {(formData.status === 'analysis' || formData.status === 'proposal' || formData.status === 'active') && (

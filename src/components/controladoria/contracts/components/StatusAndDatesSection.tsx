@@ -35,6 +35,7 @@ interface StatusAndDatesSectionProps {
     ensureArray: (val: any) => string[];
     dateWarningMessage?: string | null;
     duplicateHonCase?: any | null;
+    getStatusLabel: (status: string) => string;
 }
 
 export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
@@ -45,7 +46,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
         formatForInput, handleAddToList, removeExtra,
         newIntermediateFee, setNewIntermediateFee, interimInstallments, setInterimInstallments,
         handleAddIntermediateFee, interimClause, setInterimClause, handleRemoveIntermediateFee, ensureArray,
-        dateWarningMessage, duplicateHonCase
+        dateWarningMessage, duplicateHonCase, getStatusLabel
     } = props;
 
     const isTimesheet = (formData as any).timesheet === true;
@@ -344,7 +345,10 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                                 <label className="text-xs font-medium block mb-1 text-green-800">Número HON (Único) <span className="text-red-500">*</span></label>
                                 <input type="text" className={`w-full border-2 p-2.5 rounded-lg font-mono font-bold bg-white outline-none ${duplicateHonCase ? 'border-yellow-400 text-yellow-800 bg-yellow-50' : 'border-green-200 text-green-900 focus:border-green-500'}`} placeholder="00.000.000/000" value={formData.hon_number} onChange={e => setFormData({ ...formData, hon_number: maskHon(e.target.value) })} />
                                 {duplicateHonCase && (
-                                    <div className="flex items-center gap-1 mt-1 text-xs text-yellow-700 font-medium"><AlertTriangle className="w-3 h-3" /><span>Em uso por: {duplicateHonCase.display_id}</span></div>
+                                    <div className="flex items-center gap-1 mt-1 text-xs text-yellow-700 font-medium whitespace-nowrap overflow-hidden text-ellipsis" title={`ID: ${duplicateHonCase.display_id} - ${duplicateHonCase.client_name} (${getStatusLabel(duplicateHonCase.status)})`}>
+                                        <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                                        <span>Em uso por: {duplicateHonCase.display_id} - {duplicateHonCase.client_name} ({getStatusLabel(duplicateHonCase.status)})</span>
+                                    </div>
                                 )}
                             </div>
                             <div className="md:col-span-4"><CustomSelect label="Local Faturamento *" value={formData.billing_location || ''} onChange={(val: string) => setFormData({ ...formData, billing_location: val })} options={billingOptions} onAction={() => setActiveManager('location')} actionLabel="Gerenciar Locais" actionIcon={Settings} /></div>
