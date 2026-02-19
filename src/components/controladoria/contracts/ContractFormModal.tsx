@@ -37,7 +37,7 @@ export function ContractFormModal(props: Props) {
     isOpen, onClose, formData, setFormData, onSave, loading: parentLoading, isEditing,
     partners, onOpenPartnerManager, analysts, onOpenAnalystManager,
     processes, currentProcess, setCurrentProcess, editingProcessIndex, handleProcessAction, editProcess, removeProcess,
-    newIntermediateFee, setNewIntermediateFee, addIntermediateFee, getStatusLabel
+    newIntermediateFee, setNewIntermediateFee, addIntermediateFee, removeIntermediateFee, getStatusLabel
   } = props;
 
   const [localLoading, setLocalLoading] = useState(false);
@@ -479,7 +479,7 @@ export function ContractFormModal(props: Props) {
   };
 
   const handleRemoveIntermediateFee = (idx: number) => {
-    handleRemoveIntermediateFee(idx);
+    removeIntermediateFee(idx);
     const currentClauses = [...ensureArray((formData as any).intermediate_fees_clauses)]; currentClauses.splice(idx, 1);
     const currentInst = [...ensureArray((formData as any).intermediate_fees_installments)]; currentInst.splice(idx, 1);
     setFormData(prev => ({ ...prev, intermediate_fees_clauses: currentClauses, intermediate_fees_installments: currentInst } as any));
