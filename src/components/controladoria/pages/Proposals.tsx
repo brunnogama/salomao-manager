@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import {
   FileText,
-  Download,
-  Printer,
   Loader2,
-  RefreshCw,
   Eye,
   CheckCircle,
   FileSignature
 } from 'lucide-react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 import { saveAs } from 'file-saver';
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../../types/controladoria';
 import { ContractFormModal } from '../contracts/ContractFormModal';
-import { generateProposalDocx } from '../../utils/docxGenerator';
+import { generateProposalDocx } from '../../../utils/docxGenerator';
 import { maskMoney } from '../utils/masks';
 
 export function Proposals() {
@@ -39,7 +35,7 @@ export function Proposals() {
   const [contractFormData, setContractFormData] = useState<Contract>({} as Contract);
   const [processes, setProcesses] = useState<ContractProcess[]>([]);
   const [currentProcess, setCurrentProcess] = useState<ContractProcess>({ process_number: '' });
-  const [editingProcessIndex, setEditingProcessIndex] = useState<number | null>(null);
+  const [editingProcessIndex] = useState<number | null>(null);
   const [newIntermediateFee, setNewIntermediateFee] = useState('');
   const [timelineData, setTimelineData] = useState<TimelineEvent[]>([]);
   const [analysts, setAnalysts] = useState<Analyst[]>([]);
