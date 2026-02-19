@@ -1,5 +1,4 @@
-import React from 'react';
-import { FileText, AlertCircle, Upload, Download, Trash2 } from 'lucide-react';
+import { FileText, Upload, Download, Trash2 } from 'lucide-react';
 import { ContractDocument } from '../../../../types/controladoria';
 
 // ROTA CORRIGIDA: Sobe 2 níveis para sair de /components/contracts e entrar em /utils
@@ -7,23 +6,27 @@ import { maskHon } from '../../utils/masks';
 
 interface ContractDocumentsProps {
   documents: ContractDocument[];
-  isEditing: boolean;
+  tempFiles?: { file: File, type: string }[];
   uploading: boolean;
   status: string;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>, type: string) => void;
   onDownload: (path: string) => void;
   onDelete: (id: string, path: string) => void;
+  onRemoveTemp?: (index: number) => void;
 }
 
 export function ContractDocuments({
   documents,
-  isEditing,
+  tempFiles = [],
   uploading,
   status,
   onUpload,
   onDownload,
-  onDelete
+  onDelete,
+  onRemoveTemp
 }: ContractDocumentsProps) {
+  const hasFiles = documents.length > 0 || tempFiles.length > 0;
+
   return (
     <div className="mb-8 mt-6">
       <div className="flex items-center justify-between mb-4">
@@ -31,32 +34,28 @@ export function ContractDocuments({
           <FileText className="w-4 h-4 mr-2" />
           Arquivos & Documentos
         </h3>
-        {!isEditing ? (
-          <span className="text-xs text-orange-500 flex items-center">
-            <AlertCircle className="w-3 h-3 mr-1" /> Salve o caso para anexar arquivos
-          </span>
-        ) : (
-          <label className="cursor-pointer bg-white border border-dashed border-salomao-blue text-salomao-blue px-4 py-2 rounded-lg text-xs font-medium hover:bg-blue-50 transition-colors flex items-center">
-            {uploading ? (
-              'Enviando...'
-            ) : (
-              <>
-                <Upload className="w-3 h-3 mr-2" /> Anexar PDF
-              </>
-            )}
-            <input
-              type="file"
-              accept="application/pdf"
-              className="hidden"
-              disabled={uploading}
-              onChange={(e) => onUpload(e, status === 'active' ? 'contract' : 'proposal')}
-            />
-          </label>
-        )}
+
+        <label className="cursor-pointer bg-white border border-dashed border-salomao-blue text-salomao-blue px-4 py-2 rounded-lg text-xs font-medium hover:bg-blue-50 transition-colors flex items-center">
+          {uploading ? (
+            'Enviando...'
+          ) : (
+            <>
+              <Upload className="w-3 h-3 mr-2" /> Anexar PDF
+            </>
+          )}
+          <input
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => onUpload(e, status === 'active' ? 'contract' : 'proposal')}
+          />
+        </label>
       </div>
 
-      {documents.length > 0 ? (
+      {hasFiles ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Arquivos Já Salvos */}
           {documents.map((doc) => (
             <div key={doc.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 group">
               <div className="flex items-center overflow-hidden">
@@ -87,13 +86,35 @@ export function ContractDocuments({
               </div>
             </div>
           ))}
+
+          {/* Arquivos Temporários (Novos) */}
+          {tempFiles.map((item, idx) => (
+            <div key={`temp-${idx}`} className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-100 group">
+              <div className="flex items-center overflow-hidden">
+                <div className="bg-blue-100 p-2 rounded text-blue-600 mr-3">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-blue-700 break-all" title={item.file.name}>
+                    {item.file.name}
+                  </p>
+                  <div className="flex items-center text-[10px] text-blue-400 mt-0.5">
+                    <span className="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase">Agendado p/ Upload</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => onRemoveTemp?.(idx)} className="p-1.5 text-red-600 hover:bg-red-100 rounded">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
-        isEditing && (
-          <div className="text-center py-6 border-2 border-dashed border-gray-100 rounded-lg text-xs text-gray-400">
-            Nenhum arquivo anexado.
-          </div>
-        )
+        <div className="text-center py-6 border-2 border-dashed border-gray-100 rounded-lg text-xs text-gray-400 font-medium">
+          Nenhum arquivo anexado.
+        </div>
       )}
     </div>
   );

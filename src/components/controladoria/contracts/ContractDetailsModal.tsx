@@ -211,55 +211,52 @@ export function ContractDetailsModal({
       <div className="bg-white w-full max-w-7xl rounded-3xl shadow-2xl flex flex-col max-h-[95vh] animate-in zoom-in-95 overflow-hidden">
 
         {/* Header */}
-        <div className="p-8 bg-gray-50 border-b border-gray-100 flex justify-between items-start relative">
-          <div className="flex-1 pr-10">
+        <div className="p-8 bg-gray-50 border-b border-gray-100 flex justify-between items-start relative shrink-0">
+          <div>
             <div className="flex items-center gap-3 mb-3">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getStatusColor(contract.status)}`}>
+              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${getStatusColor(contract.status)}`}>
                 {getStatusLabel(contract.status)}
               </span>
               {contract.hon_number && (
-                <span className="font-mono text-xs text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded">
+                <span className="font-mono text-[10px] text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded">
                   HON: {contract.hon_number}
                 </span>
               )}
               {contract.proposal_code && contract.status === 'proposal' && (
-                <span className="font-mono text-xs text-blue-600 bg-blue-50 border border-blue-100 px-2 py-1 rounded ml-1">
+                <span className="font-mono text-[10px] text-blue-600 bg-blue-50 border border-blue-100 px-2 py-1 rounded">
                   Cód: {contract.proposal_code}
                 </span>
               )}
+              <span className="text-gray-300 font-mono text-[10px]">
+                #{contract.display_id || String(contract.seq_id || 0).padStart(6, '0')}
+              </span>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 leading-tight mb-2">{contract.client_name}</h2>
+            <div className="flex items-center gap-4 text-gray-500 text-sm">
+              {contract.cnpj && (
+                <span className="font-mono font-medium">{contract.cnpj}</span>
+              )}
+              <span className="flex items-center"><Briefcase className="w-4 h-4 mr-1.5" /> {contract.area}</span>
+              <span className="flex items-center"><MapPin className="w-4 h-4 mr-1.5" /> {contract.uf}</span>
             </div>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 leading-tight">{contract.client_name}</h2>
-          {contract.cnpj && (
-            <div className="text-sm text-gray-500 font-mono mt-1">{contract.cnpj}</div>
-          )}
-          <div className="flex items-center gap-4 mt-2 text-gray-500 text-sm">
-            <span className="flex items-center"><Briefcase className="w-4 h-4 mr-1.5" /> {contract.area}</span>
-            <span className="flex items-center"><MapPin className="w-4 h-4 mr-1.5" /> {contract.uf}</span>
+
+          <div className="flex items-center gap-2">
+            {canEdit && (
+              <button onClick={onEdit} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors shadow-sm" title="Editar">
+                <Edit className="w-5 h-5" />
+              </button>
+            )}
+
+            {canDelete && (
+              <button onClick={onDelete} className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors shadow-sm" title="Excluir">
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
+            <button onClick={onClose} className="p-3 bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 transition-colors ml-2 shadow-sm">
+              <X className="w-5 h-5" />
+            </button>
           </div>
-        </div>
-
-        <div className="flex gap-2 items-start">
-          {/* ID FORMATADO 000000 */}
-          <span className="text-gray-300 font-mono text-xs mt-3 mr-2">
-            #{contract.display_id || String(contract.seq_id || 0).padStart(6, '0')}
-          </span>
-
-          {/* BOTÕES DE AÇÃO CONDICIONAIS */}
-          {canEdit && (
-            <button onClick={onEdit} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors" title="Editar">
-              <Edit className="w-5 h-5" />
-            </button>
-          )}
-
-          {canDelete && (
-            <button onClick={onDelete} className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors" title="Excluir">
-              <Trash2 className="w-5 h-5" />
-            </button>
-          )}
-          <button onClick={onClose} className="p-3 bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 ml-2 transition-colors">
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-8">

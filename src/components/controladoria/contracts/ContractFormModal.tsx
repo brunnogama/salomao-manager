@@ -767,6 +767,10 @@ export function ContractFormModal(props: Props) {
     } catch (error: any) { alert("Erro ao baixar arquivo: " + error.message); }
   };
 
+  const removeTempFile = (index: number) => {
+    setTempFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleDeleteDocument = async (id: string, path: string) => {
     if (!confirm("Tem certeza que deseja excluir este documento?")) return;
     try {
@@ -1002,7 +1006,7 @@ export function ContractFormModal(props: Props) {
 
             {activeTab === 4 && (
               <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                <ContractDocuments documents={documents} isEditing={isEditing} uploading={uploading} status={formData.status} onUpload={handleFileUpload} onDownload={handleDownload} onDelete={handleDeleteDocument} />
+                <ContractDocuments documents={documents} tempFiles={tempFiles} uploading={uploading} status={formData.status} onUpload={handleFileUpload} onDownload={handleDownload} onDelete={handleDeleteDocument} onRemoveTemp={removeTempFile} />
               </div>
             )}
 
