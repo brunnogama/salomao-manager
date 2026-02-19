@@ -505,28 +505,79 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
   const handleExportXLSX = () => {
     const dataToExport = filtered.map(c => ({
-      ID: c.id,
-      Nome: c.name,
-      'Email Corporativo': c.email,
-      CPF: c.cpf,
-      Cargo: (c as any).roles?.name || c.role,
-      'Área': c.area,
-      Equipe: (c as any).teams?.name || c.equipe,
-      Local: (c as any).locations?.name || c.local,
-      Status: c.status === 'active' ? 'Ativo' : 'Inativo',
-      Admissão: formatDateToDisplay(c.hire_date),
-      'Filhos': c.has_children ? 'Sim' : 'Não',
+      // 1. DADOS PESSOAIS
+      'Nome Completo': c.name,
+      'CPF': c.cpf,
+      'RG': c.rg,
+      'Data Nascimento': formatDateToDisplay(c.birthday),
+      'Gênero': c.gender,
+      'Estado Civil': c.civil_status,
+      'Possui Filhos?': c.has_children ? 'Sim' : 'Não',
       'Quantidade de Filhos': c.children_count || 0,
+      'Nome Emergência': c.emergencia_nome,
+      'Telefone Emergência': c.emergencia_telefone,
+      'Parentesco Emergência': c.emergencia_parentesco,
+      'Observações': c.observacoes,
+      'CEP': c.zip_code,
+      'Endereço': c.address,
+      'Número': c.address_number,
+      'Complemento': c.address_complement,
+      'Bairro': c.neighborhood,
+      'Cidade': c.city,
+      'Estado': c.state,
+
+      // 2. DADOS PROFISSIONAIS
+      'OAB Número': c.oab_numero,
+      'OAB UF': c.oab_uf,
+      'OAB Emissão': formatDateToDisplay(c.oab_emissao),
+      'Tipo Inscrição OAB': c.oab_tipo,
+      'PIS/PASEP': c.pis || c.pis_pasep,
+      'Matrícula e-Social': c.matricula_esocial,
+      'Dispensa Militar': c.dispensa_militar,
+      'CTPS': c.ctps || c.ctps_numero,
+      'Série CTPS': c.ctps_serie,
+      'UF CTPS': c.ctps_uf,
+
+      // 3. DADOS DE ESCOLARIDADE
+      'Nível Escolaridade': c.escolaridade_nivel,
+      'Subnível': c.escolaridade_subnivel,
+      'Instituição': c.escolaridade_instituicao,
+      'Curso': c.escolaridade_curso,
+      'Matrícula Escolar': c.escolaridade_matricula,
+      'Semestre': c.escolaridade_semestre,
+      'Previsão Conclusão': formatDateToDisplay(c.escolaridade_previsao_conclusao),
+
+      // 4. DADOS CORPORATIVOS
+      'Status': c.status === 'active' ? 'Ativo' : 'Inativo',
+      'Rateio': getLookupName(rateios, c.rateio_id),
+      'Data Admissão': formatDateToDisplay(c.hire_date),
+      'Motivo Contratação': getLookupName(hiringReasons, c.hiring_reason_id),
+      'Tipo Contrato': c.contract_type,
+      'Email Corporativo': c.email,
+      'Sócio Responsável': (c as any).partner?.name || getLookupName(partners as any[], c.partner_id),
+      'Líder Direto': (c as any).leader?.name || getLookupName(colaboradores as any[], c.leader_id),
+      'Equipe/Área': (c as any).teams?.name || c.equipe,
+      'Cargo': (c as any).roles?.name || c.role,
+      'Centro de Custo': c.centro_custo,
+      'Local': (c as any).locations?.name || c.local,
+
+      // 5. HISTÓRICO (DESLIGAMENTO)
       'Data Desligamento': formatDateToDisplay(c.termination_date),
       'Iniciativa Desligamento': getLookupName(terminationInitiatives, c.termination_initiative_id),
       'Tipo Desligamento': getLookupName(terminationTypes, c.termination_type_id),
-      'Motivo Desligamento': getLookupName(terminationReasons, c.termination_reason_id)
+      'Motivo Desligamento': getLookupName(terminationReasons, c.termination_reason_id),
+      'Observações Histórico': c.history_observations
     }));
+
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('pt-BR').replace(/\//g, '-');
+    const formattedTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', '-');
+    const fileName = `Colaboradores_${formattedDate}_${formattedTime}.xlsx`;
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Colaboradores");
-    XLSX.writeFile(wb, "colaboradores_export.xlsx");
+    XLSX.writeFile(wb, fileName);
   };
 
   // LAYOUT FUNCTIONS
