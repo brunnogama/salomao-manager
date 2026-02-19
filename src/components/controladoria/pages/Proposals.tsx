@@ -429,7 +429,22 @@ export function Proposals() {
         display_id: String(insertedContract.seq_id).padStart(6, '0'),
         partner_name: primaryPartner.name,
         proposal_code: proposalCode,
-        documents: [docData]
+        documents: [docData],
+        // Reset honorariums to blank for manual entry as requested
+        pro_labore: null,
+        pro_labore_clause: null,
+        pro_labore_extras: null,
+        pro_labore_extras_clauses: null,
+        final_success_fee: null,
+        final_success_fee_clause: null,
+        final_success_percent: null,
+        final_success_percent_clause: null,
+        final_success_extras: null,
+        final_success_extras_clauses: null,
+        percent_extras: null,
+        percent_extras_clauses: null,
+        intermediate_fees: null,
+        intermediate_fees_clauses: null,
       });
       setProcesses([]);
       setTimelineData([]);
@@ -627,7 +642,7 @@ export function Proposals() {
             </div>
 
             <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Referência [incluir referência da proposta]</label>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Referência da Proposta</label>
               <input
                 type="text"
                 name="reference"
@@ -639,7 +654,7 @@ export function Proposals() {
             </div>
 
             <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Objeto da Proposta [incluir objeto da disputa]</label>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Objeto da Proposta</label>
               <textarea
                 name="object"
                 value={proposalData.object}

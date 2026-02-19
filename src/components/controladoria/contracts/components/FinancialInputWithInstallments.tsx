@@ -41,11 +41,11 @@ export const FinancialInputWithInstallments = ({
         {onChangeClause && (
           <input
             type="text"
-            className="w-40 border border-gray-300 rounded-l-lg p-2.5 text-sm bg-gray-50 focus:border-salomao-blue outline-none border-r-0 placeholder-gray-400"
+            className="w-14 border border-gray-300 rounded-l-lg p-2.5 text-sm bg-gray-50 focus:border-salomao-blue outline-none border-r-0 placeholder-gray-400 text-center"
             value={clause || ''}
             onChange={(e) => onChangeClause(e.target.value)}
-            placeholder="Cláusula"
-            title="Cláusula ou Descrição"
+            placeholder="Cl."
+            title="Cláusula (ex: 2.1)"
           />
         )}
         <input
