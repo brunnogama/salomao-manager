@@ -518,6 +518,5 @@ export function ContractDetailsModal({
 
       </div>
     </div>
-    </div >
   );
 }
