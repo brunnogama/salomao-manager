@@ -18,7 +18,7 @@ import {
   TrendingDown,
   Building2
 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx-js-style'
 import { supabase } from '../lib/supabase'
 
 // Tipos

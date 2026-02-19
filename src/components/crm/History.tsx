@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Search, RefreshCw, Calendar, XCircle, LayoutGrid } from 'lucide-react'
-import { utils, writeFile } from 'xlsx'
+import XLSX from 'xlsx-js-style'
 import { FilterSelect } from '../controladoria/ui/FilterSelect'
 
 interface LogItem {
@@ -90,10 +90,10 @@ export function History() {
   }
 
   const handleExport = () => {
-    const ws = utils.json_to_sheet(filteredLogs)
-    const wb = utils.book_new()
-    utils.book_append_sheet(wb, ws, "Logs")
-    writeFile(wb, "Historico_Atividades.xlsx")
+    const ws = XLSX.utils.json_to_sheet(filteredLogs)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Logs")
+    XLSX.writeFile(wb, "Historico_Atividades.xlsx")
   }
 
   return (

@@ -11,7 +11,7 @@ import { FinancialInstallment, Partner, Contract, ContractProcess, ContractDocum
 import { EmptyState } from '../ui/EmptyState';
 
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 import { toast } from 'sonner';
 
 // --- COMPONENTES AUXILIARES ---

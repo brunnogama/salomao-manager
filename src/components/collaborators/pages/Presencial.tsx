@@ -6,7 +6,7 @@ import {
   Users, Briefcase, FileText,
   Plus, Search, Eraser, Clock, MapPin
 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx-js-style'
 import { supabase } from '../../../lib/supabase'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { MonthSelect } from '../components/MonthSelect'

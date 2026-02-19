@@ -20,7 +20,7 @@ import {
   X,
   Download
 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx-js-style'
 import { FinanceModalEnviarFatura } from '../components/FinanceModalEnviarFatura'
 import { FinanceModalDetalhesFatura } from '../components/FinanceModalDetalhesFatura'
 import { FinanceModalEditarDatas } from '../components/FinanceModalEditarDatas'

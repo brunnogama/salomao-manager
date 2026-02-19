@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Contract, Partner } from '../../../types/controladoria';
 import { ContractFilters } from '../contracts/ContractFilters';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 
 export function Volumetry() {
 

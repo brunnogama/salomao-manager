@@ -6,7 +6,7 @@ import {
   FileSignature, X, FileSearch, Eye
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 import { toast } from 'sonner';
 
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst } from '../../../types/controladoria';

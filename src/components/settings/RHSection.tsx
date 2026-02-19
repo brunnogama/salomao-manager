@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Download, Upload, FileSpreadsheet, AlertTriangle, CheckCircle, Loader2, Trash2 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx-js-style'
 import { supabase } from '../../lib/supabase'
 
 interface RHSectionProps {
