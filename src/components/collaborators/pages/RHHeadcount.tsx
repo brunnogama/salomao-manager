@@ -517,11 +517,11 @@ export function RHHeadcount() {
         </div>
       </div>
 
-      {/* 3. Charts Row 1: Local & Gender */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* 3. Charts Row 1: Local & Leaders */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* Local & Area (Stacked Bar) - Span 2 */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        {/* Local & Area (Stacked Bar) */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
               <MapIcon className="w-5 h-5" />
@@ -549,7 +549,45 @@ export function RHHeadcount() {
           </div>
         </div>
 
-        {/* Gender (Donut) - Span 1 */}
+        {/* Collaborators per Team Leader */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Colaboradores por Líder</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Top 15 Lideranças</p>
+            </div>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={leaderData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                  width={150}
+                />
+                <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
+                  <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 4. Chart Row 2: Gender & Age Distributions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Gender (Donut) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-pink-50 text-pink-600">
@@ -567,8 +605,8 @@ export function RHHeadcount() {
                   data={genderData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
+                  innerRadius={50}
+                  outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
                   label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -578,7 +616,7 @@ export function RHHeadcount() {
                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
                     return (
-                      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+                      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight="bold">
                         {`${(percent * 100).toFixed(0)}%`}
                       </text>
                     );
@@ -592,16 +630,13 @@ export function RHHeadcount() {
                     return <Cell key={`cell-${index}`} fill={color} />
                   })}
                 </Pie>
-                <Legend verticalAlign="bottom" height={36} />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" />
                 <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
 
-      {/* 4. Chart Row 2: Age Distributions (Legal & Admin) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Age Distribution (Legal) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
@@ -707,39 +742,6 @@ export function RHHeadcount() {
           </div>
         </div>
 
-      </div>
-
-      {/* 5. Chart Row 3: Collaborators per Leader */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-        <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-black text-gray-800 tracking-tight">Colaboradores por Líder</h3>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Top 15 Lideranças</p>
-          </div>
-        </div>
-        <div className="h-[350px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={leaderData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-              <XAxis type="number" hide />
-              <YAxis
-                dataKey="name"
-                type="category"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                width={150}
-              />
-              <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
-              <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
-                <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
       </div>
 
       {/* 6. Chart Row 4: Legal Specifics */}
@@ -918,6 +920,6 @@ export function RHHeadcount() {
         </div>
       </div>
 
-    </div>
+    </div >
   )
 }
