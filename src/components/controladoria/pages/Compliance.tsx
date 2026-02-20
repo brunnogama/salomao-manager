@@ -1,14 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ShieldCheck, Loader2, FileSearch, Plus, Search, Eye, Trash2, Download, LayoutDashboard, Database, Clock, BarChart3 } from 'lucide-react';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
   Tooltip,
-  ResponsiveContainer,
-  Legend
+  ResponsiveContainer
 } from 'recharts';
 import XLSX from 'xlsx-js-style';
 import { supabase } from '../../../lib/supabase';
@@ -177,24 +174,34 @@ export function Compliance() {
   const chartData = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const warningThreshold = new Date(today);
+    warningThreshold.setDate(today.getDate() + 10);
 
     const dataByLocation = certificates.reduce((acc, c) => {
       const dDate = parseLocalDate(c.due_date);
       const loc = c.location || 'Não Informado';
-      if (!acc[loc]) acc[loc] = { active: 0, expired: 0 };
+      if (!acc[loc]) acc[loc] = { valid: 0, expiring: 0, expired: 0 };
 
-      if (!c.due_date || (dDate && dDate >= today)) {
-        acc[loc].active += 1;
-      } else {
+      if (!c.due_date) {
+        acc[loc].valid += 1;
+      } else if (dDate && dDate < today) {
         acc[loc].expired += 1;
+      } else if (dDate && dDate <= warningThreshold) {
+        acc[loc].expiring += 1;
+      } else {
+        acc[loc].valid += 1;
       }
       return acc;
-    }, {} as Record<string, { active: number, expired: number }>);
+    }, {} as Record<string, { valid: number, expiring: number, expired: number }>);
 
-    return (Object.entries(dataByLocation) as any[]).map(([name, counts]) => ({
+    return (Object.entries(dataByLocation) as [string, any][]).map(([name, counts]) => ({
       name,
-      active: counts.active,
-      expired: counts.expired
+      data: [
+        { name: 'Em Dia', value: counts.valid, color: '#1e3a8a' },
+        { name: '7 Dias Úteis', value: counts.expiring, color: '#b45309' },
+        { name: 'Vencida', value: counts.expired, color: '#ef4444' }
+      ],
+      total: counts.valid + counts.expiring + counts.expired
     }));
   }, [certificates]);
 
@@ -461,42 +468,73 @@ export function Compliance() {
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gráfico de Distribuição */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                      <BarChart3 className="w-5 h-5 text-blue-600" />
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col min-h-[500px]">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-50 rounded-lg">
+                        <BarChart3 className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Status por Unidade</h3>
                     </div>
-                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Ativas por Local</h3>
+                    <div className="flex gap-4 text-[9px] font-black uppercase tracking-tighter">
+                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#1e3a8a]" /> Em Dia</div>
+                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#b45309]" /> 7 Dias Úteis</div>
+                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#ef4444]" /> Vencidas</div>
+                    </div>
                   </div>
-                  <div className="flex-1 w-full min-h-0">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                        <XAxis
-                          dataKey="name"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 700 }}
-                        />
-                        <YAxis
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 700 }}
-                        />
-                        <Tooltip
-                          cursor={{ fill: '#f9fafb' }}
-                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                        />
-                        <Legend verticalAlign="top" align="right" iconType="circle" />
-                        <Bar dataKey="active" name="Ativas" stackId="a" fill="#1e3a8a" radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="expired" name="Vencidas" stackId="a" fill="#ef4444" radius={[6, 6, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto custom-scrollbar p-1">
+                    {(chartData as any[]).map((loc) => (
+                      <div key={loc.name} className="flex flex-col items-center bg-gray-50/50 rounded-2xl p-4 border border-gray-100/50 hover:bg-gray-50 transition-colors">
+                        <div className="w-full h-40 relative">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={loc.data.filter((d: any) => d.value > 0)}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={45}
+                                outerRadius={65}
+                                paddingAngle={2}
+                                dataKey="value"
+                              >
+                                {loc.data.filter((d: any) => d.value > 0).map((entry: any, index: number) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                contentStyle={{ borderRadius: '12px', border: 'none', fontSize: '10px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          {/* Centered Total */}
+                          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span className="text-lg font-black text-[#0a192f] leading-none">{loc.total}</span>
+                            <span className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Total</span>
+                          </div>
+                        </div>
+                        <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-2">{loc.name}</h4>
+                        <div className="flex gap-3 mt-3">
+                          {loc.data.map((d: any) => (
+                            <div key={d.name} className="flex flex-col items-center">
+                              <span className="text-xs font-black text-[#0a192f]">{d.value}</span>
+                              <span className="text-[7px] font-bold text-gray-400 uppercase tracking-tighter">{d.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    {chartData.length === 0 && (
+                      <div className="col-span-full h-full flex flex-col items-center justify-center text-gray-400 py-20">
+                        <ShieldCheck className="w-12 h-12 opacity-10 mb-4" />
+                        <span className="text-xs font-bold uppercase tracking-widest">Sem dados disponíveis</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Tabela de Próximos Vencimentos */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[500px]">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-amber-50 rounded-lg">
                       <Clock className="w-5 h-5 text-amber-600" />
