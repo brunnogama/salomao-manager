@@ -679,7 +679,7 @@ export function Proposals() {
                       name="isPerson"
                       checked={proposalData.isPerson}
                       onChange={handleChange}
-                      className="peer h-3 w-3 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all check:bg-[#1e3a8a] checked:border-[#1e3a8a] hover:border-[#1e3a8a]"
+                      className="peer h-3 w-3 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:bg-[#1e3a8a] checked:border-[#1e3a8a] hover:border-[#1e3a8a]"
                     />
                     <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
