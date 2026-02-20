@@ -38,7 +38,7 @@ export function SearchableSelect({
   const [searchTerm, setSearchTerm] = useState('');
   const [options, setOptions] = useState<Option[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const toTitleCase = (str: string) => {
@@ -63,9 +63,27 @@ export function SearchableSelect({
     if (!table) return;
     setLoading(true);
     try {
-      const { data } = await supabase.from(table).select('*').order(nameField);
-      if (data) setOptions(data);
-    } catch (error) {
+      // Para tabelas de controle, muitas vezes tem a coluna status. 
+      // Tentar filtrar ativo, se falhar ou a coluna não existir, pegamos tudo.
+      const { data, error } = await supabase
+        .from(table)
+        .select('*')
+        .eq('status', 'active')
+        .order(nameField);
+
+      if (error) {
+        console.warn(`Tentando buscar sem filtro de status na tabela ${table}`, error);
+        // Fallback para tabelas sem a coluna status
+        const fallback = await supabase.from(table).select('*').order(nameField);
+        if (fallback.error) {
+          console.error(`Erro no fallback de tabela ${table}`, fallback.error);
+        } else if (fallback.data) {
+          setOptions(fallback.data);
+        }
+      } else if (data) {
+        setOptions(data);
+      }
+    } catch (error: any) {
       console.error('Erro ao buscar opções:', error);
     } finally {
       setLoading(false);
@@ -87,12 +105,12 @@ export function SearchableSelect({
   const getName = (opt: Option) => opt.name || opt.nome || opt.label || opt.value || '';
   const getId = (opt: Option) => opt.id || opt.value || Math.random();
 
-  const filteredOptions = options.filter(opt => 
+  const filteredOptions = options.filter(opt =>
     getName(opt).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Encontra o item selecionado para exibição no trigger
-  const selectedOption = options.find(opt => 
+  const selectedOption = options.find(opt =>
     (opt.id?.toString() === value) || (getName(opt).toLowerCase() === value.toLowerCase())
   );
 
@@ -105,9 +123,9 @@ export function SearchableSelect({
   return (
     <div ref={dropdownRef} className={`relative w-full ${className}`}>
       {label && <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{label}</label>}
-      
+
       {/* TRIGGER */}
-      <div 
+      <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`
           w-full bg-gray-100/50 border rounded-xl p-3 text-left flex items-center justify-between cursor-pointer transition-all
@@ -118,10 +136,10 @@ export function SearchableSelect({
         <span className={`text-sm font-medium truncate ${value ? "text-gray-700" : "text-gray-400"}`}>
           {selectedOption ? getName(selectedOption) : placeholder}
         </span>
-        
+
         <div className="flex items-center gap-1">
           {value && !disabled && (
-            <button 
+            <button
               onClick={handleClearSelection}
               className="p-1 text-gray-400 hover:text-red-500 rounded-full transition-colors"
             >
@@ -135,7 +153,7 @@ export function SearchableSelect({
       {/* DROPDOWN MENU */}
       {isOpen && (
         <div className="absolute left-0 top-full mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[9999]">
-          
+
           <div className="p-3 border-b border-gray-50 bg-gray-50/50">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -171,8 +189,8 @@ export function SearchableSelect({
                       }}
                       className={`
                         w-full px-4 py-2.5 text-left text-sm font-medium rounded-xl transition-all
-                        ${isSelected 
-                          ? 'bg-[#1e3a8a] text-white' 
+                        ${isSelected
+                          ? 'bg-[#1e3a8a] text-white'
                           : 'text-gray-600 hover:bg-blue-50 hover:text-[#1e3a8a]'
                         }
                       `}
