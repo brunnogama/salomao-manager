@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ShieldCheck, Loader2, FileSearch, Plus, Search, Eye, Trash2, Download, LayoutDashboard, Database, AlertTriangle, CheckCircle2, Clock, BarChart3 } from 'lucide-react';
+import { ShieldCheck, Loader2, FileSearch, Plus, Search, Eye, Trash2, Download, LayoutDashboard, Database, Clock, BarChart3 } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -71,7 +71,7 @@ export function Compliance() {
   const fetchLocations = async () => {
     setLoading(true);
     // Tentamos buscar da nova tabela. Se não existir, voltamos para o fallback dos contratos
-    const { data: offices, error } = await supabase.from('office_locations').select('name, cnpj').eq('active', true).order('name');
+    const { data: offices } = await supabase.from('office_locations').select('name, cnpj').eq('active', true).order('name');
 
     if (offices && offices.length > 0) {
       setLocationsList(offices);
@@ -326,6 +326,11 @@ export function Compliance() {
       </div>
 
       {loading ? (
+        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center flex flex-col items-center justify-center">
+          <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mb-4" />
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando locais...</p>
+        </div>
+      ) : (
         <div className="flex flex-col space-y-6">
           {/* Abas de Locais no Estilo do Sistema */}
           <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-2 overflow-hidden">
