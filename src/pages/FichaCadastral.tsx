@@ -1,12 +1,11 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { User, GraduationCap, BookOpen, Briefcase, Files, CheckCircle, AlertTriangle, Save, Loader2 } from 'lucide-react'
+import { User, GraduationCap, BookOpen, Files, CheckCircle, AlertTriangle, Save, Loader2 } from 'lucide-react'
 import { DadosPessoaisSection } from '../components/collaborators/components/DadosPessoaisSection'
 import { EnderecoSection } from '../components/collaborators/components/EnderecoSection'
 import { InformacoesProfissionaisSection } from '../components/collaborators/components/InformacoesProfissionaisSection'
 import { DadosEscolaridadeSection } from '../components/collaborators/components/DadosEscolaridadeSection'
 import { PhotoUploadSection } from '../components/collaborators/components/PhotoUploadSection'
-import { DadosCorporativosSection } from '../components/collaborators/components/DadosCorporativosSection'
 import { SearchableSelect } from '../components/crm/SearchableSelect'
 
 // Default empty collaborator state
@@ -66,8 +65,7 @@ export default function FichaCadastral() {
         { id: 1, label: 'Dados Pessoais', icon: User },
         { id: 2, label: 'Profissional', icon: GraduationCap },
         { id: 3, label: 'Escolaridade', icon: BookOpen },
-        { id: 4, label: 'Corporativo', icon: Briefcase },
-        { id: 5, label: 'Documentos', icon: Files }
+        { id: 4, label: 'Documentos', icon: Files }
     ]
 
     const gedCategories = [
@@ -110,7 +108,6 @@ export default function FichaCadastral() {
     const validateForm = () => {
         if (!formData.name) return 'Nome é obrigatório.'
         if (!formData.cpf) return 'CPF é obrigatório.'
-        if (!formData.email) return 'Email é obrigatório.'
         return null
     }
 
@@ -199,7 +196,6 @@ export default function FichaCadastral() {
                         {steps.map(step => {
                             const Icon = step.icon
                             const isActive = activeTab === step.id
-                            const isCompleted = false // simplified for now
 
                             return (
                                 <button
@@ -278,17 +274,6 @@ export default function FichaCadastral() {
                             )}
 
                             {activeTab === 4 && (
-                                <div className="space-y-6">
-                                    <h2 className="text-xl font-bold text-[#0a192f] mb-6">Dados Corporativos</h2>
-                                    <DadosCorporativosSection
-                                        formData={formData}
-                                        setFormData={setFormData}
-                                        maskDate={maskDate}
-                                    />
-                                </div>
-                            )}
-
-                            {activeTab === 5 && (
                                 <div className="space-y-8">
                                     <div className="space-y-6">
                                         <h2 className="text-xl font-bold text-[#0a192f] mb-6">Foto de Perfil</h2>
@@ -378,9 +363,9 @@ export default function FichaCadastral() {
                             Voltar
                         </button>
 
-                        {activeTab < 5 ? (
+                        {activeTab < 4 ? (
                             <button
-                                onClick={() => setActiveTab(prev => Math.min(5, prev + 1))}
+                                onClick={() => setActiveTab(prev => Math.min(4, prev + 1))}
                                 className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-lg shadow-blue-900/10"
                             >
                                 Próximo
