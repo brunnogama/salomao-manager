@@ -14,19 +14,41 @@ export function Compliance() {
 
   // Fetching data
   const [certificates, setCertificates] = useState<any[]>([]);
+  const [nameDict, setNameDict] = useState<Record<string, string>>({});
+  const [agencyDict, setAgencyDict] = useState<Record<string, string>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCertificate, setEditingCertificate] = useState(null);
 
   useEffect(() => {
     fetchLocations();
+    fetchDictionaries();
     fetchCertificates();
   }, []);
 
+  const fetchDictionaries = async () => {
+    // Busca dados no formato dicionário para casar IDs com Nomes offline (salva de erros de Foreign Key no SQL)
+    const [{ data: names }, { data: agencies }] = await Promise.all([
+      supabase.from('certificate_names').select('id, name'),
+      supabase.from('certificate_agencies').select('id, name')
+    ]);
+
+    if (names) {
+      const nd: Record<string, string> = {};
+      names.forEach(n => nd[n.id] = n.name);
+      setNameDict(nd);
+    }
+    if (agencies) {
+      const ad: Record<string, string> = {};
+      agencies.forEach(a => ad[a.id] = a.name);
+      setAgencyDict(ad);
+    }
+  };
+
   const fetchCertificates = async () => {
-    // Busca as certidões com os dados vitrincados via Foreign Key (se houver), se não retorna silent como nulo para dados legados.
+    // Retornamos ao select original para não quebrar caso a migração de FK não tenha sido feita no Supabase
     const { data, error } = await supabase
       .from('certificates')
-      .select('*, name_obj:certificate_names(name), agency_obj:certificate_agencies(name)')
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (data) {
@@ -48,9 +70,9 @@ export function Compliance() {
     setLoading(false);
   };
 
-  // Resolve os nomes reais, misturando as chaves estrangeiras com dados antigos
-  const getCertName = (c: any) => c.name_obj?.name || c.name || '';
-  const getAgencyName = (c: any) => c.agency_obj?.name || c.agency || '';
+  // Resolve os nomes reais, misturando as chaves do dicionário com dados antigos
+  const getCertName = (c: any) => nameDict[c.name] || c.name || '';
+  const getAgencyName = (c: any) => agencyDict[c.agency] || c.agency || '';
 
   const filteredCertificates = certificates.filter(c =>
     getCertName(c).toLowerCase().includes(searchTerm.toLowerCase()) ||
