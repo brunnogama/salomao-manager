@@ -301,6 +301,40 @@ export function Compliance() {
         </div>
       ) : (
         <div className="flex flex-col space-y-6">
+          {activeTab === 'dashboard' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                <div className="p-3 bg-emerald-50 rounded-xl">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Certidões Ativas</p>
+                  <p className="text-2xl font-black text-[#0a192f]">{stats.active}</p>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                <div className="p-3 bg-amber-50 rounded-xl">
+                  <Clock className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">A Vencer (Próximos 7 dias)</p>
+                  <p className="text-2xl font-black text-[#0a192f]">{stats.expiringSoon}</p>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                <div className="p-3 bg-red-50 rounded-xl">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Certidões Vencidas</p>
+                  <p className="text-2xl font-black text-[#0a192f]">{stats.expired}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Abas de Locais no Estilo do Sistema */}
           <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-2 overflow-hidden">
             <div className="flex space-x-2 overflow-x-auto pb-2 custom-scrollbar">
@@ -343,39 +377,6 @@ export function Compliance() {
 
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {/* Cards de Resumo */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                  <div className="p-3 bg-emerald-50 rounded-xl">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Certidões Ativas</p>
-                    <p className="text-2xl font-black text-[#0a192f]">{stats.active}</p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                  <div className="p-3 bg-amber-50 rounded-xl">
-                    <Clock className="w-6 h-6 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">A Vencer (Próximos 7 dias)</p>
-                    <p className="text-2xl font-black text-[#0a192f]">{stats.expiringSoon}</p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                  <div className="p-3 bg-red-50 rounded-xl">
-                    <AlertTriangle className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Certidões Vencidas</p>
-                    <p className="text-2xl font-black text-[#0a192f]">{stats.expired}</p>
-                  </div>
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gráfico de Distribuição */}
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
