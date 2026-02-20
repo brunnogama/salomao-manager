@@ -14,8 +14,6 @@ import {
 import {
   BarChart,
   Bar,
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -622,23 +620,24 @@ export function RHHeadcount() {
           </div>
         </div>
 
-        {/* Age Pyramid (Legal) */}
+        {/* Age Distribution (Legal) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
               <TrendingUp size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Pirâmide Etária (Jurídico)</h3>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Faixa Etária (Jurídico)</h3>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição por Gênero</p>
             </div>
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
+              <BarChart
                 data={agePyramidData}
                 layout="vertical"
-                margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+                margin={{ top: 10, right: 40, left: 10, bottom: 0 }}
+                barGap={2}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
                 <XAxis type="number" hide />
@@ -650,25 +649,25 @@ export function RHHeadcount() {
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                   width={90}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
                 <Legend iconType="circle" />
-                <Area
-                  type="monotone"
+                <Bar
                   dataKey="Masculino"
-                  stroke={COLORS.pyramid.male}
-                  fill={COLORS.pyramid.maleFill}
-                  fillOpacity={0.6}
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
+                  fill={COLORS.pyramid.male}
+                  radius={[0, 4, 4, 0]}
+                  barSize={15}
+                >
+                  <LabelList dataKey="Masculino" position="right" fill={COLORS.pyramid.male} fontSize={10} fontWeight={700} offset={8} />
+                </Bar>
+                <Bar
                   dataKey="Feminino"
-                  stroke={COLORS.pyramid.female}
-                  fill={COLORS.pyramid.femaleFill}
-                  fillOpacity={0.6}
-                  strokeWidth={2}
-                />
-              </AreaChart>
+                  fill={COLORS.pyramid.female}
+                  radius={[0, 4, 4, 0]}
+                  barSize={15}
+                >
+                  <LabelList dataKey="Feminino" position="right" fill={COLORS.pyramid.female} fontSize={10} fontWeight={700} offset={8} />
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
