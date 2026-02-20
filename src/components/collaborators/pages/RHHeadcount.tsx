@@ -9,6 +9,11 @@ import {
   Scale,
   Calendar,
   TrendingUp,
+  Lightbulb,
+  AlertTriangle,
+  GraduationCap,
+  Heart,
+  ShieldCheck,
   X
 } from 'lucide-react'
 import {
@@ -92,14 +97,6 @@ const calculateAge = (birthday?: string) => {
   }
 }
 
-const formatCompact = (val: number) => {
-  if (val === 0) return '0'
-  return new Intl.NumberFormat('pt-BR', {
-    notation: 'compact',
-    compactDisplay: 'short',
-    maximumFractionDigits: 1
-  }).format(val);
-}
 
 // --- Main Component ---
 
@@ -107,8 +104,7 @@ export function RHHeadcount() {
   const {
     colaboradores,
     loading,
-    locations: masterLocations,
-    partners: masterPartners
+    locations: masterLocations
   } = useColaboradores()
 
   // --- State for Filters ---
@@ -361,44 +357,27 @@ export function RHHeadcount() {
     return dataMap
   }, [activeData])
 
-  // --- Custom Label Components ---
-  const CustomDataLabel = (props: any) => {
-    const { x, y, value, fill, position, offset } = props;
-    if (!value) return null; // Don't show 0s
+  // 8. Generational Diversity Data
+  const generationalData = useMemo(() => {
+    const counts = {
+      'Baby Boomers (55+)': 0,
+      'Geração X (45-54)': 0,
+      'Millennials (25-44)': 0,
+      'Geração Z (< 25)': 0
+    }
 
-    // Logic for stacked bar positioning can be tricky, let's keep it simple for now or use the same pill style
-    // For Stacked, we usually want it centered in the bar segment
-    // But Recharts LabelList positioning on stacked bars can be weird.
+    activeData.forEach(c => {
+      const age = calculateAge(c.birthday)
+      if (age === null) return
 
-    // For simple bars:
-    let yOffset = -25
-    if (position === 'insideRight') return null; // Handle if necessary
+      if (age >= 55) counts['Baby Boomers (55+)']++
+      else if (age >= 45) counts['Geração X (45-54)']++
+      else if (age >= 25) counts['Millennials (25-44)']++
+      else counts['Geração Z (< 25)']++
+    })
 
-    return (
-      <g>
-        <rect
-          x={x + (props.width / 2) - 15}
-          y={y + yOffset}
-          width={30}
-          height={18}
-          rx={4}
-          fill={fill}
-        />
-        <text
-          x={x + (props.width / 2)}
-          y={y + yOffset + 12}
-          fill="white"
-          textAnchor="middle"
-          fontSize="10px"
-          fontWeight="bold"
-        >
-          {formatCompact(value)}
-        </text>
-      </g>
-    );
-  };
-
-
+    return Object.entries(counts).map(([name, value]) => ({ name, value }))
+  }, [activeData])
 
   // --- Constants ---
   const COLORS = {
@@ -592,7 +571,7 @@ export function RHHeadcount() {
                   outerRadius={90}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
                     const RADIAN = Math.PI / 180;
                     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -778,10 +757,6 @@ export function RHHeadcount() {
             </div>
           </div>
           <div className="h-[400px] w-full bg-scroll overflow-y-auto">
-            {/* Use scrollable container if list is long? 
-                 Recharts doesn't scroll natively. Better to fix height or just show Top N.
-                 Let's fit in fixed height for now.
-             */}
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={legalRoleData.slice(0, 15)} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
@@ -828,7 +803,119 @@ export function RHHeadcount() {
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
+      {/* 7. Strategic HR Insights & Actions */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col space-y-6">
+        <div className="pb-4 border-b border-gray-100 flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
+            <Lightbulb className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-gray-800 tracking-tight">Insights e Ações Estratégicas de RH</h3>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Gestão de Pessoas e Planejamento</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+          {/* Sucessão e Risco */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-red-600 mb-2">
+              <AlertTriangle size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Planejamento de Sucessão</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Risco de Apagão:</span> Se a média gerência não estiver preparada, a saída de seniores pode impactar o negócio.
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-blue-900 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-blue-900">Identificar profissionais (35-45 anos) para programas de mentoria e shadowing.</p>
+            </div>
+          </div>
+
+          {/* Retenção e Turnover */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-orange-600 mb-2">
+              <TrendingUp size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Retenção e Turnover</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Foco Millenials/Gen Z:</span> Faixas etárias mais jovens tendem a ter rotatividade maior no setor jurídico.
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-orange-800 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-orange-800">Criar programas de carreira acelerada e flexibilidade para reduzir custos de recrutamento.</p>
+            </div>
+          </div>
+
+          {/* Treinamento */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-indigo-600 mb-2">
+              <GraduationCap size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Estratégia de Aprendizado</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Mentoria Reversa:</span> Equipes jovens trazem agilidade tecnológica, enquanto sêniores detêm a estratégia.
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-indigo-800 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-indigo-800">Sêniores ensinam estratégia e base jurídica; jovens ensinam Lawtechs e IA.</p>
+            </div>
+          </div>
+
+          {/* Benefícios */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-pink-600 mb-2">
+              <Heart size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Cultura e Benefícios</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Plano Flexível:</span> Necessidades mudam com a idade: estabilidade vs. plano de carreira rápido.
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-pink-800 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-pink-800">Customizar pacotes de benefícios que atendam desde o estagiário ao sócio sênior.</p>
+            </div>
+          </div>
+
+          {/* Diversidade */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-emerald-600 mb-2">
+              <ShieldCheck size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Compliance e Diversidade</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Combate ao Ageismo:</span> Valorização do talento independente da idade para garantir pluralidade de ideias.
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-emerald-800 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-emerald-800">Garantir processos seletivos cegos à idade para cargos de associados e administrativos.</p>
+            </div>
+          </div>
+
+          {/* Diversidade Geracional (Mini Gráfico) */}
+          <div className="p-5 rounded-2xl bg-[#1e3a8a] text-white flex flex-col">
+            <h4 className="font-black text-sm uppercase tracking-tight mb-4">Diversidade Geracional</h4>
+            <div className="flex-1 space-y-3 overflow-y-auto">
+              {generationalData.map((item, idx) => (
+                <div key={idx} className="flex flex-col space-y-1">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-80">
+                    <span>{item.name}</span>
+                    <span>{item.value}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                      style={{ width: `${(item.value / totalActive * 100) || 0}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
       </div>
 
     </div>
