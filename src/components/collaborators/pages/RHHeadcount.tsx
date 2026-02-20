@@ -8,11 +8,14 @@ import {
   Briefcase,
   Scale,
   Calendar,
+  TrendingUp,
   X
 } from 'lucide-react'
 import {
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -73,6 +76,22 @@ const isActiveAtDate = (c: Collaborator, date: Date) => {
 const getYearFromDate = (dateStr?: string) => {
   if (!dateStr) return null
   return new Date(dateStr + 'T12:00:00').getFullYear()
+}
+
+const calculateAge = (birthday?: string) => {
+  if (!birthday) return null
+  try {
+    const birthDate = new Date(birthday + 'T12:00:00')
+    const today = new Date()
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const m = today.getMonth() - birthDate.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return age
+  } catch (e) {
+    return null
+  }
 }
 
 const formatCompact = (val: number) => {
@@ -270,6 +289,43 @@ export function RHHeadcount() {
   }, [activeData])
 
 
+  // 6. Age Pyramid Data (Legal)
+  const agePyramidData = useMemo(() => {
+    const groups = [
+      { label: '< 25 anos', min: 0, max: 24 },
+      { label: '25 - 34 anos', min: 25, max: 34 },
+      { label: '35 - 44 anos', min: 35, max: 44 },
+      { label: '45 - 54 anos', min: 45, max: 54 },
+      { label: '55+ anos', min: 55, max: 120 },
+    ]
+
+    const dataMap = groups.map(g => ({
+      group: g.label,
+      Masculino: 0,
+      Feminino: 0,
+    }))
+
+    activeData
+      .filter(c => getSegment(c) === 'Jurídico')
+      .forEach(c => {
+        const age = calculateAge(c.birthday)
+        if (age === null) return
+
+        let gender = 'Outros'
+        if (c.gender === 'M' || c.gender === 'Masculino') gender = 'Masculino'
+        else if (c.gender === 'F' || c.gender === 'Feminino') gender = 'Feminino'
+
+        if (gender === 'Outros') return
+
+        const groupIndex = groups.findIndex(g => age >= g.min && age <= g.max)
+        if (groupIndex !== -1) {
+          dataMap[groupIndex][gender as 'Masculino' | 'Feminino']++
+        }
+      })
+
+    return dataMap
+  }, [activeData])
+
   // --- Custom Label Components ---
   const CustomDataLabel = (props: any) => {
     const { x, y, value, fill, position, offset } = props;
@@ -316,7 +372,13 @@ export function RHHeadcount() {
     tertiary: '#f59e0b',
     text: '#6b7280',
     grid: '#e5e7eb',
-    pieGender: ['#3b82f6', '#ec4899', '#9ca3af']
+    pieGender: ['#3b82f6', '#ec4899', '#9ca3af'],
+    pyramid: {
+      male: '#1d4ed8',   // Blue 700
+      maleFill: '#dbeafe', // Blue 100
+      female: '#be185d', // Pink 700
+      femaleFill: '#fce7f3' // Pink 100
+    }
   }
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -524,37 +586,93 @@ export function RHHeadcount() {
         </div>
       </div>
 
-      {/* 4. Chart Row 2: Team Leader */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
-            <Users className="w-5 h-5" />
+      {/* 4. Chart Row 2: Team Leader & Age Pyramid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Team Leader */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Colaboradores por Líder</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Top 15 Lideranças</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-black text-gray-800 tracking-tight">Colaboradores por Líder de Equipe</h3>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Top 15 Lideranças</p>
+          <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={leaderData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                  width={150}
+                />
+                <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
+                  <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
-        <div className="h-[350px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={leaderData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-              <XAxis type="number" hide />
-              <YAxis
-                dataKey="name"
-                type="category"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                width={150}
-              />
-              <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
-              <Bar dataKey="value" name="Colaboradores" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
-                <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+
+        {/* Age Pyramid (Legal) */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+              <TrendingUp size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Pirâmide Etária (Jurídico)</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição por Gênero</p>
+            </div>
+          </div>
+          <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={agePyramidData}
+                layout="vertical"
+                margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="group"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                  width={90}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" />
+                <Area
+                  type="monotone"
+                  dataKey="Masculino"
+                  stroke={COLORS.pyramid.male}
+                  fill={COLORS.pyramid.maleFill}
+                  fillOpacity={0.6}
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Feminino"
+                  stroke={COLORS.pyramid.female}
+                  fill={COLORS.pyramid.femaleFill}
+                  fillOpacity={0.6}
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
+
       </div>
 
       {/* 5. Chart Row 3: Legal Specifics */}
