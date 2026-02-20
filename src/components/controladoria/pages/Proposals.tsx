@@ -837,7 +837,9 @@ export function Proposals() {
             {/* Addressee */}
             <div className="mb-6 font-bold">
               <p>AO <span className="bg-yellow-200/50 px-1 uppercase">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span></p>
-              <p className="mt-1"><span className="bg-yellow-200/50 px-1">{proposalData.cnpj || '[CNPJ da empresa cliente]'}</span></p>
+              {!proposalData.isPerson && (
+                <p className="mt-1"><span className="bg-yellow-200/50 px-1">{proposalData.cnpj || '[CNPJ da empresa cliente]'}</span></p>
+              )}
             </div>
 
             {/* Ref */}
