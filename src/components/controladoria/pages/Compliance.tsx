@@ -23,7 +23,12 @@ export function Compliance() {
   }, []);
 
   const fetchCertificates = async () => {
-    const { data, error } = await supabase.from('certificates').select('*').order('created_at', { ascending: false });
+    // Busca as certidões com os dados vitrincados via Foreign Key (se houver), se não retorna silent como nulo para dados legados.
+    const { data, error } = await supabase
+      .from('certificates')
+      .select('*, name_obj:certificate_names(name), agency_obj:certificate_agencies(name)')
+      .order('created_at', { ascending: false });
+
     if (data) {
       setCertificates(data);
     } else if (error) {
@@ -43,20 +48,24 @@ export function Compliance() {
     setLoading(false);
   };
 
+  // Resolve os nomes reais, misturando as chaves estrangeiras com dados antigos
+  const getCertName = (c: any) => c.name_obj?.name || c.name || '';
+  const getAgencyName = (c: any) => c.agency_obj?.name || c.agency || '';
+
   const filteredCertificates = certificates.filter(c =>
-    c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.agency?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.location?.toLowerCase().includes(searchTerm.toLowerCase())
+    getCertName(c).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    getAgencyName(c).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.location?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const exportToExcel = () => {
     // Header e configuração XLSX
     const header = ['Nome', 'Data Emissão', 'Data Vencimento', 'Cartório', 'Local'];
     const rows = filteredCertificates.filter(c => selectedLocation === '' || c.location === selectedLocation).map(c => [
-      c.name || '-',
+      getCertName(c) || '-',
       c.issue_date ? new Date(c.issue_date).toLocaleDateString() : '-',
       c.due_date ? new Date(c.due_date).toLocaleDateString() : '-',
-      c.agency || '-',
+      getAgencyName(c) || '-',
       c.location || '-'
     ]);
 
@@ -264,19 +273,23 @@ export function Compliance() {
                         <th className="p-4 sticky right-0 bg-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)]">Ações</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {filteredCertificates.filter(c => selectedLocation === '' || c.location === selectedLocation).map((cert) => (
-                        <tr key={cert.id} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
-                          <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{cert.name}</td>
-                          <td className="p-4 text-[11px] font-semibold text-gray-500">{new Date(cert.issue_date).toLocaleDateString() || '-'}</td>
-                          <td className="p-4 text-[11px] font-semibold text-gray-500">{new Date(cert.due_date).toLocaleDateString() || '-'}</td>
-                          <td className="p-4 text-[11px] font-semibold text-gray-600">{cert.agency || '-'}</td>
-                          <td className="p-4 text-[11px] font-semibold text-gray-600">{cert.location || '-'}</td>
-                          <td className="p-4 sticky right-0 bg-white group-hover:bg-blue-50/30">
-                            <div className="flex justify-end gap-1 opacity-100 transition-opacity">
-                              {cert.file_url && (
+                    <tbody>
+                      {filteredCertificates.map((c) => (
+                        <tr key={c.id} className="border-t border-[rgba(255,255,255,0.05)] text-sm">
+                          <td className="px-6 py-4 truncate font-medium">{getCertName(c)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {c.issue_date ? new Date(c.issue_date).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {c.due_date ? new Date(c.due_date).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="px-6 py-4 truncate">{getAgencyName(c)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{c.location}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              {c.file_url && (
                                 <button
-                                  onClick={() => window.open(cert.file_url, '_blank')}
+                                  onClick={() => window.open(c.file_url, '_blank')}
                                   className="p-1.5 hover:bg-blue-100 rounded-lg text-blue-500 hover:text-blue-700 transition-all"
                                   title="Visualizar Arquivo (GED)"
                                 >
@@ -284,14 +297,14 @@ export function Compliance() {
                                 </button>
                               )}
                               <button
-                                onClick={() => handleEdit(cert)}
+                                onClick={() => handleEdit(c)}
                                 className="p-1.5 hover:bg-yellow-100 rounded-lg text-yellow-500 hover:text-yellow-700 transition-all"
                                 title="Editar"
                               >
                                 <FileSearch className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleDelete(cert.id)}
+                                onClick={() => handleDelete(c.id)}
                                 className="p-1.5 hover:bg-red-100 rounded-lg text-red-400 hover:text-red-600 transition-all"
                                 title="Excluir"
                               >
