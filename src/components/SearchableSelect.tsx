@@ -49,16 +49,22 @@ export function SearchableSelect({
     }).join(' ');
   };
 
+  // Estabilizar a referência das opções externas para não firtar loop infinito de re-render
+  const externalOptionsStr = JSON.stringify(externalOptions);
+
   // Carrega opções dinâmicas ou estáticas
   useEffect(() => {
     if (table) {
+      // Buscamos dados no momento em que o dropdown abre
+      // Não corre risco de loop porque a string de options externas estabiliza o hook
       if (isOpen) {
         fetchOptions();
       }
     } else {
       setOptions(externalOptions);
     }
-  }, [table, isOpen, externalOptions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table, isOpen, externalOptionsStr]);
 
   const fetchOptions = async () => {
     if (!table) return;
