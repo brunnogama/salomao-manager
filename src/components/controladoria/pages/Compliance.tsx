@@ -292,6 +292,29 @@ export function Compliance() {
     setIsModalOpen(true);
   };
 
+  const handleEmitRF = (locationName: string) => {
+    const location = locationsList.find(l => l.name === locationName);
+    if (!location?.cnpj) {
+      toast.error('CNPJ não encontrado para este local');
+      return;
+    }
+
+    const cleanCnpj = location.cnpj.replace(/\D/g, '');
+    const rfUrl = `https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp?cnpj=${cleanCnpj}`;
+
+    // Abre o site da RF em uma nova aba
+    window.open(rfUrl, '_blank');
+
+    // Abre o modal de nova certidão já preenchido
+    setEditingCertificate({
+      name: 'Comprovante de Inscrição e de Situação Cadastral',
+      cnpj: location.cnpj,
+      location: location.name,
+      issueDate: new Date().toISOString().split('T')[0],
+    } as any);
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 animate-in fade-in duration-500">
       {/* Header */}
@@ -526,14 +549,25 @@ export function Compliance() {
                   />
                 </div>
 
-                {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg">
-                    <ShieldCheck className="w-4 h-4 text-[#1e3a8a]" />
-                    <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest">
-                      CNPJ FILIAL: {locationsList.find(l => l.name === activeTab)?.cnpj}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center gap-3">
+                  {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
+                    <button
+                      onClick={() => handleEmitRF(activeTab)}
+                      className="flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95"
+                    >
+                      <Download className="h-4 w-4" /> Emitir Certidão RF
+                    </button>
+                  )}
+
+                  {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg">
+                      <ShieldCheck className="w-4 h-4 text-[#1e3a8a]" />
+                      <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest">
+                        CNPJ FILIAL: {locationsList.find(l => l.name === activeTab)?.cnpj}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Tabela de Certidões */}
