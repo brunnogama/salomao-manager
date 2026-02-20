@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ShieldCheck, Loader2, FileSearch, Plus, Search, Eye, Trash2, Download, LayoutDashboard, Database, Clock, BarChart3 } from 'lucide-react';
+import { ShieldCheck, Loader2, Edit, FileSearch, Plus, Search, Eye, Trash2, Download, LayoutDashboard, Database, Clock, BarChart3 } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -12,6 +12,7 @@ import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 import { EmptyState } from '../ui/EmptyState';
 import { CertificateFormModal } from '../certificates/CertificateFormModal';
+import { CertificateDetailsModal } from '../certificates/CertificateDetailsModal';
 
 export function Compliance() {
   const [locationsList, setLocationsList] = useState<{ name: string, cnpj?: string }[]>([]);
@@ -25,6 +26,8 @@ export function Compliance() {
   const [agencyDict, setAgencyDict] = useState<Record<string, string>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCertificate, setEditingCertificate] = useState(null);
+  const [viewingCertificate, setViewingCertificate] = useState<any | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   useEffect(() => {
     fetchLocations();
@@ -198,7 +201,7 @@ export function Compliance() {
       name,
       data: [
         { name: 'Em Dia', value: counts.valid, color: '#1e3a8a' },
-        { name: '7 Dias Úteis', value: counts.expiring, color: '#b45309' },
+        { name: '7 Dias Úteis', value: counts.expiring, color: '#facc15' },
         { name: 'Vencida', value: counts.expired, color: '#ef4444' }
       ],
       total: counts.valid + counts.expiring + counts.expired
@@ -336,6 +339,11 @@ export function Compliance() {
       fileName: cert.file_name,
     } as any);
     setIsModalOpen(true);
+  };
+
+  const handleView = (cert: any) => {
+    setViewingCertificate(cert);
+    setIsViewModalOpen(true);
   };
 
   const handleCreateNew = () => {
@@ -478,7 +486,7 @@ export function Compliance() {
                     </div>
                     <div className="flex gap-4 text-[9px] font-black uppercase tracking-tighter">
                       <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#1e3a8a]" /> Em Dia</div>
-                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#b45309]" /> 7 Dias Úteis</div>
+                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#facc15]" /> 7 Dias Úteis</div>
                       <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#ef4444]" /> Vencidas</div>
                     </div>
                   </div>
@@ -534,7 +542,7 @@ export function Compliance() {
                 </div>
 
                 {/* Tabela de Próximos Vencimentos */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[500px]">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col min-h-[500px]">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-amber-50 rounded-lg">
                       <Clock className="w-5 h-5 text-amber-600" />
@@ -546,26 +554,32 @@ export function Compliance() {
                     {(stats as any).expiredList.length > 0 || stats.expiringMonthList.length > 0 ? (
                       <>
                         {(stats as any).expiredList.map((c: any) => (
-                          <div key={c.id} className="flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-colors">
+                          <div key={c.id} className="flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-colors group relative cursor-pointer" onClick={() => handleView(c)}>
                             <div className="flex flex-col gap-1">
                               <span className="text-xs font-bold text-red-700">{getCertName(c)}</span>
                               <span className="text-[10px] text-red-500 font-medium uppercase tracking-tight">{c.location}</span>
                             </div>
-                            <div className="text-right">
-                              <span className="text-[11px] font-black text-red-600 block">{formatDate(c.due_date)}</span>
-                              <span className="text-[9px] text-red-400 font-bold uppercase tracking-widest">Vencida</span>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <span className="text-[11px] font-black text-red-600 block">{formatDate(c.due_date)}</span>
+                                <span className="text-[9px] text-red-400 font-bold uppercase tracking-widest">Vencida</span>
+                              </div>
+                              <Eye className="w-4 h-4 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
                           </div>
                         ))}
                         {stats.expiringMonthList.map((c) => (
-                          <div key={c.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                          <div key={c.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group relative cursor-pointer" onClick={() => handleView(c)}>
                             <div className="flex flex-col gap-1">
                               <span className="text-xs font-bold text-gray-700">{getCertName(c)}</span>
                               <span className="text-[10px] text-gray-500 font-medium uppercase tracking-tight">{c.location}</span>
                             </div>
-                            <div className="text-right">
-                              <span className="text-[11px] font-black text-amber-600 block">{formatDate(c.due_date)}</span>
-                              <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Vencimento</span>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <span className="text-[11px] font-black text-amber-600 block">{formatDate(c.due_date)}</span>
+                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Vencimento</span>
+                              </div>
+                              <Eye className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
                           </div>
                         ))}
@@ -713,26 +727,24 @@ export function Compliance() {
                           <td className="px-6 py-4 truncate">{getAgencyName(c)}</td>
                           <td className="px-6 py-4 whitespace-nowrap">{c.location}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              {c.file_url && (
-                                <button
-                                  onClick={() => window.open(c.file_url, '_blank')}
-                                  className="p-1.5 hover:bg-blue-100 rounded-lg text-blue-500 hover:text-blue-700 transition-all"
-                                  title="Visualizar Arquivo (GED)"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </button>
-                              )}
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleView(c)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
+                                title="Visualizar Detalhes"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
                               <button
                                 onClick={() => handleEdit(c)}
-                                className="p-1.5 hover:bg-yellow-100 rounded-lg text-yellow-500 hover:text-yellow-700 transition-all"
+                                className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
                                 title="Editar"
                               >
-                                <FileSearch className="w-4 h-4" />
+                                <Edit className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleDelete(c.id)}
-                                className="p-1.5 hover:bg-red-100 rounded-lg text-red-400 hover:text-red-600 transition-all"
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
                                 title="Excluir"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -752,19 +764,24 @@ export function Compliance() {
 
       <CertificateFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingCertificate(null);
+        }}
         onSave={handleSaveCertificate}
         locationsList={locationsList.map(l => l.name)}
-        initialData={editingCertificate ? {
-          id: (editingCertificate as any).id,
-          name: (editingCertificate as any).name,
-          cnpj: (editingCertificate as any).cnpj || '',
-          issueDate: (editingCertificate as any).issue_date,
-          dueDate: (editingCertificate as any).due_date,
-          agency: (editingCertificate as any).agency,
-          location: (editingCertificate as any).location,
-          fileUrl: (editingCertificate as any).file_url
-        } : undefined}
+        initialData={editingCertificate || undefined}
+      />
+
+      <CertificateDetailsModal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setViewingCertificate(null);
+        }}
+        certificate={viewingCertificate}
+        nameDict={nameDict}
+        agencyDict={agencyDict}
       />
     </div>
   );
