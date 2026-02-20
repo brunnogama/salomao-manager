@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { User, GraduationCap, BookOpen, Briefcase, History, Files, CheckCircle, AlertTriangle, Save, Loader2 } from 'lucide-react'
+import { User, GraduationCap, BookOpen, Briefcase, Files, CheckCircle, AlertTriangle, Save, Loader2 } from 'lucide-react'
 import { DadosPessoaisSection } from '../components/collaborators/components/DadosPessoaisSection'
 import { EnderecoSection } from '../components/collaborators/components/EnderecoSection'
 import { InformacoesProfissionaisSection } from '../components/collaborators/components/InformacoesProfissionaisSection'
 import { DadosEscolaridadeSection } from '../components/collaborators/components/DadosEscolaridadeSection'
 import { PhotoUploadSection } from '../components/collaborators/components/PhotoUploadSection'
+import { DadosCorporativosSection } from '../components/collaborators/components/DadosCorporativosSection'
+import { SearchableSelect } from '../components/crm/SearchableSelect'
 
 // Default empty collaborator state
 const initialFormData = {
@@ -51,10 +53,10 @@ export default function FichaCadastral() {
     const [loading, setLoading] = useState(false)
     const [submitted, setSubmitted] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const photoInputRef = useRef<HTMLInputElement>(null)
 
     // Photo State
     const [photoPreview, setPhotoPreview] = useState<string | null>(null)
-    const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
     // Lookup data placeholders (if needed by child components, though some fetch their own or receive props)
     // Most child sections in this codebase seem to accept direct props or have internal logic.
@@ -62,11 +64,25 @@ export default function FichaCadastral() {
 
     const steps = [
         { id: 1, label: 'Dados Pessoais', icon: User },
-        { id: 2, label: 'Endereço', icon: User }, // Re-using User icon or finding another
-        { id: 3, label: 'Profissional', icon: GraduationCap },
-        { id: 4, label: 'Escolaridade', icon: BookOpen },
-        { id: 5, label: 'Foto', icon: Files }
+        { id: 2, label: 'Profissional', icon: GraduationCap },
+        { id: 3, label: 'Escolaridade', icon: BookOpen },
+        { id: 4, label: 'Corporativo', icon: Briefcase },
+        { id: 5, label: 'Documentos', icon: Files }
     ]
+
+    const gedCategories = [
+        { id: 'Carteira de Trabalho', label: 'Carteira de Trabalho', value: 'Carteira de Trabalho' },
+        { id: 'CNH', label: 'CNH', value: 'CNH' },
+        { id: 'Comprovante de Matrícula', label: 'Comprovante de Matrícula', value: 'Comprovante de Matrícula' },
+        { id: 'Comprovante de Residência', label: 'Comprovante de Residência', value: 'Comprovante de Residência' },
+        { id: 'CPF', label: 'CPF', value: 'CPF' },
+        { id: 'Diploma', label: 'Diploma', value: 'Diploma' },
+        { id: 'Identidade', label: 'Identidade', value: 'Identidade' },
+        { id: 'OAB', label: 'OAB', value: 'OAB' }
+    ]
+
+    const [selectedGedCategory, setSelectedGedCategory] = useState('')
+    const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, tempId: string }[]>([])
 
     const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
     const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14)
@@ -190,8 +206,8 @@ export default function FichaCadastral() {
                                     key={step.id}
                                     onClick={() => setActiveTab(step.id)}
                                     className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${isActive
-                                            ? 'bg-[#1e3a8a] text-white shadow-md'
-                                            : 'text-gray-500 hover:bg-white hover:shadow-sm'
+                                        ? 'bg-[#1e3a8a] text-white shadow-md'
+                                        : 'text-gray-500 hover:bg-white hover:shadow-sm'
                                         }`}
                                 >
                                     <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
@@ -229,12 +245,6 @@ export default function FichaCadastral() {
                                         maskCPF={maskCPF}
                                         maskDate={maskDate}
                                     />
-                                </div>
-                            )}
-
-                            {activeTab === 2 && (
-                                <div className="space-y-6">
-                                    <h2 className="text-xl font-bold text-[#0a192f] mb-6">Endereço</h2>
                                     <EnderecoSection
                                         formData={formData}
                                         setFormData={setFormData}
@@ -244,7 +254,7 @@ export default function FichaCadastral() {
                                 </div>
                             )}
 
-                            {activeTab === 3 && (
+                            {activeTab === 2 && (
                                 <div className="space-y-6">
                                     <h2 className="text-xl font-bold text-[#0a192f] mb-6">Informações Profissionais</h2>
                                     <InformacoesProfissionaisSection
@@ -255,7 +265,7 @@ export default function FichaCadastral() {
                                 </div>
                             )}
 
-                            {activeTab === 4 && (
+                            {activeTab === 3 && (
                                 <div className="space-y-6">
                                     <h2 className="text-xl font-bold text-[#0a192f] mb-6">Escolaridade</h2>
                                     <DadosEscolaridadeSection
@@ -267,24 +277,92 @@ export default function FichaCadastral() {
                                 </div>
                             )}
 
-                            {activeTab === 5 && (
+                            {activeTab === 4 && (
                                 <div className="space-y-6">
-                                    <h2 className="text-xl font-bold text-[#0a192f] mb-6">Foto de Perfil</h2>
-                                    <PhotoUploadSection
-                                        photoPreview={photoPreview || formData.photo_url || formData.foto_url}
-                                        setPhotoPreview={(val: string | null) => {
-                                            setPhotoPreview(val)
-                                            if (val) setFormData({ ...formData, photo_url: val })
-                                        }}
-                                        uploadingPhoto={uploadingPhoto}
-                                    // PhotoUploadSection internals handle the upload logic if we pass refs, but here we might need to adapt if it relies on parent state heavily.
-                                    // The component uses an input ref and handles change. 
-                                    // Let's check how PhotoUploadSection is implemented.
-                                    // Assuming it exposes `setPhotoPreview` and handles update.
+                                    <h2 className="text-xl font-bold text-[#0a192f] mb-6">Dados Corporativos</h2>
+                                    <DadosCorporativosSection
+                                        formData={formData}
+                                        setFormData={setFormData}
+                                        maskDate={maskDate}
                                     />
-                                    <p className="text-xs text-gray-500 text-center mt-4">
-                                        A foto será usada para seu perfil e crachá.
-                                    </p>
+                                </div>
+                            )}
+
+                            {activeTab === 5 && (
+                                <div className="space-y-8">
+                                    <div className="space-y-6">
+                                        <h2 className="text-xl font-bold text-[#0a192f] mb-6">Foto de Perfil</h2>
+                                        <PhotoUploadSection
+                                            photoPreview={photoPreview || formData.photo_url || formData.foto_url}
+                                            setPhotoPreview={(val: string | null) => {
+                                                setPhotoPreview(val)
+                                                if (val) setFormData({ ...formData, photo_url: val })
+                                            }}
+                                            uploadingPhoto={false}
+                                            photoInputRef={photoInputRef}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-6 pt-8 border-t border-gray-100">
+                                        <h2 className="text-xl font-bold text-[#0a192f] mb-6">Documentos (GED)</h2>
+                                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                            <div className="flex flex-col md:flex-row items-end gap-3">
+                                                <div className="flex-1 w-full">
+                                                    <SearchableSelect
+                                                        label="Tipo de Documento"
+                                                        placeholder="Selecione..."
+                                                        value={selectedGedCategory}
+                                                        onChange={setSelectedGedCategory}
+                                                        options={gedCategories}
+                                                        uppercase={false}
+                                                    />
+                                                </div>
+                                                <button
+                                                    disabled={!selectedGedCategory}
+                                                    onClick={() => {
+                                                        const input = document.createElement('input');
+                                                        input.type = 'file';
+                                                        input.accept = '.pdf,image/*';
+                                                        input.onchange = (e: any) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                setPendingGedDocs(prev => [...prev, {
+                                                                    file,
+                                                                    category: selectedGedCategory,
+                                                                    tempId: Math.random().toString(36).substr(2, 9)
+                                                                }]);
+                                                                setSelectedGedCategory('');
+                                                            }
+                                                        };
+                                                        input.click();
+                                                    }}
+                                                    className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#112240] transition-all disabled:opacity-50"
+                                                >
+                                                    Anexar
+                                                </button>
+                                            </div>
+
+                                            <div className="mt-4 space-y-2">
+                                                {pendingGedDocs.map(doc => (
+                                                    <div key={doc.tempId} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-1.5 bg-blue-50 text-blue-600 rounded"><Files className="h-4 w-4" /></div>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-[#0a192f]">{doc.file.name}</p>
+                                                                <span className="text-[9px] bg-gray-100 text-gray-500 px-1 py-0.5 rounded uppercase">{doc.category}</span>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setPendingGedDocs(prev => prev.filter(p => p.tempId !== doc.tempId))}
+                                                            className="text-red-600 hover:text-red-800"
+                                                        >
+                                                            <CheckCircle className="h-4 w-4 rotate-45 text-red-500" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>

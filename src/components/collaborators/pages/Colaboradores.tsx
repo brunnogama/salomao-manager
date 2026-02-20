@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
-  GraduationCap, Briefcase, Files, History, User, BookOpen, FileSpreadsheet, Settings, Clock
+  GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock
 } from 'lucide-react'
 import { differenceInMonths, differenceInYears } from 'date-fns'
 import XLSX from 'xlsx-js-style'
@@ -19,7 +19,6 @@ import { EnderecoSection } from '../components/EnderecoSection'
 import { InformacoesProfissionaisSection } from '../components/InformacoesProfissionaisSection'
 import { DadosEscolaridadeSection } from '../components/DadosEscolaridadeSection'
 import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
-import { HistoricoSection } from '../components/HistoricoSection'
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
 
 // ... existing imports
@@ -65,7 +64,7 @@ const ESTADOS_BRASIL = [
   { sigla: 'TO', nome: 'Tocantins' }
 ]
 
-export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }: ColaboradoresProps) {
+export function Colaboradores({ }: ColaboradoresProps) {
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
   const [partners, setPartners] = useState<Partial<Partner>[]>([])
   const [roles, setRoles] = useState<Role[]>([])
@@ -120,8 +119,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
     { id: 2, label: 'Dados Profissionais', icon: GraduationCap },
     { id: 3, label: 'Dados de Escolaridade', icon: BookOpen },
     { id: 4, label: 'Dados Corporativos', icon: Briefcase },
-    { id: 5, label: 'Histórico', icon: History },
-    { id: 6, label: 'GED', icon: Files }
+    { id: 5, label: 'GED', icon: Files }
   ]
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -188,7 +186,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   }, [viewingPhoto, showFormModal, selectedColaborador])
 
   useEffect(() => {
-    if (selectedColaborador && activeDetailTab === 6) {
+    if (selectedColaborador && activeDetailTab === 5) {
       fetchGedDocs(selectedColaborador.id)
     }
   }, [selectedColaborador, activeDetailTab])
@@ -940,22 +938,9 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       }
     }
 
-    // 5. HISTORICO
-    if (activeTab === 5) {
-      // Usar HistoricoSection para visualização e edição (interativo)
-      return (
-        <div className="animate-in slide-in-from-right-4 duration-300">
-          <HistoricoSection
-            formData={formData}
-            setFormData={setFormData}
-            maskDate={maskDate}
-          />
-        </div>
-      )
-    }
 
-    // 6. GED
-    if (activeTab === 6) {
+    // 5. GED
+    if (activeTab === 5) {
       // Content logic for GED corresponds to View/Edit similarly except upload allowed in Form
       // In View Mode, we allow upload too, so logic is shared mostly, but let's implement the GED UI
       // For simplicity, using same UI for both mode as it allows management
