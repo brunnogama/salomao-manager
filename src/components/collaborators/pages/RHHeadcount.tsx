@@ -4,7 +4,7 @@ import {
   Filter,
   BarChart3,
   PieChart as PieChartIcon,
-  Map,
+  Map as MapIcon,
   Briefcase,
   Scale,
   Calendar,
@@ -448,7 +448,7 @@ export function RHHeadcount() {
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-              <Map className="w-5 h-5" />
+              <MapIcon className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-800 tracking-tight">Distribuição por Local e Área</h3>
