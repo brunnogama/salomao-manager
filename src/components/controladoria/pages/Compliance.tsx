@@ -1,5 +1,15 @@
-import { useState, useEffect } from 'react';
-import { ShieldCheck, Loader2, FileSearch, Plus, Search, Eye, Trash2, Download } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ShieldCheck, Loader2, FileSearch, Plus, Search, Eye, Trash2, Download, LayoutDashboard, Database, AlertTriangle, CheckCircle2, Clock, BarChart3 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell
+} from 'recharts';
 import XLSX from 'xlsx-js-style';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
@@ -8,7 +18,7 @@ import { CertificateFormModal } from '../certificates/CertificateFormModal';
 
 export function Compliance() {
   const [locationsList, setLocationsList] = useState<string[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'ged' | string>('dashboard');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -65,10 +75,65 @@ export function Compliance() {
       const unique = Array.from(new Set(contracts.map(c => (c as any).billing_location).filter(Boolean)));
       const sorted = unique.sort() as string[];
       setLocationsList(sorted);
-      if (sorted.length > 0) setSelectedLocation(sorted[0]);
     }
     setLoading(false);
   };
+
+  // --- Lógica de Dashbord ---
+  const stats = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 7 dias úteis = Aprox 10 dias corridos
+    const warningThreshold = new Date();
+    warningThreshold.setDate(today.getDate() + 10);
+
+    const active = certificates.filter(c => {
+      if (!c.due_date) return true;
+      return new Date(c.due_date) >= today;
+    });
+
+    const expired = certificates.filter(c => {
+      if (!c.due_date) return false;
+      return new Date(c.due_date) < today;
+    });
+
+    const expiringSoon = active.filter(c => {
+      if (!c.due_date) return false;
+      const dueDate = new Date(c.due_date);
+      return dueDate <= warningThreshold;
+    });
+
+    const expiringMonth = active.filter(c => {
+      if (!c.due_date) return false;
+      const dueDate = new Date(c.due_date);
+      const thirtyDaysOut = new Date();
+      thirtyDaysOut.setDate(today.getDate() + 30);
+      return dueDate <= thirtyDaysOut;
+    });
+
+    return {
+      active: active.length,
+      expired: expired.length,
+      expiringSoon: expiringSoon.length,
+      expiringMonthList: expiringMonth.sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+    };
+  }, [certificates]);
+
+  const chartData = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const activeByLocation = certificates.reduce((acc, c) => {
+      if (!c.due_date || new Date(c.due_date) >= today) {
+        const loc = c.location || 'Não Informado';
+        acc[loc] = (acc[loc] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(activeByLocation).map(([name, value]) => ({ name, value }));
+  }, [certificates]);
 
   // Resolve os nomes reais, misturando as chaves do dicionário com dados antigos
   const getCertName = (c: any) => nameDict[c.name] || c.name || '';
@@ -83,7 +148,7 @@ export function Compliance() {
   const exportToExcel = () => {
     // Header e configuração XLSX
     const header = ['Nome', 'Data Emissão', 'Data Vencimento', 'Cartório', 'Local'];
-    const rows = filteredCertificates.filter(c => selectedLocation === '' || c.location === selectedLocation).map(c => [
+    const rows = filteredCertificates.filter(c => activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab).map(c => [
       getCertName(c) || '-',
       c.issue_date ? new Date(c.issue_date).toLocaleDateString() : '-',
       c.due_date ? new Date(c.due_date).toLocaleDateString() : '-',
@@ -96,7 +161,7 @@ export function Compliance() {
     XLSX.utils.book_append_sheet(wb, ws, "Certidões");
 
     const dateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-    XLSX.writeFile(wb, `Certidoes_${selectedLocation || 'Geral'}_${dateStr}.xlsx`);
+    XLSX.writeFile(wb, `Certidoes_${activeTab === 'dashboard' ? 'Geral' : activeTab}_${dateStr}.xlsx`);
   };
 
   const handleSaveCertificate = async (data: any) => {
@@ -237,13 +302,24 @@ export function Compliance() {
       ) : (
         <div className="flex flex-col space-y-6">
           {/* Abas de Locais no Estilo do Sistema */}
-          <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-2">
-            <div className="flex space-x-2 overflow-x-auto custom-scrollbar">
+          <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-2 overflow-hidden">
+            <div className="flex space-x-2 overflow-x-auto pb-2 custom-scrollbar">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 ${activeTab === 'dashboard'
+                  ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
+                  : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
+                  }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </button>
+
               {locationsList.map(loc => (
                 <button
                   key={loc}
-                  onClick={() => setSelectedLocation(loc)}
-                  className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${selectedLocation === loc
+                  onClick={() => setActiveTab(loc)}
+                  className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === loc
                     ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
                     : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
                     }`}
@@ -251,13 +327,178 @@ export function Compliance() {
                   {loc}
                 </button>
               ))}
-              {locationsList.length === 0 && (
-                <div className="p-4 text-sm font-medium text-gray-500">Nenhum local cadastrado com contratos.</div>
-              )}
+
+              <button
+                onClick={() => setActiveTab('ged')}
+                className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 ${activeTab === 'ged'
+                  ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
+                  : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
+                  }`}
+              >
+                <Database className="w-4 h-4" />
+                GED
+              </button>
             </div>
           </div>
 
-          {locationsList.length > 0 && (
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {/* Cards de Resumo */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                  <div className="p-3 bg-emerald-50 rounded-xl">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Certidões Ativas</p>
+                    <p className="text-2xl font-black text-[#0a192f]">{stats.active}</p>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                  <div className="p-3 bg-amber-50 rounded-xl">
+                    <Clock className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">A Vencer (Próximos 7 dias)</p>
+                    <p className="text-2xl font-black text-[#0a192f]">{stats.expiringSoon}</p>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                  <div className="p-3 bg-red-50 rounded-xl">
+                    <AlertTriangle className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Certidões Vencidas</p>
+                    <p className="text-2xl font-black text-[#0a192f]">{stats.expired}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Gráfico de Distribuição */}
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                      <BarChart3 className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Ativas por Local</h3>
+                  </div>
+                  <div className="flex-1 w-full min-h-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="0" vertical={false} stroke="#f3f4f6" />
+                        <XAxis
+                          dataKey="name"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 700 }}
+                        />
+                        <YAxis
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 700 }}
+                        />
+                        <Tooltip
+                          cursor={{ fill: '#f9fafb' }}
+                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                        />
+                        <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                          {chartData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={['#1e3a8a', '#112240', '#3b82f6', '#475569'][index % 4]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Tabela de Próximos Vencimentos */}
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-amber-50 rounded-lg">
+                      <Clock className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Próximos Vencimentos</h3>
+                  </div>
+                  <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                    {stats.expiringMonthList.length > 0 ? (
+                      stats.expiringMonthList.map((c) => (
+                        <div key={c.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-bold text-gray-700">{getCertName(c)}</span>
+                            <span className="text-[10px] text-gray-500 font-medium uppercase tracking-tight">{c.location}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[11px] font-black text-amber-600 block">{new Date(c.due_date).toLocaleDateString()}</span>
+                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Vencimento</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-gray-400 text-xs font-medium italic">
+                        Nenhuma certidão a vencer nos próximos dias.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'ged' && (
+            <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-500">
+              <table className="w-full text-left border-collapse whitespace-nowrap">
+                <thead>
+                  <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Documento</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Vencimento</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Local</th>
+                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {certificates.filter(c => c.file_url).map((c) => {
+                    const isExpired = c.due_date && new Date(c.due_date) < new Date();
+                    return (
+                      <tr key={c.id} className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-[#0a192f] text-xs">{getCertName(c)}</span>
+                            <span className="text-[10px] text-gray-400 font-medium truncate max-w-[200px]">{c.file_name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-gray-600 text-xs">
+                          {c.due_date ? new Date(c.due_date).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isExpired
+                            ? 'bg-red-50 text-red-600 border border-red-100'
+                            : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                            }`}>
+                            {isExpired ? 'Vencida' : 'Válida'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-bold text-gray-500">{c.location}</td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => window.open(c.file_url, '_blank')}
+                            className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab !== 'dashboard' && activeTab !== 'ged' && (
             <div className="w-full flex flex-col space-y-6">
               {/* Toolbar: Busca e Ações */}
               <div className="w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between gap-4">
@@ -279,9 +520,13 @@ export function Compliance() {
                   <EmptyState
                     icon={FileSearch}
                     title="Nenhuma certidão encontrada"
-                    description={`Não há certidões cadastradas para o local ${selectedLocation}.`}
+                    description={activeTab === 'ged'
+                      ? "Não há certidões com arquivos vinculados."
+                      : activeTab === 'dashboard'
+                        ? "Dados insuficientes para gerar o dashboard."
+                        : `Não há certidões cadastradas para o local ${activeTab}.`}
                     actionLabel="Adicionar Certidão"
-                    onAction={() => { }}
+                    onAction={handleCreateNew}
                   />
                 ) : (
                   <table className="w-full text-left border-collapse whitespace-nowrap">
