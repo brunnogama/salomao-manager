@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, Upload, Settings2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Save, Upload, Settings2, ChevronDown } from 'lucide-react';
 import { SearchableSelect } from '../../SearchableSelect';
 import { CertificateNameManagerModal } from './modals/CertificateNameManagerModal';
 import { CertificateAgencyManagerModal } from './modals/CertificateAgencyManagerModal';
@@ -26,6 +26,9 @@ interface Props {
 }
 
 export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, initialData }: Props) {
+    const [isLocalDropdownOpen, setIsLocalDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
     const [formData, setFormData] = useState<CertificateFormData>({
         name: '',
         cnpj: '',
@@ -61,6 +64,16 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
         if (isOpen) window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsLocalDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     if (!isOpen) return null;
 
@@ -171,19 +184,47 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                     nameField="name"
                                 />
                             </div>
-                            <div>
+                            <div className="relative" ref={dropdownRef}>
                                 <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Local *</label>
-                                <select
-                                    required
-                                    className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors bg-white"
-                                    value={formData.location}
-                                    onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsLocalDropdownOpen(!isLocalDropdownOpen)}
+                                    className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-all bg-white flex items-center justify-between group hover:border-[#1e3a8a]"
                                 >
-                                    <option value="" disabled>Selecione um local</option>
-                                    {locationsList.map(loc => (
-                                        <option key={loc} value={loc}>{loc}</option>
-                                    ))}
-                                </select>
+                                    <span className={formData.location ? "text-gray-900 font-medium" : "text-gray-400"}>
+                                        {formData.location || "Selecione um local"}
+                                    </span>
+                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isLocalDropdownOpen ? 'rotate-180' : ''} group-hover:text-[#1e3a8a]`} />
+                                </button>
+
+                                {isLocalDropdownOpen && (
+                                    <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                                            {locationsList.map((loc) => (
+                                                <button
+                                                    key={loc}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setFormData({ ...formData, location: loc });
+                                                        setIsLocalDropdownOpen(false);
+                                                    }}
+                                                    className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-gray-50 flex items-center justify-between ${formData.location === loc ? 'bg-blue-50 text-[#1e3a8a] font-bold' : 'text-gray-700 font-medium'
+                                                        }`}
+                                                >
+                                                    {loc}
+                                                    {formData.location === loc && (
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a]" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                            {locationsList.length === 0 && (
+                                                <div className="px-4 py-8 text-center text-gray-400 text-xs italic">
+                                                    Nenhum local disponível
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

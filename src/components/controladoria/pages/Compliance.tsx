@@ -96,12 +96,17 @@ export function Compliance() {
     const warningThreshold = new Date();
     warningThreshold.setDate(today.getDate() + 10);
 
-    const active = certificates.filter(c => {
+    // Filtrar por local se não estiver no dashboard ou GED
+    const relevantCertificates = (activeTab === 'dashboard' || activeTab === 'ged')
+      ? certificates
+      : certificates.filter(c => c.location === activeTab);
+
+    const active = relevantCertificates.filter(c => {
       if (!c.due_date) return true;
       return new Date(c.due_date) >= today;
     });
 
-    const expired = certificates.filter(c => {
+    const expired = relevantCertificates.filter(c => {
       if (!c.due_date) return false;
       return new Date(c.due_date) < today;
     });
@@ -126,6 +131,22 @@ export function Compliance() {
       expiringSoon: expiringSoon.length,
       expiringMonthList: expiringMonth.sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
     };
+  }, [certificates, activeTab]);
+
+  const expiringByLocation = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const warningThreshold = new Date();
+    warningThreshold.setDate(today.getDate() + 10);
+
+    return certificates.reduce((acc, c) => {
+      if (!c.due_date || !c.location) return acc;
+      const dueDate = new Date(c.due_date);
+      if (dueDate >= today && dueDate <= warningThreshold) {
+        acc[c.location] = (acc[c.location] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
   }, [certificates]);
 
   const chartData = useMemo(() => {
@@ -305,46 +326,7 @@ export function Compliance() {
       </div>
 
       {loading ? (
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center flex flex-col items-center justify-center">
-          <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mb-4" />
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando locais...</p>
-        </div>
-      ) : (
         <div className="flex flex-col space-y-6">
-          {activeTab === 'dashboard' && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                <div className="p-3 bg-emerald-50 rounded-xl">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Certidões Ativas</p>
-                  <p className="text-2xl font-black text-[#0a192f]">{stats.active}</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                <div className="p-3 bg-amber-50 rounded-xl">
-                  <Clock className="w-6 h-6 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">A Vencer (Próximos 7 dias)</p>
-                  <p className="text-2xl font-black text-[#0a192f]">{stats.expiringSoon}</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                <div className="p-3 bg-red-50 rounded-xl">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Certidões Vencidas</p>
-                  <p className="text-2xl font-black text-[#0a192f]">{stats.expired}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Abas de Locais no Estilo do Sistema */}
           <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-2 overflow-hidden">
             <div className="flex space-x-2 overflow-x-auto pb-2 custom-scrollbar">
@@ -359,18 +341,29 @@ export function Compliance() {
                 Dashboard
               </button>
 
-              {locationsList.map(loc => (
-                <button
-                  key={loc.name}
-                  onClick={() => setActiveTab(loc.name)}
-                  className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === loc.name
-                    ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
-                    : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
-                    }`}
-                >
-                  {loc.name}
-                </button>
-              ))}
+              {locationsList.map(loc => {
+                const expiringCount = expiringByLocation[loc.name] || 0;
+                return (
+                  <button
+                    key={loc.name}
+                    onClick={() => setActiveTab(loc.name)}
+                    className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-3 ${activeTab === loc.name
+                      ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
+                      : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
+                      }`}
+                  >
+                    {loc.name}
+                    {expiringCount > 0 && (
+                      <span className={`flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black border ${activeTab === loc.name
+                        ? 'bg-white text-[#112240] border-transparent'
+                        : 'bg-red-500 text-white border-red-600 shadow-sm'
+                        }`}>
+                        {expiringCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
 
               <button
                 onClick={() => setActiveTab('ged')}
