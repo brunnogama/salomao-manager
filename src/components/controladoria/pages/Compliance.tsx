@@ -8,7 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell
+  Legend
 } from 'recharts';
 import XLSX from 'xlsx-js-style';
 import { supabase } from '../../../lib/supabase';
@@ -89,8 +89,17 @@ export function Compliance() {
 
   const parseLocalDate = (dateStr: string) => {
     if (!dateStr) return null;
-    const [year, month, day] = dateStr.split('T')[0].split('-').map(Number);
-    return new Date(year, month - 1, day);
+    // Tenta ISO YYYY-MM-DD
+    if (dateStr.includes('-')) {
+      const [year, month, day] = dateStr.split('T')[0].split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+    // Tenta DD/MM/YYYY
+    if (dateStr.includes('/')) {
+      const [day, month, year] = dateStr.split('/').map(Number);
+      return new Date(year, month - 1, day);
+    }
+    return new Date(dateStr);
   };
 
   // --- Lógica de Dashbord ---
@@ -143,7 +152,8 @@ export function Compliance() {
       active: active.length,
       expired: expired.length,
       expiringSoon: expiringSoon.length,
-      expiringMonthList: sortedMonth
+      expiringMonthList: sortedMonth,
+      expiredList: expired // Adicionado para exibir no dashboard se necessário
     };
   }, [certificates, activeTab]);
 
@@ -156,7 +166,8 @@ export function Compliance() {
     return certificates.reduce((acc, c) => {
       if (!c.due_date || !c.location) return acc;
       const dDate = parseLocalDate(c.due_date);
-      if (dDate && dDate >= today && dDate <= warningThreshold) {
+      // Inclui vencidas (dDate < today) OU a vencer em 10 dias (dDate <= warningThreshold)
+      if (dDate && dDate <= warningThreshold) {
         acc[c.location] = (acc[c.location] || 0) + 1;
       }
       return acc;
@@ -167,16 +178,24 @@ export function Compliance() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const activeByLocation = certificates.reduce((acc, c) => {
+    const dataByLocation = certificates.reduce((acc, c) => {
       const dDate = parseLocalDate(c.due_date);
+      const loc = c.location || 'Não Informado';
+      if (!acc[loc]) acc[loc] = { active: 0, expired: 0 };
+
       if (!c.due_date || (dDate && dDate >= today)) {
-        const loc = c.location || 'Não Informado';
-        acc[loc] = (acc[loc] || 0) + 1;
+        acc[loc].active += 1;
+      } else {
+        acc[loc].expired += 1;
       }
       return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, { active: number, expired: number }>);
 
-    return Object.entries(activeByLocation).map(([name, value]) => ({ name, value }));
+    return (Object.entries(dataByLocation) as any[]).map(([name, counts]) => ({
+      name,
+      active: counts.active,
+      expired: counts.expired
+    }));
   }, [certificates]);
 
   // Resolve os nomes reais, misturando as chaves do dicionário com dados antigos
@@ -414,7 +433,7 @@ export function Compliance() {
                   >
                     {loc.name}
                     {expiringCount > 0 && (
-                      <span className={`flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black border ${activeTab === loc.name
+                      <span className={`flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black border animate-pulse ${activeTab === loc.name
                         ? 'bg-white text-[#112240] border-transparent'
                         : 'bg-red-500 text-white border-red-600 shadow-sm'
                         }`}>
@@ -452,7 +471,7 @@ export function Compliance() {
                   <div className="flex-1 w-full min-h-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="0" vertical={false} stroke="#f3f4f6" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                         <XAxis
                           dataKey="name"
                           axisLine={false}
@@ -468,11 +487,9 @@ export function Compliance() {
                           cursor={{ fill: '#f9fafb' }}
                           contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                         />
-                        <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                          {chartData.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={['#1e3a8a', '#112240', '#3b82f6', '#475569'][index % 4]} />
-                          ))}
-                        </Bar>
+                        <Legend verticalAlign="top" align="right" iconType="circle" />
+                        <Bar dataKey="active" name="Ativas" stackId="a" fill="#1e3a8a" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="expired" name="Vencidas" stackId="a" fill="#ef4444" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -487,19 +504,34 @@ export function Compliance() {
                     <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider">Próximos Vencimentos</h3>
                   </div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
-                    {stats.expiringMonthList.length > 0 ? (
-                      stats.expiringMonthList.map((c) => (
-                        <div key={c.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-xs font-bold text-gray-700">{getCertName(c)}</span>
-                            <span className="text-[10px] text-gray-500 font-medium uppercase tracking-tight">{c.location}</span>
+                    {/* Exibe primeiro as Vencidas, depois as Próximas */}
+                    {(stats as any).expiredList.length > 0 || stats.expiringMonthList.length > 0 ? (
+                      <>
+                        {(stats as any).expiredList.map((c: any) => (
+                          <div key={c.id} className="flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-colors">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs font-bold text-red-700">{getCertName(c)}</span>
+                              <span className="text-[10px] text-red-500 font-medium uppercase tracking-tight">{c.location}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[11px] font-black text-red-600 block">{formatDate(c.due_date)}</span>
+                              <span className="text-[9px] text-red-400 font-bold uppercase tracking-widest">Vencida</span>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <span className="text-[11px] font-black text-amber-600 block">{formatDate(c.due_date)}</span>
-                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Vencimento</span>
+                        ))}
+                        {stats.expiringMonthList.map((c) => (
+                          <div key={c.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs font-bold text-gray-700">{getCertName(c)}</span>
+                              <span className="text-[10px] text-gray-500 font-medium uppercase tracking-tight">{c.location}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[11px] font-black text-amber-600 block">{formatDate(c.due_date)}</span>
+                              <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Vencimento</span>
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        ))}
+                      </>
                     ) : (
                       <div className="h-full flex items-center justify-center text-gray-400 text-xs font-medium italic">
                         Nenhuma certidão a vencer nos próximos dias.
