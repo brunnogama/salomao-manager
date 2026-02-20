@@ -324,6 +324,43 @@ export function RHHeadcount() {
     return dataMap
   }, [activeData])
 
+  // 7. Age Distribution Data (Administrative)
+  const ageDistributionAdminData = useMemo(() => {
+    const groups = [
+      { label: '< 25 anos', min: 0, max: 24 },
+      { label: '25 - 34 anos', min: 25, max: 34 },
+      { label: '35 - 44 anos', min: 35, max: 44 },
+      { label: '45 - 54 anos', min: 45, max: 54 },
+      { label: '55+ anos', min: 55, max: 120 },
+    ]
+
+    const dataMap = groups.map(g => ({
+      group: g.label,
+      Masculino: 0,
+      Feminino: 0,
+    }))
+
+    activeData
+      .filter(c => getSegment(c) === 'Administrativo')
+      .forEach(c => {
+        const age = calculateAge(c.birthday)
+        if (age === null) return
+
+        let gender = 'Outros'
+        if (c.gender === 'M' || c.gender === 'Masculino') gender = 'Masculino'
+        else if (c.gender === 'F' || c.gender === 'Feminino') gender = 'Feminino'
+
+        if (gender === 'Outros') return
+
+        const groupIndex = groups.findIndex(g => age >= g.min && age <= g.max)
+        if (groupIndex !== -1) {
+          dataMap[groupIndex][gender as 'Masculino' | 'Feminino']++
+        }
+      })
+
+    return dataMap
+  }, [activeData])
+
   // --- Custom Label Components ---
   const CustomDataLabel = (props: any) => {
     const { x, y, value, fill, position, offset } = props;
@@ -584,41 +621,8 @@ export function RHHeadcount() {
         </div>
       </div>
 
-      {/* 4. Chart Row 2: Team Leader & Age Pyramid */}
+      {/* 4. Chart Row 2: Age Distributions (Legal & Admin) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Team Leader */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Colaboradores por Líder</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Top 15 Lideranças</p>
-            </div>
-          </div>
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={leaderData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                  width={150}
-                />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
-                <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
-                  <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
 
         {/* Age Distribution (Legal) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
@@ -672,9 +676,94 @@ export function RHHeadcount() {
           </div>
         </div>
 
+        {/* Age Distribution (Administrative) */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+          <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-orange-50 text-orange-600">
+              <TrendingUp size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Faixa Etária (Administrativo)</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição por Gênero</p>
+            </div>
+          </div>
+          <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={ageDistributionAdminData}
+                layout="vertical"
+                margin={{ top: 10, right: 40, left: 10, bottom: 0 }}
+                barGap={2}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="group"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                  width={90}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
+                <Legend iconType="circle" />
+                <Bar
+                  dataKey="Masculino"
+                  fill="#0369a1"
+                  radius={[0, 4, 4, 0]}
+                  barSize={15}
+                >
+                  <LabelList dataKey="Masculino" position="right" fill="#0369a1" fontSize={10} fontWeight={700} offset={8} />
+                </Bar>
+                <Bar
+                  dataKey="Feminino"
+                  fill="#db2777"
+                  radius={[0, 4, 4, 0]}
+                  barSize={15}
+                >
+                  <LabelList dataKey="Feminino" position="right" fill="#db2777" fontSize={10} fontWeight={700} offset={8} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
       </div>
 
-      {/* 5. Chart Row 3: Legal Specifics */}
+      {/* 5. Chart Row 3: Collaborators per Leader */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-gray-800 tracking-tight">Colaboradores por Líder</h3>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Top 15 Lideranças</p>
+          </div>
+        </div>
+        <div className="h-[350px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={leaderData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+              <XAxis type="number" hide />
+              <YAxis
+                dataKey="name"
+                type="category"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                width={150}
+              />
+              <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+              <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
+                <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* 6. Chart Row 4: Legal Specifics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Legal Roles */}
