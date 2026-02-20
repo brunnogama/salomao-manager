@@ -305,12 +305,18 @@ export function Compliance() {
     // Abre o site da RF em uma nova aba
     window.open(rfUrl, '_blank');
 
+    // Data de hoje formatada YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
+
     // Abre o modal de nova certidão já preenchido
+    // Usamos as chaves que o mapping do modal espera (issue_date, due_date)
     setEditingCertificate({
       name: 'Comprovante de Inscrição e de Situação Cadastral',
       cnpj: location.cnpj,
       location: location.name,
-      issueDate: new Date().toISOString().split('T')[0],
+      issue_date: today,
+      due_date: today,
+      agency: 'Secretaria da Receita Federal do Brasil'
     } as any);
     setIsModalOpen(true);
   };

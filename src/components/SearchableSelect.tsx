@@ -42,29 +42,21 @@ export function SearchableSelect({
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const toTitleCase = (str: string) => {
-    if (!str) return '';
-    return str.toLowerCase().split(' ').map(word => {
-      return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
-    }).join(' ');
-  };
-
   // Estabilizar a referência das opções externas para não firtar loop infinito de re-render
   const externalOptionsStr = JSON.stringify(externalOptions);
 
   // Carrega opções dinâmicas ou estáticas
   useEffect(() => {
     if (table) {
-      // Buscamos dados no momento em que o dropdown abre
-      // Não corre risco de loop porque a string de options externas estabiliza o hook
-      if (isOpen) {
+      // Buscamos dados se o dropdown abrir OU se houver um valor para resolver o label
+      if (isOpen || (value && options.length === 0)) {
         fetchOptions();
       }
     } else {
       setOptions(externalOptions);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [table, isOpen, externalOptionsStr]);
+  }, [table, isOpen, externalOptionsStr, value]);
 
   const fetchOptions = async () => {
     if (!table) return;
@@ -115,13 +107,15 @@ export function SearchableSelect({
   const getId = (opt: Option) => opt.id || opt.value || Math.random();
 
   const filteredOptions = options.filter(opt =>
-    getName(opt).toLowerCase().includes(searchTerm.toLowerCase())
+    getName(opt).toLowerCase().includes((searchTerm || '').toLowerCase())
   );
 
   // Encontra o item selecionado para exibição no trigger
-  const selectedOption = options.find(opt =>
-    (opt.id?.toString() === value) || (getName(opt).toLowerCase() === value.toLowerCase())
-  );
+  const selectedOption = options.find(opt => {
+    const optName = getName(opt).toLowerCase();
+    const valStr = (value || '').toString().toLowerCase();
+    return (opt.id?.toString() === value) || (optName === valStr);
+  });
 
   const handleClearSelection = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -143,7 +137,7 @@ export function SearchableSelect({
         `}
       >
         <span className={`text-sm font-medium truncate ${value ? "text-gray-700" : "text-gray-400"}`}>
-          {selectedOption ? getName(selectedOption) : placeholder}
+          {selectedOption ? getName(selectedOption) : (value || placeholder)}
         </span>
 
         <div className="flex items-center gap-1">
@@ -186,7 +180,9 @@ export function SearchableSelect({
             ) : filteredOptions.length > 0 ? (
               <div className="space-y-1">
                 {filteredOptions.map((opt) => {
-                  const isSelected = (opt.id?.toString() === value) || (getName(opt).toLowerCase() === value.toLowerCase());
+                  const optName = getName(opt).toLowerCase();
+                  const valStr = (value || '').toString().toLowerCase();
+                  const isSelected = (opt.id?.toString() === value) || (optName === valStr);
                   return (
                     <button
                       key={getId(opt)}
