@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Upload } from 'lucide-react';
+import { X, Save, Upload, Settings2 } from 'lucide-react';
+import { SearchableSelect } from '../../SearchableSelect';
+import { CertificateNameManagerModal } from './modals/CertificateNameManagerModal';
+import { CertificateAgencyManagerModal } from './modals/CertificateAgencyManagerModal';
 
 interface CertificateFormData {
     id?: string;
@@ -28,6 +31,9 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
         agency: '',
         location: '',
     });
+
+    const [isNameModalOpen, setIsNameModalOpen] = useState(false);
+    const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -88,14 +94,22 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Nome da Certidão *</label>
-                            <input
-                                type="text"
-                                required
-                                className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors"
-                                placeholder="Ex: Certidão Negativa de Débitos"
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest">Nome da Certidão *</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsNameModalOpen(true)}
+                                    className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-tighter flex items-center gap-1 hover:underline"
+                                >
+                                    <Settings2 className="w-3 h-3" /> Gerenciar
+                                </button>
+                            </div>
+                            <SearchableSelect
+                                placeholder="Selecione ou busque a certidão"
                                 value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                onChange={(val) => setFormData({ ...formData, name: val })}
+                                table="certificate_names"
+                                nameField="name"
                             />
                         </div>
 
@@ -124,14 +138,22 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Cartório/Órgão *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors"
-                                    placeholder="Ex: Receita Federal"
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="block text-xs font-black text-gray-700 uppercase tracking-widest">Cartório/Órgão *</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAgencyModalOpen(true)}
+                                        className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-tighter flex items-center gap-1 hover:underline"
+                                    >
+                                        <Settings2 className="w-3 h-3" /> Gerenciar
+                                    </button>
+                                </div>
+                                <SearchableSelect
+                                    placeholder="Selecione ou busque o órgão"
                                     value={formData.agency}
-                                    onChange={e => setFormData({ ...formData, agency: e.target.value })}
+                                    onChange={(val) => setFormData({ ...formData, agency: val })}
+                                    table="certificate_agencies"
+                                    nameField="name"
                                 />
                             </div>
                             <div>
@@ -187,6 +209,16 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                     </button>
                 </div>
             </div>
+
+            <CertificateNameManagerModal
+                isOpen={isNameModalOpen}
+                onClose={() => setIsNameModalOpen(false)}
+            />
+
+            <CertificateAgencyManagerModal
+                isOpen={isAgencyModalOpen}
+                onClose={() => setIsAgencyModalOpen(false)}
+            />
         </div>
     );
 }
