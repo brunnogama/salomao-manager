@@ -285,7 +285,8 @@ export function Compliance() {
         location: data.location,
         file_url: fileUrl,
         file_name: fileName,
-        status: data.status || 'Válida'
+        status: data.status || 'Válida',
+        observations: data.observations
       };
 
       toast.loading('Salvando registro no banco de dados...', { id: toastId });
@@ -337,6 +338,7 @@ export function Compliance() {
       location: cert.location,
       fileUrl: cert.file_url,
       fileName: cert.file_name,
+      observations: cert.observations,
     } as any);
     setIsModalOpen(true);
   };
@@ -715,11 +717,12 @@ export function Compliance() {
                     </thead>
                     <tbody>
                       {filteredCertificates.filter(c => activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab).map((c) => (
-                        <tr key={c.id} className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors">
-                          <td
-                            className="px-6 py-4 truncate font-bold text-[#0a192f] cursor-pointer hover:text-blue-600 hover:underline transition-all"
-                            onClick={() => handleView(c)}
-                          >
+                        <tr
+                          key={c.id}
+                          className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors cursor-pointer group"
+                          onClick={() => handleView(c)}
+                        >
+                          <td className="px-6 py-4 truncate font-bold text-[#0a192f] group-hover:text-blue-600 transition-colors">
                             {getCertName(c)}
                           </td>
                           <td className="px-6 py-4 text-xs text-gray-500">{c.cnpj || '-'}</td>

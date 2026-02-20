@@ -15,6 +15,7 @@ interface CertificateFormData {
     location: string;
     file?: File;
     fileUrl?: string;
+    observations?: string;
 }
 
 interface Props {
@@ -36,6 +37,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
         dueDate: '',
         agency: '',
         location: '',
+        observations: '',
     });
 
     const [isNameModalOpen, setIsNameModalOpen] = useState(false);
@@ -51,7 +53,8 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                 issueDate: '',
                 dueDate: '',
                 agency: '',
-                location: locationsList[0] || '',
+                location: '',
+                observations: '',
             });
         }
     }, [initialData, isOpen, locationsList]);
@@ -226,6 +229,17 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Observações Internas</label>
+                            <textarea
+                                rows={3}
+                                className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors resize-none"
+                                placeholder="Notas adicionais sobre esta certidão..."
+                                value={formData.observations}
+                                onChange={e => setFormData({ ...formData, observations: e.target.value })}
+                            />
                         </div>
 
                         <div>

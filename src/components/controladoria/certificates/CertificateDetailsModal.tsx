@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { X, FileText, Database, Calendar, Building2, MapPin, Info, Paperclip, Download, ExternalLink, ShieldCheck } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, FileText, Database, Calendar, Building2, MapPin, Info, Paperclip, Download, ExternalLink, ShieldCheck, Trash2 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { toast } from 'sonner';
 
 interface CertificateDetailsModalProps {
     isOpen: boolean;
@@ -18,6 +19,35 @@ export function CertificateDetailsModal({
     agencyDict
 }: CertificateDetailsModalProps) {
     const [activeTab, setActiveTab] = useState<'info' | 'ged'>('info');
+    const [relatedFiles, setRelatedFiles] = useState<any[]>([]);
+    const [loadingFiles, setLoadingFiles] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && certificate) {
+            fetchRelatedFiles();
+        }
+    }, [isOpen, certificate]);
+
+    const fetchRelatedFiles = async () => {
+        if (!certificate) return;
+        setLoadingFiles(true);
+        try {
+            const { data, error } = await supabase
+                .from('certificates')
+                .select('*')
+                .eq('name', certificate.name)
+                .eq('location', certificate.location)
+                .not('file_url', 'is', null)
+                .order('due_date', { ascending: false });
+
+            if (error) throw error;
+            setRelatedFiles(data || []);
+        } catch (error: any) {
+            console.error('Erro ao buscar arquivos:', error);
+        } finally {
+            setLoadingFiles(false);
+        }
+    };
 
     if (!isOpen || !certificate) return null;
 
@@ -48,21 +78,46 @@ export function CertificateDetailsModal({
         return dDate < today;
     };
 
-    const handleDownload = async () => {
-        if (!certificate.file_url) return;
+    const handleDownload = async (file: any) => {
+        if (!file.file_url) return;
+        const toastId = toast.loading('Preparando download...');
         try {
-            const { data, error } = await supabase.storage.from('certificate-documents').download(certificate.file_url);
+            const { data, error } = await supabase.storage.from('ged-documentos').download(file.file_url);
             if (error) throw error;
             const url = URL.createObjectURL(data);
             const a = document.createElement('a');
             a.href = url;
-            a.download = certificate.file_name || `certidao_${certificate.id}.pdf`;
+            a.download = file.file_name || `certidao_${file.id}.pdf`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            toast.success('Download concluído', { id: toastId });
         } catch (error: any) {
-            alert('Erro ao baixar documento: ' + error.message);
+            toast.error('Erro ao baixar documento: ' + error.message, { id: toastId });
+        }
+    };
+
+    const handleDeleteFile = async (id: string, fileUrl: string) => {
+        if (!window.confirm('Tem certeza que deseja excluir este arquivo? Isso removerá o registro da certidão correspondente.')) return;
+
+        const toastId = toast.loading('Excluindo arquivo...');
+        try {
+            // Se tiver URL do arquivo, tenta excluir do storage primeiro
+            if (fileUrl) {
+                const { error: storageError } = await supabase.storage
+                    .from('ged-documentos')
+                    .remove([fileUrl]);
+                if (storageError) console.error('Erro ao remover do storage:', storageError);
+            }
+
+            const { error } = await supabase.from('certificates').delete().eq('id', id);
+            if (error) throw error;
+
+            toast.success('Arquivo excluído com sucesso!', { id: toastId });
+            fetchRelatedFiles();
+        } catch (error: any) {
+            toast.error('Erro ao excluir: ' + error.message, { id: toastId });
         }
     };
 
@@ -136,7 +191,12 @@ export function CertificateDetailsModal({
                             <h3 className="text-xl font-black text-gray-900 leading-tight">
                                 {getCertName(certificate)}
                             </h3>
-                            <p className="text-[10px] font-mono text-gray-400 mt-1 uppercase tracking-widest">Órgão: {getAgencyName(certificate)}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                                <p className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Órgão: {getAgencyName(certificate)}</p>
+                                {certificate.cnpj && (
+                                    <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest border-l border-gray-100 pl-3">CNPJ: {certificate.cnpj}</span>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -208,7 +268,7 @@ export function CertificateDetailsModal({
                                             <FileText className="w-3.5 h-3.5" /> Observações Internas
                                         </label>
                                         <div className="bg-amber-50/40 p-5 rounded-3xl border border-amber-100/50">
-                                            <p className="text-sm text-amber-900 leading-relaxed italic">
+                                            <p className="text-sm text-amber-900 leading-relaxed italic whitespace-pre-wrap">
                                                 {certificate.observations}
                                             </p>
                                         </div>
@@ -216,37 +276,94 @@ export function CertificateDetailsModal({
                                 )}
                             </div>
                         ) : (
-                            <div className="h-full flex flex-col items-center justify-center space-y-8 animate-in fade-in slide-in-from-right-4 duration-300 min-h-[400px]">
-                                {certificate.file_url ? (
-                                    <div className="w-full max-w-lg bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-xl flex flex-col items-center text-center">
-                                        <div className="w-20 h-20 bg-blue-50 text-[#1e3a8a] rounded-3xl flex items-center justify-center mb-6 shadow-inner">
-                                            <Paperclip className="w-10 h-10" />
-                                        </div>
-                                        <h4 className="text-lg font-black text-gray-900 mb-2 truncate w-full px-4">
-                                            {certificate.file_name || 'Documento Digitalizado'}
-                                        </h4>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-8">
-                                            Acesso rápido ao GED
-                                        </p>
+                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                                        <Database className="w-4 h-4 text-blue-600" /> Histórico de Arquivos
+                                    </h4>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-100 px-2 py-1 rounded-lg">
+                                        {relatedFiles.length} {relatedFiles.length === 1 ? 'arquivo' : 'arquivos'}
+                                    </span>
+                                </div>
 
-                                        <div className="flex flex-col w-full gap-4">
-                                            <button
-                                                onClick={handleDownload}
-                                                className="w-full flex items-center justify-center gap-3 px-8 py-4 bg-[#1e3a8a] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-xl hover:bg-[#112240] transition-all active:scale-95"
-                                            >
-                                                <Download className="w-5 h-5" /> Baixar Documento
-                                            </button>
-                                            {certificate.file_url && (
-                                                <a
-                                                    href={supabase.storage.from('certificate-documents').getPublicUrl(certificate.file_url).data.publicUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="w-full flex items-center justify-center gap-3 px-8 py-4 bg-white border border-gray-200 text-gray-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                                {loadingFiles ? (
+                                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest">Carregando arquivos...</p>
+                                    </div>
+                                ) : relatedFiles.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {relatedFiles.map((file, index) => {
+                                            const fileExpired = isExpired(file.due_date);
+                                            const isCurrentRevision = index === 0 && !fileExpired;
+
+                                            return (
+                                                <div
+                                                    key={file.id}
+                                                    className={`bg-white rounded-[1.5rem] p-5 border transition-all hover:shadow-md flex items-center gap-5 ${isCurrentRevision
+                                                        ? 'border-green-200 bg-green-50/20 shadow-sm'
+                                                        : 'border-gray-100'
+                                                        }`}
                                                 >
-                                                    <ExternalLink className="w-5 h-5" /> Visualizar em Nova Aba
-                                                </a>
-                                            )}
-                                        </div>
+                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${fileExpired ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-600'
+                                                        }`}>
+                                                        <Paperclip className="w-5 h-5" />
+                                                    </div>
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <h5 className="text-sm font-bold text-gray-900 truncate">
+                                                                {file.file_name || 'Certidão Digitalizada'}
+                                                            </h5>
+                                                            {isCurrentRevision && (
+                                                                <span className="text-[8px] font-black text-green-700 bg-green-100 px-1.5 py-0.5 rounded-full uppercase tracking-tighter border border-green-200">
+                                                                    Atual
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Calendar className="w-3 h-3 text-gray-400" />
+                                                                <span className={`text-[10px] font-bold ${fileExpired ? 'text-red-500' : 'text-gray-500'}`}>
+                                                                    Expira em: {formatDate(file.due_date)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 border-l border-gray-100 pl-4">
+                                                                <span className="text-[10px] font-mono text-gray-300">
+                                                                    ID: {file.id.slice(0, 8)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => handleDownload(file)}
+                                                            className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors bg-white border border-gray-100 shadow-sm"
+                                                            title="Baixar"
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </button>
+                                                        <a
+                                                            href={supabase.storage.from('ged-documentos').getPublicUrl(file.file_url).data.publicUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors bg-white border border-gray-100 shadow-sm"
+                                                            title="Visualizar"
+                                                        >
+                                                            <ExternalLink className="w-4 h-4" />
+                                                        </a>
+                                                        <button
+                                                            onClick={() => handleDeleteFile(file.id, file.file_url)}
+                                                            className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors bg-white border border-gray-100 shadow-sm"
+                                                            title="Excluir"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <div className="bg-white/50 p-16 rounded-[3rem] border border-gray-100 flex flex-col items-center text-center shadow-sm">
@@ -254,7 +371,7 @@ export function CertificateDetailsModal({
                                             <Database className="w-10 h-10 opacity-30" />
                                         </div>
                                         <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Vazio</p>
-                                        <p className="text-[11px] text-gray-300 mt-2 font-medium italic">Esta certidão não possui arquivos anexados ao sistema.</p>
+                                        <p className="text-[11px] text-gray-300 mt-2 font-medium italic">Nenhum arquivo encontrado para esta certidão.</p>
                                     </div>
                                 )}
                             </div>
