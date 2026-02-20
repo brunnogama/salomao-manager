@@ -697,10 +697,6 @@ export function Proposals() {
                   value={proposalData.cnpj}
                   onChange={handleChange}
                   placeholder="00.000.000/0000-00"
-                  className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
-                />
-                <button
-                  onClick={handleCNPJSearch}
                   disabled={proposalData.isPerson}
                   className={`w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all ${proposalData.isPerson ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
                 />
