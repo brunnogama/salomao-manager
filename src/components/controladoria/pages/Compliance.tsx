@@ -716,7 +716,12 @@ export function Compliance() {
                     <tbody>
                       {filteredCertificates.filter(c => activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab).map((c) => (
                         <tr key={c.id} className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 truncate font-bold text-[#0a192f]">{getCertName(c)}</td>
+                          <td
+                            className="px-6 py-4 truncate font-bold text-[#0a192f] cursor-pointer hover:text-blue-600 hover:underline transition-all"
+                            onClick={() => handleView(c)}
+                          >
+                            {getCertName(c)}
+                          </td>
                           <td className="px-6 py-4 text-xs text-gray-500">{c.cnpj || '-'}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {formatDate(c.issue_date)}

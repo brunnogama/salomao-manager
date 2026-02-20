@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, FileText, Database, Calendar, Building2, MapPin, Info, Paperclip, Download, ExternalLink, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
@@ -69,180 +69,207 @@ export function CertificateDetailsModal({
     const statusExpired = isExpired(certificate.due_date);
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[80] p-4">
-            <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 overflow-hidden">
+        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl h-[85vh] flex overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
 
-                {/* Header */}
-                <div className="p-6 bg-gray-50 border-b border-gray-100 flex justify-between items-start shrink-0">
-                    <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-2xl shadow-sm ${statusExpired ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                {/* Left Sidebar */}
+                <div className="w-64 bg-white border-r border-gray-100 flex flex-col py-8 px-5 shrink-0 overflow-y-auto">
+                    <div className="mb-8 px-2">
+                        <div className={`w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center mb-4 ${statusExpired ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
                             <ShieldCheck className="w-6 h-6" />
                         </div>
-                        <div>
-                            <h2 className="text-xl font-black text-gray-900 leading-tight">
-                                {getCertName(certificate)}
-                            </h2>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${statusExpired
-                                        ? 'bg-red-100 text-red-700 border-red-200'
-                                        : 'bg-green-100 text-green-700 border-green-200'
-                                    }`}>
-                                    {statusExpired ? 'Vencida' : 'Ativa'}
-                                </span>
-                                <span className="text-[10px] font-mono text-gray-400">ID: {certificate.id?.slice(0, 8)}</span>
-                            </div>
+                        <h2 className="text-lg font-black text-[#0a192f] tracking-tight leading-tight">
+                            Detalhes da Certidão
+                        </h2>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${statusExpired
+                                ? 'bg-red-100 text-red-700 border-red-200'
+                                : 'bg-green-100 text-green-700 border-green-200'
+                                }`}>
+                                {statusExpired ? 'Vencida' : 'Ativa'}
+                            </span>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 bg-white border border-gray-200 text-gray-400 rounded-xl hover:bg-gray-50 hover:text-gray-600 transition-colors shadow-sm"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
 
-                {/* Tabs */}
-                <div className="flex px-6 pt-4 bg-white border-b border-gray-100">
-                    <button
-                        onClick={() => setActiveTab('info')}
-                        className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all flex items-center gap-2 ${activeTab === 'info'
-                                ? 'border-[#1e3a8a] text-[#1e3a8a]'
-                                : 'border-transparent text-gray-400 hover:text-gray-600'
-                            }`}
-                    >
-                        <Info className="w-3.5 h-3.5" />
-                        Informações
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('ged')}
-                        className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all flex items-center gap-2 ${activeTab === 'ged'
-                                ? 'border-[#1e3a8a] text-[#1e3a8a]'
-                                : 'border-transparent text-gray-400 hover:text-gray-600'
-                            }`}
-                    >
-                        <Database className="w-3.5 h-3.5" />
-                        GED
-                    </button>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                    {activeTab === 'info' ? (
-                        <div className="space-y-8 animate-in fade-in duration-300">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                        <Building2 className="w-3 h-3" /> Órgão Emissor
-                                    </label>
-                                    <p className="text-sm font-bold text-gray-800 bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
-                                        {getAgencyName(certificate)}
-                                    </p>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                        <MapPin className="w-3 h-3" /> Unidade / Local
-                                    </label>
-                                    <p className="text-sm font-bold text-gray-800 bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
-                                        {certificate.location || '-'}
-                                    </p>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                        <FileText className="w-3 h-3" /> CNPJ Associado
-                                    </label>
-                                    <p className="text-sm font-mono font-bold text-gray-800 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                        {certificate.cnpj || 'Não informado'}
-                                    </p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 col-span-1 md:col-span-1">
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                            <Calendar className="w-3 h-3" /> Emissão
-                                        </label>
-                                        <p className="text-sm font-black text-gray-800 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                            {formatDate(certificate.issue_date)}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                            <Calendar className="w-3 h-3" /> Vencimento
-                                        </label>
-                                        <p className={`text-sm font-black p-3 rounded-xl border ${statusExpired
-                                                ? 'bg-red-50 text-red-700 border-red-100'
-                                                : 'bg-gray-50 text-gray-800 border-gray-100'
-                                            }`}>
-                                            {formatDate(certificate.due_date)}
-                                        </p>
-                                    </div>
-                                </div>
+                    <div className="space-y-1 w-full flex-1">
+                        <button
+                            onClick={() => setActiveTab('info')}
+                            className={`w-full flex items-center gap-3 p-3.5 rounded-xl transition-all text-left relative group ${activeTab === 'info'
+                                ? 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm'
+                                : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                                }`}
+                        >
+                            <div className={`p-1 rounded-lg transition-colors ${activeTab === 'info' ? 'text-[#1e3a8a]' : 'text-gray-300 group-hover:text-gray-500'}`}>
+                                <Info className="h-4 w-4" />
                             </div>
+                            <span className="text-[10px] uppercase tracking-[0.1em] font-bold">Informações</span>
+                            {activeTab === 'info' && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#1e3a8a] rounded-r-full" />}
+                        </button>
 
-                            {certificate.observations && (
-                                <div className="space-y-2 pt-4 border-t border-gray-100">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                        <FileText className="w-3 h-3" /> Observações Internas
-                                    </label>
-                                    <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100/50">
-                                        <p className="text-xs text-amber-900 leading-relaxed italic">
-                                            {certificate.observations}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="h-full flex flex-col items-center justify-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300 min-h-[300px]">
-                            {certificate.file_url ? (
-                                <div className="w-full max-w-md bg-gray-50 rounded-3xl p-8 border-2 border-dashed border-gray-200 flex flex-col items-center text-center">
-                                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
-                                        <Paperclip className="w-8 h-8" />
-                                    </div>
-                                    <h4 className="text-sm font-black text-gray-900 mb-1 truncate w-full px-4">
-                                        {certificate.file_name || 'Documento Digitalizado'}
-                                    </h4>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">
-                                        Arquivo pronto para visualização
-                                    </p>
+                        <button
+                            onClick={() => setActiveTab('ged')}
+                            className={`w-full flex items-center gap-3 p-3.5 rounded-xl transition-all text-left relative group ${activeTab === 'ged'
+                                ? 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm'
+                                : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                                }`}
+                        >
+                            <div className={`p-1 rounded-lg transition-colors ${activeTab === 'ged' ? 'text-[#1e3a8a]' : 'text-gray-300 group-hover:text-gray-500'}`}>
+                                <Database className="h-4 w-4" />
+                            </div>
+                            <span className="text-[10px] uppercase tracking-[0.1em] font-bold">GED</span>
+                            {activeTab === 'ged' && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#1e3a8a] rounded-r-full" />}
+                        </button>
+                    </div>
 
-                                    <div className="flex flex-col w-full gap-3">
-                                        <button
-                                            onClick={handleDownload}
-                                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-xl hover:bg-[#112240] transition-all active:scale-95"
-                                        >
-                                            <Download className="w-4 h-4" /> Download do Arquivo
-                                        </button>
-                                        {certificate.file_url && (
-                                            <a
-                                                href={supabase.storage.from('certificate-documents').getPublicUrl(certificate.file_url).data.publicUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all active:scale-95"
-                                            >
-                                                <ExternalLink className="w-4 h-4" /> Visualizar em Nova Aba
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="bg-gray-50 p-12 rounded-3xl border border-gray-100 flex flex-col items-center text-center">
-                                    <div className="w-16 h-16 bg-gray-200 text-gray-400 rounded-3xl flex items-center justify-center mb-4">
-                                        <Database className="w-8 h-8 opacity-20" />
-                                    </div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nenhum documento anexado</p>
-                                    <p className="text-[10px] text-gray-300 mt-1 italic">Esta certidão não possui arquivo no GED.</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    <div className="mt-auto pt-6 border-t border-gray-100">
+                        <button onClick={onClose} className="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-red-500 hover:bg-red-50 p-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest">
+                            <X className="w-4 h-4" /> Fechar
+                        </button>
+                    </div>
                 </div>
 
-                <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end shrink-0">
-                    <button
-                        onClick={onClose}
-                        className="px-8 py-3 bg-white border border-gray-300 text-gray-700 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm hover:bg-gray-50 transition-all active:scale-95"
-                    >
-                        Fechar
-                    </button>
+                {/* Right Content */}
+                <div className="flex-1 flex flex-col min-w-0 bg-gray-50/50">
+                    {/* Header bar within content area */}
+                    <div className="px-10 py-6 border-b border-gray-100 bg-white flex justify-between items-center shrink-0">
+                        <div>
+                            <h3 className="text-xl font-black text-gray-900 leading-tight">
+                                {getCertName(certificate)}
+                            </h3>
+                            <p className="text-[10px] font-mono text-gray-400 mt-1 uppercase tracking-widest">Órgão: {getAgencyName(certificate)}</p>
+                        </div>
+                    </div>
+
+                    {/* Scrollable Content */}
+                    <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                        {activeTab === 'info' ? (
+                            <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <Building2 className="w-3.5 h-3.5" /> Órgão Emissor
+                                        </label>
+                                        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                            <p className="text-sm font-bold text-gray-800">
+                                                {getAgencyName(certificate)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <MapPin className="w-3.5 h-3.5" /> Unidade / Local
+                                        </label>
+                                        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                            <p className="text-sm font-bold text-gray-800">
+                                                {certificate.location || '-'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <FileText className="w-3.5 h-3.5" /> CNPJ Associado
+                                        </label>
+                                        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                            <p className="text-sm font-mono font-bold text-gray-800">
+                                                {certificate.cnpj || 'Não informado'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                <Calendar className="w-3.5 h-3.5" /> Emissão
+                                            </label>
+                                            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                                <p className="text-sm font-black text-gray-800">
+                                                    {formatDate(certificate.issue_date)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                <Calendar className="w-3.5 h-3.5" /> Vencimento
+                                            </label>
+                                            <div className={`p-4 rounded-2xl border shadow-sm ${statusExpired
+                                                ? 'bg-red-50 text-red-700 border-red-100'
+                                                : 'bg-white text-gray-800 border-gray-100'
+                                                }`}>
+                                                <p className="text-sm font-black">
+                                                    {formatDate(certificate.due_date)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {certificate.observations && (
+                                    <div className="space-y-3 pt-6 border-t border-gray-100">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <FileText className="w-3.5 h-3.5" /> Observações Internas
+                                        </label>
+                                        <div className="bg-amber-50/40 p-5 rounded-3xl border border-amber-100/50">
+                                            <p className="text-sm text-amber-900 leading-relaxed italic">
+                                                {certificate.observations}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center space-y-8 animate-in fade-in slide-in-from-right-4 duration-300 min-h-[400px]">
+                                {certificate.file_url ? (
+                                    <div className="w-full max-w-lg bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-xl flex flex-col items-center text-center">
+                                        <div className="w-20 h-20 bg-blue-50 text-[#1e3a8a] rounded-3xl flex items-center justify-center mb-6 shadow-inner">
+                                            <Paperclip className="w-10 h-10" />
+                                        </div>
+                                        <h4 className="text-lg font-black text-gray-900 mb-2 truncate w-full px-4">
+                                            {certificate.file_name || 'Documento Digitalizado'}
+                                        </h4>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-8">
+                                            Acesso rápido ao GED
+                                        </p>
+
+                                        <div className="flex flex-col w-full gap-4">
+                                            <button
+                                                onClick={handleDownload}
+                                                className="w-full flex items-center justify-center gap-3 px-8 py-4 bg-[#1e3a8a] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-xl hover:bg-[#112240] transition-all active:scale-95"
+                                            >
+                                                <Download className="w-5 h-5" /> Baixar Documento
+                                            </button>
+                                            {certificate.file_url && (
+                                                <a
+                                                    href={supabase.storage.from('certificate-documents').getPublicUrl(certificate.file_url).data.publicUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-full flex items-center justify-center gap-3 px-8 py-4 bg-white border border-gray-200 text-gray-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                                                >
+                                                    <ExternalLink className="w-5 h-5" /> Visualizar em Nova Aba
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-white/50 p-16 rounded-[3rem] border border-gray-100 flex flex-col items-center text-center shadow-sm">
+                                        <div className="w-20 h-20 bg-gray-100 text-gray-300 rounded-[2rem] flex items-center justify-center mb-6">
+                                            <Database className="w-10 h-10 opacity-30" />
+                                        </div>
+                                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Vazio</p>
+                                        <p className="text-[11px] text-gray-300 mt-2 font-medium italic">Esta certidão não possui arquivos anexados ao sistema.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-10 py-6 border-t border-gray-100 bg-white/80 backdrop-blur-sm flex justify-end shrink-0">
+                        <button
+                            onClick={onClose}
+                            className="px-10 py-3.5 bg-white border border-gray-200 text-gray-500 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95"
+                        >
+                            Fechar Detalhes
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
