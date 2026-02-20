@@ -87,6 +87,12 @@ export function Compliance() {
     setLoading(false);
   };
 
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split('T')[0].split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   // --- Lógica de Dashbord ---
   const stats = useMemo(() => {
     const today = new Date();
@@ -103,46 +109,54 @@ export function Compliance() {
 
     const active = relevantCertificates.filter(c => {
       if (!c.due_date) return true;
-      return new Date(c.due_date) >= today;
+      const dDate = parseLocalDate(c.due_date);
+      return dDate && dDate >= today;
     });
 
     const expired = relevantCertificates.filter(c => {
       if (!c.due_date) return false;
-      return new Date(c.due_date) < today;
+      const dDate = parseLocalDate(c.due_date);
+      return dDate && dDate < today;
     });
 
     const expiringSoon = active.filter(c => {
       if (!c.due_date) return false;
-      const dueDate = new Date(c.due_date);
-      return dueDate <= warningThreshold;
+      const dDate = parseLocalDate(c.due_date);
+      return dDate && dDate <= warningThreshold;
     });
 
     const expiringMonth = active.filter(c => {
       if (!c.due_date) return false;
-      const dueDate = new Date(c.due_date);
-      const thirtyDaysOut = new Date();
+      const dDate = parseLocalDate(c.due_date);
+      const thirtyDaysOut = new Date(today);
       thirtyDaysOut.setDate(today.getDate() + 30);
-      return dueDate <= thirtyDaysOut;
+      return dDate && dDate <= thirtyDaysOut;
+    });
+
+    const sortedMonth = [...expiringMonth].sort((a, b) => {
+      const dateA = parseLocalDate(a.due_date)?.getTime() || 0;
+      const dateB = parseLocalDate(b.due_date)?.getTime() || 0;
+      return dateA - dateB;
     });
 
     return {
       active: active.length,
       expired: expired.length,
       expiringSoon: expiringSoon.length,
-      expiringMonthList: expiringMonth.sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+      expiringMonthList: sortedMonth
     };
   }, [certificates, activeTab]);
 
   const expiringByLocation = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const warningThreshold = new Date();
+    const warningThreshold = new Date(today);
     warningThreshold.setDate(today.getDate() + 10);
 
     return certificates.reduce((acc, c) => {
       if (!c.due_date || !c.location) return acc;
-      const dueDate = new Date(c.due_date);
-      if (dueDate >= today && dueDate <= warningThreshold) {
+      const dDate = parseLocalDate(c.due_date);
+      if (dDate && dDate >= today && dDate <= warningThreshold) {
         acc[c.location] = (acc[c.location] || 0) + 1;
       }
       return acc;
@@ -154,7 +168,8 @@ export function Compliance() {
     today.setHours(0, 0, 0, 0);
 
     const activeByLocation = certificates.reduce((acc, c) => {
-      if (!c.due_date || new Date(c.due_date) >= today) {
+      const dDate = parseLocalDate(c.due_date);
+      if (!c.due_date || (dDate && dDate >= today)) {
         const loc = c.location || 'Não Informado';
         acc[loc] = (acc[loc] || 0) + 1;
       }
@@ -168,6 +183,16 @@ export function Compliance() {
   const getCertName = (c: any) => nameDict[c.name] || c.name || '';
   const getAgencyName = (c: any) => agencyDict[c.agency] || c.agency || '';
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    // Se vier no formato ISO 2024-02-20, dividimos para evitar problemas de fuso horário
+    if (dateStr.includes('-')) {
+      const [year, month, day] = dateStr.split('T')[0].split('-');
+      return `${day}/${month}/${year}`;
+    }
+    return new Date(dateStr).toLocaleDateString();
+  };
+
   const filteredCertificates = certificates.filter(c =>
     getCertName(c).toLowerCase().includes(searchTerm.toLowerCase()) ||
     getAgencyName(c).toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -180,8 +205,8 @@ export function Compliance() {
     const rows = filteredCertificates.filter(c => activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab).map(c => [
       getCertName(c) || '-',
       c.cnpj || '-',
-      c.issue_date ? new Date(c.issue_date).toLocaleDateString() : '-',
-      c.due_date ? new Date(c.due_date).toLocaleDateString() : '-',
+      formatDate(c.issue_date),
+      formatDate(c.due_date),
       getAgencyName(c) || '-',
       c.location || '-'
     ]);
@@ -305,8 +330,9 @@ export function Compliance() {
     // Abre o site da RF em uma nova aba
     window.open(rfUrl, '_blank');
 
-    // Data de hoje formatada YYYY-MM-DD
-    const today = new Date().toISOString().split('T')[0];
+    // Data de hoje formatada YYYY-MM-DD no fuso local
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     // Abre o modal de nova certidão já preenchido
     // Usamos as chaves que o mapping do modal espera (issue_date, due_date)
@@ -469,7 +495,7 @@ export function Compliance() {
                             <span className="text-[10px] text-gray-500 font-medium uppercase tracking-tight">{c.location}</span>
                           </div>
                           <div className="text-right">
-                            <span className="text-[11px] font-black text-amber-600 block">{new Date(c.due_date).toLocaleDateString()}</span>
+                            <span className="text-[11px] font-black text-amber-600 block">{formatDate(c.due_date)}</span>
                             <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Vencimento</span>
                           </div>
                         </div>
@@ -513,7 +539,7 @@ export function Compliance() {
                           {c.cnpj || '-'}
                         </td>
                         <td className="px-6 py-4 font-semibold text-gray-600 text-xs">
-                          {c.due_date ? new Date(c.due_date).toLocaleDateString() : '-'}
+                          {formatDate(c.due_date)}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isExpired
@@ -609,10 +635,10 @@ export function Compliance() {
                           <td className="px-6 py-4 truncate font-bold text-[#0a192f]">{getCertName(c)}</td>
                           <td className="px-6 py-4 text-xs text-gray-500">{c.cnpj || '-'}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {c.issue_date ? new Date(c.issue_date).toLocaleDateString() : '-'}
+                            {formatDate(c.issue_date)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {c.due_date ? new Date(c.due_date).toLocaleDateString() : '-'}
+                            {formatDate(c.due_date)}
                           </td>
                           <td className="px-6 py-4 truncate">{getAgencyName(c)}</td>
                           <td className="px-6 py-4 whitespace-nowrap">{c.location}</td>
