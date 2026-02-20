@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ChevronDown, X, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { toast } from 'sonner';
 
 interface Option {
   id?: string | number;
@@ -77,6 +78,7 @@ export function SearchableSelect({
         const fallback = await supabase.from(table).select('*').order(nameField);
         if (fallback.error) {
           console.error(`Erro no fallback de tabela ${table}`, fallback.error);
+          toast.error(`Falha ao ler ${table}: Acesso Negado (RLS) ou tabela ausente`);
         } else if (fallback.data) {
           setOptions(fallback.data);
         }
@@ -85,6 +87,7 @@ export function SearchableSelect({
       }
     } catch (error: any) {
       console.error('Erro ao buscar opções:', error);
+      toast.error(`Falha na conexão: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
     }
