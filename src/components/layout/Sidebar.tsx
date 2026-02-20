@@ -11,6 +11,7 @@ import {
   KanbanSquare,
   FolderOpen,
   Share2,
+  ShieldCheck,
   X
 } from 'lucide-react';
 
@@ -52,6 +53,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { label: 'Dashboard', path: '/controladoria/dashboard', icon: LayoutDashboard },
     { label: 'Casos', path: '/controladoria/contratos', icon: FileSignature },
     { label: 'Propostas', path: '/controladoria/propostas', icon: FileText },
+    { label: 'Compliance', path: '/controladoria/compliance', icon: ShieldCheck },
     { label: 'Financeiro', path: '/controladoria/financeiro', icon: DollarSign },
     { label: 'Jurimetria', path: '/controladoria/jurimetria', icon: Share2 },
     { label: 'Volumetria', path: '/controladoria/volumetria', icon: BarChart3 },
