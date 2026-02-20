@@ -196,39 +196,41 @@ export function Compliance() {
             </button>
           </div>
         </div>
+      </div>
 
-        {loading ? (
-          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center flex flex-col items-center justify-center">
-            <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mb-4" />
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando locais...</p>
-          </div>
-        ) : (
-          <>
-            {/* Abas de Locais no Estilo do Sistema */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
-              <div className="flex space-x-2 overflow-x-auto custom-scrollbar">
-                {locationsList.map(loc => (
-                  <button
-                    key={loc}
-                    onClick={() => setSelectedLocation(loc)}
-                    className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${selectedLocation === loc
-                      ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
-                      : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
-                      }`}
-                  >
-                    {loc}
-                  </button>
-                ))}
-                {locationsList.length === 0 && (
-                  <div className="p-4 text-sm font-medium text-gray-500">Nenhum local cadastrado com contratos.</div>
-                )}
-              </div>
+      {loading ? (
+        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-20 text-center flex flex-col items-center justify-center">
+          <Loader2 className="w-8 h-8 text-[#1e3a8a] animate-spin mb-4" />
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando locais...</p>
+        </div>
+      ) : (
+        <div className="flex flex-col space-y-6">
+          {/* Abas de Locais no Estilo do Sistema */}
+          <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+            <div className="flex space-x-2 overflow-x-auto custom-scrollbar">
+              {locationsList.map(loc => (
+                <button
+                  key={loc}
+                  onClick={() => setSelectedLocation(loc)}
+                  className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${selectedLocation === loc
+                    ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
+                    : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
+                    }`}
+                >
+                  {loc}
+                </button>
+              ))}
+              {locationsList.length === 0 && (
+                <div className="p-4 text-sm font-medium text-gray-500">Nenhum local cadastrado com contratos.</div>
+              )}
             </div>
+          </div>
 
-            {locationsList.length > 0 && (
-              <div className="flex-1 space-y-6">
-                {/* Toolbar: Busca e Ações */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+          {locationsList.length > 0 && (
+            <div className="w-full flex flex-col space-y-6">
+              {/* Toolbar: Busca e Ações */}
+              <div className="w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 w-full max-w-md">
                   <Search className="h-5 w-5 text-gray-400" />
                   <input
                     type="text"
@@ -238,84 +240,84 @@ export function Compliance() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-
-                {/* Tabela de Certidões */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  {filteredCertificates.length === 0 ? (
-                    <EmptyState
-                      icon={FileSearch}
-                      title="Nenhuma certidão encontrada"
-                      description={`Não há certidões cadastradas para o local ${selectedLocation}.`}
-                      actionLabel="Adicionar Certidão"
-                      onAction={() => { }}
-                    />
-                  ) : (
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Nome</th>
-                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Emissão</th>
-                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Vencimento</th>
-                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cartório</th>
-                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Local</th>
-                          <th className="p-4 sticky right-0 bg-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)]">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
-                        {filteredCertificates.filter(c => selectedLocation === '' || c.location === selectedLocation).map((cert) => (
-                          <tr key={cert.id} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
-                            <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{cert.name}</td>
-                            <td className="p-4 text-[11px] font-semibold text-gray-500">{new Date(cert.issue_date).toLocaleDateString() || '-'}</td>
-                            <td className="p-4 text-[11px] font-semibold text-gray-500">{new Date(cert.due_date).toLocaleDateString() || '-'}</td>
-                            <td className="p-4 text-[11px] font-semibold text-gray-600">{cert.agency || '-'}</td>
-                            <td className="p-4 text-[11px] font-semibold text-gray-600">{cert.location || '-'}</td>
-                            <td className="p-4">
-                              <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {cert.file_url && (
-                                  <button
-                                    onClick={() => window.open(cert.file_url, '_blank')}
-                                    className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"
-                                    title="Visualizar Arquivo (GED)"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => handleEdit(cert)}
-                                  className="p-1.5 hover:bg-yellow-50 rounded-lg text-yellow-500 hover:text-yellow-700 transition-all"
-                                  title="Editar"
-                                >
-                                  <FileSearch className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(cert.id)}
-                                  className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"
-                                  title="Excluir"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
               </div>
-            )}
-          </>
-        )}
 
-        {/* Modal de Certidões */}
-        <CertificateFormModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSaveCertificate}
-          locationsList={locationsList}
-          initialData={editingCertificate || undefined}
-        />
-      </div>
+              {/* Tabela de Certidões */}
+              <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+                {filteredCertificates.length === 0 ? (
+                  <EmptyState
+                    icon={FileSearch}
+                    title="Nenhuma certidão encontrada"
+                    description={`Não há certidões cadastradas para o local ${selectedLocation}.`}
+                    actionLabel="Adicionar Certidão"
+                    onAction={() => { }}
+                  />
+                ) : (
+                  <table className="w-full text-left border-collapse whitespace-nowrap">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Nome</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Emissão</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Vencimento</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cartório</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Local</th>
+                        <th className="p-4 sticky right-0 bg-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)]">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {filteredCertificates.filter(c => selectedLocation === '' || c.location === selectedLocation).map((cert) => (
+                        <tr key={cert.id} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
+                          <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{cert.name}</td>
+                          <td className="p-4 text-[11px] font-semibold text-gray-500">{new Date(cert.issue_date).toLocaleDateString() || '-'}</td>
+                          <td className="p-4 text-[11px] font-semibold text-gray-500">{new Date(cert.due_date).toLocaleDateString() || '-'}</td>
+                          <td className="p-4 text-[11px] font-semibold text-gray-600">{cert.agency || '-'}</td>
+                          <td className="p-4 text-[11px] font-semibold text-gray-600">{cert.location || '-'}</td>
+                          <td className="p-4 sticky right-0 bg-white group-hover:bg-blue-50/30">
+                            <div className="flex justify-end gap-1 opacity-100 transition-opacity">
+                              {cert.file_url && (
+                                <button
+                                  onClick={() => window.open(cert.file_url, '_blank')}
+                                  className="p-1.5 hover:bg-blue-100 rounded-lg text-blue-500 hover:text-blue-700 transition-all"
+                                  title="Visualizar Arquivo (GED)"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleEdit(cert)}
+                                className="p-1.5 hover:bg-yellow-100 rounded-lg text-yellow-500 hover:text-yellow-700 transition-all"
+                                title="Editar"
+                              >
+                                <FileSearch className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(cert.id)}
+                                className="p-1.5 hover:bg-red-100 rounded-lg text-red-400 hover:text-red-600 transition-all"
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal de Certidões */}
+      <CertificateFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveCertificate}
+        locationsList={locationsList}
+        initialData={editingCertificate || undefined}
+      />
     </div>
   );
 }
