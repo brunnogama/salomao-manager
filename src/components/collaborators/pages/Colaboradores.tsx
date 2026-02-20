@@ -125,6 +125,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
   ]
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null)
   const [, setRefreshKey] = useState(0)
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null)
 
@@ -390,6 +391,27 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       setLoading(true)
       let photoUrl = formData.photo_url
 
+      if (selectedPhotoFile) {
+        setUploadingPhoto(true)
+        try {
+          const fileExt = selectedPhotoFile.name.split('.').pop()
+          const cleanName = formData.name?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s-]/g, '').replace(/\s+/g, '_') || 'foto'
+          const filePath = `colaboradores/${Date.now()}_${cleanName}.${fileExt}`
+
+          const { error: uploadError } = await supabase.storage.from('fotos-colaboradores').upload(filePath, selectedPhotoFile)
+          if (uploadError) throw uploadError
+
+          const { data: { publicUrl } } = supabase.storage.from('fotos-colaboradores').getPublicUrl(filePath)
+          photoUrl = publicUrl
+        } catch (error: any) {
+          showAlert('Erro', 'Erro ao fazer upload da foto: ' + error.message, 'error')
+          setUploadingPhoto(false)
+          setLoading(false)
+          return
+        }
+        setUploadingPhoto(false)
+      }
+
       // Prepare data for save: Convert DD/MM/YYYY back to YYYY-MM-DD
       const dataToSave = {
         ...formData,
@@ -462,6 +484,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
       else {
         setFormData({ status: 'active', state: '' })
         setPhotoPreview(null)
+        setSelectedPhotoFile(null)
         setPendingGedDocs([])
         setActiveFormTab(1)
       }
@@ -481,6 +504,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
 
     setFormData(formattedColaborador)
     setPhotoPreview(colaborador.photo_url || null)
+    setSelectedPhotoFile(null)
     setActiveFormTab(1)
     setShowFormModal(true)
     // Clear pending
@@ -1404,6 +1428,7 @@ export function Colaboradores({ userName = 'Usuário', onModuleHome, onLogout }:
           uploadingPhoto={uploadingPhoto}
           photoInputRef={photoInputRef}
           setPhotoPreview={setPhotoPreview}
+          onPhotoSelected={setSelectedPhotoFile}
         />
       )}
 

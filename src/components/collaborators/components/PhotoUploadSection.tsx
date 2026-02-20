@@ -6,13 +6,15 @@ interface PhotoUploadSectionProps {
   uploadingPhoto: boolean
   photoInputRef: React.RefObject<HTMLInputElement>
   setPhotoPreview: (preview: string | null) => void
+  onPhotoSelected?: (file: File | null) => void
 }
 
 export function PhotoUploadSection({
   photoPreview,
   uploadingPhoto,
   photoInputRef,
-  setPhotoPreview
+  setPhotoPreview,
+  onPhotoSelected
 }: PhotoUploadSectionProps) {
   return (
     <div className="flex flex-col items-center gap-3">
@@ -57,6 +59,9 @@ export function PhotoUploadSection({
             const r = new FileReader()
             r.onload = (ev) => setPhotoPreview(ev.target?.result as string)
             r.readAsDataURL(f)
+            if (onPhotoSelected) onPhotoSelected(f)
+          } else {
+            if (onPhotoSelected) onPhotoSelected(null)
           }
         }}
       />
