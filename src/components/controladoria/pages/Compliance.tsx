@@ -17,7 +17,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { CertificateFormModal } from '../certificates/CertificateFormModal';
 
 export function Compliance() {
-  const [locationsList, setLocationsList] = useState<string[]>([]);
+  const [locationsList, setLocationsList] = useState<{ name: string, cnpj?: string }[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'ged' | string>('dashboard');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,11 +70,19 @@ export function Compliance() {
 
   const fetchLocations = async () => {
     setLoading(true);
-    const { data: contracts } = await supabase.from('contracts').select('billing_location');
-    if (contracts) {
-      const unique = Array.from(new Set(contracts.map(c => (c as any).billing_location).filter(Boolean)));
-      const sorted = unique.sort() as string[];
-      setLocationsList(sorted);
+    // Tentamos buscar da nova tabela. Se não existir, voltamos para o fallback dos contratos
+    const { data: offices, error } = await supabase.from('office_locations').select('name, cnpj').eq('active', true).order('name');
+
+    if (offices && offices.length > 0) {
+      setLocationsList(offices);
+    } else {
+      // Fallback para não quebrar a UI antes do usuário rodar o SQL
+      const { data: contracts } = await supabase.from('contracts').select('billing_location');
+      if (contracts) {
+        const unique = Array.from(new Set(contracts.map(c => (c as any).billing_location).filter(Boolean)));
+        const sorted = unique.sort() as string[];
+        setLocationsList(sorted.map(name => ({ name })));
+      }
     }
     setLoading(false);
   };
@@ -147,9 +155,10 @@ export function Compliance() {
 
   const exportToExcel = () => {
     // Header e configuração XLSX
-    const header = ['Nome', 'Data Emissão', 'Data Vencimento', 'Cartório', 'Local'];
+    const header = ['Documento', 'CNPJ', 'Data Emissão', 'Data Vencimento', 'Cartório', 'Local'];
     const rows = filteredCertificates.filter(c => activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab).map(c => [
       getCertName(c) || '-',
+      c.cnpj || '-',
       c.issue_date ? new Date(c.issue_date).toLocaleDateString() : '-',
       c.due_date ? new Date(c.due_date).toLocaleDateString() : '-',
       getAgencyName(c) || '-',
@@ -194,6 +203,7 @@ export function Compliance() {
       // Preparar payload
       const payload = {
         name: data.name,
+        cnpj: data.cnpj,
         issue_date: data.issueDate,
         due_date: data.dueDate,
         agency: data.agency,
@@ -245,13 +255,13 @@ export function Compliance() {
     setEditingCertificate({
       id: cert.id,
       name: cert.name,
+      cnpj: cert.cnpj,
       issueDate: cert.issue_date,
       dueDate: cert.due_date,
       agency: cert.agency,
       location: cert.location,
       fileUrl: cert.file_url,
       fileName: cert.file_name,
-      status: cert.status,
     } as any);
     setIsModalOpen(true);
   };
@@ -351,14 +361,14 @@ export function Compliance() {
 
               {locationsList.map(loc => (
                 <button
-                  key={loc}
-                  onClick={() => setActiveTab(loc)}
-                  className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === loc
+                  key={loc.name}
+                  onClick={() => setActiveTab(loc.name)}
+                  className={`flex-shrink-0 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === loc.name
                     ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-md'
                     : 'bg-transparent text-gray-500 hover:bg-gray-50 hover:text-[#1e3a8a]'
                     }`}
                 >
-                  {loc}
+                  {loc.name}
                 </button>
               ))}
 
@@ -454,6 +464,7 @@ export function Compliance() {
                 <thead>
                   <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
                     <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Documento</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">CNPJ Certidão</th>
                     <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Vencimento</th>
                     <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
                     <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Local</th>
@@ -470,6 +481,9 @@ export function Compliance() {
                             <span className="font-bold text-[#0a192f] text-xs">{getCertName(c)}</span>
                             <span className="text-[10px] text-gray-400 font-medium truncate max-w-[200px]">{c.file_name}</span>
                           </div>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-semibold text-gray-500">
+                          {c.cnpj || '-'}
                         </td>
                         <td className="px-6 py-4 font-semibold text-gray-600 text-xs">
                           {c.due_date ? new Date(c.due_date).toLocaleDateString() : '-'}
@@ -513,6 +527,15 @@ export function Compliance() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
+
+                {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg">
+                    <ShieldCheck className="w-4 h-4 text-[#1e3a8a]" />
+                    <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest">
+                      CNPJ FILIAL: {locationsList.find(l => l.name === activeTab)?.cnpj}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Tabela de Certidões */}
@@ -534,6 +557,7 @@ export function Compliance() {
                     <thead>
                       <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
                         <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Nome</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">CNPJ Certidão</th>
                         <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Emissão</th>
                         <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Vencimento</th>
                         <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cartório</th>
@@ -542,9 +566,10 @@ export function Compliance() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredCertificates.map((c) => (
-                        <tr key={c.id} className="border-t border-[rgba(255,255,255,0.05)] text-sm">
-                          <td className="px-6 py-4 truncate font-medium">{getCertName(c)}</td>
+                      {filteredCertificates.filter(c => activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab).map((c) => (
+                        <tr key={c.id} className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 truncate font-bold text-[#0a192f]">{getCertName(c)}</td>
+                          <td className="px-6 py-4 text-xs text-gray-500">{c.cnpj || '-'}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {c.issue_date ? new Date(c.issue_date).toLocaleDateString() : '-'}
                           </td>
@@ -591,13 +616,21 @@ export function Compliance() {
         </div>
       )}
 
-      {/* Modal de Certidões */}
       <CertificateFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveCertificate}
-        locationsList={locationsList}
-        initialData={editingCertificate || undefined}
+        locationsList={locationsList.map(l => l.name)}
+        initialData={editingCertificate ? {
+          id: (editingCertificate as any).id,
+          name: (editingCertificate as any).name,
+          cnpj: (editingCertificate as any).cnpj || '',
+          issueDate: (editingCertificate as any).issue_date,
+          dueDate: (editingCertificate as any).due_date,
+          agency: (editingCertificate as any).agency,
+          location: (editingCertificate as any).location,
+          fileUrl: (editingCertificate as any).file_url
+        } : undefined}
       />
     </div>
   );

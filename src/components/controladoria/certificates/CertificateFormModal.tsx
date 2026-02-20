@@ -3,10 +3,12 @@ import { X, Save, Upload, Settings2 } from 'lucide-react';
 import { SearchableSelect } from '../../SearchableSelect';
 import { CertificateNameManagerModal } from './modals/CertificateNameManagerModal';
 import { CertificateAgencyManagerModal } from './modals/CertificateAgencyManagerModal';
+import { maskCNPJ } from '../utils/masks';
 
 interface CertificateFormData {
     id?: string;
     name: string;
+    cnpj: string; // Novo campo
     issueDate: string;
     dueDate: string;
     agency: string;
@@ -26,6 +28,7 @@ interface Props {
 export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, initialData }: Props) {
     const [formData, setFormData] = useState<CertificateFormData>({
         name: '',
+        cnpj: '',
         issueDate: '',
         dueDate: '',
         agency: '',
@@ -41,6 +44,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
         } else {
             setFormData({
                 name: '',
+                cnpj: '',
                 issueDate: '',
                 dueDate: '',
                 agency: '',
@@ -110,6 +114,17 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                 onChange={(val) => setFormData({ ...formData, name: val })}
                                 table="certificate_names"
                                 nameField="name"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">CNPJ da Certidão</label>
+                            <input
+                                type="text"
+                                placeholder="00.000.000/0000-00"
+                                className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors"
+                                value={formData.cnpj}
+                                onChange={e => setFormData({ ...formData, cnpj: maskCNPJ(e.target.value) })}
                             />
                         </div>
 
