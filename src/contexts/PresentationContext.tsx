@@ -11,15 +11,39 @@ const PresentationContext = createContext<PresentationContextType | undefined>(u
 export function PresentationProvider({ children }: { children: ReactNode }) {
     const [isPresentationMode, setIsPresentationMode] = useState(false);
 
-    const togglePresentationMode = () => {
+    const togglePresentationMode = async () => {
+        try {
+            if (!isPresentationMode) {
+                await document.documentElement.requestFullscreen();
+            } else {
+                if (document.fullscreenElement) {
+                    await document.exitFullscreen();
+                }
+            }
+        } catch (err) {
+            console.error('Erro ao alternar modo tela cheia:', err);
+        }
         setIsPresentationMode(prev => !prev);
+    };
+
+    const handleSetPresentationMode = async (value: boolean) => {
+        try {
+            if (value && !document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+            } else if (!value && document.fullscreenElement) {
+                await document.exitFullscreen();
+            }
+        } catch (err) {
+            console.error('Erro ao definir modo tela cheia:', err);
+        }
+        setIsPresentationMode(value);
     };
 
     return (
         <PresentationContext.Provider value={{
             isPresentationMode,
             togglePresentationMode,
-            setPresentationMode: setIsPresentationMode
+            setPresentationMode: handleSetPresentationMode
         }}>
             {children}
         </PresentationContext.Provider>

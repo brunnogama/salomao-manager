@@ -88,21 +88,16 @@ export function DashboardHeader({
           {/* Botão de Apresentação */}
           <button
             onClick={togglePresentationMode}
-            className={`flex items-center gap-2 px-6 py-2.5 text-[9px] font-black rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-widest ${isPresentationMode
-                ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+            title={isPresentationMode ? "Sair da Apresentação" : "Modo Apresentação"}
+            className={`flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 ${isPresentationMode
+              ? 'bg-amber-500 hover:bg-amber-600 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
               }`}
           >
             {isPresentationMode ? (
-              <>
-                <Minimize2 className="w-3.5 h-3.5" />
-                Sair
-              </>
+              <Minimize2 className="w-4 h-4" />
             ) : (
-              <>
-                <Maximize2 className="w-3.5 h-3.5" />
-                Apresentação
-              </>
+              <Maximize2 className="w-4 h-4" />
             )}
           </button>
 
@@ -111,18 +106,13 @@ export function DashboardHeader({
             <button
               onClick={onExport}
               disabled={exporting}
-              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white text-[9px] font-black rounded-xl hover:bg-[#112240] shadow-lg transition-all active:scale-95 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Enviar E-mail"
+              className="flex justify-center items-center w-10 h-10 bg-[#1e3a8a] text-white rounded-xl hover:bg-[#112240] shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {exporting ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Exportando...
-                </>
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <>
-                  <Mail className="w-3.5 h-3.5" />
-                  Enviar E-mail
-                </>
+                <Mail className="w-4 h-4" />
               )}
             </button>
           </div>
