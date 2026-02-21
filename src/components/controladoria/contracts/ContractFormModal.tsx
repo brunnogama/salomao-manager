@@ -920,16 +920,7 @@ export function ContractFormModal(props: Props) {
                   getStatusLabel={getStatusLabel}
                 />
 
-                {(formData.status === 'analysis' || formData.status === 'proposal' || formData.status === 'active') && (
-                  <div className="pt-6 border-t border-black/5 space-y-6">
-                    {(formData.status === 'proposal' || formData.status === 'active') && (
-                      <div className="mb-2">
-                        <label className="text-xs font-medium block mb-1">Referência</label>
-                        <textarea className="w-full border border-gray-300 p-2.5 rounded-lg text-sm bg-white focus:border-salomao-blue outline-none h-24 resize-none" value={(formData as any).reference || ''} onChange={e => setFormData({ ...formData, reference: e.target.value } as any)} placeholder="Ex: Proposta 123/2025" />
-                      </div>
-                    )}
-                  </div>
-                )}
+
               </div>
             )}
 
@@ -997,6 +988,12 @@ export function ContractFormModal(props: Props) {
                   />
                   <LegalProcessList processes={processes} setViewProcess={setViewProcess} setViewProcessIndex={setViewProcessIndex} editProcess={editProcess} removeProcess={removeProcess} />
                 </section>
+                {(formData.status === 'proposal' || formData.status === 'active') && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Referência</label>
+                    <textarea className="w-full border border-gray-300 rounded-lg p-3 text-sm h-24 focus:border-salomao-blue outline-none bg-white mb-4" value={(formData as any).reference || ''} onChange={e => setFormData({ ...formData, reference: e.target.value } as any)} placeholder="Ex: Proposta 123/2025" />
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Observações Gerais</label>
                   <textarea className="w-full border border-gray-300 rounded-lg p-3 text-sm h-24 focus:border-salomao-blue outline-none bg-white" value={formData.observations} onChange={(e) => setFormData({ ...formData, observations: toTitleCase(e.target.value) })}></textarea>

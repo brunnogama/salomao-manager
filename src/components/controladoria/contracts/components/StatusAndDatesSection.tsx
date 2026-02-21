@@ -356,7 +356,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                         </div>
                     )}
 
-                    <div className={`grid grid-cols-1 md:grid-cols-3 gap-5 items-start ${isTimesheet ? 'opacity-40 pointer-events-none filter grayscale' : ''}`}>
+                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-5 items-start ${isTimesheet ? 'opacity-40 pointer-events-none filter grayscale' : ''}`}>
                         <div className="space-y-2">
                             <FinancialInputWithInstallments label="Pró-Labore (R$)" value={safeString(formatForInput(formData.pro_labore))} onChangeValue={(v: any) => setFormData({ ...formData, pro_labore: v })} installments={formData.pro_labore_installments} onChangeInstallments={(v: any) => setFormData({ ...formData, pro_labore_installments: v })} onAdd={() => handleAddToList('pro_labore_extras', 'pro_labore', 'pro_labore_extras_installments', 'pro_labore_installments')} clause={(formData as any).pro_labore_clause} onChangeClause={(v: any) => setFormData({ ...formData, pro_labore_clause: v } as any)} />
                             <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
@@ -375,23 +375,6 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                         </div>
 
                         <div className="space-y-2">
-                            <FinancialInputWithInstallments label="Outros Honorários (R$)" value={safeString(formatForInput(formData.other_fees))} onChangeValue={(v: any) => setFormData({ ...formData, other_fees: v })} installments={formData.other_fees_installments} onChangeInstallments={(v: any) => setFormData({ ...formData, other_fees_installments: v })} onAdd={() => handleAddToList('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments')} clause={(formData as any).other_fees_clause} onChangeClause={(v: any) => setFormData({ ...formData, other_fees_clause: v } as any)} />
-                            <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
-                                {(formData as any).other_fees_extras?.map((val: string, idx: number) => {
-                                    const clauses = ensureArray((formData as any).other_fees_extras_clauses);
-                                    const installments = ensureArray((formData as any).other_fees_extras_installments);
-                                    return (
-                                        <div key={idx} onClick={() => handleEditExtra('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments', 'other_fees_extras_clauses', 'other_fees_clause', idx)} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
-                                            <div className="flex items-center gap-1">{clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}<span className="font-medium">{val}</span>{installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}</div>
-                                            <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            {renderInstallmentBreakdown('Outros', 'other_fees', 'other_fees_breakdown', 'other_fees_installments')}
-                        </div>
-
-                        <div className="space-y-2">
                             <FinancialInputWithInstallments label="Fixo Mensal (R$)" value={safeString(formatForInput(formData.fixed_monthly_fee))} onChangeValue={(v: any) => setFormData({ ...formData, fixed_monthly_fee: v })} installments={formData.fixed_monthly_fee_installments} onChangeInstallments={(v: any) => setFormData({ ...formData, fixed_monthly_fee_installments: v })} onAdd={() => handleAddToList('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments')} clause={(formData as any).fixed_monthly_fee_clause} onChangeClause={(v: any) => setFormData({ ...formData, fixed_monthly_fee_clause: v } as any)} />
                             <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
                                 {(formData as any).fixed_monthly_extras?.map((val: string, idx: number) => {
@@ -407,9 +390,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                             </div>
                             {renderInstallmentBreakdown('Fixo Mensal', 'fixed_monthly_fee', 'fixed_monthly_fee_breakdown', 'fixed_monthly_fee_installments')}
                         </div>
-                    </div>
 
-                    <div className={`grid grid-cols-1 md:grid-cols-3 gap-5 items-start ${isTimesheet ? 'opacity-40 pointer-events-none filter grayscale' : ''}`}>
                         <div className="space-y-2">
                             <FinancialInputWithInstallments label="Êxito Intermediário" value={newIntermediateFee} onChangeValue={setNewIntermediateFee} installments={interimInstallments} onChangeInstallments={setInterimInstallments} onAdd={handleAddIntermediateFee} clause={interimClause} onChangeClause={setInterimClause} />
                             <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
@@ -463,6 +444,23 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                                     );
                                 })}
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <FinancialInputWithInstallments label="Outros Honorários (R$)" value={safeString(formatForInput(formData.other_fees))} onChangeValue={(v: any) => setFormData({ ...formData, other_fees: v })} installments={formData.other_fees_installments} onChangeInstallments={(v: any) => setFormData({ ...formData, other_fees_installments: v })} onAdd={() => handleAddToList('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments')} clause={(formData as any).other_fees_clause} onChangeClause={(v: any) => setFormData({ ...formData, other_fees_clause: v } as any)} />
+                            <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
+                                {(formData as any).other_fees_extras?.map((val: string, idx: number) => {
+                                    const clauses = ensureArray((formData as any).other_fees_extras_clauses);
+                                    const installments = ensureArray((formData as any).other_fees_extras_installments);
+                                    return (
+                                        <div key={idx} onClick={() => handleEditExtra('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments', 'other_fees_extras_clauses', 'other_fees_clause', idx)} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
+                                            <div className="flex items-center gap-1">{clauses[idx] && <span className="text-gray-500 font-bold text-[10px] bg-gray-50 px-1 rounded border border-gray-100">Cl. {clauses[idx]}</span>}<span className="font-medium">{val}</span>{installments[idx] && <span className="text-gray-500 text-[10px]">({installments[idx]})</span>}</div>
+                                            <div className="text-blue-300 p-1"><X className="w-3 h-3" /></div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {renderInstallmentBreakdown('Outros', 'other_fees', 'other_fees_breakdown', 'other_fees_installments')}
                         </div>
                     </div>
 
