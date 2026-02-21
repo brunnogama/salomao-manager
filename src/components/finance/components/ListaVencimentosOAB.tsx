@@ -39,12 +39,18 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   const fetchVencimentos = async () => {
     setLoading(true)
     try {
-      // 1. Busca Colaboradores
-      const { data: colaboradores, error: colError } = await supabase
-        .from('collaborators')
-        .select('*')
+      // 1. Busca Colaboradores e tabelas de mapeamento
+      const [colabRes, rolesRes, teamsRes] = await Promise.all([
+        supabase.from('collaborators').select('*'),
+        supabase.from('roles').select('id, name'),
+        supabase.from('teams').select('id, name')
+      ]);
 
-      if (colError) throw colError
+      if (colabRes.error) throw colabRes.error;
+      const colaboradores = colabRes.data;
+      
+      const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || []);
+      const teamsMap = new Map(teamsRes.data?.map(t => [String(t.id), t.name]) || []);
 
       // 2. Busca Dados Financeiros Reais (Sem filtro de período para permitir visão global)
       const { data: financeiros, error: finError } = await supabase
