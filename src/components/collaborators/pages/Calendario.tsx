@@ -552,26 +552,46 @@ export function Calendario() {
                   <Cake className="h-4 w-4 text-[#d4af37]" /> Aniversariantes ({aniversariosDoMes(selectedMonth, selectedYear).length})
                 </h3>
                 <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                  {aniversariosDoMes(selectedMonth, selectedYear).sort((a, b) => a.dia - b.dia).map((aniv, idx) => (
-                    <div key={idx} className="flex items-center gap-3 bg-gray-50 p-2.5 rounded-xl border border-gray-100 hover:border-[#d4af37]/30 transition-all hover:shadow-sm">
-                      <div className="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-lg border border-gray-200 shadow-sm shrink-0">
-                        <span className="text-[8px] font-black uppercase text-gray-400">{MESES[aniv.mes].substring(0, 3)}</span>
-                        <span className="text-sm font-black text-[#0a192f]">{aniv.dia}</span>
+                  {(() => {
+                    const anivsEsteMes = aniversariosDoMes(selectedMonth, selectedYear);
+                    if (anivsEsteMes.length === 0) {
+                      return (
+                        <div className="text-center py-4 text-xs text-gray-400 font-medium italic">
+                          Nenhum aniversariante este mês
+                        </div>
+                      );
+                    }
+
+                    const groupedByDay = anivsEsteMes.reduce((acc, curr) => {
+                      if (!acc[curr.dia]) acc[curr.dia] = [];
+                      acc[curr.dia].push(curr);
+                      return acc;
+                    }, {} as Record<number, AniversarioData[]>);
+
+                    return Object.keys(groupedByDay).map(Number).sort((a, b) => a - b).map(dia => (
+                      <div key={dia} className="flex gap-3 bg-gray-50 p-2.5 rounded-xl border border-gray-100 hover:border-[#d4af37]/30 transition-all hover:shadow-sm">
+                        <div className="flex flex-col items-center justify-start py-1 w-10 shrink-0">
+                          <div className="flex flex-col items-center justify-center w-full aspect-square bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <span className="text-[8px] font-black uppercase text-gray-400 leading-none mb-0.5">{MESES[selectedMonth].substring(0, 3)}</span>
+                            <span className="text-sm font-black text-[#0a192f] leading-none">{dia}</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-2 py-0.5 mt-0.5">
+                          {groupedByDay[dia].map((aniv, idx) => (
+                            <div key={idx} className="flex items-center justify-between">
+                              <div className="min-w-0">
+                                <p className="text-xs font-black text-[#0a192f] truncate leading-tight">{formatName(aniv.colaborador.name)}</p>
+                                <p className="text-[10px] text-gray-500 truncate leading-tight">{toTitleCase(aniv.colaborador.role)}</p>
+                              </div>
+                              {aniv.isHoje && (
+                                <div className="h-2 w-2 rounded-full bg-[#d4af37] animate-pulse shrink-0 ml-2" title="Hoje!" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-[#0a192f] truncate">{formatName(aniv.colaborador.name)}</p>
-                        <p className="text-[10px] text-gray-500 truncate">{toTitleCase(aniv.colaborador.role)}</p>
-                      </div>
-                      {aniv.isHoje && (
-                        <div className="h-2 w-2 rounded-full bg-[#d4af37] animate-pulse" title="Hoje!" />
-                      )}
-                    </div>
-                  ))}
-                  {aniversariosDoMes(selectedMonth, selectedYear).length === 0 && (
-                    <div className="text-center py-4 text-xs text-gray-400 font-medium italic">
-                      Nenhum aniversariante este mês
-                    </div>
-                  )}
+                    ));
+                  })()}
                 </div>
               </div>
 
