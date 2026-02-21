@@ -217,17 +217,29 @@ export function RHHeadcount() {
 
   // 2. Gender Distribution (Donut)
   const genderData = useMemo(() => {
-    const map = new Map<string, number>()
+    const map = new Map<string, { count: number, totalAge: number, ageCount: number }>()
     activeData.forEach(c => {
       let g = c.gender || 'Não Informado'
       if (g === 'M' || g === 'Masculino') g = 'Masculino'
       else if (g === 'F' || g === 'Feminino') g = 'Feminino'
       else g = 'Outros'
 
-      map.set(g, (map.get(g) || 0) + 1)
+      const age = calculateAge(c.birthday)
+
+      if (!map.has(g)) map.set(g, { count: 0, totalAge: 0, ageCount: 0 })
+      const data = map.get(g)!
+      data.count++
+      if (age !== null && age > 0) {
+        data.totalAge += age
+        data.ageCount++
+      }
     })
 
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value }))
+    return Array.from(map.entries()).map(([name, data]) => ({
+      name,
+      value: data.count,
+      avgAge: data.ageCount > 0 ? Math.round(data.totalAge / data.ageCount) : 0
+    }))
   }, [activeData])
 
   // 3. Collaborators per Team Leader
@@ -401,11 +413,20 @@ export function RHHeadcount() {
         <div className="bg-white p-3 border border-gray-200 shadow-xl rounded-xl min-w-[140px] z-50">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center justify-between gap-3 mb-1">
-              <span className="text-[10px] font-bold uppercase" style={{ color: entry.color }}>
-                {entry.name}
-              </span>
-              <span className="text-xs font-black text-gray-700">{entry.value}</span>
+            <div key={index} className="flex flex-col mb-1 last:mb-0">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[10px] font-bold uppercase" style={{ color: entry.color }}>
+                  {entry.name}
+                </span>
+                <span className="text-xs font-black text-gray-700">{entry.value}</span>
+              </div>
+              {entry.payload && entry.payload.avgAge !== undefined && (
+                <div className="text-right mt-0.5">
+                  <span className="text-[9px] font-bold text-gray-400">
+                    MÉDIA: {entry.payload.avgAge} ANOS
+                  </span>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -585,10 +606,10 @@ export function RHHeadcount() {
       </div>
 
       {/* 4. Chart Row 2: Gender & Age Distributions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
         {/* Gender (Donut) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-1">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-pink-50 text-pink-600">
               <PieChartIcon className="w-5 h-5" />
@@ -609,7 +630,7 @@ export function RHHeadcount() {
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, payload }) => {
                     const RADIAN = Math.PI / 180;
                     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -617,7 +638,10 @@ export function RHHeadcount() {
 
                     return (
                       <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight="bold">
-                        {`${(percent * 100).toFixed(0)}%`}
+                        <tspan x={x} dy="-4">{`${(percent * 100).toFixed(0)}%`}</tspan>
+                        {payload.avgAge > 0 && (
+                          <tspan x={x} dy="12" fontSize={8} fontWeight="normal">{`Média ${payload.avgAge} anos`}</tspan>
+                        )}
                       </text>
                     );
                   }}
@@ -639,7 +663,7 @@ export function RHHeadcount() {
 
 
         {/* Age Distribution (Legal) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
               <TrendingUp size={20} />
@@ -691,7 +715,7 @@ export function RHHeadcount() {
         </div>
 
         {/* Age Distribution (Administrative) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:col-span-2">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-orange-50 text-orange-600">
               <TrendingUp size={20} />
