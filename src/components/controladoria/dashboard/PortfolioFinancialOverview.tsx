@@ -66,7 +66,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
               </div>
             </div>
             <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
-              {metrics.geral?.analysis || 0}
+              {metrics.geral?.emAnalise || 0}
             </p>
             <p className='text-[10px] font-bold text-gray-400'>aguardando elaboração</p>
           </div>
@@ -85,7 +85,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
               </div>
             </div>
             <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
-              {metrics.geral?.proposal || 0}
+              {metrics.geral?.propostasAtivas || 0}
             </p>
             <p className='text-[10px] font-bold text-gray-400'>enviadas ao cliente</p>
           </div>
@@ -104,7 +104,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
               </div>
             </div>
             <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
-              {metrics.geral?.active || 0}
+              {metrics.geral?.fechados || 0}
             </p>
             <p className='text-[10px] font-bold text-gray-400'>casos em andamento</p>
           </div>
@@ -123,7 +123,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
               </div>
             </div>
             <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
-              {metrics.geral?.rejected || 0}
+              {metrics.geral?.rejeitados || 0}
             </p>
             <p className='text-[10px] font-bold text-gray-400'>propostas não aceitas</p>
           </div>
