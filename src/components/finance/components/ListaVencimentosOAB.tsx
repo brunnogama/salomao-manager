@@ -28,7 +28,7 @@ interface ListaVencimentosOABProps {
 export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABProps) {
   const [vencimentos, setVencimentos] = useState<VencimentoOAB[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtro, setFiltro] = useState<'todos' | 'urgente' | 'tratados' | 'mes_atual'>('mes_atual')
+  const [filtro, setFiltro] = useState<'todos' | 'urgente' | 'tratados' | 'mes_atual'>('todos')
   const [selectedVencimento, setSelectedVencimento] = useState<VencimentoOAB | null>(null)
   const [valorInput, setValorInput] = useState('')
 
@@ -62,20 +62,22 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
           // Filtro de Status Ativo
           const statusLimpo = v.status?.trim().toLowerCase() || '';
-          if (statusLimpo !== 'ativo') return false;
+          if (!statusLimpo.includes('ativ')) return false;
 
           const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
-          const ehCargoValido = cargoLimpo.includes('advogad') || cargoLimpo.includes('socio') || cargoLimpo.includes('socia') || cargoLimpo.includes('estagiario') || cargoLimpo.includes('estagiaria');
+          const ehCargoValido = cargoLimpo.includes('advogad') || cargoLimpo.includes('socio') || cargoLimpo.includes('socia') || cargoLimpo.includes('estagiario') || cargoLimpo.includes('estagiaria') || cargoLimpo.includes('juridico') || cargoLimpo.includes('legal');
 
-          if (!ehCargoValido) return false;
+          if (v.cargo && !ehCargoValido && !v.equipe?.toLowerCase().includes('juridico')) return false;
 
           return true;
         }).map((v: any) => {
           let dia, mes, ano;
-          if (v.data_admissao.includes('/')) {
-            [dia, mes, ano] = v.data_admissao.split('/').map(Number);
+          const dataAdmissaoSoData = v.data_admissao.split('T')[0];
+
+          if (dataAdmissaoSoData.includes('/')) {
+            [dia, mes, ano] = dataAdmissaoSoData.split('/').map(Number);
           } else {
-            [ano, mes, dia] = v.data_admissao.split('-').map(Number);
+            [ano, mes, dia] = dataAdmissaoSoData.split('-').map(Number);
           }
 
           const dataVenc = new Date(ano, (mes - 1) + 6, dia)
