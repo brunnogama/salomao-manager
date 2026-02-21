@@ -423,7 +423,7 @@ export function EvolutionCharts({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
 
           {/* LADO ESQUERDO - PROPOSTAS */}
           <div className="bg-white border border-gray-100 rounded-xl p-5 flex flex-col justify-between hover:shadow-sm transition-all">
