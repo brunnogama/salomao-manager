@@ -43,7 +43,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
       const { data: colaboradores, error: colError } = await supabase
         .from('colaboradores')
         .select('*')
-      
+
       if (colError) throw colError
 
       // 2. Busca Dados Financeiros Reais (Sem filtro de período para permitir visão global)
@@ -59,14 +59,14 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
         const processados = colaboradores.filter((v: any) => {
           if (!v.data_admissao) return false
-          
+
           // Filtro de Status Ativo
           const statusLimpo = v.status?.trim().toLowerCase() || '';
           if (statusLimpo !== 'ativo') return false;
 
           const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
-          const ehCargoValido = cargoLimpo === 'advogado' || cargoLimpo === 'socio';
-          
+          const ehCargoValido = cargoLimpo.includes('advogad') || cargoLimpo.includes('socio') || cargoLimpo.includes('socia') || cargoLimpo.includes('estagiario') || cargoLimpo.includes('estagiaria');
+
           if (!ehCargoValido) return false;
 
           return true;
@@ -80,19 +80,26 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
           const dataVenc = new Date(ano, (mes - 1) + 6, dia)
           dataVenc.setDate(dataVenc.getDate() - 1)
-          
-          const diff = Math.ceil((dataVenc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
-          
+
+          // Use UTC dates to avoid timezone differences incorrectly counting days when time is near midnight
+          const dataVencUTC = Date.UTC(dataVenc.getFullYear(), dataVenc.getMonth(), dataVenc.getDate());
+          const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+
+          const diff = Math.ceil((dataVencUTC - hojeUTC) / (1000 * 60 * 60 * 24))
+
+          // Add padStart to ensure valid YYYY-MM-DD format without local timezone shift vulnerabilities
+          const dataPagamentoFmt = `${dataVenc.getFullYear()}-${String(dataVenc.getMonth() + 1).padStart(2, '0')}-${String(dataVenc.getDate()).padStart(2, '0')}`;
+
           // Cruzamento com dados financeiros reais baseado no vencimento calculado
-          const fin = financeiros?.find(f => 
-            f.colaborador_id === v.id && 
-            f.mes_referencia === dataVenc.getMonth() && 
+          const fin = financeiros?.find(f =>
+            f.colaborador_id === v.id &&
+            f.mes_referencia === dataVenc.getMonth() &&
             f.ano_referencia === dataVenc.getFullYear()
           )
 
-          return { 
-            ...v, 
-            data_pagamento_oab: dataVenc.toISOString().split('T')[0],
+          return {
+            ...v,
+            data_pagamento_oab: dataPagamentoFmt,
             dias_ate_pagamento: diff,
             valor_anuidade: fin?.valor_anuidade,
             status_pagamento_real: fin?.status_pagamento
@@ -115,22 +122,24 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
     if (!selectedVencimento) return
 
     const valorNumerico = parseFloat(valorInput.replace(/[R$\s.]/g, '').replace(',', '.'))
-    const dataVenc = new Date(selectedVencimento.data_pagamento_oab);
+    const [anoStr, mesStr] = selectedVencimento.data_pagamento_oab.split('-');
+    const mesRef = parseInt(mesStr, 10) - 1;
+    const anoRef = parseInt(anoStr, 10);
 
     try {
       const { error } = await supabase
         .from('financeiro_oab')
         .upsert({
           colaborador_id: selectedVencimento.id,
-          mes_referencia: dataVenc.getMonth(),
-          ano_referencia: dataVenc.getFullYear(),
+          mes_referencia: mesRef,
+          ano_referencia: anoRef,
           status_pagamento: status,
           valor_anuidade: status === 'pago' ? valorNumerico : 0,
           updated_at: new Date().toISOString()
         }, { onConflict: 'colaborador_id,mes_referencia,ano_referencia' })
 
       if (error) throw error
-      
+
       await fetchVencimentos()
       setSelectedVencimento(null)
       setValorInput('')
@@ -168,7 +177,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         class: 'bg-green-600 text-white border-green-700 font-black'
       }
     }
-    
+
     if (statusReal === 'desconsiderado') {
       return {
         icon: Ban,
@@ -219,8 +228,8 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
     if (filtro === 'mes_atual') {
       const hoje = new Date();
       return vencimentosPendentesGlobal.filter(v => {
-        const dataVenc = new Date(v.data_pagamento_oab);
-        return dataVenc.getMonth() === hoje.getMonth() && dataVenc.getFullYear() === hoje.getFullYear();
+        const [year, month] = v.data_pagamento_oab.split('-');
+        return parseInt(month, 10) === hoje.getMonth() + 1 && parseInt(year, 10) === hoje.getFullYear();
       });
     }
     return vencimentosPendentesGlobal; // 'todos'
@@ -242,33 +251,30 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
       <div className="flex gap-2 flex-wrap p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
         <button
           onClick={() => setFiltro('todos')}
-          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-            filtro === 'todos' 
-              ? 'bg-[#1e3a8a] text-white shadow-md' 
-              : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-          }`}
+          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'todos'
+            ? 'bg-[#1e3a8a] text-white shadow-md'
+            : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+            }`}
         >
           Todos ({vencimentosPendentesGlobal.length})
         </button>
 
         <button
           onClick={() => setFiltro('urgente')}
-          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-            filtro === 'urgente' 
-              ? 'bg-red-600 text-white shadow-md' 
-              : 'bg-red-50 text-red-600 hover:bg-red-100'
-          }`}
+          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'urgente'
+            ? 'bg-red-600 text-white shadow-md'
+            : 'bg-red-50 text-red-600 hover:bg-red-100'
+            }`}
         >
           Urgente ({vencimentosPendentesGlobal.filter(v => v.dias_ate_pagamento <= 7).length})
         </button>
 
         <button
           onClick={() => setFiltro('tratados')}
-          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-            filtro === 'tratados' 
-              ? 'bg-green-600 text-white shadow-md' 
-              : 'bg-green-50 text-green-600 hover:bg-green-100'
-          }`}
+          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'tratados'
+            ? 'bg-green-600 text-white shadow-md'
+            : 'bg-green-50 text-green-600 hover:bg-green-100'
+            }`}
         >
           Tratados ({vencimentosTratadosGlobal.length})
         </button>
@@ -375,7 +381,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                 <label className="text-xs font-black text-gray-700 uppercase tracking-wider block">Valor Pago</label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input 
+                  <input
                     type="text"
                     value={valorInput}
                     onChange={handleValorChange}
