@@ -99,11 +99,25 @@ export function Proposals() {
   };
 
   const fetchLocations = async () => {
-    const { data } = await supabase.from('office_locations').select('city').order('city');
-    if (data) {
-      // Remove duplicates if any multiple offices in same city exist
-      const uniqueCities = Array.from(new Set(data.map(loc => loc.city))).filter(Boolean);
-      setLocationOptions(uniqueCities.map(city => ({ label: city, value: city })));
+    try {
+      const { data, error } = await supabase.from('office_locations').select('name').order('name');
+      if (error) {
+        console.error("Erro ao buscar office_locations:", error);
+      }
+
+      let uniqueCities: string[] = [];
+      if (data && data.length > 0) {
+        uniqueCities = Array.from(new Set(data.map((loc: any) => loc.name))).filter(Boolean);
+      } else {
+        // Fallback to partner locations if table is empty or misses name
+        uniqueCities = Array.from(new Set(Object.values(PARTNER_LOCATIONS).flat())).sort();
+      }
+
+      setLocationOptions(uniqueCities.map((city: string) => ({ label: city, value: city })));
+    } catch (e) {
+      console.error(e);
+      const uniqueCities = Array.from(new Set(Object.values(PARTNER_LOCATIONS).flat())).sort();
+      setLocationOptions(uniqueCities.map((city: string) => ({ label: city, value: city })));
     }
   };
 
@@ -964,7 +978,7 @@ export function Proposals() {
 
             {/* Ref */}
             <div className="mb-4">
-              <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir objeto da proposta]'}</span></p>
+              <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir referência da proposta]'}</span></p>
               <p><strong>Cód.:</strong> <span className="bg-yellow-200/50 px-1">[código proposta]</span></p>
             </div>
 
@@ -1035,12 +1049,20 @@ export function Proposals() {
                 </p>
 
                 {/* Dynamic Clauses Preview */}
-                {/* Pro-Labore (Starts at 2.2) */}
                 {proposalData.pro_labore_clauses.map((clause, idx) => {
                   const num = `2.${2 + idx}`;
+                  let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                  let extensoPart = "";
+                  if (clause.value) {
+                    if (clause.type === 'currency') {
+                      extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
+                    } else {
+                      extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
+                    }
+                  }
                   return (
                     <p key={`pl-${idx}`} className="text-justify mb-2">
-                      {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
+                      {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
                     </p>
                   );
                 })}
@@ -1049,9 +1071,18 @@ export function Proposals() {
                 {proposalData.intermediate_fee_clauses.map((clause, idx) => {
                   const base = 2 + proposalData.pro_labore_clauses.length;
                   const num = `2.${base + idx}`;
+                  let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                  let extensoPart = "";
+                  if (clause.value) {
+                    if (clause.type === 'currency') {
+                      extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
+                    } else {
+                      extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
+                    }
+                  }
                   return (
                     <p key={`int-${idx}`} className="text-justify mb-2">
-                      {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
+                      {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
                     </p>
                   );
                 })}
