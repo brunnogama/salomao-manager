@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Briefcase, Banknote, TrendingUp, Users } from 'lucide-react';
 import { formatMoney } from './dashboardHelpers';
+import { PartnerDetailModal } from './PartnerDetailModal';
 
 interface PartnerStatsProps {
   contractsByPartner: any[];
 }
 
 export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
+  const [selectedPartner, setSelectedPartner] = useState<any | null>(null);
+
   return (
     <>
       <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
@@ -41,9 +44,10 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
               return (
                 <div
                   key={idx}
-                  className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-[#0a192f] hover:shadow-md transition-all flex flex-col"
+                  onClick={() => setSelectedPartner(item)}
+                  className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-[#0a192f] hover:shadow-lg transition-all flex flex-col cursor-pointer group"
                 >
-                  <div className="p-5 flex-1">
+                  <div className="p-5 flex-1 group-hover:bg-gray-50/30 transition-colors">
                     {/* Header do Card com Foto e Nome */}
                     <div className="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
                       <div className="flex items-center gap-3 min-w-0">
@@ -178,6 +182,14 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
           )}
         </div>
       </div>
+
+      {/* Modal de Detalhes do Sócio */}
+      {selectedPartner && (
+        <PartnerDetailModal
+          partner={selectedPartner}
+          onClose={() => setSelectedPartner(null)}
+        />
+      )}
     </>
   );
 }

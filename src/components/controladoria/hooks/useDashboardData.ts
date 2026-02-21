@@ -160,7 +160,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     // -------------------------------------
 
     const partnerMap = partners.reduce((acc: any, s: Partner) => {
-      acc[s.id] = { name: s.name, photo_url: s.photo_url }; // Atualizado para armazenar URL da foto
+      acc[s.id] = { name: s.name, photo_url: s.photo_url || s.foto_url }; // Atualizado para armazenar URL da foto (com fallback para foto_url)
       return acc;
     }, {});
 
