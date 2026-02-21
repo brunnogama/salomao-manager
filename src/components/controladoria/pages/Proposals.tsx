@@ -357,7 +357,37 @@ export function Proposals() {
     text += `1.3. Além da análise do caso e definição da estratégia jurídica, o escopo dos serviços profissionais compreende a análise completa dos documentos e informações enviadas pelo Cliente, elaboração das peças processuais, acompanhamento processual, realização de sustentações orais, despachos, bem como todos os atos conexos necessários a atender os interesses do Cliente nos referidos processos.\n\n`;
     text += `1.4. Os serviços aqui propostos compreende a participação em reuniões com o Cliente sempre que necessário para entendimentos, esclarecimentos e discussão de estratégias, sempre objetivando a melhor atuação possível do Escritório em defesa dos interesses do Cliente.\n\n`;
     text += `1.5. Também está incluída a assessoria jurídica na interlocução com a contraparte, para fins de autocomposição.\n\n`;
-    text += `1.6. Os serviços aqui propostos não incluem consultoria geral ou outra que não possua correlação com o objeto da proposta.`;
+    text += `1.6. Os serviços aqui propostos não incluem consultoria geral ou outra que não possua correlação com o objeto da proposta.\n\n`;
+    text += `2. HONORÁRIOS E FORMA DE PAGAMENTO:\n\n`;
+    text += `2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:\n\n`;
+
+    let clauseIndex = 2;
+    proposalData.pro_labore_clauses.forEach((c) => {
+      text += `2.${clauseIndex}. Honorários pró-labore de ${c.value || '[valor]'}, ${c.description || 'para engajamento no caso'}\n\n`;
+      clauseIndex++;
+    });
+
+    proposalData.intermediate_fee_clauses.forEach((c) => {
+      if (c.value) {
+        text += `2.${clauseIndex}. Êxito intermediário: ${c.value || '[valor]'}, ${c.description || '[descrição]'}\n\n`;
+        clauseIndex++;
+      }
+    });
+
+    proposalData.final_success_fee_clauses.forEach((c) => {
+      if (c.value) {
+        const valText = c.type === 'currency' ? c.value : `${c.value}%`;
+        text += `2.${clauseIndex}. Honorários finais de êxito de ${valText}, ${c.description || '[descrição]'}\n\n`;
+        clauseIndex++;
+      }
+    });
+
+    text += `2.${clauseIndex}. Os honorários de êxito serão integralmente devidos pelo Cliente em caso de transação ou rescisão imotivada do presente contrato.\n\n`;
+    text += `2.${clauseIndex + 1}. Nos casos de (a) desistência e/ou renúncia que encerrem as discussões travadas... (texto de rescisão)\n\n`;
+
+    text += `3. CONDIÇÕES GERAIS:\n\n`;
+    text += `3.1. Não estão incluídas nos honorários as despesas relacionadas ao caso...`;
+
     return text;
   };
 
@@ -565,7 +595,22 @@ export function Proposals() {
             <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50/50 focus-within:border-[#1e3a8a] transition-all overflow-hidden">
               {showTypeToggle && (
                 <button
-                  onClick={() => updateClause(type, index, 'type', clause.type === 'currency' ? 'percent' : 'currency')}
+                  onClick={() => {
+                    const newType = clause.type === 'currency' ? 'percent' : 'currency';
+                    updateClause(type, index, 'type', newType);
+
+                    if (clause.value) {
+                      if (newType === 'percent') {
+                        // Converter Moeda pra Porcentagem
+                        const numbersOnly = clause.value.replace(/[^\d,]/g, '').split(',')[0] || '';
+                        if (numbersOnly) updateClause(type, index, 'value', `${numbersOnly}%`);
+                      } else {
+                        // Converter Porcentagem para Moeda Formato Simples (limpa o % e devolve a mascara nativa ou deixa cru para o formata no blur)
+                        const numbersOnly = clause.value.replace(/[^\d]/g, '');
+                        if (numbersOnly) updateClause(type, index, 'value', `R$ ${numbersOnly},00`);
+                      }
+                    }
+                  }}
                   className={`px-3 py-3.5 text-xs font-bold border-r border-gray-200 hover:bg-gray-100 transition-colors ${clause.type === 'percent' ? 'text-blue-600' : 'text-green-600'}`}
                   title={clause.type === 'currency' ? 'Mudar para %' : 'Mudar para R$'}
                 >
@@ -838,18 +883,11 @@ export function Proposals() {
                 if (!isEditingBody && !customBodyText) {
                   setCustomBodyText(generateDefaultBodyText());
                 }
-                setIsEditingBody(!isEditingBody);
+                setIsEditingBody(true);
               }}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${isEditingBody
-                  ? 'bg-blue-100 text-[#1e3a8a] border border-blue-200 shadow-inner'
-                  : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
-                }`}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 z-10"
             >
-              {isEditingBody ? (
-                <> <CheckCircle className="w-3 h-3" /> Salvar Texto </>
-              ) : (
-                <> <FileSignature className="w-3 h-3" /> Editar Texto </>
-              )}
+              <FileSignature className="w-3 h-3" /> Abrir Modo de Edição
             </button>
             <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest flex items-center gap-1">
               <Eye className="w-3 h-3" /> Visualização em Tempo Real
@@ -921,26 +959,17 @@ export function Proposals() {
               , vem formular a presente proposta de honorários...
             </p>
 
-            {isEditingBody ? (
-              <textarea
-                value={customBodyText}
-                onChange={(e) => setCustomBodyText(e.target.value)}
-                rows={15}
-                className="w-full text-justify mb-4 p-4 text-[10px] border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-lg outline-none focus:border-[#1e3a8a] focus:bg-white transition-all resize-y font-mono leading-relaxed"
-                placeholder="Edite o corpo da proposta aqui..."
-              />
-            ) : customBodyText ? (
-              <div className="mb-4 space-y-4">
-                {customBodyText.split('\n\n').map((paragraph, idx) => (
-                  <p key={idx} className="text-justify whitespace-pre-line leading-relaxed">
-                    {paragraph.split('\n').map((line, lIdx) => (
-                      <React.Fragment key={lIdx}>
-                        {line}
-                        {lIdx !== paragraph.split('\n').length - 1 && <br />}
-                      </React.Fragment>
-                    ))}
-                  </p>
-                ))}
+            {customBodyText ? (
+              <div className="mb-4 space-y-4 text-justify whitespace-pre-line leading-relaxed pb-8">
+                {customBodyText.split('\n\n').map((paragraph, idx) => {
+                  const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
+
+                  return (
+                    <p key={idx} className={`${isHeading ? 'font-bold mt-4' : ''}`}>
+                      {paragraph}
+                    </p>
+                  )
+                })}
               </div>
             ) : (
               <>
@@ -951,59 +980,58 @@ export function Proposals() {
                   <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
                   no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
                 </p>
+
+                {/* 2. Honorários */}
+                <p className="font-bold mb-2 break-before-page mt-6">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
+                <p className="text-justify mb-2">
+                  2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
+                </p>
+
+                {/* Dynamic Clauses Preview */}
+                {/* Pro-Labore (Starts at 2.2) */}
+                {proposalData.pro_labore_clauses.map((clause, idx) => {
+                  const num = `2.${2 + idx}`;
+                  return (
+                    <p key={`pl-${idx}`} className="text-justify mb-2">
+                      {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
+                    </p>
+                  );
+                })}
+
+                {/* Intermediate (Starts after Pro-Labore) */}
+                {proposalData.intermediate_fee_clauses.map((clause, idx) => {
+                  const base = 2 + proposalData.pro_labore_clauses.length;
+                  const num = `2.${base + idx}`;
+                  return (
+                    <p key={`int-${idx}`} className="text-justify mb-2">
+                      {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
+                    </p>
+                  );
+                })}
+
+                {/* Final Success - Unified */}
+                {proposalData.final_success_fee_clauses.map((clause, idx) => {
+                  const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
+                  const num = `2.${base + idx}`;
+
+                  let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                  let extensoPart = "";
+                  if (clause.value) {
+                    if (clause.type === 'currency') {
+                      extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
+                    } else {
+                      extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
+                    }
+                  }
+
+                  return (
+                    <p key={`sf-unified-${idx}`} className="text-justify mb-2">
+                      {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
+                    </p>
+                  );
+                })}
               </>
             )}
-
-            {/* 2. Honorários */}
-            <p className="font-bold mb-2 break-before-page mt-6">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
-            <p className="text-justify mb-2">
-              2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
-            </p>
-
-            {/* Dynamic Clauses Preview */}
-            {/* Pro-Labore (Starts at 2.2) */}
-            {proposalData.pro_labore_clauses.map((clause, idx) => {
-              const num = `2.${2 + idx}`;
-              return (
-                <p key={`pl-${idx}`} className="text-justify mb-2">
-                  {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
-                </p>
-              );
-            })}
-
-            {/* Intermediate (Starts after Pro-Labore) */}
-            {proposalData.intermediate_fee_clauses.map((clause, idx) => {
-              // Base index = 2 (previous fixed) + length of previous
-              const base = 2 + proposalData.pro_labore_clauses.length;
-              const num = `2.${base + idx}`;
-              return (
-                <p key={`int-${idx}`} className="text-justify mb-2">
-                  {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
-                </p>
-              );
-            })}
-
-            {/* Final Success - Unified */}
-            {proposalData.final_success_fee_clauses.map((clause, idx) => {
-              const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
-              const num = `2.${base + idx}`;
-
-              let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-              let extensoPart = "";
-              if (clause.value) {
-                if (clause.type === 'currency') {
-                  extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-                } else {
-                  extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-                }
-              }
-
-              return (
-                <p key={`sf-unified-${idx}`} className="text-justify mb-2">
-                  {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-                </p>
-              );
-            })}
 
             {/* Signatures */}
             <div className="text-center mt-12 space-y-8">
@@ -1095,6 +1123,53 @@ export function Proposals() {
                   Sim, cancelar e excluir
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Editor Modal */}
+      {isEditingBody && (
+        <div className="fixed inset-0 bg-[#0a192f]/80 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+              <div>
+                <h3 className="text-xl font-black text-[#0a192f] flex items-center gap-2">
+                  <FileSignature className="w-6 h-6 text-[#1e3a8a]" />
+                  Editor Avançado da Proposta
+                </h3>
+                <p className="text-xs font-semibold text-gray-500 mt-1">Edite livremente o conteúdo da proposta. Deixe linhas em branco para separar os parágrafos.</p>
+              </div>
+              <button
+                onClick={() => setIsEditingBody(false)}
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="flex-1 p-6 bg-gray-100 overflow-hidden flex flex-col">
+              <textarea
+                value={customBodyText}
+                onChange={(e) => setCustomBodyText(e.target.value)}
+                className="w-full flex-1 p-8 text-sm text-gray-800 bg-white border border-gray-200 shadow-inner rounded-xl outline-none focus:border-[#1e3a8a] focus:ring-4 focus:ring-blue-500/10 transition-all resize-none font-mono leading-relaxed"
+                placeholder="Edite o corpo da proposta aqui..."
+              />
+            </div>
+
+            <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-3">
+              <button
+                onClick={() => setIsEditingBody(false)}
+                className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs uppercase tracking-wider hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => setIsEditingBody(false)}
+                className="px-8 py-3 rounded-xl bg-[#1e3a8a] text-white font-black text-xs uppercase tracking-wider hover:bg-[#112240] shadow-lg flex items-center gap-2 transition-all active:scale-95"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Salvar Alterações
+              </button>
             </div>
           </div>
         </div>
