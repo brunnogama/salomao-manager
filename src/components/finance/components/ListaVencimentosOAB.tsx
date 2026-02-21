@@ -71,42 +71,51 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
           return true;
         }).map((v: any) => {
-          let dia, mes, ano;
-          const dataAdmissaoSoData = v.data_admissao.split('T')[0];
+          try {
+            if (typeof v.data_admissao !== 'string') return null;
 
-          if (dataAdmissaoSoData.includes('/')) {
-            [dia, mes, ano] = dataAdmissaoSoData.split('/').map(Number);
-          } else {
-            [ano, mes, dia] = dataAdmissaoSoData.split('-').map(Number);
+            let dia, mes, ano;
+            const dataAdmissaoSoData = v.data_admissao.split('T')[0];
+
+            if (dataAdmissaoSoData.includes('/')) {
+              [dia, mes, ano] = dataAdmissaoSoData.split('/').map(Number);
+            } else {
+              [ano, mes, dia] = dataAdmissaoSoData.split('-').map(Number);
+            }
+
+            if (!ano || !mes || !dia) return null;
+
+            const dataVenc = new Date(ano, (mes - 1) + 6, dia)
+            dataVenc.setDate(dataVenc.getDate() - 1)
+
+            // Use UTC dates to avoid timezone differences incorrectly counting days when time is near midnight
+            const dataVencUTC = Date.UTC(dataVenc.getFullYear(), dataVenc.getMonth(), dataVenc.getDate());
+            const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+
+            const diff = Math.ceil((dataVencUTC - hojeUTC) / (1000 * 60 * 60 * 24))
+
+            // Add padStart to ensure valid YYYY-MM-DD format without local timezone shift vulnerabilities
+            const dataPagamentoFmt = `${dataVenc.getFullYear()}-${String(dataVenc.getMonth() + 1).padStart(2, '0')}-${String(dataVenc.getDate()).padStart(2, '0')}`;
+
+            // Cruzamento com dados financeiros reais baseado no vencimento calculado
+            const fin = financeiros?.find(f =>
+              f.colaborador_id === v.id &&
+              f.mes_referencia === dataVenc.getMonth() &&
+              f.ano_referencia === dataVenc.getFullYear()
+            )
+
+            return {
+              ...v,
+              data_pagamento_oab: dataPagamentoFmt,
+              dias_ate_pagamento: diff,
+              valor_anuidade: fin?.valor_anuidade,
+              status_pagamento_real: fin?.status_pagamento
+            }
+          } catch (err) {
+            console.error('Erro de parsing na data para', v.nome, err);
+            return null;
           }
-
-          const dataVenc = new Date(ano, (mes - 1) + 6, dia)
-          dataVenc.setDate(dataVenc.getDate() - 1)
-
-          // Use UTC dates to avoid timezone differences incorrectly counting days when time is near midnight
-          const dataVencUTC = Date.UTC(dataVenc.getFullYear(), dataVenc.getMonth(), dataVenc.getDate());
-          const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-
-          const diff = Math.ceil((dataVencUTC - hojeUTC) / (1000 * 60 * 60 * 24))
-
-          // Add padStart to ensure valid YYYY-MM-DD format without local timezone shift vulnerabilities
-          const dataPagamentoFmt = `${dataVenc.getFullYear()}-${String(dataVenc.getMonth() + 1).padStart(2, '0')}-${String(dataVenc.getDate()).padStart(2, '0')}`;
-
-          // Cruzamento com dados financeiros reais baseado no vencimento calculado
-          const fin = financeiros?.find(f =>
-            f.colaborador_id === v.id &&
-            f.mes_referencia === dataVenc.getMonth() &&
-            f.ano_referencia === dataVenc.getFullYear()
-          )
-
-          return {
-            ...v,
-            data_pagamento_oab: dataPagamentoFmt,
-            dias_ate_pagamento: diff,
-            valor_anuidade: fin?.valor_anuidade,
-            status_pagamento_real: fin?.status_pagamento
-          }
-        })
+        }).filter(Boolean)
 
         // Ordenação: Do mais antigo (mais atrasado/menor diff) para o mais novo
         processados.sort((a, b) => a.dias_ate_pagamento - b.dias_ate_pagamento)
