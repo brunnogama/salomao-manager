@@ -1,6 +1,6 @@
-import { 
+import {
   LayoutDashboard, Users, Gavel, FileWarning, Truck, KanbanSquare, History, BookOpen,
-  Calendar, MapPin, TrendingUp, Clock, BarChart3, RefreshCw, Briefcase, Banknote, Megaphone,
+  Calendar, MapPin, TrendingUp, Clock, BarChart3, RefreshCw, Briefcase, Megaphone,
   FolderSearch, ArrowUpCircle, ArrowDownCircle, Plane, Receipt, Home
 } from 'lucide-react';
 
@@ -48,9 +48,7 @@ export const MODULE_CONFIG = {
       headcount: BarChart3,
       turnover: RefreshCw,
       vagas: Briefcase,
-      remuneracao: Banknote,
       acoes: Megaphone,
-      kanban: KanbanSquare,
       ged: FolderSearch
     },
     titles: {
@@ -63,9 +61,7 @@ export const MODULE_CONFIG = {
       headcount: 'Headcount',
       turnover: 'Turnover',
       vagas: 'Vagas',
-      remuneracao: 'Remuneração',
       acoes: 'Ações Internas & Marketing',
-      kanban: 'Kanban RH',
       ged: 'GED - Gestão Eletrônica de Documentos'
     },
     descriptions: {
@@ -78,9 +74,7 @@ export const MODULE_CONFIG = {
       headcount: 'Indicadores quantitativos da equipe.',
       turnover: 'Índices de rotatividade de pessoal.',
       vagas: 'Gestão de processos seletivos abertos.',
-      remuneracao: 'Gestão salarial e benefícios.',
       acoes: 'Gestão de endomarketing, eventos e campanhas.',
-      kanban: 'Fluxo de contratações e tarefas de RH.',
       ged: 'Arquivo digital e organização de documentos.'
     }
   },

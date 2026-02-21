@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   MapPin,
-  KanbanSquare,
   X,
   Users,
   TrendingUp,
@@ -11,7 +10,6 @@ import {
   BarChart3,
   RefreshCw,
   Briefcase,
-  Banknote,
   Megaphone,
   Folder,
   Calendar
@@ -68,9 +66,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { path: '/rh/headcount', label: 'Headcount', icon: BarChart3 },
     { path: '/rh/turnover', label: 'Turnover', icon: RefreshCw },
     { path: '/rh/vagas', label: 'Vagas', icon: Briefcase },
-    { path: '/rh/remuneracao', label: 'Remuneração', icon: Banknote },
     { path: '/rh/acoes', label: 'Ações', icon: Megaphone },
-    { path: '/rh/kanban', label: 'Kanban', icon: KanbanSquare },
     { path: '/rh/ged', label: 'GED', icon: Folder },
   ]
 
