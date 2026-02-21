@@ -50,50 +50,31 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           </div>
         </div>
         {/* Cards de Status */}
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6'>
 
-          {/* 1. Ativos */}
-          <div
-            onClick={() => handleDrillDown('Ativo')}
-            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-green-600 shadow-sm hover:shadow-md cursor-pointer transition-all'
-          >
-            <div className='flex justify-between items-start mb-3'>
-              <p className='text-[10px] text-gray-500 font-black uppercase tracking-widest'>
-                Contratos Ativos
-              </p>
-              <div className='p-1.5 bg-green-50 rounded-lg text-green-600 group-hover:scale-110 transition-transform'>
-                <CheckCircle2 className='w-4 h-4' />
-              </div>
-            </div>
-            <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
-              {metrics.geral.active}
-            </p>
-            <p className='text-[10px] font-bold text-gray-400'>casos em andamento</p>
-          </div>
-
-          {/* 2. Em Análise */}
+          {/* 1. Em Análise */}
           <div
             onClick={() => handleDrillDown('Análise')}
-            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-amber-500 shadow-sm hover:shadow-md cursor-pointer transition-all'
+            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-amber-500 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
             <div className='flex justify-between items-start mb-3'>
               <p className='text-[10px] text-gray-500 font-black uppercase tracking-widest'>
-                Em Análise
+                Sob Análise
               </p>
               <div className='p-1.5 bg-amber-50 rounded-lg text-amber-600 group-hover:scale-110 transition-transform'>
                 <Clock className='w-4 h-4' />
               </div>
             </div>
             <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
-              {metrics.geral.analysis}
+              {metrics.geral?.analysis || 0}
             </p>
-            <p className='text-[10px] font-bold text-gray-400'>aguardando proposta</p>
+            <p className='text-[10px] font-bold text-gray-400'>aguardando elaboração</p>
           </div>
 
-          {/* 3. Proposta Formulada */}
+          {/* 2. Propostas */}
           <div
             onClick={() => handleDrillDown('Proposta Formulada')}
-            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-blue-600 shadow-sm hover:shadow-md cursor-pointer transition-all'
+            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-blue-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
             <div className='flex justify-between items-start mb-3'>
               <p className='text-[10px] text-gray-500 font-black uppercase tracking-widest'>
@@ -104,27 +85,47 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
               </div>
             </div>
             <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
-              {metrics.geral.proposal}
+              {metrics.geral?.proposal || 0}
             </p>
             <p className='text-[10px] font-bold text-gray-400'>enviadas ao cliente</p>
           </div>
 
-          {/* 4. Total Fotografia */}
-          <div className='bg-[#0a192f] text-white p-5 rounded-xl shadow-md flex flex-col justify-between'>
+          {/* 3. Contratos Fechados */}
+          <div
+            onClick={() => handleDrillDown('Ativo')}
+            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-green-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
+          >
             <div className='flex justify-between items-start mb-3'>
-              <p className='text-[10px] text-gray-300 font-black uppercase tracking-widest'>
-                Volume Total
+              <p className='text-[10px] text-gray-500 font-black uppercase tracking-widest'>
+                Contratos Fechados
               </p>
-              <div className='p-1.5 bg-white/10 rounded-lg text-white'>
-                <Layers className='w-4 h-4' />
+              <div className='p-1.5 bg-green-50 rounded-lg text-green-600 group-hover:scale-110 transition-transform'>
+                <CheckCircle2 className='w-4 h-4' />
               </div>
             </div>
-            <div>
-              <p className='text-[34px] font-black text-white tracking-tight leading-none mb-1'>
-                {metrics.geral.active + metrics.geral.analysis + metrics.geral.proposal}
+            <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+              {metrics.geral?.active || 0}
+            </p>
+            <p className='text-[10px] font-bold text-gray-400'>casos em andamento</p>
+          </div>
+
+          {/* 4. Rejeitados */}
+          <div
+            onClick={() => handleDrillDown('Rejeitado')}
+            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-red-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
+          >
+            <div className='flex justify-between items-start mb-3'>
+              <p className='text-[10px] text-gray-500 font-black uppercase tracking-widest'>
+                Rejeitados
               </p>
-              <p className='text-[10px] font-bold text-gray-400'>demandas ativas no momento</p>
+              <div className='p-1.5 bg-red-50 rounded-lg text-red-600 group-hover:scale-110 transition-transform'>
+                <XCircle className='w-4 h-4' />
+              </div>
             </div>
+            <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+              {metrics.geral?.rejected || 0}
+            </p>
+            <p className='text-[10px] font-bold text-gray-400'>propostas não aceitas</p>
           </div>
         </div>
       </div>

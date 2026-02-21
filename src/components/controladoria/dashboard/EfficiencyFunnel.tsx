@@ -113,14 +113,22 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
           </div>
         </div>
 
-        {/* Etapa 3 - Fechados */}
-        <div className='md:col-span-1 border-gray-100'>
-          <div className='bg-white p-5 rounded-xl border border-gray-200 border-l-4 border-l-green-600 shadow-sm text-center group hover:shadow-md transition-all flex h-full flex-col justify-center'>
-            <p className='text-[10px] font-black text-green-600 uppercase tracking-[0.2em] mb-2'>
+        {/* Etapas Finais - Fechados e Rejeitados */}
+        <div className='md:col-span-1 flex flex-col gap-3 h-full justify-center'>
+          <div className='bg-white p-4 rounded-xl border border-gray-200 border-l-4 border-l-green-600 shadow-sm text-center group hover:shadow-md transition-all flex flex-col justify-center flex-1'>
+            <p className='text-[10px] font-black text-green-600 uppercase tracking-[0.2em] mb-1'>
               3. Fechados
             </p>
-            <p className='text-[30px] font-black text-[#0a192f] tracking-tight'>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none'>
               {funil.fechados}
+            </p>
+          </div>
+          <div className='bg-white p-4 rounded-xl border border-gray-200 border-l-4 border-l-red-600 shadow-sm text-center group hover:shadow-md transition-all flex flex-col justify-center flex-1'>
+            <p className='text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-1'>
+              Rejeitados
+            </p>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none'>
+              {funil.perdaAnalise + funil.perdaNegociacao}
             </p>
           </div>
         </div>

@@ -41,7 +41,7 @@ export function Dashboard({ }: Props) {
     rejectionData, contractsByPartner
   } = useDashboardData(selectedPartner, selectedLocation);
 
-  const [activeTab, setActiveTab] = useState<'geral' | 'financeiro' | 'operacional'>('geral');
+
 
   useEffect(() => {
     fetchFilterOptions();
@@ -141,73 +141,30 @@ export function Dashboard({ }: Props) {
         </div>
       </div>
 
-      {/* TABS NAVIGATION */}
-      <div className="flex space-x-2 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab('geral')}
-          className={`px-4 py-3 text-[11px] font-black uppercase tracking-widest transition-colors border-b-2 ${activeTab === 'geral'
-              ? 'border-blue-800 text-blue-900 bg-blue-50/50'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-            }`}
-        >
-          Visão Geral
-        </button>
-        <button
-          onClick={() => setActiveTab('financeiro')}
-          className={`px-4 py-3 text-[11px] font-black uppercase tracking-widest transition-colors border-b-2 ${activeTab === 'financeiro'
-              ? 'border-blue-800 text-blue-900 bg-blue-50/50'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-            }`}
-        >
-          Financeiro & Evolução
-        </button>
-        <button
-          onClick={() => setActiveTab('operacional')}
-          className={`px-4 py-3 text-[11px] font-black uppercase tracking-widest transition-colors border-b-2 ${activeTab === 'operacional'
-              ? 'border-blue-800 text-blue-900 bg-blue-50/50'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-            }`}
-        >
-          Operacional & Sócios
-        </button>
-      </div>
+      {/* 4. GRÁFICOS E FUNCIONALIDADES DA CONTROLADORIA */}
+      <div ref={dashboardRef} className="space-y-6 pb-12">
+        {/* Visão Geral */}
+        <EfficiencyFunnel funil={funil} />
+        <PortfolioFinancialOverview metrics={metrics} />
+        <div className="grid grid-cols-1 gap-6">
+          <WeeklySummary metrics={metrics} />
+          <MonthlySummary metrics={metrics} />
+        </div>
 
+        {/* Financeiro & Evolução */}
+        <EvolutionCharts
+          evolucaoMensal={evolucaoMensal}
+          propostas12Meses={propostas12Meses}
+          financeiro12Meses={financeiro12Meses}
+          mediasPropostas={mediasPropostas}
+          mediasFinanceiras={mediasFinanceiras}
+          statsPropostas={statsPropostas}
+          statsFinanceiro={statsFinanceiro}
+        />
 
-      {/* 4. NOVOS GRÁFICOS E FUNCIONALIDADES DA CONTROLADORIA (Integrados abaixo do conteúdo original) */}
-      <div ref={dashboardRef} className="space-y-6">
-
-        {activeTab === 'geral' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <EfficiencyFunnel funil={funil} />
-            <PortfolioFinancialOverview metrics={metrics} />
-            <div className="grid grid-cols-1 gap-6">
-              <WeeklySummary metrics={metrics} />
-              <MonthlySummary metrics={metrics} />
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'financeiro' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <EvolutionCharts
-              evolucaoMensal={evolucaoMensal}
-              propostas12Meses={propostas12Meses}
-              financeiro12Meses={financeiro12Meses}
-              mediasPropostas={mediasPropostas}
-              mediasFinanceiras={mediasFinanceiras}
-              statsPropostas={statsPropostas}
-              statsFinanceiro={statsFinanceiro}
-            />
-          </div>
-        )}
-
-        {activeTab === 'operacional' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <PartnerStats contractsByPartner={contractsByPartner} />
-            <OperationalStats rejectionData={rejectionData} metrics={metrics} />
-          </div>
-        )}
-
+        {/* Operacional & Sócios */}
+        <PartnerStats contractsByPartner={contractsByPartner} />
+        <OperationalStats rejectionData={rejectionData} metrics={metrics} />
       </div>
 
     </div>
