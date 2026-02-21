@@ -9,9 +9,7 @@ import {
   Award,
   MapPin,
   DoorOpen,
-  PieChart as PieChartIcon,
-  Activity,
-  Clock
+  PieChart as PieChartIcon
 } from 'lucide-react'
 import { usePresentation } from '../../../contexts/PresentationContext'
 import { useColaboradores } from '../hooks/useColaboradores'
@@ -327,10 +325,10 @@ export function RHDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-6 w-full pb-10">
+      <div className="max-w-[1600px] mx-auto space-y-6 w-full pb-10">
 
         {/* TOP CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden">
             <div className="absolute right-0 top-0 h-full w-1 bg-pink-500"></div>
@@ -353,28 +351,6 @@ export function RHDashboard() {
               <Users className="h-6 w-6" />
             </div>
           </div>
-
-          {/* Placeholders for visual balance based on previous dashboard */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 opacity-50 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Ponto Pendente</p>
-              <p className="text-3xl font-black text-gray-800">--</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-xl text-gray-400">
-              <Clock className="h-6 w-6" />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 opacity-50 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Turnover Mensal</p>
-              <p className="text-3xl font-black text-gray-800">--%</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-xl text-gray-400">
-              <Activity className="h-6 w-6" />
-            </div>
-          </div>
-
         </div>
 
         {/* CHARTS ROW 1 */}
@@ -494,8 +470,8 @@ export function RHDashboard() {
                       data={distGenderData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
+                      innerRadius={45}
+                      outerRadius={75}
                       paddingAngle={5}
                       dataKey="value"
                       label={renderCustomPieLabel}
