@@ -8,7 +8,11 @@ import {
   X,
   TrendingUp,
   Award,
-  Scale
+  Scale,
+  Lightbulb,
+  AlertTriangle,
+  GraduationCap,
+  Heart
 } from 'lucide-react'
 import {
   AreaChart,
@@ -751,6 +755,68 @@ export function RHTempoCasa() {
               <Legend verticalAlign="bottom" height={36} />
             </PieChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* 6. Strategic HR Insights & Actions */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col space-y-6">
+        <div className="pb-4 border-b border-gray-100 flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
+            <Lightbulb className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-gray-800 tracking-tight">Insights e Ações Estratégicas de RH</h3>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Estabilidade e Retenção de Talentos</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+          {/* Rotatividade Recém-contratados */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-red-600 mb-2">
+              <AlertTriangle size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Rotatividade Curto Prazo</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Custo de Onboarding:</span> Desligamentos precoces (- de 1 ano) indicam desalinhamento de cultura ou falha no recrutamento.
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-blue-900 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-blue-900">Reforçar entrevistas focadas em fit cultural e intensificar o acompanhamento nos primeiros 90 dias.</p>
+            </div>
+          </div>
+
+          {/* Retenção de Talentos Críticos */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-pink-600 mb-2">
+              <Heart size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Engajamento e Retenção</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Risco em Plenos/Seniores:</span> A permanência estável entre 3-5 anos pode ser palco para estagnação se não houver um plano claro.
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-pink-800 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-pink-800">Mapear talentos nesta faixa para programas de liderança e novos desafios de gestão.</p>
+            </div>
+          </div>
+
+          {/* Conhecimento Institucional */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-indigo-600 mb-2">
+              <GraduationCap size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Conhecimento Institucional</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Veteranos (+5 anos):</span> Representam a memória cultural e processual do escritório. A não disseminação desse conhecimento é um risco elevado.
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-indigo-800 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-indigo-800">Programas de mentoria "Veterano-Novato" para acelerar o ramp-up de novos colaboradores e espalhar a cultura.</p>
+            </div>
+          </div>
+
         </div>
       </div>
 

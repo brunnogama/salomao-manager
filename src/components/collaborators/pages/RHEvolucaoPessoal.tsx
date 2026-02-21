@@ -7,7 +7,10 @@ import {
   UserMinus,
   UserPlus,
   Calendar,
-  X
+  X,
+  Lightbulb,
+  AlertTriangle,
+  ShieldCheck
 } from 'lucide-react'
 import {
   AreaChart,
@@ -933,6 +936,68 @@ export function RHEvolucaoPessoal() {
           </div>
         </div>
 
+      </div>
+
+      {/* 4. Strategic HR Insights & Actions */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col space-y-6">
+        <div className="pb-4 border-b border-gray-100 flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
+            <Lightbulb className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-gray-800 tracking-tight">Insights e Ações Estratégicas de RH</h3>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Crescimento Sustentável e Integração</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+          {/* Diluição da Cultura */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-red-600 mb-2">
+              <ShieldCheck size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Diluição Cultural</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Picos de Contratação:</span> Um aumento abrupto de headcount pode afrouxar os valores essenciais se a integração não for forte.
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-blue-900 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-blue-900">Implementar imersões de cultura intensivas focadas nos valores institucionais para grupos de novos colaboradores.</p>
+            </div>
+          </div>
+
+          {/* Turnover Silencioso */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-orange-600 mb-2">
+              <AlertTriangle size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Turnover Voluntário</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Picos de Desligamento:</span> Podem refletir insatisfações sazonais (ex. avaliações, dissídios, ou falta de bônus).
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-orange-800 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-orange-800">Realizar entrevistas de desligamento profundas e mapear causas reais (liderança, salário, clima).</p>
+            </div>
+          </div>
+
+          {/* Crescimento Estruturado */}
+          <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col space-y-3">
+            <div className="flex items-center gap-2 text-indigo-600 mb-2">
+              <TrendingUp size={20} />
+              <h4 className="font-black text-sm uppercase tracking-tight">Planejamento de Capacidade</h4>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed font-medium">
+              <span className="font-bold text-gray-800">Expansão de Custo:</span> A adição rápida de Headcount exige aumento proporcional na infraestrutura (TI, espaço, gestão).
+            </p>
+            <div className="mt-auto pt-3 border-t border-gray-200">
+              <p className="text-[10px] font-black text-indigo-800 uppercase">Ação Recomendada:</p>
+              <p className="text-xs text-indigo-800">Equilibrar o fluxo de contratações com um plano de revisão de capacidade dos líderes e infra.</p>
+            </div>
+          </div>
+
+        </div>
       </div>
 
     </div>
