@@ -11,11 +11,11 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
     <>
       {/* 7. CONTRATOS POR SÓCIO */}
       <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
-        
+
         {/* Header */}
-        <div className='mb-6 pb-5 border-b border-gray-100'>
-          <div className='flex items-center gap-3 mb-2'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
+        <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <div className='p-2 rounded-xl bg-[#0a192f] text-white shadow-sm'>
               <Briefcase className='w-5 h-5' />
             </div>
             <div>
@@ -38,9 +38,9 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
             </div>
           ) : (
             contractsByPartner.map((item, idx) => (
-              <div 
-                key={idx} 
-                className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all"
+              <div
+                key={idx}
+                className="bg-white rounded-xl p-5 border border-gray-200 border-l-4 border-l-[#0a192f] hover:shadow-md transition-all"
               >
                 {/* Header do Card */}
                 <div className="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
@@ -149,11 +149,11 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
 
       {/* 8. VISÃO FINANCEIRA POR SÓCIO */}
       <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
-        
+
         {/* Header */}
-        <div className='mb-6 pb-5 border-b border-gray-100'>
-          <div className='flex items-center gap-3 mb-2'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-lg'>
+        <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <div className='p-2 rounded-xl bg-[#0a192f] text-white shadow-sm'>
               <Banknote className='w-5 h-5' />
             </div>
             <div>
@@ -177,11 +177,11 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
           ) : (
             contractsByPartner.map((item: any, idx) => {
               const totalSocio = (item.pl || 0) + (item.exito || 0) + (item.fixo || 0);
-              
+
               return (
-                <div 
-                  key={idx} 
-                  className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all"
+                <div
+                  key={idx}
+                  className="bg-white rounded-xl p-5 border border-gray-200 border-l-4 border-l-[#0a192f] hover:shadow-md transition-all"
                 >
                   {/* Header do Card */}
                   <div className="mb-4 pb-4 border-b border-gray-100">
