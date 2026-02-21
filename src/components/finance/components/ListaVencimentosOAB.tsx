@@ -41,7 +41,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
     try {
       // 1. Busca Colaboradores
       const { data: colaboradores, error: colError } = await supabase
-        .from('colaboradores')
+        .from('collaborators')
         .select('*')
 
       if (colError) throw colError
