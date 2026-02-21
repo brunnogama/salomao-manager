@@ -109,8 +109,8 @@ export function MainLayout() {
             className="flex h-screen bg-gray-100 overflow-hidden w-full relative"
             onMouseMove={(e) => {
                 if (isPresentationMode) {
-                    // Show sidebar if mouse is within left 50px
-                    setIsHoveringEdge(e.clientX < 50);
+                    // Show sidebar if mouse is within left 50px. Keep it open if cursor is over sidebar (< 260px)
+                    setIsHoveringEdge(prev => prev ? e.clientX < 260 : e.clientX < 50);
                 }
             }}
             onMouseLeave={() => setIsHoveringEdge(false)}
@@ -127,8 +127,8 @@ export function MainLayout() {
             {/* Sidebar with dynamic visibility */}
             <div
                 className={`transition-all duration-300 ease-in-out z-40 ${isPresentationMode
-                        ? (isHoveringEdge ? 'absolute left-0 h-full shadow-2xl' : 'absolute -left-full h-full')
-                        : 'relative flex-shrink-0'
+                    ? (isHoveringEdge ? 'absolute left-0 h-full shadow-2xl' : 'absolute -left-full h-full')
+                    : 'relative flex-shrink-0'
                     }`}
             >
                 {shouldShowSidebar && renderSidebar()}
