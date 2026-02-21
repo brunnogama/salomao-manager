@@ -379,9 +379,9 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       }
 
       // Tempos Médios (Funil)
-      const dProspect = c.prospect_date ? new Date(c.prospect_date + 'T12:00:00') : null;
-      const dProposal = c.proposal_date ? new Date(c.proposal_date + 'T12:00:00') : null;
-      const dContract = c.contract_date ? new Date(c.contract_date + 'T12:00:00') : null;
+      const dProspect = safeDate(c.prospect_date);
+      const dProposal = safeDate(c.proposal_date);
+      const dContract = safeDate(c.contract_date);
 
       if (dProspect && isValidDate(dProspect) && dProposal && isValidDate(dProposal) && dProposal >= dProspect) {
         const diffTime = Math.abs(dProposal.getTime() - dProspect.getTime());

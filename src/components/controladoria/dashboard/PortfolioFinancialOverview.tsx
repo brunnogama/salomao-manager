@@ -13,7 +13,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
   const navigate = useNavigate();
 
   const handleDrillDown = (status: string) => {
-    navigate('/contratos', { state: { status } });
+    navigate('/controladoria/contratos', { state: { status } });
   };
 
   // Cálculos protegidos
