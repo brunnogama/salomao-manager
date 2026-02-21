@@ -90,7 +90,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
           // Filtro de Status Ativo
           const statusLimpo = v.status?.trim().toLowerCase() || '';
-          if (!statusLimpo.includes('ativ') && !statusLimpo.includes('activ')) return false;
+          if (statusLimpo !== 'active') return false;
 
           const cargoLimpo = v.role.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
           const equipeLimpa = v.equipe.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
