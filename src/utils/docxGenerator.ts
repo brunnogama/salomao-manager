@@ -63,7 +63,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
     const createTextParagraph = (text: string, options: { bold?: boolean, size?: number, color?: string, alignment?: any, spacing?: number } = {}) => {
         return new Paragraph({
             alignment: options.alignment || AlignmentType.JUSTIFIED,
-            spacing: { after: options.spacing !== undefined ? options.spacing : 200 },
+            spacing: { line: 288, after: options.spacing !== undefined ? options.spacing : 200 },
             children: [
                 new TextRun({
                     text,
@@ -100,7 +100,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                     } as any),
                 ],
             }),
-            new Paragraph({ text: "", spacing: { after: 200 } }), // Space between logo and date
+            new Paragraph({ text: "", spacing: { line: 288, after: 200 } }), // Space between logo and date
         ],
     });
 
@@ -159,20 +159,20 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         // Date
         new Paragraph({
             alignment: AlignmentType.RIGHT,
-            spacing: { before: 200, after: 400 },
+            spacing: { line: 288, before: 200, after: 400 },
             children: [new TextRun({ text: dateLine, font: standardFont, size: 22 })]
         }),
 
         // Client Info
         new Paragraph({
-            spacing: { after: 100 },
+            spacing: { line: 288, after: 100 },
             children: [
                 new TextRun({ text: "A ", font: standardFont, size: 22, bold: true }),
                 new TextRun({ text: (data.client_name || "[NOME DA EMPRESA CLIENTE]").toUpperCase(), font: standardFont, size: 22, bold: true })
             ]
         }),
         new Paragraph({
-            spacing: { after: 300 },
+            spacing: { line: 288, after: 300 },
             children: [
                 new TextRun({ text: data.cnpj || "[CNPJ da empresa cliente]", font: standardFont, size: 22, bold: true })
             ]
@@ -180,14 +180,14 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
 
         // Ref and Code
         new Paragraph({
-            spacing: { after: 50 },
+            spacing: { line: 288, after: 50 },
             children: [
                 new TextRun({ text: "Ref: ", font: standardFont, size: 22, bold: true }),
                 new TextRun({ text: (data.reference || "[incluir referência da proposta]"), font: standardFont, size: 22 })
             ]
         }),
         new Paragraph({
-            spacing: { after: 400 },
+            spacing: { line: 288, after: 400 },
             children: [
                 new TextRun({ text: "Cód.: ", font: standardFont, size: 22, bold: true }),
                 new TextRun({ text: proposalCode, font: standardFont, size: 22 })
@@ -199,7 +199,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         // Introduction
         new Paragraph({
             alignment: AlignmentType.JUSTIFIED,
-            spacing: { after: 300 },
+            spacing: { line: 288, after: 300 },
             children: [
                 new TextRun({ text: "É com grande honra que ", font: standardFont, size: 22 }),
                 new TextRun({ text: "SALOMÃO ADVOGADOS", font: standardFont, size: 22, bold: true }),
@@ -232,7 +232,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         createTextParagraph("1.	OBJETO E ESCOPO DO SERVIÇO:", { bold: true, spacing: 200 }),
         new Paragraph({
             alignment: AlignmentType.JUSTIFIED,
-            spacing: { after: 200 },
+            spacing: { line: 288, after: 200 },
             children: [
                 new TextRun({ text: "1.1. 	O objeto da presente proposta é a assessoria jurídica a ser realizada pelos advogados que compõem Salomão Advogados (“Escritório”), com vistas à representação judicial em favor do Cliente ", font: standardFont, size: 22 }),
                 new TextRun({ text: (data.client_name || "[NOME DA EMPRESA CLIENTE]"), font: standardFont, size: 22, bold: true }),
@@ -254,7 +254,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         // 2.2 Pro Labore
         new Paragraph({
             alignment: AlignmentType.JUSTIFIED,
-            spacing: { after: 200 },
+            spacing: { line: 288, after: 200 },
             children: [
                 new TextRun({ text: "2.2.	Honorários pró-labore de ", font: standardFont, size: 22 }),
                 new TextRun({ text: formatCurrency(data.pro_labore), font: standardFont, size: 22, bold: true }),
@@ -267,7 +267,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
             const clause = (data.pro_labore_extras_clauses || [])[idx] || "";
             return new Paragraph({
                 alignment: AlignmentType.JUSTIFIED,
-                spacing: { after: 200 },
+                spacing: { line: 288, after: 200 },
                 children: [
                     new TextRun({ text: `2.2.${idx + 1}.	Honorários pró-labore adicionais de `, font: standardFont, size: 22 }),
                     new TextRun({ text: formatCurrency(val), font: standardFont, size: 22, bold: true }),
@@ -282,7 +282,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
             const clause = (data.intermediate_fees_clauses || [])[idx] || "[incluir texto]";
             return new Paragraph({
                 alignment: AlignmentType.JUSTIFIED,
-                spacing: { after: 200 },
+                spacing: { line: 288, after: 200 },
                 children: [
                     new TextRun({ text: `2.3.${idx + 1}.	Êxito intermediário: `, font: standardFont, size: 22 }),
                     new TextRun({ text: formatCurrency(val), font: standardFont, size: 22, bold: true }),
@@ -296,7 +296,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         // 2.4 Final Success
         new Paragraph({
             alignment: AlignmentType.JUSTIFIED,
-            spacing: { after: 200 },
+            spacing: { line: 288, after: 200 },
             children: [
                 new TextRun({ text: "2.4.	Honorários finais de êxito de ", font: standardFont, size: 22 }),
                 // Check if we have fixed fee or percentage or both
@@ -344,7 +344,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
             return [
                 new Paragraph({
                     alignment: AlignmentType.CENTER,
-                    spacing: { before: 400 },
+                    spacing: { line: 288, before: 400 },
                     children: [new TextRun({ text: underline, font: standardFont, size: 22 })]
                 }),
                 new Paragraph({
@@ -363,11 +363,11 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
             ]
         }),
 
-        new Paragraph({ text: "", spacing: { after: 600 } }),
+        new Paragraph({ text: "", spacing: { line: 288, after: 600 } }),
 
         new Paragraph({
             alignment: AlignmentType.CENTER,
-            spacing: { before: 400 },
+            spacing: { line: 288, before: 400 },
             children: [new TextRun({ text: "_".repeat(Math.max((data.client_name || "").length + 10, 40)), font: standardFont, size: 22 })]
         }),
         createTextParagraph((data.client_name || "[CLIENTE]").toUpperCase(), { bold: true, alignment: AlignmentType.CENTER, spacing: 200 }),
@@ -379,14 +379,14 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         }),
         new Paragraph({
             alignment: AlignmentType.LEFT,
-            spacing: { before: 600 },
+            spacing: { line: 288, before: 600 },
             children: [
                 new TextRun({ text: "Testemunha 01: __________________________", font: standardFont, size: 22 }),
             ]
         }),
         new Paragraph({
             alignment: AlignmentType.LEFT,
-            spacing: { before: 300 },
+            spacing: { line: 288, before: 300 },
             children: [
                 new TextRun({ text: "Testemunha 02: __________________________", font: standardFont, size: 22 }),
             ]
