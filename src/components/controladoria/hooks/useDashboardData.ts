@@ -160,7 +160,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     // -------------------------------------
 
     const partnerMap = partners.reduce((acc: any, s: Partner) => {
-      acc[s.id] = s.name; // Atualizado para usar s.name
+      acc[s.id] = { name: s.name, photo_url: s.photo_url }; // Atualizado para armazenar URL da foto
       return acc;
     }, {});
 
@@ -309,10 +309,12 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       }
 
       // Contagem por Sócio e Financeiro
-      const pName = (c.partner_id && partnerMap[c.partner_id]) || c.responsavel_socio || 'Não Informado';
+      const pName = (c.partner_id && partnerMap[c.partner_id]?.name) || c.responsavel_socio || 'Não Informado';
+      const pPhotoUrl = (c.partner_id && partnerMap[c.partner_id]?.photo_url) || undefined;
+
       if (!partnerCounts[pName]) partnerCounts[pName] = {
         total: 0, analysis: 0, proposal: 0, active: 0, rejected: 0, probono: 0,
-        pl: 0, exito: 0, fixo: 0
+        pl: 0, exito: 0, fixo: 0, photo_url: pPhotoUrl
       };
 
       partnerCounts[pName].total++;
