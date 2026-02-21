@@ -3,7 +3,7 @@ import { Plus, X, Settings, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Contract } from '../../../../types/controladoria';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { FinancialInputWithInstallments } from './FinancialInputWithInstallments';
-import { maskMoney, parseCurrency } from '../../utils/masks';
+import { maskMoney, parseCurrency, maskPercent } from '../../utils/masks';
 import { addMonths } from 'date-fns';
 
 interface StatusAndDatesSectionProps {
@@ -429,7 +429,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                             <label className="text-xs font-medium block mb-1">Êxito %</label>
                             <div className="flex rounded-lg shadow-sm">
                                 <input type="text" className="w-14 border border-gray-300 rounded-l-lg p-2.5 text-sm bg-gray-50 outline-none border-r-0 text-center" value={(formData as any).final_success_percent_clause || ''} onChange={(e) => setFormData({ ...formData, final_success_percent_clause: e.target.value } as any)} placeholder="Cl." />
-                                <input type="text" className="flex-1 border border-gray-300 p-2.5 text-sm bg-white outline-none" placeholder="Ex: 20%" value={formData.final_success_percent} onChange={e => setFormData({ ...formData, final_success_percent: e.target.value })} />
+                                <input type="text" className="flex-1 border border-gray-300 p-2.5 text-sm bg-white outline-none" placeholder="Ex: 20,00%" value={formData.final_success_percent} onChange={e => setFormData({ ...formData, final_success_percent: maskPercent(e.target.value) })} />
                                 <button className="bg-salomao-blue text-white px-3 rounded-r-lg hover:bg-blue-900" type="button" onClick={() => handleAddToList('percent_extras', 'final_success_percent')}><Plus className="w-4 h-4" /></button>
                             </div>
                             <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">

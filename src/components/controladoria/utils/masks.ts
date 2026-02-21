@@ -27,6 +27,13 @@ export const maskMoney = (value: string) => {
   return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
+export const maskPercent = (value: string) => {
+  const onlyDigits = value.replace(/\D/g, "");
+  if (!onlyDigits) return "";
+  const number = parseFloat(onlyDigits) / 100;
+  return number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+};
+
 export const maskHon = (value: string) => {
   return value
     .replace(/\D/g, '')
