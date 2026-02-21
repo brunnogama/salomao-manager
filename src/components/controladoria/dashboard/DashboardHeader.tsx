@@ -1,5 +1,6 @@
 import React from 'react';
-import { LayoutDashboard, Users, MapPin, Loader2, Mail } from 'lucide-react';
+import { LayoutDashboard, Users, MapPin, Loader2, Mail, Maximize2, Minimize2 } from 'lucide-react';
+import { usePresentation } from '../../../contexts/PresentationContext';
 
 interface DashboardHeaderProps {
   userRole: 'admin' | 'editor' | 'viewer' | null;
@@ -30,6 +31,7 @@ export function DashboardHeader({
   hideTitle = false,
   className = ""
 }: DashboardHeaderProps) {
+  const { isPresentationMode, togglePresentationMode } = usePresentation();
 
   const partnerOptions = [
     { label: 'Todos os Sócios', value: '' },
@@ -82,6 +84,27 @@ export function DashboardHeader({
             options={locationOptions}
             placeholder="Locais"
           />
+
+          {/* Botão de Apresentação */}
+          <button
+            onClick={togglePresentationMode}
+            className={`flex items-center gap-2 px-6 py-2.5 text-[9px] font-black rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-widest ${isPresentationMode
+                ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+              }`}
+          >
+            {isPresentationMode ? (
+              <>
+                <Minimize2 className="w-3.5 h-3.5" />
+                Sair
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-3.5 h-3.5" />
+                Apresentação
+              </>
+            )}
+          </button>
 
           {/* Botão de Exportar */}
           <div id="export-button-container">

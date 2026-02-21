@@ -13,6 +13,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
 import { InactivityModal } from '../components/common/InactivityModal';
 import { useAuth } from '../contexts/AuthContext';
+import { usePresentation } from '../contexts/PresentationContext';
 
 export function MainLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -21,6 +22,8 @@ export function MainLayout() {
     const location = useLocation();
     const path = location.pathname;
     const { signOut } = useAuth();
+    const { isPresentationMode } = usePresentation();
+    const [isHoveringEdge, setIsHoveringEdge] = useState(false);
 
     // Setup inactivity monitoring
     const { resetTimers } = useInactivityTimeout({
@@ -98,8 +101,20 @@ export function MainLayout() {
     // If we are at the root path, we don't show any sidebar (Module Selector is shown)
     const isRoot = path === '/';
 
+    // Logic for presentation mode hiding the sidebar unless hovered
+    const shouldShowSidebar = !isRoot && (!isPresentationMode || isHoveringEdge);
+
     return (
-        <div className="flex h-screen bg-gray-100 overflow-hidden w-full">
+        <div
+            className="flex h-screen bg-gray-100 overflow-hidden w-full relative"
+            onMouseMove={(e) => {
+                if (isPresentationMode) {
+                    // Show sidebar if mouse is within left 50px
+                    setIsHoveringEdge(e.clientX < 50);
+                }
+            }}
+            onMouseLeave={() => setIsHoveringEdge(false)}
+        >
             <Toaster position="top-right" richColors closeButton />
             <WelcomeModal />
             <InactivityModal
@@ -109,9 +124,18 @@ export function MainLayout() {
                 minutesLeft={minutesLeft}
             />
 
-            {!isRoot && renderSidebar()}
+            {/* Sidebar with dynamic visibility */}
+            <div
+                className={`transition-all duration-300 ease-in-out z-40 ${isPresentationMode
+                        ? (isHoveringEdge ? 'absolute left-0 h-full shadow-2xl' : 'absolute -left-full h-full')
+                        : 'relative flex-shrink-0'
+                    }`}
+            >
+                {shouldShowSidebar && renderSidebar()}
+            </div>
 
-            <main className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
+            {/* Main content area */}
+            <main className={`flex-1 flex flex-col h-screen overflow-hidden min-w-0 transition-all duration-300`}>
                 {!isRoot && (
                     <div className="md:hidden bg-white border-b px-4 py-3 flex items-center">
                         <button
