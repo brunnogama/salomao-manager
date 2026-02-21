@@ -10,11 +10,34 @@ import { Sidebar as OperationalSidebar } from '../components/operational/Sidebar
 import { WelcomeModal } from '../components/WelcomeModal';
 import { Toaster } from 'sonner';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
+import { InactivityModal } from '../components/common/InactivityModal';
+import { useAuth } from '../contexts/AuthContext';
 
 export function MainLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [showInactivityModal, setShowInactivityModal] = useState(false);
+    const [minutesLeft, setMinutesLeft] = useState(5);
     const location = useLocation();
     const path = location.pathname;
+    const { signOut } = useAuth();
+
+    // Setup inactivity monitoring
+    const { resetTimers } = useInactivityTimeout({
+        onWarning: () => {
+            setShowInactivityModal(true);
+            setMinutesLeft(5); // Adjust based on your warning vs idle gap
+        },
+        onIdle: () => {
+            setShowInactivityModal(false);
+            signOut();
+        }
+    });
+
+    const handleExtendSession = () => {
+        setShowInactivityModal(false);
+        resetTimers();
+    };
 
     // Determine which sidebar to show based on the current path
     const renderSidebar = () => {
@@ -79,6 +102,12 @@ export function MainLayout() {
         <div className="flex h-screen bg-gray-100 overflow-hidden w-full">
             <Toaster position="top-right" richColors closeButton />
             <WelcomeModal />
+            <InactivityModal
+                isOpen={showInactivityModal}
+                onClose={handleExtendSession}
+                onLogout={signOut}
+                minutesLeft={minutesLeft}
+            />
 
             {!isRoot && renderSidebar()}
 
