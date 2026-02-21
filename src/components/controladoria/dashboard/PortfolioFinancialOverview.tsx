@@ -50,83 +50,121 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           </div>
         </div>
         {/* Cards de Status */}
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6'>
+        <div className='grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6'>
 
           {/* 1. Em Análise */}
           <div
             onClick={() => handleDrillDown('Análise')}
-            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-amber-500 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-amber-500 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
-            <div className='flex justify-between items-start mb-3'>
-              <p className='text-[10px] text-gray-500 font-black uppercase tracking-widest'>
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
                 Sob Análise
               </p>
               <div className='p-1.5 bg-amber-50 rounded-lg text-amber-600 group-hover:scale-110 transition-transform'>
                 <Clock className='w-4 h-4' />
               </div>
             </div>
-            <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
               {metrics.geral?.emAnalise || 0}
             </p>
-            <p className='text-[10px] font-bold text-gray-400'>aguardando elaboração</p>
+            <p className='text-[9px] font-bold text-gray-400'>aguardando elaboração</p>
           </div>
 
           {/* 2. Propostas */}
           <div
             onClick={() => handleDrillDown('Proposta Formulada')}
-            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-blue-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-blue-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
-            <div className='flex justify-between items-start mb-3'>
-              <p className='text-[10px] text-gray-500 font-black uppercase tracking-widest'>
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
                 Propostas
               </p>
               <div className='p-1.5 bg-blue-50 rounded-lg text-blue-600 group-hover:scale-110 transition-transform'>
                 <FileSignature className='w-4 h-4' />
               </div>
             </div>
-            <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
               {metrics.geral?.propostasAtivas || 0}
             </p>
-            <p className='text-[10px] font-bold text-gray-400'>enviadas ao cliente</p>
+            <p className='text-[9px] font-bold text-gray-400'>enviadas ao cliente</p>
           </div>
 
           {/* 3. Contratos Fechados */}
           <div
             onClick={() => handleDrillDown('Ativo')}
-            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-green-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-green-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
-            <div className='flex justify-between items-start mb-3'>
-              <p className='text-[10px] text-gray-500 font-black uppercase tracking-widest'>
-                Contratos Fechados
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
+                Fechados
               </p>
               <div className='p-1.5 bg-green-50 rounded-lg text-green-600 group-hover:scale-110 transition-transform'>
                 <CheckCircle2 className='w-4 h-4' />
               </div>
             </div>
-            <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
               {metrics.geral?.fechados || 0}
             </p>
-            <p className='text-[10px] font-bold text-gray-400'>casos em andamento</p>
+            <p className='text-[9px] font-bold text-gray-400'>casos em andamento</p>
           </div>
 
           {/* 4. Rejeitados */}
           <div
             onClick={() => handleDrillDown('Rejeitado')}
-            className='bg-white group p-5 rounded-xl border border-gray-200 border-l-4 border-l-red-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-red-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
-            <div className='flex justify-between items-start mb-3'>
-              <p className='text-[10px] text-gray-500 font-black uppercase tracking-widest'>
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
                 Rejeitados
               </p>
               <div className='p-1.5 bg-red-50 rounded-lg text-red-600 group-hover:scale-110 transition-transform'>
                 <XCircle className='w-4 h-4' />
               </div>
             </div>
-            <p className='text-[34px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
               {metrics.geral?.rejeitados || 0}
             </p>
-            <p className='text-[10px] font-bold text-gray-400'>propostas não aceitas</p>
+            <p className='text-[9px] font-bold text-gray-400'>propostas não aceitas</p>
           </div>
+
+          {/* 5. Probono */}
+          <div
+            onClick={() => handleDrillDown('Probono')}
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-purple-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
+          >
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
+                Probono
+              </p>
+              <div className='p-1.5 bg-purple-50 rounded-lg text-purple-600 group-hover:scale-110 transition-transform'>
+                <HeartHandshake className='w-4 h-4' />
+              </div>
+            </div>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+              {metrics.geral?.probono || 0}
+            </p>
+            <p className='text-[9px] font-bold text-gray-400'>serviço gratuito</p>
+          </div>
+
+          {/* 6. Total */}
+          <div
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-[#0a192f] shadow-sm flex flex-col justify-center'
+          >
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
+                Total
+              </p>
+              <div className='p-1.5 bg-gray-100 rounded-lg text-gray-600'>
+                <Layers className='w-4 h-4' />
+              </div>
+            </div>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+              {(metrics.geral?.emAnalise || 0) + (metrics.geral?.propostasAtivas || 0) + (metrics.geral?.fechados || 0) + (metrics.geral?.rejeitados || 0) + (metrics.geral?.probono || 0)}
+            </p>
+            <p className='text-[9px] font-bold text-gray-400'>todos os contratos</p>
+          </div>
+
         </div>
       </div>
 

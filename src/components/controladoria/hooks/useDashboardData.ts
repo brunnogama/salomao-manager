@@ -479,9 +479,9 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
       // Funil
       fTotal++;
-      const chegouEmProposta = c.status === 'proposal' || c.status === 'active' || (c.status === 'rejected' && c.proposal_date);
+      const chegouEmProposta = c.status === 'proposal' || c.status === 'active' || c.status === 'probono' || (c.status === 'rejected' && c.proposal_date);
       if (chegouEmProposta) fQualificados++;
-      if (c.status === 'active') fFechados++;
+      if (c.status === 'active' || c.status === 'probono') fFechados++;
       else if (c.status === 'rejected') c.proposal_date ? fPerdaNegociacao++ : fPerdaAnalise++;
     });
 
