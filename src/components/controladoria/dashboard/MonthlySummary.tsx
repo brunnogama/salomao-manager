@@ -1,8 +1,7 @@
 import React from 'react';
-import { 
-  CalendarRange, Layers, ArrowUpRight, GitCommit, Lightbulb 
+import {
+  CalendarRange, Layers, ArrowUpRight, GitCommit
 } from 'lucide-react';
-import { formatMoney, calcDelta, getTrendText } from './dashboardHelpers';
 import { FinItem } from './FinItem';
 
 interface MonthlySummaryProps {
@@ -10,24 +9,11 @@ interface MonthlySummaryProps {
 }
 
 export function MonthlySummary({ metrics }: MonthlySummaryProps) {
-  // Cálculos Locais
-  const valPropMes = (metrics?.executivo?.mesAtual?.propPL || 0) + (metrics?.executivo?.mesAtual?.propExito || 0) + (metrics?.executivo?.mesAtual?.propMensal || 0);
-  const valPropMesAnt = (metrics?.executivo?.mesAnterior?.propPL || 0) + (metrics?.executivo?.mesAnterior?.propExito || 0) + (metrics?.executivo?.mesAnterior?.propMensal || 0);
-  const deltaPropMes = calcDelta(valPropMes, valPropMesAnt);
 
-  const valFechMes = (metrics?.executivo?.mesAtual?.fechPL || 0) + (metrics?.executivo?.mesAtual?.fechExito || 0) + (metrics?.executivo?.mesAtual?.fechMensal || 0);
-  const valFechMesAnt = (metrics?.executivo?.mesAnterior?.fechPL || 0) + (metrics?.executivo?.mesAnterior?.fechExito || 0) + (metrics?.executivo?.mesAnterior?.fechMensal || 0);
-  const deltaFechMes = calcDelta(valFechMes, valFechMesAnt);
-
-  const maxMesChart = Math.max(valPropMes, valPropMesAnt, valFechMes, valFechMesAnt, 100);
-
-  const deltaNovos = calcDelta(metrics?.executivo?.mesAtual?.novos || 0, metrics?.executivo?.mesAnterior?.novos || 0);
-  
-  const insightMes = `${getTrendText(deltaNovos, 'novas demandas')} ${getTrendText(deltaFechMes, 'faturamento fechado')}`;
 
   return (
     <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
-      
+
       {/* Header */}
       <div className='mb-6 pb-5 border-b border-gray-100'>
         <div className='flex items-center gap-3 mb-2'>
@@ -42,10 +28,10 @@ export function MonthlySummary({ metrics }: MonthlySummaryProps) {
           Performance mensal consolidada
         </p>
       </div>
-      
+
       {/* Cards Grid */}
       <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6'>
-        
+
         {/* Card 1: Geral */}
         <div className='bg-gradient-to-br from-[#112240] to-[#1e3a8a] p-5 rounded-xl border border-white/10 shadow-lg flex flex-col justify-between transition-all hover:shadow-blue-900/20'>
           <div>
@@ -161,123 +147,8 @@ export function MonthlySummary({ metrics }: MonthlySummaryProps) {
           </div>
         </div>
       </div>
-      
-      {/* Gráfico Mês + Insights */}
-      <div className="flex flex-col lg:flex-row gap-4">
-        
-        {/* Gráfico Comparativo */}
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex-1">
-          <div className="flex justify-between items-start mb-5 pb-4 border-b border-gray-100">
-            <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.15em]">
-              Comparativo Financeiro
-            </h3>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
-              {metrics.executivo.periodoAnteriorLabel} vs {metrics.executivo.periodoAtualLabel}
-            </span>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-8 h-56">
-            
-            {/* Propostas */}
-            <div className="flex flex-col justify-end relative border-r border-gray-100 pr-4">
-              <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">
-                Propostas
-              </p>
-              <div className="flex items-end justify-center gap-6 h-full">
-                {/* Anterior */}
-                <div className="flex flex-col items-center justify-end h-full w-16">
-                  <span className="text-[10px] text-gray-500 mb-2 font-bold whitespace-nowrap">
-                    {formatMoney(valPropMesAnt)}
-                  </span>
-                  <div 
-                    className="w-full bg-gray-300 rounded-t-xl transition-all" 
-                    style={{ height: `${valPropMesAnt > 0 ? (valPropMesAnt / maxMesChart) * 100 : 2}%` }}
-                  />
-                  <span className="text-[9px] text-gray-500 mt-2 font-black uppercase tracking-wider text-center leading-tight">
-                    Anterior
-                  </span>
-                </div>
-                
-                {/* Atual */}
-                <div className="flex flex-col items-center justify-end h-full w-16 relative">
-                  <div className={`text-[9px] font-black px-2 py-0.5 rounded-lg mb-2 ${deltaPropMes >= 0 ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
-                    {deltaPropMes > 0 ? '+' : ''}{deltaPropMes.toFixed(0)}%
-                  </div>
-                  <span className={`text-[10px] mb-2 font-bold whitespace-nowrap ${deltaPropMes >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                    {formatMoney(valPropMes)}
-                  </span>
-                  <div 
-                    className="w-full bg-gradient-to-t from-[#1e3a8a] to-[#112240] rounded-t-xl transition-all shadow-lg" 
-                    style={{ height: `${valPropMes > 0 ? (valPropMes / maxMesChart) * 100 : 2}%` }}
-                  />
-                  <span className="text-[9px] text-blue-600 font-black uppercase tracking-wider mt-2 text-center leading-tight">
-                    Atual
-                  </span>
-                </div>
-              </div>
-            </div>
 
-            {/* Fechados */}
-            <div className="flex flex-col justify-end relative">
-              <p className="text-[9px] font-black text-green-600 uppercase tracking-widest mb-3 text-center">
-                Fechados
-              </p>
-              <div className="flex items-end justify-center gap-6 h-full">
-                {/* Anterior */}
-                <div className="flex flex-col items-center justify-end h-full w-16">
-                  <span className="text-[10px] text-gray-500 mb-2 font-bold whitespace-nowrap">
-                    {formatMoney(valFechMesAnt)}
-                  </span>
-                  <div 
-                    className="w-full bg-gray-300 rounded-t-xl transition-all" 
-                    style={{ height: `${valFechMesAnt > 0 ? (valFechMesAnt / maxMesChart) * 100 : 2}%` }}
-                  />
-                  <span className="text-[9px] text-gray-500 mt-2 font-black uppercase tracking-wider text-center leading-tight">
-                    Anterior
-                  </span>
-                </div>
-                
-                {/* Atual */}
-                <div className="flex flex-col items-center justify-end h-full w-16 relative">
-                  <div className={`text-[9px] font-black px-2 py-0.5 rounded-lg mb-2 ${deltaFechMes >= 0 ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
-                    {deltaFechMes > 0 ? '+' : ''}{deltaFechMes.toFixed(0)}%
-                  </div>
-                  <span className={`text-[10px] mb-2 font-bold whitespace-nowrap ${deltaFechMes >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatMoney(valFechMes)}
-                  </span>
-                  <div 
-                    className="w-full bg-gradient-to-t from-green-700 to-green-600 rounded-t-xl transition-all shadow-lg" 
-                    style={{ height: `${valFechMes > 0 ? (valFechMes / maxMesChart) * 100 : 2}%` }}
-                  />
-                  <span className="text-[9px] text-green-600 font-black uppercase tracking-wider mt-2 text-center leading-tight">
-                    Atual
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Insight Box */}
-        <div className="bg-gradient-to-br from-[#112240] to-[#1e3a8a] p-5 rounded-xl border border-white/10 shadow-lg flex flex-col justify-center w-full lg:w-64 transition-all hover:shadow-blue-900/20">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-lg bg-white/20 backdrop-blur-sm">
-              <Lightbulb className='w-4 h-4 text-white' />
-            </div>
-            <span className="text-[9px] text-white font-black uppercase tracking-widest">
-              Insight Mensal
-            </span>
-          </div>
-          <div className="space-y-2">
-            <p className="text-xs text-white/90 leading-relaxed font-semibold">
-              {getTrendText(deltaNovos, 'novas demandas')}.
-            </p>
-            <p className="text-xs text-white/90 leading-relaxed font-semibold">
-              {getTrendText(deltaFechMes, 'faturamento fechado')}.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
