@@ -68,6 +68,11 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         hojeObj.setHours(0, 0, 0, 0)
 
         const processados = colaboradores.map((v: any) => {
+          if (v.name === 'Bruno Gama' || v.name === 'Marcus Livio Gomes') {
+               console.log("[OAB_DEBUG] MAP STEP User:", v.name, "RoleID:", v.role, "EquipeID:", v.equipe);
+               console.log("[OAB_DEBUG] RolesMap Check:", rolesMap.get(String(v.role)));
+               console.log("[OAB_DEBUG] TeamsMap Check:", teamsMap.get(String(v.equipe)));
+          }
           const realRoleName = rolesMap.get(String(v.role)) || v.role || '';
           const realTeamName = teamsMap.get(String(v.equipe)) || v.equipe || '';
 
@@ -77,6 +82,9 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
             equipe: realTeamName
           }
         }).filter((v: any) => {
+          if (v.name === 'Bruno Gama' || v.name === 'Marcus Livio Gomes') {
+              console.log("[OAB_DEBUG] FILTER STEP. Role mapped:", v.role, "Equipe Mapped:", v.equipe, "Hire Date:", v.hire_date, "Status:", v.status);
+          }
           // let's just log a couple to see their raw format
           if (v.name === 'Bruno Gama' || v.name === 'Marcus Livio Gomes') {
             console.log("[OAB_DEBUG] Found sample user:", v.name, "Role:", v.role, "HireDate:", v.hire_date, "Status:", v.status);
