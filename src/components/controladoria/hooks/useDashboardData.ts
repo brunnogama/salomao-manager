@@ -165,12 +165,36 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const periodoAnteriorStr = `${formatDateShort(primeiroDiaMesAnterior)} - ${formatDateShort(diaLimiteMesAnterior)}`;
     // -------------------------------------
 
+    const normalizeName = (name: string) => {
+      if (!name) return '';
+      return name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // remove accents
+        .trim();
+    };
+
     const partnerMap = partners.reduce((acc: any, s: Partner) => {
-      const colab = collaborators.find((c: any) => c.name === s.name);
+      const normalizedPartnerName = normalizeName(s.name);
+
+      // Attempt 1: Exact match on normalized names
+      let colab = collaborators.find((c: any) => normalizeName(c.name) === normalizedPartnerName);
+
+      // Attempt 2: Partial match (e.g. "Rodrigo Figueiredo" in "Rodrigo Figueiredo da Silva Cotta")
+      if (!colab) {
+        const partnerParts = normalizedPartnerName.split(' ').filter(p => p.length > 2);
+        colab = collaborators.find((c: any) => {
+          const colabNormalized = normalizeName(c.name);
+          if (!colabNormalized) return false;
+          // Check if at least first and last name matches, or if it's a very close substring
+          return partnerParts.length >= 2 && colabNormalized.includes(partnerParts[0]) && colabNormalized.includes(partnerParts[partnerParts.length - 1]);
+        });
+      }
+
       acc[s.id] = {
         name: s.name,
         photo_url: s.photo_url || s.foto_url || colab?.photo_url || colab?.foto_url
-      }; // Atualizado com fallback para a base de colaboradores
+      }; // Atualizado com fallback seguro
       return acc;
     }, {});
 
