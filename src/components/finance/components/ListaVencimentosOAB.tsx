@@ -48,6 +48,9 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
       if (colabRes.error) throw colabRes.error;
       const colaboradores = colabRes.data;
+      console.log("[OAB_DEBUG] Total colabs from DB:", colaboradores.length);
+      console.log("[OAB_DEBUG] Roles mapping count:", rolesMap.size);
+      console.log("[OAB_DEBUG] Teams mapping count:", teamsMap.size);
       
       const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || []);
       const teamsMap = new Map(teamsRes.data?.map(t => [String(t.id), t.name]) || []);
@@ -64,6 +67,10 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         hoje.setHours(0, 0, 0, 0)
 
         const processados = colaboradores.filter((v: any) => {
+          // let's just log a couple to see their raw format
+          if (v.name === 'Bruno Gama' || v.name === 'Marcus Livio Gomes') {
+               console.log("[OAB_DEBUG] Found sample user:", v.name, "Role:", v.role, "HireDate:", v.hire_date, "Status:", v.status);
+          }
           if (!v.hire_date) return false
 
           // Filtro de Status Ativo
@@ -126,6 +133,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         // Ordenação: Do mais antigo (mais atrasado/menor diff) para o mais novo
         processados.sort((a, b) => a.dias_ate_pagamento - b.dias_ate_pagamento)
 
+        console.log("[OAB_DEBUG] Final processados array size:", processados.length);
         setVencimentos(processados)
       }
     } catch (error) {
