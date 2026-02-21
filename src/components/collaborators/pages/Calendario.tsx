@@ -1,5 +1,5 @@
 // src/components/collaborators/pages/Calendario.tsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -21,11 +21,10 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { RHCalendarioDiaModal } from '../components/RHCalendarioDiaModal'
-
-
+import { useColaboradores } from '../hooks/useColaboradores'
 
 interface Colaborador {
-  id: number;
+  id: string | number;
   name: string; // Atualizado de nome
   birthday: string; // Atualizado de data_nascimento
   role: string; // Atualizado de cargo
@@ -59,10 +58,22 @@ const MESES = [
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 export function Calendario() {
-  const [collaborators, setcollaborators] = useState<Colaborador[]>([])
+  const { colaboradores, loading: colabsLoading } = useColaboradores()
   const [eventos, setEventos] = useState<Evento[]>([])
-  const [loading, setLoading] = useState(true)
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const [loadingEventos, setLoadingEventos] = useState(true)
+
+  const collaborators = useMemo(() => {
+    return colaboradores
+      .filter((c: any) => c.status === 'active' && c.birthday && c.birthday.trim() !== '')
+      .map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        birthday: c.birthday,
+        role: c.roles?.name || c.role || '',
+        photo_url: c.photo_url || c.foto_url
+      }))
+  }, [colaboradores])
+  const [currentDate] = useState(new Date())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [viewMode, setViewMode] = useState<'calendario' | 'proximos'>('calendario')
@@ -87,23 +98,14 @@ export function Calendario() {
   }, [])
 
   const fetchData = async () => {
-    setLoading(true)
-    // Atualizado para a tabela 'collaborators' e campos traduzidos
-    const { data: colabs } = await supabase
-      .from('collaborators')
-      .select('id, name, birthday, role, photo_url')
-      .not('birthday', 'is', null)
-      .eq('status', 'active') // Status agora em inglês
-      .order('name')
-
+    setLoadingEventos(true)
     const { data: evs } = await supabase
       .from('eventos')
       .select('*')
       .order('data_evento')
 
-    if (colabs) setcollaborators(colabs)
     if (evs) setEventos(evs)
-    setLoading(false)
+    setLoadingEventos(false)
   }
 
   const handleSaveEvento = async () => {
@@ -212,7 +214,7 @@ export function Calendario() {
     const hoje = new Date()
     const aniversarios: AniversarioData[] = []
 
-    collaborators.forEach(colab => {
+    collaborators.forEach((colab: any) => {
       if (colab.birthday) {
         const nascimento = new Date(colab.birthday)
         const nascimentoCorrigido = new Date(nascimento.valueOf() + nascimento.getTimezoneOffset() * 60000)
@@ -355,7 +357,6 @@ export function Calendario() {
   }
 
   const aniversariosHoje = getAniversariosHoje()
-  const aniversariosEstaSemana = getAniversariosEstaSemana()
   const aniversariosEsteMes = getAniversariosEsteMes()
 
   // Agrupamento de eventos para a lista lateral
