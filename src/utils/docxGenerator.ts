@@ -13,6 +13,7 @@ interface ProposalData extends Contract {
         gender: string;
     }[];
     location?: string;
+    custom_body_text?: string;
 }
 
 // Helper to fetch image as ArrayBuffer
@@ -228,24 +229,36 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
             ]
         }),
 
-        // Section 1: OBJETO
-        createTextParagraph("1.	OBJETO E ESCOPO DO SERVIÇO:", { bold: true, spacing: 200 }),
-        new Paragraph({
-            alignment: AlignmentType.JUSTIFIED,
-            spacing: { line: 288, after: 200 },
-            children: [
-                new TextRun({ text: "1.1. 	O objeto da presente proposta é a assessoria jurídica a ser realizada pelos advogados que compõem Salomão Advogados (“Escritório”), com vistas à representação judicial em favor do Cliente ", font: standardFont, size: 22 }),
-                new TextRun({ text: (data.client_name || "[NOME DA EMPRESA CLIENTE]"), font: standardFont, size: 22, bold: true }),
-                new TextRun({ text: " (“Cliente” ou “Contratante”) no ", font: standardFont, size: 22 }),
-                new TextRun({ text: (data.observations || "[incluir objeto da disputa]"), font: standardFont, size: 22, bold: true }),
-                new TextRun({ text: ".", font: standardFont, size: 22 }),
+        // Section 1: OBJETO ou TEXTO CUSTOMIZADO
+        ...(data.custom_body_text
+            ? data.custom_body_text.split('\n\n').filter(p => p.trim()).map(paragraphText => {
+                // Check if it's a topic header (e.g., "1. OBJETO E ESCOPO DO SERVIÇO:")
+                const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraphText);
+                return createTextParagraph(paragraphText, {
+                    bold: isHeading || undefined,
+                    spacing: 200
+                });
+            })
+            : [
+                createTextParagraph("1.	OBJETO E ESCOPO DO SERVIÇO:", { bold: true, spacing: 200 }),
+                new Paragraph({
+                    alignment: AlignmentType.JUSTIFIED,
+                    spacing: { line: 288, after: 200 },
+                    children: [
+                        new TextRun({ text: "1.1. 	O objeto da presente proposta é a assessoria jurídica a ser realizada pelos advogados que compõem Salomão Advogados (“Escritório”), com vistas à representação judicial em favor do Cliente ", font: standardFont, size: 22 }),
+                        new TextRun({ text: (data.client_name || "[NOME DA EMPRESA CLIENTE]"), font: standardFont, size: 22, bold: true }),
+                        new TextRun({ text: " (“Cliente” ou “Contratante”) no ", font: standardFont, size: 22 }),
+                        new TextRun({ text: (data.observations || "[incluir objeto da disputa]"), font: standardFont, size: 22, bold: true }),
+                        new TextRun({ text: ".", font: standardFont, size: 22 }),
+                    ]
+                }),
+                createTextParagraph("1.2.	Os serviços previstos nesta proposta abrangem a defesa dos interesses do Contratante em toda e qualquer discussão relacionada ao tema tratado.", { spacing: 200 }),
+                createTextParagraph("1.3.	Além da análise do caso e definição da estratégia jurídica, o escopo dos serviços profissionais compreende a análise completa dos documentos e informações enviadas pelo Cliente, elaboração das peças processuais, acompanhamento processual, realização de sustentações orais, despachos, bem como todos os atos conexos necessários a atender os interesses do Cliente nos referidos processos.", { spacing: 200 }),
+                createTextParagraph("1.4.	Os serviços aqui propostos compreende a participação em reuniões com o Cliente sempre que necessário para entendimentos, esclarecimentos e discussão de estratégias, sempre objetivando a melhor atuação possível do Escritório em defesa dos interesses do Cliente.", { spacing: 200 }),
+                createTextParagraph("1.5.	Também está incluída a assessoria jurídica na interlocução com a contraparte, para fins de autocomposição.", { spacing: 200 }),
+                createTextParagraph("1.6.	Os serviços aqui propostos não incluem consultoria geral ou outra que não possua correlação com o objeto da proposta.", { spacing: 400 }),
             ]
-        }),
-        createTextParagraph("1.2.	Os serviços previstos nesta proposta abrangem a defesa dos interesses do Contratante em toda e qualquer discussão relacionada ao tema tratado.", { spacing: 200 }),
-        createTextParagraph("1.3.	Além da análise do caso e definição da estratégia jurídica, o escopo dos serviços profissionais compreende a análise completa dos documentos e informações enviadas pelo Cliente, elaboração das peças processuais, acompanhamento processual, realização de sustentações orais, despachos, bem como todos os atos conexos necessários a atender os interesses do Cliente nos referidos processos.", { spacing: 200 }),
-        createTextParagraph("1.4.	Os serviços aqui propostos compreende a participação em reuniões com o Cliente sempre que necessário para entendimentos, esclarecimentos e discussão de estratégias, sempre objetivando a melhor atuação possível do Escritório em defesa dos interesses do Cliente.", { spacing: 200 }),
-        createTextParagraph("1.5.	Também está incluída a assessoria jurídica na interlocução com a contraparte, para fins de autocomposição.", { spacing: 200 }),
-        createTextParagraph("1.6.	Os serviços aqui propostos não incluem consultoria geral ou outra que não possua correlação com o objeto da proposta.", { spacing: 400 }),
+        ),
 
         // Section 2: HONORÁRIOS
         createTextParagraph("2.	HONORÁRIOS E FORMA DE PAGAMENTO:", { bold: true, spacing: 200 }),

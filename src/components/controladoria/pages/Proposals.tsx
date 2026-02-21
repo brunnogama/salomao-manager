@@ -60,6 +60,9 @@ export function Proposals() {
     final_success_fee_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
   });
 
+  const [isEditingBody, setIsEditingBody] = useState(false);
+  const [customBodyText, setCustomBodyText] = useState("");
+
   // Modal State (for after generation)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [contractFormData, setContractFormData] = useState<Contract>({} as Contract);
@@ -343,7 +346,19 @@ export function Proposals() {
       intermediate_fees_clauses: intermediateClauses,
 
       full_success_clauses: proposalData.final_success_fee_clauses,
+      custom_body_text: customBodyText || undefined,
     };
+  };
+
+  const generateDefaultBodyText = () => {
+    let text = `1. OBJETO E ESCOPO DO SERVIÇO:\n\n`;
+    text += `1.1. O objeto da presente proposta é a assessoria jurídica a ser realizada pelos advogados que compõem Salomão Advogados (“Escritório”), com vistas à representação judicial em favor do Cliente ${proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'} (“Cliente” ou “Contratante”) no ${proposalData.object || '[incluir objeto da disputa]'}.\n\n`;
+    text += `1.2. Os serviços previstos nesta proposta abrangem a defesa dos interesses do Contratante em toda e qualquer discussão relacionada ao tema tratado.\n\n`;
+    text += `1.3. Além da análise do caso e definição da estratégia jurídica, o escopo dos serviços profissionais compreende a análise completa dos documentos e informações enviadas pelo Cliente, elaboração das peças processuais, acompanhamento processual, realização de sustentações orais, despachos, bem como todos os atos conexos necessários a atender os interesses do Cliente nos referidos processos.\n\n`;
+    text += `1.4. Os serviços aqui propostos compreende a participação em reuniões com o Cliente sempre que necessário para entendimentos, esclarecimentos e discussão de estratégias, sempre objetivando a melhor atuação possível do Escritório em defesa dos interesses do Cliente.\n\n`;
+    text += `1.5. Também está incluída a assessoria jurídica na interlocução com a contraparte, para fins de autocomposição.\n\n`;
+    text += `1.6. Os serviços aqui propostos não incluem consultoria geral ou outra que não possua correlação com o objeto da proposta.`;
+    return text;
   };
 
   const handleGenerateProposal = async () => {
@@ -817,9 +832,29 @@ export function Proposals() {
 
         {/* DIREITA: Preview Visual */}
         <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center relative min-h-[800px]">
-          <p className="absolute top-4 right-6 text-[9px] font-black text-gray-300 uppercase tracking-widest flex items-center gap-1">
-            <Eye className="w-3 h-3" /> Visualização em Tempo Real
-          </p>
+          <div className="absolute top-4 right-6 flex items-center gap-3">
+            <button
+              onClick={() => {
+                if (!isEditingBody && !customBodyText) {
+                  setCustomBodyText(generateDefaultBodyText());
+                }
+                setIsEditingBody(!isEditingBody);
+              }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${isEditingBody
+                  ? 'bg-blue-100 text-[#1e3a8a] border border-blue-200 shadow-inner'
+                  : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
+                }`}
+            >
+              {isEditingBody ? (
+                <> <CheckCircle className="w-3 h-3" /> Salvar Texto </>
+              ) : (
+                <> <FileSignature className="w-3 h-3" /> Editar Texto </>
+              )}
+            </button>
+            <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest flex items-center gap-1">
+              <Eye className="w-3 h-3" /> Visualização em Tempo Real
+            </p>
+          </div>
 
           {/* A4 Paper Simulation */}
           <div className="w-full max-w-[500px] bg-white shadow-2xl p-8 md:p-12 text-left border border-gray-100 h-full text-[#0a192f] text-[10px] leading-relaxed scale-95 origin-top select-none">
@@ -886,16 +921,41 @@ export function Proposals() {
               , vem formular a presente proposta de honorários...
             </p>
 
-            {/* 1. Objeto */}
-            <p className="font-bold mb-2">1. OBJETO E ESCOPO DO SERVIÇO:</p>
-            <p className="text-justify mb-4">
-              1.1. O objeto da presente proposta é a assessoria jurídica... em favor do Cliente
-              <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
-              no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
-            </p>
+            {isEditingBody ? (
+              <textarea
+                value={customBodyText}
+                onChange={(e) => setCustomBodyText(e.target.value)}
+                rows={15}
+                className="w-full text-justify mb-4 p-4 text-[10px] border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-lg outline-none focus:border-[#1e3a8a] focus:bg-white transition-all resize-y font-mono leading-relaxed"
+                placeholder="Edite o corpo da proposta aqui..."
+              />
+            ) : customBodyText ? (
+              <div className="mb-4 space-y-4">
+                {customBodyText.split('\n\n').map((paragraph, idx) => (
+                  <p key={idx} className="text-justify whitespace-pre-line leading-relaxed">
+                    {paragraph.split('\n').map((line, lIdx) => (
+                      <React.Fragment key={lIdx}>
+                        {line}
+                        {lIdx !== paragraph.split('\n').length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <>
+                {/* 1. Objeto */}
+                <p className="font-bold mb-2">1. OBJETO E ESCOPO DO SERVIÇO:</p>
+                <p className="text-justify mb-4">
+                  1.1. O objeto da presente proposta é a assessoria jurídica... em favor do Cliente
+                  <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
+                  no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
+                </p>
+              </>
+            )}
 
             {/* 2. Honorários */}
-            <p className="font-bold mb-2">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
+            <p className="font-bold mb-2 break-before-page mt-6">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
             <p className="text-justify mb-2">
               2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
             </p>
