@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { FileText, CheckCircle, Search, Plus, Trash2, Edit3, X, EyeOff, Check, XCircle, Filter, FileSignature, Loader2, PlayCircle, AlertTriangle } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { saveAs } from 'file-saver';
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst, Collaborator } from '../../../types/controladoria';
 import { ContractFormModal } from '../contracts/ContractFormModal';
