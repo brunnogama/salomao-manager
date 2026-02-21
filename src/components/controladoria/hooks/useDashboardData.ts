@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { contractService } from '../services/contractService';
 import { partnerService } from '../services/partnerService';
+import { supabase } from '../../../lib/supabase';
 import { Contract, Partner, ContractCase } from '../../../types/controladoria';
 import { safeDate } from '../utils/masks';
 
@@ -102,17 +103,22 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
   const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [contratosData, sociosData] = await Promise.all([
+      const [contratosData, sociosData, colabResp] = await Promise.all([
         contractService.getAll(),
-        partnerService.getAll()
+        partnerService.getAll(),
+        supabase.from('collaborators').select('name, photo_url, foto_url')
       ]);
 
       setContracts(contratosData);
       setPartners(sociosData);
+      if (colabResp.data) {
+        setCollaborators(colabResp.data);
+      }
     } catch (error) {
       console.error("Erro ao buscar dados do dashboard:", error);
     } finally {
@@ -160,7 +166,11 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     // -------------------------------------
 
     const partnerMap = partners.reduce((acc: any, s: Partner) => {
-      acc[s.id] = { name: s.name, photo_url: s.photo_url || s.foto_url }; // Atualizado para armazenar URL da foto (com fallback para foto_url)
+      const colab = collaborators.find((c: any) => c.name === s.name);
+      acc[s.id] = {
+        name: s.name,
+        photo_url: s.photo_url || s.foto_url || colab?.photo_url || colab?.foto_url
+      }; // Atualizado com fallback para a base de colaboradores
       return acc;
     }, {});
 

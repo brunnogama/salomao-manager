@@ -1,5 +1,6 @@
-import React from 'react';
-import { X, Briefcase, Banknote, Calendar, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { X, Briefcase, Banknote, CheckCircle, TrendingUp } from 'lucide-react';
 import { formatMoney } from './dashboardHelpers';
 
 interface PartnerDetailModalProps {
@@ -8,13 +9,27 @@ interface PartnerDetailModalProps {
 }
 
 export function PartnerDetailModal({ partner, onClose }: PartnerDetailModalProps) {
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onClose]);
+
     if (!partner) return null;
 
     const totalSocio = (partner.pl || 0) + (partner.exito || 0) + (partner.fixo || 0);
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200"
+                onClick={(e) => e.stopPropagation()}
+            >
 
                 {/* Header - Perfil do Sócio */}
                 <div className="bg-[#0a192f] p-6 text-white relative flex-shrink-0">
@@ -165,6 +180,7 @@ export function PartnerDetailModal({ partner, onClose }: PartnerDetailModalProps
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
