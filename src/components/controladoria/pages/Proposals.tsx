@@ -24,10 +24,25 @@ interface FeeClause {
   type: 'currency' | 'percent'; // Added type
 }
 
+// Fixed Dictionary for Partner Locations validation
+const PARTNER_LOCATIONS: Record<string, string[]> = {
+  "Bernardo Safady Kaiuca": ["Rio de Janeiro", "Vitória"],
+  "Eduardo Oliveira Machado de Souz Abrahão": ["Rio de Janeiro", "São Paulo", "Salvador"],
+  "Livia Sanches Sancio": ["Rio de Janeiro", "Vitória"],
+  "Luis Felipe Salomão Filho": ["Rio de Janeiro", "São Paulo", "Brasília", "Vitória", "Florianópolis"],
+  "Marcus Lívio Gomes": ["Brasília", "Vitória", "Florianópolis", "Belém"],
+  "Paulo Cesar Salomão Filho": ["Rio de Janeiro", "Vitória", "Salvador"],
+  "Pedro Neiva de Santana Neto": ["São Paulo", "Brasília", "Florianópolis"],
+  "Rodrigo Figueiredo da Silva Cotta": ["Rio de Janeiro", "São Paulo", "Brasília", "Vitória", "Florianópolis"],
+  "Rodrigo Moraes Mendonça Raposo": ["Rio de Janeiro", "São Paulo", "Brasília", "Vitória", "Florianópolis"],
+  "Rodrigo Cunha Mello Salomão": ["Rio de Janeiro", "São Paulo", "Brasília", "Vitória", "Florianópolis"],
+};
+
 export function Proposals() {
   const [loading, setLoading] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [clientOptions, setClientOptions] = useState<{ label: string; value: string }[]>([]);
+  const [locationOptions, setLocationOptions] = useState<{ label: string; value: string }[]>([]);
 
   // Form State
   const [proposalData, setProposalData] = useState({
@@ -66,6 +81,7 @@ export function Proposals() {
   useEffect(() => {
     fetchPartners();
     fetchClients();
+    fetchLocations();
   }, []);
 
   const fetchPartners = async () => {
@@ -79,6 +95,15 @@ export function Proposals() {
     const { data } = await supabase.from('clients').select('name, cnpj').order('name');
     if (data) {
       setClientOptions(data.map(c => ({ label: c.name, value: c.name }))); // Value is name for the proposal
+    }
+  };
+
+  const fetchLocations = async () => {
+    const { data } = await supabase.from('office_locations').select('city').order('city');
+    if (data) {
+      // Remove duplicates if any multiple offices in same city exist
+      const uniqueCities = Array.from(new Set(data.map(loc => loc.city))).filter(Boolean);
+      setLocationOptions(uniqueCities.map(city => ({ label: city, value: city })));
     }
   };
 
@@ -806,6 +831,32 @@ export function Proposals() {
                   className="w-full"
                 />
               </div>
+
+              {/* Warnings for Validation */}
+              {(() => {
+                const warnings = proposalData.selectedPartners.map(p => {
+                  if (!proposalData.contractLocation) return null;
+                  const allowedLocations = PARTNER_LOCATIONS[p.name];
+                  if (allowedLocations && !allowedLocations.includes(proposalData.contractLocation)) {
+                    return `O sócio ${p.name} não compõe o contrato social de ${proposalData.contractLocation}. Ele pertence a: ${allowedLocations.join(', ')}.`;
+                  }
+                  return null;
+                }).filter(Boolean);
+
+                if (warnings.length > 0) {
+                  return (
+                    <div className="mt-3 space-y-2">
+                      {warnings.map((msg, i) => (
+                        <div key={i} className="flex items-start gap-2 p-3 bg-red-50 text-red-700 rounded-xl border border-red-200">
+                          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+                          <p className="text-xs font-medium leading-relaxed">{msg}</p>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             <div>
@@ -814,12 +865,7 @@ export function Proposals() {
                 label="" // Empty label as we have the header above
                 value={proposalData.contractLocation}
                 onChange={(val) => setProposalData(prev => ({ ...prev, contractLocation: val }))}
-                options={[
-                  { label: 'Rio de Janeiro', value: 'Rio de Janeiro' },
-                  { label: 'São Paulo', value: 'São Paulo' },
-                  { label: 'Brasília', value: 'Brasília' },
-                  { label: 'Vitória', value: 'Vitória' },
-                ]}
+                options={locationOptions}
                 allowCustomValue={true}
                 placeholder="Selecione ou digite a cidade"
               />
