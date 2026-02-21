@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Camera, Clock, Briefcase, CheckCircle2, TrendingUp, Layers, Banknote, XCircle, HeartHandshake, PieChart, FileSignature
+  Camera, Clock, CheckCircle2, PieChart, FileSignature, HeartHandshake, XCircle
 } from 'lucide-react';
 import { formatMoney } from './dashboardHelpers';
 
@@ -28,10 +28,10 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
     ((metrics?.geral as any)?.valorEmNegociacaoOutros || 0);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div className="flex flex-col gap-6">
 
-      {/* Esquerda: Fotografia da Carteira Atual (Cards) */}
-      <div className='lg:col-span-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 h-full flex flex-col'>
+      {/* Linha 1: Fotografia da Carteira Atual (Cards) */}
+      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
 
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
@@ -50,7 +50,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           </div>
         </div>
         {/* Cards de Status */}
-        <div className='grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6'>
+        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3'>
 
           {/* 1. Em Análise */}
           <div
@@ -147,29 +147,11 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
             <p className='text-[9px] font-bold text-gray-400'>serviço gratuito</p>
           </div>
 
-          {/* 6. Total */}
-          <div
-            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-[#0a192f] shadow-sm flex flex-col justify-center'
-          >
-            <div className='flex justify-between items-start mb-2'>
-              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
-                Total
-              </p>
-              <div className='p-1.5 bg-gray-100 rounded-lg text-gray-600'>
-                <Layers className='w-4 h-4' />
-              </div>
-            </div>
-            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
-              {(metrics.geral?.emAnalise || 0) + (metrics.geral?.propostasAtivas || 0) + (metrics.geral?.fechados || 0) + (metrics.geral?.rejeitados || 0) + (metrics.geral?.probono || 0)}
-            </p>
-            <p className='text-[9px] font-bold text-gray-400'>todos os contratos</p>
-          </div>
-
         </div>
       </div>
 
-      {/* Direita: Fotografia Financeira Total */}
-      <div className='lg:col-span-7 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 h-full flex flex-col'>
+      {/* Linha 2: Fotografia Financeira Total */}
+      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
 
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100'>
