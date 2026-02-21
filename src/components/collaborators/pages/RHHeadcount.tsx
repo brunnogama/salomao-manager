@@ -632,17 +632,49 @@ export function RHHeadcount() {
                   dataKey="value"
                   label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, payload }) => {
                     const RADIAN = Math.PI / 180;
-                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                    // Posição para a porcentagem (dentro do gráfico)
+                    const radiusInside = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const xInside = cx + radiusInside * Math.cos(-midAngle * RADIAN);
+                    const yInside = cy + radiusInside * Math.sin(-midAngle * RADIAN);
+
+                    // Posição para a média de idade (fora do gráfico)
+                    const radiusOutside = outerRadius + 25;
+                    const xOutside = cx + radiusOutside * Math.cos(-midAngle * RADIAN);
+                    const yOutside = cy + radiusOutside * Math.sin(-midAngle * RADIAN);
+
+                    const textAnchorOutside = xOutside > cx ? 'start' : 'end';
 
                     return (
-                      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight="bold">
-                        <tspan x={x} dy="-4">{`${(percent * 100).toFixed(0)}%`}</tspan>
+                      <g>
+                        {/* Rótulo de Porcentagem */}
+                        <text
+                          x={xInside}
+                          y={yInside}
+                          fill="white"
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={14}
+                          fontWeight="900"
+                        >
+                          {`${(percent * 100).toFixed(0)}%`}
+                        </text>
+
+                        {/* Rótulo de Média de Idade (Fora) */}
                         {payload.avgAge > 0 && (
-                          <tspan x={x} dy="12" fontSize={8} fontWeight="normal">{`Média ${payload.avgAge} anos`}</tspan>
+                          <text
+                            x={xOutside}
+                            y={yOutside}
+                            fill="#6b7280"
+                            textAnchor={textAnchorOutside}
+                            dominantBaseline="central"
+                            fontSize={11}
+                            fontWeight="600"
+                          >
+                            {`Média ${payload.avgAge} anos`}
+                          </text>
                         )}
-                      </text>
+                      </g>
                     );
                   }}
                   labelLine={false}
