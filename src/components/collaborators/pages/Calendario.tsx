@@ -74,10 +74,13 @@ export function Calendario() {
       }))
   }, [colaboradores])
   const [currentDate] = useState(new Date())
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [viewMode, setViewMode] = useState<'calendario' | 'proximos'>('calendario')
-  const [filterMes, setFilterMes] = useState<number | null>(null)
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const d = new Date()
+    const diff = d.getDate() - d.getDay()
+    return new Date(d.getFullYear(), d.getMonth(), diff)
+  })
+  const selectedMonth = currentWeekStart.getMonth();
+  const selectedYear = currentWeekStart.getFullYear();
 
   // Estados para o Modal de Evento
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -258,64 +261,86 @@ export function Calendario() {
   const getAniversariosEstaSemana = () => aniversarios.filter(a => a.isEstaSemana && !a.isHoje)
   const getAniversariosEsteMes = () => aniversarios.filter(a => a.isEsteMes)
   const getProximosAniversarios = () => {
-    if (filterMes !== null) {
-      return aniversarios.filter(a => a.mes === filterMes)
-    }
     return aniversarios.slice(0, 20)
   }
 
-  const getDaysInMonth = (month: number, year: number) => {
-    return new Date(year, month + 1, 0).getDate()
+  const getProximosEventos = () => {
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+
+    return eventos
+      .map(e => {
+        const dataEvento = new Date(e.data_evento + 'T12:00:00')
+        dataEvento.setHours(0, 0, 0, 0)
+        const diffTime = dataEvento.getTime() - hoje.getTime()
+        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        return {
+          ...e,
+          dataObjeto: dataEvento,
+          diasRestantes,
+          isHoje: diasRestantes === 0,
+          isEstaSemana: diasRestantes <= 7 && diasRestantes >= 0,
+        }
+      })
+      .filter(e => e.diasRestantes >= 0)
+      .sort((a, b) => a.diasRestantes - b.diasRestantes)
+      .slice(0, 20)
   }
 
-  const getFirstDayOfMonth = (month: number, year: number) => {
-    return new Date(year, month, 1).getDay()
-  }
-
-  const renderCalendar = () => {
-    const daysInMonth = getDaysInMonth(selectedMonth, selectedYear)
-    const firstDay = getFirstDayOfMonth(selectedMonth, selectedYear)
+  const weekDays = useMemo(() => {
     const days = []
-    const anivMes = aniversariosDoMes(selectedMonth, selectedYear)
-    const evMes = eventosDoMes(selectedMonth, selectedYear)
-
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="aspect-square" />)
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(currentWeekStart)
+      d.setDate(currentWeekStart.getDate() + i)
+      days.push(d)
     }
+    return days
+  }, [currentWeekStart])
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const anivDoDia = anivMes.filter(a => a.dia === day)
-      const evDoDia = evMes.filter(e => new Date(e.data_evento + 'T12:00:00').getDate() === day)
+  const renderWeeklyCalendar = () => {
+    return weekDays.map((dateObj, idx) => {
+      const day = dateObj.getDate()
+      const month = dateObj.getMonth()
+      const year = dateObj.getFullYear()
+
+      const anivDoDia = aniversarios.filter(a => a.dia === day && a.mes === month)
+      const evDoDia = eventos.filter(e => {
+        const d = new Date(e.data_evento + 'T12:00:00')
+        return d.getDate() === day && d.getMonth() === month && d.getFullYear() === year
+      })
       const totalDia = [...anivDoDia, ...evDoDia]
 
-      const isToday =
-        day === currentDate.getDate() &&
-        selectedMonth === currentDate.getMonth() &&
-        selectedYear === currentDate.getFullYear()
+      const isToday = day === currentDate.getDate() && month === currentDate.getMonth() && year === currentDate.getFullYear()
 
-      days.push(
+      return (
         <div
-          key={day}
+          key={idx}
           onClick={() => setSelectedDayEvents({ day, events: totalDia })}
-          className={`aspect-square p-2 rounded-xl border transition-all duration-200 flex flex-col justify-between overflow-hidden cursor-pointer ${isToday
+          className={`h-32 p-3 rounded-xl border transition-all duration-200 flex flex-col justify-start overflow-hidden cursor-pointer ${isToday
             ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a] shadow-xl'
             : totalDia.length > 0
-              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg hover:scale-105 hover:border-[#1e3a8a]/50'
+              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg hover:scale-[1.02] hover:border-[#1e3a8a]/50'
               : 'bg-white border-gray-100 hover:border-[#1e3a8a]/30 hover:bg-blue-50/30'
             }`}
         >
-          <div className={`text-sm font-black ${isToday ? 'text-white' : 'text-[#0a192f]'}`}>
-            {day}
+          <div className="flex justify-between items-center mb-2">
+            <span className={`text-sm font-black ${isToday ? 'text-white' : 'text-[#0a192f]'}`}>
+              {day}
+            </span>
+            <span className={`text-[10px] font-bold uppercase ${isToday ? 'text-blue-200' : 'text-gray-400'}`}>
+              {MESES[month].substring(0, 3)}
+            </span>
           </div>
           {totalDia.length > 0 && (
-            <div className="space-y-1 mt-1">
-              {totalDia.slice(0, 2).map((item, idx) => (
+            <div className="space-y-1.5 overflow-y-auto custom-scrollbar flex-1 pr-1 pb-1">
+              {totalDia.map((item, idxx) => (
                 <div
-                  key={idx}
-                  className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-1.5 py-1 rounded-lg shadow-sm border border-blue-100"
+                  key={idxx}
+                  className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-2 py-1.5 rounded-lg shadow-sm border border-blue-100"
                 >
                   {'colaborador' in item ? (
-                    <Cake className="h-3 w-3 text-[#1e3a8a] flex-shrink-0" />
+                    <Cake className="h-3 w-3 text-[#d4af37] flex-shrink-0" />
                   ) : (
                     <CalendarEventIcon className="h-3 w-3 text-green-600 flex-shrink-0" />
                   )}
@@ -324,36 +349,27 @@ export function Calendario() {
                   </span>
                 </div>
               ))}
-              {totalDia.length > 2 && (
-                <div className="text-[8px] font-black text-[#1e3a8a] text-center bg-white/80 rounded px-1">
-                  +{totalDia.length - 2}
-                </div>
-              )}
             </div>
           )}
         </div>
       )
-    }
-
-    return days
+    })
   }
 
-  const handlePrevMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11)
-      setSelectedYear(selectedYear - 1)
-    } else {
-      setSelectedMonth(selectedMonth - 1)
-    }
+  const handlePrevWeek = () => {
+    setCurrentWeekStart(prev => {
+      const d = new Date(prev)
+      d.setDate(d.getDate() - 7)
+      return d
+    })
   }
 
-  const handleNextMonth = () => {
-    if (selectedMonth === 11) {
-      setSelectedMonth(0)
-      setSelectedYear(selectedYear + 1)
-    } else {
-      setSelectedMonth(selectedMonth + 1)
-    }
+  const handleNextWeek = () => {
+    setCurrentWeekStart(prev => {
+      const d = new Date(prev)
+      d.setDate(d.getDate() + 7)
+      return d
+    })
   }
 
   const aniversariosHoje = getAniversariosHoje()
@@ -441,27 +457,6 @@ export function Calendario() {
 
           <div className="flex flex-wrap gap-3 w-full xl:w-auto justify-end">
             {/* Novo Evento moved to header */}
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode('calendario')}
-                className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm ${viewMode === 'calendario'
-                  ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-              >
-                Calendário
-              </button>
-              <button
-                onClick={() => setViewMode('proximos')}
-                className={`px-6 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-sm ${viewMode === 'proximos'
-                  ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-              >
-                Lista
-              </button>
-            </div>
           </div>
         </div>
 
@@ -508,210 +503,93 @@ export function Calendario() {
           </div>
         )}
 
-        {/* CONTEÚDO PRINCIPAL */}
-        {viewMode === 'calendario' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Calendário */}
-            <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
-                <button
-                  onClick={handlePrevMonth}
-                  className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
-                >
-                  <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
-                </button>
-                <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
-                  {MESES[selectedMonth]} {selectedYear}
-                </h2>
-                <button
-                  onClick={handleNextMonth}
-                  className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
-                >
-                  <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-7 gap-2 mb-3">
-                {DIAS_SEMANA.map(dia => (
-                  <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">
-                    {dia}
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-7 gap-2">
-                {renderCalendar()}
-              </div>
-            </div>
-
-            {/* Lista Lateral - Separada por Tipo */}
-            <div className="flex flex-col gap-6 h-full">
-              {/* Seção Aniversariantes */}
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col flex-1 max-h-[50%]">
-                <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-4 flex items-center gap-2 sticky top-0 bg-white z-10 pb-2 border-b border-gray-100">
-                  <Cake className="h-4 w-4 text-[#d4af37]" /> Aniversariantes ({aniversariosDoMes(selectedMonth, selectedYear).length})
-                </h3>
-                <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                  {(() => {
-                    const anivsEsteMes = aniversariosDoMes(selectedMonth, selectedYear);
-                    if (anivsEsteMes.length === 0) {
-                      return (
-                        <div className="text-center py-4 text-xs text-gray-400 font-medium italic">
-                          Nenhum aniversariante este mês
-                        </div>
-                      );
-                    }
-
-                    const groupedByDay = anivsEsteMes.reduce((acc, curr) => {
-                      if (!acc[curr.dia]) acc[curr.dia] = [];
-                      acc[curr.dia].push(curr);
-                      return acc;
-                    }, {} as Record<number, AniversarioData[]>);
-
-                    return Object.keys(groupedByDay).map(Number).sort((a, b) => a - b).map(dia => (
-                      <div key={dia} className="flex gap-3 bg-gray-50 p-2.5 rounded-xl border border-gray-100 hover:border-[#d4af37]/30 transition-all hover:shadow-sm">
-                        <div className="flex flex-col items-center justify-start py-1 w-10 shrink-0">
-                          <div className="flex flex-col items-center justify-center w-full aspect-square bg-white rounded-lg border border-gray-200 shadow-sm">
-                            <span className="text-[8px] font-black uppercase text-gray-400 leading-none mb-0.5">{MESES[selectedMonth].substring(0, 3)}</span>
-                            <span className="text-sm font-black text-[#0a192f] leading-none">{dia}</span>
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0 space-y-2 py-0.5 mt-0.5">
-                          {groupedByDay[dia].map((aniv, idx) => (
-                            <div key={idx} className="flex items-center justify-between">
-                              <div className="min-w-0">
-                                <p className="text-xs font-black text-[#0a192f] truncate leading-tight">{formatName(aniv.colaborador.name)}</p>
-                                <p className="text-[10px] text-gray-500 truncate leading-tight">{toTitleCase(aniv.colaborador.role)}</p>
-                              </div>
-                              {aniv.isHoje && (
-                                <div className="h-2 w-2 rounded-full bg-[#d4af37] animate-pulse shrink-0 ml-2" title="Hoje!" />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ));
-                  })()}
-                </div>
-              </div>
-
-              {/* Seção Eventos */}
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col flex-1 max-h-[50%]">
-                <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-4 flex items-center gap-2 sticky top-0 bg-white z-10 pb-2 border-b border-gray-100">
-                  <CalendarEventIcon className="h-4 w-4 text-[#1e3a8a]" /> Eventos ({eventosDoMes(selectedMonth, selectedYear).length})
-                </h3>
-                <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                  {eventosDoMes(selectedMonth, selectedYear).sort((a, b) => new Date(a.data_evento).getDate() - new Date(b.data_evento).getDate()).map((evento, idx) => (
-                    <div key={idx} className="group flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-100 hover:border-[#1e3a8a]/30 transition-all hover:shadow-sm">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-lg border border-gray-200 shadow-sm shrink-0">
-                          <span className="text-[8px] font-black uppercase text-gray-400">{MESES[selectedMonth].substring(0, 3)}</span>
-                          <span className="text-sm font-black text-[#1e3a8a]">{new Date(evento.data_evento + 'T12:00:00').getDate()}</span>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-black text-[#0a192f] truncate">{evento.titulo}</p>
-                          <p className="text-[10px] text-gray-500 truncate">{evento.tipo}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => handleEditClick(evento)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg"
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteEvento(evento.id)}
-                          className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {eventosDoMes(selectedMonth, selectedYear).length === 0 && (
-                    <div className="text-center py-4 text-xs text-gray-400 font-medium italic">
-                      Nenhum evento agendado
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+        {/* CONTEÚDO PRINCIPAL - CALENDÁRIO SEMANAL */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
+            <button
+              onClick={handlePrevWeek}
+              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
+            >
+              <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
+            </button>
+            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight text-center">
+              Semana de {weekDays[0].getDate()} de {MESES[weekDays[0].getMonth()]} a {weekDays[6].getDate()} de {MESES[weekDays[6].getMonth()]} {weekDays[0].getFullYear() !== weekDays[6].getFullYear() ? `${weekDays[0].getFullYear()}/${weekDays[6].getFullYear()}` : weekDays[0].getFullYear()}
+            </h2>
+            <button
+              onClick={handleNextWeek}
+              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
+            >
+              <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
+            </button>
           </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
+
+          <div className="grid grid-cols-7 gap-2 mb-3">
+            {DIAS_SEMANA.map(dia => (
+              <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">
+                {dia}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-2">
+            {renderWeeklyCalendar()}
+          </div>
+        </div>
+
+        {/* BLOCOS INFERIORES: ANIVERSARIANTES | EVENTOS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 w-full">
+          {/* BLOCO ANIVERSARIANTES */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[600px] w-full">
+            <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
-                  <Clock className="h-5 w-5 text-[#1e3a8a]" />
+                <div className="p-2 bg-[#d4af37]/10 rounded-xl">
+                  <Cake className="h-5 w-5 text-[#d4af37]" />
                 </div>
                 <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Aniversários</h2>
               </div>
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-gray-400" />
-                <select
-                  value={filterMes ?? ''}
-                  onChange={(e) => setFilterMes(e.target.value ? parseInt(e.target.value) : null)}
-                  className="border border-gray-200 rounded-xl px-4 py-2 text-sm font-semibold focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all"
-                >
-                  <option value="">Todos os meses</option>
-                  {MESES.map((mes, idx) => (
-                    <option key={idx} value={idx}>{mes}</option>
-                  ))}
-                </select>
-                {filterMes !== null && (
-                  <button
-                    onClick={() => setFilterMes(null)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
               {getProximosAniversarios().map((aniv) => (
                 <div
                   key={aniv.colaborador.id}
-                  className={`flex items-center justify-between p-5 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${aniv.isHoje
+                  className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg ${aniv.isHoje
                     ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-[#d4af37]/50'
                     : aniv.isEstaSemana
                       ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
                       : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
                     }`}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 min-w-0 pr-2">
                     {aniv.colaborador.photo_url ? (
                       <img
                         src={aniv.colaborador.photo_url}
                         alt={aniv.colaborador.name}
-                        className="w-14 h-14 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md"
+                        className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0"
                       />
                     ) : (
-                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white text-xl font-black border-2 border-[#1e3a8a]/30 shadow-md">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-lg font-black border-2 border-[#d4af37]/30 shadow-md shrink-0">
                         {aniv.colaborador.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <div>
-                      <p className="font-black text-[#0a192f] text-base">{formatName(aniv.colaborador.name)}</p>
-                      <p className="text-xs font-semibold text-gray-600">{toTitleCase(aniv.colaborador.role)}</p>
+                    <div className="min-w-0">
+                      <p className="font-black text-[#0a192f] text-sm truncate">{formatName(aniv.colaborador.name)}</p>
+                      <p className="text-[10px] font-semibold text-gray-600 truncate max-w-[120px] md:max-w-[200px]">{toTitleCase(aniv.colaborador.role)}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Data</p>
-                      <p className="font-bold text-[#0a192f]">
-                        {aniv.dia} de {MESES[aniv.mes]}
+                  <div className="flex items-center gap-4 border-l border-gray-200/50 pl-4 shrink-0">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Data</p>
+                      <p className="font-bold text-[#0a192f] text-xs">
+                        {aniv.dia} {MESES[aniv.mes].substring(0, 3)}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Faltam</p>
-                      <p className={`font-black text-lg ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                    <div className="text-right w-12 sm:w-16">
+                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Faltam</p>
+                      <p className={`font-black text-sm ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
                         }`}>
-                        {aniv.diasRestantes === 0 ? 'Hoje!' : `${aniv.diasRestantes} dias`}
+                        {aniv.diasRestantes === 0 ? 'Hoje!' : `${aniv.diasRestantes}d`}
                       </p>
                     </div>
                   </div>
@@ -719,7 +597,77 @@ export function Calendario() {
               ))}
             </div>
           </div>
-        )}
+
+          {/* BLOCO EVENTOS */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[600px] w-full">
+            <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
+                  <CalendarEventIcon className="h-5 w-5 text-[#1e3a8a]" />
+                </div>
+                <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Eventos</h2>
+              </div>
+            </div>
+
+            <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
+              {getProximosEventos().length === 0 ? (
+                <div className="text-center py-8 text-sm text-gray-400 font-medium italic">
+                  Nenhum evento agendado
+                </div>
+              ) : getProximosEventos().map((evento, idx) => (
+                <div
+                  key={idx}
+                  className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg ${evento.isHoje
+                    ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-500/50'
+                    : evento.isEstaSemana
+                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
+                      : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
+                    }`}
+                >
+                  <div className="flex items-center gap-4 min-w-0 pr-2">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-black border-2 shadow-md shrink-0 ${evento.isHoje ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-500/30' : evento.tipo === 'Aniversário' ? 'bg-gradient-to-br from-[#d4af37] to-amber-600 border-[#d4af37]/30' : 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a]/30'}`}>
+                      {evento.tipo === 'Reunião' ? <Users className="h-5 w-5" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-black text-[#0a192f] text-sm truncate">{evento.titulo}</p>
+                      <p className="text-[10px] font-semibold text-gray-600 truncate">{evento.tipo}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 border-l border-gray-200/50 pl-4 shrink-0">
+                    <div className="text-right hidden sm:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleEditClick(evento)}
+                        className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEvento(evento.id)}
+                        className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="text-right hidden sm:block">
+                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Data</p>
+                      <p className="font-bold text-[#0a192f] text-xs">
+                        {evento.dataObjeto.getDate()} {MESES[evento.dataObjeto.getMonth()].substring(0, 3)}
+                      </p>
+                    </div>
+                    <div className="text-right w-12 sm:w-16">
+                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Faltam</p>
+                      <p className={`font-black text-sm ${evento.isHoje ? 'text-emerald-600' : evento.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                        }`}>
+                        {evento.diasRestantes === 0 ? 'Hoje!' : `${evento.diasRestantes}d`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* MODAL NOVO/EDITAR EVENTO */}
         {isModalOpen && (
