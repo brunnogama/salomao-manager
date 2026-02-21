@@ -6,7 +6,7 @@ interface VencimentoOAB {
   id: number
   name: string
   role: string
-  oab_number: string
+  oab_numero: string
   oab_uf: string
   oab_vencimento: string
   hire_date: string
@@ -90,7 +90,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
           // Filtro de Status Ativo
           const statusLimpo = v.status?.trim().toLowerCase() || '';
-          if (!statusLimpo.includes('ativ')) return false;
+          if (!statusLimpo.includes('ativ') && !statusLimpo.includes('activ')) return false;
 
           const cargoLimpo = v.role.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
           const equipeLimpa = v.equipe.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -353,7 +353,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                       <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">OAB</p>
-                        <p className="text-xs font-bold text-[#0a192f]">{vencimento.oab_number}</p>
+                        <p className="text-xs font-bold text-[#0a192f]">{vencimento.oab_numero}</p>
                       </div>
                       <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">UF</p>
@@ -411,7 +411,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">OAB Número / UF</p>
-                  <p className="text-sm font-bold text-[#0a192f]">{selectedVencimento.oab_number} / {selectedVencimento.oab_uf}</p>
+                  <p className="text-sm font-bold text-[#0a192f]">{selectedVencimento.oab_numero} / {selectedVencimento.oab_uf}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Data Prevista</p>
