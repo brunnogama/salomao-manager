@@ -2,8 +2,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
   Cake,
   Users,
   Sparkles,
@@ -20,7 +18,6 @@ import {
   Trash2
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
-import { RHCalendarioDiaModal } from '../components/RHCalendarioDiaModal'
 import { useColaboradores } from '../hooks/useColaboradores'
 
 interface Colaborador {
@@ -55,8 +52,6 @@ const MESES = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ]
 
-const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-
 export function Calendario() {
   const { colaboradores, loading: colabsLoading } = useColaboradores()
   const [eventos, setEventos] = useState<Evento[]>([])
@@ -74,13 +69,8 @@ export function Calendario() {
       }))
   }, [colaboradores])
   const [currentDate] = useState(new Date())
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
-    const d = new Date()
-    const diff = d.getDate() - d.getDay()
-    return new Date(d.getFullYear(), d.getMonth(), diff)
-  })
-  const selectedMonth = currentWeekStart.getMonth();
-  const selectedYear = currentWeekStart.getFullYear();
+  const selectedMonth = currentDate.getMonth();
+  const selectedYear = currentDate.getFullYear();
 
   // Estados para o Modal de Evento
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -92,9 +82,6 @@ export function Calendario() {
     data: new Date().toISOString().split('T')[0],
     descricao: ''
   })
-
-  // Estado para o Modal de Lista do Dia
-  const [selectedDayEvents, setSelectedDayEvents] = useState<{ day: number, events: any[] } | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -163,7 +150,6 @@ export function Calendario() {
       const { error } = await supabase.from('eventos').delete().eq('id', id)
       if (error) throw error
       await fetchData()
-      setSelectedDayEvents(null)
     } catch (error) {
       alert('Erro ao excluir evento')
     }
@@ -178,7 +164,6 @@ export function Calendario() {
       descricao: evento.descricao || ''
     })
     setIsModalOpen(true)
-    setSelectedDayEvents(null)
   }
 
   const toTitleCase = (str: string) => {
@@ -286,90 +271,6 @@ export function Calendario() {
       .filter(e => e.diasRestantes >= 0)
       .sort((a, b) => a.diasRestantes - b.diasRestantes)
       .slice(0, 20)
-  }
-
-  const weekDays = useMemo(() => {
-    const days = []
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(currentWeekStart)
-      d.setDate(currentWeekStart.getDate() + i)
-      days.push(d)
-    }
-    return days
-  }, [currentWeekStart])
-
-  const renderWeeklyCalendar = () => {
-    return weekDays.map((dateObj, idx) => {
-      const day = dateObj.getDate()
-      const month = dateObj.getMonth()
-      const year = dateObj.getFullYear()
-
-      const anivDoDia = aniversarios.filter(a => a.dia === day && a.mes === month)
-      const evDoDia = eventos.filter(e => {
-        const d = new Date(e.data_evento + 'T12:00:00')
-        return d.getDate() === day && d.getMonth() === month && d.getFullYear() === year
-      })
-      const totalDia = [...anivDoDia, ...evDoDia]
-
-      const isToday = day === currentDate.getDate() && month === currentDate.getMonth() && year === currentDate.getFullYear()
-
-      return (
-        <div
-          key={idx}
-          onClick={() => setSelectedDayEvents({ day, events: totalDia })}
-          className={`h-32 p-3 rounded-xl border transition-all duration-200 flex flex-col justify-start overflow-hidden cursor-pointer ${isToday
-            ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a] shadow-xl'
-            : totalDia.length > 0
-              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg hover:scale-[1.02] hover:border-[#1e3a8a]/50'
-              : 'bg-white border-gray-100 hover:border-[#1e3a8a]/30 hover:bg-blue-50/30'
-            }`}
-        >
-          <div className="flex justify-between items-center mb-2">
-            <span className={`text-sm font-black ${isToday ? 'text-white' : 'text-[#0a192f]'}`}>
-              {day}
-            </span>
-            <span className={`text-[10px] font-bold uppercase ${isToday ? 'text-blue-200' : 'text-gray-400'}`}>
-              {MESES[month].substring(0, 3)}
-            </span>
-          </div>
-          {totalDia.length > 0 && (
-            <div className="space-y-1.5 overflow-y-auto custom-scrollbar flex-1 pr-1 pb-1">
-              {totalDia.map((item, idxx) => (
-                <div
-                  key={idxx}
-                  className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-2 py-1.5 rounded-lg shadow-sm border border-blue-100"
-                >
-                  {'colaborador' in item ? (
-                    <Cake className="h-3 w-3 text-[#d4af37] flex-shrink-0" />
-                  ) : (
-                    <CalendarEventIcon className="h-3 w-3 text-green-600 flex-shrink-0" />
-                  )}
-                  <span className="text-[9px] font-bold text-gray-700 truncate w-full leading-tight">
-                    {'colaborador' in item ? formatName(item.colaborador.name) : item.titulo}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )
-    })
-  }
-
-  const handlePrevWeek = () => {
-    setCurrentWeekStart(prev => {
-      const d = new Date(prev)
-      d.setDate(d.getDate() - 7)
-      return d
-    })
-  }
-
-  const handleNextWeek = () => {
-    setCurrentWeekStart(prev => {
-      const d = new Date(prev)
-      d.setDate(d.getDate() + 7)
-      return d
-    })
   }
 
   const aniversariosHoje = getAniversariosHoje()
@@ -503,40 +404,7 @@ export function Calendario() {
           </div>
         )}
 
-        {/* CONTEÚDO PRINCIPAL - CALENDÁRIO SEMANAL */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
-            <button
-              onClick={handlePrevWeek}
-              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
-            >
-              <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
-            </button>
-            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight text-center">
-              Semana de {weekDays[0].getDate()} de {MESES[weekDays[0].getMonth()]} a {weekDays[6].getDate()} de {MESES[weekDays[6].getMonth()]} {weekDays[0].getFullYear() !== weekDays[6].getFullYear() ? `${weekDays[0].getFullYear()}/${weekDays[6].getFullYear()}` : weekDays[0].getFullYear()}
-            </h2>
-            <button
-              onClick={handleNextWeek}
-              className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
-            >
-              <ChevronRight className="h-6 w-6 text-[#1e3a8a]" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-7 gap-2 mb-3">
-            {DIAS_SEMANA.map(dia => (
-              <div key={dia} className="text-center text-[9px] font-black text-gray-400 uppercase tracking-[0.15em]">
-                {dia}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-2">
-            {renderWeeklyCalendar()}
-          </div>
-        </div>
-
-        {/* BLOCOS INFERIORES: ANIVERSARIANTES | EVENTOS */}
+        {/* BLOCOS: ANIVERSARIANTES | EVENTOS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 w-full">
           {/* BLOCO ANIVERSARIANTES */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[600px] w-full">
@@ -756,18 +624,6 @@ export function Calendario() {
               </div>
             </div>
           </div>
-        )}
-
-        {/* MODAL DETALHES DO DIA */}
-        {selectedDayEvents && (
-          <RHCalendarioDiaModal
-            day={selectedDayEvents.day}
-            events={selectedDayEvents.events}
-            onClose={() => setSelectedDayEvents(null)}
-            onEdit={handleEditClick}
-            onDelete={handleDeleteEvento}
-            formatName={formatName}
-          />
         )}
 
       </div>
