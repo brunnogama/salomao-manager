@@ -70,7 +70,7 @@ export function ContractDetailsModal({
   const handleDownload = async (e: React.MouseEvent, doc: ContractDocument) => {
     e.stopPropagation();
     try {
-      const { data, error } = await supabase.storage.from('contract-documents').download(doc.file_path);
+      const { data, error } = await supabase.storage.from('ged-documentos').download(doc.file_path);
       if (error) throw error;
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
