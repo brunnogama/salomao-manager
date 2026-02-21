@@ -48,12 +48,13 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
       if (colabRes.error) throw colabRes.error;
       const colaboradores = colabRes.data;
+
+      const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || []);
+      const teamsMap = new Map(teamsRes.data?.map(t => [String(t.id), t.name]) || []);
+
       console.log("[OAB_DEBUG] Total colabs from DB:", colaboradores.length);
       console.log("[OAB_DEBUG] Roles mapping count:", rolesMap.size);
       console.log("[OAB_DEBUG] Teams mapping count:", teamsMap.size);
-      
-      const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || []);
-      const teamsMap = new Map(teamsRes.data?.map(t => [String(t.id), t.name]) || []);
 
       // 2. Busca Dados Financeiros Reais (Sem filtro de período para permitir visão global)
       const { data: financeiros, error: finError } = await supabase
@@ -63,13 +64,22 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
       if (finError) throw finError
 
       if (colaboradores) {
-        const hoje = new Date()
-        hoje.setHours(0, 0, 0, 0)
+        const hojeObj = new Date()
+        hojeObj.setHours(0, 0, 0, 0)
 
-        const processados = colaboradores.filter((v: any) => {
+        const processados = colaboradores.map((v: any) => {
+          const realRoleName = rolesMap.get(String(v.role)) || v.role || '';
+          const realTeamName = teamsMap.get(String(v.equipe)) || v.equipe || '';
+
+          return {
+            ...v,
+            role: realRoleName,
+            equipe: realTeamName
+          }
+        }).filter((v: any) => {
           // let's just log a couple to see their raw format
           if (v.name === 'Bruno Gama' || v.name === 'Marcus Livio Gomes') {
-               console.log("[OAB_DEBUG] Found sample user:", v.name, "Role:", v.role, "HireDate:", v.hire_date, "Status:", v.status);
+            console.log("[OAB_DEBUG] Found sample user:", v.name, "Role:", v.role, "HireDate:", v.hire_date, "Status:", v.status);
           }
           if (!v.hire_date) return false
 
@@ -77,10 +87,12 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
           const statusLimpo = v.status?.trim().toLowerCase() || '';
           if (!statusLimpo.includes('ativ')) return false;
 
-          const cargoLimpo = v.role?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
+          const cargoLimpo = v.role.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const equipeLimpa = v.equipe.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
           const ehCargoValido = cargoLimpo.includes('advogad') || cargoLimpo.includes('socio') || cargoLimpo.includes('socia') || cargoLimpo.includes('estagiario') || cargoLimpo.includes('estagiaria') || cargoLimpo.includes('juridico') || cargoLimpo.includes('legal');
 
-          if (v.role && !ehCargoValido && !v.equipe?.toLowerCase().includes('juridico')) return false;
+          if (!ehCargoValido && !equipeLimpa.includes('juridico')) return false;
 
           return true;
         }).map((v: any) => {
@@ -103,7 +115,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
             // Use UTC dates to avoid timezone differences incorrectly counting days when time is near midnight
             const dataVencUTC = Date.UTC(dataVenc.getFullYear(), dataVenc.getMonth(), dataVenc.getDate());
-            const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+            const hojeUTC = Date.UTC(hojeObj.getFullYear(), hojeObj.getMonth(), hojeObj.getDate());
 
             const diff = Math.ceil((dataVencUTC - hojeUTC) / (1000 * 60 * 60 * 24))
 
@@ -382,7 +394,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                 <GraduationCap className="h-6 w-6" />
                 <div>
                   <h3 className="text-lg font-black uppercase tracking-tight">Tratar Vencimento OAB</h3>
-                  <p className="text-xs text-blue-100 font-medium">{selectedVencimento.nome}</p>
+                  <p className="text-xs text-blue-100 font-medium">{selectedVencimento.name}</p>
                 </div>
               </div>
               <button onClick={() => setSelectedVencimento(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -394,7 +406,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">OAB Número / UF</p>
-                  <p className="text-sm font-bold text-[#0a192f]">{selectedVencimento.oab_numero} / {selectedVencimento.oab_uf}</p>
+                  <p className="text-sm font-bold text-[#0a192f]">{selectedVencimento.oab_number} / {selectedVencimento.oab_uf}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Data Prevista</p>
