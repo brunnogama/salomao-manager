@@ -4,12 +4,12 @@ import { supabase } from '../../../lib/supabase'
 
 interface VencimentoOAB {
   id: number
-  nome: string
-  cargo: string
-  oab_numero: string
+  name: string
+  role: string
+  oab_number: string
   oab_uf: string
   oab_vencimento: string
-  data_admissao: string
+  hire_date: string
   data_pagamento_oab: string
   dias_ate_pagamento: number
   equipe: string
@@ -58,24 +58,24 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         hoje.setHours(0, 0, 0, 0)
 
         const processados = colaboradores.filter((v: any) => {
-          if (!v.data_admissao) return false
+          if (!v.hire_date) return false
 
           // Filtro de Status Ativo
           const statusLimpo = v.status?.trim().toLowerCase() || '';
           if (!statusLimpo.includes('ativ')) return false;
 
-          const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
+          const cargoLimpo = v.role?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
           const ehCargoValido = cargoLimpo.includes('advogad') || cargoLimpo.includes('socio') || cargoLimpo.includes('socia') || cargoLimpo.includes('estagiario') || cargoLimpo.includes('estagiaria') || cargoLimpo.includes('juridico') || cargoLimpo.includes('legal');
 
-          if (v.cargo && !ehCargoValido && !v.equipe?.toLowerCase().includes('juridico')) return false;
+          if (v.role && !ehCargoValido && !v.equipe?.toLowerCase().includes('juridico')) return false;
 
           return true;
         }).map((v: any) => {
           try {
-            if (typeof v.data_admissao !== 'string') return null;
+            if (typeof v.hire_date !== 'string') return null;
 
             let dia, mes, ano;
-            const dataAdmissaoSoData = v.data_admissao.split('T')[0];
+            const dataAdmissaoSoData = v.hire_date.split('T')[0];
 
             if (dataAdmissaoSoData.includes('/')) {
               [dia, mes, ano] = dataAdmissaoSoData.split('/').map(Number);
@@ -112,7 +112,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
               status_pagamento_real: fin?.status_pagamento
             }
           } catch (err) {
-            console.error('Erro de parsing na data para', v.nome, err);
+            console.error('Erro de parsing na data para', v.name, err);
             return null;
           }
         }).filter(Boolean)
@@ -314,15 +314,15 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                         <GraduationCap className="h-4 w-4 text-white" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-black text-[#0a192f]">{vencimento.nome}</h4>
-                        <p className="text-xs text-gray-500 font-semibold">{vencimento.cargo} • {vencimento.equipe}</p>
+                        <h4 className="text-sm font-black text-[#0a192f]">{vencimento.name}</h4>
+                        <p className="text-xs text-gray-500 font-semibold">{vencimento.role} • {vencimento.equipe}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                       <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">OAB</p>
-                        <p className="text-xs font-bold text-[#0a192f]">{vencimento.oab_numero}</p>
+                        <p className="text-xs font-bold text-[#0a192f]">{vencimento.oab_number}</p>
                       </div>
                       <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">UF</p>
@@ -330,7 +330,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                       </div>
                       <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Admissão</p>
-                        <p className="text-xs font-bold text-[#0a192f]">{formatDate(vencimento.data_admissao)}</p>
+                        <p className="text-xs font-bold text-[#0a192f]">{formatDate(vencimento.hire_date)}</p>
                       </div>
                       <div className={`${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-100'} p-2.5 rounded-lg border`}>
                         <p className={`text-[8px] font-black ${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'text-orange-600' : 'text-blue-600'} uppercase tracking-wider mb-0.5 flex items-center gap-1`}>
