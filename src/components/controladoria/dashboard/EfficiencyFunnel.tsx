@@ -76,9 +76,15 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
             </div>
           </div>
 
-          {/* Etapa 2 - Propostas */}
-          <div className='md:col-span-1 flex flex-col items-center group relative'>
-            <div className='bg-white w-full h-[120px] p-5 rounded-2xl border border-gray-200 border-x-4 border-x-blue-600 shadow-sm flex flex-col items-center justify-center group-hover:shadow-md transition-all relative'>
+          {/* Etapa 2 - Propostas + Rejeitadas  */}
+          <div className='md:col-span-1 flex flex-col items-center relative w-full h-[120px]'>
+
+            {/* Linha que desce de Prospects para Rejeitadas (Visível apenas Desktop) */}
+            <div className='hidden md:block absolute w-[2px] h-[60px] bg-gradient-to-b from-indigo-200 to-red-200 right-[calc(100%+14px)] top-[60px] z-0'></div>
+            <div className='hidden md:block absolute h-[2px] w-[calc(50%+14px)] bg-red-200 right-[50%] top-[120px] z-0'></div>
+
+            {/* Propostas */}
+            <div className='bg-white w-full h-full p-5 rounded-2xl border border-gray-200 border-x-4 border-x-blue-600 shadow-sm flex flex-col items-center justify-center group-hover:shadow-md transition-all relative z-10'>
               <div className='w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-4 border-white shadow-sm text-[10px]'>
                 2
               </div>
@@ -89,9 +95,20 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
                 {funil.qualificadosProposta}
               </p>
             </div>
+
             {/* Seta Móvel */}
             <div className='md:hidden text-blue-300 my-2'>
               <ArrowRight className='w-6 h-6 rotate-90' />
+            </div>
+
+            {/* Rejeitadas (Abaixo de Propostas) */}
+            <div className='md:absolute md:top-[140px] md:left-0 md:right-0 bg-[#fef2f2] w-full p-3 rounded-xl border border-red-100 shadow-sm text-center flex flex-col justify-center opacity-90 mt-4 md:mt-0 z-10 hover:shadow-md transition-all'>
+              <p className='text-[9px] font-black text-red-600 uppercase tracking-[0.2em] mb-1'>
+                Rejeitadas
+              </p>
+              <p className='text-[20px] font-black text-red-700 tracking-tight leading-none'>
+                {funil.perdaAnalise + funil.perdaNegociacao}
+              </p>
             </div>
           </div>
 
@@ -121,8 +138,8 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
             </div>
           </div>
 
-          {/* Etapas Finais - Fechados e Rejeitados */}
-          <div className='md:col-span-1 flex flex-col relative w-full h-[120px]'>
+          {/* Etapas Finais - Fechados */}
+          <div className='md:col-span-1 flex flex-col items-center relative w-full h-[120px]'>
             {/* Fechados */}
             <div className='bg-[#f2fdf5] w-full h-full p-5 rounded-2xl border border-green-200 shadow-sm flex flex-col items-center justify-center group hover:shadow-md transition-all relative border-x-4 border-x-green-500 z-10'>
               <div className='w-6 h-6 rounded-full bg-green-500 text-white font-bold flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-4 border-[#f2fdf5] shadow-sm text-[10px]'>
@@ -133,16 +150,6 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
               </p>
               <p className='text-[32px] font-black text-[#0a192f] tracking-tight leading-none'>
                 {funil.fechados}
-              </p>
-            </div>
-
-            {/* Rejeitadas (Abaixo de Fechados) */}
-            <div className='md:absolute md:top-[140px] md:left-0 md:right-0 bg-[#fef2f2] w-full p-3 rounded-xl border border-red-100 shadow-sm text-center flex flex-col justify-center opacity-90 mt-4 md:mt-0'>
-              <p className='text-[9px] font-black text-red-600 uppercase tracking-[0.2em] mb-1'>
-                Rejeitadas
-              </p>
-              <p className='text-[20px] font-black text-red-700 tracking-tight leading-none'>
-                {funil.perdaAnalise + funil.perdaNegociacao}
               </p>
             </div>
           </div>
