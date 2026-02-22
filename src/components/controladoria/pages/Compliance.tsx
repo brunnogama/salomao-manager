@@ -703,7 +703,7 @@ export function Compliance() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto shrink-0 mt-4 xl:mt-0">
-                  {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
+                  {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab) && (
                     <button
                       onClick={() => handleEmitRF(activeTab)}
                       className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
