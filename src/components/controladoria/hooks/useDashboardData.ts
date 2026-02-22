@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { contractService } from '../services/contractService';
 import { partnerService } from '../services/partnerService';
+import { supabase } from '../../../lib/supabase';
 import { Contract, Partner, ContractCase } from '../../../types/controladoria';
 import { safeDate } from '../utils/masks';
 
@@ -102,17 +103,22 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
   const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [contratosData, sociosData] = await Promise.all([
+      const [contratosData, sociosData, colabResp] = await Promise.all([
         contractService.getAll(),
-        partnerService.getAll()
+        partnerService.getAll(),
+        supabase.from('collaborators').select('name, photo_url, foto_url')
       ]);
 
       setContracts(contratosData);
       setPartners(sociosData);
+      if (colabResp.data) {
+        setCollaborators(colabResp.data);
+      }
     } catch (error) {
       console.error("Erro ao buscar dados do dashboard:", error);
     } finally {
@@ -159,8 +165,36 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const periodoAnteriorStr = `${formatDateShort(primeiroDiaMesAnterior)} - ${formatDateShort(diaLimiteMesAnterior)}`;
     // -------------------------------------
 
+    const normalizeName = (name: string) => {
+      if (!name) return '';
+      return name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // remove accents
+        .trim();
+    };
+
     const partnerMap = partners.reduce((acc: any, s: Partner) => {
-      acc[s.id] = s.name; // Atualizado para usar s.name
+      const normalizedPartnerName = normalizeName(s.name);
+
+      // Attempt 1: Exact match on normalized names
+      let colab = collaborators.find((c: any) => normalizeName(c.name) === normalizedPartnerName);
+
+      // Attempt 2: Partial match (e.g. "Rodrigo Figueiredo" in "Rodrigo Figueiredo da Silva Cotta")
+      if (!colab) {
+        const partnerParts = normalizedPartnerName.split(' ').filter(p => p.length > 2);
+        colab = collaborators.find((c: any) => {
+          const colabNormalized = normalizeName(c.name);
+          if (!colabNormalized) return false;
+          // Check if at least first and last name matches, or if it's a very close substring
+          return partnerParts.length >= 2 && colabNormalized.includes(partnerParts[0]) && colabNormalized.includes(partnerParts[partnerParts.length - 1]);
+        });
+      }
+
+      acc[s.id] = {
+        name: s.name,
+        photo_url: s.photo_url || s.foto_url || colab?.photo_url || colab?.foto_url
+      }; // Atualizado com fallback seguro
       return acc;
     }, {});
 
@@ -309,10 +343,12 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       }
 
       // Contagem por Sócio e Financeiro
-      const pName = (c.partner_id && partnerMap[c.partner_id]) || c.responsavel_socio || 'Não Informado';
+      const pName = (c.partner_id && partnerMap[c.partner_id]?.name) || c.responsavel_socio || 'Não Informado';
+      const pPhotoUrl = (c.partner_id && partnerMap[c.partner_id]?.photo_url) || undefined;
+
       if (!partnerCounts[pName]) partnerCounts[pName] = {
         total: 0, analysis: 0, proposal: 0, active: 0, rejected: 0, probono: 0,
-        pl: 0, exito: 0, fixo: 0
+        pl: 0, exito: 0, fixo: 0, photo_url: pPhotoUrl
       };
 
       partnerCounts[pName].total++;
@@ -379,9 +415,9 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       }
 
       // Tempos Médios (Funil)
-      const dProspect = c.prospect_date ? new Date(c.prospect_date + 'T12:00:00') : null;
-      const dProposal = c.proposal_date ? new Date(c.proposal_date + 'T12:00:00') : null;
-      const dContract = c.contract_date ? new Date(c.contract_date + 'T12:00:00') : null;
+      const dProspect = safeDate(c.prospect_date);
+      const dProposal = safeDate(c.proposal_date);
+      const dContract = safeDate(c.contract_date);
 
       if (dProspect && isValidDate(dProspect) && dProposal && isValidDate(dProposal) && dProposal >= dProspect) {
         const diffTime = Math.abs(dProposal.getTime() - dProspect.getTime());
@@ -443,9 +479,9 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
       // Funil
       fTotal++;
-      const chegouEmProposta = c.status === 'proposal' || c.status === 'active' || (c.status === 'rejected' && c.proposal_date);
+      const chegouEmProposta = c.status === 'proposal' || c.status === 'active' || c.status === 'probono' || (c.status === 'rejected' && c.proposal_date);
       if (chegouEmProposta) fQualificados++;
-      if (c.status === 'active') fFechados++;
+      if (c.status === 'active' || c.status === 'probono') fFechados++;
       else if (c.status === 'rejected') c.proposal_date ? fPerdaNegociacao++ : fPerdaAnalise++;
     });
 

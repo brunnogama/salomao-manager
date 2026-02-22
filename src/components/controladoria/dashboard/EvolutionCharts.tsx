@@ -327,11 +327,11 @@ export function EvolutionCharts({
     <>
       {/* 5. ENTRADA DE CASOS (12 MESES) */}
       <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
-        
+
         {/* Header */}
-        <div className='mb-6 pb-5 border-b border-gray-100'>
-          <div className='flex items-center gap-3 mb-2'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
+        <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <div className='p-2 rounded-xl bg-[#0a192f] text-white shadow-sm'>
               <BarChart3 className='w-5 h-5' />
             </div>
             <div>
@@ -349,11 +349,11 @@ export function EvolutionCharts({
         <div className='mb-6'>
           {evolucaoMensal.length === 0 ? (
             <div className="h-64 flex items-center justify-center">
-              <EmptyState 
-                icon={BarChart3} 
-                title="Sem dados de evolução" 
+              <EmptyState
+                icon={BarChart3}
+                title="Sem dados de evolução"
                 description="Ainda não há histórico suficiente para gerar o gráfico de entrada."
-                className="min-h-[200px]" 
+                className="min-h-[200px]"
               />
             </div>
           ) : (
@@ -362,38 +362,38 @@ export function EvolutionCharts({
             </div>
           )}
         </div>
-        
+
         {/* Análise de Dados */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5 border-t border-gray-100">
-          <div className="flex flex-col gap-1 p-4 rounded-xl bg-gray-50/50 border border-gray-100/80 transition-all hover:bg-white hover:shadow-sm">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">
+          <div className="flex flex-col gap-1 p-4 rounded-xl bg-white border border-gray-200 border-l-4 border-l-[#0a192f] transition-all hover:shadow-md">
+            <span className="text-[9px] font-black text-gray-500 uppercase tracking-wider mb-1">
               Volume Total (12m)
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-[24px] font-black text-gray-800 tracking-tight">
+              <span className="text-[24px] font-black text-[#0a192f] tracking-tight">
                 {totalEntrada12}
               </span>
-              <span className="text-xs font-semibold text-gray-500">casos</span>
+              <span className="text-xs font-semibold text-gray-400">casos</span>
             </div>
           </div>
-          
-          <div className="flex flex-col gap-1 p-4 rounded-xl bg-gray-50/50 border border-gray-100/80 transition-all hover:bg-white hover:shadow-sm">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">
+
+          <div className="flex flex-col gap-1 p-4 rounded-xl bg-white border border-gray-200 border-l-4 border-l-blue-600 transition-all hover:shadow-md">
+            <span className="text-[9px] font-black text-gray-500 uppercase tracking-wider mb-1">
               Média Mensal
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-[24px] font-black text-blue-600 tracking-tight">
+              <span className="text-[24px] font-black text-[#0a192f] tracking-tight">
                 {mediaEntrada}
               </span>
-              <span className="text-xs font-semibold text-gray-500">/mês</span>
+              <span className="text-xs font-semibold text-gray-400">/mês</span>
             </div>
           </div>
-          
-          <div className="flex flex-col gap-1 p-4 rounded-xl bg-gray-50/50 border border-gray-100/80 transition-all hover:bg-white hover:shadow-sm">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-1">
+
+          <div className="flex flex-col gap-1 p-4 rounded-xl bg-white border border-gray-200 border-l-4 border-l-emerald-500 transition-all hover:shadow-md">
+            <span className="text-[9px] font-black text-gray-500 uppercase tracking-wider mb-1">
               Tendência Recente
             </span>
-            <div className={`flex items-center gap-2 ${diffEntrada > 0 ? 'text-green-600' : diffEntrada < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+            <div className={`flex items-center gap-2 ${diffEntrada > 0 ? 'text-emerald-600' : diffEntrada < 0 ? 'text-red-500' : 'text-gray-500'}`}>
               {diffEntrada > 0 ? <TrendingUp className="w-5 h-5" /> : diffEntrada < 0 ? <TrendingDown className="w-5 h-5" /> : <Minus className="w-5 h-5" />}
               <span className="text-[20px] font-black tracking-tight">
                 {diffEntrada > 0 ? `+${diffEntrada}` : diffEntrada}
@@ -408,21 +408,23 @@ export function EvolutionCharts({
 
       {/* 6. EVOLUÇÃO FINANCEIRA (12 MESES) */}
       <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
-        
+
         {/* Header */}
-        <div className='mb-6 pb-5 border-b border-gray-100'>
+        <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
           <div className='flex items-center gap-3'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
+            <div className='p-2 rounded-xl bg-[#0a192f] text-white shadow-sm'>
               <BarChart4 className='w-5 h-5' />
             </div>
-            <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
-              Evolução Financeira (12 Meses)
-            </h2>
+            <div>
+              <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
+                Evolução Financeira (12 Meses)
+              </h2>
+            </div>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
+
+        <div className="grid grid-cols-1 gap-6">
+
           {/* LADO ESQUERDO - PROPOSTAS */}
           <div className="bg-white border border-gray-100 rounded-xl p-5 flex flex-col justify-between hover:shadow-sm transition-all">
             <div>
@@ -444,12 +446,12 @@ export function EvolutionCharts({
                   </span>
                 </div>
               </div>
-              
+
               {propostas12Meses.length === 0 ? (
                 <div className="h-64 flex items-center justify-center">
-                  <EmptyState 
-                    icon={BarChart3} 
-                    title="Sem dados de propostas" 
+                  <EmptyState
+                    icon={BarChart3}
+                    title="Sem dados de propostas"
                     description="Ainda não há histórico suficiente para gerar o gráfico."
                     className="min-h-[150px]"
                   />
@@ -460,7 +462,7 @@ export function EvolutionCharts({
                 </div>
               )}
             </div>
-            
+
             {/* Análise Propostas */}
             <div className="grid grid-cols-3 gap-3 pt-5 mt-5 border-t border-gray-100">
               <div className="flex flex-col gap-1">
@@ -514,12 +516,12 @@ export function EvolutionCharts({
                   </span>
                 </div>
               </div>
-              
+
               {financeiro12Meses.length === 0 ? (
                 <div className="h-64 flex items-center justify-center">
-                  <EmptyState 
-                    icon={BarChart3} 
-                    title="Sem dados financeiros" 
+                  <EmptyState
+                    icon={BarChart3}
+                    title="Sem dados financeiros"
                     description="Ainda não há histórico suficiente para gerar o gráfico."
                     className="min-h-[150px]"
                   />
@@ -530,7 +532,7 @@ export function EvolutionCharts({
                 </div>
               )}
             </div>
-            
+
             {/* Análise Fechamentos */}
             <div className="grid grid-cols-3 gap-3 pt-5 mt-5 border-t border-gray-100">
               <div className="flex flex-col gap-1">
@@ -563,7 +565,7 @@ export function EvolutionCharts({
             </div>
           </div>
         </div>
-        
+
         {/* Legenda */}
         <div className='flex justify-center gap-6 mt-6 pt-5 border-t border-gray-100'>
           <div className='flex items-center gap-2'>

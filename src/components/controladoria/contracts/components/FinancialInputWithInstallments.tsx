@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, ChevronDown } from 'lucide-react';
-import { maskMoney } from '../../utils/masks';
+import { maskMoney, maskPercent } from '../../utils/masks';
 
 const MinimalSelect = ({ value, onChange, options }: { value: string, onChange: (val: string) => void, options: string[] }) => {
   return (
@@ -34,6 +34,33 @@ export const FinancialInputWithInstallments = ({
   label, value, onChangeValue, installments, onChangeInstallments, onAdd, clause, onChangeClause
 }: FinancialInputProps) => {
   const installmentOptions = Array.from({ length: 24 }, (_, i) => `${i + 1}x`);
+
+  // Decide whether the current value looks like a percentage
+  const isPercentInitial = value?.includes('%');
+  const [format, setFormat] = useState<'R$' | '%'>((isPercentInitial) ? '%' : 'R$');
+
+  const handleFormatChange = (newFormat: 'R$' | '%') => {
+    setFormat(newFormat);
+    if (!value) return;
+
+    // Quick conversion logic to swap format string visually 
+    // Usually one might clear the field or just apply the new mask to the raw digits
+    if (newFormat === '%') {
+      onChangeValue(maskPercent(value));
+    } else {
+      onChangeValue(maskMoney(value));
+    }
+  };
+
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawVal = e.target.value;
+    if (format === '%') {
+      onChangeValue(maskPercent(rawVal));
+    } else {
+      onChangeValue(maskMoney(rawVal));
+    }
+  };
+
   return (
     <div>
       <label className="text-xs font-medium block mb-1 text-gray-600">{label}</label>
@@ -48,13 +75,29 @@ export const FinancialInputWithInstallments = ({
             title="Cláusula (ex: 2.1)"
           />
         )}
+
+        {/* Currency/Percent Prefix Toggle */}
+        <div className={`relative ${!onChangeClause ? 'rounded-l-lg' : ''} border border-gray-300 border-r-0 bg-gray-50 hover:bg-gray-100 transition-colors`}>
+          <select
+            value={format}
+            onChange={(e) => handleFormatChange(e.target.value as 'R$' | '%')}
+            className="h-full pl-2 pr-6 appearance-none bg-transparent outline-none text-sm font-semibold text-gray-600 cursor-pointer"
+            title="Formato do valor"
+          >
+            <option value="R$">R$</option>
+            <option value="%">%</option>
+          </select>
+          <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+        </div>
+
         <input
           type="text"
-          className={`flex-1 border border-gray-300 p-2.5 text-sm bg-white focus:border-salomao-blue outline-none min-w-0 ${!onChangeClause ? 'rounded-l-lg' : ''} ${!onAdd ? 'rounded-r-none border-r-0' : ''}`}
+          className={`flex-1 border border-gray-300 p-2.5 text-sm bg-white focus:border-salomao-blue outline-none min-w-0 ${!onAdd ? 'rounded-r-none border-r-0' : ''}`}
           value={value || ''}
-          onChange={(e) => onChangeValue(maskMoney(e.target.value))}
-          placeholder="R$ 0,00"
+          onChange={handleValueChange}
+          placeholder={format === 'R$' ? "0,00" : "0,00%"}
         />
+
         <div className={`w-16 border-y border-r border-gray-300 bg-gray-50 ${!onAdd ? 'rounded-r-lg' : ''}`}>
           <MinimalSelect value={installments || '1x'} onChange={onChangeInstallments} options={installmentOptions} />
         </div>

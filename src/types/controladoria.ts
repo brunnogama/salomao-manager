@@ -13,6 +13,7 @@ export interface Partner {
   birthday?: string;
   gender?: string;
   photo_url?: string;
+  foto_url?: string; // Legacy/DB field support
 
   // Endereço
   zip_code?: string;

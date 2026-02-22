@@ -41,6 +41,8 @@ export function Dashboard({ }: Props) {
     rejectionData, contractsByPartner
   } = useDashboardData(selectedPartner, selectedLocation);
 
+
+
   useEffect(() => {
     fetchFilterOptions();
   }, []);
@@ -139,19 +141,17 @@ export function Dashboard({ }: Props) {
         </div>
       </div>
 
-
-
-      {/* 3. Mensagem de Boas-vindas */}
-
-
-      {/* 4. NOVOS GRÁFICOS E FUNCIONALIDADES DA CONTROLADORIA (Integrados abaixo do conteúdo original) */}
-      <div ref={dashboardRef} className="space-y-6">
+      {/* 4. GRÁFICOS E FUNCIONALIDADES DA CONTROLADORIA */}
+      <div ref={dashboardRef} className="space-y-6 pb-12">
+        {/* Visão Geral */}
         <EfficiencyFunnel funil={funil} />
         <PortfolioFinancialOverview metrics={metrics} />
         <div className="grid grid-cols-1 gap-6">
           <WeeklySummary metrics={metrics} />
           <MonthlySummary metrics={metrics} />
         </div>
+
+        {/* Financeiro & Evolução */}
         <EvolutionCharts
           evolucaoMensal={evolucaoMensal}
           propostas12Meses={propostas12Meses}
@@ -161,6 +161,8 @@ export function Dashboard({ }: Props) {
           statsPropostas={statsPropostas}
           statsFinanceiro={statsFinanceiro}
         />
+
+        {/* Operacional & Sócios */}
         <PartnerStats contractsByPartner={contractsByPartner} />
         <OperationalStats rejectionData={rejectionData} metrics={metrics} />
       </div>

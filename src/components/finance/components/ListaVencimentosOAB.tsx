@@ -4,12 +4,12 @@ import { supabase } from '../../../lib/supabase'
 
 interface VencimentoOAB {
   id: number
-  nome: string
-  cargo: string
+  name: string
+  role: string
   oab_numero: string
   oab_uf: string
   oab_vencimento: string
-  data_admissao: string
+  hire_date: string
   data_pagamento_oab: string
   dias_ate_pagamento: number
   equipe: string
@@ -28,7 +28,7 @@ interface ListaVencimentosOABProps {
 export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABProps) {
   const [vencimentos, setVencimentos] = useState<VencimentoOAB[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtro, setFiltro] = useState<'todos' | 'urgente' | 'tratados' | 'mes_atual'>('mes_atual')
+  const [filtro, setFiltro] = useState<'todos' | 'urgente' | 'tratados' | 'mes_atual'>('todos')
   const [selectedVencimento, setSelectedVencimento] = useState<VencimentoOAB | null>(null)
   const [valorInput, setValorInput] = useState('')
 
@@ -39,12 +39,22 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
   const fetchVencimentos = async () => {
     setLoading(true)
     try {
-      // 1. Busca Colaboradores
-      const { data: colaboradores, error: colError } = await supabase
-        .from('colaboradores')
-        .select('*')
+      // 1. Busca Colaboradores e tabelas de mapeamento
+      const [colabRes, rolesRes, teamsRes] = await Promise.all([
+        supabase.from('collaborators').select('*'),
+        supabase.from('roles').select('id, name'),
+        supabase.from('teams').select('id, name')
+      ]);
 
-      if (colError) throw colError
+      if (colabRes.error) throw colabRes.error;
+      const colaboradores = colabRes.data;
+
+      const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || []);
+      const teamsMap = new Map(teamsRes.data?.map(t => [String(t.id), t.name]) || []);
+
+      console.log("[OAB_DEBUG] Total colabs from DB:", colaboradores.length);
+      console.log("[OAB_DEBUG] Roles mapping count:", rolesMap.size);
+      console.log("[OAB_DEBUG] Teams mapping count:", teamsMap.size);
 
       // 2. Busca Dados Financeiros Reais (Sem filtro de período para permitir visão global)
       const { data: financeiros, error: finError } = await supabase
@@ -54,54 +64,93 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
       if (finError) throw finError
 
       if (colaboradores) {
-        const hoje = new Date()
-        hoje.setHours(0, 0, 0, 0)
+        const hojeObj = new Date()
+        hojeObj.setHours(0, 0, 0, 0)
 
-        const processados = colaboradores.filter((v: any) => {
-          if (!v.data_admissao) return false
+        // Log the first element to see actual structure
+        if (colaboradores.length > 0) {
+          console.log("[OAB_DEBUG] Sample Collaborator Data:", colaboradores[0]);
+        }
 
-          // Filtro de Status Ativo
-          const statusLimpo = v.status?.trim().toLowerCase() || '';
-          if (statusLimpo !== 'ativo') return false;
-
-          const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
-          const ehCargoValido = cargoLimpo === 'advogado' || cargoLimpo === 'socio';
-
-          if (!ehCargoValido) return false;
-
-          return true;
-        }).map((v: any) => {
-          let dia, mes, ano;
-          if (v.data_admissao.includes('/')) {
-            [dia, mes, ano] = v.data_admissao.split('/').map(Number);
-          } else {
-            [ano, mes, dia] = v.data_admissao.split('-').map(Number);
-          }
-
-          const dataVenc = new Date(ano, (mes - 1) + 6, dia)
-          dataVenc.setDate(dataVenc.getDate() - 1)
-
-          const diff = Math.ceil((dataVenc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
-
-          // Cruzamento com dados financeiros reais baseado no vencimento calculado
-          const fin = financeiros?.find(f =>
-            f.colaborador_id === v.id &&
-            f.mes_referencia === dataVenc.getMonth() &&
-            f.ano_referencia === dataVenc.getFullYear()
-          )
+        const processados = colaboradores.map((v: any) => {
+          const realRoleName = rolesMap.get(String(v.role)) || v.role || '';
+          const realTeamName = teamsMap.get(String(v.equipe)) || v.equipe || '';
 
           return {
             ...v,
-            data_pagamento_oab: dataVenc.toISOString().split('T')[0],
-            dias_ate_pagamento: diff,
-            valor_anuidade: fin?.valor_anuidade,
-            status_pagamento_real: fin?.status_pagamento
+            role: realRoleName,
+            equipe: realTeamName
           }
-        })
+        }).filter((v: any) => {
+          if (!v.hire_date) return false
+          if (v.name === 'Bruno Gama' || v.name === 'Marcus Livio Gomes') {
+            console.log("[OAB_DEBUG] Found sample user:", v.name, "Role:", v.role, "HireDate:", v.hire_date, "Status:", v.status);
+          }
+          if (!v.hire_date) return false
+
+          // Filtro de Status Ativo
+          const statusLimpo = v.status?.trim().toLowerCase() || '';
+          if (statusLimpo !== 'active') return false;
+
+          const cargoLimpo = v.role.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const equipeLimpa = v.equipe.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+          const ehCargoValido = cargoLimpo.includes('advogad') || cargoLimpo.includes('socio') || cargoLimpo.includes('socia') || cargoLimpo.includes('estagiario') || cargoLimpo.includes('estagiaria') || cargoLimpo.includes('juridico') || cargoLimpo.includes('legal');
+
+          if (!ehCargoValido && !equipeLimpa.includes('juridico')) return false;
+
+          return true;
+        }).map((v: any) => {
+          try {
+            if (typeof v.hire_date !== 'string') return null;
+
+            let dia, mes, ano;
+            const dataAdmissaoSoData = v.hire_date.split('T')[0];
+
+            if (dataAdmissaoSoData.includes('/')) {
+              [dia, mes, ano] = dataAdmissaoSoData.split('/').map(Number);
+            } else {
+              [ano, mes, dia] = dataAdmissaoSoData.split('-').map(Number);
+            }
+
+            if (!ano || !mes || !dia) return null;
+
+            const dataVenc = new Date(ano, (mes - 1) + 6, dia)
+            dataVenc.setDate(dataVenc.getDate() - 1)
+
+            // Use UTC dates to avoid timezone differences incorrectly counting days when time is near midnight
+            const dataVencUTC = Date.UTC(dataVenc.getFullYear(), dataVenc.getMonth(), dataVenc.getDate());
+            const hojeUTC = Date.UTC(hojeObj.getFullYear(), hojeObj.getMonth(), hojeObj.getDate());
+
+            const diff = Math.ceil((dataVencUTC - hojeUTC) / (1000 * 60 * 60 * 24))
+
+            // Add padStart to ensure valid YYYY-MM-DD format without local timezone shift vulnerabilities
+            const dataPagamentoFmt = `${dataVenc.getFullYear()}-${String(dataVenc.getMonth() + 1).padStart(2, '0')}-${String(dataVenc.getDate()).padStart(2, '0')}`;
+
+            // Cruzamento com dados financeiros reais baseado no vencimento calculado
+            const fin = financeiros?.find(f =>
+              f.colaborador_id === v.id &&
+              f.mes_referencia === dataVenc.getMonth() &&
+              f.ano_referencia === dataVenc.getFullYear()
+            )
+
+            return {
+              ...v,
+              data_pagamento_oab: dataPagamentoFmt,
+              dias_ate_pagamento: diff,
+              valor_anuidade: fin?.valor_anuidade,
+              status_pagamento_real: fin?.status_pagamento
+            }
+          } catch (err) {
+            console.error('Erro de parsing na data para', v.name, err);
+            return null;
+          }
+        }).filter(Boolean)
 
         // Ordenação: Do mais antigo (mais atrasado/menor diff) para o mais novo
         processados.sort((a, b) => a.dias_ate_pagamento - b.dias_ate_pagamento)
 
+        console.log("[OAB_DEBUG] Final processados array size:", processados.length);
         setVencimentos(processados)
       }
     } catch (error) {
@@ -115,15 +164,17 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
     if (!selectedVencimento) return
 
     const valorNumerico = parseFloat(valorInput.replace(/[R$\s.]/g, '').replace(',', '.'))
-    const dataVenc = new Date(selectedVencimento.data_pagamento_oab);
+    const [anoStr, mesStr] = selectedVencimento.data_pagamento_oab.split('-');
+    const mesRef = parseInt(mesStr, 10) - 1;
+    const anoRef = parseInt(anoStr, 10);
 
     try {
       const { error } = await supabase
         .from('financeiro_oab')
         .upsert({
           colaborador_id: selectedVencimento.id,
-          mes_referencia: dataVenc.getMonth(),
-          ano_referencia: dataVenc.getFullYear(),
+          mes_referencia: mesRef,
+          ano_referencia: anoRef,
           status_pagamento: status,
           valor_anuidade: status === 'pago' ? valorNumerico : 0,
           updated_at: new Date().toISOString()
@@ -219,8 +270,8 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
     if (filtro === 'mes_atual') {
       const hoje = new Date();
       return vencimentosPendentesGlobal.filter(v => {
-        const dataVenc = new Date(v.data_pagamento_oab);
-        return dataVenc.getMonth() === hoje.getMonth() && dataVenc.getFullYear() === hoje.getFullYear();
+        const [year, month] = v.data_pagamento_oab.split('-');
+        return parseInt(month, 10) === hoje.getMonth() + 1 && parseInt(year, 10) === hoje.getFullYear();
       });
     }
     return vencimentosPendentesGlobal; // 'todos'
@@ -243,8 +294,8 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         <button
           onClick={() => setFiltro('todos')}
           className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'todos'
-              ? 'bg-[#1e3a8a] text-white shadow-md'
-              : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+            ? 'bg-[#1e3a8a] text-white shadow-md'
+            : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
             }`}
         >
           Todos ({vencimentosPendentesGlobal.length})
@@ -253,8 +304,8 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         <button
           onClick={() => setFiltro('urgente')}
           className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'urgente'
-              ? 'bg-red-600 text-white shadow-md'
-              : 'bg-red-50 text-red-600 hover:bg-red-100'
+            ? 'bg-red-600 text-white shadow-md'
+            : 'bg-red-50 text-red-600 hover:bg-red-100'
             }`}
         >
           Urgente ({vencimentosPendentesGlobal.filter(v => v.dias_ate_pagamento <= 7).length})
@@ -263,8 +314,8 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         <button
           onClick={() => setFiltro('tratados')}
           className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'tratados'
-              ? 'bg-green-600 text-white shadow-md'
-              : 'bg-green-50 text-green-600 hover:bg-green-100'
+            ? 'bg-green-600 text-white shadow-md'
+            : 'bg-green-50 text-green-600 hover:bg-green-100'
             }`}
         >
           Tratados ({vencimentosTratadosGlobal.length})
@@ -285,17 +336,17 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
               <div
                 key={vencimento.id}
                 onClick={() => setSelectedVencimento(vencimento)}
-                className={`bg-white rounded-xl border p-4 sm:p-5 transition-all cursor-pointer ${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'ring-2 ring-orange-500 border-orange-200 shadow-lg' : 'border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md'}`}
+                className={`bg-white rounded-xl border p-5 transition-all cursor-pointer ${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'ring-2 ring-orange-500 border-orange-200 shadow-lg' : 'border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md'}`}
               >
-                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                  <div className="flex-1 space-y-3 w-full">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
                         <GraduationCap className="h-4 w-4 text-white" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-black text-[#0a192f]">{vencimento.nome}</h4>
-                        <p className="text-xs text-gray-500 font-semibold">{vencimento.cargo} • {vencimento.equipe}</p>
+                        <h4 className="text-sm font-black text-[#0a192f]">{vencimento.name}</h4>
+                        <p className="text-xs text-gray-500 font-semibold">{vencimento.role} • {vencimento.equipe}</p>
                       </div>
                     </div>
 
@@ -310,7 +361,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                       </div>
                       <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Admissão</p>
-                        <p className="text-xs font-bold text-[#0a192f]">{formatDate(vencimento.data_admissao)}</p>
+                        <p className="text-xs font-bold text-[#0a192f]">{formatDate(vencimento.hire_date)}</p>
                       </div>
                       <div className={`${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-100'} p-2.5 rounded-lg border`}>
                         <p className={`text-[8px] font-black ${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'text-orange-600' : 'text-blue-600'} uppercase tracking-wider mb-0.5 flex items-center gap-1`}>
@@ -342,25 +393,25 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
       {selectedVencimento && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-[#1e3a8a] text-white shrink-0">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-200 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-[#1e3a8a] text-white">
               <div className="flex items-center gap-3">
-                <GraduationCap className="h-6 w-6 shrink-0" />
+                <GraduationCap className="h-6 w-6" />
                 <div>
-                  <h3 className="text-base sm:text-lg font-black uppercase tracking-tight leading-tight">Tratar Vencimento OAB</h3>
-                  <p className="text-[10px] sm:text-xs text-blue-100 font-medium">{selectedVencimento.nome}</p>
+                  <h3 className="text-lg font-black uppercase tracking-tight">Tratar Vencimento OAB</h3>
+                  <p className="text-xs text-blue-100 font-medium">{selectedVencimento.name}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedVencimento(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors shrink-0">
+              <button onClick={() => setSelectedVencimento(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto custom-scrollbar">
+            <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">OAB Número / UF</p>
-                  <p className="text-sm font-bold text-[#0a192f] truncate">{selectedVencimento.oab_numero} / {selectedVencimento.oab_uf}</p>
+                  <p className="text-sm font-bold text-[#0a192f]">{selectedVencimento.oab_numero} / {selectedVencimento.oab_uf}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Data Prevista</p>
@@ -382,7 +433,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-gray-100">
+              <div className="grid grid-cols-2 gap-3 pt-4">
                 <button
                   onClick={() => handleUpdateStatus('desconsiderado')}
                   className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all uppercase tracking-widest"

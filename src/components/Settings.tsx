@@ -3,7 +3,7 @@ import {
   Shield, Users, History as HistoryIcon, Code,
   Briefcase, EyeOff, LayoutGrid, Heart, DollarSign, Grid,
   CheckCircle, AlertCircle, Trash2, AlertTriangle,
-  UserCircle, LogOut, Settings as SettingsIcon, Layout, Mail, Info, Database
+  UserCircle, LogOut, Settings as SettingsIcon, Layout, Info, Database
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
@@ -17,6 +17,7 @@ import { MaintenanceSection } from './settings/MaintenanceSection'
 import { RHSection } from './settings/RHSection'
 import { SystemSection } from './settings/SystemSection'
 import { ControladoriaSection } from './settings/ControladoriaSection'
+import { SYSTEM_VERSION } from '../config/version'
 
 // --- INTERFACES & CONSTANTS ---
 interface UserPermissions {
@@ -358,14 +359,14 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   }
 
   const menuItems = [
-    { id: 'geral', label: 'Geral', icon: Shield },
+    { id: 'geral', label: 'Usuários', icon: Shield },
     { id: 'crm', label: 'CRM Brindes', icon: Briefcase },
     { id: 'controladoria', label: 'Controladoria', icon: Layout, adminOnly: true }, // NEW ITEM
     { id: 'rh', label: 'RH', icon: Users },
     { id: 'family', label: 'Família', icon: Heart },
     { id: 'financial', label: 'Financeiro', icon: DollarSign },
     { id: 'historico', label: 'Histórico', icon: HistoryIcon },
-    { id: 'sistema', label: 'Sistema', icon: Code, adminOnly: true },
+    { id: 'sistema', label: 'Changelog', icon: Code, adminOnly: true },
     { id: 'about', label: 'Sobre', icon: Info },
   ];
 
@@ -382,13 +383,16 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-6 overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-[#f1f5f9] p-4 sm:p-6 space-y-6 overflow-hidden relative">
+      {/* Glow backgrounds */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob pointer-events-none"></div>
+      <div className="absolute top-0 left-0 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob pointer-events-none animation-delay-2000"></div>
 
       {/* 1. Header - Salomão Design System */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white/80 backdrop-blur-md p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 relative z-10 gap-4">
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2 sm:p-3 shadow-lg shrink-0">
-            <SettingsIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
+          <div className="rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 p-2 sm:p-3 shadow-lg shadow-blue-500/30 shrink-0">
+            <SettingsIcon className="h-6 w-6 sm:h-7 w-7 text-white" />
           </div>
           <div>
             <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Configurações</h1>
@@ -422,40 +426,28 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden relative z-10">
 
         {/* SIDEBAR DE NAVEGAÇÃO REESTRUTURADA */}
         <div className="w-full lg:w-64 flex-shrink-0 flex flex-col space-y-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 lg:p-3 flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 lg:gap-0 lg:space-y-1 custom-scrollbar">
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-sm border border-white/40 p-2 lg:p-3 flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 lg:gap-0 lg:space-y-1 relative custom-scrollbar">
+            {/* Subtle glow effect behind menu */}
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none"></div>
             {menuItems.map(item => (
               (!item.adminOnly || isAdmin) && hasAccessToModule(item.id) && (
                 <button
                   key={item.id}
                   onClick={() => setActiveModule(item.id as any)}
-                  className={`flex-shrink-0 lg:w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeModule === item.id
-                    ? 'bg-[#1e3a8a] text-white shadow-md'
-                    : 'text-gray-500 hover:bg-gray-50'
+                  className={`flex-shrink-0 lg:w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all relative z-10 ${activeModule === item.id
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/25 lg:scale-[1.02]'
+                    : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm'
                     }`}
                 >
-                  <item.icon className="mr-2 lg:mr-3 h-4 w-4" />
+                  <item.icon className={`mr-2 lg:mr-3 h-4 w-4 ${activeModule === item.id ? 'text-blue-100' : 'text-gray-400'}`} />
                   <span className="whitespace-nowrap">{item.label}</span>
                 </button>
               )
             ))}
-          </div>
-
-          <div className="p-4 bg-white rounded-2xl border border-gray-100 text-[9px] font-black uppercase tracking-widest text-gray-400 shadow-sm">
-            <p className="text-[#0a192f] mb-3 border-b border-gray-50 pb-2">Diagnóstico</p>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <Mail className="w-3 h-3 text-[#1e3a8a]" />
-                <span className="truncate">{currentUserEmail || 'N/A'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="w-3 h-3 text-[#1e3a8a]" />
-                <span>Nível: {currentUserRole || '...'}</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -500,7 +492,10 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
                   </div>
                 </div>
                 <h2 className="text-xl font-black text-[#0a192f] uppercase tracking-[0.2em]">FlowMetrics</h2>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Versão 3.0.0 • Build 2026.02</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2 flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                  Versão {SYSTEM_VERSION} • Build 2026.02
+                </p>
 
                 <div className="mt-10 flex justify-center gap-12 border-t border-gray-50 pt-10">
                   <div className="text-center">
@@ -620,6 +615,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
                 onChange={(e) => setConfirmText(e.target.value)}
                 placeholder="Digite APAGAR"
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-lg text-center sm:text-left"
+                autoFocus
               />
             </div>
 

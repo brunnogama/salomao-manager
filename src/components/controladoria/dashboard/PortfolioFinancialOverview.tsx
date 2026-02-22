@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Camera, Clock, Briefcase, CheckCircle2, XCircle, HeartHandshake, Layers
+  Camera, Clock, CheckCircle2, PieChart, FileSignature, HeartHandshake, XCircle
 } from 'lucide-react';
 import { formatMoney } from './dashboardHelpers';
 
@@ -13,7 +13,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
   const navigate = useNavigate();
 
   const handleDrillDown = (status: string) => {
-    navigate('/contratos', { state: { status } });
+    navigate('/controladoria/contratos', { state: { status } });
   };
 
   // Cálculos protegidos
@@ -28,122 +28,135 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
     ((metrics?.geral as any)?.valorEmNegociacaoOutros || 0);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div className="flex flex-col gap-6">
 
-      {/* Esquerda: Fotografia da Carteira Atual (Cards) */}
-      <div className='lg:col-span-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 h-full flex flex-col'>
+      {/* Linha 1: Fotografia da Carteira Atual (Cards) */}
+      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
 
         {/* Header */}
-        <div className='mb-6 pb-5 border-b border-gray-100'>
-          <div className='flex items-center gap-3 mb-2'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
-              <Camera className='w-5 h-5' />
+        <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <div className='p-2 rounded-xl bg-[#0a192f] text-white shadow-sm'>
+              <PieChart className='w-5 h-5' />
             </div>
-            <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
-              Fotografia da Carteira Atual
-            </h2>
+            <div>
+              <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
+                Fotografia da Carteira Atual
+              </h2>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                Distribuição dos casos por fase
+              </p>
+            </div>
           </div>
-          <p className='text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-[48px]'>
-            Quantidade atual por status
-          </p>
         </div>
+        {/* Cards de Status */}
+        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3'>
 
-        {/* Cards Clicáveis para Drill-Down */}
-        <div className='grid grid-cols-2 gap-3 flex-1'>
-
-          {/* Sob Análise */}
-          <button
-            onClick={() => handleDrillDown('analysis')}
-            className='bg-gradient-to-br from-amber-600/90 to-amber-500/80 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-amber-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
+          {/* 1. Em Análise */}
+          <div
+            onClick={() => handleDrillDown('Análise')}
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-amber-500 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
-            <Clock className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
-              {metrics.geral.emAnalise}
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
+                Sob Análise
+              </p>
+              <div className='p-1.5 bg-amber-50 rounded-lg text-amber-600 group-hover:scale-110 transition-transform'>
+                <Clock className='w-4 h-4' />
+              </div>
+            </div>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+              {metrics.geral?.emAnalise || 0}
             </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
-              Sob Análise
-            </p>
-          </button>
+            <p className='text-[9px] font-bold text-gray-400'>aguardando elaboração</p>
+          </div>
 
-          {/* Propostas */}
-          <button
-            onClick={() => handleDrillDown('proposal')}
-            className='bg-gradient-to-br from-[#1e3a8a]/90 to-[#1e3a8a]/80 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-blue-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
+          {/* 2. Propostas */}
+          <div
+            onClick={() => handleDrillDown('Proposta Formulada')}
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-blue-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
-            <Briefcase className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
-              {metrics.geral.propostasAtivas}
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
+                Propostas
+              </p>
+              <div className='p-1.5 bg-blue-50 rounded-lg text-blue-600 group-hover:scale-110 transition-transform'>
+                <FileSignature className='w-4 h-4' />
+              </div>
+            </div>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+              {metrics.geral?.propostasAtivas || 0}
             </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
-              Propostas
-            </p>
-          </button>
+            <p className='text-[9px] font-bold text-gray-400'>enviadas ao cliente</p>
+          </div>
 
-          {/* Fechados */}
-          <button
-            onClick={() => handleDrillDown('active')}
-            className='bg-gradient-to-br from-emerald-700/90 to-emerald-600/80 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-emerald-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
+          {/* 3. Contratos Fechados */}
+          <div
+            onClick={() => handleDrillDown('Ativo')}
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-green-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
-            <CheckCircle2 className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
-              {metrics.geral.fechados}
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
+                Fechados
+              </p>
+              <div className='p-1.5 bg-green-50 rounded-lg text-green-600 group-hover:scale-110 transition-transform'>
+                <CheckCircle2 className='w-4 h-4' />
+              </div>
+            </div>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+              {metrics.geral?.fechados || 0}
             </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
-              Fechados
-            </p>
-          </button>
+            <p className='text-[9px] font-bold text-gray-400'>casos em andamento</p>
+          </div>
 
-          {/* Rejeitados */}
-          <button
-            onClick={() => handleDrillDown('rejected')}
-            className='bg-gradient-to-br from-rose-700/90 to-rose-600/80 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-rose-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
+          {/* 4. Rejeitados */}
+          <div
+            onClick={() => handleDrillDown('Rejeitado')}
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-red-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
-            <XCircle className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
-              {metrics.geral.rejeitados}
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
+                Rejeitados
+              </p>
+              <div className='p-1.5 bg-red-50 rounded-lg text-red-600 group-hover:scale-110 transition-transform'>
+                <XCircle className='w-4 h-4' />
+              </div>
+            </div>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+              {metrics.geral?.rejeitados || 0}
             </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
-              Rejeitados
-            </p>
-          </button>
+            <p className='text-[9px] font-bold text-gray-400'>propostas não aceitas</p>
+          </div>
 
-          {/* Probono */}
-          <button
-            onClick={() => handleDrillDown('probono')}
-            className='bg-gradient-to-br from-slate-600 to-slate-500 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-slate-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
+          {/* 5. Probono */}
+          <div
+            onClick={() => handleDrillDown('Probono')}
+            className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-purple-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
-            <HeartHandshake className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
-              {metrics.geral.probono}
+            <div className='flex justify-between items-start mb-2'>
+              <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest'>
+                Probono
+              </p>
+              <div className='p-1.5 bg-purple-50 rounded-lg text-purple-600 group-hover:scale-110 transition-transform'>
+                <HeartHandshake className='w-4 h-4' />
+              </div>
+            </div>
+            <p className='text-[28px] font-black text-[#0a192f] tracking-tight leading-none mb-1'>
+              {metrics.geral?.probono || 0}
             </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
-              Probono
-            </p>
-          </button>
+            <p className='text-[9px] font-bold text-gray-400'>serviço gratuito</p>
+          </div>
 
-          {/* Total Geral */}
-          <button
-            onClick={() => handleDrillDown('all')}
-            className='bg-gradient-to-br from-gray-800 to-gray-700 p-4 rounded-xl border border-white/10 shadow-lg text-center cursor-pointer hover:shadow-gray-900/10 transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-sm'
-          >
-            <Layers className='mx-auto text-white mb-2 group-hover:scale-110 transition-all' size={20} />
-            <p className='text-[24px] font-black text-white tracking-tight'>
-              {metrics.geral.totalCasos}
-            </p>
-            <p className='text-[9px] text-white font-black uppercase tracking-widest mt-1'>
-              Total Geral
-            </p>
-          </button>
         </div>
       </div>
 
-      {/* Direita: Fotografia Financeira Total */}
-      <div className='lg:col-span-7 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 h-full flex flex-col'>
+      {/* Linha 2: Fotografia Financeira Total */}
+      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
 
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100'>
           <div className='flex items-center gap-3 mb-2'>
-            <div className='p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg'>
+            <div className='p-2 rounded-xl bg-[#0a192f] text-white shadow-lg'>
               <Camera className='w-5 h-5' />
             </div>
             <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>

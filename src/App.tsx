@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AppRoutes } from './AppRoutes';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toaster } from 'sonner';
+import { PresentationProvider } from './contexts/PresentationContext';
 import './index.css'; // Ensure styles are imported
 
 export default function App() {
@@ -13,7 +14,9 @@ export default function App() {
       <Toaster position="top-right" richColors closeButton />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <PresentationProvider>
+            <AppRoutes />
+          </PresentationProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

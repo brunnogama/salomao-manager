@@ -1,17 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import {
-  FileText,
-  Loader2,
-  Eye,
-  CheckCircle,
-  FileSignature,
-  Search,
-  Plus,
-  Trash2,
-  X,
-  AlertTriangle
-} from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { FileText, CheckCircle, Search, Plus, Trash2, Edit3, X, EyeOff, Eye, Check, XCircle, Filter, FileSignature, Loader2, PlayCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { saveAs } from 'file-saver';
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst, Collaborator } from '../../../types/controladoria';
@@ -35,10 +24,25 @@ interface FeeClause {
   type: 'currency' | 'percent'; // Added type
 }
 
+// Fixed Dictionary for Partner Locations validation
+const PARTNER_LOCATIONS: Record<string, string[]> = {
+  "Bernardo Safady Kaiuca": ["Rio de Janeiro", "Vitória"],
+  "Eduardo Oliveira Machado de Souz Abrahão": ["Rio de Janeiro", "São Paulo", "Salvador"],
+  "Livia Sanches Sancio": ["Rio de Janeiro", "Vitória"],
+  "Luis Felipe Salomão Filho": ["Rio de Janeiro", "São Paulo", "Brasília", "Vitória", "Florianópolis"],
+  "Marcus Lívio Gomes": ["Brasília", "Vitória", "Florianópolis", "Belém"],
+  "Paulo Cesar Salomão Filho": ["Rio de Janeiro", "Vitória", "Salvador"],
+  "Pedro Neiva de Santana Neto": ["São Paulo", "Brasília", "Florianópolis"],
+  "Rodrigo Figueiredo da Silva Cotta": ["Rio de Janeiro", "São Paulo", "Brasília", "Vitória", "Florianópolis"],
+  "Rodrigo Moraes Mendonça Raposo": ["Rio de Janeiro", "São Paulo", "Brasília", "Vitória", "Florianópolis"],
+  "Rodrigo Cunha Mello Salomão": ["Rio de Janeiro", "São Paulo", "Brasília", "Vitória", "Florianópolis"],
+};
+
 export function Proposals() {
   const [loading, setLoading] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [clientOptions, setClientOptions] = useState<{ label: string; value: string }[]>([]);
+  const [locationOptions, setLocationOptions] = useState<{ label: string; value: string }[]>([]);
 
   // Form State
   const [proposalData, setProposalData] = useState({
@@ -60,6 +64,9 @@ export function Proposals() {
     final_success_fee_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
   });
 
+  const [isEditingBody, setIsEditingBody] = useState(false);
+  const [customBodyText, setCustomBodyText] = useState("");
+
   // Modal State (for after generation)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [contractFormData, setContractFormData] = useState<Contract>({} as Contract);
@@ -74,6 +81,7 @@ export function Proposals() {
   useEffect(() => {
     fetchPartners();
     fetchClients();
+    fetchLocations();
   }, []);
 
   const fetchPartners = async () => {
@@ -87,6 +95,29 @@ export function Proposals() {
     const { data } = await supabase.from('clients').select('name, cnpj').order('name');
     if (data) {
       setClientOptions(data.map(c => ({ label: c.name, value: c.name }))); // Value is name for the proposal
+    }
+  };
+
+  const fetchLocations = async () => {
+    try {
+      const { data, error } = await supabase.from('office_locations').select('name').order('name');
+      if (error) {
+        console.error("Erro ao buscar office_locations:", error);
+      }
+
+      let uniqueCities: string[] = [];
+      if (data && data.length > 0) {
+        uniqueCities = Array.from(new Set(data.map((loc: any) => loc.name))).filter(Boolean);
+      } else {
+        // Fallback to partner locations if table is empty or misses name
+        uniqueCities = Array.from(new Set(Object.values(PARTNER_LOCATIONS).flat())).sort();
+      }
+
+      setLocationOptions(uniqueCities.map((city: string) => ({ label: city, value: city })));
+    } catch (e) {
+      console.error(e);
+      const uniqueCities = Array.from(new Set(Object.values(PARTNER_LOCATIONS).flat())).sort();
+      setLocationOptions(uniqueCities.map((city: string) => ({ label: city, value: city })));
     }
   };
 
@@ -343,7 +374,64 @@ export function Proposals() {
       intermediate_fees_clauses: intermediateClauses,
 
       full_success_clauses: proposalData.final_success_fee_clauses,
+      custom_body_text: customBodyText || undefined,
     };
+  };
+
+  const generateDefaultBodyText = () => {
+    let text = `1. OBJETO E ESCOPO DO SERVIÇO:\n\n`;
+    text += `1.1. O objeto da presente proposta é a assessoria jurídica a ser realizada pelos advogados que compõem Salomão Advogados (“Escritório”), com vistas à representação judicial em favor do Cliente ${proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'} (“Cliente” ou “Contratante”) no ${proposalData.object || '[incluir objeto da disputa]'}.\n\n`;
+    text += `1.2. Os serviços previstos nesta proposta abrangem a defesa dos interesses do Contratante em toda e qualquer discussão relacionada ao tema tratado.\n\n`;
+    text += `1.3. Além da análise do caso e definição da estratégia jurídica, o escopo dos serviços profissionais compreende a análise completa dos documentos e informações enviadas pelo Cliente, elaboração das peças processuais, acompanhamento processual, realização de sustentações orais, despachos, bem como todos os atos conexos necessários a atender os interesses do Cliente nos referidos processos.\n\n`;
+    text += `1.4. Os serviços aqui propostos compreende a participação em reuniões com o Cliente sempre que necessário para entendimentos, esclarecimentos e discussão de estratégias, sempre objetivando a melhor atuação possível do Escritório em defesa dos interesses do Cliente.\n\n`;
+    text += `1.5. Também está incluída a assessoria jurídica na interlocução com a contraparte, para fins de autocomposição.\n\n`;
+    text += `1.6. Os serviços aqui propostos não incluem consultoria geral ou outra que não possua correlação com o objeto da proposta.\n\n`;
+    text += `2. HONORÁRIOS E FORMA DE PAGAMENTO:\n\n`;
+    text += `2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:\n\n`;
+
+    let clauseIndex = 2;
+    proposalData.pro_labore_clauses.forEach((c) => {
+      text += `2.${clauseIndex}. Honorários pró-labore de ${c.value || '[valor]'}, ${c.description || 'para engajamento no caso'}\n\n`;
+      clauseIndex++;
+    });
+
+    proposalData.intermediate_fee_clauses.forEach((c) => {
+      if (c.value) {
+        text += `2.${clauseIndex}. Êxito intermediário: ${c.value || '[valor]'}, ${c.description || '[descrição]'}\n\n`;
+        clauseIndex++;
+      }
+    });
+
+    proposalData.final_success_fee_clauses.forEach((c) => {
+      if (c.value) {
+        const valText = c.type === 'currency' ? c.value : `${c.value}%`;
+        text += `2.${clauseIndex}. Honorários finais de êxito de ${valText}, ${c.description || '[descrição]'}\n\n`;
+        clauseIndex++;
+      }
+    });
+
+    text += `2.${clauseIndex}. Os honorários de êxito serão integralmente devidos pelo Cliente em caso de transação ou rescisão imotivada do presente contrato.\n\n`;
+    text += `2.${clauseIndex + 1}. Nos casos de (a) desistência e/ou renúncia que encerrem as discussões travadas; (b) perda superveniente de seu objeto; (c) destituição dos profissionais do ESCRITÓRIO sem culpa dos mesmos; e/ou (d) cessões e/ou operações envolvendo direitos do Contratante e/ou os interesses do ESCRITÓRIO, as Partes decidem, de boa-fé e na melhor forma de Direito, que todos os valores contemplados nesse Contrato, sem exceção, serão integralmente e automaticamente devidos, mesmo se e independentemente se os eventos de êxito ocorrerem após o desligamento do ESCRITÓRIO e independentemente do teor de quaisquer Decisões Judiciais que sejam proferidas, em reconhecimento, pelo Cliente, de que a estratégia desenhada e executada pelo ESCRITÓRIO afigurou-se determinante à obtenção do sucesso em seu favor. Esses valores serão pagos em até 10 (dez) dias após a ocorrência de quaisquer desses eventos.\n\n`;
+
+    text += `3. CONDIÇÕES GERAIS:\n\n`;
+    text += `3.1. Não estão incluídas nos honorários as despesas relacionadas ao caso, tais como aquelas com custas judiciais, extrajudiciais, passagens aéreas e hospedagens, dentre outras próprias da(o) Cliente. As despesas poderão ser adiantadas pelo Escritório e submetidas à reembolso pela(o) Cliente. Caso venhamos a contratar outros profissionais, peritos, vistoriadores, tradutores ou demais prestadores de serviços em nome da(o) Cliente e sob prévia aprovação de V.Sa., tal contratação será feita na qualidade de mandatários da(o) Cliente ficando V.Sas. desde já responsável pelo pagamento dos honorários dos profissionais supramencionados.\n\n`;
+    text += `3.2. O atraso no pagamento dos honorários sujeitará o Cliente ao pagamento de multa de mora de 10% (dez por cento), juros de mora de 1% (um por cento) ao mês e correção monetária pela variação positiva do IPCA. Na hipótese de necessidade de cobrança judicial, serão devidos também honorários à razão de 20% (vinte por cento) do valor atualizado do débito.\n\n`;
+    text += `3.3. Os valores previstos na presente proposta, incluindo eventual limite sobre os honorários de êxito, deverão ser corrigidos monetariamente pela variação positiva do IPCA desde a presente data até sua efetiva liquidação.\n\n`;
+    text += `3.4. Os valores devidos a título de honorários são líquidos de tributos, independentemente de alterações legislativas futuras.\n\n`;
+    text += `3.5. Esta proposta foi formulada com base nas informações fornecidas pelo Cliente (ou por pessoa por ele indicada) e em prazo exíguo, buscando o melhor custo-benefício ao Cliente. Verificando-se, no decorrer do processo, divergência entre tais informações e os documentos constantes dos autos, ou a ampliação do escopo originalmente considerado, os honorários poderão ser revistos para recompor o equilíbrio econômico-financeiro, o que poderá ser feito mediante aditivo contratual ou qualquer outra solicitação formal a ser apresentado pelo Escritório.\n\n`;
+    text += `3.6. A contratação do Escritório para a especialidade ora pactuada não caracteriza, por si só, impedimento para que o Escritório atue em assuntos não relacionados de outro cliente, mesmo quando os interesses do outro cliente possam ser eventualmente adversos ao Cliente, desde que: (i) não haja adversidade direta em processo ou procedimento no qual o Escritório represente o Cliente; (ii) não se utilize, nem se ponha em risco, informação confidencial do Cliente; e (iii) sejam observadas barreiras éticas (Chinese wall) e segregação de equipes, quando cabível.\n\n`;
+    text += `3.7. Esta proposta constitui-se em contrato entre as partes com respeito ao assunto objeto desta, podendo ser modificada ou substituída somente mediante autorização por escrito de ambas as partes envolvidas. Em caso de divergência das cláusulas do presente instrumento em relação a outro contrato enviado pelo Cliente, ainda que posterior, prevalecerão as do presente instrumento.\n\n`;
+    text += `3.8. O aceite em relação a presente contratação poderá se dar de forma expressa ou tácita, sendo que neste último caso se dará a partir do início da prestação de serviços pelos Contratados.\n\n`;
+    text += `3.9. Em qualquer caso, a responsabilidade dos Contratados será limitada aos valores efetivamente recebidos por este. Os honorários de sucumbência serão devidos exclusivamente ao Escritório.\n\n`;
+    text += `3.10. Mediante expressa autorização da(o) Cliente, os Contratados poderão indicar outros advogados para atuar na referida demanda, cujos custos da contratação serão de responsabilidade d(ao) Cliente.\n\n`;
+    text += `3.11. Esta proposta obriga os herdeiros e sucessores das Partes para o fiel cumprimento de suas obrigações.\n\n`;
+    text += `3.12. O Escritório contratado adota as medidas adequadas, de acordo com as boas práticas da legislação, para impedir qualquer atividade fraudulenta por si, seus advogados, estagiários, e/ou por quaisquer fornecedores, agentes, contratadas, subcontratadas e/ou os empregados.\n\n`;
+    text += `3.13. As partes se comprometem a cumprir toda a legislação aplicável sobre segurança da informação, privacidade e proteção de dados, inclusive a Constituição Federal, o Código de Defesa do Consumidor, o Código Civil, o Marco Civil da Internet (Lei Federal n. 12.965/2014), seu decreto regulamentador (Decreto 8.771/2016), a Lei Geral de Proteção de Dados (Lei Federal n. 13.709/2018), e demais normas setoriais ou gerais sobre o tema, se comprometendo a tratar apenas os dados mencionados e/ou nas formas dispostas neste instrumento mediante instruções expressas do controlador de dados (parte que determina as finalidades e os meios de tratamento de dados pessoais); ou com o devido embasamento legal, sem transferi-los a qualquer terceiro, exceto se expressamente autorizado por este ou outro instrumento que as vincule.\n\n`;
+    text += `3.14. As partes concordam em tratar e manter todas e quaisquer informações (escritas ou verbais) como confidenciais, ficando vedado, por ação ou omissão, a revelação de quaisquer informações, documentos entre outros, obtidos nas tratativas e/ou na execução do Contrato, sem prévio e expresso consentimento da outra parte. Tal regra não abrange as informações que se encontram em domínio público nem impede a menção da(o) Contratante como cliente do Escritório.\n\n`;
+    text += `3.15. As partes elegem o foro da Comarca da Capital da Cidade do Rio de Janeiro para dirimir todas as controvérsias oriundas do presente instrumento, com renúncia expressa a qualquer outro.\n\n`;
+    text += `O Cliente e o Escritório concordam que esta proposta poderá ser firmada de maneira digital por todos os seus signatários. Para este fim, serão utilizados serviços disponíveis no mercado e amplamente utilizados que possibilitam a segurança de assinatura digital por meio de sistemas de certificação capazes de validar a autoria de assinatura eletrônica, bem como de certificar sua integridade, através de certificado digital emitido no padrão ICP-Brasil, autorizando, inclusive, a sua assinatura digital por meio de plataformas digitais.\n\n`;
+
+    return text;
   };
 
   const handleGenerateProposal = async () => {
@@ -550,7 +638,22 @@ export function Proposals() {
             <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50/50 focus-within:border-[#1e3a8a] transition-all overflow-hidden">
               {showTypeToggle && (
                 <button
-                  onClick={() => updateClause(type, index, 'type', clause.type === 'currency' ? 'percent' : 'currency')}
+                  onClick={() => {
+                    const newType = clause.type === 'currency' ? 'percent' : 'currency';
+                    updateClause(type, index, 'type', newType);
+
+                    if (clause.value) {
+                      if (newType === 'percent') {
+                        // Converter Moeda pra Porcentagem
+                        const numbersOnly = clause.value.replace(/[^\d,]/g, '').split(',')[0] || '';
+                        if (numbersOnly) updateClause(type, index, 'value', `${numbersOnly}%`);
+                      } else {
+                        // Converter Porcentagem para Moeda Formato Simples (limpa o % e devolve a mascara nativa ou deixa cru para o formata no blur)
+                        const numbersOnly = clause.value.replace(/[^\d]/g, '');
+                        if (numbersOnly) updateClause(type, index, 'value', `R$ ${numbersOnly},00`);
+                      }
+                    }
+                  }}
                   className={`px-3 py-3.5 text-xs font-bold border-r border-gray-200 hover:bg-gray-100 transition-colors ${clause.type === 'percent' ? 'text-blue-600' : 'text-green-600'}`}
                   title={clause.type === 'currency' ? 'Mudar para %' : 'Mudar para R$'}
                 >
@@ -742,6 +845,32 @@ export function Proposals() {
                   className="w-full"
                 />
               </div>
+
+              {/* Warnings for Validation */}
+              {(() => {
+                const warnings = proposalData.selectedPartners.map(p => {
+                  if (!proposalData.contractLocation) return null;
+                  const allowedLocations = PARTNER_LOCATIONS[p.name];
+                  if (allowedLocations && !allowedLocations.includes(proposalData.contractLocation)) {
+                    return `O sócio ${p.name} não compõe o contrato social de ${proposalData.contractLocation}. Ele pertence a: ${allowedLocations.join(', ')}.`;
+                  }
+                  return null;
+                }).filter(Boolean);
+
+                if (warnings.length > 0) {
+                  return (
+                    <div className="mt-3 space-y-2">
+                      {warnings.map((msg, i) => (
+                        <div key={i} className="flex items-start gap-2 p-3 bg-red-50 text-red-700 rounded-xl border border-red-200">
+                          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+                          <p className="text-xs font-medium leading-relaxed">{msg}</p>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             <div>
@@ -750,12 +879,7 @@ export function Proposals() {
                 label="" // Empty label as we have the header above
                 value={proposalData.contractLocation}
                 onChange={(val) => setProposalData(prev => ({ ...prev, contractLocation: val }))}
-                options={[
-                  { label: 'Rio de Janeiro', value: 'Rio de Janeiro' },
-                  { label: 'São Paulo', value: 'São Paulo' },
-                  { label: 'Brasília', value: 'Brasília' },
-                  { label: 'Vitória', value: 'Vitória' },
-                ]}
+                options={locationOptions}
                 allowCustomValue={true}
                 placeholder="Selecione ou digite a cidade"
               />
@@ -820,6 +944,19 @@ export function Proposals() {
           <p className="absolute top-4 right-6 text-[9px] font-black text-gray-300 uppercase tracking-widest hidden sm:flex items-center gap-1">
             <Eye className="w-3 h-3" /> Visualização em Tempo Real
           </p>
+          <div className="w-full flex justify-center mb-6 z-10 mt-6 sm:mt-0">
+            <button
+              onClick={() => {
+                if (!isEditingBody && !customBodyText) {
+                  setCustomBodyText(generateDefaultBodyText());
+                }
+                setIsEditingBody(true);
+              }}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-[#1e3a8a] text-white hover:bg-[#112240] shadow-lg active:scale-95"
+            >
+              <FileSignature className="w-4 h-4" /> Abrir Modo de Edição
+            </button>
+          </div>
 
           {/* A4 Paper Simulation */}
           <div className="w-full max-w-[500px] bg-white shadow-2xl p-6 md:p-12 text-left border border-gray-100 h-full text-[#0a192f] text-[10px] leading-relaxed select-none overflow-y-auto custom-scrollbar">
@@ -844,7 +981,7 @@ export function Proposals() {
 
             {/* Ref */}
             <div className="mb-4">
-              <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir objeto da proposta]'}</span></p>
+              <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir referência da proposta]'}</span></p>
               <p><strong>Cód.:</strong> <span className="bg-yellow-200/50 px-1">[código proposta]</span></p>
             </div>
 
@@ -886,64 +1023,96 @@ export function Proposals() {
               , vem formular a presente proposta de honorários...
             </p>
 
-            {/* 1. Objeto */}
-            <p className="font-bold mb-2">1. OBJETO E ESCOPO DO SERVIÇO:</p>
-            <p className="text-justify mb-4">
-              1.1. O objeto da presente proposta é a assessoria jurídica... em favor do Cliente
-              <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
-              no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
-            </p>
+            {customBodyText ? (
+              <div className="mb-4 space-y-4 text-justify whitespace-pre-line leading-relaxed pb-8">
+                {customBodyText.split('\n\n').map((paragraph, idx) => {
+                  const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
 
-            {/* 2. Honorários */}
-            <p className="font-bold mb-2">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
-            <p className="text-justify mb-2">
-              2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
-            </p>
-
-            {/* Dynamic Clauses Preview */}
-            {/* Pro-Labore (Starts at 2.2) */}
-            {proposalData.pro_labore_clauses.map((clause, idx) => {
-              const num = `2.${2 + idx}`;
-              return (
-                <p key={`pl-${idx}`} className="text-justify mb-2">
-                  {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
+                  return (
+                    <p key={idx} className={`${isHeading ? 'font-bold mt-4' : ''}`}>
+                      {paragraph}
+                    </p>
+                  )
+                })}
+              </div>
+            ) : (
+              <>
+                {/* 1. Objeto */}
+                <p className="font-bold mb-2">1. OBJETO E ESCOPO DO SERVIÇO:</p>
+                <p className="text-justify mb-4">
+                  1.1. O objeto da presente proposta é a assessoria jurídica... em favor do Cliente
+                  <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
+                  no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
                 </p>
-              );
-            })}
 
-            {/* Intermediate (Starts after Pro-Labore) */}
-            {proposalData.intermediate_fee_clauses.map((clause, idx) => {
-              // Base index = 2 (previous fixed) + length of previous
-              const base = 2 + proposalData.pro_labore_clauses.length;
-              const num = `2.${base + idx}`;
-              return (
-                <p key={`int-${idx}`} className="text-justify mb-2">
-                  {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{clause.value || '[valor]'}</span> {clause.description}
+                {/* 2. Honorários */}
+                <p className="font-bold mb-2 break-before-page mt-6">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
+                <p className="text-justify mb-2">
+                  2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
                 </p>
-              );
-            })}
 
-            {/* Final Success - Unified */}
-            {proposalData.final_success_fee_clauses.map((clause, idx) => {
-              const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
-              const num = `2.${base + idx}`;
+                {/* Dynamic Clauses Preview */}
+                {proposalData.pro_labore_clauses.map((clause, idx) => {
+                  const num = `2.${2 + idx}`;
+                  let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                  let extensoPart = "";
+                  if (clause.value) {
+                    if (clause.type === 'currency') {
+                      extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
+                    } else {
+                      extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
+                    }
+                  }
+                  return (
+                    <p key={`pl-${idx}`} className="text-justify mb-2">
+                      {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
+                    </p>
+                  );
+                })}
 
-              let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-              let extensoPart = "";
-              if (clause.value) {
-                if (clause.type === 'currency') {
-                  extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-                } else {
-                  extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-                }
-              }
+                {/* Intermediate (Starts after Pro-Labore) */}
+                {proposalData.intermediate_fee_clauses.map((clause, idx) => {
+                  const base = 2 + proposalData.pro_labore_clauses.length;
+                  const num = `2.${base + idx}`;
+                  let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                  let extensoPart = "";
+                  if (clause.value) {
+                    if (clause.type === 'currency') {
+                      extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
+                    } else {
+                      extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
+                    }
+                  }
+                  return (
+                    <p key={`int-${idx}`} className="text-justify mb-2">
+                      {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
+                    </p>
+                  );
+                })}
 
-              return (
-                <p key={`sf-unified-${idx}`} className="text-justify mb-2">
-                  {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-                </p>
-              );
-            })}
+                {/* Final Success - Unified */}
+                {proposalData.final_success_fee_clauses.map((clause, idx) => {
+                  const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
+                  const num = `2.${base + idx}`;
+
+                  let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                  let extensoPart = "";
+                  if (clause.value) {
+                    if (clause.type === 'currency') {
+                      extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
+                    } else {
+                      extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
+                    }
+                  }
+
+                  return (
+                    <p key={`sf-unified-${idx}`} className="text-justify mb-2">
+                      {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
+                    </p>
+                  );
+                })}
+              </>
+            )}
 
             {/* Signatures */}
             <div className="text-center mt-12 space-y-8">
@@ -1035,6 +1204,53 @@ export function Proposals() {
                   Sim, cancelar e excluir
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Editor Modal */}
+      {isEditingBody && (
+        <div className="fixed inset-0 bg-[#0a192f]/80 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+              <div>
+                <h3 className="text-xl font-black text-[#0a192f] flex items-center gap-2">
+                  <FileSignature className="w-6 h-6 text-[#1e3a8a]" />
+                  Editor Avançado da Proposta
+                </h3>
+                <p className="text-xs font-semibold text-gray-500 mt-1">Edite livremente o conteúdo da proposta. Deixe linhas em branco para separar os parágrafos.</p>
+              </div>
+              <button
+                onClick={() => setIsEditingBody(false)}
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="flex-1 p-6 bg-gray-100 overflow-hidden flex flex-col">
+              <textarea
+                value={customBodyText}
+                onChange={(e) => setCustomBodyText(e.target.value)}
+                className="w-full flex-1 p-8 text-sm text-gray-800 bg-white border border-gray-200 shadow-inner rounded-xl outline-none focus:border-[#1e3a8a] focus:ring-4 focus:ring-blue-500/10 transition-all resize-none font-mono leading-relaxed"
+                placeholder="Edite o corpo da proposta aqui..."
+              />
+            </div>
+
+            <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-3">
+              <button
+                onClick={() => setIsEditingBody(false)}
+                className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs uppercase tracking-wider hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => setIsEditingBody(false)}
+                className="px-8 py-3 rounded-xl bg-[#1e3a8a] text-white font-black text-xs uppercase tracking-wider hover:bg-[#112240] shadow-lg flex items-center gap-2 transition-all active:scale-95"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Salvar Alterações
+              </button>
             </div>
           </div>
         </div>
