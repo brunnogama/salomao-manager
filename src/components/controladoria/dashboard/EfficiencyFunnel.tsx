@@ -27,8 +27,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
 
       {/* Funil visualmente conectado */}
       <div className='relative pt-6 pb-2'>
-        {/* Linha conectora de fluxo de fundo (apenas visível em displays maiores) */}
-        <div className='hidden md:block absolute top-[68px] left-[10%] right-[10%] h-2 bg-gradient-to-r from-indigo-100 via-blue-100 to-green-100 rounded-full z-0'></div>
+        <div className='hidden md:block absolute top-[50%] left-[10%] right-[10%] h-1 bg-gradient-to-r from-indigo-200 via-blue-200 to-green-200 z-0'></div>
 
         <div className='grid grid-cols-1 md:grid-cols-5 gap-4 items-start relative z-10'>
 
@@ -52,25 +51,28 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
           </div>
 
           {/* Conversão 1 -> 2 */}
-          <div className='md:col-span-1 flex flex-col items-center justify-start pt-[44px] space-y-2 relative'>
-            <div className='hidden md:flex w-10 h-10 bg-white rounded-full border border-indigo-100 shadow-sm items-center justify-center text-indigo-400 mb-1 z-10'>
+          <div className='md:col-span-1 flex flex-col items-center justify-center relative h-full'>
+
+            {/* Secção Superior: Texo Acima da Linha */}
+            <div className='absolute bottom-[calc(50%+24px)] w-full text-center'>
+              <div className='text-[10px] font-black uppercase text-indigo-700 tracking-wider bg-white/80 py-1 px-2 rounded-md inline-block'>
+                {funil.taxaConversaoProposta}% Avançam
+              </div>
+            </div>
+
+            {/* Centro: Seta no Meio da Linha */}
+            <div className='w-10 h-10 bg-white rounded-full border-2 border-indigo-100 shadow-sm flex items-center justify-center text-indigo-400 z-10 my-4 md:my-0'>
               <ArrowRight className='w-5 h-5' />
             </div>
 
-            {/* Taxa de Conversão */}
-            <div className='text-[10px] font-black uppercase text-indigo-700 tracking-wider'>
-              {funil.taxaConversaoProposta}% Avançam
-            </div>
-
-            {/* Linha Fina Central */}
-            <div className='w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-200 to-transparent my-2'></div>
-
-            {/* Tempo Médio */}
-            <div className='flex items-center gap-1.5 text-gray-500'>
-              <Clock className='w-3 h-3' />
-              <span className='text-[10px] font-bold text-[#112240]'>
-                {funil.tempoMedioProspectProposta} dias
-              </span>
+            {/* Secção Inferior: Texto Abaixo da Linha */}
+            <div className='absolute top-[calc(50%+24px)] w-full flex justify-center'>
+              <div className='flex items-center justify-center gap-1.5 text-gray-500 bg-white/80 py-1 px-2 rounded-md'>
+                <Clock className='w-3 h-3' />
+                <span className='text-[10px] font-bold text-[#112240]'>
+                  {funil.tempoMedioProspectProposta} dias
+                </span>
+              </div>
             </div>
           </div>
 
@@ -94,25 +96,28 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
           </div>
 
           {/* Conversão 2 -> 3 */}
-          <div className='md:col-span-1 flex flex-col items-center justify-start pt-[44px] space-y-2 relative'>
-            <div className='hidden md:flex w-10 h-10 bg-white rounded-full border border-blue-100 shadow-sm items-center justify-center text-blue-400 mb-1 z-10'>
+          <div className='md:col-span-1 flex flex-col items-center justify-center relative h-full'>
+
+            {/* Secção Superior: Texo Acima da Linha */}
+            <div className='absolute bottom-[calc(50%+24px)] w-full text-center'>
+              <div className='text-[10px] font-black uppercase text-blue-700 tracking-wider bg-white/80 py-1 px-2 rounded-md inline-block'>
+                {funil.taxaConversaoFechamento}% Fecham
+              </div>
+            </div>
+
+            {/* Centro: Seta no Meio da Linha */}
+            <div className='w-10 h-10 bg-white rounded-full border-2 border-blue-100 shadow-sm flex items-center justify-center text-blue-400 z-10 my-4 md:my-0'>
               <ArrowRight className='w-5 h-5' />
             </div>
 
-            {/* Taxa de Conversão */}
-            <div className='text-[10px] font-black uppercase text-blue-700 tracking-wider'>
-              {funil.taxaConversaoFechamento}% Fecham
-            </div>
-
-            {/* Linha Fina Central */}
-            <div className='w-full h-[1px] bg-gradient-to-r from-transparent via-blue-200 to-transparent my-2'></div>
-
-            {/* Tempo Médio */}
-            <div className='flex items-center gap-1.5 text-gray-500'>
-              <Clock className='w-3 h-3' />
-              <span className='text-[10px] font-bold text-[#112240]'>
-                {funil.tempoMedioPropostaFechamento} dias
-              </span>
+            {/* Secção Inferior: Texto Abaixo da Linha */}
+            <div className='absolute top-[calc(50%+24px)] w-full flex justify-center'>
+              <div className='flex items-center justify-center gap-1.5 text-gray-500 bg-white/80 py-1 px-2 rounded-md'>
+                <Clock className='w-3 h-3' />
+                <span className='text-[10px] font-bold text-[#112240]'>
+                  {funil.tempoMedioPropostaFechamento} dias
+                </span>
+              </div>
             </div>
           </div>
 
