@@ -403,13 +403,12 @@ export function Compliance() {
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     // Abre o modal de nova certidão já preenchido
-    // Usamos as chaves que o mapping do modal espera (issue_date, due_date)
     setEditingCertificate({
       name: 'Comprovante de Inscrição e de Situação Cadastral',
       cnpj: cnpjToUse,
       location: locationName,
-      issue_date: today,
-      due_date: today,
+      issueDate: today,
+      dueDate: today,
       agency: 'Secretaria da Receita Federal do Brasil'
     } as any);
     setIsModalOpen(true);
