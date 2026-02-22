@@ -150,22 +150,37 @@ export function useFinanceContasReceber() {
 
       if (faturaError) throw faturaError;
 
-      // 4. Enviar e-mail (usando função edge do Supabase ou serviço externo)
+      // 4. Enviar e-mail (Webhook Make.com)
       try {
-        if (params.cliente_email) {
-          await supabase.functions.invoke('enviar-email-fatura', {
-            body: {
-              destinatario: params.cliente_email,
-              remetente: params.remetente,
-              assunto: params.assunto,
-              corpo: params.corpo,
-              arquivos_urls,
-              fatura_id: faturaData.id
-            }
+        const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_URL;
+        if (webhookUrl && params.cliente_email) {
+          const payload = {
+            destinatario: params.cliente_email,
+            remetente: params.remetente,
+            assunto: params.assunto,
+            corpo: params.corpo,
+            arquivos_urls,
+            valor: params.valor,
+            cliente_nome: params.cliente_nome,
+            fatura_id: faturaData.id
+          };
+
+          const webhookResponse = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
           });
+
+          if (!webhookResponse.ok) {
+            console.warn('Erro retornado pelo Webhook Make:', webhookResponse.statusText);
+          }
+        } else {
+          console.log("VITE_MAKE_WEBHOOK_URL não configurada no .env ou email do cliente ausente.");
         }
-      } catch (emailError) {
-        console.warn('Erro ao enviar e-mail (função edge):', emailError);
+      } catch (webhookError) {
+        console.error('Erro de rede ao chamar o Webhook:', webhookError);
       }
 
       // 5. Recarregar lista
