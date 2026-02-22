@@ -93,7 +93,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             ? 'bg-white/5 backdrop-blur-md shadow-lg border-white/10 hover:shadow-2xl hover:bg-white/10 hover:-translate-y-1 cursor-pointer hover:border-[#d4af37]/50'
             : 'bg-gray-100/5 backdrop-blur-sm border-white/5 opacity-50 cursor-not-allowed grayscale'
           }
-          h-[180px] w-full
+          h-[220px] w-full
         `}
       >
         {/* Background Gradients */}
@@ -116,12 +116,12 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
           {/* Icon Container with Glow */}
           <div className={`
-            relative p-3.5 rounded-xl mb-3.5 transition-all duration-300 group-hover:scale-105
+            relative p-4 rounded-xl mb-4 transition-all duration-300 group-hover:scale-105
             ${allowed
               ? `bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white shadow-lg shadow-${gradientFrom}/20`
               : 'bg-gray-800/50 text-gray-500'}
           `}>
-            <Icon className="h-6 w-6" strokeWidth={1.5} />
+            <Icon className="h-8 w-8" strokeWidth={1.5} />
 
             {/* Inner Glow Effect */}
             {allowed && (
@@ -129,11 +129,11 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             )}
           </div>
 
-          <h2 className="text-sm font-bold text-white mb-2 tracking-wide group-hover:text-[#d4af37] transition-colors">
+          <h2 className="text-base font-bold text-white mb-2 tracking-wide group-hover:text-[#d4af37] transition-colors">
             {title}
           </h2>
 
-          <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-[200px] line-clamp-2 group-hover:text-gray-300 transition-colors">
+          <p className="text-xs text-gray-400 font-medium leading-relaxed max-w-[220px] line-clamp-2 group-hover:text-gray-300 transition-colors">
             {description}
           </p>
         </div>
@@ -230,11 +230,11 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 h-full min-h-0">
 
         {/* Hero Section */}
-        <div className="text-center mb-8 shrink-0">
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight drop-shadow-2xl">
+        <div className="text-center mb-12 -mt-10 shrink-0">
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight drop-shadow-2xl">
             Ecossistema <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] to-[#fcc200]">Salomão</span>
           </h1>
-          <p className="text-sm text-blue-100/90 font-medium max-w-xl mx-auto leading-relaxed shadow-sm">
+          <p className="text-base text-blue-100/90 font-medium max-w-xl mx-auto leading-relaxed shadow-sm">
             Selecione um módulo para acessar suas ferramentas.
           </p>
         </div>
