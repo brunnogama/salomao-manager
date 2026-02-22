@@ -1,4 +1,4 @@
-import { ArrowRight, XCircle, Clock, TrendingDown } from 'lucide-react';
+import { ArrowRight, Clock, TrendingDown } from 'lucide-react';
 
 interface EfficiencyFunnelProps {
   funil: any;
@@ -52,33 +52,25 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
           </div>
 
           {/* Conversão 1 -> 2 */}
-          <div className='md:col-span-1 flex flex-col items-center justify-start pt-[34px] space-y-3 relative'>
-            <div className='hidden md:flex w-10 h-10 bg-white rounded-full border border-indigo-100 shadow-sm items-center justify-center text-indigo-400 mb-2 z-10'>
+          <div className='md:col-span-1 flex flex-col items-center justify-start pt-[44px] space-y-2 relative'>
+            <div className='hidden md:flex w-10 h-10 bg-white rounded-full border border-indigo-100 shadow-sm items-center justify-center text-indigo-400 mb-1 z-10'>
               <ArrowRight className='w-5 h-5' />
             </div>
 
             {/* Taxa de Conversão */}
-            <div className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border bg-indigo-50 text-indigo-700 border-indigo-100 shadow-sm'>
+            <div className='text-[10px] font-black uppercase text-indigo-700 tracking-wider'>
               {funil.taxaConversaoProposta}% Avançam
             </div>
 
-            {/* Rejeições */}
-            <div className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border bg-red-50 text-red-700 border-red-100'>
-              <XCircle className='w-3 h-3' />
-              {funil.perdaAnalise} Rejeições
-            </div>
+            {/* Linha Fina Central */}
+            <div className='w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-200 to-transparent my-2'></div>
 
             {/* Tempo Médio */}
-            <div className='flex flex-col items-center gap-1 p-2.5 rounded-xl bg-gray-50/80 border border-gray-100/80 min-w-[120px] shadow-sm'>
-              <span className='text-[9px] font-black text-gray-400 uppercase tracking-wider'>
-                Tempo Médio
+            <div className='flex items-center gap-1.5 text-gray-500'>
+              <Clock className='w-3 h-3' />
+              <span className='text-[10px] font-bold text-[#112240]'>
+                {funil.tempoMedioProspectProposta} dias
               </span>
-              <div className='flex items-center gap-1.5'>
-                <Clock className='w-3 h-3 text-gray-500' />
-                <span className='text-xs font-bold text-[#112240]'>
-                  {funil.tempoMedioProspectProposta} dias
-                </span>
-              </div>
             </div>
           </div>
 
@@ -102,33 +94,25 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
           </div>
 
           {/* Conversão 2 -> 3 */}
-          <div className='md:col-span-1 flex flex-col items-center justify-start pt-[34px] space-y-3 relative'>
-            <div className='hidden md:flex w-10 h-10 bg-white rounded-full border border-blue-100 shadow-sm items-center justify-center text-blue-400 mb-2 z-10'>
+          <div className='md:col-span-1 flex flex-col items-center justify-start pt-[44px] space-y-2 relative'>
+            <div className='hidden md:flex w-10 h-10 bg-white rounded-full border border-blue-100 shadow-sm items-center justify-center text-blue-400 mb-1 z-10'>
               <ArrowRight className='w-5 h-5' />
             </div>
 
             {/* Taxa de Conversão */}
-            <div className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border bg-blue-50 text-blue-700 border-blue-100 shadow-sm'>
+            <div className='text-[10px] font-black uppercase text-blue-700 tracking-wider'>
               {funil.taxaConversaoFechamento}% Fecham
             </div>
 
-            {/* Rejeições */}
-            <div className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border bg-red-50 text-red-700 border-red-100'>
-              <XCircle className='w-3 h-3' />
-              {funil.perdaNegociacao} Rejeições
-            </div>
+            {/* Linha Fina Central */}
+            <div className='w-full h-[1px] bg-gradient-to-r from-transparent via-blue-200 to-transparent my-2'></div>
 
             {/* Tempo Médio */}
-            <div className='flex flex-col items-center gap-1 p-2.5 rounded-xl bg-gray-50/80 border border-gray-100/80 min-w-[120px] shadow-sm'>
-              <span className='text-[9px] font-black text-gray-400 uppercase tracking-wider'>
-                Tempo Médio
+            <div className='flex items-center gap-1.5 text-gray-500'>
+              <Clock className='w-3 h-3' />
+              <span className='text-[10px] font-bold text-[#112240]'>
+                {funil.tempoMedioPropostaFechamento} dias
               </span>
-              <div className='flex items-center gap-1.5'>
-                <Clock className='w-3 h-3 text-gray-500' />
-                <span className='text-xs font-bold text-[#112240]'>
-                  {funil.tempoMedioPropostaFechamento} dias
-                </span>
-              </div>
             </div>
           </div>
 
@@ -150,7 +134,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
             {/* Rejeitados Totais */}
             <div className='bg-[#fef2f2] w-full p-4 rounded-xl border border-red-100 shadow-sm text-center flex flex-col justify-center opacity-90'>
               <p className='text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-1'>
-                Perdas Totais
+                Rejeitadas
               </p>
               <p className='text-[20px] font-black text-red-700 tracking-tight leading-none'>
                 {funil.perdaAnalise + funil.perdaNegociacao}
