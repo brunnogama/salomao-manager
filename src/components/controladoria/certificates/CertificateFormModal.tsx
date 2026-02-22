@@ -42,6 +42,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
 
     const [isNameModalOpen, setIsNameModalOpen] = useState(false);
     const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -88,6 +89,24 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             setFormData({ ...formData, file: e.target.files[0] });
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            setFormData({ ...formData, file: e.dataTransfer.files[0] });
         }
     };
 
@@ -244,7 +263,12 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
 
                         <div>
                             <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Arquivo da Certidão (GED) *</label>
-                            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:bg-gray-50 transition-colors cursor-pointer relative">
+                            <div
+                                className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer relative ${isDragging ? 'border-[#1e3a8a] bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
                                 <input
                                     type="file"
                                     onChange={handleFileChange}
@@ -252,9 +276,9 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                     required={!initialData} // Só é obrigatório se for novo
                                     accept=".pdf,.png,.jpg,.jpeg"
                                 />
-                                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-[#1e3a8a]' : 'text-gray-400'}`} />
                                 <p className="text-sm font-semibold text-gray-600">
-                                    {formData.file ? formData.file.name : (initialData?.fileUrl ? 'Arquivo enviado anteriormente. Clique para substituir.' : 'Clique ou arraste o arquivo aqui')}
+                                    {formData.file ? formData.file.name : (initialData?.fileUrl ? 'Arquivo enviado anteriormente. Clique para substituir.' : (isDragging ? 'Solte o arquivo aqui' : 'Clique ou arraste o arquivo aqui'))}
                                 </p>
                                 <p className="text-xs text-gray-400 mt-1">PDF, PNG, JPG (Max. 10MB)</p>
                             </div>

@@ -307,7 +307,7 @@ export function Compliance() {
       }
 
       // Preparar payload
-      const payload = {
+      const payload: any = {
         name: data.name,
         cnpj: data.cnpj,
         issue_date: data.issueDate,
@@ -316,8 +316,7 @@ export function Compliance() {
         location: data.location,
         file_url: fileUrl,
         file_name: fileName,
-        status: data.status || 'Válida',
-        observations: data.observations
+        status: data.status || 'Válida'
       };
 
       toast.loading('Salvando registro no banco de dados...', { id: toastId });
