@@ -18,7 +18,7 @@ import { usePresentation } from '../contexts/PresentationContext';
 export function MainLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showInactivityModal, setShowInactivityModal] = useState(false);
-    const [minutesLeft, setMinutesLeft] = useState(5);
+    const [minutesLeft, setMinutesLeft] = useState(1);
     const location = useLocation();
     const path = location.pathname;
     const { signOut } = useAuth();
@@ -29,12 +29,14 @@ export function MainLayout() {
     const { resetTimers } = useInactivityTimeout({
         onWarning: () => {
             setShowInactivityModal(true);
-            setMinutesLeft(5); // Adjust based on your warning vs idle gap
+            setMinutesLeft(1); // 1 minute to respond
         },
         onIdle: () => {
             setShowInactivityModal(false);
             signOut();
-        }
+        },
+        warningTimeoutMs: 30 * 60 * 1000, // 30 minutes
+        idleTimeoutMs: 31 * 60 * 1000,    // 31 minutes (30 + 1)
     });
 
     const handleExtendSession = () => {

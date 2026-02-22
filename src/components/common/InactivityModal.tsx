@@ -47,7 +47,7 @@ export function InactivityModal({ isOpen, onClose, onLogout, minutesLeft }: Inac
                                         </Dialog.Title>
                                         <div className="mt-3">
                                             <p className="text-sm text-gray-500 leading-relaxed">
-                                                Sua sessão irá expirar em aproximadamente <span className="font-semibold text-gray-900">{minutesLeft} minutos</span> devido à inatividade.
+                                                Sua sessão irá expirar em aproximadamente <span className="font-semibold text-gray-900">{minutesLeft} {minutesLeft === 1 ? 'minuto' : 'minutos'}</span> devido à inatividade.
                                                 Deseja continuar conectado?
                                             </p>
                                         </div>
