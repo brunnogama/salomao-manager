@@ -47,6 +47,9 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   // Estado Modal Sucesso
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  // Estado Modal Aviso Sem Arquivo
+  const [showWarningModal, setShowWarningModal] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       loadClientes();
@@ -144,10 +147,14 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     e.preventDefault();
 
     if (arquivos.length === 0) {
-      const confirmSend = confirm("Nenhum arquivo PDF anexado. Deseja enviar a fatura assim mesmo?");
-      if (!confirmSend) return;
+      setShowWarningModal(true);
+      return;
     }
 
+    proceedWithSubmit();
+  };
+
+  const proceedWithSubmit = async () => {
     if (!clienteId) {
       alert("Por favor, selecione um cliente válido da lista. Se for um novo cliente, cadastre-o primeiro.");
       return;
@@ -410,6 +417,45 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
         description="A fatura foi enviada com sucesso e o fluxo de acompanhamento automático (2d + 2d) foi iniciado."
         confirmText="OK, Entendi"
       />
+
+      {/* WARNING NO-FILE MODAL */}
+      {showWarningModal && (
+        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-gray-200 text-center p-8">
+            <div className="mx-auto w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-6">
+              <AlertTriangle className="h-8 w-8 text-amber-500" />
+            </div>
+
+            <h3 className="text-xl font-black text-[#0a192f] mb-3">
+              Nenhum anexo encontrado
+            </h3>
+
+            <p className="text-sm font-medium text-gray-500 mb-8 leading-relaxed">
+              Você não selecionou nenhum arquivo PDF para enviar junto com a fatura. Deseja continuar o envio assim mesmo?
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => setShowWarningModal(false)}
+                className="w-full px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all"
+              >
+                Voltar e Anexar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWarningModal(false);
+                  proceedWithSubmit();
+                }}
+                className="w-full px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-center flex items-center justify-center"
+              >
+                Enviar sem Anexo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
