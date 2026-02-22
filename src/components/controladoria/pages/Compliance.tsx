@@ -374,14 +374,29 @@ export function Compliance() {
     setIsModalOpen(true);
   };
 
-  const handleEmitRF = (locationName: string) => {
-    const location = locationsList.find(l => l.name === locationName);
-    if (!location?.cnpj) {
+  const handleEmitRF = async (locationName: string) => {
+    let location = locationsList.find(l => l.name === locationName);
+    let cnpjToUse = location?.cnpj;
+
+    if (!cnpjToUse) {
+      // Tenta buscar diretamente do banco caso não esteja na listagem devido a algum fallback
+      const { data } = await supabase
+        .from('office_locations')
+        .select('cnpj')
+        .eq('name', locationName)
+        .single();
+
+      if (data?.cnpj) {
+        cnpjToUse = data.cnpj;
+      }
+    }
+
+    if (!cnpjToUse) {
       toast.error('CNPJ não encontrado para este local');
       return;
     }
 
-    const cleanCnpj = location.cnpj.replace(/\D/g, '');
+    const cleanCnpj = cnpjToUse.replace(/\D/g, '');
     const rfUrl = `https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp?cnpj=${cleanCnpj}`;
 
     // Abre o site da RF em uma nova aba
@@ -395,8 +410,8 @@ export function Compliance() {
     // Usamos as chaves que o mapping do modal espera (issue_date, due_date)
     setEditingCertificate({
       name: 'Comprovante de Inscrição e de Situação Cadastral',
-      cnpj: location.cnpj,
-      location: location.name,
+      cnpj: cnpjToUse,
+      location: locationName,
       issue_date: today,
       due_date: today,
       agency: 'Secretaria da Receita Federal do Brasil'
