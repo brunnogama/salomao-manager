@@ -226,12 +226,18 @@ export function Compliance() {
 
   const uniqueCertTypes = useMemo(() => {
     const types = new Set<string>();
-    certificates.forEach(c => {
+
+    // Filter certificates based on the active tab first
+    const relevantCerts = certificates.filter(c =>
+      activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab
+    );
+
+    relevantCerts.forEach(c => {
       const name = getCertName(c);
       if (name) types.add(name);
     });
     return Array.from(types).sort();
-  }, [certificates, nameDict]);
+  }, [certificates, nameDict, activeTab]);
 
   const filteredCertificates = certificates.filter(c => {
     const matchesSearch = getCertName(c).toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -696,13 +702,13 @@ export function Compliance() {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto shrink-0">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto shrink-0 mt-4 xl:mt-0">
                   {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
                     <button
                       onClick={() => handleEmitRF(activeTab)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 w-full sm:w-auto"
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
                     >
-                      <Download className="h-4 w-4 shrink-0" /> Emitir Certidão RF
+                      <Download className="h-4 w-4 shrink-0" /> Comprovante de Inscrição e de Situação Cadastral
                     </button>
                   )}
 
