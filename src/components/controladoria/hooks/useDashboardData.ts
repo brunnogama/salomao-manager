@@ -237,6 +237,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     let fPerdaAnalise = 0; let fPerdaNegociacao = 0;
     let somaDiasProspectProposta = 0; let qtdProspectProposta = 0;
     let somaDiasPropostaFechamento = 0; let qtdPropostaFechamento = 0;
+    let somaDiasProspectRejeicao = 0; let qtdProspectRejeicao = 0;
 
     const mapaMeses: Record<string, number> = {};
     const financeiroMap: Record<string, { pl: number, fixo: number, exito: number, data: Date }> = {};
@@ -418,6 +419,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       const dProspect = safeDate(c.prospect_date);
       const dProposal = safeDate(c.proposal_date);
       const dContract = safeDate(c.contract_date);
+      const dRejection = safeDate(c.rejection_date);
 
       if (dProspect && isValidDate(dProspect) && dProposal && isValidDate(dProposal) && dProposal >= dProspect) {
         const diffTime = Math.abs(dProposal.getTime() - dProspect.getTime());
@@ -428,6 +430,11 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
         const diffTime = Math.abs(dContract.getTime() - dProposal.getTime());
         somaDiasPropostaFechamento += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         qtdPropostaFechamento++;
+      }
+      if (c.status === 'rejected' && dProspect && isValidDate(dProspect) && dRejection && isValidDate(dRejection) && dRejection >= dProspect) {
+        const diffTime = Math.abs(dRejection.getTime() - dProspect.getTime());
+        somaDiasProspectRejeicao += Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        qtdProspectRejeicao++;
       }
 
       // Totais Gerais
@@ -514,7 +521,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const maxValProp = Math.max(...propArray.map(i => Math.max(i.pl, i.fixo, i.exito)), 1);
     const propostas12Meses = propArray.map(i => ({ ...i, hPl: (i.pl / maxValProp) * 100, hFixo: (i.fixo / maxValProp) * 100, hExito: (i.exito / maxValProp) * 100 }));
 
-    const funil = { totalEntrada: fTotal, qualificadosProposta: fQualificados, fechados: fFechados, perdaAnalise: fPerdaAnalise, perdaNegociacao: fPerdaNegociacao, taxaConversaoProposta: fTotal > 0 ? ((fQualificados / fTotal) * 100).toFixed(1) : '0', taxaConversaoFechamento: fQualificados > 0 ? ((fFechados / fQualificados) * 100).toFixed(1) : '0', tempoMedioProspectProposta: qtdProspectProposta > 0 ? Math.round(somaDiasProspectProposta / qtdProspectProposta) : 0, tempoMedioPropostaFechamento: qtdPropostaFechamento > 0 ? Math.round(somaDiasPropostaFechamento / qtdPropostaFechamento) : 0 };
+    const funil = { totalEntrada: fTotal, qualificadosProposta: fQualificados, fechados: fFechados, perdaAnalise: fPerdaAnalise, perdaNegociacao: fPerdaNegociacao, taxaConversaoProposta: fTotal > 0 ? ((fQualificados / fTotal) * 100).toFixed(1) : '0', taxaConversaoFechamento: fQualificados > 0 ? ((fFechados / fQualificados) * 100).toFixed(1) : '0', taxaRejeicao: fTotal > 0 ? (((fPerdaAnalise + fPerdaNegociacao) / fTotal) * 100).toFixed(1) : '0', tempoMedioProspectProposta: qtdProspectProposta > 0 ? Math.round(somaDiasProspectProposta / qtdProspectProposta) : 0, tempoMedioPropostaFechamento: qtdPropostaFechamento > 0 ? Math.round(somaDiasPropostaFechamento / qtdPropostaFechamento) : 0, tempoMedioRejeicao: qtdProspectRejeicao > 0 ? Math.round(somaDiasProspectRejeicao / qtdProspectRejeicao) : 0 };
 
     const mesesGrafico = []; let iteradorGrafico = new Date(dataInicioFixo); while (iteradorGrafico <= hoje) { const key = iteradorGrafico.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }); mesesGrafico.push({ mes: key, qtd: mapaMeses[key] || 0, altura: 0 }); iteradorGrafico.setMonth(iteradorGrafico.getMonth() + 1); } const maxQtd = Math.max(...mesesGrafico.map((m) => m.qtd), 1); mesesGrafico.forEach((m) => (m.altura = (m.qtd / maxQtd) * 100));
     const evolucaoMensal = mesesGrafico;

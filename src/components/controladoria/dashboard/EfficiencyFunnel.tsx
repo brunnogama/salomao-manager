@@ -50,6 +50,21 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
             <div className='hidden md:block absolute h-[2px] w-[calc(150%+32px)] bg-red-200 left-1/2 top-[172px] z-0'></div>
             <div className='hidden md:block absolute border-y-[4px] border-y-transparent border-l-[6px] border-l-red-200 left-[calc(200%+32px)] top-[169px] z-0'></div>
 
+            {/* Indicadores do Fluxo de Rejeição (Desktop) */}
+            <div className='hidden md:flex absolute top-[148px] left-[calc(125%+16px)] -translate-x-1/2 justify-center z-10'>
+              <div className='text-[10px] font-black uppercase text-red-700 tracking-wider bg-white/80 py-1 px-2 rounded-md inline-block whitespace-nowrap'>
+                {funil.taxaRejeicao}% Rejeição
+              </div>
+            </div>
+            <div className='hidden md:flex absolute top-[180px] left-[calc(125%+16px)] -translate-x-1/2 justify-center z-10'>
+              <div className='flex items-center justify-center gap-1.5 text-gray-500 bg-white/80 py-1 px-2 rounded-md whitespace-nowrap'>
+                <Clock className='w-3 h-3' />
+                <span className='text-[10px] font-bold text-[#112240]'>
+                  {funil.tempoMedioRejeicao} dias
+                </span>
+              </div>
+            </div>
+
             {/* Seta Móvel */}
             <div className='md:hidden text-indigo-300 my-2'>
               <ArrowRight className='w-6 h-6 rotate-90' />
