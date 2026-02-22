@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ShieldCheck, Loader2, Edit, FileSearch, Plus, Search, Eye, Trash2, Download, LayoutDashboard, Database, Clock, BarChart3 } from 'lucide-react';
+import { ShieldCheck, Loader2, Edit, FileSearch, Plus, Search, Eye, Trash2, Download, LayoutDashboard, Database, Clock, BarChart3, Filter } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -19,6 +19,7 @@ export function Compliance() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'ged' | string>('dashboard');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCertType, setSelectedCertType] = useState('');
 
   // Fetching data
   const [certificates, setCertificates] = useState<any[]>([]);
@@ -222,11 +223,24 @@ export function Compliance() {
     return new Date(dateStr).toLocaleDateString();
   };
 
-  const filteredCertificates = certificates.filter(c =>
-    getCertName(c).toLowerCase().includes(searchTerm.toLowerCase()) ||
-    getAgencyName(c).toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (c.location?.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const uniqueCertTypes = useMemo(() => {
+    const types = new Set<string>();
+    certificates.forEach(c => {
+      const name = getCertName(c);
+      if (name) types.add(name);
+    });
+    return Array.from(types).sort();
+  }, [certificates, nameDict]);
+
+  const filteredCertificates = certificates.filter(c => {
+    const matchesSearch = getCertName(c).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getAgencyName(c).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.location?.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesType = !selectedCertType || getCertName(c) === selectedCertType;
+
+    return matchesSearch && matchesType;
+  });
 
   const exportToExcel = () => {
     // Header e configuração XLSX
@@ -655,25 +669,43 @@ export function Compliance() {
           {activeTab !== 'dashboard' && activeTab !== 'ged' && (
             <div className="w-full flex flex-col space-y-6">
               {/* Toolbar: Busca e Ações */}
-              <div className="w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="flex items-center gap-3 w-full md:max-w-md bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg">
-                  <Search className="h-4 w-4 text-gray-400 shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Buscar certidão por nome, cartório ou local..."
-                    className="w-full bg-transparent border-none text-sm font-medium outline-none text-gray-700"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+              <div className="w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+
+                {/* Search and Filter */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full xl:flex-1">
+                  <div className="flex items-center gap-3 w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg relative focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+                    <Search className="h-4 w-4 text-gray-400 shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Buscar certidão por nome, cartório ou local..."
+                      className="w-full bg-transparent border-none text-sm font-medium outline-none text-gray-700"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 w-full md:w-64 bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg relative focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+                    <Filter className="h-4 w-4 text-gray-400 shrink-0" />
+                    <select
+                      value={selectedCertType}
+                      onChange={(e) => setSelectedCertType(e.target.value)}
+                      className="w-full bg-transparent border-none text-sm font-medium outline-none text-gray-700 cursor-pointer appearance-none"
+                    >
+                      <option value="">Todas as Certidões</option>
+                      {uniqueCertTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto shrink-0">
                   {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
                     <button
                       onClick={() => handleEmitRF(activeTab)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 w-full sm:w-auto"
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-lg hover:shadow-lg transition-all text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 w-full sm:w-auto"
                     >
-                      <Download className="h-4 w-4 shrink-0" /> Emitir Certidão RF
+                      <FileSearch className="h-4 w-4 shrink-0" /> Comprovante de Inscrição e de Situação Cadastral
                     </button>
                   )}
 
