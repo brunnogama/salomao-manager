@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, Download, ShieldCheck, FileText, CheckCircle2, Clock, AlertCircle, Eye, Pencil, Trash2, X, Plus, Calendar, FileDown, Paperclip, Loader2, ChevronDown, RefreshCw, LayoutDashboard, Database, BarChart3, FileSearch, Edit } from 'lucide-react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
+import { Search, Filter, Download, ShieldCheck, FileText, CheckCircle2, Clock, AlertCircle, Eye, Pencil, Trash2, X, Plus, Calendar, FileDown, Paperclip, Loader2, ChevronDown, RefreshCw, LayoutDashboard, Database, BarChart3, FileSearch, Edit, Building2 } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -640,42 +640,57 @@ export function Compliance() {
                     </tr>
                   </thead>
                   <tbody>
-                    {certificates.filter(c => c.file_url).map((c) => {
-                      const isExpired = c.due_date && new Date(c.due_date) < new Date();
-                      return (
-                        <tr key={c.id} className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex flex-col">
-                              <span className="font-bold text-[#0a192f] text-xs">{getCertName(c)}</span>
-                              <span className="text-[10px] text-gray-400 font-medium truncate max-w-[200px]">{c.file_name}</span>
+                    {Array.from(new Set(certificates.filter(c => c.file_url).map(c => c.location || 'Sem Local'))).sort().map(location => (
+                      <Fragment key={location}>
+                        <tr className="bg-gray-50/80 border-y border-gray-100">
+                          <td colSpan={6} className="px-6 py-3">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-[#1e3a8a]" />
+                              <span className="font-black text-[#0a192f] text-xs uppercase tracking-widest">{location}</span>
+                              <span className="text-[10px] font-bold text-gray-400 bg-white px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
+                                {certificates.filter(c => c.file_url && (c.location || 'Sem Local') === location).length}
+                              </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-xs font-semibold text-gray-500">
-                            {c.cnpj || '-'}
-                          </td>
-                          <td className="px-6 py-4 font-semibold text-gray-600 text-xs">
-                            {formatDate(c.due_date)}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isExpired
-                              ? 'bg-red-50 text-red-600 border border-red-100'
-                              : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                              }`}>
-                              {isExpired ? 'Vencida' : 'Válida'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-xs font-bold text-gray-500">{c.location}</td>
-                          <td className="px-6 py-4 text-right">
-                            <button
-                              onClick={() => window.open(c.file_url, '_blank')}
-                              className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          </td>
                         </tr>
-                      );
-                    })}
+                        {certificates.filter(c => c.file_url && (c.location || 'Sem Local') === location).map((c) => {
+                          const isExpired = c.due_date && new Date(c.due_date) < new Date();
+                          return (
+                            <tr key={c.id} className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-[#0a192f] text-xs">{getCertName(c)}</span>
+                                  <span className="text-[10px] text-gray-400 font-medium truncate max-w-[200px]">{c.file_name}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-xs font-semibold text-gray-500">
+                                {c.cnpj || '-'}
+                              </td>
+                              <td className="px-6 py-4 font-semibold text-gray-600 text-xs">
+                                {formatDate(c.due_date)}
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isExpired
+                                  ? 'bg-red-50 text-red-600 border border-red-100'
+                                  : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                  }`}>
+                                  {isExpired ? 'Vencida' : 'Válida'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-xs font-bold text-gray-500">{c.location}</td>
+                              <td className="px-6 py-4 text-right">
+                                <button
+                                  onClick={() => window.open(c.file_url, '_blank')}
+                                  className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </Fragment>
+                    ))}
                   </tbody>
                 </table>
               </div>

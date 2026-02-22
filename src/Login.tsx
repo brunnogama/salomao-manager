@@ -63,7 +63,6 @@ export default function Login() {
 
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-black text-[#0a192f] tracking-tight">Bem-vindo de volta</h1>
-              <p className="text-sm font-medium text-gray-500">Insira suas credenciais para acessar o Manager.</p>
             </div>
           </div>
 

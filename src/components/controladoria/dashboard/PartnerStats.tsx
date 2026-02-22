@@ -38,7 +38,11 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
               <p className="text-sm font-semibold text-gray-400">Nenhum dado disponível</p>
             </div>
           ) : (
-            contractsByPartner.map((item: any, idx) => {
+            [...contractsByPartner].sort((a, b) => {
+              const totalA = (a.pl || 0) + (a.exito || 0) + (a.fixo || 0);
+              const totalB = (b.pl || 0) + (b.exito || 0) + (b.fixo || 0);
+              return totalB - totalA;
+            }).map((item: any, idx) => {
               const totalSocio = (item.pl || 0) + (item.exito || 0) + (item.fixo || 0);
 
               return (
