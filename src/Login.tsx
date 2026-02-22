@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './lib/supabase'
 import { User, Lock, ArrowRight, Loader2, LayoutGrid, Eye, EyeOff, Scale } from 'lucide-react'
-
+import { SYSTEM_VERSION } from './config/version'
 export default function Login() {
   const [emailPrefix, setEmailPrefix] = useState('')
   const [password, setPassword] = useState('')
@@ -169,7 +169,7 @@ export default function Login() {
             </p>
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#d4af37]"></span>
-              <span className="text-[10px] text-gray-500 font-bold tracking-widest">V1.6</span>
+              <span className="text-[10px] text-gray-500 font-bold tracking-widest">V{SYSTEM_VERSION}</span>
             </div>
           </div>
         </div>
