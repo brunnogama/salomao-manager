@@ -380,14 +380,14 @@ export function Compliance() {
 
     if (!cnpjToUse) {
       // Tenta buscar diretamente do banco caso não esteja na listagem devido a algum fallback
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('office_locations')
         .select('cnpj')
-        .eq('name', locationName)
-        .single();
+        .ilike('name', `%${locationName}%`)
+        .limit(1);
 
-      if (data?.cnpj) {
-        cnpjToUse = data.cnpj;
+      if (!error && data && data.length > 0 && data[0].cnpj) {
+        cnpjToUse = data[0].cnpj;
       }
     }
 
