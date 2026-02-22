@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ShieldCheck, Loader2, Edit, FileSearch, Plus, Search, Eye, Trash2, Download, LayoutDashboard, Database, Clock, BarChart3, Filter } from 'lucide-react';
+import { Search, Filter, Download, ShieldCheck, FileText, CheckCircle2, Clock, AlertCircle, Eye, Pencil, Trash2, X, Plus, Calendar, FileDown, Paperclip, Loader2, ChevronDown, RefreshCw, LayoutDashboard, Database, BarChart3, FileSearch, Edit } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -14,6 +14,16 @@ import { EmptyState } from '../ui/EmptyState';
 import { CertificateFormModal } from '../certificates/CertificateFormModal';
 import { CertificateDetailsModal } from '../certificates/CertificateDetailsModal';
 import { FilterSelect } from '../ui/FilterSelect';
+
+const CNPJ_MAP: Record<string, string> = {
+  'Salomão BA': '63.808.246/0001-04',
+  'Salomão DF': '52.361.325/0001-01',
+  'Salomão ES': '52.033.582/0001-06',
+  'Salomão PA': '',
+  'Salomão RJ': '14.493.710/0001-05',
+  'Salomão SC': '62.793.384/0001-02',
+  'Salomão SP': '33.789.321/0001-76'
+};
 
 export function Compliance() {
   const [locationsList, setLocationsList] = useState<{ name: string, cnpj?: string }[]>([]);
@@ -374,24 +384,11 @@ export function Compliance() {
     setIsModalOpen(true);
   };
 
-  const handleEmitRF = async (locationName: string, cnpjStr: string) => {
-    let cnpjToUse = cnpjStr;
+  const handleEmitRF = async (locationName: string) => {
+    const cnpjToUse = CNPJ_MAP[locationName];
 
     if (!cnpjToUse) {
-      // Tenta buscar diretamente do banco caso não esteja na listagem devido a algum fallback
-      const { data, error } = await supabase
-        .from('office_locations')
-        .select('cnpj')
-        .ilike('name', `%${locationName}%`)
-        .limit(1);
-
-      if (!error && data && data.length > 0 && data[0].cnpj) {
-        cnpjToUse = data[0].cnpj;
-      }
-    }
-
-    if (!cnpjToUse) {
-      toast.error('CNPJ não encontrado para este local');
+      toast.error('CNPJ não cadastrado ou não encontrado para este local');
       return;
     }
 
@@ -719,18 +716,18 @@ export function Compliance() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto shrink-0 mt-4 xl:mt-0">
                   {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab) && (
                     <button
-                      onClick={() => handleEmitRF(activeTab, locationsList.find(l => l.name === activeTab)?.cnpj || '')}
+                      onClick={() => handleEmitRF(activeTab)}
                       className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
                     >
                       <Download className="h-4 w-4 shrink-0" /> Emitir Certidão RF
                     </button>
                   )}
 
-                  {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
+                  {activeTab !== 'dashboard' && activeTab !== 'ged' && CNPJ_MAP[activeTab] && (
                     <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg w-full sm:w-auto">
                       <ShieldCheck className="w-4 h-4 text-[#1e3a8a] shrink-0" />
                       <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest truncate">
-                        CNPJ FILIAL: {locationsList.find(l => l.name === activeTab)?.cnpj}
+                        CNPJ FILIAL: {CNPJ_MAP[activeTab]}
                       </span>
                     </div>
                   )}
