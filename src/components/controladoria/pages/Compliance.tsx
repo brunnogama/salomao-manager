@@ -708,7 +708,7 @@ export function Compliance() {
                       onClick={() => handleEmitRF(activeTab)}
                       className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
                     >
-                      <Download className="h-4 w-4 shrink-0" /> Comprovante de Inscrição e de Situação Cadastral
+                      <Download className="h-4 w-4 shrink-0" /> Emitir Certidão RF
                     </button>
                   )}
 
