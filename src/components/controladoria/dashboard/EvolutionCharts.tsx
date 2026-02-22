@@ -194,7 +194,7 @@ export function EvolutionCharts({
     scales: {
       y: {
         beginAtZero: true,
-        grace: '10%',
+        grace: '20%',
         grid: {
           color: '#e5e7eb'
         },
@@ -261,17 +261,9 @@ export function EvolutionCharts({
       },
       datalabels: {
         display: true,
-        align: (context) => {
-          const index = context.dataIndex;
-          const datasetLength = context.dataset.data.length;
-          // Alternar alinhamento para evitar sobreposição
-          if (index === 0 || index === datasetLength - 1) {
-            return 'top';
-          }
-          return (index % 2 === 0) ? 'top' : 'bottom';
-        },
-        anchor: 'center',
-        offset: 6,
+        align: 'top',
+        anchor: 'end',
+        offset: 8,
         backgroundColor: (context) => {
           return context.dataset.borderColor as string;
         },
@@ -293,7 +285,7 @@ export function EvolutionCharts({
     scales: {
       y: {
         beginAtZero: true,
-        grace: '10%',
+        grace: '20%',
         grid: {
           color: '#e5e7eb'
         },
