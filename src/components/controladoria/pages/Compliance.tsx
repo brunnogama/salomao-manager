@@ -374,9 +374,8 @@ export function Compliance() {
     setIsModalOpen(true);
   };
 
-  const handleEmitRF = async (locationName: string) => {
-    let location = locationsList.find(l => l.name === locationName);
-    let cnpjToUse = location?.cnpj;
+  const handleEmitRF = async (locationName: string, cnpjStr: string) => {
+    let cnpjToUse = cnpjStr;
 
     if (!cnpjToUse) {
       // Tenta buscar diretamente do banco caso não esteja na listagem devido a algum fallback
@@ -720,7 +719,7 @@ export function Compliance() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto shrink-0 mt-4 xl:mt-0">
                   {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab) && (
                     <button
-                      onClick={() => handleEmitRF(activeTab)}
+                      onClick={() => handleEmitRF(activeTab, locationsList.find(l => l.name === activeTab)?.cnpj || '')}
                       className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
                     >
                       <Download className="h-4 w-4 shrink-0" /> Emitir Certidão RF
