@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Plus, Search, Filter, Calendar, User, Briefcase,
   Loader2,
@@ -72,7 +73,8 @@ export function Contracts() {
   const [searchTerm, setSearchTerm] = useState('');
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const [statusFilter, setStatusFilter] = useState('');
+  const location = useLocation();
+  const [statusFilter, setStatusFilter] = useState(location.state?.status || '');
   const [partnerFilter, setPartnerFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -121,9 +123,7 @@ export function Contracts() {
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        if (!searchTerm) {
-          setIsSearchOpen(false);
-        }
+        // Search bar is always visible, so no need to manage open state
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -514,7 +514,6 @@ export function Contracts() {
     setPartnerFilter('');
     setStartDate('');
     setEndDate('');
-    setIsSearchOpen(false);
   };
 
   const hasActiveFilters = searchTerm !== '' || statusFilter !== '' || partnerFilter !== '' || startDate !== '' || endDate !== '';

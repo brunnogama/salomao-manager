@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Camera, Clock, CheckCircle2, PieChart, FileSignature, HeartHandshake, XCircle
@@ -54,7 +53,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
 
           {/* 1. Em Análise */}
           <div
-            onClick={() => handleDrillDown('Análise')}
+            onClick={() => handleDrillDown('analysis')}
             className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-amber-500 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
             <div className='flex justify-between items-start mb-2'>
@@ -73,7 +72,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
 
           {/* 2. Propostas */}
           <div
-            onClick={() => handleDrillDown('Proposta Formulada')}
+            onClick={() => handleDrillDown('proposal')}
             className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-blue-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
             <div className='flex justify-between items-start mb-2'>
@@ -92,7 +91,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
 
           {/* 3. Contratos Fechados */}
           <div
-            onClick={() => handleDrillDown('Ativo')}
+            onClick={() => handleDrillDown('active')}
             className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-green-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
             <div className='flex justify-between items-start mb-2'>
@@ -111,7 +110,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
 
           {/* 4. Rejeitados */}
           <div
-            onClick={() => handleDrillDown('Rejeitado')}
+            onClick={() => handleDrillDown('rejected')}
             className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-red-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
             <div className='flex justify-between items-start mb-2'>
@@ -130,7 +129,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
 
           {/* 5. Probono */}
           <div
-            onClick={() => handleDrillDown('Probono')}
+            onClick={() => handleDrillDown('probono')}
             className='bg-white group p-4 rounded-xl border border-gray-200 border-l-4 border-l-purple-600 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-center'
           >
             <div className='flex justify-between items-start mb-2'>
