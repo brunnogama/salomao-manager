@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { EmptyState } from '../ui/EmptyState';
 import { CertificateFormModal } from '../certificates/CertificateFormModal';
 import { CertificateDetailsModal } from '../certificates/CertificateDetailsModal';
+import { FilterSelect } from '../ui/FilterSelect';
 
 export function Compliance() {
   const [locationsList, setLocationsList] = useState<{ name: string, cnpj?: string }[]>([]);
@@ -684,18 +685,14 @@ export function Compliance() {
                     />
                   </div>
 
-                  <div className="flex items-center gap-3 w-full md:w-64 bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg relative focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
-                    <Filter className="h-4 w-4 text-gray-400 shrink-0" />
-                    <select
+                  <div className="w-full md:w-64 shrink-0">
+                    <FilterSelect
+                      icon={Filter}
                       value={selectedCertType}
-                      onChange={(e) => setSelectedCertType(e.target.value)}
-                      className="w-full bg-transparent border-none text-sm font-medium outline-none text-gray-700 cursor-pointer appearance-none"
-                    >
-                      <option value="">Todas as Certidões</option>
-                      {uniqueCertTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
+                      onChange={setSelectedCertType}
+                      placeholder="Todas as Certidões"
+                      options={uniqueCertTypes.map(type => ({ label: type, value: type }))}
+                    />
                   </div>
                 </div>
 
@@ -703,9 +700,9 @@ export function Compliance() {
                   {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
                     <button
                       onClick={() => handleEmitRF(activeTab)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-lg hover:shadow-lg transition-all text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 w-full sm:w-auto"
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 w-full sm:w-auto"
                     >
-                      <FileSearch className="h-4 w-4 shrink-0" /> Comprovante de Inscrição e de Situação Cadastral
+                      <Download className="h-4 w-4 shrink-0" /> Emitir Certidão RF
                     </button>
                   )}
 
