@@ -211,56 +211,56 @@ export function ContractDetailsModal({
       <div className="bg-white w-full max-w-7xl rounded-3xl shadow-2xl flex flex-col max-h-[95vh] animate-in zoom-in-95 overflow-hidden">
 
         {/* Header */}
-        <div className="p-8 bg-gray-50 border-b border-gray-100 flex justify-between items-start relative shrink-0">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${getStatusColor(contract.status)}`}>
+        <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start relative shrink-0 gap-4">
+          <div className="flex-1 pr-10 sm:pr-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+              <span className={`px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wide border ${getStatusColor(contract.status)}`}>
                 {getStatusLabel(contract.status)}
               </span>
               {contract.hon_number && (
-                <span className="font-mono text-[10px] text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded">
+                <span className="font-mono text-[9px] sm:text-[10px] text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded">
                   HON: {contract.hon_number}
                 </span>
               )}
               {contract.proposal_code && contract.status === 'proposal' && (
-                <span className="font-mono text-[10px] text-blue-600 bg-blue-50 border border-blue-100 px-2 py-1 rounded">
+                <span className="font-mono text-[9px] sm:text-[10px] text-blue-600 bg-blue-50 border border-blue-100 px-2 py-1 rounded">
                   Cód: {contract.proposal_code}
                 </span>
               )}
-              <span className="text-gray-300 font-mono text-[10px]">
+              <span className="text-gray-300 font-mono text-[9px] sm:text-[10px]">
                 #{contract.display_id || String(contract.seq_id || 0).padStart(6, '0')}
               </span>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 leading-tight mb-2">{contract.client_name}</h2>
-            <div className="flex items-center gap-4 text-gray-500 text-sm">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-2">{contract.client_name}</h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-gray-500 text-sm">
               {contract.cnpj && (
-                <span className="font-mono font-medium">{contract.cnpj}</span>
+                <span className="font-mono font-medium text-xs sm:text-sm">{contract.cnpj}</span>
               )}
-              <span className="flex items-center"><Briefcase className="w-4 h-4 mr-1.5" /> {contract.area}</span>
-              <span className="flex items-center"><MapPin className="w-4 h-4 mr-1.5" /> {contract.uf}</span>
+              <span className="flex items-center text-xs sm:text-sm"><Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" /> {contract.area}</span>
+              <span className="flex items-center text-xs sm:text-sm"><MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" /> {contract.uf}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 absolute top-2 right-2 sm:static sm:top-auto sm:right-auto">
             {canEdit && (
-              <button onClick={onEdit} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors shadow-sm" title="Editar">
-                <Edit className="w-5 h-5" />
+              <button onClick={onEdit} className="p-2 sm:p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors shadow-sm" title="Editar">
+                <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             )}
 
             {canDelete && (
-              <button onClick={onDelete} className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors shadow-sm" title="Excluir">
-                <Trash2 className="w-5 h-5" />
+              <button onClick={onDelete} className="p-2 sm:p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors shadow-sm" title="Excluir">
+                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             )}
-            <button onClick={onClose} className="p-3 bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 transition-colors ml-2 shadow-sm">
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="p-2 sm:p-3 bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 transition-colors ml-1 sm:ml-2 shadow-sm">
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 custom-scrollbar">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Coluna 1: Dados Gerais */}
             <div className="space-y-6">
               <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">Dados Gerais</h3>

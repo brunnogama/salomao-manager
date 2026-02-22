@@ -1,20 +1,15 @@
 import { useMemo, useState } from 'react'
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   LabelList,
   AreaChart,
-  Area,
-  Defs,
-  LinearGradient,
-  Stop
+  Area
 } from 'recharts'
-import { Filter, TrendingUp, Plane, DollarSign, Users, Calendar, AlertCircle, PieChart, ArrowUpRight, ArrowDownRight, BarChart3, BarChart4, Hash } from 'lucide-react'
+import { Filter, Plane, DollarSign, Users, Calendar, AlertCircle, PieChart, ArrowUpRight, ArrowDownRight, BarChart3, BarChart4, Hash } from 'lucide-react'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
 
 interface AeronaveDashboardProps {
@@ -27,16 +22,8 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
   // Alteração 1: Padrão "all" para todos os anos
   const [yearFilter, setYearFilter] = useState<string>('all')
 
-  // --- Cores do Sistema (Salomão Design System) ---
-  const COLORS = {
-    line: '#1e3a8a', // Azul Salomão Principal
-    dot: '#ffffff',
-    activeDot: '#f59e0b', // Amber
-    text: '#6b7280'
-  }
-
   // --- Helpers de Formatação ---
-  const formatCurrency = (val: number) => 
+  const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
 
   const formatCompact = (val: number) => {
@@ -59,7 +46,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
     if (!start || !end) return '-'
     const dStart = new Date(start + 'T00:00:00')
     const dEnd = new Date(end + 'T00:00:00')
-    
+
     const dayStart = String(dStart.getDate()).padStart(2, '0')
     const monthStart = String(dStart.getMonth() + 1).padStart(2, '0')
     const dayEnd = String(dEnd.getDate()).padStart(2, '0')
@@ -78,51 +65,51 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
   }, [data])
 
   const dashboardData = useMemo(() => {
-  // FILTRO 1: Excluir Voos Comerciais (Agência/Passagem)
-  const filteredData = data.filter(item => {
-    const aeronave = (item.aeronave || '').toLowerCase().trim()
-    const despesa = (item.despesa || '').toLowerCase().trim()
-    const tipo = (item.tipo || '').toLowerCase().trim()
-    
-    // Excluir se for aeronave comercial OU despesa de agência OU tipo passagem
-    const isComercial = aeronave.includes('comercial')
-    const isAgencia = despesa.includes('agência') || despesa.includes('agencia')
-    const isPassagem = tipo.includes('passagem')
-    
-    return !isComercial && !isAgencia && !isPassagem
-  })
-  
-  // FILTRO 2: Filtro de Ano
-  if (yearFilter === 'all') return filteredData
-  return filteredData.filter(item => {
-    const dateStr = item.data_pagamento || item.vencimento || item.created_at || ''
-    return dateStr.startsWith(yearFilter)
-  })
-}, [data, yearFilter])
+    // FILTRO 1: Excluir Voos Comerciais (Agência/Passagem)
+    const filteredData = data.filter(item => {
+      const aeronave = (item.aeronave || '').toLowerCase().trim()
+      const despesa = (item.despesa || '').toLowerCase().trim()
+      const tipo = (item.tipo || '').toLowerCase().trim()
+
+      // Excluir se for aeronave comercial OU despesa de agência OU tipo passagem
+      const isComercial = aeronave.includes('comercial')
+      const isAgencia = despesa.includes('agência') || despesa.includes('agencia')
+      const isPassagem = tipo.includes('passagem')
+
+      return !isComercial && !isAgencia && !isPassagem
+    })
+
+    // FILTRO 2: Filtro de Ano
+    if (yearFilter === 'all') return filteredData
+    return filteredData.filter(item => {
+      const dateStr = item.data_pagamento || item.vencimento || item.created_at || ''
+      return dateStr.startsWith(yearFilter)
+    })
+  }, [data, yearFilter])
 
   // --- 1. Dados do Gráfico ---
   const chartData = useMemo(() => {
-    const validRecords = dashboardData.filter(item => 
+    const validRecords = dashboardData.filter(item =>
       item.data_pagamento && (item.valor_pago || 0) > 0
     )
 
     const grouped = validRecords.reduce((acc, item) => {
       const dateStr = item.data_pagamento
       if (!dateStr) return acc
-      
+
       const date = new Date(dateStr)
       const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000)
       const key = `${adjustedDate.getFullYear()}-${String(adjustedDate.getMonth() + 1).padStart(2, '0')}`
-      
-      const monthLabel = adjustedDate.toLocaleDateString('pt-BR', { 
-        month: 'short', 
-        year: yearFilter === 'all' ? '2-digit' : undefined 
+
+      const monthLabel = adjustedDate.toLocaleDateString('pt-BR', {
+        month: 'short',
+        year: yearFilter === 'all' ? '2-digit' : undefined
       }).replace('.', '')
-      
+
       if (!acc[key]) {
-        acc[key] = { 
-          name: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1), 
-          fullDate: key, 
+        acc[key] = {
+          name: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
+          fullDate: key,
           value: 0
         }
       }
@@ -165,9 +152,9 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       const itemDate = item.data_missao || item.vencimento || item.data_pagamento
 
       if (!acc[key]) {
-        acc[key] = { 
-          id, 
-          nome, 
+        acc[key] = {
+          id,
+          nome,
           dataInicio: itemDate,
           dataFim: itemDate,
           total: 0,
@@ -176,12 +163,12 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       }
       acc[key].total += (item.valor_pago || 0)
       acc[key].quantidade += 1
-      
+
       if (itemDate) {
         if (!acc[key].dataInicio || itemDate < acc[key].dataInicio) acc[key].dataInicio = itemDate
         if (!acc[key].dataFim || itemDate > acc[key].dataFim) acc[key].dataFim = itemDate
       }
-      
+
       return acc
     }, {} as Record<string, any>)
 
@@ -209,9 +196,9 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
   // --- 5. Pagamentos Pendentes ---
   const pendingPaymentsList = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
-    const pending = dashboardData.filter(item => 
-      item.vencimento && 
-      (item.valor_previsto || 0) > 0 && 
+    const pending = dashboardData.filter(item =>
+      item.vencimento &&
+      (item.valor_previsto || 0) > 0 &&
       (!item.data_pagamento || item.data_pagamento >= today)
     )
 
@@ -239,8 +226,8 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
     const average = keys.length > 0 ? totalSum / keys.length : 0
 
     return Object.entries(groups)
-      .map(([name, value]) => ({ 
-        name, 
+      .map(([name, value]) => ({
+        name,
         value,
         isHigh: value > average,
         insight: `${Math.abs(average > 0 ? (value - average) / average * 100 : 0).toFixed(0)}% ${value > average ? 'acima' : 'abaixo'} da média`
@@ -263,8 +250,8 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
     const average = keys.length > 0 ? totalSum / keys.length : 0
 
     return Object.entries(groups)
-      .map(([name, value]) => ({ 
-        name, 
+      .map(([name, value]) => ({
+        name,
         value,
         isHigh: value > average,
         insight: `${Math.abs(average > 0 ? (value - average) / average * 100 : 0).toFixed(0)}% ${value > average ? 'acima' : 'abaixo'} da média`
@@ -297,20 +284,20 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
     const { x, y, value } = props;
     return (
       <g>
-        <rect 
-          x={x - 25} 
-          y={y - 32} 
-          width={50} 
-          height={20} 
-          rx={6} 
-          fill="#1e3a8a" 
+        <rect
+          x={x - 25}
+          y={y - 32}
+          width={50}
+          height={20}
+          rx={6}
+          fill="#1e3a8a"
         />
-        <text 
-          x={x} 
-          y={y - 18} 
-          fill="white" 
-          textAnchor="middle" 
-          fontSize="10px" 
+        <text
+          x={x}
+          y={y - 18}
+          fill="white"
+          textAnchor="middle"
+          fontSize="10px"
           fontWeight="bold"
         >
           {formatCompact(value)}
@@ -320,29 +307,29 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50/50 min-h-full">
-      
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 bg-gray-50/50 min-h-full">
+
       {/* LINHA 1: GRÁFICO (67%) E RANKING DE FORNECEDORES (33%) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+
         {/* 1. GRÁFICO DE LINHA (IDENTIDADE REPLICADA) */}
-        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 flex flex-col h-[480px]">
-          
+        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-4 sm:p-6 flex flex-col h-[480px]">
+
           {/* Header Identidade Replicada */}
-          <div className="mb-6 pb-5 border-b border-gray-100 flex items-center justify-between">
+          <div className="mb-4 sm:mb-6 pb-4 sm:pb-5 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg shrink-0">
                 <BarChart3 className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Análise Financeira</h2>
+                <h2 className="text-lg sm:text-[20px] font-black text-[#0a192f] tracking-tight">Análise Financeira</h2>
                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Fluxo de Pagamentos Realizados</p>
               </div>
             </div>
-            
-            <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-1.5 hover:bg-white hover:shadow-sm transition-all">
+
+            <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-1.5 hover:bg-white hover:shadow-sm transition-all w-full sm:w-auto">
               <Filter className="h-3.5 w-3.5 text-gray-400" />
-              <select 
+              <select
                 value={yearFilter}
                 onChange={(e) => setYearFilter(e.target.value)}
                 className="bg-transparent text-[10px] font-black text-gray-700 uppercase tracking-wider outline-none cursor-pointer"
@@ -358,30 +345,30 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
               <AreaChart data={chartData} margin={{ top: 40, right: 30, left: 10, bottom: 10 }}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#1e3a8a" stopOpacity={0.3}/>
-                    <stop offset="100%" stopColor="#1e3a8a" stopOpacity={0}/>
+                    <stop offset="0%" stopColor="#1e3a8a" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#1e3a8a" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="0" vertical={false} stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 900 }} 
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 900 }}
                   dy={15}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fill: '#6b7280', fontSize: 11, fontWeight: 900 }}
                   tickFormatter={(val) => formatCompact(val)}
                   width={40}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 1 }} />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#1e3a8a" 
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#1e3a8a"
                   strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorValue)"
@@ -397,17 +384,17 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
         </div>
 
         {/* 2. RANKING DE FORNECEDORES (1 coluna de 3) */}
-        <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[480px]">
+        <div className="lg:col-span-1 bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[480px]">
           <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg shrink-0">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Fornecedores</h2>
+              <h2 className="text-lg sm:text-[20px] font-black text-[#0a192f] tracking-tight">Fornecedores</h2>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Maiores volumes financeiros</p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 rounded-lg mb-2 shrink-0">
             <div className="col-span-7 text-[10px] font-black uppercase text-gray-500">Fornecedor</div>
             <div className="col-span-5 text-[10px] font-black uppercase text-gray-500 text-right">Total</div>
@@ -436,18 +423,18 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       </div>
 
       {/* LINHA 2: LISTAS DETALHADAS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+
         {/* CARD ESQUERDA: RELAÇÃO DAS MISSÕES OU PAGAMENTOS PENDENTES */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
           {filterOrigem === 'fixa' ? (
             <>
               <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg shrink-0">
                   <AlertCircle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Pendentes</h2>
+                  <h2 className="text-lg sm:text-[20px] font-black text-[#0a192f] tracking-tight">Pendentes</h2>
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Pagamentos aguardando</p>
                 </div>
               </div>
@@ -490,11 +477,11 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           ) : (
             <>
               <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg shrink-0">
                   <Plane className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Missões</h2>
+                  <h2 className="text-lg sm:text-[20px] font-black text-[#0a192f] tracking-tight">Missões</h2>
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Relação completa no período</p>
                 </div>
               </div>
@@ -508,7 +495,7 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
 
               <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2 min-h-0">
                 {missionsList.map((missao, idx) => (
-                  <button 
+                  <button
                     key={idx}
                     onClick={() => handleMissionClick(missao.nome)}
                     className="w-full grid grid-cols-12 gap-2 px-4 py-3 border border-gray-100 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all items-center text-left group"
@@ -545,15 +532,15 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
         </div>
 
         {/* CARD DIREITA: DESPESAS FIXAS OU PAGAMENTOS PENDENTES */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-[400px]">
           {filterOrigem === 'missao' ? (
             <>
               <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg shrink-0">
                   <AlertCircle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Pendentes</h2>
+                  <h2 className="text-lg sm:text-[20px] font-black text-[#0a192f] tracking-tight">Pendentes</h2>
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Pagamentos aguardando</p>
                 </div>
               </div>
@@ -596,11 +583,11 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           ) : (
             <>
               <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg shrink-0">
                   <DollarSign className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Despesas</h2>
+                  <h2 className="text-lg sm:text-[20px] font-black text-[#0a192f] tracking-tight">Despesas</h2>
                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Gastos fixos operacionais</p>
                 </div>
               </div>
@@ -637,15 +624,15 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
       </div>
 
       {/* LINHA 3: EVOLUÇÃO DE GASTOS POR TIPO */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <div className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-5 flex flex-col h-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-4 sm:p-5 flex flex-col h-auto">
           <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg shrink-0">
               <BarChart4 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Custo Missão</h2>
+              <h2 className="text-lg sm:text-[20px] font-black text-[#0a192f] tracking-tight">Custo Missão</h2>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Maiores gastos por categoria</p>
             </div>
           </div>
@@ -665,8 +652,8 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                   </div>
                 </div>
                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-blue-600 rounded-full" 
+                  <div
+                    className="h-full bg-blue-600 rounded-full"
                     style={{ width: `${(cat.value / (topMissionCategories[0]?.value || 1)) * 100}%` }}
                   />
                 </div>
@@ -678,13 +665,13 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
           </div>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-5 flex flex-col h-auto">
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-4 sm:p-5 flex flex-col h-auto">
           <div className="mb-4 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg shrink-0">
               <PieChart className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Custo Fixo</h2>
+              <h2 className="text-lg sm:text-[20px] font-black text-[#0a192f] tracking-tight">Custo Fixo</h2>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Maiores gastos por categoria</p>
             </div>
           </div>
@@ -704,8 +691,8 @@ export function AeronaveDashboard({ data, onMissionClick, filterOrigem = 'todos'
                   </div>
                 </div>
                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-emerald-600 rounded-full" 
+                  <div
+                    className="h-full bg-emerald-600 rounded-full"
                     style={{ width: `${(cat.value / (topFixedCategories[0]?.value || 1)) * 100}%` }}
                   />
                 </div>

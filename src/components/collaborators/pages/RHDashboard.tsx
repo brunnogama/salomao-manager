@@ -105,41 +105,41 @@ export function RHDashboard({ }: RHDashboardProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6">
 
       {/* PAGE HEADER */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <LayoutDashboard className="h-7 w-7 text-white" />
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+            <LayoutDashboard className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
               Dashboard RH
             </h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
               Indicadores de capital humano e gestão de colaboradores
             </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-6 w-full">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 w-full">
 
         {/* DATA VISUALIZATION - ACTIONS CHART */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-50 rounded-lg text-[#1e3a8a]">
                 <Megaphone className="h-5 w-5" />
               </div>
-              <h2 className="text-lg font-black text-[#0a192f]">Ações Realizadas (Anual)</h2>
+              <h2 className="text-base sm:text-lg font-black text-[#0a192f]">Ações Realizadas (Anual)</h2>
             </div>
           </div>
 
-          <div className="h-64 w-full">
+          <div className="h-48 sm:h-64 w-full">
             {loading ? (
-              <div className="h-full flex items-center justify-center text-gray-400 animate-pulse">Carregando dados...</div>
+              <div className="h-full flex items-center justify-center text-gray-400 animate-pulse text-sm">Carregando dados...</div>
             ) : (
               <Bar options={chartOptions} data={chartData} />
             )}

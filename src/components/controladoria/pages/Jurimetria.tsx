@@ -296,26 +296,26 @@ export function Jurimetria() {
     <div className={`flex flex-col h-screen bg-gray-50 p-6 space-y-6 overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 p-0' : ''}`}>
 
       {/* 1. Header - Salomão Design System */}
-      <div className={`flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 ${isFullscreen ? 'rounded-none border-x-0 border-t-0' : ''}`}>
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <Share2 className="h-7 w-7 text-white" />
+      <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 ${isFullscreen ? 'rounded-none border-x-0 border-t-0' : ''}`}>
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
+            <Share2 className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Jurimetria</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Análise de Conexões & Processos</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Jurimetria</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Análise de Conexões & Processos</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
 
 
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Buscar nó ou termo..."
-              className="pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold w-48 md:w-64 outline-none focus:border-[#1e3a8a] transition-all"
+              className="pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold w-full sm:w-48 md:w-64 outline-none focus:border-[#1e3a8a] transition-all"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />

@@ -185,29 +185,29 @@ export function GED() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
+    <div className="flex flex-col min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 space-y-4 sm:space-y-6">
 
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <Folder className="h-7 w-7 text-white" />
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+            <Folder className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">GED - Gestão Eletrônica de Documentos</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Repositório Central de Documentos</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">GED - Gestão Eletrônica de Documentos</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">Repositório Central de Documentos</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button onClick={() => setIsUploadModalOpen(true)} className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95">
-            <Plus className="h-3.5 w-3.5" /> Novo Documento
+        <div className="flex items-center gap-3 w-full md:w-auto mt-2 md:mt-0 justify-end flex-wrap">
+          <button onClick={() => setIsUploadModalOpen(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95">
+            <Plus className="h-4 w-4" /> Novo Documento
           </button>
         </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
             <Filter className="h-4 w-4 text-gray-400" />
             <select value={selectedCategoria} onChange={(e) => setSelectedCategoria(e.target.value)} className="px-4 py-2 bg-gray-100/50 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
               {categorias.map(cat => <option key={cat} value={cat.toLowerCase()}>{cat}</option>)}
@@ -364,8 +364,8 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md">
-      <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="px-8 py-5 border-b border-gray-50 flex justify-between items-center">
+      <div className="bg-white w-full max-w-2xl max-h-[90vh] flex flex-col rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div className="px-8 py-5 border-b border-gray-50 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-50 rounded-lg"><Upload className="w-5 h-5 text-blue-600" /></div>
             <div>
@@ -376,7 +376,7 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-all"><XCircle className="w-5 h-5 text-gray-400" /></button>
         </div>
 
-        <div className="px-8 py-6 space-y-4">
+        <div className="px-8 py-6 space-y-4 overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-2 gap-4">
             <label className="block">
               <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Categoria *</span>
@@ -441,8 +441,8 @@ function ViewDocumentModal({ documento, isOpen, onClose, onDownload, onDelete }:
   if (!isOpen) return null
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 animate-in zoom-in duration-300">
-        <div className="px-10 py-6 border-b border-gray-50 flex justify-between items-center">
+      <div className="bg-white w-full max-w-3xl max-h-[90vh] flex flex-col rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 animate-in zoom-in duration-300">
+        <div className="px-10 py-6 border-b border-gray-50 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-5">
             <div className="p-3.5 bg-blue-50 rounded-2xl"><FileText className="h-6 w-6 text-blue-600" /></div>
             <div>
@@ -452,30 +452,30 @@ function ViewDocumentModal({ documento, isOpen, onClose, onDownload, onDelete }:
           </div>
           <button onClick={onClose} className="p-2.5 hover:bg-gray-100 rounded-2xl transition-all group"><XCircle className="h-6 w-6 text-gray-400 group-hover:rotate-90 transition-transform" /></button>
         </div>
-        <div className="px-10 py-8 space-y-6">
+        <div className="px-10 py-8 space-y-6 overflow-y-auto custom-scrollbar">
           <div className="bg-blue-50/30 p-5 rounded-xl border border-blue-100">
-            <h4 className="text-lg font-black text-[#0a192f] mb-2">{documento.nome_arquivo}</h4>
+            <h4 className="text-lg font-black text-[#0a192f] mb-2 break-all">{documento.nome_arquivo}</h4>
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div><span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Categoria</span><p className="text-sm font-bold text-gray-700 mt-1">{documento.categoria}</p></div>
               <div><span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Tipo</span><p className="text-sm font-bold text-gray-700 mt-1">{documento.tipo_documento}</p></div>
-              <div><span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Entidade</span><p className="text-sm font-bold text-gray-700 mt-1">{documento.entidade_vinculada || '---'}</p></div>
+              <div><span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Entidade</span><p className="text-sm font-bold text-gray-700 mt-1 break-all">{documento.entidade_vinculada || '---'}</p></div>
               <div><span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Data Upload</span><p className="text-sm font-bold text-gray-700 mt-1">{new Date(documento.data_upload).toLocaleDateString('pt-BR')}</p></div>
               <div><span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Tamanho</span><p className="text-sm font-bold text-gray-700 mt-1">{(documento.tamanho / 1024).toFixed(2)} KB</p></div>
-              <div><span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Enviado por</span><p className="text-sm font-bold text-gray-700 mt-1">{documento.usuario_upload}</p></div>
+              <div><span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Enviado por</span><p className="text-sm font-bold text-gray-700 mt-1 truncate">{documento.usuario_upload}</p></div>
             </div>
             {documento.observacoes && (
               <div className="mt-4 pt-4 border-t border-blue-100">
                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Observações</span>
-                <p className="text-sm font-semibold text-gray-600 mt-1 italic">"{documento.observacoes}"</p>
+                <p className="text-sm font-semibold text-gray-600 mt-1 italic break-words">"{documento.observacoes}"</p>
               </div>
             )}
           </div>
         </div>
-        <div className="px-10 py-6 border-t border-gray-50 bg-gray-50/50 flex justify-between items-center">
-          <button onClick={() => onDelete(documento)} className="flex items-center gap-2 px-6 py-3 text-red-500 hover:bg-red-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"><Trash2 className="h-4 w-4" /> Excluir Documento</button>
-          <div className="flex gap-4">
+        <div className="px-10 py-6 border-t border-gray-50 bg-gray-50/50 shrink-0 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
+          <button onClick={() => onDelete(documento)} className="flex items-center justify-center gap-2 px-6 py-3 text-red-500 hover:bg-red-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"><Trash2 className="h-4 w-4" /> Excluir Documento</button>
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <button onClick={onClose} className="px-6 py-3 text-gray-400 hover:text-gray-600 text-[10px] font-black uppercase tracking-widest transition-all">Fechar</button>
-            <button onClick={() => onDownload(documento)} className="flex items-center gap-3 px-10 py-3 bg-[#1e3a8a] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all transform active:scale-95"><Download className="h-4 w-4" /> Baixar Documento</button>
+            <button onClick={() => onDownload(documento)} className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-10 py-3 bg-[#1e3a8a] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all transform active:scale-95"><Download className="h-4 w-4" /> Baixar Documento</button>
           </div>
         </div>
       </div>

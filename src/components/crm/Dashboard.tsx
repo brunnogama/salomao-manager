@@ -188,23 +188,23 @@ export function Dashboard({
     <div className="flex flex-col h-full space-y-6 p-6 bg-gradient-to-br from-gray-50 to-gray-100">
 
       {/* PAGE HEADER - Identêntico ao arquivo de Clientes */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <LayoutGrid className="h-7 w-7 text-white" />
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+            <LayoutGrid className="h-6 w-6 md:h-7 md:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+            <h1 className="text-2xl md:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
               Dashboard Clientes
             </h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+            <p className="text-xs md:text-sm font-semibold text-gray-500 mt-1 md:mt-0.5">
               Visão geral de clientes, brindes e magistrados
             </p>
           </div>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 self-end md:self-auto mt-2 md:mt-0">
           <button
             onClick={() => fetchDashboardData()}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 hover:border-[#1e3a8a]/30 text-gray-600 hover:text-[#1e3a8a] rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] transition-all shadow-sm hover:shadow-md active:scale-95"

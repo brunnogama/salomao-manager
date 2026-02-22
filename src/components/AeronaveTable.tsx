@@ -71,8 +71,8 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
   }
 
   return (
-    <div className="overflow-x-auto custom-scrollbar pb-4">
-      <table className="w-full text-left border-separate border-spacing-y-2 px-4">
+    <div className="overflow-x-auto custom-scrollbar pb-4 -mx-4 sm:mx-0 px-4 sm:px-0">
+      <table className="w-full min-w-[1000px] text-left border-separate border-spacing-y-2">
         <thead>
           <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
             <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest w-24 first:rounded-l-xl">ID</th>
@@ -124,8 +124,8 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
                 {/* Tipo (Sub-categoria) */}
                 <td className="px-4 py-4">
                   <span className={`inline-flex px-2 py-1 rounded text-[10px] font-black uppercase tracking-wide border ${item.origem === 'missao'
-                      ? 'bg-blue-50 text-blue-700 border-blue-100'
-                      : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                    ? 'bg-blue-50 text-blue-700 border-blue-100'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-100'
                     }`}>
                     {item.tipo || 'Geral'}
                   </span>

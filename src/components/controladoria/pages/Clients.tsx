@@ -123,24 +123,24 @@ export function Clients() {
 
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
+    <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 sm:space-y-6">
 
       {/* 1. Header - Salomão Design System */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <Users className="h-7 w-7 text-white" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2 sm:p-3 shadow-lg shrink-0">
+            <Users className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Clientes</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão da base de clientes</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Clientes</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão da base de clientes</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
           <button
             onClick={handleNew}
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            className="flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
           >
             <Plus className="h-4 w-4" /> Novo Cliente
           </button>
@@ -149,10 +149,10 @@ export function Clients() {
 
       {/* 2. Toolbar: Total | Busca | Filtros */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex flex-col lg:flex-row items-center gap-4">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
 
           {/* Card de Total */}
-          <div className="flex items-center gap-3 pr-4 border-r border-gray-100">
+          <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100">
             <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
               <Briefcase className="w-5 h-5" />
             </div>
@@ -208,100 +208,102 @@ export function Clients() {
             <p className="text-gray-500">Tente ajustar os filtros ou adicione um novo cliente</p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            {/* Table Header */}
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-              <div className="grid grid-cols-12 gap-4 px-6 py-4">
-                <div className="col-span-4">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Cliente</p>
-                </div>
-                <div className="col-span-3">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Sócio Responsável</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Contratos Vinculados</p>
-                </div>
-                <div className="col-span-1">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">UF</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">Ações</p>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto custom-scrollbar">
+            <div className="min-w-[1000px]">
+              {/* Table Header */}
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                <div className="grid grid-cols-12 gap-4 px-6 py-4">
+                  <div className="col-span-4">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Cliente</p>
+                  </div>
+                  <div className="col-span-3">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Sócio Responsável</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Contratos Vinculados</p>
+                  </div>
+                  <div className="col-span-1">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">UF</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">Ações</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Table Body */}
-            <div className="divide-y divide-gray-100">
-              {filteredClients.map(client => (
-                <div
-                  key={client.id}
-                  className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => handleView(client)}
-                >
-                  {/* Cliente Column */}
-                  <div className="col-span-4 flex items-center gap-3">
-                    <div className={`p-2 rounded-xl ${client.is_person ? 'bg-blue-50 text-blue-600' : 'bg-indigo-50 text-indigo-600'}`}>
-                      {client.is_person ? <User className="w-4 h-4" /> : <Building className="w-4 h-4" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-black text-[#0a192f] truncate">{client.name}</h3>
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide truncate">
-                        {client.cnpj ? maskCNPJ(client.cnpj) : 'Sem documento'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Sócio Responsável Column */}
-                  <div className="col-span-3 flex items-center">
-                    <span className="text-sm text-gray-700 font-semibold truncate">
-                      {client.partner_name || '-'}
-                    </span>
-                  </div>
-
-                  {/* Contratos Vinculados Column */}
-                  <div className="col-span-2 flex items-center justify-center">
-                    {client.active_contracts_count !== undefined && client.active_contracts_count > 0 ? (
-                      <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-lg">
-                        <Briefcase className="w-4 h-4 text-emerald-600" />
-                        <span className="text-sm font-black text-emerald-700">{client.active_contracts_count}</span>
+              {/* Table Body */}
+              <div className="divide-y divide-gray-100">
+                {filteredClients.map(client => (
+                  <div
+                    key={client.id}
+                    className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => handleView(client)}
+                  >
+                    {/* Cliente Column */}
+                    <div className="col-span-4 flex items-center gap-3">
+                      <div className={`p-2 rounded-xl shrink-0 ${client.is_person ? 'bg-blue-50 text-blue-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                        {client.is_person ? <User className="w-4 h-4" /> : <Building className="w-4 h-4" />}
                       </div>
-                    ) : (
-                      <span className="text-sm text-gray-400 font-semibold">-</span>
-                    )}
-                  </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-black text-[#0a192f] truncate">{client.name}</h3>
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide truncate">
+                          {client.cnpj ? maskCNPJ(client.cnpj) : 'Sem documento'}
+                        </p>
+                      </div>
+                    </div>
 
-                  {/* UF Column */}
-                  <div className="col-span-1 flex items-center justify-center">
-                    <span className="text-sm font-bold text-gray-700">
-                      {client.uf || '-'}
-                    </span>
-                  </div>
+                    {/* Sócio Responsável Column */}
+                    <div className="col-span-3 flex items-center min-w-0">
+                      <span className="text-sm text-gray-700 font-semibold truncate">
+                        {client.partner_name || '-'}
+                      </span>
+                    </div>
 
-                  {/* Ações Column */}
-                  <div className="col-span-2 flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(client);
-                      }}
-                      className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all"
-                      title="Editar cliente"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(client.id!);
-                      }}
-                      className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
-                      title="Excluir cliente"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {/* Contratos Vinculados Column */}
+                    <div className="col-span-2 flex items-center justify-center shrink-0">
+                      {client.active_contracts_count !== undefined && client.active_contracts_count > 0 ? (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-lg">
+                          <Briefcase className="w-4 h-4 text-emerald-600" />
+                          <span className="text-sm font-black text-emerald-700">{client.active_contracts_count}</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400 font-semibold">-</span>
+                      )}
+                    </div>
+
+                    {/* UF Column */}
+                    <div className="col-span-1 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-bold text-gray-700">
+                        {client.uf || '-'}
+                      </span>
+                    </div>
+
+                    {/* Ações Column */}
+                    <div className="col-span-2 flex items-center justify-end gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(client);
+                        }}
+                        className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all"
+                        title="Editar cliente"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(client.id!);
+                        }}
+                        className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+                        title="Excluir cliente"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -319,45 +321,45 @@ export function Clients() {
       {
         viewingClient && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]">
               {/* Header */}
-              <div className="flex justify-between items-center px-6 py-4 bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
+              <div className="flex justify-between items-start sm:items-center px-4 sm:px-6 py-4 bg-gradient-to-br from-[#1e3a8a] to-[#112240] shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-xl ${viewingClient.is_person ? 'bg-blue-400/20' : 'bg-indigo-400/20'}`}>
-                    {viewingClient.is_person ? <User className="w-6 h-6 text-white" /> : <Building className="w-6 h-6 text-white" />}
+                  <div className={`p-2 rounded-xl shrink-0 ${viewingClient.is_person ? 'bg-blue-400/20' : 'bg-indigo-400/20'}`}>
+                    {viewingClient.is_person ? <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" /> : <Building className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
                   </div>
-                  <div>
-                    <h2 className="text-xl font-black text-white">{viewingClient.name}</h2>
-                    <p className="text-sm text-white/80 font-semibold">{viewingClient.cnpj ? maskCNPJ(viewingClient.cnpj) : 'Sem documento'}</p>
+                  <div className="min-w-0 pr-4">
+                    <h2 className="text-lg sm:text-xl font-black text-white truncate">{viewingClient.name}</h2>
+                    <p className="text-xs sm:text-sm text-white/80 font-semibold truncate">{viewingClient.cnpj ? maskCNPJ(viewingClient.cnpj) : 'Sem documento'}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setViewingClient(null)}
-                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-1 sm:p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
 
               {/* Content */}
-              <div className="p-6 max-h-[70vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 flex-1 overflow-y-auto custom-scrollbar">
                 <div className="space-y-6">
                   {/* Informações Básicas */}
                   <div>
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Informações Básicas</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                        <Mail className="w-4 h-4 text-gray-400" />
+                        <Mail className="w-4 h-4 text-gray-400 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-gray-500">Email</p>
                           <p className="text-sm font-bold text-gray-800 truncate">{viewingClient.email || '-'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                        <Phone className="w-4 h-4 text-gray-400" />
+                        <Phone className="w-4 h-4 text-gray-400 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-gray-500">Telefone</p>
-                          <p className="text-sm font-bold text-gray-800">{viewingClient.phone || '-'}</p>
+                          <p className="text-sm font-bold text-gray-800 truncate">{viewingClient.phone || '-'}</p>
                         </div>
                       </div>
                     </div>
@@ -368,13 +370,13 @@ export function Clients() {
                     <div>
                       <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Endereço</h3>
                       <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
-                        <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                        <div className="flex-1">
-                          <p className="text-sm font-bold text-gray-800">
+                        <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-800 break-words">
                             {viewingClient.address}, {viewingClient.number}
                             {viewingClient.complement && ` - ${viewingClient.complement}`}
                           </p>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-gray-600 mt-1 truncate">
                             {viewingClient.city}, {viewingClient.uf}
                           </p>
                         </div>
@@ -387,8 +389,8 @@ export function Clients() {
                     <div>
                       <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Sócio Responsável</h3>
                       <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
-                        <User className="w-4 h-4 text-blue-600" />
-                        <p className="text-sm font-bold text-blue-900">{viewingClient.partner_name}</p>
+                        <User className="w-4 h-4 text-blue-600 shrink-0" />
+                        <p className="text-sm font-bold text-blue-900 truncate">{viewingClient.partner_name}</p>
                       </div>
                     </div>
                   )}
@@ -398,8 +400,8 @@ export function Clients() {
                     <div>
                       <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Contratos Vinculados</h3>
                       <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl">
-                        <Briefcase className="w-4 h-4 text-emerald-600" />
-                        <p className="text-sm font-bold text-emerald-900">{viewingClient.active_contracts_count} contrato(s) ativo(s)</p>
+                        <Briefcase className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <p className="text-sm font-bold text-emerald-900 truncate">{viewingClient.active_contracts_count} contrato(s) ativo(s)</p>
                       </div>
                     </div>
                   )}
@@ -409,7 +411,7 @@ export function Clients() {
                     <div>
                       <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Observações</h3>
                       <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{viewingClient.notes}</p>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap word-break">{viewingClient.notes}</p>
                       </div>
                     </div>
                   )}
@@ -417,16 +419,16 @@ export function Clients() {
               </div>
 
               {/* Footer com Botões */}
-              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+              <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex flex-col-reverse sm:flex-row justify-end items-stretch sm:items-center gap-3 bg-gray-50 shrink-0">
                 <button
                   onClick={() => setViewingClient(null)}
-                  className="px-6 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors"
+                  className="px-6 py-2.5 sm:py-2 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors bg-white sm:bg-transparent border sm:border-transparent border-gray-200 rounded-xl sm:rounded-none w-full sm:w-auto"
                 >
                   Fechar
                 </button>
                 <button
                   onClick={() => handleEdit(viewingClient)}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+                  className="flex items-center justify-center gap-2 px-6 py-3 sm:py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
                 >
                   <Edit className="w-4 h-4" />
                   Editar Cliente

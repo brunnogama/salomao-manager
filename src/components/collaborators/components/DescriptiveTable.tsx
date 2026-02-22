@@ -23,82 +23,84 @@ export function DescriptiveTable({ descriptiveData, socioMap }: DescriptiveTable
   const weekDays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
 
   return (
-    <div className="flex-1 overflow-auto">
-      <table className="w-full text-left border-collapse">
+    <div className="flex-1 overflow-auto custom-scrollbar">
+      <div className="min-w-[800px]">
+        <table className="w-full text-left border-collapse">
 
-        {/* THEAD - Design System */}
-        <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
-          <tr>
-            <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
-              Colaborador
-            </th>
-            <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
-              Sócio
-            </th>
-            <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
-              Data
-            </th>
-            <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-[0.2em]">
-              Dia da Semana
-            </th>
-          </tr>
-        </thead>
+          {/* THEAD - Design System */}
+          <thead className="bg-[#112240] sticky top-0 z-10">
+            <tr>
+              <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">
+                Colaborador
+              </th>
+              <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">
+                Sócio
+              </th>
+              <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">
+                Data
+              </th>
+              <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap">
+                Dia da Semana
+              </th>
+            </tr>
+          </thead>
 
-        {/* TBODY - Design System */}
-        <tbody className="divide-y divide-gray-100">
-          {descriptiveData.map((record, idx) => {
-            // Ajustado para refletir os campos se a interface PresenceRecord for atualizada
-            // Caso contrário, mantemos record.nome_colaborador se ele vier de uma View específica
-            const collaboratorName = record.nome_colaborador || record.name;
-            const normName = normalizeKey(collaboratorName)
-            const socioRaw = socioMap.get(normName) || '-'
-            const socioFormatted = toTitleCase(socioRaw)
+          {/* TBODY - Design System */}
+          <tbody className="divide-y divide-gray-100">
+            {descriptiveData.map((record, idx) => {
+              // Ajustado para refletir os campos se a interface PresenceRecord for atualizada
+              // Caso contrário, mantemos record.nome_colaborador se ele vier de uma View específica
+              const collaboratorName = record.nome_colaborador || record.name;
+              const normName = normalizeKey(collaboratorName)
+              const socioRaw = socioMap.get(normName) || '-'
+              const socioFormatted = toTitleCase(socioRaw)
 
-            // Tratamento para data_hora ou created_at
-            const dateValue = record.data_hora || record.created_at;
-            const dateObj = new Date(dateValue)
-            const displayName = toTitleCase(collaboratorName)
+              // Tratamento para data_hora ou created_at
+              const dateValue = record.data_hora || record.created_at;
+              const dateObj = new Date(dateValue)
+              const displayName = toTitleCase(collaboratorName)
 
-            return (
-              <tr key={record.id || idx} className="hover:bg-blue-50/40 transition-colors">
+              return (
+                <tr key={record.id || idx} className="hover:bg-blue-50/40 transition-colors">
 
-                {/* Colaborador com Avatar Navy */}
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white font-black text-sm shadow-md">
-                      {displayName.charAt(0).toUpperCase()}
+                  {/* Colaborador com Avatar Navy */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white font-black text-sm shadow-md shrink-0">
+                        {displayName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-bold text-[#0a192f] text-base tracking-tight">{displayName}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-[#0a192f] text-base tracking-tight">{displayName}</p>
-                    </div>
-                  </div>
-                </td>
+                  </td>
 
-                {/* Sócio */}
-                <td className="px-6 py-4">
-                  <span className="text-gray-700 text-sm font-semibold">
-                    {socioFormatted !== '-' ? socioFormatted : <span className="text-red-500 italic font-medium">Sem Sócio</span>}
-                  </span>
-                </td>
+                  {/* Sócio */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-gray-700 text-sm font-semibold">
+                      {socioFormatted !== '-' ? socioFormatted : <span className="text-red-500 italic font-medium">Sem Sócio</span>}
+                    </span>
+                  </td>
 
-                {/* Data */}
-                <td className="px-6 py-4">
-                  <span className="text-[#0a192f] font-bold text-sm">
-                    {dateObj.toLocaleDateString('pt-BR')}
-                  </span>
-                </td>
+                  {/* Data */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-[#0a192f] font-bold text-sm">
+                      {dateObj.toLocaleDateString('pt-BR')}
+                    </span>
+                  </td>
 
-                {/* Dia da Semana */}
-                <td className="px-6 py-4">
-                  <span className="text-gray-500 text-sm font-medium capitalize">
-                    {weekDays[dateObj.getUTCDay()]}
-                  </span>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+                  {/* Dia da Semana */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-gray-500 text-sm font-medium capitalize">
+                      {weekDays[dateObj.getUTCDay()]}
+                    </span>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

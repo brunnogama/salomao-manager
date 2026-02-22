@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, ShoppingCart, Check, Filter, X, ChevronRight, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, ShoppingCart, Check, X, ChevronRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { AlertModal } from '../../ui/AlertModal'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
@@ -17,7 +17,6 @@ interface ShoppingItem {
 
 export function Compras() {
     const [items, setItems] = useState<ShoppingItem[]>([])
-    const [loading, setLoading] = useState(false)
     const [itemToDelete, setItemToDelete] = useState<ShoppingItem | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalStep, setModalStep] = useState(1) // 1: Category, 2: Details
@@ -64,7 +63,6 @@ export function Compras() {
 
     const fetchItems = async () => {
         try {
-            setLoading(true)
             const { data, error } = await supabase
                 .from('shopping_list_items')
                 .select('*')
@@ -84,8 +82,6 @@ export function Compras() {
         } catch (error) {
             console.error('Error fetching shopping list:', error)
             showAlert('Erro', 'Erro ao carregar lista de compras.', 'error')
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -183,20 +179,20 @@ export function Compras() {
     }, {} as Record<string, ShoppingItem[]>)
 
     return (
-        <div className="p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div className="flex items-center gap-3">
-                    <div className="p-3 bg-blue-100 rounded-lg">
+        <div className="p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                    <div className="p-3 bg-blue-100 rounded-lg shrink-0">
                         <ShoppingCart className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Lista de Compras</h1>
-                        <p className="text-gray-500">Gerencie itens a serem adquiridos.</p>
+                        <h1 className="text-2xl sm:text-[30px] font-bold text-gray-800 tracking-tight leading-none">Lista de Compras</h1>
+                        <p className="text-sm text-gray-500 mt-1">Gerencie itens a serem adquiridos.</p>
                     </div>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                    className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
                 >
                     <Plus className="w-4 h-4" />
                     Adicionar Item
@@ -223,58 +219,62 @@ export function Compras() {
                                 </button>
 
                                 {expandedCategories[category] && (
-                                    <table className="w-full">
-                                        <thead className="bg-white border-b border-gray-100">
-                                            <tr>
-                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Status</th>
-                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
-                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qtd</th>
-                                                <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                                                <th className="text-right py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-50">
-                                            {categoryItems.map((item) => (
-                                                <tr key={item.id} className={`hover:bg-gray-50/50 transition-colors ${item.status === 'purchased' ? 'bg-gray-50' : ''}`}>
-                                                    <td className="py-3 px-6">
-                                                        <button
-                                                            onClick={() => toggleItemStatus(item)}
-                                                            className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${item.status === 'purchased'
-                                                                ? 'bg-green-500 border-green-500 text-white'
-                                                                : 'border-gray-300 hover:border-blue-500 text-transparent hover:text-blue-200'
-                                                                }`}
-                                                        >
-                                                            <Check className="w-3 h-3" />
-                                                        </button>
-                                                    </td>
-                                                    <td className="py-3 px-6">
-                                                        <span className={`font-medium ${item.status === 'purchased' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                                                            {item.name}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-3 px-6 text-sm text-gray-600">
-                                                        {item.brand || '-'}
-                                                    </td>
-                                                    <td className="py-3 px-6 text-sm text-gray-600">
-                                                        {item.quantity}
-                                                    </td>
-                                                    <td className="py-3 px-6 text-sm text-gray-600">
-                                                        {item.unit_price ? `R$ ${item.unit_price.toFixed(2)}` : '-'}
-                                                    </td>
-                                                    <td className="py-3 px-6 text-right">
-                                                        <button
-                                                            onClick={() => setItemToDelete(item)}
-                                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                            title="Remover"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                    <div className="overflow-x-auto custom-scrollbar">
+                                        <div className="min-w-[600px]">
+                                            <table className="w-full">
+                                                <thead className="bg-white border-b border-gray-100">
+                                                    <tr>
+                                                        <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Status</th>
+                                                        <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
+                                                        <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
+                                                        <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qtd</th>
+                                                        <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unit.</th>
+                                                        <th className="text-right py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-50">
+                                                    {categoryItems.map((item) => (
+                                                        <tr key={item.id} className={`hover:bg-gray-50/50 transition-colors ${item.status === 'purchased' ? 'bg-gray-50' : ''}`}>
+                                                            <td className="py-3 px-6">
+                                                                <button
+                                                                    onClick={() => toggleItemStatus(item)}
+                                                                    className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${item.status === 'purchased'
+                                                                        ? 'bg-green-500 border-green-500 text-white'
+                                                                        : 'border-gray-300 hover:border-blue-500 text-transparent hover:text-blue-200'
+                                                                        }`}
+                                                                >
+                                                                    <Check className="w-3 h-3" />
+                                                                </button>
+                                                            </td>
+                                                            <td className="py-3 px-6">
+                                                                <span className={`font-medium ${item.status === 'purchased' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                                                                    {item.name}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-3 px-6 text-sm text-gray-600">
+                                                                {item.brand || '-'}
+                                                            </td>
+                                                            <td className="py-3 px-6 text-sm text-gray-600">
+                                                                {item.quantity}
+                                                            </td>
+                                                            <td className="py-3 px-6 text-sm text-gray-600">
+                                                                {item.unit_price ? `R$ ${item.unit_price.toFixed(2)}` : '-'}
+                                                            </td>
+                                                            <td className="py-3 px-6 text-right">
+                                                                <button
+                                                                    onClick={() => setItemToDelete(item)}
+                                                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                                    title="Remover"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         ))}
@@ -299,8 +299,8 @@ export function Compras() {
             {/* Add Item Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <div className="bg-white rounded-xl shadow-2xl w-[95vw] max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col">
+                        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
                             <h2 className="text-lg font-bold text-gray-800">
                                 {modalStep === 1 ? 'Selecione a Categoria' : 'Detalhes do Item'}
                             </h2>
@@ -309,9 +309,9 @@ export function Compras() {
                             </button>
                         </div>
 
-                        <div className="p-6">
+                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
                             {modalStep === 1 ? (
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {categories.map(cat => (
                                         <button
                                             key={cat}
@@ -345,7 +345,7 @@ export function Compras() {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Quantidade</label>
                                             <input

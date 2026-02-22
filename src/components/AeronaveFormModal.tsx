@@ -28,7 +28,7 @@ function SearchableSelect({ value, onChange, options, placeholder = 'Selecione..
   const [searchTerm, setSearchTerm] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const filteredOptions = options.filter(opt => 
+  const filteredOptions = options.filter(opt =>
     opt.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -44,7 +44,7 @@ function SearchableSelect({ value, onChange, options, placeholder = 'Selecione..
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
-      <div 
+      <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`
           w-full px-3 py-2 bg-[#f9fafb] border border-gray-200 rounded-xl text-xs font-semibold 
@@ -65,7 +65,7 @@ function SearchableSelect({ value, onChange, options, placeholder = 'Selecione..
           <div className="p-2 border-b border-gray-100 bg-gray-50/50">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-              <input 
+              <input
                 autoFocus
                 type="text"
                 placeholder="Buscar opção..."
@@ -118,7 +118,7 @@ const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
 
   useEffect(() => {
     if (!isFocused) {
-      const formatted = new Intl.NumberFormat('pt-BR', { 
+      const formatted = new Intl.NumberFormat('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       }).format(value || 0)
@@ -131,7 +131,7 @@ const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
     if (value === 0) {
       setLocalValue('')
     } else {
-      const formatted = new Intl.NumberFormat('pt-BR', { 
+      const formatted = new Intl.NumberFormat('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       }).format(value || 0)
@@ -141,7 +141,7 @@ const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
 
   const handleBlur = () => {
     setIsFocused(false)
-    const formatted = new Intl.NumberFormat('pt-BR', { 
+    const formatted = new Intl.NumberFormat('pt-BR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(value || 0)
@@ -151,19 +151,19 @@ const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value
     const numbers = input.replace(/\D/g, '')
-    
+
     if (numbers === '') {
       setLocalValue('')
       onChange(0)
       return
     }
-    
+
     const numericValue = parseInt(numbers) / 100
     const formatted = new Intl.NumberFormat('pt-BR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(numericValue)
-    
+
     setLocalValue(formatted)
     onChange(numericValue)
   }
@@ -192,15 +192,15 @@ const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
   )
 }
 
-export function AeronaveFormModal({ 
-  isOpen, 
-  onClose, 
-  origem, 
-  initialData, 
-  onSave, 
-  onSuccess 
+export function AeronaveFormModal({
+  isOpen,
+  onClose,
+  origem,
+  initialData,
+  onSave,
+  onSuccess
 }: AeronaveFormModalProps) {
-  
+
   // --- Estados de Listas Dinâmicas ---
   const [tiposOpcoes, setTiposOpcoes] = useState<string[]>([])
   const [fornecedoresOpcoes, setFornecedoresOpcoes] = useState<string[]>([])
@@ -265,8 +265,8 @@ export function AeronaveFormModal({
       if (initialData) {
         setFormData({ ...initialData })
       } else {
-        setFormData({ 
-          ...emptyForm, 
+        setFormData({
+          ...emptyForm,
           origem: origem,
           despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
           aeronave: 'PR WBW'
@@ -279,12 +279,12 @@ export function AeronaveFormModal({
   const handleChange = (field: keyof AeronaveLancamento, value: any) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
-      
+
       // Regra de Negócio: Se alterar o valor pago, reflete no valor total do doc automaticamente
       if (field === 'valor_pago' && (!prev.valor_total_doc || prev.valor_total_doc === 0)) {
         newData.valor_total_doc = value;
       }
-      
+
       return newData;
     });
   }
@@ -303,11 +303,11 @@ export function AeronaveFormModal({
       setLoading(true)
       await onSave(formData)
       if (onSuccess) onSuccess()
-      
+
       if (saveAndNew) {
-        setFormData({ 
-          ...emptyForm, 
-          origem: origem, 
+        setFormData({
+          ...emptyForm,
+          origem: origem,
           despesa: origem === 'missao' ? 'Custo Missões' : 'Despesa Fixa',
           aeronave: 'PR WBW'
         })
@@ -327,7 +327,7 @@ export function AeronaveFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
-        
+
         {/* Header */}
         <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-100 ${origem === 'missao' ? 'bg-blue-50/50' : 'bg-emerald-50/50'}`}>
           <div className="flex items-center gap-3">
@@ -351,7 +351,7 @@ export function AeronaveFormModal({
         </div>
 
         {/* Form Body */}
-        <div className="flex-1 p-6 bg-white max-h-[70vh] overflow-y-auto custom-scrollbar">
+        <div className="flex-1 p-4 sm:p-6 bg-white max-h-[85vh] overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6">
 
             {/* COLUNA 1: Dados Principais e Operacionais */}
@@ -367,13 +367,13 @@ export function AeronaveFormModal({
                 <div className="col-span-2 flex flex-col gap-1">
                   <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Aeronave</label>
                   <div className="flex gap-2 w-full">
-                    <SearchableSelect 
+                    <SearchableSelect
                       value={formData.aeronave || ''}
                       onChange={val => handleChange('aeronave', val)}
                       options={frotaOpcoes}
                       placeholder="Selecione a aeronave..."
                     />
-                    <button 
+                    <button
                       onClick={() => handleOpenConfig('Frota', 'aeronave_frota')}
                       className="px-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-xl transition-all border border-gray-200 flex items-center justify-center shadow-sm"
                       title="Gerenciar Frota"
@@ -387,7 +387,7 @@ export function AeronaveFormModal({
                   <>
                     <div className="col-span-2 flex flex-col gap-1">
                       <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Tripulação</label>
-                      <input 
+                      <input
                         type="text" className="input-base"
                         value={formData.tripulacao || ''}
                         onChange={e => handleChange('tripulacao', e.target.value)}
@@ -397,7 +397,7 @@ export function AeronaveFormModal({
 
                     <div className="col-span-2 flex flex-col gap-1">
                       <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Missão</label>
-                      <MissaoSelect 
+                      <MissaoSelect
                         value={formData.id_missao}
                         onSelect={(missao) => {
                           if (missao) {
@@ -418,23 +418,23 @@ export function AeronaveFormModal({
                 <div className="col-span-2 grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
                     <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Categoria</label>
-                    <input 
-                      disabled 
-                      className="input-base bg-gray-50 text-gray-400 cursor-not-allowed" 
-                      value={formData.despesa} 
+                    <input
+                      disabled
+                      className="input-base bg-gray-50 text-gray-400 cursor-not-allowed"
+                      value={formData.despesa}
                     />
                   </div>
 
                   <div className="flex flex-col gap-1">
                     <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Tipo de Gasto</label>
                     <div className="flex gap-2 w-full">
-                      <SearchableSelect 
+                      <SearchableSelect
                         value={formData.tipo || ''}
                         onChange={val => handleChange('tipo', val)}
                         options={tiposOpcoes}
                         placeholder="Selecione..."
                       />
-                      <button 
+                      <button
                         onClick={() => handleOpenConfig('Tipos de Despesa', 'aeronave_tipos')}
                         className="px-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm"
                       >
@@ -452,13 +452,13 @@ export function AeronaveFormModal({
                 <div className="col-span-2 flex flex-col gap-1">
                   <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Fornecedor</label>
                   <div className="flex gap-2 w-full">
-                    <SearchableSelect 
+                    <SearchableSelect
                       value={formData.fornecedor || ''}
                       onChange={val => handleChange('fornecedor', val)}
                       options={fornecedoresOpcoes}
                       placeholder="Selecione o fornecedor..."
                     />
-                    <button 
+                    <button
                       onClick={() => handleOpenConfig('Fornecedores', 'aeronave_fornecedores')}
                       className="px-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm"
                     >
@@ -514,13 +514,13 @@ export function AeronaveFormModal({
                   <div className="col-span-2 flex flex-col gap-1">
                     <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 ml-1">Doc. Fiscal</label>
                     <div className="flex gap-2 w-full">
-                      <SearchableSelect 
+                      <SearchableSelect
                         value={formData.doc_fiscal || ''}
                         onChange={val => handleChange('doc_fiscal', val)}
                         options={docFiscalOpcoes}
                         placeholder="Tipo de documento..."
                       />
-                      <button 
+                      <button
                         onClick={() => handleOpenConfig('Docs Fiscais', 'aeronave_docs_fiscais')}
                         className="px-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm"
                       >
@@ -560,7 +560,7 @@ export function AeronaveFormModal({
         </div>
 
       </div>
-      
+
       <style>{`
         .input-base {
           width: 100%;
@@ -585,7 +585,7 @@ export function AeronaveFormModal({
         }
       `}</style>
 
-      <GerenciadorOpcoesModal 
+      <GerenciadorOpcoesModal
         isOpen={configModal.open}
         onClose={handleCloseConfig}
         titulo={configModal.tipo}

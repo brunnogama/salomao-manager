@@ -94,20 +94,20 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in duration-200">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
-                    <div>
-                        <h2 className="text-xl font-black text-[#0a192f] tracking-tight">
+                <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-start sm:items-center bg-gray-50 rounded-t-2xl shrink-0">
+                    <div className="pr-4">
+                        <h2 className="text-lg sm:text-xl font-black text-[#0a192f] tracking-tight">
                             {initialData ? 'Editar Certidão' : 'Nova Certidão'}
                         </h2>
-                        <p className="text-xs font-semibold text-gray-500 mt-1 uppercase tracking-widest">
+                        <p className="text-[10px] sm:text-xs font-semibold text-gray-500 mt-1 uppercase tracking-widest">
                             PREENCHA OS DADOS ABAIXO
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-600"
+                        className="p-1 sm:p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-600 shrink-0"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                 </div>
 
@@ -262,17 +262,17 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                     </div>
                 </form>
 
-                <div className="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+                <div className="p-4 sm:p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-6 py-2.5 text-xs font-black text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors uppercase tracking-widest"
+                        className="px-6 py-3 sm:py-2.5 text-xs font-black text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors uppercase tracking-widest w-full sm:w-auto text-center"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleSubmit}
-                        className="px-6 py-2.5 text-xs font-black text-white bg-gradient-to-r from-[#1e3a8a] to-[#112240] rounded-xl shadow-lg hover:shadow-xl transition-all uppercase tracking-widest flex items-center gap-2"
+                        className="px-6 py-3 sm:py-2.5 text-xs font-black text-white bg-gradient-to-r from-[#1e3a8a] to-[#112240] rounded-xl shadow-lg hover:shadow-xl transition-all uppercase tracking-widest flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         <Save className="w-4 h-4" />
                         Salvar Certidão

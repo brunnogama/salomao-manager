@@ -1,4 +1,4 @@
-import { X, Edit3, Trash2, Calendar, CreditCard, FileText, Printer, AlertTriangle } from 'lucide-react'
+import { X, Edit3, Trash2, CreditCard, FileText, Printer, AlertTriangle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
 
@@ -70,21 +70,21 @@ export function AeronaveViewModal({
       <div id="printable-modal" className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300 print:shadow-none print:max-h-none print:rounded-none">
 
         {/* Header */}
-        <div className={`px-6 py-5 border-b border-gray-100 flex items-center justify-between ${isMissao ? 'bg-blue-50/50' : 'bg-emerald-50/50'} print:bg-white print:border-b-2`}>
-          <div>
+        <div className={`px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isMissao ? 'bg-blue-50/50' : 'bg-emerald-50/50'} print:bg-white print:border-b-2`}>
+          <div className="w-full sm:w-auto">
             <div className="flex items-center gap-2 mb-1">
               <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${isMissao ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'} print:border`}>
                 {isGroup ? 'Fatura Agrupada' : (isMissao ? 'Missão' : 'Fixa')}
               </span>
-              <span className="text-[10px] font-bold text-gray-400">
+              <span className="text-[10px] font-bold text-gray-400 truncate">
                 DOC: {item.doc_fiscal} | Nº: {item.numero_doc || '-'}
               </span>
             </div>
-            <h2 className="text-xl font-black text-[#112240] tracking-tight">
+            <h2 className="text-lg sm:text-xl font-black text-[#112240] tracking-tight leading-tight">
               {isGroup ? `Relatório de Itens - Fatura ${item.numero_doc}` : (isMissao ? (item.nome_missao || 'Sem Nome') : item.descricao)}
             </h2>
           </div>
-          <div className="flex items-center gap-2 print:hidden">
+          <div className="flex items-center gap-2 print:hidden w-full sm:w-auto justify-end shrink-0">
             <button
               onClick={handlePrint}
               className="p-2 bg-white rounded-lg text-gray-500 hover:text-[#1e3a8a] border border-gray-100 shadow-sm transition-all"
@@ -98,18 +98,18 @@ export function AeronaveViewModal({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar print:overflow-visible">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 custom-scrollbar print:overflow-visible">
 
           {isGroup ? (
             /* VISUALIZAÇÃO AGRUPADA (ITENS DA FATURA) */
             <section className="space-y-4">
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 pb-2 border-b border-gray-100">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-gray-400" />
                   <h3 className="text-xs font-bold text-gray-500 uppercase">Relação de Itens</h3>
                 </div>
-                <div className="flex gap-6">
-                  <div className="text-right">
+                <div className="flex gap-4 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                  <div className="text-left sm:text-right">
                     <span className="text-[10px] font-black text-gray-400 uppercase">Soma dos Itens</span>
                     <p className="text-sm font-bold text-gray-600">{formatMoney(totalItens)}</p>
                   </div>
@@ -130,8 +130,8 @@ export function AeronaveViewModal({
                 </div>
               )}
 
-              <div className="overflow-hidden border border-gray-100 rounded-xl">
-                <table className="w-full text-left text-sm">
+              <div className="overflow-x-auto custom-scrollbar border border-gray-100 rounded-xl">
+                <table className="w-full min-w-[600px] text-left text-sm">
                   <thead className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
                     <tr>
                       <th className="px-4 py-3 text-[10px] font-black uppercase text-white tracking-widest">ID Missão</th>
@@ -170,21 +170,20 @@ export function AeronaveViewModal({
               </div>
             </section>
           ) : (
-            /* VISUALIZAÇÃO INDIVIDUAL ORIGINAL */
             <>
               <section>
                 <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                   <FileText className="h-4 w-4 text-gray-400" />
                   <h3 className="text-xs font-bold text-gray-500 uppercase">Detalhes Gerais</h3>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6">
                   <InfoRow label="Aeronave" value={item.aeronave} />
                   <InfoRow label="Tripulação" value={isMissao ? item.tripulacao : 'N/A'} />
                   <InfoRow label="Data Missão" value={isMissao ? formatDate(item.data_missao) : 'N/A'} />
                   <InfoRow label="Despesa" value={item.despesa} />
                   <InfoRow label="Tipo" value={item.tipo} />
                   <InfoRow label="Fornecedor" value={item.fornecedor} highlight />
-                  <div className="col-span-2 md:col-span-3">
+                  <div className="col-span-1 sm:col-span-2 md:col-span-3">
                     <InfoRow label="Descrição" value={item.descricao} />
                   </div>
                 </div>
@@ -195,7 +194,7 @@ export function AeronaveViewModal({
                   <CreditCard className="h-4 w-4 text-gray-400" />
                   <h3 className="text-xs font-bold text-gray-500 uppercase">Financeiro</h3>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-4">
                   <InfoRow label="Vencimento" value={formatDate(item.vencimento)} />
                   <div className="text-amber-600">
                     <InfoRow label="Valor Previsto" value={formatMoney(item.valor_previsto)} />
@@ -205,7 +204,7 @@ export function AeronaveViewModal({
                     <InfoRow label="Valor Pago" value={formatMoney(item.valor_pago)} />
                   </div>
                   {isMissao && (
-                    <div className="col-span-2 md:col-span-4 mt-2 pt-2 border-t border-gray-200/50">
+                    <div className="col-span-1 sm:col-span-2 md:col-span-4 mt-2 pt-2 border-t border-gray-200/50">
                       <InfoRow label="Faturado CNPJ Salomão" value={formatMoney(item.faturado_cnpj)} />
                     </div>
                   )}
@@ -213,7 +212,7 @@ export function AeronaveViewModal({
               </section>
 
               <section>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <InfoRow label="Doc. Fiscal" value={item.doc_fiscal} />
                   <InfoRow label="Número Doc" value={item.numero_doc} />
                 </div>
@@ -227,10 +226,10 @@ export function AeronaveViewModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center print:hidden">
+        <div className="p-4 bg-gray-50 border-t border-gray-200 flex flex-col-reverse sm:flex-row justify-between items-center gap-3 print:hidden">
           <button
             onClick={handleDelete}
-            className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+            className="flex items-center justify-center w-full sm:w-auto gap-2 px-4 py-3 sm:py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
           >
             <Trash2 className="h-4 w-4" /> Excluir
           </button>
@@ -238,7 +237,7 @@ export function AeronaveViewModal({
           {!isGroup && (
             <button
               onClick={() => onEdit(item)}
-              className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white hover:bg-[#112240] rounded-lg text-xs font-bold uppercase tracking-widest shadow-md transition-all active:scale-95"
+              className="flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-3 sm:py-2 bg-[#1e3a8a] text-white hover:bg-[#112240] rounded-lg text-xs font-bold uppercase tracking-widest shadow-md transition-all active:scale-95"
             >
               <Edit3 className="h-4 w-4" /> Editar
             </button>

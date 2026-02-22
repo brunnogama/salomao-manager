@@ -543,10 +543,10 @@ export function Proposals() {
     <div className="mb-4">
       <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">{title}</label>
       {proposalData[type].map((clause, index) => (
-        <div key={index} className="flex gap-2 mb-2 items-start">
+        <div key={index} className="flex flex-col sm:flex-row gap-2 mb-2 items-start sm:items-center">
 
           {/* Value Input Group */}
-          <div className="w-1/3 relative flex flex-col gap-1">
+          <div className="w-full sm:w-1/3 relative flex flex-col gap-1">
             <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50/50 focus-within:border-[#1e3a8a] transition-all overflow-hidden">
               {showTypeToggle && (
                 <button
@@ -567,18 +567,18 @@ export function Proposals() {
             </div>
           </div>
 
-          <div className="w-2/3 flex gap-2">
+          <div className="w-full sm:w-2/3 flex gap-2">
             <input
               type="text"
               value={clause.description}
               onChange={(e) => updateClause(type, index, 'description', e.target.value)}
               placeholder={descPlaceholder}
-              className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
+              className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all shadow-sm"
             />
             {index === 0 ? (
               <button
                 onClick={() => addClause(type)}
-                className="p-3.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
+                className="p-3.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors shrink-0"
                 title="Adicionar Cláusula"
               >
                 <Plus className="w-5 h-5" />
@@ -586,7 +586,7 @@ export function Proposals() {
             ) : (
               <button
                 onClick={() => removeClause(type, index)}
-                className="p-3.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors"
+                className="p-3.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors shrink-0"
                 title="Remover Cláusula"
               >
                 <Trash2 className="w-5 h-5" />
@@ -634,14 +634,14 @@ export function Proposals() {
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
 
       {/* 1. Header */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <FileText className="h-7 w-7 text-white" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
+            <FileText className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Propostas</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gerador de Propostas e Minutas</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Propostas</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gerador de Propostas e Minutas</p>
           </div>
         </div>
       </div>
@@ -795,11 +795,11 @@ export function Proposals() {
 
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+          <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-3 sm:gap-0">
             <button
               onClick={handleGenerateProposalOnly}
               disabled={loading}
-              className="mr-3 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest px-6 py-4 rounded-xl hover:bg-blue-50 transition-all flex items-center disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto sm:mr-3 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest px-6 py-4 rounded-xl hover:bg-blue-50 transition-all flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <FileText className="w-4 h-4 mr-2" />
               Gerar Apenas Arquivo
@@ -807,7 +807,7 @@ export function Proposals() {
             <button
               onClick={handleGenerateProposal}
               disabled={loading}
-              className="bg-[#1e3a8a] hover:bg-[#112240] text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto bg-[#1e3a8a] hover:bg-[#112240] text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
               Gerar Proposta & Criar Caso
@@ -816,13 +816,13 @@ export function Proposals() {
         </div>
 
         {/* DIREITA: Preview Visual */}
-        <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center relative min-h-[800px]">
-          <p className="absolute top-4 right-6 text-[9px] font-black text-gray-300 uppercase tracking-widest flex items-center gap-1">
+        <div className="bg-white p-4 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center relative min-h-[500px] sm:min-h-[800px] overflow-hidden">
+          <p className="absolute top-4 right-6 text-[9px] font-black text-gray-300 uppercase tracking-widest hidden sm:flex items-center gap-1">
             <Eye className="w-3 h-3" /> Visualização em Tempo Real
           </p>
 
           {/* A4 Paper Simulation */}
-          <div className="w-full max-w-[500px] bg-white shadow-2xl p-8 md:p-12 text-left border border-gray-100 h-full text-[#0a192f] text-[10px] leading-relaxed scale-95 origin-top select-none">
+          <div className="w-full max-w-[500px] bg-white shadow-2xl p-6 md:p-12 text-left border border-gray-100 h-full text-[#0a192f] text-[10px] leading-relaxed select-none overflow-y-auto custom-scrollbar">
 
             {/* Header Image Placeholder */}
             <div className="flex justify-center mb-8">

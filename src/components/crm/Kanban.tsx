@@ -108,23 +108,23 @@ export function Kanban({ userName = 'Usuário', onModuleHome, onLogout }: Kanban
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6 overflow-hidden">
 
       {/* PAGE HEADER - Identêntico ao padrão CRM */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 shrink-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 shrink-0">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <KanbanSquare className="h-7 w-7 text-white" />
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+            <KanbanSquare className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
               Kanban
             </h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
               Organize suas tarefas visualmente
             </p>
           </div>
         </div>
 
         {/* Right: User Info & Global Actions */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto mt-2 sm:mt-0">
           <div className="hidden md:flex flex-col items-end">
             <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
             <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Conectado</span>
@@ -159,20 +159,20 @@ export function Kanban({ userName = 'Usuário', onModuleHome, onLogout }: Kanban
           <div className="flex gap-4 h-full mx-auto">
             {COLUMNS.map((column) => (
               <div key={column.id} className={`flex-shrink-0 w-80 lg:w-96 flex flex-col rounded-2xl border-2 shadow-sm transition-all overflow-hidden ${column.color === 'orange' ? 'bg-orange-50/30 border-orange-100' :
-                  column.color === 'blue' ? 'bg-blue-50/30 border-blue-100' :
-                    'bg-green-50/30 border-green-100'
+                column.color === 'blue' ? 'bg-blue-50/30 border-blue-100' :
+                  'bg-green-50/30 border-green-100'
                 }`}>
 
                 {/* Column Header */}
                 <div className="p-5 flex items-center justify-between bg-white border-b border-gray-100">
                   <div className={`flex items-center gap-2.5 font-black text-[11px] uppercase tracking-[0.15em] ${column.color === 'orange' ? 'text-orange-700' :
-                      column.color === 'blue' ? 'text-blue-700' : 'text-green-700'
+                    column.color === 'blue' ? 'text-blue-700' : 'text-green-700'
                     }`}>
                     {column.icon} {column.title}
                   </div>
                   <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black border shadow-sm ${column.color === 'orange' ? 'bg-orange-100 text-orange-700 border-orange-200' :
-                      column.color === 'blue' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                        'bg-green-100 text-green-700 border-green-200'
+                    column.color === 'blue' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                      'bg-green-100 text-green-700 border-green-200'
                     }`}>
                     {tasks.filter(t => t.status === column.id).length}
                   </span>
@@ -183,8 +183,8 @@ export function Kanban({ userName = 'Usuário', onModuleHome, onLogout }: Kanban
                   <button
                     onClick={() => { setNewTask({ ...newTask, status: column.id as any }); setIsAddModalOpen(true); }}
                     className={`w-full py-2.5 rounded-xl text-white text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all active:scale-95 ${column.color === 'orange' ? 'bg-[#1e3a8a] hover:bg-[#112240]' :
-                        column.color === 'blue' ? 'bg-[#1e3a8a] hover:bg-[#112240]' :
-                          'bg-[#1e3a8a] hover:bg-[#112240]'
+                      column.color === 'blue' ? 'bg-[#1e3a8a] hover:bg-[#112240]' :
+                        'bg-[#1e3a8a] hover:bg-[#112240]'
                       }`}
                   >
                     <Plus className="h-4 w-4" /> Nova Tarefa
@@ -214,8 +214,8 @@ export function Kanban({ userName = 'Usuário', onModuleHome, onLogout }: Kanban
                               <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed font-semibold">{task.description}</p>
                               <div className="flex items-center justify-between">
                                 <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${task.priority === 'ALTA' ? 'bg-red-50 text-red-700 border-red-200' :
-                                    task.priority === 'MEDIA' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                      'bg-gray-50 text-gray-700 border-gray-200'
+                                  task.priority === 'MEDIA' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                    'bg-gray-50 text-gray-700 border-gray-200'
                                   }`}>
                                   {task.priority}
                                 </span>
@@ -385,8 +385,8 @@ export function Kanban({ userName = 'Usuário', onModuleHome, onLogout }: Kanban
                     <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                       <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Prioridade</label>
                       <span className={`inline-block px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm ${selectedTask.priority === 'ALTA' ? 'bg-red-50 text-red-700 border-red-200' :
-                          selectedTask.priority === 'MEDIA' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                            'bg-gray-50 text-gray-700 border-gray-200'
+                        selectedTask.priority === 'MEDIA' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                          'bg-gray-50 text-gray-700 border-gray-200'
                         }`}>
                         {selectedTask.priority}
                       </span>

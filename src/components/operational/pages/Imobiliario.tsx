@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react'
-import { Armchair, Plus, Filter, Search, MapPin, Tag, Box, Trash2, Pencil, Save, X, RotateCcw } from 'lucide-react'
+import { Armchair, Plus, Search, MapPin, Tag, Box, Trash2, Pencil, Save, X, RotateCcw } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { AlertModal } from '../../ui/AlertModal'
@@ -174,21 +174,21 @@ export function Imobiliario() {
     const getLocationLabel = (id: string) => locations.find(l => l.id === id)?.label || id
 
     return (
-        <div className="p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div className="flex items-center gap-3">
-                    <div className="p-3 bg-indigo-100 rounded-lg">
+        <div className="p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                    <div className="p-3 bg-indigo-100 rounded-lg shrink-0">
                         <Armchair className="w-6 h-6 text-indigo-600" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Controle Imobiliário</h1>
-                        <p className="text-gray-500">Gestão de móveis e ativos fixos do escritório.</p>
+                        <h1 className="text-2xl sm:text-[30px] font-bold text-gray-800 tracking-tight leading-none">Controle Imobiliário</h1>
+                        <p className="text-sm text-gray-500 mt-1">Gestão de móveis e ativos fixos do escritório.</p>
                     </div>
                 </div>
 
                 <button
                     onClick={() => handleOpenForm()}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md font-medium"
                 >
                     <Plus className="w-4 h-4" />
                     NOVO ATIVO
@@ -263,73 +263,75 @@ export function Imobiliario() {
             {/* List / Table */}
             {filteredAssets.length > 0 ? (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Patrimônio</th>
-                                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome/Descrição</th>
-                                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Categoria</th>
-                                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Local</th>
-                                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor</th>
-                                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {filteredAssets.map((asset) => (
-                                    <tr key={asset.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="py-4 px-6 text-sm font-medium text-gray-600">
-                                            {asset.patrimony_number || '-'}
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-gray-800">{asset.name}</span>
-                                                {asset.brand && <span className="text-xs text-gray-500">{asset.brand} {asset.model}</span>}
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
-                                                {asset.category}
-                                            </span>
-                                        </td>
-                                        <td className="py-4 px-6 text-sm text-gray-600">
-                                            {getLocationLabel(asset.location)}
-                                        </td>
-                                        <td className="py-4 px-6 text-sm font-medium text-gray-900">
-                                            {asset.value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.value) : '-'}
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <span className={`px-2 py-1 text-xs rounded-full font-bold uppercase
-                                                ${asset.status === 'Bom' ? 'bg-green-100 text-green-700' :
-                                                    asset.status === 'Regular' ? 'bg-yellow-100 text-yellow-700' :
-                                                        asset.status === 'Ruim' ? 'bg-orange-100 text-orange-700' :
-                                                            asset.status === 'Em Manutenção' ? 'bg-blue-100 text-blue-700' :
-                                                                'bg-gray-100 text-gray-700'
-                                                }`}>
-                                                {asset.status}
-                                            </span>
-                                        </td>
-                                        <td className="py-4 px-6 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleOpenForm(asset)}
-                                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => setItemToDelete(asset.id)}
-                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <div className="min-w-[1000px]">
+                            <table className="w-full">
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Patrimônio</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome/Descrição</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Categoria</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Local</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {filteredAssets.map((asset) => (
+                                        <tr key={asset.id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="py-4 px-6 text-sm font-medium text-gray-600">
+                                                {asset.patrimony_number || '-'}
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-800">{asset.name}</span>
+                                                    {asset.brand && <span className="text-xs text-gray-500">{asset.brand} {asset.model}</span>}
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
+                                                    {asset.category}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 text-sm text-gray-600">
+                                                {getLocationLabel(asset.location)}
+                                            </td>
+                                            <td className="py-4 px-6 text-sm font-medium text-gray-900">
+                                                {asset.value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.value) : '-'}
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <span className={`px-2 py-1 text-xs rounded-full font-bold uppercase
+                                                ${asset.status === 'Bom' ? 'bg-green-100 text-green-700' :
+                                                        asset.status === 'Regular' ? 'bg-yellow-100 text-yellow-700' :
+                                                            asset.status === 'Ruim' ? 'bg-orange-100 text-orange-700' :
+                                                                asset.status === 'Em Manutenção' ? 'bg-blue-100 text-blue-700' :
+                                                                    'bg-gray-100 text-gray-700'
+                                                    }`}>
+                                                    {asset.status}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenForm(asset)}
+                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setItemToDelete(asset.id)}
+                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             ) : (
@@ -354,8 +356,8 @@ export function Imobiliario() {
             {/* FORM MODAL */}
             {isFormOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div className="bg-white rounded-2xl shadow-2xl w-[95vw] max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                        <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
                             <h2 className="text-xl font-black text-[#0a192f]">
                                 {editingAsset ? 'Editar Ativo' : 'Novo Ativo'}
                             </h2>

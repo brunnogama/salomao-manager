@@ -373,67 +373,67 @@ export function Presencial() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6">
       <SocioRuleModal isOpen={isModalOpen} editingRule={editingRule} onClose={() => setIsModalOpen(false)} onSave={handleSaveRule} setEditingRule={setEditingRule} />
 
       {/* PAGE HEADER COMPLETO - Título + User Info */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         {/* Left: Título e Ícone */}
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <MapPin className="h-7 w-7 text-white" />
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+            <MapPin className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
               Controle Presencial
             </h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
               Gestão de presença e frequência dos colaboradores
             </p>
           </div>
         </div>
 
         {/* Right: User Info & Actions -> Just Actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-auto mt-2 sm:mt-0 w-full sm:w-auto justify-end">
           <input type="file" accept=".xlsx" ref={presenceInputRef} onChange={handlePresenceUpload} className="hidden" />
           <input type="file" accept=".xlsx" ref={socioInputRef} onChange={handleSocioUpload} className="hidden" />
-          <button onClick={() => fetchRecords()} className="p-2.5 text-gray-400 hover:text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all" title="Atualizar"><RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} /></button>
+          <button onClick={() => fetchRecords()} className="p-2 sm:p-2.5 text-gray-400 hover:text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all" title="Atualizar"><RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 ${loading ? 'animate-spin' : ''}`} /></button>
           {viewMode === 'horas' && registrosHoras.length > 0 && (
-            <button onClick={handleExportXLSX} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Download className="h-4 w-4" /> Exportar</button>
+            <button onClick={handleExportXLSX} className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95"><Download className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">Exportar</span></button>
           )}
           {viewMode === 'socios' ? (
-            <div className="flex gap-2">
-              <button onClick={() => handleOpenModal()} className="bg-[#1e3a8a] hover:bg-[#112240] text-white px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg transition-all active:scale-95"><Plus className="h-4 w-4" /> Novo</button>
-              <button onClick={() => socioInputRef.current?.click()} className="bg-[#112240] hover:bg-[#0a192f] text-white px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg transition-all active:scale-95"><Users className="h-4 w-4" /> Importar</button>
+            <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+              <button onClick={() => handleOpenModal()} className="flex-1 sm:flex-none justify-center bg-[#1e3a8a] hover:bg-[#112240] text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg transition-all active:scale-95"><Plus className="h-4 w-4 shrink-0" /> Novo</button>
+              <button onClick={() => socioInputRef.current?.click()} className="flex-1 sm:flex-none justify-center bg-[#112240] hover:bg-[#0a192f] text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg transition-all active:scale-95"><Users className="h-4 w-4 shrink-0" /> Importar</button>
             </div>
           ) : (
-            <button onClick={() => presenceInputRef.current?.click()} className="bg-[#1e3a8a] hover:bg-[#112240] text-white px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg transition-all active:scale-95"><FileSpreadsheet className="h-4 w-4" /> Importar</button>
+            <button onClick={() => presenceInputRef.current?.click()} className="w-full sm:w-auto mt-2 sm:mt-0 justify-center bg-[#1e3a8a] hover:bg-[#112240] text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg transition-all active:scale-95"><FileSpreadsheet className="h-4 w-4 shrink-0" /> Importar</button>
           )}
         </div>
       </div>
 
       {/* CONTROLS CARD */}
-      <div className="flex flex-col gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col gap-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
 
           {/* VIEW MODE - Navy Gradient quando ativo */}
-          <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
-            <button onClick={() => setViewMode('horas')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'horas' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><Clock className="h-4 w-4" /> Horas</button>
-            <button onClick={() => setViewMode('descriptive')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'descriptive' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><FileText className="h-4 w-4" /> Descritivo</button>
-            <button onClick={() => setViewMode('socios')} className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'socios' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><Briefcase className="h-4 w-4" /> Regras</button>
+          <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto custom-scrollbar pb-1 md:pb-1">
+            <button onClick={() => setViewMode('horas')} className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'horas' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><Clock className="h-3 w-3 sm:h-4 sm:w-4" /> Horas</button>
+            <button onClick={() => setViewMode('descriptive')} className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'descriptive' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><FileText className="h-3 w-3 sm:h-4 sm:w-4" /> Descritivo</button>
+            <button onClick={() => setViewMode('socios')} className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${viewMode === 'socios' ? 'bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white shadow-lg' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`}><Briefcase className="h-3 w-3 sm:h-4 sm:w-4" /> Regras</button>
           </div>
 
           {/* ACTIONS - Moved to Header */}
         </div>
 
         {/* FILTERS - Design System */}
-        <div className="flex flex-col lg:flex-row items-center justify-between border-t border-gray-100 pt-4 gap-4">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between border-t border-gray-100 pt-4 gap-4">
           {/* Left: Barra de Pesquisa - Ocupa espaço disponível */}
           <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-full lg:flex-1">
             <Search className="h-4 w-4 text-gray-400 mr-2" />
             <input
               type="text"
-              placeholder="Buscar colaborador..."
+              placeholder="Buscar..."
               className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}

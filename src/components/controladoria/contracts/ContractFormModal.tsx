@@ -819,20 +819,25 @@ export function ContractFormModal(props: Props) {
 
   return (
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-6xl h-[90vh] flex overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
+      <div className="bg-white rounded-2xl sm:rounded-[2rem] shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 relative">
 
         {/* Left Sidebar */}
-        <div className="w-72 bg-white border-r border-gray-100 flex flex-col py-8 px-5 shrink-0 overflow-y-auto">
-          <div className="mb-8 px-2">
-            <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight">
-              {isEditing ? 'Editar Caso' : 'Novo Caso'}
-            </h2>
-            <p className="text-xs text-gray-400 mt-1 font-medium">
-              {(formData as any).display_id ? `Caso ID: ${(formData as any).display_id}` : 'Insira os dados do caso'}
-            </p>
+        <div className="w-full md:w-72 bg-white border-b md:border-b-0 md:border-r border-gray-100 flex flex-col py-4 md:py-8 px-4 md:px-5 shrink-0 z-10">
+          <div className="mb-4 md:mb-8 px-2 flex justify-between items-start md:items-center">
+            <div>
+              <h2 className="text-xl font-black text-[#0a192f] tracking-tight leading-tight">
+                {isEditing ? 'Editar Caso' : 'Novo Caso'}
+              </h2>
+              <p className="text-xs text-gray-400 mt-1 font-medium">
+                {(formData as any).display_id ? `Caso ID: ${(formData as any).display_id}` : 'Insira os dados do caso'}
+              </p>
+            </div>
+            <button onClick={onClose} className="md:hidden p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <div className="space-y-1 w-full flex-1">
+          <div className="flex flex-row md:flex-col space-x-2 md:space-x-0 md:space-y-1 w-full flex-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0 custom-scrollbar">
             {steps.map((step) => {
               const Icon = step.icon;
               const isActive = activeTab === step.id;
@@ -840,7 +845,7 @@ export function ContractFormModal(props: Props) {
                 <button
                   key={step.id}
                   onClick={() => setActiveTab(step.id)}
-                  className={`w-full flex items-center gap-3 p-3.5 rounded-xl transition-all text-left relative group ${isActive
+                  className={`flex-shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-4 py-2.5 md:p-3.5 rounded-xl transition-all text-left relative group ${isActive
                     ? 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm'
                     : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
                     }`}
@@ -848,14 +853,15 @@ export function ContractFormModal(props: Props) {
                   <div className={`p-1 rounded-lg transition-colors ${isActive ? 'text-[#1e3a8a]' : 'text-gray-300 group-hover:text-gray-500'}`}>
                     <Icon className="h-4 w-4" />
                   </div>
-                  <span className="text-[10px] uppercase tracking-[0.1em] font-bold">{step.label}</span>
-                  {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#1e3a8a] rounded-r-full" />}
+                  <span className="text-[10px] uppercase tracking-[0.1em] font-bold whitespace-nowrap">{step.label}</span>
+                  {isActive && <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#1e3a8a] rounded-r-full" />}
+                  {isActive && <div className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#1e3a8a] rounded-t-full" />}
                 </button>
               );
             })}
           </div>
 
-          <div className="mt-auto pt-6 border-t border-gray-100">
+          <div className="hidden md:flex mt-auto pt-6 border-t border-gray-100">
             <button onClick={onClose} className="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-red-500 hover:bg-red-50 p-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest">
               <X className="w-4 h-4" /> Fechar
             </button>
@@ -865,7 +871,7 @@ export function ContractFormModal(props: Props) {
         {/* Right Content */}
         <div className={`flex-1 flex flex-col min-w-0 ${getThemeBackground(formData.status)} transition-colors duration-300`}>
           {/* Scrollable Body */}
-          <div className="flex-1 overflow-y-auto px-10 py-8 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-8 custom-scrollbar">
 
             {activeTab === 1 && (
               <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
@@ -1010,12 +1016,12 @@ export function ContractFormModal(props: Props) {
           </div>
 
           {/* Footer - Moved Inside Content Area */}
-          <div className="px-10 py-6 border-t border-black/5 flex justify-end gap-3 bg-white/50 backdrop-blur-sm shrink-0">
-            <button onClick={onClose} className="px-6 py-2.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors">Cancelar</button>
+          <div className="px-4 py-4 md:px-10 md:py-6 border-t border-black/5 flex flex-col-reverse sm:flex-row justify-end gap-3 bg-white/50 backdrop-blur-sm shrink-0">
+            <button onClick={onClose} className="w-full sm:w-auto px-6 py-3 sm:py-2.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-100 bg-white border border-gray-200 sm:border-transparent rounded-xl transition-colors text-center">Cancelar</button>
             <button
               onClick={handleSaveWithIntegrations}
               disabled={isLoading}
-              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] hover:shadow-xl active:scale-95 disabled:opacity-50 transition-all"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 sm:py-2.5 bg-[#1e3a8a] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#112240] hover:shadow-xl active:scale-95 disabled:opacity-50 transition-all"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Salvar Caso

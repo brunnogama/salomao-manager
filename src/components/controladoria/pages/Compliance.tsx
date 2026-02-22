@@ -384,35 +384,33 @@ export function Compliance() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 animate-in fade-in duration-500">
+    <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <ShieldCheck className="h-7 w-7 text-white" />
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2 sm:p-3 shadow-lg shrink-0">
+            <ShieldCheck className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Compliance</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão de Certidões e Conformidade</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Compliance</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão de Certidões e Conformidade</p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full lg:w-auto">
           <button
             onClick={exportToExcel}
-            className="flex items-center gap-2 px-6 py-2.5 bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 sm:py-2.5 bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95 w-full sm:w-auto"
           >
-            <Download className="h-4 w-4" /> Exportar XLS
+            <Download className="h-4 w-4 shrink-0" /> Exportar XLS
           </button>
 
           {/* Ações */}
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={handleCreateNew}
-              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-            >
-              <Plus className="h-4 w-4" /> Nova Certidão
-            </button>
-          </div>
+          <button
+            onClick={handleCreateNew}
+            className="flex items-center justify-center gap-2 px-6 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 shrink-0" /> Nova Certidão
+          </button>
         </div>
       </div>
 
@@ -598,66 +596,68 @@ export function Compliance() {
           )}
 
           {activeTab === 'ged' && (
-            <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-500">
-              <table className="w-full text-left border-collapse whitespace-nowrap">
-                <thead>
-                  <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Documento</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">CNPJ Certidão</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Vencimento</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Local</th>
-                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {certificates.filter(c => c.file_url).map((c) => {
-                    const isExpired = c.due_date && new Date(c.due_date) < new Date();
-                    return (
-                      <tr key={c.id} className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-[#0a192f] text-xs">{getCertName(c)}</span>
-                            <span className="text-[10px] text-gray-400 font-medium truncate max-w-[200px]">{c.file_name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-xs font-semibold text-gray-500">
-                          {c.cnpj || '-'}
-                        </td>
-                        <td className="px-6 py-4 font-semibold text-gray-600 text-xs">
-                          {formatDate(c.due_date)}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isExpired
-                            ? 'bg-red-50 text-red-600 border border-red-100'
-                            : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                            }`}>
-                            {isExpired ? 'Vencida' : 'Válida'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-xs font-bold text-gray-500">{c.location}</td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => window.open(c.file_url, '_blank')}
-                            className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto custom-scrollbar animate-in fade-in duration-500">
+              <div className="min-w-[1000px]">
+                <table className="w-full text-left border-collapse whitespace-nowrap">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Documento</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">CNPJ Certidão</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Vencimento</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Local</th>
+                      <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {certificates.filter(c => c.file_url).map((c) => {
+                      const isExpired = c.due_date && new Date(c.due_date) < new Date();
+                      return (
+                        <tr key={c.id} className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-[#0a192f] text-xs">{getCertName(c)}</span>
+                              <span className="text-[10px] text-gray-400 font-medium truncate max-w-[200px]">{c.file_name}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-xs font-semibold text-gray-500">
+                            {c.cnpj || '-'}
+                          </td>
+                          <td className="px-6 py-4 font-semibold text-gray-600 text-xs">
+                            {formatDate(c.due_date)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isExpired
+                              ? 'bg-red-50 text-red-600 border border-red-100'
+                              : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                              }`}>
+                              {isExpired ? 'Vencida' : 'Válida'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-xs font-bold text-gray-500">{c.location}</td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              onClick={() => window.open(c.file_url, '_blank')}
+                              className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
           {activeTab !== 'dashboard' && activeTab !== 'ged' && (
             <div className="w-full flex flex-col space-y-6">
               {/* Toolbar: Busca e Ações */}
-              <div className="w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 w-full max-w-md">
-                  <Search className="h-5 w-5 text-gray-400" />
+              <div className="w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full md:max-w-md bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg">
+                  <Search className="h-4 w-4 text-gray-400 shrink-0" />
                   <input
                     type="text"
                     placeholder="Buscar certidão por nome, cartório ou local..."
@@ -667,20 +667,20 @@ export function Compliance() {
                   />
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                   {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
                     <button
                       onClick={() => handleEmitRF(activeTab)}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95"
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-all text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 w-full sm:w-auto"
                     >
-                      <Download className="h-4 w-4" /> Emitir Certidão RF
+                      <Download className="h-4 w-4 shrink-0" /> Emitir Certidão RF
                     </button>
                   )}
 
                   {activeTab !== 'dashboard' && activeTab !== 'ged' && locationsList.find(l => l.name === activeTab)?.cnpj && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg">
-                      <ShieldCheck className="w-4 h-4 text-[#1e3a8a]" />
-                      <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest">
+                    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg w-full sm:w-auto">
+                      <ShieldCheck className="w-4 h-4 text-[#1e3a8a] shrink-0" />
+                      <span className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest truncate">
                         CNPJ FILIAL: {locationsList.find(l => l.name === activeTab)?.cnpj}
                       </span>
                     </div>
@@ -689,81 +689,83 @@ export function Compliance() {
               </div>
 
               {/* Tabela de Certidões */}
-              <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
-                {filteredCertificates.length === 0 ? (
-                  <EmptyState
-                    icon={FileSearch}
-                    title="Nenhuma certidão encontrada"
-                    description={activeTab === 'ged'
-                      ? "Não há certidões com arquivos vinculados."
-                      : activeTab === 'dashboard'
-                        ? "Dados insuficientes para gerar o dashboard."
-                        : `Não há certidões cadastradas para o local ${activeTab}.`}
-                    actionLabel="Adicionar Certidão"
-                    onAction={handleCreateNew}
-                  />
-                ) : (
-                  <table className="w-full text-left border-collapse whitespace-nowrap">
-                    <thead>
-                      <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Nome</th>
-                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">CNPJ Certidão</th>
-                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Emissão</th>
-                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Vencimento</th>
-                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cartório</th>
-                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Local</th>
-                        <th className="p-4 sticky right-0 bg-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)]">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredCertificates.filter(c => activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab).map((c) => (
-                        <tr
-                          key={c.id}
-                          className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors cursor-pointer group"
-                          onClick={() => handleView(c)}
-                        >
-                          <td className="px-6 py-4 truncate font-bold text-[#0a192f] group-hover:text-blue-600 transition-colors">
-                            {getCertName(c)}
-                          </td>
-                          <td className="px-6 py-4 text-xs text-gray-500">{c.cnpj || '-'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {formatDate(c.issue_date)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {formatDate(c.due_date)}
-                          </td>
-                          <td className="px-6 py-4 truncate">{getAgencyName(c)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{c.location}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleView(c)}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
-                                title="Visualizar Detalhes"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleEdit(c)}
-                                className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
-                                title="Editar"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(c.id)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
+              <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto custom-scrollbar">
+                <div className="min-w-[1000px]">
+                  {filteredCertificates.length === 0 ? (
+                    <EmptyState
+                      icon={FileSearch}
+                      title="Nenhuma certidão encontrada"
+                      description={activeTab === 'ged'
+                        ? "Não há certidões com arquivos vinculados."
+                        : activeTab === 'dashboard'
+                          ? "Dados insuficientes para gerar o dashboard."
+                          : `Não há certidões cadastradas para o local ${activeTab}.`}
+                      actionLabel="Adicionar Certidão"
+                      onAction={handleCreateNew}
+                    />
+                  ) : (
+                    <table className="w-full text-left border-collapse whitespace-nowrap">
+                      <thead>
+                        <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Nome</th>
+                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">CNPJ Certidão</th>
+                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Emissão</th>
+                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data Vencimento</th>
+                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cartório</th>
+                          <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Local</th>
+                          <th className="p-4 sticky right-0 bg-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)]">Ações</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                      </thead>
+                      <tbody>
+                        {filteredCertificates.filter(c => activeTab === 'dashboard' || activeTab === 'ged' || c.location === activeTab).map((c) => (
+                          <tr
+                            key={c.id}
+                            className="border-t border-gray-100 text-sm hover:bg-gray-50 transition-colors cursor-pointer group"
+                            onClick={() => handleView(c)}
+                          >
+                            <td className="px-6 py-4 truncate font-bold text-[#0a192f] group-hover:text-blue-600 transition-colors">
+                              {getCertName(c)}
+                            </td>
+                            <td className="px-6 py-4 text-xs text-gray-500">{c.cnpj || '-'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {formatDate(c.issue_date)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {formatDate(c.due_date)}
+                            </td>
+                            <td className="px-6 py-4 truncate">{getAgencyName(c)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">{c.location}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleView(c)}
+                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
+                                  title="Visualizar Detalhes"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleEdit(c)}
+                                  className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
+                                  title="Editar"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(c.id)}
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
             </div>
           )}

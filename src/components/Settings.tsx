@@ -382,21 +382,21 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-gray-50 p-4 sm:p-6 space-y-6 overflow-hidden">
 
       {/* 1. Header - Salomão Design System */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <SettingsIcon className="h-7 w-7 text-white" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2 sm:p-3 shadow-lg shrink-0">
+            <SettingsIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Configurações</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gerenciamento e Sistema</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Configurações</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gerenciamento e Sistema</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-end sm:self-auto">
           <div className="hidden md:flex flex-col items-end mr-2">
             <span className="text-sm font-bold text-[#0a192f]">{currentUserEmail.split('@')[0]}</span>
             <div className="flex items-center gap-1">
@@ -426,19 +426,19 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
 
         {/* SIDEBAR DE NAVEGAÇÃO REESTRUTURADA */}
         <div className="w-full lg:w-64 flex-shrink-0 flex flex-col space-y-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-col space-y-1">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 lg:p-3 flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 lg:gap-0 lg:space-y-1 custom-scrollbar">
             {menuItems.map(item => (
               (!item.adminOnly || isAdmin) && hasAccessToModule(item.id) && (
                 <button
                   key={item.id}
                   onClick={() => setActiveModule(item.id as any)}
-                  className={`w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeModule === item.id
+                  className={`flex-shrink-0 lg:w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeModule === item.id
                     ? 'bg-[#1e3a8a] text-white shadow-md'
                     : 'text-gray-500 hover:bg-gray-50'
                     }`}
                 >
-                  <item.icon className="mr-3 h-4 w-4" />
-                  {item.label}
+                  <item.icon className="mr-2 lg:mr-3 h-4 w-4" />
+                  <span className="whitespace-nowrap">{item.label}</span>
                 </button>
               )
             ))}
@@ -589,15 +589,15 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
       />
 
       {resetModal?.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 animate-in zoom-in-95">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="p-3 bg-red-100 rounded-xl">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[150] p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 sm:p-8 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 mb-6">
+              <div className="p-3 bg-red-100 rounded-xl shrink-0">
                 <AlertTriangle className="h-8 w-8 text-red-600" />
               </div>
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Confirmar Reset de Dados</h3>
-                <p className="text-gray-600">Esta ação é <span className="font-bold text-red-600">IRREVERSÍVEL</span></p>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Confirmar Reset de Dados</h3>
+                <p className="text-gray-600 text-sm sm:text-base">Esta ação é <span className="font-bold text-red-600">IRREVERSÍVEL</span></p>
               </div>
             </div>
 
@@ -619,12 +619,11 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 placeholder="Digite APAGAR"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-lg"
-                autoFocus
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-lg text-center sm:text-left"
               />
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => { setResetModal(null); setConfirmText(''); }}
                 disabled={loading}

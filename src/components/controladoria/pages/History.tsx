@@ -164,18 +164,18 @@ export function History({
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
 
       {/* 1. Header - Salomão Design System */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <HistoryIcon className="h-7 w-7 text-white" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
+            <HistoryIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Audit Log</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Histórico de Atividades</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Audit Log</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Histórico de Atividades</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-end sm:self-auto">
           <div className="hidden md:flex flex-col items-end mr-2">
             <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
             <div className="flex items-center gap-1">

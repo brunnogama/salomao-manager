@@ -291,18 +291,18 @@ export function Settings({
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
 
       {/* 1. Header - Salomão Design System */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <SettingsIcon className="h-7 w-7 text-white" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
+            <SettingsIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Configurações</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gerenciamento e Sistema</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Configurações</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gerenciamento e Sistema</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
           <div className="hidden md:flex flex-col items-end mr-2">
             <span className="text-sm font-bold text-[#0a192f]">{userName}</span>
             <div className="flex items-center gap-1">
@@ -332,33 +332,33 @@ export function Settings({
 
         {/* SIDEBAR DE NAVEGAÇÃO */}
         <div className="w-full lg:w-64 flex-shrink-0 flex flex-col space-y-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-col space-y-1">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-row lg:flex-col gap-2 lg:gap-0 lg:space-y-1 overflow-x-auto custom-scrollbar">
             <button
               onClick={() => setActiveTab('users')}
-              className={`w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'users' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+              className={`flex-1 lg:flex-none flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap shrink-0 ${activeTab === 'users' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
               <Users className="mr-3 h-4 w-4" /> Usuários
             </button>
 
             <button
               onClick={() => setActiveTab('changelog')}
-              className={`w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'changelog' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+              className={`flex-1 lg:flex-none flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap shrink-0 ${activeTab === 'changelog' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
               <History className="mr-3 h-4 w-4" /> Versões
             </button>
 
             <button
               onClick={() => setActiveTab('about')}
-              className={`w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'about' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+              className={`flex-1 lg:flex-none flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap shrink-0 ${activeTab === 'about' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
             >
               <Info className="mr-3 h-4 w-4" /> Sobre
             </button>
 
             {currentUserRole === 'admin' && (
-              <div className="pt-2 mt-2 border-t border-gray-100">
+              <div className="lg:pt-2 lg:mt-2 lg:border-t lg:border-gray-100 flexshrink-0">
                 <button
                   onClick={() => setActiveTab('system')}
-                  className={`w-full flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'system' ? 'bg-red-50 text-red-600 border border-red-100' : 'text-gray-400 hover:bg-gray-50'}`}
+                  className={`flex-1 lg:flex-none flex items-center px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap shrink-0 ${activeTab === 'system' ? 'bg-red-50 text-red-600 border border-red-100' : 'text-gray-400 hover:bg-gray-50'}`}
                 >
                   <SettingsIcon className="mr-3 h-4 w-4" /> Sistema
                 </button>
@@ -398,60 +398,62 @@ export function Settings({
                 )}
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Membro</th>
-                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Email</th>
-                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Perfil</th>
-                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
-                      {['admin', 'editor'].includes(currentUserRole || '') && <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {users.map(user => (
-                      <tr key={user.id} className="hover:bg-blue-50/30 transition-colors">
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-blue-100 shadow-sm">
-                              {(user.name || user.email || '?').charAt(0).toUpperCase()}
-                            </div>
-                            <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{user.name || 'Sem nome'}</span>
-                          </div>
-                        </td>
-                        <td className="p-4 text-xs font-semibold text-gray-500">{user.email}</td>
-                        <td className="p-4">
-                          <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${user.role === 'admin'
-                            ? 'bg-purple-50 text-purple-700 border-purple-100'
-                            : user.role === 'editor'
-                              ? 'bg-blue-50 text-blue-700 border-blue-100'
-                              : 'bg-gray-50 text-gray-600 border-gray-100'
-                            }`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          {user.active ? (
-                            <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Ativo</span>
-                          ) : (
-                            <span className="flex items-center text-gray-400 text-[9px] font-black uppercase tracking-widest"><XCircle className="w-3.5 h-3.5 mr-1.5" /> Inativo</span>
-                          )}
-                        </td>
-                        {['admin', 'editor'].includes(currentUserRole || '') && (
-                          <td className="p-4 text-right">
-                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={() => openUserModal(user)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="Editar"><Edit className="w-4 h-4" /></button>
-                              {currentUserRole === 'admin' && (
-                                <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-all" title="Excluir"><Trash2 className="w-4 h-4" /></button>
-                              )}
+              <div className="overflow-x-auto custom-scrollbar">
+                <div className="min-w-[800px]">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Membro</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Email</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Perfil</th>
+                        <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                        {['admin', 'editor'].includes(currentUserRole || '') && <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {users.map(user => (
+                        <tr key={user.id} className="hover:bg-blue-50/30 transition-colors">
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-blue-100 shadow-sm">
+                                {(user.name || user.email || '?').charAt(0).toUpperCase()}
+                              </div>
+                              <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{user.name || 'Sem nome'}</span>
                             </div>
                           </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          <td className="p-4 text-xs font-semibold text-gray-500">{user.email}</td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${user.role === 'admin'
+                              ? 'bg-purple-50 text-purple-700 border-purple-100'
+                              : user.role === 'editor'
+                                ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                : 'bg-gray-50 text-gray-600 border-gray-100'
+                              }`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            {user.active ? (
+                              <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Ativo</span>
+                            ) : (
+                              <span className="flex items-center text-gray-400 text-[9px] font-black uppercase tracking-widest"><XCircle className="w-3.5 h-3.5 mr-1.5" /> Inativo</span>
+                            )}
+                          </td>
+                          {['admin', 'editor'].includes(currentUserRole || '') && (
+                            <td className="p-4 text-right">
+                              <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => openUserModal(user)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="Editar"><Edit className="w-4 h-4" /></button>
+                                {currentUserRole === 'admin' && (
+                                  <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-all" title="Excluir"><Trash2 className="w-4 h-4" /></button>
+                                )}
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -611,12 +613,12 @@ export function Settings({
       {/* MODAL DE USUÁRIO */}
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-[#0a192f]/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 border border-gray-100 max-h-[90vh] flex flex-col">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h3 className="text-xs font-black text-[#0a192f] uppercase tracking-widest">{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</h3>
               <button onClick={() => setIsUserModalOpen(false)} className="p-1 hover:bg-gray-200 rounded-lg transition-colors"><XCircle className="w-5 h-5 text-gray-400" /></button>
             </div>
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar flex-1">
               <div>
                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Nome Completo</label>
                 <div className="relative">

@@ -157,24 +157,22 @@ export function GED() {
     <div className="flex flex-col h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
 
       {/* 1. Header - Salomão Design System */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <FolderOpen className="h-7 w-7 text-white" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
+            <FolderOpen className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">GED</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão Eletrônica de Documentos</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">GED</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão Eletrônica de Documentos</p>
           </div>
         </div>
-
-
       </div>
 
-      <div className="flex flex-1 gap-6 overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 gap-4 sm:gap-6 overflow-hidden">
 
         {/* Sidebar de Diretórios */}
-        <div className="w-64 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+        <div className="w-full lg:w-64 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col shrink-0 lg:overflow-hidden max-h-[30vh] lg:max-h-none">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50">
             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center">
               <HardDrive className="w-4 h-4 mr-2" /> Diretórios
@@ -204,10 +202,10 @@ export function GED() {
 
         {/* Listagem de Arquivos */}
         <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-3">
+          <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <h3 className="text-xs font-black text-[#0a192f] uppercase tracking-widest flex items-center">
-                {selectedFolder ? <><FolderOpen className="w-4 h-4 mr-2 text-[#1e3a8a]" /> {selectedFolder}</> : 'Todos os Documentos'}
+                {selectedFolder ? <><FolderOpen className="w-4 h-4 mr-2 text-[#1e3a8a]" /> <span className="truncate max-w-[200px]">{selectedFolder}</span></> : 'Todos os Documentos'}
               </h3>
               <div className="flex items-center gap-2">
                 <span className="bg-gray-100 text-gray-500 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">{filteredDocs.length} itens</span>

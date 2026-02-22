@@ -33,7 +33,7 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, placeholder }: { i
   const displayValue = options.find((opt) => opt.value === value)?.label || placeholder;
 
   return (
-    <div className="relative min-w-[160px]" ref={wrapperRef}>
+    <div className="relative w-full sm:w-auto sm:min-w-[160px]" ref={wrapperRef}>
       <div
         className="flex items-center bg-white px-3 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors select-none shadow-sm h-[40px]"
         onClick={() => setIsOpen(!isOpen)}
@@ -397,24 +397,24 @@ export function Finance() {
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6">
 
       {/* 1. Header - Salomão Design System */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <DollarSign className="h-7 w-7 text-white" />
+      <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
+            <DollarSign className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Controle Financeiro</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão de faturamento e recebíveis</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Controle Financeiro</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão de faturamento e recebíveis</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <button onClick={exportToExcel} className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
+        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
+          <button onClick={exportToExcel} className="hidden lg:flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
             <Download className="h-4 w-4" /> Exportar XLS
           </button>
           <button
             onClick={handleNewInvoice}
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 whitespace-nowrap"
           >
             <Plus className="h-4 w-4" /> Novo Lançamento
           </button>
@@ -472,11 +472,11 @@ export function Finance() {
       </div>
 
       {/* 3. Toolbar Principal - Padrão Contratos */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-        <div className="flex flex-col lg:flex-row items-center gap-4">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 w-full">
+        <div className="flex flex-col lg:flex-row flex-wrap items-stretch lg:items-center gap-4">
 
           {/* Barra de Busca (flex-1, sempre visível) */}
-          <div className="relative flex-1 w-full lg:w-auto">
+          <div className="relative flex-1 w-full lg:w-auto shrink-0 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
@@ -488,7 +488,7 @@ export function Finance() {
           </div>
 
           {/* Filtros: Sócios, Status, Locais e Período */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row flex-wrap lg:flex-nowrap items-stretch sm:items-center gap-2 w-full lg:w-auto">
             <FilterSelect
               icon={Briefcase}
               value={selectedPartner}
@@ -514,8 +514,8 @@ export function Finance() {
             />
 
             {/* Período: De - Até */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px] flex-1 sm:flex-none justify-between sm:justify-start">
                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
                 <input
                   type="date"
@@ -524,7 +524,7 @@ export function Finance() {
                   className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
                 />
               </div>
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px] flex-1 sm:flex-none justify-between sm:justify-start">
                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
                 <input
                   type="date"
@@ -561,69 +561,71 @@ export function Finance() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Categoria</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Detalhamento</th>
-                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Origem</th>
-                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Valor</th>
-                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {filteredInstallments.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
-                      onClick={() => handleOpenContractModal(item.contract!.id)}
-                    >
-                      <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{(item.contract as any)?.display_id}</td>
-                      <td className="p-4">
-                        {item.status === 'paid'
-                          ? <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> Faturado</span>
-                          : <span className="flex items-center text-amber-500 text-[9px] font-black uppercase tracking-widest"><Circle className="w-3 h-3 mr-1" /> Pendente</span>
-                        }
-                      </td>
-                      <td className="p-4 text-[11px] font-semibold">
-                        {item.paid_at ? (
-                          <span className="text-emerald-600 font-black uppercase tracking-tighter">Pago em {new Date(item.paid_at).toLocaleDateString()}</span>
-                        ) : (
-                          <span className={`flex items-center ${isOverdue(item) ? "text-red-600 font-black uppercase tracking-tighter" : "text-gray-700"}`}>
-                            {isOverdue(item) && <AlertTriangle className="w-3 h-3 mr-1 animate-pulse" />}
-                            {item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{item.contract?.client_name}</td>
-                      <td className="p-4 text-[10px] font-semibold text-gray-500 uppercase">
-                        <div className="font-bold">HON: {item.contract?.hon_number || '-'}</div>
-                        <div className="text-[9px] text-gray-400 truncate max-w-[150px] lowercase tracking-normal">{(item as any).clause}</div>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest">{getTypeLabel(item.type)}</div>
-                        <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Parcela {item.installment_number}/{item.total_installments}</div>
-                      </td>
-                      <td className="p-4 text-right font-black text-[#0a192f] text-xs">
-                        {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </td>
-                      <td className="p-4 text-right">
-                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-all" title="Alterar Vencimento"><CalendarDays className="w-4 h-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-all" title="Baixar Contrato"><FileDown className="w-4 h-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-lg hover:bg-emerald-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
-                            <DollarSign className="w-3 h-3 mr-1" /> Faturar
-                          </button>
-                        </div>
-
-                      </td>
+            <div className="overflow-x-auto custom-scrollbar">
+              <div className="min-w-[1000px]">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Categoria</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Detalhamento</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Origem</th>
+                      <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Valor</th>
+                      <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {filteredInstallments.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
+                        onClick={() => handleOpenContractModal(item.contract!.id)}
+                      >
+                        <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{(item.contract as any)?.display_id}</td>
+                        <td className="p-4">
+                          {item.status === 'paid'
+                            ? <span className="flex items-center text-emerald-600 text-[9px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3 mr-1" /> Faturado</span>
+                            : <span className="flex items-center text-amber-500 text-[9px] font-black uppercase tracking-widest"><Circle className="w-3 h-3 mr-1" /> Pendente</span>
+                          }
+                        </td>
+                        <td className="p-4 text-[11px] font-semibold">
+                          {item.paid_at ? (
+                            <span className="text-emerald-600 font-black uppercase tracking-tighter">Pago em {new Date(item.paid_at).toLocaleDateString()}</span>
+                          ) : (
+                            <span className={`flex items-center ${isOverdue(item) ? "text-red-600 font-black uppercase tracking-tighter" : "text-gray-700"}`}>
+                              {isOverdue(item) && <AlertTriangle className="w-3 h-3 mr-1 animate-pulse" />}
+                              {item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{item.contract?.client_name}</td>
+                        <td className="p-4 text-[10px] font-semibold text-gray-500 uppercase">
+                          <div className="font-bold">HON: {item.contract?.hon_number || '-'}</div>
+                          <div className="text-[9px] text-gray-400 truncate max-w-[150px] lowercase tracking-normal">{(item as any).clause}</div>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest">{getTypeLabel(item.type)}</div>
+                          <div className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Parcela {item.installment_number}/{item.total_installments}</div>
+                        </td>
+                        <td className="p-4 text-right font-black text-[#0a192f] text-xs">
+                          {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                            <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-all" title="Alterar Vencimento"><CalendarDays className="w-4 h-4" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-all" title="Baixar Contrato"><FileDown className="w-4 h-4" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-lg hover:bg-emerald-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
+                              <DollarSign className="w-3 h-3 mr-1" /> Faturar
+                            </button>
+                          </div>
+
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

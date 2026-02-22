@@ -84,11 +84,11 @@ export function DashboardHeader({
           />
 
           {/* Botão de Exportar */}
-          <div id="export-button-container">
+          <div id="export-button-container" className="w-full sm:w-auto mt-2 sm:mt-0">
             <button
               onClick={onExport}
               disabled={exporting}
-              className="flex items-center gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white text-[9px] font-black rounded-xl hover:bg-[#112240] shadow-lg transition-all active:scale-95 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center w-full sm:w-auto gap-2 px-8 py-2.5 bg-[#1e3a8a] text-white text-[9px] font-black rounded-xl hover:bg-[#112240] shadow-lg transition-all active:scale-95 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {exporting ? (
                 <>

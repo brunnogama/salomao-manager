@@ -97,42 +97,44 @@ export function History() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col p-4 sm:p-6 space-y-4 sm:space-y-6 bg-gradient-to-br from-gray-50 to-gray-100">
       {/* BARRA DE FILTROS */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
+      <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
 
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full xl:w-auto flex-wrap">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full xl:w-auto">
           {/* Busca Texto */}
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar por usuário, ação..."
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#112240]"
+              placeholder="Buscar..."
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#112240] transition-colors"
               value={filter}
               onChange={e => setFilter(e.target.value)}
             />
           </div>
 
           {/* Filtro Módulo */}
-          <FilterSelect
-            icon={LayoutGrid}
-            value={moduleFilter}
-            onChange={setModuleFilter}
-            options={[
-              { label: 'Todos Módulos', value: 'TODOS' },
-              { label: 'Clientes', value: 'CLIENTES' },
-              { label: 'Kanban', value: 'KANBAN' },
-              { label: 'Configurações', value: 'CONFIG' },
-              { label: 'Incompletos', value: 'INCOMPLETOS' }
-            ]}
-            placeholder="Módulo"
-          />
+          <div className="w-full md:w-auto">
+            <FilterSelect
+              icon={LayoutGrid}
+              value={moduleFilter}
+              onChange={setModuleFilter}
+              options={[
+                { label: 'Todos', value: 'TODOS' },
+                { label: 'Clientes', value: 'CLIENTES' },
+                { label: 'Kanban', value: 'KANBAN' },
+                { label: 'Config', value: 'CONFIG' },
+                { label: 'Incompletos', value: 'INCOMPLETOS' }
+              ]}
+              placeholder="Módulo"
+            />
+          </div>
 
           {/* Filtros de Data */}
-          <div className="flex items-center gap-2 w-full md:w-auto bg-white border border-gray-200 rounded-lg p-1 px-2">
-            <Calendar className="h-4 w-4 text-gray-400" />
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full md:w-auto bg-white border border-gray-200 rounded-lg p-1.5 px-3">
+            <Calendar className="h-4 w-4 text-gray-400 shrink-0" />
+            <div className="flex items-center gap-2 overflow-x-auto">
               <input
                 type="date"
                 className="text-sm outline-none text-gray-600 bg-transparent"
@@ -140,7 +142,7 @@ export function History() {
                 onChange={e => setStartDate(e.target.value)}
                 title="Data Início"
               />
-              <span className="text-gray-400 text-xs">até</span>
+              <span className="text-gray-400 text-xs shrink-0">até</span>
               <input
                 type="date"
                 className="text-sm outline-none text-gray-600 bg-transparent"
@@ -150,7 +152,7 @@ export function History() {
               />
             </div>
             {(startDate || endDate) && (
-              <button onClick={clearDateFilters} className="ml-1 text-gray-400 hover:text-red-500">
+              <button onClick={clearDateFilters} className="ml-auto text-gray-400 hover:text-red-500 shrink-0">
                 <XCircle className="h-4 w-4" />
               </button>
             )}
@@ -159,10 +161,10 @@ export function History() {
 
         {/* Botões de Ação */}
         <div className="flex gap-2 w-full xl:w-auto">
-          <button onClick={fetchLogs} className="p-2 text-gray-500 hover:text-[#112240] bg-white border border-gray-200 rounded-lg shadow-sm transition-all active:scale-95" title="Atualizar">
+          <button onClick={fetchLogs} className="p-2 text-gray-500 hover:text-[#112240] bg-white border border-gray-200 rounded-lg shadow-sm transition-all active:scale-95 flex items-center justify-center shrink-0" title="Atualizar">
             <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button onClick={handleExport} className="flex-1 xl:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 shadow-sm transition-all">
+          <button onClick={handleExport} className="flex-1 xl:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 shadow-sm transition-all text-center">
             Exportar Logs
           </button>
         </div>
@@ -170,49 +172,51 @@ export function History() {
 
       {/* TABELA DE LOGS */}
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-        <div className="overflow-y-auto custom-scrollbar flex-1">
-          <table className="min-w-full divide-y divide-gray-100">
-            <thead>
-              <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
-                <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Data/Hora</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Usuário</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Módulo</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Ação</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Detalhes</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              {loading && logs.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Carregando histórico...</td></tr>
-              ) : filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                    {new Date(log.created_at).toLocaleString('pt-BR')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900">
-                    {log.user_email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                    {log.module}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-[10px] font-bold rounded border ${getActionColor(log.action)}`}>
-                      {log.action}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-xs text-gray-600">
-                    {log.details}
-                  </td>
+        <div className="overflow-x-auto overflow-y-auto custom-scrollbar flex-1">
+          <div className="min-w-[800px]">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead>
+                <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] sticky top-0 z-10">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Data/Hora</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Usuário</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Módulo</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Ação</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Detalhes</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {filteredLogs.length === 0 && !loading && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-              <Search className="h-8 w-8 mb-2 opacity-20" />
-              <p className="text-sm">Nenhum registro encontrado com os filtros atuais.</p>
-            </div>
-          )}
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {loading && logs.length === 0 ? (
+                  <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Carregando histórico...</td></tr>
+                ) : filteredLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                      {new Date(log.created_at).toLocaleString('pt-BR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900">
+                      {log.user_email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                      {log.module}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-[10px] font-bold rounded border ${getActionColor(log.action)}`}>
+                        {log.action}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-xs text-gray-600">
+                      {log.details}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filteredLogs.length === 0 && !loading && (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                <Search className="h-8 w-8 mb-2 opacity-20" />
+                <p className="text-sm">Nenhum registro encontrado com os filtros atuais.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

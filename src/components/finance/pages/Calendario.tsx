@@ -185,39 +185,39 @@ export function Calendario() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-6 relative p-6">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6">
 
       {/* PAGE HEADER COMPLETO */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <CalendarIcon className="h-7 w-7 text-white" />
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+            <CalendarIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
               Calendário Financeiro
             </h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
               Gestão temporal de obrigações e recebimentos
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 w-full md:w-auto mt-2 md:mt-0 justify-end flex-wrap">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
           >
             <Plus className="h-4 w-4" /> Novo Lançamento
           </button>
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto space-y-6 w-full">
+      <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6 w-full">
 
         {/* TOOLBAR & STATS */}
-        <div className="flex flex-col xl:flex-row gap-4 items-center justify-between">
-          <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
+        <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
+          <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 custom-scrollbar">
             <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
               <div className="p-2 rounded-xl bg-gradient-to-br from-red-500 to-red-700 shadow-lg">
                 <ArrowUpCircle className="h-5 w-5 text-white" />
@@ -253,17 +253,17 @@ export function Calendario() {
         </div>
 
         {/* CONTEÚDO PRINCIPAL - GRID 3:1 APLICADO */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Calendário */}
-          <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
+          <div className="lg:col-span-3 bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 mb-4 lg:mb-0">
+            <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6 pb-4 sm:pb-5 border-b border-gray-100">
               <button
                 onClick={handlePreviousMonth}
-                className="p-2.5 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"
+                className="p-2 hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95 shrink-0"
               >
-                <ChevronLeft className="h-6 w-6 text-[#1e3a8a]" />
+                <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 text-[#1e3a8a]" />
               </button>
-              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
+              <h2 className="text-base sm:text-[20px] font-black text-[#0a192f] tracking-tight text-center">
                 {MESES[selectedMonth]} {selectedYear}
               </h2>
               <button

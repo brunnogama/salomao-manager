@@ -43,7 +43,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
       const { data: colaboradores, error: colError } = await supabase
         .from('colaboradores')
         .select('*')
-      
+
       if (colError) throw colError
 
       // 2. Busca Dados Financeiros Reais (Sem filtro de período para permitir visão global)
@@ -59,14 +59,14 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
         const processados = colaboradores.filter((v: any) => {
           if (!v.data_admissao) return false
-          
+
           // Filtro de Status Ativo
           const statusLimpo = v.status?.trim().toLowerCase() || '';
           if (statusLimpo !== 'ativo') return false;
 
           const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || '';
           const ehCargoValido = cargoLimpo === 'advogado' || cargoLimpo === 'socio';
-          
+
           if (!ehCargoValido) return false;
 
           return true;
@@ -80,18 +80,18 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
           const dataVenc = new Date(ano, (mes - 1) + 6, dia)
           dataVenc.setDate(dataVenc.getDate() - 1)
-          
+
           const diff = Math.ceil((dataVenc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
-          
+
           // Cruzamento com dados financeiros reais baseado no vencimento calculado
-          const fin = financeiros?.find(f => 
-            f.colaborador_id === v.id && 
-            f.mes_referencia === dataVenc.getMonth() && 
+          const fin = financeiros?.find(f =>
+            f.colaborador_id === v.id &&
+            f.mes_referencia === dataVenc.getMonth() &&
             f.ano_referencia === dataVenc.getFullYear()
           )
 
-          return { 
-            ...v, 
+          return {
+            ...v,
             data_pagamento_oab: dataVenc.toISOString().split('T')[0],
             dias_ate_pagamento: diff,
             valor_anuidade: fin?.valor_anuidade,
@@ -130,7 +130,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         }, { onConflict: 'colaborador_id,mes_referencia,ano_referencia' })
 
       if (error) throw error
-      
+
       await fetchVencimentos()
       setSelectedVencimento(null)
       setValorInput('')
@@ -168,7 +168,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         class: 'bg-green-600 text-white border-green-700 font-black'
       }
     }
-    
+
     if (statusReal === 'desconsiderado') {
       return {
         icon: Ban,
@@ -242,33 +242,30 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
       <div className="flex gap-2 flex-wrap p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
         <button
           onClick={() => setFiltro('todos')}
-          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-            filtro === 'todos' 
-              ? 'bg-[#1e3a8a] text-white shadow-md' 
+          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'todos'
+              ? 'bg-[#1e3a8a] text-white shadow-md'
               : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-          }`}
+            }`}
         >
           Todos ({vencimentosPendentesGlobal.length})
         </button>
 
         <button
           onClick={() => setFiltro('urgente')}
-          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-            filtro === 'urgente' 
-              ? 'bg-red-600 text-white shadow-md' 
+          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'urgente'
+              ? 'bg-red-600 text-white shadow-md'
               : 'bg-red-50 text-red-600 hover:bg-red-100'
-          }`}
+            }`}
         >
           Urgente ({vencimentosPendentesGlobal.filter(v => v.dias_ate_pagamento <= 7).length})
         </button>
 
         <button
           onClick={() => setFiltro('tratados')}
-          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-            filtro === 'tratados' 
-              ? 'bg-green-600 text-white shadow-md' 
+          className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'tratados'
+              ? 'bg-green-600 text-white shadow-md'
               : 'bg-green-50 text-green-600 hover:bg-green-100'
-          }`}
+            }`}
         >
           Tratados ({vencimentosTratadosGlobal.length})
         </button>
@@ -288,10 +285,10 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
               <div
                 key={vencimento.id}
                 onClick={() => setSelectedVencimento(vencimento)}
-                className={`bg-white rounded-xl border p-5 transition-all cursor-pointer ${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'ring-2 ring-orange-500 border-orange-200 shadow-lg' : 'border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md'}`}
+                className={`bg-white rounded-xl border p-4 sm:p-5 transition-all cursor-pointer ${vencimento.dias_ate_pagamento === 0 && !vencimento.status_pagamento_real ? 'ring-2 ring-orange-500 border-orange-200 shadow-lg' : 'border-gray-200 hover:border-[#1e3a8a]/30 hover:shadow-md'}`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-3">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                  <div className="flex-1 space-y-3 w-full">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-gradient-to-br from-[#1e3a8a] to-[#112240]">
                         <GraduationCap className="h-4 w-4 text-white" />
@@ -345,25 +342,25 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
 
       {selectedVencimento && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-[#1e3a8a] text-white">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-[#1e3a8a] text-white shrink-0">
               <div className="flex items-center gap-3">
-                <GraduationCap className="h-6 w-6" />
+                <GraduationCap className="h-6 w-6 shrink-0" />
                 <div>
-                  <h3 className="text-lg font-black uppercase tracking-tight">Tratar Vencimento OAB</h3>
-                  <p className="text-xs text-blue-100 font-medium">{selectedVencimento.nome}</p>
+                  <h3 className="text-base sm:text-lg font-black uppercase tracking-tight leading-tight">Tratar Vencimento OAB</h3>
+                  <p className="text-[10px] sm:text-xs text-blue-100 font-medium">{selectedVencimento.nome}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedVencimento(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={() => setSelectedVencimento(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors shrink-0">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">OAB Número / UF</p>
-                  <p className="text-sm font-bold text-[#0a192f]">{selectedVencimento.oab_numero} / {selectedVencimento.oab_uf}</p>
+                  <p className="text-sm font-bold text-[#0a192f] truncate">{selectedVencimento.oab_numero} / {selectedVencimento.oab_uf}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Data Prevista</p>
@@ -375,7 +372,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                 <label className="text-xs font-black text-gray-700 uppercase tracking-wider block">Valor Pago</label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input 
+                  <input
                     type="text"
                     value={valorInput}
                     onChange={handleValorChange}
@@ -385,7 +382,7 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-gray-100">
                 <button
                   onClick={() => handleUpdateStatus('desconsiderado')}
                   className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all uppercase tracking-widest"

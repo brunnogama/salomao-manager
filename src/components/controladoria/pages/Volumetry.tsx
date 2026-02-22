@@ -124,20 +124,20 @@ export function Volumetry() {
     <div className="flex flex-col min-h-screen bg-gray-50 p-6 space-y-6 overflow-hidden">
 
       {/* 1. Header - Salomão Design System */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <BarChart3 className="h-7 w-7 text-white" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2.5 sm:p-3 shadow-lg shrink-0">
+            <BarChart3 className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Volumetria</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Análise Quantitativa por Sócio</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Volumetria</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Análise Quantitativa por Sócio</p>
           </div>
         </div>
 
 
-        <div className="flex items-center gap-3 shrink-0">
-          <button onClick={handleExport} className="hidden md:flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <button onClick={handleExport} className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95">
             <Download className="h-4 w-4" /> Exportar XLS
           </button>
         </div>
@@ -214,56 +214,58 @@ export function Volumetry() {
             />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Sócio Responsável</th>
-                  <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Contratos</th>
-                  <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Processos</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Representatividade</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {metricsByPartner.map((partner) => {
-                  const percentage = totalContracts > 0 ? ((partner.contractCount / totalContracts) * 100).toFixed(1) : "0";
+          <div className="overflow-x-auto custom-scrollbar">
+            <div className="min-w-[800px]">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Sócio Responsável</th>
+                    <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Contratos</th>
+                    <th className="p-4 text-center text-[10px] font-black text-white uppercase tracking-widest">Processos</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Representatividade</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {metricsByPartner.map((partner) => {
+                    const percentage = totalContracts > 0 ? ((partner.contractCount / totalContracts) * 100).toFixed(1) : "0";
 
-                  return (
-                    <tr key={partner.id} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-blue-100">
-                            {partner.name.charAt(0).toUpperCase()}
+                    return (
+                      <tr key={partner.id} className="hover:bg-blue-50/30 transition-colors group">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1e3a8a] flex items-center justify-center font-black text-xs border border-blue-100">
+                              {partner.name.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{partner.name}</span>
                           </div>
-                          <span className="text-xs font-black text-[#0a192f] uppercase tracking-tight">{partner.name}</span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className="bg-blue-50 text-[#1e3a8a] px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-100">
-                          {partner.contractCount}
-                        </span>
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-purple-100">
-                          {partner.processCount}
-                        </span>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden max-w-[200px] border border-gray-200/50 shadow-inner">
-                            <div
-                              className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] h-full rounded-full transition-all duration-500"
-                              style={{ width: `${percentage}%` }}
-                            ></div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="bg-blue-50 text-[#1e3a8a] px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-100">
+                            {partner.contractCount}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-purple-100">
+                            {partner.processCount}
+                          </span>
+                        </td>
+                        <td className="p-4 align-middle">
+                          <div className="flex items-center gap-4">
+                            <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden max-w-[200px] border border-gray-200/50 shadow-inner">
+                              <div
+                                className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] h-full rounded-full transition-all duration-500"
+                                style={{ width: `${percentage}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest w-12">{percentage}%</span>
                           </div>
-                          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest w-12">{percentage}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

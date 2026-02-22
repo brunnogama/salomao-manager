@@ -3,7 +3,7 @@ import {
   Plus, Search, Filter, Calendar, User, Briefcase,
   Loader2,
   Download, Edit, Trash2, Bell,
-  FileSignature, X, FileSearch, Eye
+  FileSignature, FileSearch, Eye
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import XLSX from 'xlsx-js-style';
@@ -41,11 +41,7 @@ const getStatusLabel = (status: string) => {
   }
 };
 
-const formatMoney = (val: number | string | undefined) => {
-  if (!val) return 'R$ 0,00';
-  const num = typeof val === 'string' ? parseCurrency(val) : val;
-  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-};
+
 
 const calculateTotalSuccess = (c: Contract) => {
   let total = parseCurrency(c.final_success_fee);
@@ -74,7 +70,6 @@ export function Contracts() {
 
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const [statusFilter, setStatusFilter] = useState('');
@@ -539,42 +534,42 @@ export function Contracts() {
   ];
 
   return (
-    <div className="p-8 animate-in fade-in duration-500">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         {/* Esquerda: Ícone + Título */}
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-3 shadow-lg">
-            <FileSignature className="h-7 w-7 text-white" />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] p-2 sm:p-3 shadow-lg shrink-0">
+            <FileSignature className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Casos</h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">Gestão completa de casos e propostas</p>
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Casos</h1>
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-0.5">Gestão completa de casos e propostas</p>
           </div>
         </div>
 
         {/* Direita: Exportar XLSX, Novo Caso, Notificações */}
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0 w-full sm:w-auto">
           {/* Exportar XLSX (Verde) */}
           <button
             onClick={exportToExcel}
-            className="flex items-center gap-2 px-6 py-2.5 bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 sm:py-2.5 bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-sm active:scale-95 flex-1 sm:flex-none"
           >
-            <Download className="h-4 w-4" /> Exportar XLS
+            <Download className="h-4 w-4 shrink-0" /> <span className="hidden sm:inline">Exportar XLS</span><span className="sm:hidden">Exportar</span>
           </button>
 
           {/* Novo Caso (Azul Royal) */}
           {userRole !== 'viewer' && (
             <button
               onClick={handleNew}
-              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 flex-1 sm:flex-none"
             >
-              <Plus className="h-4 w-4" /> Novo Caso
+              <Plus className="h-4 w-4 shrink-0" /> Novo Caso
             </button>
           )}
 
           {/* Notificações */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className={`p-2 rounded-full relative transition-all h-[40px] w-[40px] flex items-center justify-center ${notifications.length > 0
@@ -620,11 +615,11 @@ export function Contracts() {
       </div>
 
       {/* Toolbar: Total | Busca | Filtros | Período */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-        <div className="flex flex-col lg:flex-row items-center gap-4">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
 
           {/* Card de Total */}
-          <div className="flex items-center gap-3 pr-4 border-r border-gray-100">
+          <div className="flex items-center gap-3 pb-4 lg:pb-0 lg:pr-4 border-b lg:border-b-0 lg:border-r border-gray-100">
             <div className="p-2 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg">
               <Briefcase className="w-5 h-5" />
             </div>
@@ -666,22 +661,22 @@ export function Contracts() {
 
             {/* Período: De - Até */}
             <div className="flex items-center gap-2">
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">De</span>
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px] flex-1">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2 shrink-0">De</span>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-full"
                 />
               </div>
-              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px]">
-                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Até</span>
+              <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 h-[40px] flex-1">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2 shrink-0">Até</span>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-[110px]"
+                  className="bg-transparent text-xs font-bold text-gray-600 outline-none w-full"
                 />
               </div>
             </div>
@@ -709,47 +704,49 @@ export function Contracts() {
             />
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável</th>
-                  <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">HON</th>
-                  <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Data</th>
-                  <th className="p-4 sticky right-0 bg-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)]">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filteredContracts.map(contract => (
-                  <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
-                    <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{contract.display_id}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
-                        {getStatusLabel(contract.status)}
-                      </span>
-                    </td>
-                    <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
-                    <td className="p-4 text-[11px] font-semibold text-gray-600">{contract.partner_name || '-'}</td>
-                    <td className="p-4 font-mono text-[10px] font-bold text-gray-400">{contract.hon_number || '-'}</td>
-                    <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}</td>
-                    <td className="p-4">
-                      <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>
-                        {userRole !== 'viewer' && (
-                          <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"><Edit className="w-4 h-4" /></button>
-                        )}
-                        {userRole === 'admin' && (
-                          <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
-                        )}
-                      </div>
-                    </td>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto custom-scrollbar">
+            <div className="min-w-[1000px]">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Responsável</th>
+                    <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">HON</th>
+                    <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Data</th>
+                    <th className="p-4 sticky right-0 bg-[#112240] text-right text-[10px] font-black text-white uppercase tracking-widest shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)]">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredContracts.map(contract => (
+                    <tr key={contract.id} onClick={() => handleView(contract)} className="hover:bg-blue-50/30 cursor-pointer group transition-colors">
+                      <td className="p-4 font-mono text-[10px] text-gray-400 font-bold">{contract.display_id}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(contract.status)}`}>
+                          {getStatusLabel(contract.status)}
+                        </span>
+                      </td>
+                      <td className="p-4 text-xs font-black text-[#0a192f] uppercase tracking-tight">{contract.client_name}</td>
+                      <td className="p-4 text-[11px] font-semibold text-gray-600">{contract.partner_name || '-'}</td>
+                      <td className="p-4 font-mono text-[10px] font-bold text-gray-400">{contract.hon_number || '-'}</td>
+                      <td className="p-4 text-right text-[11px] font-semibold text-gray-500">{safeDate(getRelevantDate(contract))?.toLocaleDateString() || '-'}</td>
+                      <td className="p-4">
+                        <div className="flex justify-end gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={(e) => { e.stopPropagation(); handleView(contract); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-[#1e3a8a] transition-all"><Eye className="w-4 h-4" /></button>
+                          {userRole !== 'viewer' && (
+                            <button onClick={(e) => { e.stopPropagation(); handleView(contract); handleEdit(); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 hover:text-blue-700 transition-all"><Edit className="w-4 h-4" /></button>
+                          )}
+                          {userRole === 'admin' && (
+                            <button onClick={(e) => handleDeleteFromList(e, contract.id!)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-all"><Trash2 className="w-4 h-4" /></button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

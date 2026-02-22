@@ -16,7 +16,6 @@ interface InventoryItem {
 export function Estoque() {
     const [activeCategory, setActiveCategory] = useState('Todos')
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
-    const [loading, setLoading] = useState(false)
     const [itemToDelete, setItemToDelete] = useState<string | null>(null)
     const [alertConfig, setAlertConfig] = useState<{
         isOpen: boolean;
@@ -52,7 +51,6 @@ export function Estoque() {
 
     const fetchItems = async () => {
         try {
-            setLoading(true)
             let query = supabase
                 .from('operational_items')
                 .select('*')
@@ -68,8 +66,6 @@ export function Estoque() {
             if (data) setInventoryItems(data)
         } catch (error) {
             console.error('Error fetching items:', error)
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -186,21 +182,21 @@ export function Estoque() {
         : inventoryItems.filter((item: InventoryItem) => item.category === activeCategory)
 
     return (
-        <div className="p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div className="flex items-center gap-3">
-                    <div className="p-3 bg-orange-100 rounded-lg">
+        <div className="p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                    <div className="p-3 bg-orange-100 rounded-lg shrink-0">
                         <Package className="w-6 h-6 text-orange-600" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Controle de Estoque</h1>
-                        <p className="text-gray-500">Gerenciamento de itens e insumos.</p>
+                        <h1 className="text-2xl sm:text-[30px] font-bold text-gray-800 tracking-tight leading-none">Controle de Estoque</h1>
+                        <p className="text-sm text-gray-500 mt-1">Gerenciamento de itens e insumos.</p>
                     </div>
                 </div>
 
                 <button
                     onClick={handleAddItem}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
                 >
                     <Plus className="w-4 h-4" />
                     NOVO ITEM
@@ -246,84 +242,88 @@ export function Estoque() {
             {/* Table or Placeholder */}
             {filteredItems.length > 0 ? (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estoque</th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unitário</th>
-                                <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filteredItems.map((item) => (
-                                <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="py-4 px-6">
-                                        <input
-                                            type="text"
-                                            value={item.name}
-                                            onChange={(e) => handleUpdateItem(item.id, 'name', e.target.value)}
-                                            className="font-medium text-gray-900 bg-transparent border-none focus:ring-0 p-0 w-full"
-                                        />
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <div className="flex items-center gap-3">
-                                            <button
-                                                onClick={() => handleQuantityChange(item.id, -1)}
-                                                className="p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
-                                            >
-                                                <Minus className="w-4 h-4" />
-                                            </button>
-                                            <span className="w-8 text-center font-medium text-gray-900">{item.quantity}</span>
-                                            <button
-                                                onClick={() => handleQuantityChange(item.id, 1)}
-                                                className="p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <input
-                                            type="text"
-                                            value={item.brand}
-                                            onChange={(e) => handleUpdateItem(item.id, 'brand', e.target.value)}
-                                            placeholder="Marca..."
-                                            className="text-sm text-gray-600 bg-gray-50 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-md px-3 py-1.5 w-full transition-all"
-                                        />
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
-                                            <input
-                                                type="number"
-                                                value={item.unit_price}
-                                                onChange={(e) => handleUpdateItem(item.id, 'unit_price', parseFloat(e.target.value))}
-                                                placeholder="0,00"
-                                                className="text-sm text-gray-600 bg-gray-50 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-md pl-9 pr-3 py-1.5 w-32 transition-all"
-                                            />
-                                        </div>
-                                    </td>
-                                    <td className="py-4 px-6 text-right">
-                                        <button
-                                            onClick={() => handleRemoveItem(item.id)}
-                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleBuyItem(item)}
-                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                            title="Comprar"
-                                        >
-                                            <ShoppingCart className="w-4 h-4" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <div className="min-w-[800px]">
+                            <table className="w-full">
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estoque</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unitário</th>
+                                        <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {filteredItems.map((item) => (
+                                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="py-4 px-6">
+                                                <input
+                                                    type="text"
+                                                    value={item.name}
+                                                    onChange={(e) => handleUpdateItem(item.id, 'name', e.target.value)}
+                                                    className="font-medium text-gray-900 bg-transparent border-none focus:ring-0 p-0 w-full"
+                                                />
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center gap-3">
+                                                    <button
+                                                        onClick={() => handleQuantityChange(item.id, -1)}
+                                                        className="p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
+                                                    >
+                                                        <Minus className="w-4 h-4" />
+                                                    </button>
+                                                    <span className="w-8 text-center font-medium text-gray-900">{item.quantity}</span>
+                                                    <button
+                                                        onClick={() => handleQuantityChange(item.id, 1)}
+                                                        className="p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <input
+                                                    type="text"
+                                                    value={item.brand}
+                                                    onChange={(e) => handleUpdateItem(item.id, 'brand', e.target.value)}
+                                                    placeholder="Marca..."
+                                                    className="text-sm text-gray-600 bg-gray-50 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-md px-3 py-1.5 w-full transition-all"
+                                                />
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                                                    <input
+                                                        type="number"
+                                                        value={item.unit_price}
+                                                        onChange={(e) => handleUpdateItem(item.id, 'unit_price', parseFloat(e.target.value))}
+                                                        placeholder="0,00"
+                                                        className="text-sm text-gray-600 bg-gray-50 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-md pl-9 pr-3 py-1.5 w-32 transition-all"
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6 text-right">
+                                                <button
+                                                    onClick={() => handleRemoveItem(item.id)}
+                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleBuyItem(item)}
+                                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                    title="Comprar"
+                                                >
+                                                    <ShoppingCart className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

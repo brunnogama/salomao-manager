@@ -186,13 +186,13 @@ export default function FichaCadastral() {
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[80vh]">
 
                 {/* Sidebar */}
-                <div className="w-full md:w-64 bg-gray-50 border-r border-gray-100 flex flex-col p-6">
-                    <div className="mb-8">
+                <div className="w-full md:w-64 bg-gray-50 md:border-r border-b md:border-b-0 border-gray-100 flex flex-col p-4 md:p-6 shrink-0">
+                    <div className="mb-4 md:mb-8">
                         <h1 className="text-xl font-black text-[#0a192f] tracking-tight">Ficha Cadastral</h1>
                         <p className="text-xs text-gray-500 mt-1">Preencha seus dados completos</p>
                     </div>
 
-                    <div className="space-y-2 flex-1">
+                    <div className="flex flex-row md:flex-col gap-2 flex-1 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
                         {steps.map(step => {
                             const Icon = step.icon
                             const isActive = activeTab === step.id
@@ -201,19 +201,19 @@ export default function FichaCadastral() {
                                 <button
                                     key={step.id}
                                     onClick={() => setActiveTab(step.id)}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${isActive
+                                    className={`shrink-0 md:w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${isActive
                                         ? 'bg-[#1e3a8a] text-white shadow-md'
                                         : 'text-gray-500 hover:bg-white hover:shadow-sm'
                                         }`}
                                 >
                                     <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
-                                    <span className="text-xs font-bold uppercase tracking-wider">{step.label}</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider whitespace-nowrap">{step.label}</span>
                                 </button>
                             )
                         })}
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-gray-200">
+                    <div className="hidden md:block mt-8 pt-6 border-t border-gray-200">
                         <div className="flex items-center gap-2 text-gray-400">
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                             <span className="text-[10px] font-black uppercase tracking-widest">Sistema Online</span>
@@ -222,8 +222,8 @@ export default function FichaCadastral() {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 flex flex-col bg-white">
-                    <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 flex flex-col bg-white overflow-hidden">
+                    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto custom-scrollbar">
                         {error && (
                             <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3">
                                 <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
@@ -321,7 +321,7 @@ export default function FichaCadastral() {
                                                         };
                                                         input.click();
                                                     }}
-                                                    className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#112240] transition-all disabled:opacity-50"
+                                                    className="w-full sm:w-auto px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#112240] transition-all disabled:opacity-50"
                                                 >
                                                     Anexar
                                                 </button>
@@ -354,11 +354,11 @@ export default function FichaCadastral() {
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <div className="p-4 sm:p-6 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <button
                             onClick={() => setActiveTab(prev => Math.max(1, prev - 1))}
                             disabled={activeTab === 1}
-                            className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-[#1e3a8a] disabled:opacity-30 disabled:hover:text-gray-500 transition-colors"
+                            className="w-full sm:w-auto px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-[#1e3a8a] disabled:opacity-30 disabled:hover:text-gray-500 transition-colors"
                         >
                             Voltar
                         </button>
@@ -366,7 +366,7 @@ export default function FichaCadastral() {
                         {activeTab < 4 ? (
                             <button
                                 onClick={() => setActiveTab(prev => Math.min(4, prev + 1))}
-                                className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-lg shadow-blue-900/10"
+                                className="w-full sm:w-auto px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#112240] transition-colors shadow-lg shadow-blue-900/10"
                             >
                                 Próximo
                             </button>
@@ -374,7 +374,7 @@ export default function FichaCadastral() {
                             <button
                                 onClick={handleSubmit}
                                 disabled={loading}
-                                className="px-8 py-2.5 bg-green-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-green-700 transition-colors shadow-lg shadow-green-900/10 flex items-center gap-2"
+                                className="w-full sm:w-auto px-8 py-2.5 bg-green-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-green-700 transition-colors shadow-lg shadow-green-900/10 flex items-center justify-center gap-2"
                             >
                                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 Finalizar Cadastro

@@ -214,26 +214,26 @@ export function IncompleteClients({
   )
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 space-y-6">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 space-y-4 sm:space-y-6">
 
       {/* PAGE HEADER */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-            <AlertTriangle className="h-7 w-7 text-white" />
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+            <AlertTriangle className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
               Incompletos
             </h1>
-            <p className="text-sm font-semibold text-gray-500 mt-0.5">
+            <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
               <span className="text-red-600 font-black">{processedContacts.length}</span> {processedContacts.length === 1 ? 'contato pendente' : 'contatos pendentes'}
             </p>
           </div>
         </div>
 
         {/* User Actions - Moved from toolbar */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto mt-2 sm:mt-0">
           <button
             onClick={handleExport}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg hover:bg-emerald-700 active:scale-95"
@@ -246,31 +246,33 @@ export function IncompleteClients({
 
       {/* TOOLBAR & FILTERS */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
 
-          <div className="flex-1 min-w-[300px] relative">
+          <div className="flex-1 w-full sm:w-auto relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por nome, cliente ou e-mail..."
+              placeholder="Buscar..."
               className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white transition-all font-medium"
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             {/* Sócio Filter */}
-            <FilterSelect
-              icon={Users}
-              value={filterSocio}
-              onChange={setFilterSocio}
-              options={[
-                { label: 'Todos os Sócios', value: '' },
-                ...availableSocios.map(s => ({ label: s, value: s }))
-              ]}
-              placeholder="Sócios"
-            />
+            <div className="flex-1 sm:flex-none">
+              <FilterSelect
+                icon={Users}
+                value={filterSocio}
+                onChange={setFilterSocio}
+                options={[
+                  { label: 'Todos os Sócios', value: '' },
+                  ...availableSocios.map(s => ({ label: s, value: s }))
+                ]}
+                placeholder="Sócios"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -278,7 +280,7 @@ export function IncompleteClients({
       {/* TABLE - Focus on Contacts */}
       <div className="flex-1 overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col">
         <div className="overflow-x-auto overflow-y-auto custom-scrollbar flex-1 text-[#0a192f]">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead className="sticky top-0 z-10">
               <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white">
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em]">Cliente</th>
