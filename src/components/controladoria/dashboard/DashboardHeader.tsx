@@ -49,7 +49,7 @@ export function DashboardHeader({
 
         {/* Título e Subtítulo */}
         {!hideTitle && (
-          <div>
+          <div className="flex flex-col">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#112240] to-[#1e3a8a] text-white shadow-lg">
                 <LayoutDashboard className="w-6 h-6" />
