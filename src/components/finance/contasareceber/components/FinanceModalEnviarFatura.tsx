@@ -368,7 +368,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               onChange={handleFileChange}
               className="hidden"
               multiple
-              accept=".pdf"
+              accept="application/pdf,.pdf"
             />
           </div>
 
