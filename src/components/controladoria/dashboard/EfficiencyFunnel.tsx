@@ -27,7 +27,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
 
       {/* Funil visualmente conectado */}
       <div className='relative pt-8 pb-32'>
-        <div className='hidden md:block absolute top-[110px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-indigo-200 via-blue-200 to-green-200 z-0 -translate-y-1/2'></div>
+        <div className='hidden md:block absolute top-[92px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-indigo-200 via-blue-200 to-green-200 z-0 -translate-y-1/2'></div>
 
         <div className='grid grid-cols-1 md:grid-cols-5 gap-4 items-center relative z-10'>
 
@@ -44,6 +44,12 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
                 {funil.totalEntrada}
               </p>
             </div>
+
+            {/* Linhas conectando Prospects direto para Rejeitadas (Desktop) */}
+            <div className='hidden md:block absolute w-[2px] h-[52px] bg-gradient-to-b from-indigo-200 to-red-200 left-1/2 top-[120px] z-0'></div>
+            <div className='hidden md:block absolute h-[2px] w-[calc(150%+32px)] bg-red-200 left-1/2 top-[172px] z-0'></div>
+            <div className='hidden md:block absolute border-y-[4px] border-y-transparent border-l-[6px] border-l-red-200 left-[calc(200%+32px)] top-[169px] z-0'></div>
+
             {/* Seta Móvel */}
             <div className='md:hidden text-indigo-300 my-2'>
               <ArrowRight className='w-6 h-6 rotate-90' />
@@ -78,10 +84,6 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
 
           {/* Etapa 2 - Propostas + Rejeitadas  */}
           <div className='md:col-span-1 flex flex-col items-center relative w-full h-[120px]'>
-
-            {/* Linha que desce de Prospects para Rejeitadas (Visível apenas Desktop) */}
-            <div className='hidden md:block absolute w-[2px] h-[60px] bg-gradient-to-b from-indigo-200 to-red-200 right-[calc(100%+14px)] top-[60px] z-0'></div>
-            <div className='hidden md:block absolute h-[2px] w-[calc(50%+14px)] bg-red-200 right-[50%] top-[120px] z-0'></div>
 
             {/* Propostas */}
             <div className='bg-white w-full h-full p-5 rounded-2xl border border-gray-200 border-x-4 border-x-blue-600 shadow-sm flex flex-col items-center justify-center group-hover:shadow-md transition-all relative z-10'>
