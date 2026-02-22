@@ -237,7 +237,7 @@ export default function Login() {
                 <div className="w-2 h-2 rounded-full bg-blue-400"></div>
               </div>
               <div>
-                <strong className="block text-sm font-bold text-white tracking-wide mb-1">Brindes</strong>
+                <strong className="block text-sm font-bold text-white tracking-wide mb-1">Clientes</strong>
                 <span className="text-[11px] text-gray-500 font-medium leading-tight block">Gestão de Clientes</span>
               </div>
             </div>
