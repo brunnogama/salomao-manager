@@ -8,6 +8,8 @@ import ResetPassword from './ResetPassword';
 import { UnderConstruction } from './components/UnderConstruction';
 import FichaCadastral from './pages/FichaCadastral';
 import { Presentation } from './pages/presentation/Presentation';
+import { BackupService } from './lib/BackupService';
+import { useEffect } from 'react';
 
 // CRM Components
 import { Dashboard as CrmDashboard } from './components/crm/Dashboard';
@@ -34,7 +36,6 @@ import { RHGED } from './components/collaborators/pages/RHGED';
 
 // Financeiro Components
 import { FinanceDashboard } from './components/finance/pages/FinanceDashboard';
-import { Calendario as CalendarioFinanceiro } from './components/finance/pages/Calendario';
 import { FinanceContasPagar } from './components/finance/pages/FinanceContasPagar';
 import { FinanceContasReceber } from './components/finance/contasareceber/pages/FinanceContasReceber';
 import { ListaOAB } from './components/finance/pages/ListaOAB';
@@ -104,8 +105,20 @@ const WithProps = ({ Component, extraProps = {} }: { Component: any, extraProps?
 
 export function AppRoutes() {
     const navigate = useNavigate();
+    const { session } = useAuth();
     // State for CRM Filters (passing down to Clients from Dashboard)
     const [clientFilters, setClientFilters] = useState<{ socio?: string; brinde?: string }>({});
+
+    useEffect(() => {
+        if (session?.user?.email) {
+            const email = session.user.email.toLowerCase();
+            const ADMIN_EMAILS = ['marcio.gama@salomaoadv.com.br']; // Extendable list or fetch role
+
+            if (ADMIN_EMAILS.includes(email)) {
+                BackupService.checkAndRunAutomaticBackup();
+            }
+        }
+    }, [session]);
 
     // Mapeamento de chaves de módulo para rotas
     const moduleRoutes: Record<string, string> = {

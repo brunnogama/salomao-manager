@@ -17,6 +17,7 @@ import { MaintenanceSection } from './settings/MaintenanceSection'
 import { RHSection } from './settings/RHSection'
 import { SystemSection } from './settings/SystemSection'
 import { ControladoriaSection } from './settings/ControladoriaSection'
+import { BackupSection } from './settings/BackupSection'
 import { SYSTEM_VERSION } from '../config/version'
 
 // --- INTERFACES & CONSTANTS ---
@@ -68,7 +69,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   // --- STATES ---
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
-  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'family' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria'>('menu')
+  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'family' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup'>('menu')
 
   const [users, setUsers] = useState<AppUser[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
@@ -366,6 +367,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
     { id: 'family', label: 'Família', icon: Heart },
     { id: 'financial', label: 'Financeiro', icon: DollarSign },
     { id: 'historico', label: 'Histórico', icon: HistoryIcon },
+    { id: 'backup', label: 'Backup', icon: Database, adminOnly: true },
     { id: 'sistema', label: 'Changelog', icon: Code, adminOnly: true },
     { id: 'about', label: 'Sobre', icon: Info },
   ];
@@ -566,6 +568,10 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
 
           {activeModule === 'sistema' && (
             <SystemSection changelog={CHANGELOG} isAdmin={isAdmin} onSystemReset={() => openResetModal('clientes', 'SISTEMA', 'Reset Total', 'Remove TODOS os dados do sistema (clientes, histórico, etc.)')} />
+          )}
+
+          {activeModule === 'backup' && (
+            <BackupSection isAdmin={isAdmin} />
           )}
 
           {activeModule === 'historico' && <div className="bg-white rounded-xl shadow-sm border p-6"><History /></div>}
