@@ -78,6 +78,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [terminationInitiatives, setTerminationInitiatives] = useState<{ id: string; name: string }[]>([])
   const [terminationTypes, setTerminationTypes] = useState<{ id: string; name: string }[]>([])
   const [terminationReasons, setTerminationReasons] = useState<{ id: string; name: string }[]>([])
+  const [costCenters, setCostCenters] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
@@ -245,7 +246,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const fetchColaboradores = async () => {
     setLoading(true)
     try {
-      const [colabRes, rolesRes, locsRes, teamsRes, rateiosRes, hiringReasonsRes, termInitiativesRes, termTypesRes, termReasonsRes] = await Promise.all([
+      const [
+        colabRes,
+        rolesRes,
+        locsRes,
+        teamsRes,
+        rateiosRes,
+        hiringReasonsRes,
+        termInitiativesRes,
+        termTypesRes,
+        termReasonsRes,
+        costCentersRes
+      ] = await Promise.all([
         supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name)`).order('name'),
         supabase.from('roles').select('id, name'),
         supabase.from('locations').select('id, name'),
@@ -254,7 +266,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
         supabase.from('hiring_reasons').select('id, name'),
         supabase.from('termination_initiatives').select('id, name'),
         supabase.from('termination_types').select('id, name'),
-        supabase.from('termination_reasons').select('id, name')
+        supabase.from('termination_reasons').select('id, name'),
+        supabase.from('cost_centers').select('id, name')
       ])
 
       if (colabRes.error) throw colabRes.error
@@ -269,6 +282,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (termInitiativesRes.data) setTerminationInitiatives(termInitiativesRes.data)
       if (termTypesRes.data) setTerminationTypes(termTypesRes.data)
       if (termReasonsRes.data) setTerminationReasons(termReasonsRes.data)
+      if (costCentersRes.data) setCostCenters(costCentersRes.data)
 
       const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
       const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
@@ -436,8 +450,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
           locations,
           teams,
           photo_url,
+          foto_url,
           ...cleanData
         } = dataToSave;
+
+        // Clean up empty strings to avoid DB issues (set to null)
+        Object.keys(cleanData).forEach(key => {
+          if ((cleanData as any)[key] === '') (cleanData as any)[key] = null;
+        });
 
         const { error } = await supabase.from('collaborators').update({
           ...cleanData, foto_url: photoUrl
@@ -453,8 +473,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
           locations,
           teams,
           photo_url,
+          foto_url,
           ...cleanData
         } = dataToSave;
+
+        // Clean up empty strings to avoid DB issues (set to null)
+        Object.keys(cleanData).forEach(key => {
+          if ((cleanData as any)[key] === '') (cleanData as any)[key] = null;
+        });
 
         const { data, error } = await supabase.from('collaborators').insert({
           ...cleanData, foto_url: photoUrl
@@ -658,7 +684,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 <DetailRow label="Identidade (RG)" value={data.rg} />
                 <DetailRow label="Nascimento" value={formatDateToDisplay(data.birthday)} icon={Calendar} />
                 <DetailRow label="Gênero" value={data.gender} />
+                <DetailRow label="E-mail" value={data.email} />
                 <DetailRow label="Est. Civil" value={data.civil_status} />
+                <DetailRow label="Filhos" value={data.has_children ? 'Sim' : 'Não'} />
+                {data.has_children && <DetailRow label="Quantidade" value={data.children_count} />}
               </div>
             </div>
 
@@ -668,7 +697,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 <DetailRow label="CEP" value={data.zip_code} />
                 <DetailRow label="Estado" value={data.state} />
               </div>
-              <DetailRow label="Logradouro" value={`${data.address || ''}, ${data.address_number || ''}`} />
+              <DetailRow label="Logradouro" value={`${data.address || ''}${data.address_number ? `, ${data.address_number}` : ''}` || '-'} />
               <DetailRow label="Complemento" value={data.address_complement} />
               <div className="grid grid-cols-2 gap-4">
                 <DetailRow label="Bairro" value={data.neighborhood} />
@@ -729,6 +758,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   <DetailRow label="Estado OAB" value={data.oab_uf} />
                   {/* Renamed Label to Emissão OAB */}
                   <DetailRow label="Emissão OAB" value={formatDateToDisplay(data.oab_emissao)} icon={Calendar} />
+                  {data.gender === 'Masculino' && <DetailRow label="Dispensa Militar" value={data.dispensa_militar} />}
                 </div>
                 {data.oab_tipo && <DetailRow label="Tipo de Inscrição" value={data.oab_tipo} />}
               </div>
@@ -844,9 +874,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
             {/* RATEIO & STATUS */}
             <div>
               <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-4">Rateio & Status</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <DetailRow label="Rateio" value={getLookupName(rateios, data.rateio_id)} />
                 <DetailRow label="Status" value={data.status === 'active' ? 'Ativo' : 'Inativo'} />
+                <DetailRow label="Área" value={data.area} />
               </div>
             </div>
 
@@ -864,7 +895,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                 <DetailRow label="Equipe/Área" value={(data as any).teams?.name || getLookupName(teams, data.equipe)} />
                 <DetailRow label="Cargo" value={(data as any).roles?.name || getLookupName(roles, data.role)} />
-                <DetailRow label="Centro de Custo" value={data.centro_custo} />
+                <DetailRow label="Centro de Custo" value={getLookupName(costCenters, data.centro_custo)} />
 
                 <DetailRow label="Local" value={(data as any).locations?.name || getLookupName(locations, data.local)} icon={Building2} />
               </div>
