@@ -617,12 +617,19 @@ export function Finance() {
                           {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </td>
                         <td className="p-4 text-right">
-                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex justify-end gap-1 opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                             <button onClick={(e) => { e.stopPropagation(); handleEditDueDate(item); }} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-all" title="Alterar Vencimento"><CalendarDays className="w-4 h-4" /></button>
                             <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-all" title="Baixar Contrato"><FileDown className="w-4 h-4" /></button>
-                            <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-lg hover:bg-emerald-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
-                              <DollarSign className="w-3 h-3 mr-1" /> Faturar
-                            </button>
+
+                            {item.status === 'pending' ? (
+                              <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-lg hover:bg-emerald-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
+                                <DollarSign className="w-3 h-3 mr-1" /> Faturar
+                              </button>
+                            ) : (
+                              <div className="ml-2 bg-emerald-50/50 text-emerald-600 border border-emerald-100 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center">
+                                <CheckCircle2 className="w-3 h-3 mr-1" /> Faturado
+                              </div>
+                            )}
                           </div>
 
                         </td>
