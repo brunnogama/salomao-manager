@@ -244,35 +244,42 @@ export function Compliance() {
     const warningThreshold = new Date(today);
     warningThreshold.setDate(today.getDate() + 5);
 
-    const dataByLocation = certificates.reduce((acc, c) => {
-      if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return acc;
-
-      const dDate = parseLocalDate(c.due_date);
-      const loc = c.location || 'Não Informado';
-      if (!acc[loc]) acc[loc] = { valid: 0, expiring: 0, expired: 0 };
-
-      if (!c.due_date) {
-        acc[loc].valid += 1;
-      } else if (dDate && dDate < today) {
-        acc[loc].expired += 1;
-      } else if (dDate && dDate <= warningThreshold) {
-        acc[loc].expiring += 1;
-      } else {
-        acc[loc].valid += 1;
-      }
+    // Inicializa com todos os locais da lista para garantir que apareçam mesmo sem certidões
+    const dataByLocation = locationsList.reduce((acc, loc) => {
+      acc[loc.name] = { valid: 0, expiring: 0, expired: 0 };
       return acc;
     }, {} as Record<string, { valid: number, expiring: number, expired: number }>);
 
-    return (Object.entries(dataByLocation) as [string, any][]).map(([name, counts]) => ({
-      name,
-      data: [
-        { name: 'Em Dia', value: counts.valid, color: '#1e3a8a' },
-        { name: '3 Dias Úteis', value: counts.expiring, color: '#facc15' },
-        { name: 'Vencida', value: counts.expired, color: '#ef4444' }
-      ],
-      total: counts.valid + counts.expiring + counts.expired
-    }));
-  }, [certificates]);
+    certificates.forEach(c => {
+      if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return;
+
+      const dDate = parseLocalDate(c.due_date);
+      const loc = c.location || 'Não Informado';
+      if (!dataByLocation[loc]) dataByLocation[loc] = { valid: 0, expiring: 0, expired: 0 };
+
+      if (!c.due_date) {
+        dataByLocation[loc].valid += 1;
+      } else if (dDate && dDate < today) {
+        dataByLocation[loc].expired += 1;
+      } else if (dDate && dDate <= warningThreshold) {
+        dataByLocation[loc].expiring += 1;
+      } else {
+        dataByLocation[loc].valid += 1;
+      }
+    });
+
+    return Object.entries(dataByLocation)
+      .map(([name, counts]) => ({
+        name,
+        data: [
+          { name: 'Em Dia', value: counts.valid, color: '#1e3a8a' },
+          { name: '3 Dias Úteis', value: counts.expiring, color: '#facc15' },
+          { name: 'Vencida', value: counts.expired, color: '#ef4444' }
+        ],
+        total: counts.valid + counts.expiring + counts.expired
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [certificates, locationsList]);
 
   // Resolve os nomes reais, misturando as chaves do dicionário com dados antigos
 
@@ -715,10 +722,10 @@ export function Compliance() {
                                 {c.cnpj || '-'}
                               </td>
                               <td className={`px-6 py-4 font-bold text-xs ${c.due_date && parseLocalDate(c.due_date)! <= new Date()
+                                ? 'text-red-600'
+                                : (c.due_date && parseLocalDate(c.due_date)! <= new Date(new Date().setHours(0, 0, 0, 0) + 5 * 24 * 60 * 60 * 1000))
                                   ? 'text-red-600'
-                                  : (c.due_date && parseLocalDate(c.due_date)! <= new Date(new Date().setHours(0, 0, 0, 0) + 5 * 24 * 60 * 60 * 1000))
-                                    ? 'text-red-600'
-                                    : 'text-gray-600'
+                                  : 'text-gray-600'
                                 }`}>
                                 {formatDate(c.due_date)}
                               </td>
