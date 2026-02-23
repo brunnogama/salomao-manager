@@ -543,6 +543,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     });
 
     const dataToExport = sortedData.map(c => ({
+      'ID': c.id,
       // 1. DADOS PESSOAIS
       'Nome Completo': c.name,
       'CPF': c.cpf,
