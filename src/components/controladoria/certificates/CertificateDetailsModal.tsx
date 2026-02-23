@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, FileText, Database, Calendar, Building2, MapPin, Info, Paperclip, Download, ExternalLink, ShieldCheck, Trash2 } from 'lucide-react';
+import { FileText, Database, Calendar, Building2, MapPin, Info, Edit, Download, ExternalLink, ShieldCheck, Trash2, Paperclip } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 
@@ -9,6 +9,7 @@ interface CertificateDetailsModalProps {
     certificate: any | null;
     nameDict: Record<string, string>;
     agencyDict: Record<string, string>;
+    onEdit?: (cert: any) => void;
 }
 
 export function CertificateDetailsModal({
@@ -16,7 +17,8 @@ export function CertificateDetailsModal({
     onClose,
     certificate,
     nameDict,
-    agencyDict
+    agencyDict,
+    onEdit
 }: CertificateDetailsModalProps) {
     const [activeTab, setActiveTab] = useState<'info' | 'ged'>('info');
     const [relatedFiles, setRelatedFiles] = useState<any[]>([]);
@@ -27,6 +29,15 @@ export function CertificateDetailsModal({
             fetchRelatedFiles();
         }
     }, [isOpen, certificate]);
+
+    // Handle ESC key
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        if (isOpen) window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
 
     const fetchRelatedFiles = async () => {
         if (!certificate) return;
@@ -121,7 +132,7 @@ export function CertificateDetailsModal({
         }
     };
 
-    const statusExpired = isExpired(certificate.due_date);
+    const statusExpired = isExpired(certificate.due_date) && getCertName(certificate) !== 'Comprovante de Inscrição e de Situação Cadastral';
 
     return (
         <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -177,9 +188,7 @@ export function CertificateDetailsModal({
                     </div>
 
                     <div className="mt-auto pt-6 border-t border-gray-100">
-                        <button onClick={onClose} className="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-red-500 hover:bg-red-50 p-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest">
-                            <X className="w-4 h-4" /> Fechar
-                        </button>
+                        {/* Botão de fechar removido conforme solicitação */}
                     </div>
                 </div>
 
@@ -257,6 +266,11 @@ export function CertificateDetailsModal({
                                                 <p className="text-sm font-black">
                                                     {formatDate(certificate.due_date)}
                                                 </p>
+                                                {getCertName(certificate) === 'Comprovante de Inscrição e de Situação Cadastral' && (
+                                                    <p className="text-[8px] font-black text-green-600 mt-1 uppercase tracking-tighter">
+                                                        Isento de Vencimento
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -294,7 +308,7 @@ export function CertificateDetailsModal({
                                 ) : relatedFiles.length > 0 ? (
                                     <div className="space-y-3">
                                         {relatedFiles.map((file, index) => {
-                                            const fileExpired = isExpired(file.due_date);
+                                            const fileExpired = isExpired(file.due_date) && getCertName(file) !== 'Comprovante de Inscrição e de Situação Cadastral';
                                             const isCurrentRevision = index === 0 && !fileExpired;
 
                                             return (
@@ -379,7 +393,15 @@ export function CertificateDetailsModal({
                     </div>
 
                     {/* Footer */}
-                    <div className="px-10 py-6 border-t border-gray-100 bg-white/80 backdrop-blur-sm flex justify-end shrink-0">
+                    <div className="px-10 py-6 border-t border-gray-100 bg-white/80 backdrop-blur-sm flex justify-end gap-3 shrink-0">
+                        {onEdit && (
+                            <button
+                                onClick={() => onEdit(certificate)}
+                                className="px-6 py-3.5 bg-amber-50 text-amber-600 border border-amber-200 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm hover:bg-amber-100 transition-all active:scale-95 flex items-center gap-2"
+                            >
+                                <Edit className="w-4 h-4" /> Editar
+                            </button>
+                        )}
                         <button
                             onClick={onClose}
                             className="px-10 py-3.5 bg-white border border-gray-200 text-gray-500 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95"

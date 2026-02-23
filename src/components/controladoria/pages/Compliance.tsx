@@ -165,6 +165,8 @@ export function Compliance() {
       : certificates.filter(c => c.location === activeTab);
 
     const active = relevantCertificates.filter(c => {
+      // Exceção: Comprovante de Inscrição e de Situação Cadastral nunca é contado como vencido/alerta
+      if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return true;
       if (!c.due_date) return true;
       const dDate = parseLocalDate(c.due_date);
       return dDate && dDate >= today;
@@ -177,12 +179,16 @@ export function Compliance() {
     });
 
     const expiringSoon = active.filter(c => {
+      // Exceção: Comprovante de Inscrição e de Situação Cadastral
+      if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return false;
       if (!c.due_date) return false;
       const dDate = parseLocalDate(c.due_date);
       return dDate && dDate <= warningThreshold;
     });
 
     const expiringMonth = active.filter(c => {
+      // Exceção: Comprovante de Inscrição e de Situação Cadastral
+      if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return false;
       if (!c.due_date) return false;
       const dDate = parseLocalDate(c.due_date);
       const thirtyDaysOut = new Date(today);
@@ -213,6 +219,8 @@ export function Compliance() {
 
     return certificates.reduce((acc, c) => {
       if (!c.due_date || !c.location) return acc;
+      // Exceção: Comprovante de Inscrição e de Situação Cadastral
+      if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return acc;
       const dDate = parseLocalDate(c.due_date);
       // Inclui vencidas (dDate < today) OU a vencer em 10 dias (dDate <= warningThreshold)
       if (dDate && dDate <= warningThreshold) {
@@ -233,7 +241,7 @@ export function Compliance() {
       const loc = c.location || 'Não Informado';
       if (!acc[loc]) acc[loc] = { valid: 0, expiring: 0, expired: 0 };
 
-      if (!c.due_date) {
+      if (!c.due_date || getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') {
         acc[loc].valid += 1;
       } else if (dDate && dDate < today) {
         acc[loc].expired += 1;
@@ -839,21 +847,30 @@ export function Compliance() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => handleView(c)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleView(c);
+                                  }}
                                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
                                   title="Visualizar Detalhes"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleEdit(c)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(c);
+                                  }}
                                   className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
                                   title="Editar"
                                 >
                                   <Edit className="w-4 h-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(c.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(c.id);
+                                  }}
                                   className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
                                   title="Excluir"
                                 >
@@ -893,6 +910,10 @@ export function Compliance() {
         certificate={viewingCertificate}
         nameDict={nameDict}
         agencyDict={agencyDict}
+        onEdit={(cert) => {
+          setIsViewModalOpen(false);
+          handleEdit(cert);
+        }}
       />
     </div>
   );
