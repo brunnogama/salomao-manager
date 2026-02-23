@@ -99,6 +99,8 @@ export function Compliance() {
     setLoading(false);
   };
 
+  const locationNames = useMemo(() => locationsList.map(l => l.name), [locationsList]);
+
   const parseLocalDate = (dateStr: string) => {
     if (!dateStr) return null;
     // Tenta ISO YYYY-MM-DD
@@ -838,7 +840,7 @@ export function Compliance() {
           setEditingCertificate(null);
         }}
         onSave={handleSaveCertificate}
-        locationsList={locationsList.map(l => l.name)}
+        locationsList={locationNames}
         initialData={editingCertificate || undefined}
       />
 

@@ -58,7 +58,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                 observations: '',
             });
         }
-    }, [initialData, isOpen, locationsList]);
+    }, [initialData]);
 
     // Handle ESC key
     useEffect(() => {
