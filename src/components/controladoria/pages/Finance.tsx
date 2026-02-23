@@ -570,11 +570,12 @@ export function Finance() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
                       <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Data</th>
-                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Categoria</th>
-                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Detalhamento</th>
-                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Origem</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Cliente</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">HON</th>
+                      <th className="p-4 text-[10px] font-black text-white uppercase tracking-widest">Tipo</th>
                       <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Valor</th>
                       <th className="p-4 text-right text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
                     </tr>
