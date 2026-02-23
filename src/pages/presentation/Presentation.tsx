@@ -221,22 +221,22 @@ export function Presentation({ onModuleHome }: PresentationProps) {
                             {
                                 name: "Mozilla",
                                 description: "Utiliza o Supabase para gerenciar dados de IA generativa e RAG no MDN Web Docs.",
-                                logo: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Mozilla_logo_%282017%E2%80%932024%29.svg"
+                                logo: "https://upload.wikimedia.org/wikipedia/commons/f/f3/Mozilla_logo_%282017%E2%80%932024%29.svg"
                             },
                             {
                                 name: "PwC",
                                 description: "A gigante de consultoria utiliza a plataforma para impulsionar sua estratégia de transformação digital.",
-                                logo: "https://upload.wikimedia.org/wikipedia/commons/9/91/PwC_Company_Logo.svg"
+                                logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/PricewaterhouseCoopers_Logo.svg"
                             },
                             {
                                 name: "GitHub Next",
                                 description: "O laboratório de inovação do GitHub utiliza o Supabase para desenvolver aplicações experimentais.",
-                                logo: "https://upload.wikimedia.org/wikipedia/commons/9/91/Github_logo_svg.svg"
+                                logo: "https://upload.wikimedia.org/wikipedia/commons/2/29/GitHub_logo_2013.svg"
                             },
                             {
                                 name: "McDonald's",
                                 description: "Um dos maiores clientes corporativos que adotam a plataforma para suas soluções tecnológicas.",
-                                logo: "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_SVG_logo.svg"
+                                logo: "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg"
                             },
                             {
                                 name: "NASA (via Epsilon3)",
@@ -246,8 +246,9 @@ export function Presentation({ onModuleHome }: PresentationProps) {
                             {
                                 name: "eXp Realty",
                                 description: "Uma das maiores imobiliárias do mundo utiliza o serviço para reduzir custos e inovar em escala.",
-                                logo: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Exp_realty_logo.svg"
+                                logo: "https://raw.githubusercontent.com/supabase/supabase/master/apps/www/public/images/customers/logos/exp-realty.png"
                             }
+
                         ].map((company, idx) => (
                             <div key={idx} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all group flex flex-col items-center text-center">
                                 <div className="h-12 mb-8 flex items-center justify-center">
@@ -263,11 +264,23 @@ export function Presentation({ onModuleHome }: PresentationProps) {
                         ))}
                     </div>
 
-                    <div className="mt-12 text-center">
-                        <p className="text-white/30 text-[10px] font-medium uppercase tracking-[0.2em]">
-                            Referências: <a href="https://supabase.com/customers" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] underline decoration-[#d4af37]/30">supabase.com/customers</a> • <a href="https://mdn.mozilla.org" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] underline decoration-[#d4af37]/30">MDN Web Docs</a>
+                    <div className="mt-12 text-center space-y-4">
+                        <p className="text-blue-100/40 text-xs font-bold uppercase tracking-widest">
+                            Notícias Recentes
+                        </p>
+                        <a
+                            href="https://br.investing.com/news/company-news/supabase-levanta-us-100-milhoes-em-rodada-serie-e-com-avaliacao-de-us-5-bilhoes-93CH-1697573"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block px-6 py-2 rounded-full border border-[#d4af37]/30 text-[#d4af37] text-xs font-bold hover:bg-[#d4af37]/10 transition-all"
+                        >
+                            Supabase avaliada em US$ 5 bilhões (Série E)
+                        </a>
+                        <p className="text-white/30 text-[10px] font-medium uppercase tracking-[0.2em] pt-4">
+                            Referências: <a href="https://supabase.com/customers" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] underline decoration-[#d4af37]/30">supabase.com/customers</a> • <a href="https://developer.mozilla.org" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] underline decoration-[#d4af37]/30">MDN Web Docs</a>
                         </p>
                     </div>
+
                 </section>
 
                 {/* Q&A Section */}
