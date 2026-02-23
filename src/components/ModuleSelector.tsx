@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck } from 'lucide-react'
+import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 import { supabase } from '../lib/supabase'
 
@@ -9,6 +10,7 @@ interface ModuleSelectorProps {
 }
 
 export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
+  const navigate = useNavigate()
   const [allowedModules, setAllowedModules] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -214,6 +216,14 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
               <Settings className="h-5 w-5" />
             </button>
           )}
+
+          <button
+            onClick={() => navigate('/apresentacao')}
+            className="p-2.5 text-white/50 hover:text-[#d4af37] transition-all rounded-full hover:bg-white/10 active:scale-95 group"
+            title="Apresentação do Sistema"
+          >
+            <MonitorPlay className="h-5 w-5 group-hover:scale-110 transition-transform" />
+          </button>
 
           <button
             onClick={handleLogout}

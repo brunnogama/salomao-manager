@@ -7,6 +7,7 @@ import Login from './Login';
 import ResetPassword from './ResetPassword';
 import { UnderConstruction } from './components/UnderConstruction';
 import FichaCadastral from './pages/FichaCadastral';
+import { Presentation } from './pages/presentation/Presentation';
 
 // CRM Components
 import { Dashboard as CrmDashboard } from './components/crm/Dashboard';
@@ -152,6 +153,7 @@ export function AppRoutes() {
                     }} />
                 } />
 
+                <Route path="/apresentacao" element={<WithProps Component={Presentation} />} />
                 <Route path="/configuracoes" element={<WithProps Component={Settings} />} />
 
                 {/* CRM */}
@@ -184,7 +186,7 @@ export function AppRoutes() {
                 {/* Financeiro */}
                 <Route path="/financeiro">
                     <Route path="dashboard" element={<WithProps Component={FinanceDashboard} />} />
-                    <Route path="calendario" element={<WithProps Component={CalendarioFinanceiro} />} />
+                    <Route path="calendario" element={<WithProps Component={CalendarioRH} />} />
                     <Route path="contas-pagar" element={<WithProps Component={FinanceContasPagar} />} />
                     <Route path="contas-receber" element={<WithProps Component={FinanceContasReceber} />} />
                     <Route path="oab" element={<WithProps Component={ListaOAB} />} />
