@@ -92,16 +92,33 @@ export const BackupService = {
 
         const now = new Date();
         const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
         const today = now.toISOString().split('T')[0];
         const lastBackupDate = localStorage.getItem('last_backup_date');
 
-        // Triggers if it's 19:00 or later AND no backup was done today
-        if (currentHour >= 19 && lastBackupDate !== today) {
+        // Triggers if it's 17:40 or later AND no backup was done today
+        const isAfterTime = currentHour > 17 || (currentHour === 17 && currentMinute >= 40);
+
+        if (isAfterTime && lastBackupDate !== today) {
             try {
+                const { toast } = await import('sonner');
+                toast.info('Realizando backup automático do sistema...', {
+                    description: 'Aguarde a conclusão do processo.',
+                    duration: 5000
+                });
+
                 const data = await this.runBackup();
                 await this.uploadBackupToStorage(data);
+
+                toast.success('Backup automático concluído com sucesso.', {
+                    description: 'Os dados foram salvos com segurança.'
+                });
                 console.log('✅ Backup automático concluído com sucesso.');
             } catch (error) {
+                const { toast } = await import('sonner');
+                toast.error('Erro ao realizar backup automático.', {
+                    description: 'Por favor, tente realizar o backup manual nas configurações.'
+                });
                 console.error('❌ Erro no backup automático:', error);
             }
         }
