@@ -386,7 +386,13 @@ export function Compliance() {
   };
 
   const handleCreateNew = () => {
-    setEditingCertificate(null);
+    const defaultLocation = (activeTab !== 'dashboard' && activeTab !== 'ged') ? activeTab : '';
+    const defaultCNPJ = defaultLocation ? (CNPJ_MAP[defaultLocation] || '') : '';
+
+    setEditingCertificate({
+      location: defaultLocation,
+      cnpj: defaultCNPJ
+    } as any);
     setIsModalOpen(true);
   };
 
