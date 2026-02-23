@@ -41,6 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const signOut = async () => {
         try {
             const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal');
+
+            // 1. Clear Storage
             localStorage.clear();
             sessionStorage.clear();
 
@@ -49,10 +51,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 localStorage.setItem('hasSeenWelcomeModal', hasSeenWelcome);
             }
 
+            // 2. Clear Cache Storage (Broad Cleanup)
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(key => caches.delete(key)));
+            }
+
+            // 3. Unregister Service Workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.map(reg => reg.unregister()));
+            }
+
+            // 4. Clear all cookies
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i];
+                const eqPos = cookie.indexOf("=");
+                const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
+                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+            }
+
+            // 5. Supabase SignOut
             await supabase.auth.signOut();
-            // No need to reload window with React Router, we just redirect
+
+            // 6. Force Hard Reload to clear in-memory state and ensure CSS/JS freshness
+            window.location.href = '/login';
         } catch (error) {
             console.error('❌ Error signing out:', error);
+            // Fallback reload if something fails
+            window.location.href = '/login';
         }
     };
 

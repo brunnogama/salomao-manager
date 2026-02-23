@@ -13,6 +13,7 @@ import { Collaborator, Partner, GEDDocument } from '../../../types/controladoria
 import { AlertModal } from '../../ui/AlertModal'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { useDatabaseSync } from '../../../hooks/useDatabaseSync'
 
 import { DadosPessoaisSection } from '../components/DadosPessoaisSection'
 import { EnderecoSection } from '../components/EnderecoSection'
@@ -172,6 +173,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
     fetchColaboradores()
     fetchPartners()
   }, [])
+
+  useDatabaseSync(() => {
+    fetchColaboradores()
+    fetchPartners()
+  }, ['collaborators', 'partners'])
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {

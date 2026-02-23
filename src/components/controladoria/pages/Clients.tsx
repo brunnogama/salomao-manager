@@ -19,6 +19,7 @@ import {
 import { Client } from '../../../types/controladoria';
 import { ClientFormModal } from '../clients/ClientFormModal';
 import { FilterSelect } from '../ui/FilterSelect';
+import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 
 // CAMINHO CORRIGIDO: saindo de /pages e entrando em /utils (dentro de controladoria)
 import { maskCNPJ } from '../utils/masks';
@@ -41,9 +42,12 @@ export function Clients() {
   const [partnerFilter, setPartnerFilter] = useState('');
 
   useEffect(() => {
-
     fetchData();
   }, []);
+
+  useDatabaseSync(() => {
+    fetchData();
+  }, ['clients', 'partners']);
 
 
 
@@ -188,7 +192,7 @@ export function Clients() {
               icon={User}
               value={partnerFilter}
               onChange={setPartnerFilter}
-              options={uniquePartners.map(p => ({ label: p, value: p }))}
+              options={uniquePartners.map(p => ({ label: p!, value: p! }))}
               placeholder="Todos os Sócios"
             />
           </div>

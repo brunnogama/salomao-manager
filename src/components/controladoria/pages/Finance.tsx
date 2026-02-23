@@ -13,6 +13,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { ContractDetailsModal } from '../contracts/ContractDetailsModal';
 import XLSX from 'xlsx-js-style';
 import { toast } from 'sonner';
+import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -99,9 +100,12 @@ export function Finance() {
   const [contractDocuments, setContractDocuments] = useState<ContractDocument[]>([]);
 
   useEffect(() => {
-
     fetchData();
   }, []);
+
+  useDatabaseSync(() => {
+    fetchData();
+  }, ['financial_installments', 'partners']);
 
 
 

@@ -19,6 +19,7 @@ import { ConfirmModal } from '../ui/ConfirmModal';
 import { EmptyState } from '../ui/EmptyState';
 import { parseCurrency, safeDate } from '../utils/masks';
 import { FilterSelect } from '../ui/FilterSelect';
+import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -107,18 +108,12 @@ export function Contracts() {
   useEffect(() => {
     fetchData();
     fetchNotifications();
-
-    const subscription = supabase
-      .channel('contracts_list_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'contracts' }, () => {
-        fetchData();
-      })
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
+
+  useDatabaseSync(() => {
+    fetchData();
+    fetchNotifications();
+  }, ['contracts', 'kanban_tasks']);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
