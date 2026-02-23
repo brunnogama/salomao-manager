@@ -150,6 +150,20 @@ export function Compliance() {
     return new Date(dateStr);
   };
 
+  // Resolve os nomes reais, misturando as chaves do dicionário com dados antigos
+  const getCertName = (c: any) => nameDict[c.name] || c.name || '';
+  const getAgencyName = (c: any) => agencyDict[c.agency] || c.agency || '';
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    // Se vier no formato ISO 2024-02-20, dividimos para evitar problemas de fuso horário
+    if (dateStr.includes('-')) {
+      const [year, month, day] = dateStr.split('T')[0].split('-');
+      return `${day}/${month}/${year}`;
+    }
+    return new Date(dateStr).toLocaleDateString();
+  };
+
   // --- Lógica de Dashbord ---
   const stats = useMemo(() => {
     const today = new Date();
@@ -265,18 +279,6 @@ export function Compliance() {
   }, [certificates]);
 
   // Resolve os nomes reais, misturando as chaves do dicionário com dados antigos
-  const getCertName = (c: any) => nameDict[c.name] || c.name || '';
-  const getAgencyName = (c: any) => agencyDict[c.agency] || c.agency || '';
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '-';
-    // Se vier no formato ISO 2024-02-20, dividimos para evitar problemas de fuso horário
-    if (dateStr.includes('-')) {
-      const [year, month, day] = dateStr.split('T')[0].split('-');
-      return `${day}/${month}/${year}`;
-    }
-    return new Date(dateStr).toLocaleDateString();
-  };
 
   const uniqueCertTypes = useMemo(() => {
     const types = new Set<string>();
