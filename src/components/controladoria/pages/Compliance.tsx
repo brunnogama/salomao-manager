@@ -99,7 +99,6 @@ export function Compliance() {
     setLoading(false);
   };
 
-  const locationNames = useMemo(() => locationsList.map(l => l.name), [locationsList]);
 
   const parseLocalDate = (dateStr: string) => {
     if (!dateStr) return null;
@@ -840,7 +839,7 @@ export function Compliance() {
           setEditingCertificate(null);
         }}
         onSave={handleSaveCertificate}
-        locationsList={locationNames}
+        locationsList={locationsList}
         initialData={editingCertificate || undefined}
       />
 
