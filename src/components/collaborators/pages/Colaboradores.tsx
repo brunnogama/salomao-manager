@@ -113,6 +113,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
     ...roles.map((r: Role) => ({ label: r.name, value: String(r.id) })).sort((a: any, b: any) => a.label.localeCompare(b.label))
   ], [roles])
 
+  const activeCount = React.useMemo(() =>
+    colaboradores.filter(c => c.status === 'active').length
+    , [colaboradores])
+
   // Inicializa estado vazio por padrão conforme solicitado
   const [formData, setFormData] = useState<Partial<Collaborator>>({ status: 'active', state: '' })
 
@@ -1201,6 +1205,17 @@ export function Colaboradores({ }: ColaboradoresProps) {
       {/* CONTROLS CARD - Search | Filters */}
       <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+
+          {/* Active Count Card */}
+          <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
+            <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
+              <Users className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Ativos</p>
+              <p className="text-sm font-bold text-[#1e3a8a] leading-none">{activeCount}</p>
+            </div>
+          </div>
 
           {/* Search Bar - Expanded */}
           <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
