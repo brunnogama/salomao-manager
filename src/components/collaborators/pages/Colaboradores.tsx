@@ -447,16 +447,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
       // Robust cleaning of the payload
       const payload: any = {};
       Object.entries(dataToSave).forEach(([key, value]) => {
-        // Skip metadata and joined objects/arrays
-        if (['id', 'created_at', 'updated_at', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios'].includes(key)) return;
+        // Skip metadata, joined objects/arrays, and photo fields (handled separately)
+        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios'].includes(key)) return;
         if (value !== null && typeof value === 'object') return;
 
         // Map empty strings to null for better DB consistency
         payload[key] = value === '' ? null : value;
       });
 
-      // Maintain consistency between both photo column naming conventions
-      payload.photo_url = photoUrl;
+      // Maintain consistency: use foto_url as the database column
       payload.foto_url = photoUrl;
 
       if (formData.id) {
