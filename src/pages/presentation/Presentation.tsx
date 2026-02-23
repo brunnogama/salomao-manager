@@ -9,7 +9,9 @@ import {
     Fingerprint,
     RefreshCw,
     Globe,
-    HardDrive
+    HardDrive,
+    MessagesSquare,
+    HelpCircle
 } from 'lucide-react';
 
 interface PresentationProps {
@@ -202,6 +204,71 @@ export function Presentation({ onModuleHome }: PresentationProps) {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                {/* Q&A Section */}
+                <section className="mb-24 px-4 md:px-0">
+                    <div className="flex items-center gap-4 mb-12">
+                        <div className="w-12 h-12 rounded-2xl bg-[#d4af37]/20 flex items-center justify-center">
+                            <MessagesSquare className="w-6 h-6 text-[#d4af37]" />
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-black">Perguntas Frequentes</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[
+                            {
+                                q: "Onde exatamente meus dados ficam armazenados?",
+                                a: "Os dados estão hospedados nos servidores da Amazon Web Services (AWS) na Virgínia (EUA), utilizando a infraestrutura global do Supabase. É o mesmo nível de segurança utilizado por bancos digitais."
+                            },
+                            {
+                                q: "O que garante que um funcionário não veja dados de outro módulo?",
+                                a: "Utilizamos Row Level Security (RLS). A permissão é travada no nível do banco de dados; mesmo que alguém tente acessar um link direto, o sistema bloqueia a visualização se não houver permissão explícita."
+                            },
+                            {
+                                q: "O sistema faz backup automático?",
+                                a: "Sim. Realizamos backups incrementais e snapshots completos diariamente. Em caso de qualquer falha catastrófica, conseguimos restaurar o estado do escritório em poucos minutos."
+                            },
+                            {
+                                q: "O que acontece se a internet do escritório cair?",
+                                a: "Por ser um sistema 100% em nuvem, ele pode ser acessado de qualquer lugar (casa, tribunal ou via rede móvel 4G/5G no celular), mantendo a continuidade do trabalho sem perda de dados."
+                            },
+                            {
+                                q: "Como o sistema evita o vazamento de informações?",
+                                a: "Todos os dados são criptografados em repouso (AES-256) e em trânsito (SSL/TLS). Além disso, cada ação importante deixa um rastro de auditoria: sabemos quem acessou o quê e quando."
+                            },
+                            {
+                                q: "Preciso instalar algum programa nos computadores?",
+                                a: "Não. O Manager é uma aplicação Web moderna (SaaS). Basta um navegador atualizado para ter a experiência completa em Windows, Mac, Linux ou dispositivos móveis."
+                            },
+                            {
+                                q: "O sistema aguenta o crescimento do escritório?",
+                                a: "Sim. A infraestrutura é escalável. À medida que o volume de processos e documentos aumenta, o servidor da Amazon aloca automaticamente mais recursos para manter a velocidade constante."
+                            },
+                            {
+                                q: "Como são feitas as atualizações?",
+                                a: "As atualizações são transparentes. Quando implementamos uma melhoria, ela entra no ar instantaneamente para todos, mas sem necessidade de baixar patches ou parar a operação do escritório."
+                            },
+                            {
+                                q: "Existe algum risco de perda de dados?",
+                                a: "O risco é estatisticamente irrelevante (99.999% de durabilidade). Diferente de servidores físicos locais que podem queimar ou ser roubados, na nuvem da AWS os dados são replicados em múltiplos locais."
+                            },
+                            {
+                                q: "O suporte técnico consegue acessar meus dados pessoais?",
+                                a: "Não por padrão. O acesso ao banco de dados é restrito por chaves de segurança criptográficas. Qualquer intervenção técnica segue protocolos rigorosos de privacidade e compliance."
+                            }
+                        ].map((item, i) => (
+                            <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all group">
+                                <div className="flex gap-4">
+                                    <HelpCircle className="w-5 h-5 text-[#d4af37] shrink-0 mt-1" />
+                                    <div>
+                                        <h4 className="text-lg font-bold mb-3 group-hover:text-[#d4af37] transition-colors">{item.q}</h4>
+                                        <p className="text-blue-100/60 text-sm leading-relaxed">{item.a}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </section>
 
