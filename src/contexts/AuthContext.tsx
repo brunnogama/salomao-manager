@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { logAction } from '../lib/logger';
 
 interface AuthContextType {
     session: Session | null;
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             // 5. Supabase SignOut
+            await logAction('LOGOUT', 'AUTH', 'Usuário realizou logout', 'Logout')
             await supabase.auth.signOut();
 
             // 6. Force Hard Reload to clear in-memory state and ensure CSS/JS freshness

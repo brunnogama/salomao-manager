@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from './lib/supabase'
+import { logAction } from './lib/logger'
 import { User, Lock, ArrowRight, Loader2, LayoutGrid, Eye, EyeOff, Scale } from 'lucide-react'
 import { SYSTEM_VERSION } from './config/version'
 export default function Login() {
@@ -22,6 +23,8 @@ export default function Login() {
       })
 
       if (error) throw error
+
+      await logAction('LOGIN', 'AUTH', 'Usuário realizou login', 'Login')
     } catch (err: any) {
       setError('Credenciais inválidas. Verifique usuário e senha.')
     } finally {
