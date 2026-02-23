@@ -85,7 +85,7 @@ const formatCompact = (val: number | undefined | null) => {
 // --- Custom Components ---
 const CustomDataLabel = (props: any) => {
   const { x, y, value, fill, position } = props;
-  const yOffset = position === 'bottom' ? 15 : -35
+  const yOffset = position === 'bottom' ? 20 : -40
   return (
     <g>
       <rect x={x - 15} y={y + yOffset} width={30} height={18} rx={4} fill={fill} />
@@ -119,8 +119,8 @@ const renderCustomPieLabel = (props: any) => {
   const { cx, cy, midAngle, outerRadius, value, fill, percent } = props;
   if (!cx || !cy || percent < 0.05) return null; // Hide if slice is too small
   const RADIAN = Math.PI / 180;
-  const x = cx + (outerRadius + 30) * Math.cos(-midAngle * RADIAN);
-  const y = cy + (outerRadius + 30) * Math.sin(-midAngle * RADIAN);
+  const x = cx + (outerRadius + 20) * Math.cos(-midAngle * RADIAN);
+  const y = cy + (outerRadius + 20) * Math.sin(-midAngle * RADIAN);
   return (
     <g>
       <rect x={x - 12} y={y - 9} width={24} height={18} rx={4} fill={fill} />
@@ -152,7 +152,7 @@ export function RHDashboard() {
     secondary: '#1e3a8a', // Jurídico (Dark Blue)
     grid: '#e5e7eb',
     text: '#6b7280',
-    pie: ['#1e3a8a', '#3b82f6', '#ea580c', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899', '#64748b']
+    pie: ['#1e40af', '#db2777', '#f59e0b', '#10b981', '#8b5cf6', '#3b82f6', '#ec4899', '#64748b']
   }
 
   // --- Derived Metrics ---
@@ -366,7 +366,7 @@ export function RHDashboard() {
             </div>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={headcountChartData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                <AreaChart data={headcountChartData} margin={{ top: 30, right: 20, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="hcAdmin" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.1} /><stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} /></linearGradient>
                     <linearGradient id="hcLegal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.1} /><stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} /></linearGradient>
@@ -397,7 +397,7 @@ export function RHDashboard() {
             </div>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={stabilityEvolutionData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                <AreaChart data={stabilityEvolutionData} margin={{ top: 30, right: 20, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="stAdmin" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.1} /><stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} /></linearGradient>
                     <linearGradient id="stLegal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.1} /><stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} /></linearGradient>
@@ -436,7 +436,7 @@ export function RHDashboard() {
             </div>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={distLocalAreaData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+                <BarChart data={distLocalAreaData} layout="vertical" margin={{ top: 0, right: 40, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }} width={80} />
@@ -465,13 +465,13 @@ export function RHDashboard() {
             <div className="h-64 w-full flex items-center justify-center">
               {distGenderData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart margin={{ top: 0, right: 30, left: 30, bottom: 20 }}>
                     <Pie
                       data={distGenderData}
                       cx="50%"
-                      cy="50%"
+                      cy="45%"
                       innerRadius={45}
-                      outerRadius={75}
+                      outerRadius={70}
                       paddingAngle={5}
                       dataKey="value"
                       label={renderCustomPieLabel}
@@ -505,7 +505,7 @@ export function RHDashboard() {
             <div className="h-64 w-full">
               {distTerminationData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={distTerminationData} layout="vertical" margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+                  <BarChart data={distTerminationData} layout="vertical" margin={{ top: 0, right: 40, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
                     <XAxis type="number" hide />
                     <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }} width={100} />

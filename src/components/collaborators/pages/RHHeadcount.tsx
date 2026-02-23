@@ -398,7 +398,7 @@ export function RHHeadcount() {
     tertiary: '#f59e0b',
     text: '#6b7280',
     grid: '#e5e7eb',
-    pieGender: ['#3b82f6', '#ec4899', '#9ca3af'],
+    pieGender: ['#1e40af', '#db2777', '#9ca3af'],
     pyramid: {
       male: '#1d4ed8',   // Blue 700
       maleFill: '#dbeafe', // Blue 100
@@ -554,7 +554,7 @@ export function RHHeadcount() {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={localAreaData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+              <BarChart data={localAreaData} margin={{ top: 30, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
@@ -583,7 +583,7 @@ export function RHHeadcount() {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={leaderData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+              <BarChart data={leaderData} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
                 <XAxis type="number" hide />
                 <YAxis
@@ -621,13 +621,13 @@ export function RHHeadcount() {
           </div>
           <div className="flex-1 flex items-center justify-center min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 0, right: 30, left: 30, bottom: 20 }}>
                 <Pie
                   data={genderData}
                   cx="50%"
-                  cy="50%"
+                  cy="45%"
                   innerRadius={50}
-                  outerRadius={80}
+                  outerRadius={70}
                   paddingAngle={5}
                   dataKey="value"
                   label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, payload }) => {
@@ -639,7 +639,7 @@ export function RHHeadcount() {
                     const yInside = cy + radiusInside * Math.sin(-midAngle * RADIAN);
 
                     // Posição para a média de idade (fora do gráfico)
-                    const radiusOutside = outerRadius + 25;
+                    const radiusOutside = outerRadius + 20;
                     const xOutside = cx + radiusOutside * Math.cos(-midAngle * RADIAN);
                     const yOutside = cy + radiusOutside * Math.sin(-midAngle * RADIAN);
 
