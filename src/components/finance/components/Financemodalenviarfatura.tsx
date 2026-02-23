@@ -1,11 +1,11 @@
 // src/components/finance/contasareceber/components/FinanceModalEnviarFatura.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  X, 
-  Mail, 
-  Paperclip, 
-  AlertTriangle, 
-  Send, 
+import {
+  X,
+  Mail,
+  Paperclip,
+  AlertTriangle,
+  Send,
   Loader2,
   Info,
   Plus,
@@ -70,7 +70,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       .from('finance_clientes')
       .select('*')
       .order('nome');
-    
+
     if (data) {
       setClientes(data);
     }
@@ -95,7 +95,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
     const cleaned = formatted.replace(/\D/g, '');
     if (cleaned.length === 14) {
       setSearchingCNPJ(true);
-      
+
       try {
         // CORREÇÃO: Usando maybeSingle para evitar erro 406/404 em buscas vazias
         const { data: existing } = await supabase
@@ -113,7 +113,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
           if (response.ok) {
             const empresa = await response.json();
             setNovoClienteNome(empresa.razao_social || empresa.nome_fantasia || '');
-            setNovoClienteEmail(''); 
+            setNovoClienteEmail('');
           }
         }
       } catch (error) {
@@ -148,16 +148,16 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
       if (error) throw error;
 
       await loadClientes();
-      
+
       // Sincroniza estados globais do modal com o novo cliente
       setClienteNome(data.nome);
       setClienteEmail(data.email);
-      
+
       setClienteCNPJ('');
       setNovoClienteNome('');
       setNovoClienteEmail('');
       setShowAdicionar(false);
-      
+
       alert('Cliente salvo com sucesso!');
     } catch (error: any) {
       alert('Erro ao salvar cliente: ' + error.message);
@@ -183,7 +183,10 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setArquivos(Array.from(e.target.files));
+      setArquivos(prev => [...prev, ...Array.from(e.target.files as FileList)]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -193,7 +196,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // VALIDAÇÃO: Garante que o nome não seja nulo para evitar erro 23502 no Postgres
     if (!clienteNome || clienteNome.trim() === '') {
       alert('Por favor, selecione um cliente na lista ou realize o cadastro de um novo antes de enviar.');
@@ -212,8 +215,8 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
     setLoading(true);
     try {
-      const valorLimpo = typeof valor === 'string' 
-        ? parseFloat(valor.replace(/\./g, '').replace(',', '.')) 
+      const valorLimpo = typeof valor === 'string'
+        ? parseFloat(valor.replace(/\./g, '').replace(',', '.'))
         : valor;
 
       await enviarFatura({
@@ -225,9 +228,9 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
         corpo,
         arquivos: arquivos.length > 0 ? arquivos : undefined
       });
-      
+
       alert("✅ Fatura enviada com sucesso! O acompanhamento de 2d + 2d foi iniciado.");
-      
+
       setClienteNome('');
       setClienteEmail('');
       setValor('');
@@ -248,7 +251,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   return (
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-gray-200 max-h-[90vh]">
-        
+
         <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-[#1e3a8a] rounded-lg">
@@ -267,7 +270,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
         <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Remetente (Cópia Automática)</label>
-            <input 
+            <input
               type="email"
               value={remetente}
               onChange={(e) => setRemetente(e.target.value)}
@@ -282,11 +285,10 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               <button
                 type="button"
                 onClick={() => setShowAdicionar(!showAdicionar)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-                  showAdicionar 
-                    ? 'bg-[#1e3a8a] text-white shadow-md' 
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAdicionar
+                    ? 'bg-[#1e3a8a] text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </button>
@@ -295,7 +297,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               value={clienteNome}
               onChange={handleClienteChange}
               placeholder="Pesquisar cliente..."
-              table="finance_clientes" 
+              table="finance_clientes"
               className="w-full"
             />
             {isExternalDomain(clienteEmail) && (
@@ -323,7 +325,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                     CNPJ *
                   </label>
                   <div className="relative">
-                    <input 
+                    <input
                       type="text"
                       value={clienteCNPJ}
                       onChange={(e) => handleCNPJChange(e.target.value)}
@@ -343,7 +345,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                   <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
                     Nome/Razão Social *
                   </label>
-                  <input 
+                  <input
                     type="text"
                     value={novoClienteNome}
                     onChange={(e) => setNovoClienteNome(e.target.value)}
@@ -356,7 +358,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
                   <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider ml-1">
                     E-mail *
                   </label>
-                  <input 
+                  <input
                     type="email"
                     value={novoClienteEmail}
                     onChange={(e) => setNovoClienteEmail(e.target.value)}
@@ -396,7 +398,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">E-mail Cliente</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input 
+                <input
                   type="email"
                   value={clienteEmail}
                   onChange={(e) => setClienteEmail(e.target.value)}
@@ -411,7 +413,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Valor da Fatura (R$)</label>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input 
+                <input
                   type="text"
                   value={valor}
                   onChange={(e) => setValor(e.target.value)}
@@ -425,7 +427,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Assunto</label>
-            <input 
+            <input
               type="text"
               value={assunto}
               onChange={(e) => setAssunto(e.target.value)}
@@ -437,7 +439,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Corpo do E-mail</label>
-            <textarea 
+            <textarea
               value={corpo}
               onChange={(e) => setCorpo(e.target.value)}
               rows={4}
@@ -448,7 +450,7 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
 
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1">Anexos (PDF)</label>
-            
+
             {arquivos.length > 0 && (
               <div className="space-y-2 mb-3">
                 {arquivos.map((arquivo, index) => (
@@ -474,17 +476,17 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
               </div>
             )}
 
-            <div 
+            <div
               onClick={() => fileInputRef.current?.click()}
               className="border-2 border-dashed border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center bg-gray-50 hover:bg-white hover:border-[#1e3a8a] cursor-pointer transition-all group"
             >
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
-                multiple 
-                accept=".pdf" 
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                multiple
+                accept=".pdf"
               />
               <Paperclip className="h-6 w-6 text-gray-400 group-hover:text-[#1e3a8a] mb-2" />
               <span className="text-xs font-bold text-gray-500">
