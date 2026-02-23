@@ -11,20 +11,65 @@ import {
     Globe,
     HardDrive,
     MessagesSquare,
-    HelpCircle
+    HelpCircle,
+    Download
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { toast } from 'sonner';
+
 
 interface PresentationProps {
     onModuleHome: () => void;
     userName: string;
 }
 
-export function Presentation({ onModuleHome }: PresentationProps) {
+export function Presentation({ onModuleHome, userName }: PresentationProps) {
     const [isVisible, setIsVisible] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
         setIsVisible(true);
     }, []);
+
+    const handleDownloadPDF = async () => {
+        const element = document.getElementById('presentation-content');
+        if (!element) return;
+
+        setIsDownloading(true);
+        const toastId = toast.loading('Preparando PDF...');
+
+        try {
+            // Give a small delay to ensure all animations are finished
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const canvas = await html2canvas(element, {
+                scale: 2, // Higher quality
+                useCORS: true, // Allow loading external logos
+                backgroundColor: '#0a192f',
+                logging: false,
+                windowWidth: element.scrollWidth,
+                windowHeight: element.scrollHeight
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'px',
+                format: [canvas.width / 2, canvas.height / 2]
+            });
+
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+            pdf.save(`Manager-Ecosystem-Apresentacao-${userName.replace(/\s+/g, '-')}.pdf`);
+
+            toast.success('PDF baixado com sucesso!', { id: toastId });
+        } catch (error) {
+            console.error('Erro ao gerar PDF:', error);
+            toast.error('Erro ao gerar PDF. Tente novamente.', { id: toastId });
+        } finally {
+            setIsDownloading(false);
+        }
+    };
 
     const sections = [
         {
@@ -76,296 +121,321 @@ export function Presentation({ onModuleHome }: PresentationProps) {
                     <span className="font-bold uppercase tracking-widest text-xs">Voltar</span>
                 </button>
                 <img src="/logo-salomao.png" alt="Salomão" className="h-10 brightness-0 invert" />
-                <div className="flex flex-col items-end">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-white/50">Apresentação Técnica</span>
-                    <span className="text-sm font-bold text-[#d4af37]">Manager Ecosystem</span>
+                <div className="flex items-center gap-6">
+                    <button
+                        onClick={handleDownloadPDF}
+                        disabled={isDownloading}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-xs font-bold uppercase tracking-widest disabled:opacity-50"
+                    >
+                        <Download className={`w-4 h-4 ${isDownloading ? 'animate-bounce' : ''}`} />
+                        <span>{isDownloading ? 'Gerando...' : 'PDF'}</span>
+                    </button>
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white/50">Apresentação Técnica</span>
+                        <span className="text-sm font-bold text-[#d4af37]">Manager Ecosystem</span>
+                    </div>
                 </div>
             </header>
 
-            <main className="relative z-10 max-w-6xl mx-auto px-6 py-16">
-                {/* Intro */}
-                <section className="text-center mb-20 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                    <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight">
-                        Tecnologia e <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] to-[#fcc200]">Segurança</span>
-                    </h1>
-                    <p className="text-xl text-blue-100/70 max-w-3xl mx-auto leading-relaxed">
-                        Uma visão executiva sobre a infraestrutura digital que sustenta a operação do escritório Salomão, utilizando o que há de mais moderno na nuvem da Amazon (AWS).
-                    </p>
-                </section>
+            <div id="presentation-content" className="relative">
 
-                {/* Feature Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
-                    {sections.map((section, idx) => (
-                        <div
-                            key={idx}
-                            className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 hover:border-[#d4af37]/50 transition-all duration-500 hover:-translate-y-2 group"
-                            style={{ transitionDelay: `${idx * 150}ms` }}
-                        >
-                            <div className="mb-6 transform group-hover:scale-110 transition-transform duration-500">
-                                {section.icon}
+                <main className="relative z-10 max-w-6xl mx-auto px-6 py-16">
+                    {/* Intro */}
+                    <section className="text-center mb-20 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                        <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight">
+                            Tecnologia e <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d4af37] to-[#fcc200]">Segurança</span>
+                        </h1>
+                        <p className="text-xl text-blue-100/70 max-w-3xl mx-auto leading-relaxed">
+                            Uma visão executiva sobre a infraestrutura digital que sustenta a operação do escritório Salomão, utilizando o que há de mais moderno na nuvem da Amazon (AWS).
+                        </p>
+                    </section>
+
+                    {/* Feature Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
+                        {sections.map((section, idx) => (
+                            <div
+                                key={idx}
+                                className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 hover:border-[#d4af37]/50 transition-all duration-500 hover:-translate-y-2 group"
+                                style={{ transitionDelay: `${idx * 150}ms` }}
+                            >
+                                <div className="mb-6 transform group-hover:scale-110 transition-transform duration-500">
+                                    {section.icon}
+                                </div>
+                                <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-[#d4af37] transition-colors">
+                                    {section.title}
+                                </h3>
+                                <p className="text-blue-100/60 leading-relaxed mb-6">
+                                    {section.description}
+                                </p>
+                                <ul className="space-y-3">
+                                    {section.features.map((feature, fIdx) => (
+                                        <li key={fIdx} className="flex items-start gap-3 text-sm font-medium text-blue-100/80">
+                                            <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                                            <span>{feature}</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
-                            <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-[#d4af37] transition-colors">
-                                {section.title}
-                            </h3>
-                            <p className="text-blue-100/60 leading-relaxed mb-6">
-                                {section.description}
-                            </p>
-                            <ul className="space-y-3">
-                                {section.features.map((feature, fIdx) => (
-                                    <li key={fIdx} className="flex items-start gap-3 text-sm font-medium text-blue-100/80">
-                                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                                        <span>{feature}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Security Deep Dive (Simplified) */}
-                <section className="bg-gradient-to-br from-blue-900/30 to-slate-900/30 rounded-[2.5rem] p-12 border border-white/10 relative overflow-hidden mb-24">
-                    <div className="absolute top-0 right-0 p-12 opacity-10">
-                        <Fingerprint className="w-64 h-64 text-[#d4af37]" />
+                        ))}
                     </div>
 
-                    <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        <div>
-                            <h2 className="text-4xl font-black mb-8">Por que o Manager é seguro?</h2>
-
-                            <div className="space-y-8">
-                                <div className="flex gap-6">
-                                    <div className="w-12 h-12 rounded-xl bg-[#d4af37]/20 flex items-center justify-center shrink-0">
-                                        <Lock className="w-6 h-6 text-[#d4af37]" />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xl font-bold mb-2">Padrão Amazon (AWS)</h4>
-                                        <p className="text-blue-100/60 text-sm leading-relaxed">
-                                            Nossa infraestrutura está hospedada na Amazon Web Services, a mesma utilizada por bancos e governos em todo o mundo. Isso garante que seus dados estão protegidos por camadas de segurança física e eletrônica de última geração.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-6">
-                                    <div className="w-12 h-12 rounded-xl bg-[#d4af37]/20 flex items-center justify-center shrink-0">
-                                        <HardDrive className="w-6 h-6 text-[#d4af37]" />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xl font-bold mb-2">Supabase: Tecnologia de Ponta</h4>
-                                        <p className="text-blue-100/60 text-sm leading-relaxed">
-                                            O Supabase atua como o cérebro das nossas operações. Ele gerencia o banco de dados de forma que cada registro é criptografado e isolado, garantindo que apenas usuários autorizados tenham acesso à informação correta.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-6">
-                                    <div className="w-12 h-12 rounded-xl bg-[#d4af37]/20 flex items-center justify-center shrink-0">
-                                        <RefreshCw className="w-6 h-6 text-[#d4af37]" />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xl font-bold mb-2">Sincronização em Tempo Real</h4>
-                                        <p className="text-blue-100/60 text-sm leading-relaxed">
-                                            Quando um dado é atualizado no financeiro, a informação reflete instantaneamente para os sócios. Não há risco de trabalhar com dados defasados. A informação é viva e atualizada em milissegundos.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                    {/* Security Deep Dive (Simplified) */}
+                    <section className="bg-gradient-to-br from-blue-900/30 to-slate-900/30 rounded-[2.5rem] p-12 border border-white/10 relative overflow-hidden mb-24">
+                        <div className="absolute top-0 right-0 p-12 opacity-10">
+                            <Fingerprint className="w-64 h-64 text-[#d4af37]" />
                         </div>
 
-                        <div className="bg-[#0a192f] rounded-3xl p-8 border border-white/5 shadow-2xl relative">
-                            <div className="absolute -top-4 -right-4 bg-emerald-500 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full text-[#0a192f]">
-                                Live Status
-                            </div>
-                            <h5 className="text-sm font-bold mb-6 text-white/40 uppercase tracking-widest">Infraestrutura Técnica</h5>
-                            <div className="space-y-6">
-                                {[
-                                    { label: "Data Center (Amazon AWS)", status: "Operacional", tech: "EUA / Virginia", delay: "0s" },
-                                    { label: "Banco de Dados (Supabase)", status: "Conectado", tech: "Postgres 15", delay: "0.1s" },
-                                    { label: "Criptografia", status: "Ativo", tech: "AES-256", delay: "0.2s" },
-                                    { label: "Rede / Firewall", status: "Seguro", tech: "Cloudflare", delay: "0.3s" }
-                                ].map((item, i) => (
-                                    <div key={i} className="flex items-center justify-between group">
+                        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                            <div>
+                                <h2 className="text-4xl font-black mb-8">Por que o Manager é seguro?</h2>
+
+                                <div className="space-y-8">
+                                    <div className="flex gap-6">
+                                        <div className="w-12 h-12 rounded-xl bg-[#d4af37]/20 flex items-center justify-center shrink-0">
+                                            <Lock className="w-6 h-6 text-[#d4af37]" />
+                                        </div>
                                         <div>
-                                            <div className="text-sm font-bold group-hover:text-[#d4af37] transition-colors">{item.label}</div>
-                                            <div className="text-[10px] text-white/30 font-medium">{item.tech}</div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                            <span className="text-[10px] font-black uppercase text-emerald-500 tracking-wider font-mono">{item.status}</span>
+                                            <h4 className="text-xl font-bold mb-2">Padrão Amazon (AWS)</h4>
+                                            <p className="text-blue-100/60 text-sm leading-relaxed">
+                                                Nossa infraestrutura está hospedada na Amazon Web Services, a mesma utilizada por bancos e governos em todo o mundo. Isso garante que seus dados estão protegidos por camadas de segurança física e eletrônica de última geração.
+                                            </p>
                                         </div>
                                     </div>
-                                ))}
+
+                                    <div className="flex gap-6">
+                                        <div className="w-12 h-12 rounded-xl bg-[#d4af37]/20 flex items-center justify-center shrink-0">
+                                            <HardDrive className="w-6 h-6 text-[#d4af37]" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-bold mb-2">Supabase: Tecnologia de Ponta</h4>
+                                            <p className="text-blue-100/60 text-sm leading-relaxed">
+                                                O Supabase atua como o cérebro das nossas operações. Ele gerencia o banco de dados de forma que cada registro é criptografado e isolado, garantindo que apenas usuários autorizados tenham acesso à informação correta.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-6">
+                                        <div className="w-12 h-12 rounded-xl bg-[#d4af37]/20 flex items-center justify-center shrink-0">
+                                            <RefreshCw className="w-6 h-6 text-[#d4af37]" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-bold mb-2">Sincronização em Tempo Real</h4>
+                                            <p className="text-blue-100/60 text-sm leading-relaxed">
+                                                Quando um dado é atualizado no financeiro, a informação reflete instantaneamente para os sócios. Não há risco de trabalhar com dados defasados. A informação é viva e atualizada em milissegundos.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="mt-8 pt-6 border-t border-white/5">
-                                <div className="flex items-center gap-3 text-white/40 text-[10px] font-bold">
-                                    <Zap className="w-3 h-3 text-amber-400" />
-                                    <span>DISPONIBILIDADE: 99.9%</span>
-                                    <span className="ml-auto">MONITORAMENTO 24/7</span>
+                            <div className="bg-[#0a192f] rounded-3xl p-8 border border-white/5 shadow-2xl relative">
+                                <div className="absolute -top-4 -right-4 bg-emerald-500 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full text-[#0a192f]">
+                                    Live Status
+                                </div>
+                                <h5 className="text-sm font-bold mb-6 text-white/40 uppercase tracking-widest">Infraestrutura Técnica</h5>
+                                <div className="space-y-6">
+                                    {[
+                                        { label: "Data Center (Amazon AWS)", status: "Operacional", tech: "EUA / Virginia", delay: "0s" },
+                                        { label: "Banco de Dados (Supabase)", status: "Conectado", tech: "Postgres 15", delay: "0.1s" },
+                                        { label: "Criptografia", status: "Ativo", tech: "AES-256", delay: "0.2s" },
+                                        { label: "Rede / Firewall", status: "Seguro", tech: "Cloudflare", delay: "0.3s" }
+                                    ].map((item, i) => (
+                                        <div key={i} className="flex items-center justify-between group">
+                                            <div>
+                                                <div className="text-sm font-bold group-hover:text-[#d4af37] transition-colors">{item.label}</div>
+                                                <div className="text-[10px] text-white/30 font-medium">{item.tech}</div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span className="text-[10px] font-black uppercase text-emerald-500 tracking-wider font-mono">{item.status}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="mt-8 pt-6 border-t border-white/5">
+                                    <div className="flex items-center gap-3 text-white/40 text-[10px] font-bold">
+                                        <Zap className="w-3 h-3 text-amber-400" />
+                                        <span>DISPONIBILIDADE: 99.9%</span>
+                                        <span className="ml-auto">MONITORAMENTO 24/7</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                {/* Enterprise Customers Section */}
-                <section className="mb-24">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl font-black mb-4">Grandes Empresas e Organizações</h2>
-                        <p className="text-blue-100/60 max-w-2xl mx-auto">
-                            O Supabase é a escolha das empresas mais inovadoras do mundo para gerenciar dados críticos com escala e segurança.
-                        </p>
-                    </div>
+                    {/* Enterprise Customers Section */}
+                    <section className="mb-24">
+                        <div className="text-center mb-16">
+                            <h2 className="text-4xl font-black mb-4">Grandes Empresas e Organizações</h2>
+                            <p className="text-blue-100/60 max-w-2xl mx-auto">
+                                O Supabase é a escolha das empresas mais inovadoras do mundo para gerenciar dados críticos com escala e segurança.
+                            </p>
+                        </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[
-                            {
-                                name: "Mozilla",
-                                description: "Utiliza o Supabase para gerenciar dados de IA generativa e RAG no MDN Web Docs.",
-                                logo: "https://upload.wikimedia.org/wikipedia/commons/f/f3/Mozilla_logo_%282017%E2%80%932024%29.svg"
-                            },
-                            {
-                                name: "PwC",
-                                description: "A gigante de consultoria utiliza a plataforma para impulsionar sua estratégia de transformação digital.",
-                                logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/PricewaterhouseCoopers_Logo.svg"
-                            },
-                            {
-                                name: "GitHub Next",
-                                description: "O laboratório de inovação do GitHub utiliza o Supabase para desenvolver aplicações experimentais.",
-                                logo: "https://upload.wikimedia.org/wikipedia/commons/2/29/GitHub_logo_2013.svg"
-                            },
-                            {
-                                name: "McDonald's",
-                                description: "Um dos maiores clientes corporativos que adotam a plataforma para suas soluções tecnológicas.",
-                                logo: "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg"
-                            },
-                            {
-                                name: "NASA (via Epsilon3)",
-                                description: "Construção de softwares críticos para missões bilionárias da agência espacial americana.",
-                                logo: "https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg"
-                            },
-                            {
-                                name: "eXp Realty",
-                                description: "Uma das maiores imobiliárias do mundo utiliza o serviço para reduzir custos e inovar em escala.",
-                                logo: "https://raw.githubusercontent.com/supabase/supabase/master/apps/www/public/images/customers/logos/exp-realty.png"
-                            }
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[
+                                {
+                                    name: "Mozilla",
+                                    description: "Utiliza o Supabase para gerenciar dados de IA generativa e RAG no MDN Web Docs.",
+                                    logo: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Mozilla_2024_logo.svg"
+                                },
+                                {
+                                    name: "PwC",
+                                    description: "A gigante de consultoria utiliza a plataforma para impulsionar sua estratégia de transformação digital.",
+                                    logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/PricewaterhouseCoopers_Logo.svg"
+                                },
+                                {
+                                    name: "GitHub Next",
+                                    description: "O laboratório de inovação do GitHub utiliza o Supabase para desenvolver aplicações experimentais.",
+                                    logo: "https://upload.wikimedia.org/wikipedia/commons/2/29/GitHub_logo_2013.svg"
+                                },
+                                {
+                                    name: "McDonald's",
+                                    description: "Um dos maiores clientes corporativos que adotam a plataforma para suas soluções tecnológicas.",
+                                    logo: "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg"
+                                },
+                                {
+                                    name: "NASA (via Epsilon3)",
+                                    description: "Construção de softwares críticos para missões bilionárias da agência espacial americana.",
+                                    logo: "https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg",
+                                    specialStyle: true
+                                },
+                                {
+                                    name: "eXp Realty",
+                                    description: "Uma das maiores imobiliárias do mundo utiliza o serviço para reduzir custos e inovar em escala.",
+                                    logo: "https://upload.wikimedia.org/wikipedia/commons/e/e3/EXp_World_Holdings_logo.svg"
+                                }
 
-                        ].map((company, idx) => (
-                            <div key={idx} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all group flex flex-col items-center text-center">
-                                <div className="h-12 mb-8 flex items-center justify-center">
-                                    <img
-                                        src={company.logo}
-                                        alt={company.name}
-                                        className="h-full object-contain brightness-0 invert opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
-                                    />
+                            ].map((company, idx) => (
+                                <div key={idx} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all group flex flex-col items-center text-center">
+                                    <div className="h-12 mb-8 flex items-center justify-center">
+                                        <img
+                                            src={company.logo}
+                                            alt={company.name}
+                                            className={`h-full object-contain transition-all duration-500 ${(company as any).specialStyle
+                                                    ? 'opacity-80 group-hover:opacity-100 group-hover:scale-110'
+                                                    : 'brightness-0 invert opacity-70 group-hover:opacity-100 group-hover:scale-110'
+                                                }`}
+                                        />
+                                    </div>
+                                    <h4 className="text-xl font-bold mb-3 text-white group-hover:text-[#d4af37] transition-colors">{company.name}</h4>
+                                    <p className="text-blue-100/60 text-sm leading-relaxed">{company.description}</p>
                                 </div>
-                                <h4 className="text-xl font-bold mb-3 text-white group-hover:text-[#d4af37] transition-colors">{company.name}</h4>
-                                <p className="text-blue-100/60 text-sm leading-relaxed">{company.description}</p>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
 
-                    <div className="mt-12 text-center space-y-4">
-                        <p className="text-blue-100/40 text-xs font-bold uppercase tracking-widest">
-                            Notícias Recentes
-                        </p>
-                        <a
-                            href="https://br.investing.com/news/company-news/supabase-levanta-us-100-milhoes-em-rodada-serie-e-com-avaliacao-de-us-5-bilhoes-93CH-1697573"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block px-6 py-2 rounded-full border border-[#d4af37]/30 text-[#d4af37] text-xs font-bold hover:bg-[#d4af37]/10 transition-all"
+                        <div className="mt-12 text-center space-y-6">
+                            <p className="text-blue-100/40 text-xs font-bold uppercase tracking-widest">
+                                Destaque do Ecossistema
+                            </p>
+                            <a
+                                href="https://br.investing.com/news/company-news/supabase-levanta-us-100-milhoes-em-rodada-serie-e-com-avaliacao-de-us-5-bilhoes-93CH-1697573"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block px-10 py-6 rounded-[2rem] bg-gradient-to-br from-[#d4af37]/20 to-transparent border border-[#d4af37]/40 text-[#d4af37] hover:scale-105 hover:bg-[#d4af37]/30 transition-all shadow-2xl shadow-[#d4af37]/10 group"
+                            >
+                                <div className="flex flex-col items-center">
+                                    <span className="text-sm uppercase tracking-widest opacity-60 mb-2 font-black">Rodada Série E</span>
+                                    <span className="text-3xl md:text-4xl font-black group-hover:text-white transition-colors">
+                                        Avaliação de <span className="text-white font-black underline decoration-[#d4af37]">US$ 5 bilhões</span>
+                                    </span>
+                                    <span className="mt-4 text-xs font-medium opacity-50 flex items-center gap-2">
+                                        Ver notícia no Investing.com <Globe className="w-3 h-3" />
+                                    </span>
+                                </div>
+                            </a>
+                            <p className="text-white/30 text-[10px] font-medium uppercase tracking-[0.2em] pt-8">
+                                Referências: <a href="https://supabase.com/customers" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] underline decoration-[#d4af37]/30">supabase.com/customers</a> • <a href="https://developer.mozilla.org" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] underline decoration-[#d4af37]/30">MDN Web Docs</a>
+                            </p>
+                        </div>
+
+                    </section>
+
+                    {/* Q&A Section */}
+                    <section className="mb-24 px-4 md:px-0">
+                        <div className="flex items-center gap-4 mb-12">
+                            <div className="w-12 h-12 rounded-2xl bg-[#d4af37]/20 flex items-center justify-center">
+                                <MessagesSquare className="w-6 h-6 text-[#d4af37]" />
+                            </div>
+                            <h2 className="text-3xl md:text-4xl font-black">Perguntas Frequentes</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[
+                                {
+                                    q: "Onde exatamente meus dados ficam armazenados?",
+                                    a: "Os dados estão hospedados nos servidores da Amazon Web Services (AWS) na Virgínia (EUA), utilizando a infraestrutura global do Supabase. É o mesmo nível de segurança utilizado por bancos digitais."
+                                },
+                                {
+                                    q: "O que garante que um funcionário não veja dados de outro módulo?",
+                                    a: "Utilizamos Row Level Security (RLS). A permissão é travada no nível do banco de dados; mesmo que alguém tente acessar um link direto, o sistema bloqueia a visualização se não houver permissão explícita."
+                                },
+                                {
+                                    q: "O sistema faz backup automático?",
+                                    a: "Sim. Realizamos backups incrementais e snapshots completos diariamente. Em caso de qualquer falha catastrófica, conseguimos restaurar o estado do escritório em poucos minutos."
+                                },
+                                {
+                                    q: "O que acontece se a internet do escritório cair?",
+                                    a: "Por ser um sistema 100% em nuvem, ele pode ser acessado de qualquer lugar (casa, tribunal ou via rede móvel 4G/5G no celular), mantendo a continuidade do trabalho sem perda de dados."
+                                },
+                                {
+                                    q: "Como o sistema evita o vazamento de informações?",
+                                    a: "Todos os dados são criptografados em repouso (AES-256) e em trânsito (SSL/TLS). Além disso, cada ação importante deixa um rastro de auditoria: sabemos quem acessou o quê e quando."
+                                },
+                                {
+                                    q: "Preciso instalar algum programa nos computadores?",
+                                    a: "Não. O Manager é uma aplicação Web moderna (SaaS). Basta um navegador atualizado para ter a experiência completa em Windows, Mac, Linux ou dispositivos móveis."
+                                },
+                                {
+                                    q: "O sistema aguenta o crescimento do escritório?",
+                                    a: "Sim. A infraestrutura é escalável. À medida que o volume de processos e documentos aumenta, o servidor da Amazon aloca automaticamente mais recursos para manter a velocidade constante."
+                                },
+                                {
+                                    q: "Como são feitas as atualizações?",
+                                    a: "As atualizações são transparentes. Quando implementamos uma melhoria, ela entra no ar instantaneamente para todos, mas sem necessidade de baixar patches ou parar a operação do escritório."
+                                },
+                                {
+                                    q: "Existe algum risco de perda de dados?",
+                                    a: "O risco é estatisticamente irrelevante (99.999% de durabilidade). Diferente de servidores físicos locais que podem queimar ou ser roubados, na nuvem da AWS os dados são replicados em múltiplos locais."
+                                },
+                                {
+                                    q: "O suporte técnico consegue acessar meus dados pessoais?",
+                                    a: "Não por padrão. O acesso ao banco de dados é restrito por chaves de segurança criptográficas. Qualquer intervenção técnica segue protocolos rigorosos de privacidade e compliance."
+                                }
+                            ].map((item, i) => (
+                                <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all group">
+                                    <div className="flex gap-4">
+                                        <HelpCircle className="w-5 h-5 text-[#d4af37] shrink-0 mt-1" />
+                                        <div>
+                                            <h4 className="text-lg font-bold mb-3 group-hover:text-[#d4af37] transition-colors">{item.q}</h4>
+                                            <p className="text-blue-100/60 text-sm leading-relaxed">{item.a}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Call to action / Closing */}
+                    <section className="text-center">
+                        <button
+                            onClick={onModuleHome}
+                            className="px-12 py-4 rounded-full bg-[#d4af37] text-[#0a192f] font-black uppercase tracking-widest text-sm hover:bg-[#b8962f] hover:scale-105 transition-all shadow-xl shadow-[#d4af37]/20"
                         >
-                            Supabase avaliada em US$ 5 bilhões (Série E)
-                        </a>
-                        <p className="text-white/30 text-[10px] font-medium uppercase tracking-[0.2em] pt-4">
-                            Referências: <a href="https://supabase.com/customers" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] underline decoration-[#d4af37]/30">supabase.com/customers</a> • <a href="https://developer.mozilla.org" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] underline decoration-[#d4af37]/30">MDN Web Docs</a>
+                            Acessar Ecossistema
+                        </button>
+                        <p className="mt-8 text-white/30 text-xs font-medium uppercase tracking-[0.2em]">
+                            Desenvolvido por Marcio Gama - Flow Metrics
                         </p>
-                    </div>
+                    </section>
+                </main>
 
-                </section>
-
-                {/* Q&A Section */}
-                <section className="mb-24 px-4 md:px-0">
-                    <div className="flex items-center gap-4 mb-12">
-                        <div className="w-12 h-12 rounded-2xl bg-[#d4af37]/20 flex items-center justify-center">
-                            <MessagesSquare className="w-6 h-6 text-[#d4af37]" />
-                        </div>
-                        <h2 className="text-3xl md:text-4xl font-black">Perguntas Frequentes</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {[
-                            {
-                                q: "Onde exatamente meus dados ficam armazenados?",
-                                a: "Os dados estão hospedados nos servidores da Amazon Web Services (AWS) na Virgínia (EUA), utilizando a infraestrutura global do Supabase. É o mesmo nível de segurança utilizado por bancos digitais."
-                            },
-                            {
-                                q: "O que garante que um funcionário não veja dados de outro módulo?",
-                                a: "Utilizamos Row Level Security (RLS). A permissão é travada no nível do banco de dados; mesmo que alguém tente acessar um link direto, o sistema bloqueia a visualização se não houver permissão explícita."
-                            },
-                            {
-                                q: "O sistema faz backup automático?",
-                                a: "Sim. Realizamos backups incrementais e snapshots completos diariamente. Em caso de qualquer falha catastrófica, conseguimos restaurar o estado do escritório em poucos minutos."
-                            },
-                            {
-                                q: "O que acontece se a internet do escritório cair?",
-                                a: "Por ser um sistema 100% em nuvem, ele pode ser acessado de qualquer lugar (casa, tribunal ou via rede móvel 4G/5G no celular), mantendo a continuidade do trabalho sem perda de dados."
-                            },
-                            {
-                                q: "Como o sistema evita o vazamento de informações?",
-                                a: "Todos os dados são criptografados em repouso (AES-256) e em trânsito (SSL/TLS). Além disso, cada ação importante deixa um rastro de auditoria: sabemos quem acessou o quê e quando."
-                            },
-                            {
-                                q: "Preciso instalar algum programa nos computadores?",
-                                a: "Não. O Manager é uma aplicação Web moderna (SaaS). Basta um navegador atualizado para ter a experiência completa em Windows, Mac, Linux ou dispositivos móveis."
-                            },
-                            {
-                                q: "O sistema aguenta o crescimento do escritório?",
-                                a: "Sim. A infraestrutura é escalável. À medida que o volume de processos e documentos aumenta, o servidor da Amazon aloca automaticamente mais recursos para manter a velocidade constante."
-                            },
-                            {
-                                q: "Como são feitas as atualizações?",
-                                a: "As atualizações são transparentes. Quando implementamos uma melhoria, ela entra no ar instantaneamente para todos, mas sem necessidade de baixar patches ou parar a operação do escritório."
-                            },
-                            {
-                                q: "Existe algum risco de perda de dados?",
-                                a: "O risco é estatisticamente irrelevante (99.999% de durabilidade). Diferente de servidores físicos locais que podem queimar ou ser roubados, na nuvem da AWS os dados são replicados em múltiplos locais."
-                            },
-                            {
-                                q: "O suporte técnico consegue acessar meus dados pessoais?",
-                                a: "Não por padrão. O acesso ao banco de dados é restrito por chaves de segurança criptográficas. Qualquer intervenção técnica segue protocolos rigorosos de privacidade e compliance."
-                            }
-                        ].map((item, i) => (
-                            <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all group">
-                                <div className="flex gap-4">
-                                    <HelpCircle className="w-5 h-5 text-[#d4af37] shrink-0 mt-1" />
-                                    <div>
-                                        <h4 className="text-lg font-bold mb-3 group-hover:text-[#d4af37] transition-colors">{item.q}</h4>
-                                        <p className="text-blue-100/60 text-sm leading-relaxed">{item.a}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Call to action / Closing */}
-                <section className="text-center">
-                    <button
-                        onClick={onModuleHome}
-                        className="px-12 py-4 rounded-full bg-[#d4af37] text-[#0a192f] font-black uppercase tracking-widest text-sm hover:bg-[#b8962f] hover:scale-105 transition-all shadow-xl shadow-[#d4af37]/20"
-                    >
-                        Acessar Ecossistema
-                    </button>
-                    <p className="mt-8 text-white/30 text-xs font-medium uppercase tracking-[0.2em]">
-                        Desenvolvido por Marcio Gama - Flow Metrics
-                    </p>
-                </section>
-            </main>
-
-            <footer className="py-12 border-t border-white/5 text-center relative z-10">
-                <img src="/logo-salomao.png" alt="Salomão" className="h-6 mx-auto mb-4 opacity-20 filter grayscale brightness-200" />
-                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">PRIVACY • SECURITY • EFFICIENCY</p>
-            </footer>
+                <footer className="py-12 border-t border-white/5 text-center relative z-10">
+                    <img src="/logo-salomao.png" alt="Salomão" className="h-6 mx-auto mb-4 opacity-20 filter grayscale brightness-200" />
+                    <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">PRIVACY • SECURITY • EFFICIENCY</p>
+                </footer>
+            </div>
         </div>
     );
 }
