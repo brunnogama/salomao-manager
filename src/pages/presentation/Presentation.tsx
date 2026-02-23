@@ -207,6 +207,69 @@ export function Presentation({ onModuleHome }: PresentationProps) {
                     </div>
                 </section>
 
+                {/* Enterprise Customers Section */}
+                <section className="mb-24">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl font-black mb-4">Grandes Empresas e Organizações</h2>
+                        <p className="text-blue-100/60 max-w-2xl mx-auto">
+                            O Supabase é a escolha das empresas mais inovadoras do mundo para gerenciar dados críticos com escala e segurança.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[
+                            {
+                                name: "Mozilla",
+                                description: "Utiliza o Supabase para gerenciar dados de IA generativa e RAG no MDN Web Docs.",
+                                logo: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Mozilla_logo_%282017%E2%80%932024%29.svg"
+                            },
+                            {
+                                name: "PwC",
+                                description: "A gigante de consultoria utiliza a plataforma para impulsionar sua estratégia de transformação digital.",
+                                logo: "https://upload.wikimedia.org/wikipedia/commons/9/91/PwC_Company_Logo.svg"
+                            },
+                            {
+                                name: "GitHub Next",
+                                description: "O laboratório de inovação do GitHub utiliza o Supabase para desenvolver aplicações experimentais.",
+                                logo: "https://upload.wikimedia.org/wikipedia/commons/9/91/Github_logo_svg.svg"
+                            },
+                            {
+                                name: "McDonald's",
+                                description: "Um dos maiores clientes corporativos que adotam a plataforma para suas soluções tecnológicas.",
+                                logo: "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_SVG_logo.svg"
+                            },
+                            {
+                                name: "NASA (via Epsilon3)",
+                                description: "Construção de softwares críticos para missões bilionárias da agência espacial americana.",
+                                logo: "https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg"
+                            },
+                            {
+                                name: "eXp Realty",
+                                description: "Uma das maiores imobiliárias do mundo utiliza o serviço para reduzir custos e inovar em escala.",
+                                logo: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Exp_realty_logo.svg"
+                            }
+                        ].map((company, idx) => (
+                            <div key={idx} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all group flex flex-col items-center text-center">
+                                <div className="h-12 mb-8 flex items-center justify-center">
+                                    <img
+                                        src={company.logo}
+                                        alt={company.name}
+                                        className="h-full object-contain brightness-0 invert opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
+                                    />
+                                </div>
+                                <h4 className="text-xl font-bold mb-3 text-white group-hover:text-[#d4af37] transition-colors">{company.name}</h4>
+                                <p className="text-blue-100/60 text-sm leading-relaxed">{company.description}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-12 text-center">
+                        <p className="text-white/30 text-[10px] font-medium uppercase tracking-[0.2em]">
+                            Referências: <a href="https://supabase.com/customers" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] underline decoration-[#d4af37]/30">supabase.com/customers</a> • <a href="https://mdn.mozilla.org" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4af37] underline decoration-[#d4af37]/30">MDN Web Docs</a>
+                        </p>
+                    </div>
+                </section>
+
                 {/* Q&A Section */}
                 <section className="mb-24 px-4 md:px-0">
                     <div className="flex items-center gap-4 mb-12">
