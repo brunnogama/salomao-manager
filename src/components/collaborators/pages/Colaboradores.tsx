@@ -440,51 +440,26 @@ export function Colaboradores({ }: ColaboradoresProps) {
         escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null
       };
 
+      // Robust cleaning of the payload
+      const payload: any = {};
+      Object.entries(dataToSave).forEach(([key, value]) => {
+        // Skip metadata and joined objects/arrays
+        if (['id', 'created_at', 'updated_at', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios'].includes(key)) return;
+        if (value !== null && typeof value === 'object') return;
+
+        // Map empty strings to null for better DB consistency
+        payload[key] = value === '' ? null : value;
+      });
+
+      // Maintain consistency between both photo column naming conventions
+      payload.photo_url = photoUrl;
+      payload.foto_url = photoUrl;
+
       if (formData.id) {
-        // Update
-        // Remove nested objects that are not columns
-        const {
-          leader,
-          partner,
-          roles,
-          locations,
-          teams,
-          photo_url,
-          foto_url,
-          ...cleanData
-        } = dataToSave;
-
-        // Clean up empty strings to avoid DB issues (set to null)
-        Object.keys(cleanData).forEach(key => {
-          if ((cleanData as any)[key] === '') (cleanData as any)[key] = null;
-        });
-
-        const { error } = await supabase.from('collaborators').update({
-          ...cleanData, foto_url: photoUrl
-        }).eq('id', formData.id)
+        const { error } = await supabase.from('collaborators').update(payload).eq('id', formData.id)
         if (error) throw error
       } else {
-        // Insert
-        // Remove nested objects that are not columns
-        const {
-          leader,
-          partner,
-          roles,
-          locations,
-          teams,
-          photo_url,
-          foto_url,
-          ...cleanData
-        } = dataToSave;
-
-        // Clean up empty strings to avoid DB issues (set to null)
-        Object.keys(cleanData).forEach(key => {
-          if ((cleanData as any)[key] === '') (cleanData as any)[key] = null;
-        });
-
-        const { data, error } = await supabase.from('collaborators').insert({
-          ...cleanData, foto_url: photoUrl
-        }).select().single()
+        const { data, error } = await supabase.from('collaborators').insert(payload).select().single()
         if (error) throw error
 
         // Handle Pending GEDs
