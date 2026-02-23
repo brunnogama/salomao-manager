@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, Header, Footer, Table, TableRow, TableCell, BorderStyle, WidthType } from 'docx';
+import { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, Header } from 'docx';
 import { Contract } from '../types/controladoria';
 import { moedaPorExtenso, percentualPorExtenso } from './extenso';
 
@@ -119,7 +119,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         // Date
         new Paragraph({
             alignment: AlignmentType.RIGHT,
-            spacing: { line: 240, before: 600, after: 400 },
+            spacing: { line: 240, after: 600 },
             children: [new TextRun({ text: dateLine, font: standardFont, size: 20 })]
         }),
 
@@ -229,7 +229,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
         // Signatures
         new Paragraph({
             alignment: AlignmentType.CENTER,
-            spacing: { line: 240, before: 600, after: 400 },
+            spacing: { line: 240, before: 1200, after: 400 },
             children: [new TextRun({ text: "Cordialmente,", font: standardFont, size: 20 })]
         }),
 
@@ -246,7 +246,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
 
         new Paragraph({
             alignment: AlignmentType.CENTER,
-            spacing: { line: 240, before: 600 },
+            spacing: { line: 240, before: 800 },
             children: [new TextRun({ text: "____________________________________", font: standardFont, size: 20 })]
         }),
         new Paragraph({
@@ -261,8 +261,8 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                 properties: {
                     page: {
                         margin: {
-                            top: 2200,    // Space for header
-                            bottom: 1800, // Space for footer
+                            top: 3030,    // 18% of A4 (53.46mm)
+                            bottom: 2700, // 16% of A4 (47.52mm)
                             left: 1440,
                             right: 1440,
                         }

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { FileText, CheckCircle, Search, Plus, Trash2, Edit3, X, EyeOff, Eye, Check, XCircle, Filter, FileSignature, Loader2, PlayCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, CheckCircle, Search, Plus, Trash2, X, Eye, FileSignature, Loader2, AlertTriangle, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { saveAs } from 'file-saver';
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst, Collaborator } from '../../../types/controladoria';
@@ -58,10 +58,8 @@ export function Proposals() {
 
     // New Structure for multiple clauses with types
     pro_labore_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
-    intermediate_fee_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
-
-    // Unified Success Fees
     final_success_fee_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
+    intermediate_fee_clauses: [{ value: '', description: '', type: 'currency' }] as FeeClause[],
   });
 
   const [isEditingBody, setIsEditingBody] = useState(false);
@@ -80,22 +78,22 @@ export function Proposals() {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [safeAreaHeight, setSafeAreaHeight] = useState(0);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const previewContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const calculatePages = () => {
       if (previewContentRef.current && previewContainerRef.current) {
-        // Safe area is where the text actually lives, between header and footer
-        // Looking at the paper, header is roughly 120px and footer is 100px on a ~700px container
         const containerHeight = previewContainerRef.current.offsetHeight;
-        const headerHeight = containerHeight * 0.18; // approx
-        const footerHeight = containerHeight * 0.15; // approx
-        const safeAreaHeight = containerHeight - headerHeight - footerHeight;
+        const headerHeight = containerHeight * 0.18;
+        const footerHeight = containerHeight * 0.16;
+        const calculatedSafeHeight = containerHeight - headerHeight - footerHeight;
 
         const contentHeight = previewContentRef.current.scrollHeight;
-        if (safeAreaHeight > 0) {
-          const pages = Math.ceil(contentHeight / safeAreaHeight);
+        if (calculatedSafeHeight > 0) {
+          setSafeAreaHeight(calculatedSafeHeight);
+          const pages = Math.ceil(contentHeight / calculatedSafeHeight);
           setTotalPages(pages > 0 ? pages : 1);
         }
       }
@@ -112,12 +110,13 @@ export function Proposals() {
   };
 
   const jumpToFieldPage = (fieldName: string) => {
-    // Basic heuristic: Object/Clauses are usually on page 1 or 2
-    if (['pro_labore_clauses', 'intermediate_fee_clauses', 'final_success_fee_clauses'].includes(fieldName)) {
-      // These are usually further down. If content is long, might be p2.
-      // For now, let's just jump to where the content is if we can detect it.
-      // Simpler: just jump based on field type for now as a first step.
-      if (fieldName === 'final_success_fee_clauses') jumpToPage(Math.min(1, totalPages - 1));
+    if (fieldName === 'final_success_fee_clauses') {
+      jumpToPage(totalPages - 1);
+    } else if (fieldName === 'intermediate_fee_clauses') {
+      jumpToPage(Math.min(1, totalPages - 1));
+    } else if (fieldName === 'pro_labore_clauses' || fieldName === 'object') {
+      // Pro-labore is usually end of p1 or start of p2
+      if (totalPages > 1) jumpToPage(1);
       else jumpToPage(0);
     } else {
       jumpToPage(0);
@@ -421,7 +420,7 @@ export function Proposals() {
       intermediate_fees_clauses: intermediateClauses,
 
       full_success_clauses: proposalData.final_success_fee_clauses,
-      custom_body_text: customBodyText || undefined,
+      custom_body_text: customBodyText || generateDefaultBodyText(),
     };
   };
 
@@ -816,7 +815,7 @@ export function Proposals() {
                 onChange={handleClientNameChange}
                 options={clientOptions}
                 placeholder="Selecione ou digite o nome"
-                onFocus={() => jumpToPage(0)}
+                onFocus={() => jumpToFieldPage('clientName')}
                 allowCustomValue={true}
               />
             </div>
@@ -850,7 +849,7 @@ export function Proposals() {
                   onChange={handleChange}
                   placeholder="00.000.000/0000-00"
                   disabled={proposalData.isPerson}
-                  onFocus={() => jumpToPage(0)}
+                  onFocus={() => jumpToFieldPage('cnpj')}
                   className={`w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all ${proposalData.isPerson ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
                 />
                 <button
@@ -891,7 +890,7 @@ export function Proposals() {
                   value=""
                   onChange={(val) => handlePartnerAdd(val)}
                   options={partners.filter(p => !proposalData.selectedPartners.some(sp => sp.id === p.id)).map(p => ({ label: p.name, value: p.id }))}
-                  onFocus={() => jumpToPage(0)}
+                  onFocus={() => jumpToFieldPage('partners')}
                   placeholder="+ Adicionar um sócio..."
                   className="w-full"
                 />
@@ -932,7 +931,7 @@ export function Proposals() {
                 onChange={(val) => setProposalData(prev => ({ ...prev, contractLocation: val }))}
                 options={locationOptions}
                 allowCustomValue={true}
-                onFocus={() => jumpToPage(0)}
+                onFocus={() => jumpToFieldPage('contractLocation')}
                 placeholder="Selecione ou digite a cidade"
               />
             </div>
@@ -945,7 +944,7 @@ export function Proposals() {
                 value={proposalData.reference}
                 onChange={handleChange}
                 placeholder="Ex: Contrato de Honorários..."
-                onFocus={() => jumpToPage(0)}
+                onFocus={() => jumpToFieldPage('reference')}
                 className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
               />
             </div>
@@ -1066,7 +1065,7 @@ export function Proposals() {
                       <div className="flex-1 overflow-hidden px-12 md:px-16">
                         <div
                           style={{
-                            transform: `translateY(-${pageIdx * 100}%)`,
+                            transform: `translateY(-${pageIdx * safeAreaHeight}px)`,
                             height: 'fit-content'
                           }}
                         >
