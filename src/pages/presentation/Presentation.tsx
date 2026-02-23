@@ -281,7 +281,7 @@ export function Presentation({ onModuleHome }: PresentationProps) {
                         Acessar Ecossistema
                     </button>
                     <p className="mt-8 text-white/30 text-xs font-medium uppercase tracking-[0.2em]">
-                        Desenvolvido por Marcio Gama em parceria com Antigravity AI
+                        Desenvolvido por Marcio Gama - Flow Metrics
                     </p>
                 </section>
             </main>
