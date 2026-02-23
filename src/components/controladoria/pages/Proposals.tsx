@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { FileText, CheckCircle, Search, Plus, Trash2, Edit3, X, EyeOff, Eye, Check, XCircle, Filter, FileSignature, Loader2, PlayCircle, AlertTriangle } from 'lucide-react';
+import { FileText, CheckCircle, Search, Plus, Trash2, Edit3, X, EyeOff, Eye, Check, XCircle, Filter, FileSignature, Loader2, PlayCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { saveAs } from 'file-saver';
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst, Collaborator } from '../../../types/controladoria';
@@ -76,6 +76,32 @@ export function Proposals() {
   const [newIntermediateFee, setNewIntermediateFee] = useState('');
   const [timelineData, setTimelineData] = useState<TimelineEvent[]>([]);
   const [analysts, setAnalysts] = useState<Analyst[]>([]);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const previewContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const calculatePages = () => {
+      if (previewContentRef.current && previewContainerRef.current) {
+        const containerHeight = previewContainerRef.current.offsetHeight;
+        const contentHeight = previewContentRef.current.scrollHeight;
+        if (containerHeight > 0) {
+          const pages = Math.ceil(contentHeight / containerHeight);
+          setTotalPages(pages > 0 ? pages : 1);
+          if (currentPage >= pages && pages > 0) {
+            setCurrentPage(pages - 1);
+          }
+        }
+      }
+    };
+
+    // Small timeout to ensure content is rendered before measuring
+    const timeoutId = setTimeout(calculatePages, 200);
+    return () => clearTimeout(timeoutId);
+  }, [proposalData, customBodyText, isEditingBody, currentPage, partners]); // Added partners to dependencies
 
   // Fetch Inputs
   useEffect(() => {
@@ -940,11 +966,13 @@ export function Proposals() {
         </div>
 
         {/* DIREITA: Preview Visual */}
-        <div className="bg-white p-4 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center relative min-h-[500px] sm:min-h-[800px] overflow-hidden">
+        {/* DIREITA: Preview Visual */}
+        <div className="bg-white p-4 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center relative min-h-[500px] sm:min-h-[800px]">
           <p className="absolute top-4 right-6 text-[9px] font-black text-gray-300 uppercase tracking-widest hidden sm:flex items-center gap-1">
             <Eye className="w-3 h-3" /> Visualização em Tempo Real
           </p>
-          <div className="w-full flex justify-center mb-6 z-10 mt-6 sm:mt-0">
+
+          <div className="w-full flex flex-col items-center gap-6 z-10 mt-6 sm:mt-0">
             <button
               onClick={() => {
                 if (!isEditingBody && !customBodyText) {
@@ -956,191 +984,220 @@ export function Proposals() {
             >
               <FileSignature className="w-4 h-4" /> Abrir Modo de Edição
             </button>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center gap-6 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 shadow-sm">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                disabled={currentPage === 0}
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#1e3a8a] disabled:opacity-30 transition-all hover:translate-x-[-2px]"
+              >
+                <ChevronLeft className="w-4 h-4" /> Voltar
+              </button>
+
+              <div className="h-4 w-[1px] bg-gray-200"></div>
+
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                Página {currentPage + 1} de {totalPages}
+              </span>
+
+              <div className="h-4 w-[1px] bg-gray-200"></div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                disabled={currentPage === totalPages - 1}
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#1e3a8a] disabled:opacity-30 transition-all hover:translate-x-[2px]"
+              >
+                Avançar <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {/* A4 Paper Simulation */}
-          <div className="w-full max-w-[500px] bg-white shadow-2xl p-6 md:p-12 text-left border border-gray-100 h-full text-[#0a192f] text-[10px] leading-relaxed select-none overflow-y-auto custom-scrollbar">
+          {/* A4 Paper Simulation with letterhead */}
+          <div
+            ref={previewContainerRef}
+            className="w-full max-w-[500px] aspect-[21/29.7] bg-white shadow-2xl border border-gray-100 overflow-hidden relative mt-4 transform scale-100 transition-transform duration-500"
+            style={{
+              backgroundImage: "url('/papel-timbrado.png')",
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat'
+            }}
+          >
+            <div
+              ref={previewContentRef}
+              className="px-12 md:px-16 text-left text-[#0a192f] text-[10px] leading-relaxed select-none transition-transform duration-500 ease-in-out h-fit"
+              style={{ transform: `translateY(-${currentPage * (previewContainerRef.current?.offsetHeight || 0)}px)` }}
+            >
 
-            {/* Header Image Placeholder */}
-            <div className="flex justify-center mb-8">
-              <img src="/logo-salomao.png" alt="Logo" className="h-10 object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
-            </div>
-
-            {/* Date */}
-            <div className="text-right mb-6">
-              <span className="bg-yellow-200/50 px-1">{proposalData.contractLocation}, {today}</span>.
-            </div>
-
-            {/* Addressee */}
-            <div className="mb-6 font-bold">
-              <p>AO <span className="bg-yellow-200/50 px-1 uppercase">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span></p>
-              {!proposalData.isPerson && (
-                <p className="mt-1"><span className="bg-yellow-200/50 px-1">{proposalData.cnpj || '[CNPJ da empresa cliente]'}</span></p>
-              )}
-            </div>
-
-            {/* Ref */}
-            <div className="mb-4">
-              <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir referência da proposta]'}</span></p>
-              <p><strong>Cód.:</strong> <span className="bg-yellow-200/50 px-1">[código proposta]</span></p>
-            </div>
-
-            <p className="mb-4">Prezados,</p>
-
-            <p className="text-justify mb-4">
-              É com grande honra que <strong>SALOMÃO ADVOGADOS</strong>, neste ato representado, respectivamente, por seus sócios
-              {proposalData.selectedPartners.length > 0 ? (
-                proposalData.selectedPartners.map((p, idx) => (
-                  <span key={p.id}>
-                    {idx > 0 && ", e "}
-                    <span className="bg-yellow-200/50 px-1 font-bold ml-1">{p.name}</span>
-                    {(() => {
-                      const data = p.collaboratorData;
-                      const gender = data?.gender || p.gender || 'M';
-                      const isFem = ['F', 'Feminino', 'Female'].includes(gender);
-
-                      const oab = data?.oab_numero || p.oab_number || 'XXXXXX';
-                      const oabUf = data?.oab_uf || p.oab_state || 'RJ';
-                      const cpf = data?.cpf || p.cpf || 'XXX.XXX.XXX-XX';
-
-                      const civil = data?.civil_status ? data.civil_status.toLowerCase() : 'casado';
-                      const nacionalidade = data?.nacionalidade ? data.nacionalidade.toLowerCase() : 'brasileiro';
-
-                      // Inflections
-                      const textNacionalidade = isFem && nacionalidade.includes('brasileir') ? 'brasileira' : nacionalidade;
-                      const textCivil = isFem && civil.includes('casad') ? 'casada' : (isFem && civil.includes('solteir') ? 'solteira' : civil);
-                      const textAdvogado = isFem ? 'advogada' : 'advogado';
-                      const textInscrito = isFem ? 'inscrita' : 'inscrito';
-                      const textPortador = isFem ? 'portadora' : 'portador';
-
-                      return `, ${textNacionalidade}, ${textCivil}, ${textAdvogado}, ${textInscrito} na OAB/${oabUf} sob o nº ${oab}, ${textPortador} do CPF/MF nº ${cpf}`;
-                    })()}
-                  </span>
-                ))
-              ) : (
-                <span className="bg-yellow-200/50 px-1 font-bold ml-1">[incluir nome do sócio]</span>
-              )}
-              , vem formular a presente proposta de honorários...
-            </p>
-
-            {customBodyText ? (
-              <div className="mb-4 space-y-4 text-justify whitespace-pre-line leading-relaxed pb-8">
-                {customBodyText.split('\n\n').map((paragraph, idx) => {
-                  const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
-
-                  return (
-                    <p key={idx} className={`${isHeading ? 'font-bold mt-4' : ''}`}>
-                      {paragraph}
-                    </p>
-                  )
-                })}
+              {/* Date */}
+              <div className="text-right mb-6 pt-16">
+                <span className="bg-yellow-200/50 px-1">{proposalData.contractLocation}, {today}</span>.
               </div>
-            ) : (
-              <>
-                {/* 1. Objeto */}
-                <p className="font-bold mb-2">1. OBJETO E ESCOPO DO SERVIÇO:</p>
-                <p className="text-justify mb-4">
-                  1.1. O objeto da presente proposta é a assessoria jurídica... em favor do Cliente
-                  <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
-                  no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
-                </p>
 
-                {/* 2. Honorários */}
-                <p className="font-bold mb-2 break-before-page mt-6">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
-                <p className="text-justify mb-2">
-                  2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
-                </p>
-
-                {/* Dynamic Clauses Preview */}
-                {proposalData.pro_labore_clauses.map((clause, idx) => {
-                  const num = `2.${2 + idx}`;
-                  let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-                  let extensoPart = "";
-                  if (clause.value) {
-                    if (clause.type === 'currency') {
-                      extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-                    } else {
-                      extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-                    }
-                  }
-                  return (
-                    <p key={`pl-${idx}`} className="text-justify mb-2">
-                      {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-                    </p>
-                  );
-                })}
-
-                {/* Intermediate (Starts after Pro-Labore) */}
-                {proposalData.intermediate_fee_clauses.map((clause, idx) => {
-                  const base = 2 + proposalData.pro_labore_clauses.length;
-                  const num = `2.${base + idx}`;
-                  let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-                  let extensoPart = "";
-                  if (clause.value) {
-                    if (clause.type === 'currency') {
-                      extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-                    } else {
-                      extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-                    }
-                  }
-                  return (
-                    <p key={`int-${idx}`} className="text-justify mb-2">
-                      {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-                    </p>
-                  );
-                })}
-
-                {/* Final Success - Unified */}
-                {proposalData.final_success_fee_clauses.map((clause, idx) => {
-                  const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
-                  const num = `2.${base + idx}`;
-
-                  let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-                  let extensoPart = "";
-                  if (clause.value) {
-                    if (clause.type === 'currency') {
-                      extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-                    } else {
-                      extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-                    }
-                  }
-
-                  return (
-                    <p key={`sf-unified-${idx}`} className="text-justify mb-2">
-                      {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-                    </p>
-                  );
-                })}
-              </>
-            )}
-
-            {/* Signatures */}
-            <div className="text-center mt-12 space-y-8">
-              <div>
-                <p className="mb-2">Cordialmente,</p>
-                {proposalData.selectedPartners.length > 0 ? proposalData.selectedPartners.map(p => (
-                  <p key={p.id} className="bg-yellow-200/50 px-1 font-bold block">{p.name}</p>
-                )) : (
-                  <p className="bg-yellow-200/50 px-1 font-bold inline-block">[Incluir nome do sócio]</p>
+              {/* Addressee */}
+              <div className="mb-6 font-bold">
+                <p>AO <span className="bg-yellow-200/50 px-1 uppercase">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span></p>
+                {!proposalData.isPerson && (
+                  <p className="mt-1"><span className="bg-yellow-200/50 px-1">{proposalData.cnpj || '[CNPJ da empresa cliente]'}</span></p>
                 )}
-                <p className="font-bold">SALOMÃO ADVOGADOS</p>
               </div>
 
-              <div>
-                <p className="bg-yellow-200/50 px-1 font-bold inline-block uppercase">{proposalData.clientName || '[CLIENTE]'}</p>
+              {/* Ref */}
+              <div className="mb-4">
+                <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir referência da proposta]'}</span></p>
+                <p><strong>Cód.:</strong> <span className="bg-yellow-200/50 px-1">[código proposta]</span></p>
               </div>
 
-              <div className="text-left mt-8">
-                <p>De acordo em: ___/___/___</p>
+              <p className="mb-4">Prezados,</p>
+
+              <p className="text-justify mb-4">
+                É com grande honra que <strong>SALOMÃO ADVOGADOS</strong>, neste ato representado, respectivamente, por seus sócios
+                {proposalData.selectedPartners.length > 0 ? (
+                  proposalData.selectedPartners.map((p, idx) => (
+                    <span key={p.id}>
+                      {idx > 0 && ", e "}
+                      <span className="bg-yellow-200/50 px-1 font-bold ml-1">{p.name}</span>
+                      {(() => {
+                        const data = p.collaboratorData;
+                        const gender = data?.gender || p.gender || 'M';
+                        const isFem = ['F', 'Feminino', 'Female'].includes(gender);
+
+                        const oab = data?.oab_numero || p.oab_number || 'XXXXXX';
+                        const oabUf = data?.oab_uf || p.oab_state || 'RJ';
+                        const cpf = data?.cpf || p.cpf || 'XXX.XXX.XXX-XX';
+
+                        const civil = data?.civil_status ? data.civil_status.toLowerCase() : 'casado';
+                        const nacionalidade = data?.nacionalidade ? data.nacionalidade.toLowerCase() : 'brasileiro';
+
+                        // Inflections
+                        const textNacionalidade = isFem && nacionalidade.includes('brasileir') ? 'brasileira' : nacionalidade;
+                        const textCivil = isFem && civil.includes('casad') ? 'casada' : (isFem && civil.includes('solteir') ? 'solteira' : civil);
+                        const textAdvogado = isFem ? 'advogada' : 'advogado';
+                        const textInscrito = isFem ? 'inscrita' : 'inscrito';
+                        const textPortador = isFem ? 'portadora' : 'portador';
+
+                        return `, ${textNacionalidade}, ${textCivil}, ${textAdvogado}, ${textInscrito} na OAB/${oabUf} sob o nº ${oab}, ${textPortador} do CPF/MF nº ${cpf}`;
+                      })()}
+                    </span>
+                  ))
+                ) : (
+                  <span className="bg-yellow-200/50 px-1 font-bold ml-1">[incluir nome do sócio]</span>
+                )}
+                , vem formular a presente proposta de honorários...
+              </p>
+
+              {customBodyText ? (
+                <div className="mb-4 space-y-4 text-justify whitespace-pre-line leading-relaxed pb-8">
+                  {customBodyText.split('\n\n').map((paragraph, idx) => {
+                    const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
+
+                    return (
+                      <p key={idx} className={`${isHeading ? 'font-bold mt-4' : ''}`}>
+                        {paragraph}
+                      </p>
+                    )
+                  })}
+                </div>
+              ) : (
+                <>
+                  {/* 1. Objeto */}
+                  <p className="font-bold mb-2">1. OBJETO E ESCOPO DO SERVIÇO:</p>
+                  <p className="text-justify mb-4">
+                    1.1. O objeto da presente proposta é a assessoria jurídica... em favor do Cliente
+                    <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
+                    no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
+                  </p>
+
+                  {/* 2. Honorários */}
+                  <p className="font-bold mb-2 break-before-page mt-6">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
+                  <p className="text-justify mb-2">
+                    2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
+                  </p>
+
+                  {/* Dynamic Clauses Preview */}
+                  {proposalData.pro_labore_clauses.map((clause, idx) => {
+                    const num = `2.${2 + idx}`;
+                    let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                    let extensoPart = "";
+                    if (clause.value) {
+                      if (clause.type === 'currency') {
+                        extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
+                      } else {
+                        extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
+                      }
+                    }
+                    return (
+                      <p key={`pl-${idx}`} className="text-justify mb-2">
+                        {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
+                      </p>
+                    );
+                  })}
+
+                  {/* Intermediate (Starts after Pro-Labore) */}
+                  {proposalData.intermediate_fee_clauses.map((clause, idx) => {
+                    const base = 2 + proposalData.pro_labore_clauses.length;
+                    const num = `2.${base + idx}`;
+                    let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                    let extensoPart = "";
+                    if (clause.value) {
+                      if (clause.type === 'currency') {
+                        extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
+                      } else {
+                        extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
+                      }
+                    }
+                    return (
+                      <p key={`int-${idx}`} className="text-justify mb-2">
+                        {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
+                      </p>
+                    );
+                  })}
+
+                  {/* Final Success - Unified */}
+                  {proposalData.final_success_fee_clauses.map((clause, idx) => {
+                    const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
+                    const num = `2.${base + idx}`;
+
+                    let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                    let extensoPart = "";
+                    if (clause.value) {
+                      if (clause.type === 'currency') {
+                        extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
+                      } else {
+                        extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
+                      }
+                    }
+
+                    return (
+                      <p key={`sf-unified-${idx}`} className="text-justify mb-2">
+                        {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
+                      </p>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* Signatures */}
+              <div className="text-center mt-12 space-y-8 pb-16">
+                <div>
+                  <p className="mb-2">Cordialmente,</p>
+                  {proposalData.selectedPartners.length > 0 ? proposalData.selectedPartners.map(p => (
+                    <p key={p.id} className="bg-yellow-200/50 px-1 font-bold block">{p.name}</p>
+                  )) : (
+                    <p className="bg-yellow-200/50 px-1 font-bold inline-block">[Incluir nome do sócio]</p>
+                  )}
+                  <p className="font-bold">SALOMÃO ADVOGADOS</p>
+                </div>
+
+                <div>
+                  <p className="bg-yellow-200/50 px-1 font-bold inline-block uppercase">{proposalData.clientName || '[CLIENTE]'}</p>
+                </div>
+
+                <div className="text-left mt-8">
+                  <p>De acordo em: ___/___/___</p>
+                </div>
               </div>
             </div>
-
-            {/* Footer simulation */}
-            <div className="mt-12 pt-4 flex justify-between items-end border-t border-transparent opacity-50">
-              <img src="/rodape1.png" className="h-4 object-contain" alt="Footer 1" onError={(e) => e.currentTarget.style.display = 'none'} />
-              <img src="/rodape2.png" className="h-6 object-contain" alt="Footer 2" onError={(e) => e.currentTarget.style.display = 'none'} />
-            </div>
-
           </div>
         </div>
 
