@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    ShieldCheck,
     Lock,
     Database,
     Zap,
@@ -208,7 +207,6 @@ export function Presentation({ onModuleHome }: PresentationProps) {
 
                 {/* Call to action / Closing */}
                 <section className="text-center">
-                    <h2 className="text-4xl font-bold mb-8">Preparado para o futuro?</h2>
                     <button
                         onClick={onModuleHome}
                         className="px-12 py-4 rounded-full bg-[#d4af37] text-[#0a192f] font-black uppercase tracking-widest text-sm hover:bg-[#b8962f] hover:scale-105 transition-all shadow-xl shadow-[#d4af37]/20"
@@ -216,7 +214,7 @@ export function Presentation({ onModuleHome }: PresentationProps) {
                         Acessar Ecossistema
                     </button>
                     <p className="mt-8 text-white/30 text-xs font-medium uppercase tracking-[0.2em]">
-                        Desenvolvido por Brunno Gama em parceria com Antigravity AI
+                        Desenvolvido por Marcio Gama em parceria com Antigravity AI
                     </p>
                 </section>
             </main>
