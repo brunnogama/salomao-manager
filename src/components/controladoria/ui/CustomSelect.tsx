@@ -14,6 +14,7 @@ interface CustomSelectProps {
   actionIcon?: React.ElementType;
   className?: string;
   allowCustomValue?: boolean;
+  onFocus?: () => void;
 }
 
 export function CustomSelect({
@@ -27,7 +28,8 @@ export function CustomSelect({
   actionLabel,
   actionIcon: ActionIcon = Plus,
   className = '',
-  allowCustomValue = false
+  allowCustomValue = false,
+  onFocus
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -178,7 +180,12 @@ export function CustomSelect({
 
       <button
         type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!disabled) {
+            setIsOpen(!isOpen);
+            if (onFocus) onFocus();
+          }
+        }}
         disabled={disabled}
         className={`w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-white focus:border-salomao-blue outline-none flex justify-between items-center transition-all ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'hover:border-gray-400'
           } ${isOpen ? 'border-salomao-blue ring-1 ring-salomao-blue' : ''}`}

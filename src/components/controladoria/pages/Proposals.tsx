@@ -86,22 +86,43 @@ export function Proposals() {
   useEffect(() => {
     const calculatePages = () => {
       if (previewContentRef.current && previewContainerRef.current) {
+        // Safe area is where the text actually lives, between header and footer
+        // Looking at the paper, header is roughly 120px and footer is 100px on a ~700px container
         const containerHeight = previewContainerRef.current.offsetHeight;
+        const headerHeight = containerHeight * 0.18; // approx
+        const footerHeight = containerHeight * 0.15; // approx
+        const safeAreaHeight = containerHeight - headerHeight - footerHeight;
+
         const contentHeight = previewContentRef.current.scrollHeight;
-        if (containerHeight > 0) {
-          const pages = Math.ceil(contentHeight / containerHeight);
+        if (safeAreaHeight > 0) {
+          const pages = Math.ceil(contentHeight / safeAreaHeight);
           setTotalPages(pages > 0 ? pages : 1);
-          if (currentPage >= pages && pages > 0) {
-            setCurrentPage(pages - 1);
-          }
         }
       }
     };
 
-    // Small timeout to ensure content is rendered before measuring
-    const timeoutId = setTimeout(calculatePages, 200);
+    const timeoutId = setTimeout(calculatePages, 300);
     return () => clearTimeout(timeoutId);
-  }, [proposalData, customBodyText, isEditingBody, currentPage, partners]); // Added partners to dependencies
+  }, [proposalData, customBodyText, isEditingBody, partners]);
+
+  const jumpToPage = (pageIndex: number) => {
+    if (pageIndex >= 0 && pageIndex < totalPages) {
+      setCurrentPage(pageIndex);
+    }
+  };
+
+  const jumpToFieldPage = (fieldName: string) => {
+    // Basic heuristic: Object/Clauses are usually on page 1 or 2
+    if (['pro_labore_clauses', 'intermediate_fee_clauses', 'final_success_fee_clauses'].includes(fieldName)) {
+      // These are usually further down. If content is long, might be p2.
+      // For now, let's just jump to where the content is if we can detect it.
+      // Simpler: just jump based on field type for now as a first step.
+      if (fieldName === 'final_success_fee_clauses') jumpToPage(Math.min(1, totalPages - 1));
+      else jumpToPage(0);
+    } else {
+      jumpToPage(0);
+    }
+  };
 
   // Fetch Inputs
   useEffect(() => {
@@ -689,7 +710,7 @@ export function Proposals() {
               <input
                 type="text"
                 value={clause.value}
-                onChange={(e) => updateClause(type, index, 'value', e.target.value)}
+                onFocus={() => jumpToFieldPage(type)}
                 placeholder={showTypeToggle ? (clause.type === 'currency' ? valuePlaceholder : '0%') : valuePlaceholder}
                 className={`w-full p-3.5 text-sm font-bold text-gray-700 outline-none bg-transparent ${!showTypeToggle ? 'pl-4' : ''}`}
               />
@@ -701,6 +722,7 @@ export function Proposals() {
               type="text"
               value={clause.description}
               onChange={(e) => updateClause(type, index, 'description', e.target.value)}
+              onFocus={() => jumpToFieldPage(type)}
               placeholder={descPlaceholder}
               className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all shadow-sm"
             />
@@ -794,6 +816,7 @@ export function Proposals() {
                 onChange={handleClientNameChange}
                 options={clientOptions}
                 placeholder="Selecione ou digite o nome"
+                onFocus={() => jumpToPage(0)}
                 allowCustomValue={true}
               />
             </div>
@@ -827,6 +850,7 @@ export function Proposals() {
                   onChange={handleChange}
                   placeholder="00.000.000/0000-00"
                   disabled={proposalData.isPerson}
+                  onFocus={() => jumpToPage(0)}
                   className={`w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all ${proposalData.isPerson ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
                 />
                 <button
@@ -867,6 +891,7 @@ export function Proposals() {
                   value=""
                   onChange={(val) => handlePartnerAdd(val)}
                   options={partners.filter(p => !proposalData.selectedPartners.some(sp => sp.id === p.id)).map(p => ({ label: p.name, value: p.id }))}
+                  onFocus={() => jumpToPage(0)}
                   placeholder="+ Adicionar um sócio..."
                   className="w-full"
                 />
@@ -907,6 +932,7 @@ export function Proposals() {
                 onChange={(val) => setProposalData(prev => ({ ...prev, contractLocation: val }))}
                 options={locationOptions}
                 allowCustomValue={true}
+                onFocus={() => jumpToPage(0)}
                 placeholder="Selecione ou digite a cidade"
               />
             </div>
@@ -919,6 +945,7 @@ export function Proposals() {
                 value={proposalData.reference}
                 onChange={handleChange}
                 placeholder="Ex: Contrato de Honorários..."
+                onFocus={() => jumpToPage(0)}
                 className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
               />
             </div>
@@ -931,6 +958,7 @@ export function Proposals() {
                 onChange={handleChange}
                 rows={3}
                 placeholder="Ex: Assessoria Jurídica na ação..."
+                onFocus={() => jumpToPage(0)}
                 className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none resize-none bg-gray-50/50 transition-all"
               />
             </div>
@@ -966,12 +994,11 @@ export function Proposals() {
         </div>
 
         {/* DIREITA: Preview Visual */}
-        {/* DIREITA: Preview Visual */}
-        <div className="bg-white p-4 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center relative min-h-[500px] sm:min-h-[800px]">
+        <div className="bg-white p-4 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center relative min-h-[500px] sm:min-h-[900px]">
           <p className="absolute top-4 right-6 text-[9px] font-black text-gray-300 uppercase tracking-widest hidden sm:flex items-center gap-1">
             <Eye className="w-3 h-3" /> Visualização em Tempo Real
           </p>
-
+          
           <div className="w-full flex flex-col items-center gap-6 z-10 mt-6 sm:mt-0">
             <button
               onClick={() => {
@@ -987,23 +1014,23 @@ export function Proposals() {
 
             {/* Pagination Controls */}
             <div className="flex items-center gap-6 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 shadow-sm">
-              <button
+              <button 
                 onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                 disabled={currentPage === 0}
                 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#1e3a8a] disabled:opacity-30 transition-all hover:translate-x-[-2px]"
               >
                 <ChevronLeft className="w-4 h-4" /> Voltar
               </button>
-
+              
               <div className="h-4 w-[1px] bg-gray-200"></div>
-
+              
               <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
                 Página {currentPage + 1} de {totalPages}
               </span>
-
+              
               <div className="h-4 w-[1px] bg-gray-200"></div>
 
-              <button
+              <button 
                 onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
                 disabled={currentPage === totalPages - 1}
                 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#1e3a8a] disabled:opacity-30 transition-all hover:translate-x-[2px]"
@@ -1013,194 +1040,243 @@ export function Proposals() {
             </div>
           </div>
 
-          {/* A4 Paper Simulation with letterhead */}
-          <div
-            ref={previewContainerRef}
-            className="w-full max-w-[500px] aspect-[21/29.7] bg-white shadow-2xl border border-gray-100 overflow-hidden relative mt-4 transform scale-100 transition-transform duration-500"
-            style={{
-              backgroundImage: "url('/papel-timbrado.png')",
-              backgroundSize: '100% 100%',
-              backgroundRepeat: 'no-repeat'
-            }}
-          >
-            <div
-              ref={previewContentRef}
-              className="px-12 md:px-16 text-left text-[#0a192f] text-[10px] leading-relaxed select-none transition-transform duration-500 ease-in-out h-fit"
-              style={{ transform: `translateY(-${currentPage * (previewContainerRef.current?.offsetHeight || 0)}px)` }}
+          {/* Page Slider Container */}
+          <div className="w-full max-w-[500px] overflow-hidden mt-6 flex justify-center">
+            <div 
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ transform: f"translateX(-{currentPage * 100}%)", width: f"{totalPages * 100}%" }}
             >
+              {Array.from({ length: totalPages }).map((_, pageIdx) => (
+                <div 
+                  key={pageIdx}
+                  className="w-full shrink-0 flex justify-center"
+                >
+                  {/* A4 Page Simulation */}
+                  <div 
+                    className="w-full max-w-[500px] aspect-[21/29.7] bg-white shadow-2xl border border-gray-100 overflow-hidden relative"
+                    style={{ 
+                      backgroundImage: "url('/papel-timbrado.png')", 
+                      backgroundSize: '100% 100%',
+                      backgroundRepeat: 'no-repeat'
+                    }}
+                  >
+                    {/* Safe Area Container - Header/Footer Protection */}
+                    <div className="absolute inset-0 flex flex-col pt-[18%] pb-[16%]">
+                       {/* Content Clipper */}
+                       <div className="flex-1 overflow-hidden px-12 md:px-16">
+                          <div 
+                            style={{ 
+                              transform: f"translateY(-{pageIdx * 100}%)",
+                              height: 'fit-content'
+                            }}
+                          >
+                             {/* The Content itself */}
+                             <div className="text-left text-[#0a192f] text-[10px] leading-relaxed select-none h-fit pt-4">
 
-              {/* Date */}
-              <div className="text-right mb-6 pt-16">
-                <span className="bg-yellow-200/50 px-1">{proposalData.contractLocation}, {today}</span>.
-              </div>
+                                {pageIdx === 0 && (
+                                  <>
+                                    {/* Date */}
+                                    <div className="text-right mb-6">
+                                      <span className="bg-yellow-200/50 px-1">{proposalData.contractLocation}, {today}</span>.
+                                    </div>
 
-              {/* Addressee */}
-              <div className="mb-6 font-bold">
-                <p>AO <span className="bg-yellow-200/50 px-1 uppercase">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span></p>
-                {!proposalData.isPerson && (
-                  <p className="mt-1"><span className="bg-yellow-200/50 px-1">{proposalData.cnpj || '[CNPJ da empresa cliente]'}</span></p>
-                )}
-              </div>
+                                    {/* Addressee */}
+                                    <div className="mb-6 font-bold">
+                                      <p>AO <span className="bg-yellow-200/50 px-1 uppercase">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span></p>
+                                      {!proposalData.isPerson && (
+                                        <p className="mt-1"><span className="bg-yellow-200/50 px-1">{proposalData.cnpj || '[CNPJ da empresa cliente]'}</span></p>
+                                      )}
+                                    </div>
 
-              {/* Ref */}
-              <div className="mb-4">
-                <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir referência da proposta]'}</span></p>
-                <p><strong>Cód.:</strong> <span className="bg-yellow-200/50 px-1">[código proposta]</span></p>
-              </div>
+                                    {/* Ref */}
+                                    <div className="mb-4">
+                                      <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir referência da proposta]'}</span></p>
+                                      <p><strong>Cód.:</strong> <span className="bg-yellow-200/50 px-1">[código proposta]</span></p>
+                                    </div>
 
-              <p className="mb-4">Prezados,</p>
+                                    <p className="mb-4">Prezados,</p>
 
-              <p className="text-justify mb-4">
-                É com grande honra que <strong>SALOMÃO ADVOGADOS</strong>, neste ato representado, respectivamente, por seus sócios
-                {proposalData.selectedPartners.length > 0 ? (
-                  proposalData.selectedPartners.map((p, idx) => (
-                    <span key={p.id}>
-                      {idx > 0 && ", e "}
-                      <span className="bg-yellow-200/50 px-1 font-bold ml-1">{p.name}</span>
-                      {(() => {
-                        const data = p.collaboratorData;
-                        const gender = data?.gender || p.gender || 'M';
-                        const isFem = ['F', 'Feminino', 'Female'].includes(gender);
+                                    <p className="text-justify mb-4">
+                                      É com grande honra que <strong>SALOMÃO ADVOGADOS</strong>, neste ato representado, respectivamente, por seus sócios
+                                      {proposalData.selectedPartners.length > 0 ? (
+                                        proposalData.selectedPartners.map((p, idx) => (
+                                          <span key={p.id}>
+                                            {idx > 0 && ", e "}
+                                            <span className="bg-yellow-200/50 px-1 font-bold ml-1">{p.name}</span>
+                                            {(() => {
+                                              const data = p.collaboratorData;
+                                              const gender = data?.gender || p.gender || 'M';
+                                              const isFem = ['F', 'Feminino', 'Female'].includes(gender);
 
-                        const oab = data?.oab_numero || p.oab_number || 'XXXXXX';
-                        const oabUf = data?.oab_uf || p.oab_state || 'RJ';
-                        const cpf = data?.cpf || p.cpf || 'XXX.XXX.XXX-XX';
+                                              const oab = data?.oab_numero || p.oab_number || 'XXXXXX';
+                                              const oabUf = data?.oab_uf || p.oab_state || 'RJ';
+                                              const cpf = data?.cpf || p.cpf || 'XXX.XXX.XXX-XX';
 
-                        const civil = data?.civil_status ? data.civil_status.toLowerCase() : 'casado';
-                        const nacionalidade = data?.nacionalidade ? data.nacionalidade.toLowerCase() : 'brasileiro';
+                                              const civil = data?.civil_status ? data.civil_status.toLowerCase() : 'casado';
+                                              const nacionalidade = data?.nacionalidade ? data.nacionalidade.toLowerCase() : 'brasileiro';
 
-                        // Inflections
-                        const textNacionalidade = isFem && nacionalidade.includes('brasileir') ? 'brasileira' : nacionalidade;
-                        const textCivil = isFem && civil.includes('casad') ? 'casada' : (isFem && civil.includes('solteir') ? 'solteira' : civil);
-                        const textAdvogado = isFem ? 'advogada' : 'advogado';
-                        const textInscrito = isFem ? 'inscrita' : 'inscrito';
-                        const textPortador = isFem ? 'portadora' : 'portador';
+                                              // Inflections
+                                              const textNacionalidade = isFem && nacionalidade.includes('brasileir') ? 'brasileira' : nacionalidade;
+                                              const textCivil = isFem && civil.includes('casad') ? 'casada' : (isFem && civil.includes('solteir') ? 'solteira' : civil);
+                                              const textAdvogado = isFem ? 'advogada' : 'advogado';
+                                              const textInscrito = isFem ? 'inscrita' : 'inscrito';
+                                              const textPortador = isFem ? 'portadora' : 'portador';
 
-                        return `, ${textNacionalidade}, ${textCivil}, ${textAdvogado}, ${textInscrito} na OAB/${oabUf} sob o nº ${oab}, ${textPortador} do CPF/MF nº ${cpf}`;
-                      })()}
-                    </span>
-                  ))
-                ) : (
-                  <span className="bg-yellow-200/50 px-1 font-bold ml-1">[incluir nome do sócio]</span>
-                )}
-                , vem formular a presente proposta de honorários...
-              </p>
+                                              return f", {textNacionalidade}, {textCivil}, {textAdvogado}, {textInscrito} na OAB/{oabUf} sob o nº {oab}, {textPortador} do CPF/MF nº {cpf}";
+                                            })()}
+                                          </span>
+                                        ))
+                                      ) : (
+                                        <span className="bg-yellow-200/50 px-1 font-bold ml-1">[incluir nome do sócio]</span>
+                                      )}
+                                      , vem formular a presente proposta de honorários...
+                                    </p>
+                                  </>
+                                )}
 
-              {customBodyText ? (
-                <div className="mb-4 space-y-4 text-justify whitespace-pre-line leading-relaxed pb-8">
-                  {customBodyText.split('\n\n').map((paragraph, idx) => {
-                    const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
+                                {customBodyText ? (
+                                  <div className="mb-4 space-y-4 text-justify whitespace-pre-line leading-relaxed pb-8">
+                                    {customBodyText.split('\n\n').map((paragraph, idx) => {
+                                      const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
 
-                    return (
-                      <p key={idx} className={`${isHeading ? 'font-bold mt-4' : ''}`}>
-                        {paragraph}
-                      </p>
-                    )
-                  })}
+                                      return (
+                                        <p key={idx} className={isHeading ? 'font-bold mt-4' : ''}>
+                                          {paragraph}
+                                        </p>
+                                      )
+                                    })}
+                                  </div>
+                                ) : (
+                                  <>
+                                    {/* 1. Objeto */}
+                                    <p className="font-bold mb-2">1. OBJETO E ESCOPO DO SERVIÇO:</p>
+                                    <p className="text-justify mb-4">
+                                      1.1. O objeto da presente proposta é a assessoria jurídica... em favor do Cliente
+                                      <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
+                                      no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
+                                    </p>
+
+                                    {/* 2. Honorários */}
+                                    <p className="font-bold mb-2 break-before-page mt-6">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
+                                    <p className="text-justify mb-2">
+                                      2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
+                                    </p>
+
+                                    {/* Dynamic Clauses Preview */}
+                                    {proposalData.pro_labore_clauses.map((clause, idx) => {
+                                      const num = f"2.{2 + idx}";
+                                      let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                                      let extensoPart = "";
+                                      if (clause.value) {
+                                        if (clause.type === 'currency') {
+                                          extensoPart = f"({moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})";
+                                        } else {
+                                          extensoPart = f"({percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})";
+                                        }
+                                      }
+                                      return (
+                                        <p key={f"pl-{idx}"} className="text-justify mb-2">
+                                          {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
+                                        </p>
+                                      );
+                                    })}
+
+                                    {/* Intermediate (Starts after Pro-Labore) */}
+                                    {proposalData.intermediate_fee_clauses.map((clause, idx) => {
+                                      const base = 2 + proposalData.pro_labore_clauses.length;
+                                      const num = f"2.{base + idx}";
+                                      let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                                      let extensoPart = "";
+                                      if (clause.value) {
+                                        if (clause.type === 'currency') {
+                                          extensoPart = f"({moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})";
+                                        } else {
+                                          extensoPart = f"({percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})";
+                                        }
+                                      }
+                                      return (
+                                        <p key={f"int-{idx}"} className="text-justify mb-2">
+                                          {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
+                                        </p>
+                                      );
+                                    })}
+
+                                    {/* Final Success - Unified */}
+                                    {proposalData.final_success_fee_clauses.map((clause, idx) => {
+                                      const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
+                                      const num = f"2.{base + idx}";
+
+                                      let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
+                                      let extensoPart = "";
+                                      if (clause.value) {
+                                        if (clause.type === 'currency') {
+                                          extensoPart = f"({moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})";
+                                        } else {
+                                          extensoPart = f"({percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})";
+                                        }
+                                      }
+
+                                      return (
+                                        <p key={f"sf-unified-{idx}"} className="text-justify mb-2">
+                                          {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
+                                        </p>
+                                      );
+                                    })}
+                                  </>
+                                )}
+
+                                {/* Signatures */}
+                                <div className="text-center mt-12 space-y-8 pb-16">
+                                  <div>
+                                    <p className="mb-2">Cordialmente,</p>
+                                    {proposalData.selectedPartners.length > 0 ? proposalData.selectedPartners.map(p => (
+                                      <p key={p.id} className="bg-yellow-200/50 px-1 font-bold block">{p.name}</p>
+                                    )) : (
+                                      <p className="bg-yellow-200/50 px-1 font-bold inline-block">[Incluir nome do sócio]</p>
+                                    )}
+                                    <p className="font-bold">SALOMÃO ADVOGADOS</p>
+                                  </div>
+
+                                  <div>
+                                    <p className="bg-yellow-200/50 px-1 font-bold inline-block uppercase">{proposalData.clientName || '[CLIENTE]'}</p>
+                                  </div>
+
+                                  <div className="text-left mt-8">
+                                    <p>De acordo em: ___/___/___</p>
+                                  </div>
+                                </div>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <>
-                  {/* 1. Objeto */}
-                  <p className="font-bold mb-2">1. OBJETO E ESCOPO DO SERVIÇO:</p>
-                  <p className="text-justify mb-4">
-                    1.1. O objeto da presente proposta é a assessoria jurídica... em favor do Cliente
-                    <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
-                    no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
-                  </p>
-
-                  {/* 2. Honorários */}
-                  <p className="font-bold mb-2 break-before-page mt-6">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
-                  <p className="text-justify mb-2">
-                    2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
-                  </p>
-
-                  {/* Dynamic Clauses Preview */}
-                  {proposalData.pro_labore_clauses.map((clause, idx) => {
-                    const num = `2.${2 + idx}`;
-                    let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-                    let extensoPart = "";
-                    if (clause.value) {
-                      if (clause.type === 'currency') {
-                        extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-                      } else {
-                        extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-                      }
-                    }
-                    return (
-                      <p key={`pl-${idx}`} className="text-justify mb-2">
-                        {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-                      </p>
-                    );
-                  })}
-
-                  {/* Intermediate (Starts after Pro-Labore) */}
-                  {proposalData.intermediate_fee_clauses.map((clause, idx) => {
-                    const base = 2 + proposalData.pro_labore_clauses.length;
-                    const num = `2.${base + idx}`;
-                    let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-                    let extensoPart = "";
-                    if (clause.value) {
-                      if (clause.type === 'currency') {
-                        extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-                      } else {
-                        extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-                      }
-                    }
-                    return (
-                      <p key={`int-${idx}`} className="text-justify mb-2">
-                        {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-                      </p>
-                    );
-                  })}
-
-                  {/* Final Success - Unified */}
-                  {proposalData.final_success_fee_clauses.map((clause, idx) => {
-                    const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
-                    const num = `2.${base + idx}`;
-
-                    let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-                    let extensoPart = "";
-                    if (clause.value) {
-                      if (clause.type === 'currency') {
-                        extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-                      } else {
-                        extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-                      }
-                    }
-
-                    return (
-                      <p key={`sf-unified-${idx}`} className="text-justify mb-2">
-                        {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-                      </p>
-                    );
-                  })}
-                </>
-              )}
-
-              {/* Signatures */}
-              <div className="text-center mt-12 space-y-8 pb-16">
-                <div>
-                  <p className="mb-2">Cordialmente,</p>
-                  {proposalData.selectedPartners.length > 0 ? proposalData.selectedPartners.map(p => (
-                    <p key={p.id} className="bg-yellow-200/50 px-1 font-bold block">{p.name}</p>
-                  )) : (
-                    <p className="bg-yellow-200/50 px-1 font-bold inline-block">[Incluir nome do sócio]</p>
-                  )}
-                  <p className="font-bold">SALOMÃO ADVOGADOS</p>
-                </div>
-
-                <div>
-                  <p className="bg-yellow-200/50 px-1 font-bold inline-block uppercase">{proposalData.clientName || '[CLIENTE]'}</p>
-                </div>
-
-                <div className="text-left mt-8">
-                  <p>De acordo em: ___/___/___</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
-        </div>
 
+          {/* Hidden measuring content */}
+          <div className="absolute opacity-0 pointer-events-none w-full max-w-[500px] overflow-hidden" style={{ padding: '18% 4rem 16% 4rem' }}>
+             <div ref={previewContentRef}>
+                <div className="text-left text-[#0a192f] text-[10px] leading-relaxed">
+                   <div className="pt-4">
+                      <div className="text-right mb-6">
+                        <span>{proposalData.contractLocation}, {today}</span>.
+                      </div>
+                      <div className="mb-6 font-bold uppercase">{proposalData.clientName}</div>
+                      <div className="mb-4"><strong>Ref:</strong> {proposalData.reference}</div>
+                      <div>Prezados,</div>
+                      <div className="mb-4 whitespace-pre-line">
+                         {customBodyText || "representado por seus sócios... formulamos proposta..."}
+                      </div>
+                      <div className="mt-12">Cordialmente, SALOMÃO ADVOGADOS</div>
+                      <div className="mt-8 uppercase">{proposalData.clientName}</div>
+                   </div>
+                </div>
+             </div>
+             <div ref={previewContainerRef} className="aspect-[21/29.7] w-full"></div>
+          </div>
+        </div>\n
       </div>
 
       {/* Hidden Modal to open after generation */}
