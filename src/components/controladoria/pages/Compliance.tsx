@@ -82,27 +82,56 @@ export function Compliance() {
 
   const fetchLocations = async () => {
     setLoading(true);
-    // Tentamos buscar da nova tabela. Se não existir, voltamos para o fallback dos contratos
-    const { data: offices } = await supabase.from('office_locations').select('name, cnpj').eq('active', true).order('name');
+    try {
+      const [{ data: offices }, { data: contracts }] = await Promise.all([
+        supabase.from('office_locations').select('name, cnpj').eq('active', true),
+        supabase.from('contracts').select('billing_location')
+      ]);
 
-    if (offices && offices.length > 0) {
-      setLocationsList(offices);
-      // Atualiza o mapa de CNPJs dinamicamente com base no banco
-      offices.forEach(loc => {
+      const combinedLocations = new Map<string, { name: string; cnpj?: string }>();
+
+      // 1. Iniciar com os locais base do CNPJ_MAP
+      Object.keys(CNPJ_MAP).forEach(name => {
+        combinedLocations.set(name, { name, cnpj: CNPJ_MAP[name] });
+      });
+
+      // 2. Mesclar com dados da tabela office_locations
+      offices?.forEach(loc => {
+        // Normaliza "Belém" para "Salomão PA" se necessário
+        const name = (loc.name === 'Belém' || loc.name === 'Belem') ? 'Salomão PA' : loc.name;
+
+        // Se já existe, atualiza o CNPJ se o do banco for mais recente/preenchido
+        const existing = combinedLocations.get(name);
+        combinedLocations.set(name, {
+          name,
+          cnpj: loc.cnpj || existing?.cnpj || ''
+        });
+
+        // Atualiza também o mapa global para ações de emissão
         if (loc.cnpj) {
-          CNPJ_MAP[loc.name] = loc.cnpj;
+          CNPJ_MAP[name] = loc.cnpj;
         }
       });
-    } else {
-      // Fallback para não quebrar a UI antes do usuário rodar o SQL
-      const { data: contracts } = await supabase.from('contracts').select('billing_location');
-      if (contracts) {
-        const unique = Array.from(new Set(contracts.map(c => (c as any).billing_location).filter(Boolean)));
-        const sorted = unique.sort() as string[];
-        setLocationsList(sorted.map(name => ({ name })));
-      }
+
+      // 3. Mesclar com locais encontrados nos contratos (billing_location)
+      contracts?.forEach(c => {
+        const name = (c as any).billing_location;
+        if (name && !combinedLocations.has(name)) {
+          combinedLocations.set(name, { name });
+        }
+      });
+
+      const sortedList = Array.from(combinedLocations.values())
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      setLocationsList(sortedList);
+    } catch (error) {
+      console.error('Erro ao buscar locais:', error);
+      // Fallback mínimo se tudo falhar
+      setLocationsList(Object.keys(CNPJ_MAP).map(name => ({ name, cnpj: CNPJ_MAP[name] })));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
 
