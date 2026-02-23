@@ -138,7 +138,7 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                 const rowNum = i + 2 // 1-based + header
 
                 try {
-                    const rowNome = row['Nome']
+                    const rowNome = row['Nome'] || row['Nome Completo']
                     const rowCpf = row['CPF'] ? String(row['CPF']).replace(/\D/g, '') : null
 
                     if (!rowNome) {
@@ -148,13 +148,13 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                     // Map CSV/Excel fields to DB fields
                     const dbRow: any = {
                         name: rowNome,
-                        email: row['Email'],
+                        email: row['Email'] || row['Email Corporativo'],
                         cpf: rowCpf,
                         rg: row['RG'],
                         birthday: parseDate(row['Data Nascimento']),
                         gender: row['Gênero'],
                         civil_status: row['Estado Civil'],
-                        has_children: String(row['Filhos (Sim/Não)'] || '').toLowerCase() === 'sim',
+                        has_children: String(row['Filhos (Sim/Não)'] || row['Possui Filhos?'] || '').toLowerCase() === 'sim',
                         children_count: Number(row['Quantidade de Filhos']) || 0,
 
                         // Address
@@ -172,7 +172,7 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         emergencia_parentesco: row['Parentesco Emergência'],
 
                         // Corporate
-                        hire_date: parseDate(row['Admissão']),
+                        hire_date: parseDate(row['Admissão'] || row['Data Admissão']),
                         // Logic update: Support 'Status' or 'Status (Ativo/Inativo)'
                         // Only set status if one of the columns is present
                         status: (() => {
@@ -180,14 +180,14 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                             if (rawStatus === undefined || rawStatus === null || String(rawStatus).trim() === '') return undefined;
                             return String(rawStatus).trim().toLowerCase() === 'inativo' ? 'inactive' : 'active';
                         })(),
-                        contract_type: row['Tipo Contratação'],
+                        contract_type: row['Tipo Contratação'] || row['Tipo Contrato'],
 
                         // Foreign Keys mapping
                         role: findId(roles, row['Cargo']),
                         area: (row['Área'] === 'Administrativa' || row['Área'] === 'Jurídica') ? row['Área'] : undefined,
-                        equipe: findId(teams, row['Equipe']),
-                        partner_id: findId(partners, row['Sócio']),
-                        leader_id: findId(collaborators, row['Líder']),
+                        equipe: findId(teams, row['Equipe'] || row['Equipe/Área']),
+                        partner_id: findId(partners, row['Sócio'] || row['Sócio Responsável']),
+                        leader_id: findId(collaborators, row['Líder'] || row['Líder Direto']),
                         local: findId(locations, row['Local']),
                         centro_custo: findId(centers, row['Centro de Custo']),
                         rateio_id: findId(rateios, row['Rateio']),
@@ -200,9 +200,24 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
 
                         // Professional
-                        oab_numero: String(row['Número da OAB'] || ''),
+                        oab_numero: String(row['OAB Número'] || row['Número da OAB'] || ''),
                         oab_uf: row['OAB UF']?.trim().toUpperCase().substring(0, 2),
                         oab_emissao: parseDate(row['OAB Emissão']),
+                        oab_tipo: row['Tipo Inscrição OAB'],
+                        pis: row['PIS/PASEP'],
+                        matricula_esocial: row['Matrícula e-Social'],
+                        dispensa_militar: row['Dispensa Militar'],
+                        ctps: row['CTPS'],
+                        ctps_serie: row['Série CTPS'],
+                        ctps_uf: row['UF CTPS'],
+                        escolaridade_nivel: row['Nível Escolaridade'],
+                        escolaridade_subnivel: row['Subnível'],
+                        escolaridade_instituicao: row['Instituição'],
+                        escolaridade_curso: row['Curso'],
+                        escolaridade_matricula: row['Matrícula Escolar'],
+                        escolaridade_semestre: row['Semestre'],
+                        escolaridade_previsao_conclusao: parseDate(row['Previsão Conclusão']),
+                        history_observations: row['Observações Histórico'],
 
 
 
