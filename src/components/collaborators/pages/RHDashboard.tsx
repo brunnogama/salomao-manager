@@ -160,7 +160,7 @@ export function RHDashboard() {
   const currentMonth = today.getMonth() + 1 // 1-12
   const currentYear = today.getFullYear()
 
-  const activeColabs = useMemo(() => colaboradores.filter(c => isActiveAtDate(c, today)), [colaboradores, today])
+  const activeColabs = useMemo(() => colaboradores.filter(c => c.status === 'active'), [colaboradores])
 
   // 1. Aniversariantes do Mês
   const birthdaysThisMonth = useMemo(() => {
