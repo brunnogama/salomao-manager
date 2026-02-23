@@ -19,7 +19,7 @@ const CNPJ_MAP: Record<string, string> = {
   'Salomão BA': '63.808.246/0001-04',
   'Salomão DF': '52.361.325/0001-01',
   'Salomão ES': '52.033.582/0001-06',
-  'Salomão PA': '', // Will be populated from DB if available
+  'Salomão PA': '64.274.917/0001-67',
   'Salomão RJ': '14.493.710/0001-05',
   'Salomão SC': '62.793.384/0001-02',
   'Salomão SP': '33.789.321/0001-76'
@@ -71,7 +71,7 @@ export function Compliance() {
     const { data, error } = await supabase
       .from('certificates')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('due_date', { ascending: true, nullsFirst: false });
 
     if (data) {
       setCertificates(data);
@@ -169,18 +169,16 @@ export function Compliance() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 7 dias úteis = Aprox 10 dias corridos
+    // 3 dias úteis = Aprox 5 dias corridos
     const warningThreshold = new Date();
-    warningThreshold.setDate(today.getDate() + 10);
+    warningThreshold.setDate(today.getDate() + 5);
 
     // Filtrar por local se não estiver no dashboard ou GED
     const relevantCertificates = (activeTab === 'dashboard' || activeTab === 'ged')
-      ? certificates
+      ? certificates.filter(c => getCertName(c) !== 'Comprovante de Inscrição e de Situação Cadastral')
       : certificates.filter(c => c.location === activeTab);
 
     const active = relevantCertificates.filter(c => {
-      // Exceção: Comprovante de Inscrição e de Situação Cadastral nunca é contado como vencido/alerta
-      if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return true;
       if (!c.due_date) return true;
       const dDate = parseLocalDate(c.due_date);
       return dDate && dDate >= today;
@@ -193,16 +191,12 @@ export function Compliance() {
     });
 
     const expiringSoon = active.filter(c => {
-      // Exceção: Comprovante de Inscrição e de Situação Cadastral
-      if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return false;
       if (!c.due_date) return false;
       const dDate = parseLocalDate(c.due_date);
       return dDate && dDate <= warningThreshold;
     });
 
     const expiringMonth = active.filter(c => {
-      // Exceção: Comprovante de Inscrição e de Situação Cadastral
-      if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return false;
       if (!c.due_date) return false;
       const dDate = parseLocalDate(c.due_date);
       const thirtyDaysOut = new Date(today);
@@ -229,14 +223,14 @@ export function Compliance() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const warningThreshold = new Date(today);
-    warningThreshold.setDate(today.getDate() + 10);
+    warningThreshold.setDate(today.getDate() + 5);
 
     return certificates.reduce((acc, c) => {
       if (!c.due_date || !c.location) return acc;
       // Exceção: Comprovante de Inscrição e de Situação Cadastral
       if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return acc;
       const dDate = parseLocalDate(c.due_date);
-      // Inclui vencidas (dDate < today) OU a vencer em 10 dias (dDate <= warningThreshold)
+      // Inclui vencidas (dDate < today) OU a vencer em 3 dias úteis (dDate <= warningThreshold)
       if (dDate && dDate <= warningThreshold) {
         acc[c.location] = (acc[c.location] || 0) + 1;
       }
@@ -248,14 +242,16 @@ export function Compliance() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const warningThreshold = new Date(today);
-    warningThreshold.setDate(today.getDate() + 10);
+    warningThreshold.setDate(today.getDate() + 5);
 
     const dataByLocation = certificates.reduce((acc, c) => {
+      if (getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') return acc;
+
       const dDate = parseLocalDate(c.due_date);
       const loc = c.location || 'Não Informado';
       if (!acc[loc]) acc[loc] = { valid: 0, expiring: 0, expired: 0 };
 
-      if (!c.due_date || getCertName(c) === 'Comprovante de Inscrição e de Situação Cadastral') {
+      if (!c.due_date) {
         acc[loc].valid += 1;
       } else if (dDate && dDate < today) {
         acc[loc].expired += 1;
@@ -271,7 +267,7 @@ export function Compliance() {
       name,
       data: [
         { name: 'Em Dia', value: counts.valid, color: '#1e3a8a' },
-        { name: '7 Dias Úteis', value: counts.expiring, color: '#facc15' },
+        { name: '3 Dias Úteis', value: counts.expiring, color: '#facc15' },
         { name: 'Vencida', value: counts.expired, color: '#ef4444' }
       ],
       total: counts.valid + counts.expiring + counts.expired
@@ -568,7 +564,7 @@ export function Compliance() {
                     </div>
                     <div className="flex gap-4 text-[9px] font-black uppercase tracking-tighter">
                       <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#1e3a8a]" /> Em Dia</div>
-                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#facc15]" /> 7 Dias Úteis</div>
+                      <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#facc15]" /> 3 Dias Úteis</div>
                       <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#ef4444]" /> Vencidas</div>
                     </div>
                   </div>
@@ -718,7 +714,12 @@ export function Compliance() {
                               <td className="px-6 py-4 text-xs font-semibold text-gray-500">
                                 {c.cnpj || '-'}
                               </td>
-                              <td className="px-6 py-4 font-semibold text-gray-600 text-xs">
+                              <td className={`px-6 py-4 font-bold text-xs ${c.due_date && parseLocalDate(c.due_date)! <= new Date()
+                                  ? 'text-red-600'
+                                  : (c.due_date && parseLocalDate(c.due_date)! <= new Date(new Date().setHours(0, 0, 0, 0) + 5 * 24 * 60 * 60 * 1000))
+                                    ? 'text-red-600'
+                                    : 'text-gray-600'
+                                }`}>
                                 {formatDate(c.due_date)}
                               </td>
                               <td className="px-6 py-4">
@@ -841,7 +842,12 @@ export function Compliance() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               {formatDate(c.issue_date)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className={`px-6 py-4 whitespace-nowrap font-bold ${c.due_date && parseLocalDate(c.due_date)! <= (new Date())
+                              ? 'text-red-600'
+                              : (c.due_date && parseLocalDate(c.due_date)! <= new Date(new Date().setHours(0, 0, 0, 0) + 5 * 24 * 60 * 60 * 1000))
+                                ? 'text-red-600'
+                                : 'text-gray-600'
+                              }`}>
                               {formatDate(c.due_date)}
                             </td>
                             <td className="px-6 py-4 truncate">{getAgencyName(c)}</td>
