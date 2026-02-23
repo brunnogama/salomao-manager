@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, Fragment } from 'react';
-import { Search, Filter, Download, ShieldCheck, FileText, CheckCircle2, Clock, AlertCircle, Eye, Pencil, Trash2, X, Plus, Calendar, FileDown, Paperclip, Loader2, ChevronDown, RefreshCw, LayoutDashboard, Database, BarChart3, FileSearch, Edit, Building2 } from 'lucide-react';
+import { Search, Filter, Download, ShieldCheck, Clock, Eye, Trash2, Plus, Loader2, LayoutDashboard, Database, BarChart3, FileSearch, Edit, Building2 } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -19,7 +19,7 @@ const CNPJ_MAP: Record<string, string> = {
   'Salomão BA': '63.808.246/0001-04',
   'Salomão DF': '52.361.325/0001-01',
   'Salomão ES': '52.033.582/0001-06',
-  'Salomão PA': '',
+  'Salomão PA': '', // Will be populated from DB if available
   'Salomão RJ': '14.493.710/0001-05',
   'Salomão SC': '62.793.384/0001-02',
   'Salomão SP': '33.789.321/0001-76'
@@ -87,6 +87,12 @@ export function Compliance() {
 
     if (offices && offices.length > 0) {
       setLocationsList(offices);
+      // Atualiza o mapa de CNPJs dinamicamente com base no banco
+      offices.forEach(loc => {
+        if (loc.cnpj) {
+          CNPJ_MAP[loc.name] = loc.cnpj;
+        }
+      });
     } else {
       // Fallback para não quebrar a UI antes do usuário rodar o SQL
       const { data: contracts } = await supabase.from('contracts').select('billing_location');
