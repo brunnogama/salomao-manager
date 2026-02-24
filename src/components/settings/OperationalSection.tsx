@@ -35,7 +35,7 @@ export function OperationalSection({ isAdmin }: OperationalSectionProps) {
         ws['!cols'] = wscols
         const wb = XLSX.utils.book_new()
         XLSX.utils.book_append_sheet(wb, ws, "Modelo Importação Estoque")
-        XLSX.writeFile(wb, "modelo_importacao_estoque.xlsx")
+        XLSX.writeFile(wb, "MODELO_ESTOQUE_NOVO_2026.xlsx")
     }
 
     const processImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
