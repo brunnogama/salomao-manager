@@ -215,14 +215,13 @@ export function Imobiliario() {
 
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
 
-                {/* Location Filter */}
-                <div className="flex overflow-x-auto pb-4 gap-2 mb-6 custom-scrollbar">
+                <div className="flex overflow-x-auto pb-4 gap-2 custom-scrollbar">
                     {locations.map((loc) => (
                         <button
                             key={loc.id}
                             onClick={() => setActiveLocation(loc.id)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors border ${activeLocation === loc.id
-                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all border ${activeLocation === loc.id
+                                ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md'
                                 : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                                 }`}
                         >
@@ -241,7 +240,7 @@ export function Imobiliario() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Buscar por patrimônio, descrição ou nome..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-900"
                         />
                     </div>
                     {/* Placeholder for advanced filters if needed */}
