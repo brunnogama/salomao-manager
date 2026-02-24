@@ -44,11 +44,11 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
               setAllowedModules(modules)
               setIsPending(modules.length === 0)
 
-              // Notifica o administrador se for o primeiro acesso (Apenas Controladoria Jurídica)
-              if (modules.length === 1 && modules[0] === 'legal-control' && userRole === 'colaborador') {
+              // Notifica o administrador se for o primeiro acesso (Sem módulos liberados)
+              if (modules.length === 0) {
                 const hasNotified = localStorage.getItem(`notified_pending_${user.id}`)
                 if (!hasNotified) {
-                  await logAction('NOVO_ACESSO_PENDENTE', 'AUTH', `Novo usuário (${user.email}) aguardando permissões completas`, 'ModuleSelector')
+                  await logAction('NOVO_ACESSO_PENDENTE', 'AUTH', `Novo usuário (${user.email}) aguardando aprovação de acesso`, 'ModuleSelector')
                   localStorage.setItem(`notified_pending_${user.id}`, 'true')
                 }
               }
@@ -174,8 +174,8 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           </h1>
 
           <p className="text-blue-100/70 text-sm font-medium leading-relaxed mb-10 text-center">
-            Olá, <span className="text-white font-bold">{userName}</span>. Sua conta foi identificada, mas você ainda não possui módulos liberados.
-            Contate o administrador (Márcio Gama) para aprovar seu acesso.
+            Olá, <span className="text-white font-bold">{userName}</span>. Sua conta foi identificada, mas o acesso ainda não foi liberado.
+            Solicitamos a autorização do administrador (Márcio Gama). Você será notificado assim que seu acesso for liberado.
           </p>
 
           <button
