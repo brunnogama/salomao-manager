@@ -87,15 +87,22 @@ export function Proposals() {
         const containerHeight = previewContainerRef.current.offsetHeight;
         const containerWidth = previewContainerRef.current.offsetWidth;
         // In CSS, padding percentages are relative to the width of the containing block
-        const headerHeight = containerWidth * 0.18;
-        const footerHeight = containerWidth * 0.16;
-        const calculatedSafeHeight = containerHeight - headerHeight - footerHeight;
+        // Align with CSS: pt-[13%] and pb-[11%] of the container width
+        const headerPadding = containerWidth * 0.13;
+        const footerPadding = containerWidth * 0.11;
+
+        // We also have a pt-4 (16px) on the clipper
+        const clipperPaddingTop = 16;
+
+        const calculatedSafeHeight = containerHeight - headerPadding - footerPadding - clipperPaddingTop;
 
         const contentHeight = previewContentRef.current.scrollHeight;
         if (calculatedSafeHeight > 0) {
-          // Use the exact visible height for the shift to prevent gaps/skips
-          // We add a tiny 6px overlap to avoid splitting lines in half if they land exactly on the edge
-          const shiftUnit = calculatedSafeHeight - 6;
+          // Standardized line height is 20px (leading-5)
+          const lineHeight = 20;
+          // Ensure safe area is a multiple of line height to prevent cutting lines
+          const shiftUnit = Math.floor(calculatedSafeHeight / lineHeight) * lineHeight;
+
           setSafeAreaHeight(shiftUnit);
           const pages = Math.ceil(contentHeight / shiftUnit);
           setTotalPages(pages > 0 ? pages : 1);
@@ -727,7 +734,7 @@ export function Proposals() {
         , vem formular a presente proposta de honorários...
       </p>
 
-      <div className="mb-4 space-y-4 text-justify whitespace-pre-line leading-relaxed pb-8">
+      <div className="mb-4 space-y-5 text-justify whitespace-pre-line leading-5 pb-8">
         {(customBodyText || generateDefaultBodyText()).split('\n\n').map((paragraph, idx) => {
           const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
 
@@ -1166,7 +1173,7 @@ export function Proposals() {
                               }}
                             >
                               {/* The Content itself */}
-                              <div className="text-left text-[#0a192f] text-[10px] leading-[1.2] select-none h-fit">
+                              <div className="text-left text-[#0a192f] text-[10px] leading-5 select-none h-fit">
                                 {renderPreviewContent()}
                               </div>
                             </div>
@@ -1196,11 +1203,11 @@ export function Proposals() {
             className="absolute opacity-0 pointer-events-none bg-white overflow-hidden"
             style={{
               width: previewContainerRef.current?.offsetWidth ? `${previewContainerRef.current.offsetWidth}px` : '850px',
-              padding: 'calc(13% + 0.5rem) 12.1% 11% 12.1%'
+              padding: 'calc(13% + 1rem) 12.1% 11% 12.1%'
             }}
           >
             <div ref={previewContentRef}>
-              <div className="text-left text-[#0a192f] text-[10px] leading-[1.2]">
+              <div className="text-left text-[#0a192f] text-[10px] leading-5">
                 {renderPreviewContent()}
               </div>
             </div>
