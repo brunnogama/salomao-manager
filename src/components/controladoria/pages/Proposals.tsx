@@ -1174,13 +1174,16 @@ export function Proposals() {
           </div>
 
           {/* Hidden measuring content */}
-          <div className="absolute opacity-0 pointer-events-none w-full max-w-[700px] overflow-hidden" style={{ padding: '18% 4rem 16% 4rem' }}>
+          <div
+            className="absolute opacity-0 pointer-events-none bg-white shadow-2xl border border-gray-100 overflow-hidden"
+            style={{ width: '700px', padding: '18% 4rem 16% 4rem' }}
+          >
             <div ref={previewContentRef}>
               <div className="text-left text-[#0a192f] text-[10px] leading-relaxed">
                 {renderPreviewContent()}
               </div>
             </div>
-            <div ref={previewContainerRef} className="aspect-[21/29.7] w-full"></div>
+            <div ref={previewContainerRef} className="aspect-[21/29.7] w-full absolute inset-0 -z-10"></div>
           </div>
         </div>
       </div>
