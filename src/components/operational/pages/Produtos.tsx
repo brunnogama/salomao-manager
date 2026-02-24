@@ -315,16 +315,13 @@ export function Produtos() {
                                                     />
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <div className="flex items-center gap-3">
-                                                        <input
-                                                            type="number"
-                                                            value={item.minimum_stock || 0}
-                                                            onChange={(e) => handleLocalUpdate(item.id, 'minimum_stock', parseInt(e.target.value) || 0)}
-                                                            onBlur={(e) => handleUpdateItem(item.id, 'minimum_stock', parseInt(e.target.value) || 0)}
-                                                            className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-16"
-                                                        />
-                                                        <span className="text-[10px] text-gray-400 font-medium">/{item.quantity}</span>
-                                                    </div>
+                                                    <input
+                                                        type="number"
+                                                        value={item.minimum_stock || 0}
+                                                        onChange={(e) => handleLocalUpdate(item.id, 'minimum_stock', parseInt(e.target.value) || 0)}
+                                                        onBlur={(e) => handleUpdateItem(item.id, 'minimum_stock', parseInt(e.target.value) || 0)}
+                                                        className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-16"
+                                                    />
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="relative">
