@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Package, Plus, Filter, Search, Boxes, Coffee, Building2, UserCircle, Sparkles, Flag, Calendar, Trash2, ShoppingCart } from 'lucide-react'
+import { Package, Plus, Filter, Search, Boxes, Coffee, Building2, UserCircle, Sparkles, Flag, Calendar, Trash2, ShoppingCart, X } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { AlertModal } from '../../ui/AlertModal'
+import { useEscKey } from '../../../hooks/useEscKey'
 
 interface InventoryItem {
     id: string
@@ -21,6 +22,18 @@ export function Estoque() {
     const [activeCategory, setActiveCategory] = useState('Todos')
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
     const [itemToDelete, setItemToDelete] = useState<string | null>(null)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [modalStep, setModalStep] = useState(1)
+    const [newItem, setNewItem] = useState({
+        name: '',
+        product_code: '',
+        unit_of_measure: 'Unidade',
+        minimum_stock: 0,
+        unit_cost: 0,
+        unit_price: 0,
+        category: ''
+    })
+    const [searchTerm, setSearchTerm] = useState('')
     const [alertConfig, setAlertConfig] = useState<{
         isOpen: boolean;
         title: string;
@@ -89,30 +102,50 @@ export function Estoque() {
         }
     }
 
-    const handleAddItem = async () => {
-        const newItem = {
-            name: 'Novo Item',
-            quantity: 0,
-            brand: '',
-            unit_price: 0,
-            category: activeCategory === 'Todos' ? 'Limpeza' : activeCategory, // Default to Limpeza if in All
+    const resetModal = () => {
+        setIsModalOpen(false)
+        setModalStep(1)
+        setNewItem({
+            name: '',
             product_code: '',
             unit_of_measure: 'Unidade',
             minimum_stock: 0,
-            unit_cost: 0
-        }
+            unit_cost: 0,
+            unit_price: 0,
+            category: ''
+        })
+    }
+
+    useEscKey(isModalOpen, resetModal)
+
+    const handleCategorySelect = (category: string) => {
+        setNewItem(prev => ({ ...prev, category }))
+        setModalStep(2)
+    }
+
+    const handleAddItem = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault()
+        if (!newItem.name.trim()) return
 
         try {
             const { data, error } = await supabase
                 .from('operational_items')
-                .insert(newItem)
+                .insert({
+                    ...newItem,
+                    quantity: 0
+                })
                 .select()
                 .single()
 
             if (error) throw error
-            if (data) setInventoryItems((prev: InventoryItem[]) => [...prev, data])
+            if (data) {
+                setInventoryItems((prev: InventoryItem[]) => [...prev, data])
+                resetModal()
+                showAlert('Sucesso', 'Item adicionado ao estoque.', 'success')
+            }
         } catch (error) {
             console.error('Error adding item:', error)
+            showAlert('Erro', 'Erro ao adicionar item.', 'error')
         }
     }
 
@@ -163,9 +196,11 @@ export function Estoque() {
         }
     }
 
-    const filteredItems = activeCategory === 'Todos'
-        ? inventoryItems
-        : inventoryItems.filter((item: InventoryItem) => item.category === activeCategory)
+    const filteredItems = inventoryItems.filter((item: InventoryItem) => {
+        const matchesCategory = activeCategory === 'Todos' || item.category === activeCategory
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
+        return matchesCategory && matchesSearch
+    })
 
     return (
         <div className="p-4 sm:p-6 lg:p-8">
@@ -181,7 +216,7 @@ export function Estoque() {
                 </div>
 
                 <button
-                    onClick={handleAddItem}
+                    onClick={() => setIsModalOpen(true)}
                     className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl hover:bg-[#112240] transition-colors font-medium"
                 >
                     <Plus className="w-4 h-4" />
@@ -216,6 +251,8 @@ export function Estoque() {
                     <input
                         type="text"
                         placeholder={`Buscar em ${activeCategory}...`}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
                 </div>
@@ -364,6 +401,135 @@ export function Estoque() {
                 description={alertConfig.description}
                 variant={alertConfig.variant}
             />
+
+            {/* Add Item Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-[95vw] max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col">
+                        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
+                            <h2 className="text-lg font-bold text-gray-800">
+                                {modalStep === 1 ? 'Selecione a Categoria' : 'Detalhes do Item'}
+                            </h2>
+                            <button onClick={resetModal} className="p-1 hover:bg-gray-200 rounded-lg text-gray-500">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                            {modalStep === 1 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {categories.map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            onClick={() => handleCategorySelect(cat.id)}
+                                            className="p-3 border border-gray-200 rounded-xl hover:border-[#1e3a8a] hover:bg-blue-50 text-gray-700 font-medium text-sm transition-all text-left flex items-center gap-2"
+                                        >
+                                            <cat.icon className="w-4 h-4 text-gray-400" />
+                                            {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <form onSubmit={handleAddItem} className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Categoria</label>
+                                        <div className="text-sm font-semibold text-gray-800 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 flex justify-between items-center">
+                                            {categories.find(c => c.id === newItem.category)?.label}
+                                            <button type="button" onClick={() => setModalStep(1)} className="text-[#1e3a8a] text-xs hover:underline uppercase font-bold">Alterar</button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Nome do Item *</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            value={newItem.name}
+                                            onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            placeholder="Ex: Resma Papel A4"
+                                            autoFocus
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Código do Produto</label>
+                                        <input
+                                            type="text"
+                                            value={newItem.product_code}
+                                            onChange={e => setNewItem({ ...newItem, product_code: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            placeholder="Ex: PAP-001"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Unid. Medida</label>
+                                            <select
+                                                value={newItem.unit_of_measure}
+                                                onChange={e => setNewItem({ ...newItem, unit_of_measure: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                                            >
+                                                <option value="Unidade">Unidade</option>
+                                                <option value="Caixa">Caixa</option>
+                                                <option value="Pacote">Pacote</option>
+                                                <option value="Litro">Litro</option>
+                                                <option value="Kg">Kg</option>
+                                                <option value="Outro">Outro</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Estoque Mínimo</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={newItem.minimum_stock}
+                                                onChange={e => setNewItem({ ...newItem, minimum_stock: parseInt(e.target.value) || 0 })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Custo Unit. (R$)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={newItem.unit_cost}
+                                                onChange={e => setNewItem({ ...newItem, unit_cost: parseFloat(e.target.value) || 0 })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Preço Unit. (R$)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={newItem.unit_price}
+                                                onChange={e => setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        className="w-full py-3 bg-[#1e3a8a] text-white rounded-xl hover:bg-[#112240] font-bold shadow-lg shadow-blue-500/20 transition-all mt-4"
+                                    >
+                                        Cadastrar Item
+                                    </button>
+                                </form>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
