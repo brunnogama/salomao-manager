@@ -87,9 +87,6 @@ export function Produtos() {
     }
 
     const handleUpdateItem = async (id: string, field: keyof InventoryItem, value: string | number) => {
-        // Optimistic update
-        setInventoryItems((prev: InventoryItem[]) => prev.map((i: InventoryItem) => i.id === id ? { ...i, [field]: value } : i))
-
         try {
             const { error } = await supabase
                 .from('operational_items')
@@ -99,7 +96,13 @@ export function Produtos() {
             if (error) throw error
         } catch (error) {
             console.error('Error updating item:', error)
+            fetchItems() // Revert to server state on error
+            showAlert('Erro', 'Não foi possível salvar a alteração.', 'error')
         }
+    }
+
+    const handleLocalUpdate = (id: string, field: keyof InventoryItem, value: string | number) => {
+        setInventoryItems((prev: InventoryItem[]) => prev.map((i: InventoryItem) => i.id === id ? { ...i, [field]: value } : i))
     }
 
     const resetModal = () => {
@@ -286,7 +289,8 @@ export function Produtos() {
                                                     <input
                                                         type="text"
                                                         value={item.name}
-                                                        onChange={(e) => handleUpdateItem(item.id, 'name', e.target.value)}
+                                                        onChange={(e) => handleLocalUpdate(item.id, 'name', e.target.value)}
+                                                        onBlur={(e) => handleUpdateItem(item.id, 'name', e.target.value)}
                                                         className="font-medium text-gray-900 bg-transparent border-none focus:ring-0 p-0 w-full"
                                                     />
                                                 </td>
@@ -294,7 +298,8 @@ export function Produtos() {
                                                     <input
                                                         type="text"
                                                         value={item.product_code || ''}
-                                                        onChange={(e) => handleUpdateItem(item.id, 'product_code', e.target.value)}
+                                                        onChange={(e) => handleLocalUpdate(item.id, 'product_code', e.target.value)}
+                                                        onBlur={(e) => handleUpdateItem(item.id, 'product_code', e.target.value)}
                                                         placeholder="Cód..."
                                                         className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-full"
                                                     />
@@ -303,7 +308,8 @@ export function Produtos() {
                                                     <input
                                                         type="text"
                                                         value={item.unit_of_measure || ''}
-                                                        onChange={(e) => handleUpdateItem(item.id, 'unit_of_measure', e.target.value)}
+                                                        onChange={(e) => handleLocalUpdate(item.id, 'unit_of_measure', e.target.value)}
+                                                        onBlur={(e) => handleUpdateItem(item.id, 'unit_of_measure', e.target.value)}
                                                         placeholder="Un..."
                                                         className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-full"
                                                     />
@@ -313,7 +319,8 @@ export function Produtos() {
                                                         <input
                                                             type="number"
                                                             value={item.minimum_stock || 0}
-                                                            onChange={(e) => handleUpdateItem(item.id, 'minimum_stock', parseInt(e.target.value))}
+                                                            onChange={(e) => handleLocalUpdate(item.id, 'minimum_stock', parseInt(e.target.value) || 0)}
+                                                            onBlur={(e) => handleUpdateItem(item.id, 'minimum_stock', parseInt(e.target.value) || 0)}
                                                             className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-16"
                                                         />
                                                         <span className="text-[10px] text-gray-400 font-medium">/{item.quantity}</span>
@@ -326,7 +333,8 @@ export function Produtos() {
                                                             type="number"
                                                             step="0.01"
                                                             value={item.unit_cost || 0}
-                                                            onChange={(e) => handleUpdateItem(item.id, 'unit_cost', parseFloat(e.target.value))}
+                                                            onChange={(e) => handleLocalUpdate(item.id, 'unit_cost', parseFloat(e.target.value) || 0)}
+                                                            onBlur={(e) => handleUpdateItem(item.id, 'unit_cost', parseFloat(e.target.value) || 0)}
                                                             className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 pl-6 pr-0 py-0 w-24"
                                                         />
                                                     </div>
@@ -338,7 +346,8 @@ export function Produtos() {
                                                             type="number"
                                                             step="0.01"
                                                             value={item.unit_price || 0}
-                                                            onChange={(e) => handleUpdateItem(item.id, 'unit_price', parseFloat(e.target.value))}
+                                                            onChange={(e) => handleLocalUpdate(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
+                                                            onBlur={(e) => handleUpdateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
                                                             className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 pl-6 pr-0 py-0 w-24"
                                                         />
                                                     </div>
