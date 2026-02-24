@@ -350,9 +350,11 @@ export function GestaoAeronave() {
         .eq('id', cleanData.id)
       if (error) throw error
     } else {
+      // Remover o ID se for uma inserção para garantir que o banco gere um novo UUID
+      const { id, ...insertData } = cleanData
       const { error } = await supabase
         .from('aeronave_lancamentos')
-        .insert([cleanData])
+        .insert([insertData])
       if (error) throw error
     }
 

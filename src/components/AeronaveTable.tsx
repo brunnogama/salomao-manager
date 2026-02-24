@@ -38,13 +38,19 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
       const dateA = a.data_pagamento || ''
       const dateB = b.data_pagamento || ''
 
-      // Datas vazias vão para o final
-      if (!dateA && !dateB) return 0
-      if (!dateA) return 1
-      if (!dateB) return -1
+      // 1. Priorizar registros SEM data de pagamento (novos/pendentes) no TOPO
+      if (!dateA && dateB) return -1
+      if (dateA && !dateB) return 1
 
-      // Ordem decrescente (mais recente primeiro)
-      return dateB.localeCompare(dateA)
+      // 2. Se ambos tiverem data de pagamento, ordenar por data decrescente (mais recente primeiro)
+      if (dateA && dateB && dateA !== dateB) {
+        return dateB.localeCompare(dateA)
+      }
+
+      // 3. Fallback: ordenar pelo created_at decrescente (mais recente criado primeiro)
+      const createdA = a.created_at || ''
+      const createdB = b.created_at || ''
+      return createdB.localeCompare(createdA)
     })
   }, [data])
 
