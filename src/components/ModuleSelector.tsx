@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { logAction } from '../lib/logger'
 
 import { supabase } from '../lib/supabase'
 
@@ -42,6 +43,15 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
               const modules = data.allowed_modules || []
               setAllowedModules(modules)
               setIsPending(modules.length === 0)
+
+              // Notifica o administrador se for o primeiro acesso (Apenas Controladoria Jurídica)
+              if (modules.length === 1 && modules[0] === 'legal-control' && userRole === 'colaborador') {
+                const hasNotified = localStorage.getItem(`notified_pending_${user.id}`)
+                if (!hasNotified) {
+                  await logAction('NOVO_ACESSO_PENDENTE', 'AUTH', `Novo usuário (${user.email}) aguardando permissões completas`, 'ModuleSelector')
+                  localStorage.setItem(`notified_pending_${user.id}`, 'true')
+                }
+              }
             }
           } else {
             console.warn('Perfil de usuário não encontrado.')
