@@ -170,6 +170,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   // Confirmation Modal State
   const [gedToDelete, setGedToDelete] = useState<GEDDocument | null>(null)
+  const [colaboradorToDelete, setColaboradorToDelete] = useState<Collaborator | null>(null)
 
   const showAlert = (title: string, description: string, variant: 'success' | 'error' | 'info' = 'info') => {
     setAlertConfig({ isOpen: true, title, description, variant })
@@ -406,11 +407,28 @@ export function Colaboradores({ }: ColaboradoresProps) {
     }
   }
 
+  const confirmDeleteColaborador = async () => {
+    if (!colaboradorToDelete) return
+    const { error } = await supabase.from('collaborators').delete().eq('id', colaboradorToDelete.id)
+    if (!error) {
+      await logAction('EXCLUIR', 'RH', `Excluiu colaborador: ${colaboradorToDelete.name}`, 'Colaboradores')
+      fetchColaboradores()
+      if (selectedColaborador) setSelectedColaborador(null)
+      showAlert('Sucesso', 'Colaborador excluído com sucesso.', 'success')
+    } else {
+      showAlert('Erro', 'Erro ao excluir colaborador: ' + error.message, 'error')
+    }
+    setColaboradorToDelete(null)
+  }
+
 
 
   const handleSave = async (closeModal = true) => {
     try {
-      if (!formData.name) return alert('Campos obrigatórios: Nome')
+      if (!formData.name) {
+        showAlert('Atenção', 'O campo Nome é obrigatório.', 'info')
+        return
+      }
       setLoading(true)
       let photoUrl = formData.photo_url
 
@@ -499,7 +517,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
         setPendingGedDocs([])
         setActiveFormTab(1)
       }
-    } catch (error: any) { alert('Erro ao salvar: ' + error.message) } finally { setLoading(false) }
+    } catch (error: any) {
+      showAlert('Erro', 'Erro ao salvar: ' + error.message, 'error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleEdit = (colaborador: Collaborator) => {
@@ -522,16 +544,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setPendingGedDocs([])
   }
 
-  const handleDelete = async (id: string, name?: string) => {
-    if (!confirm('Deseja excluir este colaborador?')) return
-    const { error } = await supabase.from('collaborators').delete().eq('id', id)
-    if (!error) {
-      await logAction('EXCLUIR', 'RH', `Excluiu colaborador: ${name || id}`, 'Colaboradores')
-      fetchColaboradores()
-      if (selectedColaborador) setSelectedColaborador(null)
-    } else {
-      alert('Erro ao excluir: ' + error.message)
-    }
+  const handleDelete = (colaborador: Collaborator) => {
+    setColaboradorToDelete(colaborador)
   }
 
   const filtered = colaboradores.filter(c => {
@@ -1332,7 +1346,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -1372,7 +1386,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -1394,7 +1408,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         (
           <>
             <button
-              onClick={() => handleDelete(selectedColaborador.id)}
+              onClick={() => handleDelete(selectedColaborador)}
               className="px-6 py-2.5 text-red-600 font-black text-[9px] uppercase tracking-[0.2em] border border-red-200 rounded-xl hover:bg-red-50 transition-all flex items-center gap-2"
             >
               <Trash2 className="h-4 w-4" /> Excluir
@@ -1476,6 +1490,17 @@ export function Colaboradores({ }: ColaboradoresProps) {
         onConfirm={confirmDeleteGed}
         title="Excluir Documento"
         description="Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={!!colaboradorToDelete}
+        onClose={() => setColaboradorToDelete(null)}
+        onConfirm={confirmDeleteColaborador}
+        title="Excluir Colaborador"
+        description={`Tem certeza que deseja excluir o colaborador "${colaboradorToDelete?.name}" permanentemente? Todas as informações vinculadas a ele serão removidas.`}
         confirmText="Excluir"
         cancelText="Cancelar"
         variant="danger"
