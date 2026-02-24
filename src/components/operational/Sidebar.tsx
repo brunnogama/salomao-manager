@@ -6,7 +6,8 @@ import {
     X,
     LayoutGrid,
     Armchair,
-    ShoppingCart
+    ShoppingCart,
+    Boxes
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -74,7 +75,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
     const mainItems = [
         { path: '/operational/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/operational/estoque', label: 'Estoque', icon: Package },
+        { path: '/operational/produtos', label: 'Produtos', icon: Package },
+        { path: '/operational/estoque', label: 'Estoque', icon: Boxes },
         { path: '/operational/compras', label: 'Compras', icon: ShoppingCart },
         { path: '/operational/imobiliario', label: 'Imobiliário', icon: Armchair },
     ]

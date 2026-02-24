@@ -64,6 +64,7 @@ import { Compliance as ControlCompliance } from './components/controladoria/page
 
 // Operational Components
 import { Dashboard as OperationalDashboard } from './components/operational/pages/Dashboard';
+import { Produtos as OperationalProdutos } from './components/operational/pages/Produtos';
 import { Estoque as OperationalEstoque } from './components/operational/pages/Estoque';
 import { Imobiliario as OperationalImobiliario } from './components/operational/pages/Imobiliario';
 import { Compras } from './components/operational/pages/Compras';
@@ -234,6 +235,7 @@ export function AppRoutes() {
                 {/* Operational */}
                 <Route path="/operational">
                     <Route path="dashboard" element={<WithProps Component={OperationalDashboard} />} />
+                    <Route path="produtos" element={<WithProps Component={OperationalProdutos} />} />
                     <Route path="estoque" element={<WithProps Component={OperationalEstoque} />} />
                     <Route path="imobiliario" element={<WithProps Component={OperationalImobiliario} />} />
                     <Route path="compras" element={<WithProps Component={Compras} />} />
