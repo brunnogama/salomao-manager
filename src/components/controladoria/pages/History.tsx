@@ -207,7 +207,7 @@ export function History({
       {userRole === 'admin' ? (
         <>
           {/* 2. Toolbar - Salomão Design System */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4 relative z-20">
             <div className="flex flex-col md:flex-row justify-between gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />

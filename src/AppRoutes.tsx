@@ -18,7 +18,6 @@ import { Magistrados } from './components/crm/Magistrados';
 import { IncompleteClients } from './components/crm/IncompleteClients';
 import { Manual } from './components/crm/Manual';
 import { Kanban as CrmKanban } from './components/crm/Kanban';
-import { History as CrmHistory } from './components/crm/History';
 import { Settings } from './components/Settings';
 
 // RH Components
@@ -178,7 +177,6 @@ export function AppRoutes() {
                     <Route path="manual" element={<Manual />} />
                     <Route path="kanban" element={<WithProps Component={CrmKanban} />} />
                     <Route path="logistica" element={<div className="p-8 text-center text-gray-500">Módulo Logística em construção</div>} />
-                    <Route path="historico" element={<CrmHistory />} />
                 </Route>
 
                 {/* RH */}
