@@ -8,16 +8,15 @@ interface OperationalSectionProps {
 }
 
 interface ImportRow {
-    'Data da Venda'?: string | number
     'Produto': string
-    'Loja'?: string
-    'Quantidade'?: number | string
-    'Quantidade Devolvida'?: number | string
-    'Data da Devolução'?: string | number
-    'Quantidade Vendida'?: number | string
-    'Estoque Acumulado'?: number | string
-    'Preço Unitário'?: number | string
-    'Valor de Venda Total'?: number | string
+    'Entradas'?: number | string
+    'Saídas'?: number | string
+    'Saldo'?: number | string
+    'Estoque Mínimo'?: number | string
+    'Status'?: string
+    'Receita Total'?: number | string
+    'Custo Total'?: number | string
+    'Lucro/Prejuízo Total'?: number | string
     [key: string]: string | number | undefined
 }
 
@@ -27,9 +26,8 @@ export function OperationalSection({ isAdmin }: OperationalSectionProps) {
 
     const handleDownloadTemplate = () => {
         const headers = [
-            'Data da Venda', 'Produto', 'Loja', 'Quantidade',
-            'Quantidade Devolvida', 'Data da Devolução', 'Quantidade Vendida',
-            'Estoque Acumulado', 'Preço Unitário', 'Valor de Venda Total'
+            'Produto', 'Entradas', 'Saídas', 'Saldo', 'Estoque Mínimo',
+            'Status', 'Receita Total', 'Custo Total', 'Lucro/Prejuízo Total'
         ]
 
         const ws = XLSX.utils.aoa_to_sheet([headers])
@@ -38,23 +36,6 @@ export function OperationalSection({ isAdmin }: OperationalSectionProps) {
         const wb = XLSX.utils.book_new()
         XLSX.utils.book_append_sheet(wb, ws, "Modelo Importação Estoque")
         XLSX.writeFile(wb, "modelo_importacao_estoque.xlsx")
-    }
-
-    const parseDate = (val: string | number | undefined) => {
-        if (!val) return null
-        if (typeof val === 'number') {
-            const date = new Date(Math.round((val - 25569) * 86400 * 1000))
-            return date.toISOString().split('T')[0]
-        }
-        if (typeof val === 'string' && val.includes('/')) {
-            const parts = val.split('/')
-            if (parts.length === 3) {
-                const [d, m, y] = parts
-                return `${y}-${m}-${d}`
-            }
-        }
-        if (typeof val === 'string' && val.includes('-')) return val
-        return null
     }
 
     const processImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,19 +62,21 @@ export function OperationalSection({ isAdmin }: OperationalSectionProps) {
                     if (!row['Produto']) throw new Error(`Linha ${rowNum}: Produto é obrigatório.`)
 
                     const dbRow = {
-                        sale_date: parseDate(row['Data da Venda']),
                         product: String(row['Produto']),
-                        store: row['Loja'],
-                        quantity: Number(row['Quantidade']) || 0,
-                        returned_quantity: Number(row['Quantidade Devolvida']) || 0,
-                        return_date: parseDate(row['Data da Devolução']),
-                        sold_quantity: Number(row['Quantidade Vendida']) || 0,
-                        accumulated_stock: Number(row['Estoque Acumulado']) || 0,
-                        unit_price: Number(row['Preço Unitário']) || 0,
-                        total_sale_value: Number(row['Valor de Venda Total']) || 0
+                        entries: Number(row['Entradas']) || 0,
+                        outputs: Number(row['Saídas']) || 0,
+                        balance: Number(row['Saldo']) || 0,
+                        min_stock: Number(row['Estoque Mínimo']) || 0,
+                        status: row['Status'] ? String(row['Status']) : null,
+                        total_revenue: Number(row['Receita Total']) || 0,
+                        total_cost: Number(row['Custo Total']) || 0,
+                        total_profit_loss: Number(row['Lucro/Prejuízo Total']) || 0
                     }
 
-                    const { error } = await supabase.from('operational_stock_ledger').insert(dbRow)
+                    const { error } = await supabase
+                        .from('operational_stock')
+                        .upsert(dbRow, { onConflict: 'product' })
+
                     if (error) throw error
                     successCount++
 

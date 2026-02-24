@@ -111,7 +111,7 @@ export function Estoque() {
                                         <th className="text-center py-3 px-6 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
                                         <th className="text-right py-3 px-6 text-[10px] font-black text-white uppercase tracking-widest"><DollarSign className="inline w-3 h-3 mr-1" /> Receita Total</th>
                                         <th className="text-right py-3 px-6 text-[10px] font-black text-white uppercase tracking-widest"><Wallet className="inline w-3 h-3 mr-1" /> Custo Total</th>
-                                        <th className="text-right py-3 px-6 text-[10px] font-black text-white uppercase tracking-widest"><PieChart className="inline w-3 h-3 mr-1" /> Lucro/Prejuízo</th>
+                                        <th className="text-right py-3 px-6 text-[10px] font-black text-white uppercase tracking-widest"><PieChart className="inline w-3 h-3 mr-1" /> Lucro/Prejuízo Total</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
