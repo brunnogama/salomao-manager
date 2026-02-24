@@ -15,20 +15,9 @@ export async function logAction(action: string, module: string, details: string,
       console.warn('Não foi possível obter o IP do cliente')
     }
 
-    // Tenta obter o nome do usuário (do perfil)
-    let userName = email.split('@')[0]
-    try {
-      if (session?.user?.id) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('nome')
-          .eq('email', email)
-          .maybeSingle()
-        if (profile?.nome) userName = profile.nome
-      }
-    } catch (e) {
-      // Fallback para o prefixo do email
-    }
+    // Tenta obter o nome do usuário (do prefixo do email)
+    // Não consultamos 'nome' no banco pois a coluna não existe
+    let userName = email.split('@')[0].split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
 
     // Consolida as informações no campo details para garantir compatibilidade com o banco
     // Mas o formato JSON permitirá que a UI extraia os dados individualmente

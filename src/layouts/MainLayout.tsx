@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, useLocation, Navigate } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { Sidebar as CrmSidebar } from '../components/crm/Sidebar';
 import { Sidebar as RhSidebar } from '../components/collaborators/Sidebar';
@@ -46,6 +46,11 @@ export function MainLayout() {
 
     // Determine which sidebar to show based on the current path
     const renderSidebar = () => {
+        // Pages that don't have a specific module sidebar
+        if (['/configuracoes', '/apresentacao', '/'].includes(path)) {
+            return null;
+        }
+
         if (path.startsWith('/crm')) {
             return (
                 <CrmSidebar

@@ -111,7 +111,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       const [contratosData, sociosData, colabResp] = await Promise.all([
         contractService.getAll(),
         partnerService.getAll(),
-        supabase.from('collaborators').select('name, photo_url, foto_url')
+        supabase.from('collaborators').select('name, foto_url')
       ]);
 
       setContracts(contratosData);
@@ -271,13 +271,13 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
       if (fixoPontual === 0) fixoPontual = safeParseMoney((c as any).honorarios_fixos);
 
       // 2. ADIÇÃO DE EXTRAS
-      if (c.pro_labore_extras && Array.isArray(c.pro_labore_extras)) pl += c.pro_labore_extras.reduce((acc, val) => acc + safeParseMoney(val), 0);
-      if (c.final_success_extras && Array.isArray(c.final_success_extras)) exito += c.final_success_extras.reduce((acc, val) => acc + safeParseMoney(val), 0);
-      if (c.fixed_monthly_extras && Array.isArray(c.fixed_monthly_extras)) mensal += c.fixed_monthly_extras.reduce((acc, val) => acc + safeParseMoney(val), 0);
-      if (c.other_fees_extras && Array.isArray(c.other_fees_extras)) outros += c.other_fees_extras.reduce((acc, val) => acc + safeParseMoney(val), 0);
+      if (c.pro_labore_extras && Array.isArray(c.pro_labore_extras)) pl += c.pro_labore_extras.reduce((acc: number, val: string) => acc + safeParseMoney(val), 0);
+      if (c.final_success_extras && Array.isArray(c.final_success_extras)) exito += c.final_success_extras.reduce((acc: number, val: string) => acc + safeParseMoney(val), 0);
+      if (c.fixed_monthly_extras && Array.isArray(c.fixed_monthly_extras)) mensal += c.fixed_monthly_extras.reduce((acc: number, val: string) => acc + safeParseMoney(val), 0);
+      if (c.other_fees_extras && Array.isArray(c.other_fees_extras)) outros += c.other_fees_extras.reduce((acc: number, val: string) => acc + safeParseMoney(val), 0);
 
       // Extras Intermediários somam ao Êxito
-      if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) exito += c.intermediate_fees.reduce((acc, val) => acc + safeParseMoney(val), 0);
+      if (c.intermediate_fees && Array.isArray(c.intermediate_fees)) exito += c.intermediate_fees.reduce((acc: number, val: string) => acc + safeParseMoney(val), 0);
 
       // Soma de casos anexados (se houver)
       if (c.cases && Array.isArray(c.cases)) {

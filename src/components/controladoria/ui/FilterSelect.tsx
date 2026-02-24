@@ -7,9 +7,10 @@ interface FilterSelectProps {
     onChange: (val: string) => void;
     options: { label: string; value: string }[];
     placeholder: string;
+    clearValue?: string;
 }
 
-export function FilterSelect({ icon: Icon, value, onChange, options, placeholder }: FilterSelectProps) {
+export function FilterSelect({ icon: Icon, value, onChange, options, placeholder, clearValue = '' }: FilterSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -33,12 +34,12 @@ export function FilterSelect({ icon: Icon, value, onChange, options, placeholder
             >
                 {Icon && <Icon className="w-4 h-4 text-gray-400 mr-2 shrink-0" />}
                 <span className="text-xs font-bold text-gray-600 flex-1 truncate uppercase tracking-wider">{displayValue}</span>
-                {value && (
+                {value && value !== clearValue && (
                     <div
                         role="button"
                         onClick={(e) => {
                             e.stopPropagation();
-                            onChange('');
+                            onChange(clearValue);
                         }}
                         className="mr-2 p-0.5 hover:bg-gray-100 rounded-full transition-colors"
                     >

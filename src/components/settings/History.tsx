@@ -266,18 +266,21 @@ export function History() {
                     </div>
 
                     {/* Filtro Página/Módulo */}
-                    <div className="w-full sm:w-auto min-w-[160px]">
-                        <FilterSelect
-                            icon={LayoutGrid}
-                            value={moduleFilter}
-                            onChange={setModuleFilter}
-                            options={[
-                                { label: 'Todos os Módulos', value: 'TODOS' },
-                                ...uniquePages.map(page => ({ label: page, value: page }))
-                            ]}
-                            placeholder="Módulo/Página"
-                        />
-                    </div>
+                    {activeTab === 'activities' && (
+                        <div className="w-full sm:w-auto min-w-[160px]">
+                            <FilterSelect
+                                icon={LayoutGrid}
+                                value={moduleFilter}
+                                onChange={setModuleFilter}
+                                options={[
+                                    { label: 'Todos os Módulos', value: 'TODOS' },
+                                    ...uniquePages.map(page => ({ label: page, value: page }))
+                                ]}
+                                placeholder="Módulo/Página"
+                                clearValue="TODOS"
+                            />
+                        </div>
+                    )}
 
                     {/* Filtro Tipo Ação (Apenas na aba Atividades) */}
                     {activeTab === 'activities' && (
@@ -296,6 +299,7 @@ export function History() {
                                     { label: 'UPDATE', value: 'UPDATE' }
                                 ]}
                                 placeholder="Ação"
+                                clearValue="TODOS"
                             />
                         </div>
                     )}

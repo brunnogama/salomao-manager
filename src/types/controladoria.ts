@@ -175,6 +175,14 @@ export interface ContractProcess {
   value_of_cause?: number;
 }
 
+export interface ContractCase {
+  id?: string;
+  contract_id?: string;
+  pro_labore?: string;
+  final_success_fee?: string;
+  success_fee?: string;
+}
+
 export interface ContractDocument {
   id: string;
   contract_id: string;
@@ -259,6 +267,17 @@ export interface Contract {
   percent_extras_clauses?: string[];
   final_success_percent?: string;
   final_success_percent_clause?: string;
+
+  // Additional fields for calculations
+  fixed_monthly_extras?: string[];
+  other_fees_extras?: string[];
+  cases?: ContractCase[];
+  responsavel_socio?: string;
+  rejection_source?: string;
+
+  // Potential legacy fields
+  fixed_fee?: string;
+  honorarios_fixos?: string;
 }
 
 export interface ClientContact {
