@@ -51,23 +51,28 @@ export function SidebarFinanceiro({ isOpen, onClose }: SidebarProps) {
     // 1. Busca Vencidos OAB
     const fetchVencidosOAB = async () => {
       try {
-        const { data } = await supabase.from('colaboradores').select('cargo, data_admissao')
+        const [{ data: collabs }, { data: roles }] = await Promise.all([
+          supabase.from('collaborators').select('role, hire_date'),
+          supabase.from('roles').select('id, name')
+        ])
 
-        if (data) {
+        if (collabs) {
+          const rolesMap = new Map((roles || []).map(r => [String(r.id), r.name]))
           const hoje = new Date()
           hoje.setHours(0, 0, 0, 0)
 
-          const count = data.filter((v: any) => {
-            if (!v.data_admissao) return false
-            const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ''
+          const count = collabs.filter((v: any) => {
+            if (!v.hire_date) return false
+            const roleStr = rolesMap.get(String(v.role)) || String(v.role || '')
+            const cargoLimpo = roleStr.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
             const ehCargoValido = cargoLimpo === 'advogado' || cargoLimpo === 'socio'
             if (!ehCargoValido) return false
 
             let dia, mes, ano
-            if (v.data_admissao.includes('/')) {
-              [dia, mes, ano] = v.data_admissao.split('/').map(Number)
+            if (v.hire_date.includes('/')) {
+              [dia, mes, ano] = v.hire_date.split('/').map(Number)
             } else {
-              [ano, mes, dia] = v.data_admissao.split('-').map(Number)
+              [ano, mes, dia] = v.hire_date.split('-').map(Number)
             }
 
             const dataVenc = new Date(ano, (mes - 1) + 6, dia)

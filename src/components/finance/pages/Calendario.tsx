@@ -50,22 +50,28 @@ export function Calendario() {
   // Efeito para buscar colaboradores e calcular vencimentos para a visão de grade
   useEffect(() => {
     const fetchVencimentosCalendario = async () => {
-      const { data } = await supabase.from('colaboradores').select('nome, cargo, data_admissao')
-      if (data) {
-        const processados = data.filter((v: any) => {
-          if (!v.data_admissao) return false
-          const cargoLimpo = v.cargo?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ''
+      const [{ data: collabs }, { data: roles }] = await Promise.all([
+        supabase.from('collaborators').select('name, role, hire_date'),
+        supabase.from('roles').select('id, name')
+      ])
+
+      if (collabs) {
+        const rolesMap = new Map((roles || []).map(r => [String(r.id), r.name]))
+        const processados = collabs.filter((v: any) => {
+          if (!v.hire_date) return false
+          const roleStr = rolesMap.get(String(v.role)) || String(v.role || '')
+          const cargoLimpo = roleStr.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
           return cargoLimpo === 'advogado' || cargoLimpo === 'socio'
         }).map((v: any) => {
           let dia, mes, ano;
-          if (v.data_admissao.includes('/')) {
-            [dia, mes, ano] = v.data_admissao.split('/').map(Number);
+          if (v.hire_date.includes('/')) {
+            [dia, mes, ano] = v.hire_date.split('/').map(Number);
           } else {
-            [ano, mes, dia] = v.data_admissao.split('-').map(Number);
+            [ano, mes, dia] = v.hire_date.split('-').map(Number);
           }
           const dataVenc = new Date(ano, (mes - 1) + 6, dia)
           dataVenc.setDate(dataVenc.getDate() - 1)
-          return { nome: v.nome, dataVenc, tipo: 'OAB' }
+          return { nome: v.name, dataVenc, tipo: 'OAB' }
         })
         setVencimentosOAB(processados)
       }
