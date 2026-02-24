@@ -217,7 +217,7 @@ export function Estoque() {
 
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl hover:bg-[#112240] transition-colors font-medium"
+                    className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] transition-all shadow-sm hover:shadow-md active:scale-95"
                 >
                     <Plus className="w-4 h-4" />
                     NOVO ITEM
