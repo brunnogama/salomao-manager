@@ -86,8 +86,10 @@ export function Proposals() {
     const calculatePages = () => {
       if (previewContentRef.current && previewContainerRef.current) {
         const containerHeight = previewContainerRef.current.offsetHeight;
-        const headerHeight = containerHeight * 0.18;
-        const footerHeight = containerHeight * 0.16;
+        const containerWidth = previewContainerRef.current.offsetWidth;
+        // In CSS, padding percentages are relative to the width of the containing block
+        const headerHeight = containerWidth * 0.18;
+        const footerHeight = containerWidth * 0.16;
         const calculatedSafeHeight = containerHeight - headerHeight - footerHeight;
 
         const contentHeight = previewContentRef.current.scrollHeight;
@@ -725,96 +727,17 @@ export function Proposals() {
         , vem formular a presente proposta de honorários...
       </p>
 
-      {customBodyText ? (
-        <div className="mb-4 space-y-4 text-justify whitespace-pre-line leading-relaxed pb-8">
-          {customBodyText.split('\n\n').map((paragraph, idx) => {
-            const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
+      <div className="mb-4 space-y-4 text-justify whitespace-pre-line leading-relaxed pb-8">
+        {(customBodyText || generateDefaultBodyText()).split('\n\n').map((paragraph, idx) => {
+          const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
 
-            return (
-              <p key={idx} className={isHeading ? 'font-bold mt-4' : ''}>
-                {paragraph}
-              </p>
-            )
-          })}
-        </div>
-      ) : (
-        <>
-          {/* 1. Objeto */}
-          <p className="font-bold mb-2">1. OBJETO E ESCOPO DO SERVIÇO:</p>
-          <p className="text-justify mb-4">
-            1.1. O objeto da presente proposta é a assessoria jurídica... em favor do Cliente
-            <span className="bg-yellow-200/50 px-1 uppercase mx-1">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span>
-            no <span className="bg-yellow-200/50 px-1">{proposalData.object || '[incluir o objeto da proposta]'}</span>.
-          </p>
-
-          {/* 2. Honorários */}
-          <p className="font-bold mb-2 break-before-page mt-6">2. HONORÁRIOS E FORMA DE PAGAMENTO:</p>
-          <p className="text-justify mb-2">
-            2.1. Considerando as particularidades do caso, propomos honorários da seguinte forma:
-          </p>
-
-          {/* Dynamic Clauses Preview */}
-          {proposalData.pro_labore_clauses.map((clause, idx) => {
-            const num = `2.${2 + idx}`;
-            let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-            let extensoPart = "";
-            if (clause.value) {
-              if (clause.type === 'currency') {
-                extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-              } else {
-                extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-              }
-            }
-            return (
-              <p key={`pl-${idx}`} className="text-justify mb-2">
-                {num}. Honorários pró-labore de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-              </p>
-            );
-          })}
-
-          {/* Intermediate (Starts after Pro-Labore) */}
-          {proposalData.intermediate_fee_clauses.map((clause, idx) => {
-            const base = 2 + proposalData.pro_labore_clauses.length;
-            const num = `2.${base + idx}`;
-            let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-            let extensoPart = "";
-            if (clause.value) {
-              if (clause.type === 'currency') {
-                extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-              } else {
-                extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-              }
-            }
-            return (
-              <p key={`int-${idx}`} className="text-justify mb-2">
-                {num}. Êxito intermediário: <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-              </p>
-            );
-          })}
-
-          {/* Final Success - Unified */}
-          {proposalData.final_success_fee_clauses.map((clause, idx) => {
-            const base = 2 + proposalData.pro_labore_clauses.length + proposalData.intermediate_fee_clauses.length;
-            const num = `2.${base + idx}`;
-
-            let previewValue = clause.value || (clause.type === 'currency' ? '[valor]' : '[percentual]');
-            let extensoPart = "";
-            if (clause.value) {
-              if (clause.type === 'currency') {
-                extensoPart = `(${moedaPorExtenso(parseFloat(clause.value.replace(/[^\d,]/g, '').replace(',', '.') || '0'))})`;
-              } else {
-                extensoPart = `(${percentualPorExtenso(parseFloat(clause.value.replace(',', '.') || '0'))})`;
-              }
-            }
-
-            return (
-              <p key={`sf-unified-${idx}`} className="text-justify mb-2">
-                {num}. Honorários finais de êxito de <span className="bg-yellow-200/50 px-1">{previewValue} {extensoPart}</span> {clause.description}
-              </p>
-            );
-          })}
-        </>
-      )}
+          return (
+            <p key={idx} className={isHeading ? 'font-bold mt-4' : ''}>
+              {paragraph}
+            </p>
+          )
+        })}
+      </div>
 
       {/* Signatures */}
       <div className="text-center mt-12 space-y-8 pb-16">
