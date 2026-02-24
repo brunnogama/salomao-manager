@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Package, Plus, Filter, Search, Boxes, Coffee, Building2, UserCircle, Sparkles, Flag, Calendar, Trash2, Minus, ShoppingCart } from 'lucide-react'
+import { Package, Plus, Filter, Search, Boxes, Coffee, Building2, UserCircle, Sparkles, Flag, Calendar, Trash2, ShoppingCart } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { AlertModal } from '../../ui/AlertModal'
@@ -11,6 +11,10 @@ interface InventoryItem {
     brand: string
     unit_price: number
     category: string
+    product_code: string
+    unit_of_measure: string
+    minimum_stock: number
+    unit_cost: number
 }
 
 export function Estoque() {
@@ -69,28 +73,6 @@ export function Estoque() {
         }
     }
 
-    const handleQuantityChange = async (id: string, delta: number) => {
-        const item = inventoryItems.find((i: InventoryItem) => i.id === id)
-        if (!item) return
-
-        const newQuantity = Math.max(0, item.quantity + delta)
-
-        // Optimistic update
-        setInventoryItems((prev: InventoryItem[]) => prev.map((i: InventoryItem) => i.id === id ? { ...i, quantity: newQuantity } : i))
-
-        try {
-            const { error } = await supabase
-                .from('operational_items')
-                .update({ quantity: newQuantity })
-                .eq('id', id)
-
-            if (error) throw error
-        } catch (error) {
-            console.error('Error updating quantity:', error)
-            fetchItems() // Revert on error
-        }
-    }
-
     const handleUpdateItem = async (id: string, field: keyof InventoryItem, value: string | number) => {
         // Optimistic update
         setInventoryItems((prev: InventoryItem[]) => prev.map((i: InventoryItem) => i.id === id ? { ...i, [field]: value } : i))
@@ -113,7 +95,11 @@ export function Estoque() {
             quantity: 0,
             brand: '',
             unit_price: 0,
-            category: activeCategory === 'Todos' ? 'Limpeza' : activeCategory // Default to Limpeza if in All
+            category: activeCategory === 'Todos' ? 'Limpeza' : activeCategory, // Default to Limpeza if in All
+            product_code: '',
+            unit_of_measure: 'Unidade',
+            minimum_stock: 0,
+            unit_cost: 0
         }
 
         try {
@@ -248,8 +234,10 @@ export function Estoque() {
                                 <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
                                         <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estoque</th>
-                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Código do Produto</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Unidade de Medida</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estoque Mínimo</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Custo Unitário</th>
                                         <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unitário</th>
                                         <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
                                     </tr>
@@ -266,40 +254,55 @@ export function Estoque() {
                                                 />
                                             </td>
                                             <td className="py-4 px-6">
-                                                <div className="flex items-center gap-3">
-                                                    <button
-                                                        onClick={() => handleQuantityChange(item.id, -1)}
-                                                        className="p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
-                                                    >
-                                                        <Minus className="w-4 h-4" />
-                                                    </button>
-                                                    <span className="w-8 text-center font-medium text-gray-900">{item.quantity}</span>
-                                                    <button
-                                                        onClick={() => handleQuantityChange(item.id, 1)}
-                                                        className="p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
-                                                    >
-                                                        <Plus className="w-4 h-4" />
-                                                    </button>
-                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={item.product_code || ''}
+                                                    onChange={(e) => handleUpdateItem(item.id, 'product_code', e.target.value)}
+                                                    placeholder="Cód..."
+                                                    className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-full"
+                                                />
                                             </td>
                                             <td className="py-4 px-6">
                                                 <input
                                                     type="text"
-                                                    value={item.brand}
-                                                    onChange={(e) => handleUpdateItem(item.id, 'brand', e.target.value)}
-                                                    placeholder="Marca..."
-                                                    className="text-sm text-gray-600 bg-gray-50 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-md px-3 py-1.5 w-full transition-all"
+                                                    value={item.unit_of_measure || ''}
+                                                    onChange={(e) => handleUpdateItem(item.id, 'unit_of_measure', e.target.value)}
+                                                    placeholder="Un..."
+                                                    className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-full"
                                                 />
                                             </td>
                                             <td className="py-4 px-6">
-                                                <div className="relative">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                                                <div className="flex items-center gap-3">
                                                     <input
                                                         type="number"
-                                                        value={item.unit_price}
+                                                        value={item.minimum_stock || 0}
+                                                        onChange={(e) => handleUpdateItem(item.id, 'minimum_stock', parseInt(e.target.value))}
+                                                        className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-16"
+                                                    />
+                                                    <span className="text-[10px] text-gray-400 font-medium">/{item.quantity}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="relative">
+                                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={item.unit_cost || 0}
+                                                        onChange={(e) => handleUpdateItem(item.id, 'unit_cost', parseFloat(e.target.value))}
+                                                        className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 pl-6 pr-0 py-0 w-24"
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="relative">
+                                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={item.unit_price || 0}
                                                         onChange={(e) => handleUpdateItem(item.id, 'unit_price', parseFloat(e.target.value))}
-                                                        placeholder="0,00"
-                                                        className="text-sm text-gray-600 bg-gray-50 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-md pl-9 pr-3 py-1.5 w-32 transition-all"
+                                                        className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 pl-6 pr-0 py-0 w-24"
                                                     />
                                                 </div>
                                             </td>
