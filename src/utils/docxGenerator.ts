@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, Header } from 'docx';
+import { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, Header, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom } from 'docx';
 import { Contract } from '../types/controladoria';
 import { moedaPorExtenso, percentualPorExtenso } from './extenso';
 
@@ -119,7 +119,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                     new ImageRun({
                         data: footer1Buffer,
                         transformation: {
-                            width: 200, 
+                            width: 200,
                             height: 35,
                         },
                     }),

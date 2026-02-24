@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/logger'
-import { History } from './crm/History'
+import { History } from './settings/History'
 
 // Importação dos Novos Módulos
 import { UserManagement } from './settings/UserManagement'
