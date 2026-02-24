@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Plus, Trash2, Edit3, Search, Save, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useEscKey } from '../hooks/useEscKey'
 
 interface OptionItem {
   id: string;
@@ -30,7 +31,7 @@ export function GerenciadorOpcoesModal({ isOpen, onClose, titulo, tabela }: Gere
         .from(tabela)
         .select('*')
         .order('nome', { ascending: true })
-      
+
       if (error) throw error
       if (data) setItems(data)
     } catch (err) {
@@ -82,12 +83,14 @@ export function GerenciadorOpcoesModal({ isOpen, onClose, titulo, tabela }: Gere
 
   const filteredItems = items.filter(i => i.nome.toLowerCase().includes(searchTerm.toLowerCase()))
 
+  useEscKey(isOpen, onClose)
+
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-200">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
           <h3 className="text-sm font-black uppercase tracking-widest text-gray-800">Gerenciar {titulo}</h3>
@@ -100,21 +103,21 @@ export function GerenciadorOpcoesModal({ isOpen, onClose, titulo, tabela }: Gere
         <div className="p-4 border-b border-gray-100 space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Buscar..." 
+            <input
+              type="text"
+              placeholder="Buscar..."
               className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500 transition-all"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           {isAdding ? (
             <div className="flex gap-2 animate-in slide-in-from-top-2">
-              <input 
+              <input
                 autoFocus
-                type="text" 
-                placeholder="Nome do novo item" 
+                type="text"
+                placeholder="Nome do novo item"
                 className="flex-1 px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100"
                 value={newValue}
                 onChange={e => setNewValue(e.target.value)}
@@ -128,7 +131,7 @@ export function GerenciadorOpcoesModal({ isOpen, onClose, titulo, tabela }: Gere
               </button>
             </div>
           ) : (
-            <button 
+            <button
               onClick={() => setIsAdding(true)}
               className="w-full flex items-center justify-center gap-2 py-2 bg-[#1e3a8a] text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-[#112240] transition-all shadow-sm"
             >
@@ -149,9 +152,9 @@ export function GerenciadorOpcoesModal({ isOpen, onClose, titulo, tabela }: Gere
                 <div key={item.id} className="group flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg border border-transparent hover:border-gray-100 transition-all">
                   {editingId === item.id ? (
                     <div className="flex-1 flex gap-2 mr-2">
-                      <input 
+                      <input
                         autoFocus
-                        type="text" 
+                        type="text"
                         className="flex-1 px-2 py-1 text-sm border border-blue-200 rounded outline-none"
                         value={editValue}
                         onChange={e => setEditValue(e.target.value)}
@@ -164,13 +167,13 @@ export function GerenciadorOpcoesModal({ isOpen, onClose, titulo, tabela }: Gere
                     <>
                       <span className="text-sm font-medium text-gray-700">{item.nome}</span>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
+                        <button
                           onClick={() => { setEditingId(item.id); setEditValue(item.nome); }}
                           className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                         >
                           <Edit3 className="h-3.5 w-3.5" />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(item.id)}
                           className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                         >

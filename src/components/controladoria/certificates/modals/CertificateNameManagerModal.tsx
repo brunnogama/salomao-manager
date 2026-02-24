@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Plus, Loader2, Search, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '../../../../lib/supabase';
 import { toast } from 'sonner';
+import { useEscKey } from '../../../../hooks/useEscKey';
 
 interface Props {
     isOpen: boolean;
@@ -19,14 +20,7 @@ export function CertificateNameManagerModal({ isOpen, onClose, onUpdate }: Props
         if (isOpen) fetchNames();
     }, [isOpen]);
 
-    // Handle ESC key
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-        if (isOpen) window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose]);
+    useEscKey(isOpen, onClose);
 
     const fetchNames = async () => {
         setLoading(true);

@@ -1,6 +1,7 @@
 import { X, Edit3, Trash2, CreditCard, FileText, Printer, AlertTriangle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
+import { useEscKey } from '../hooks/useEscKey'
 
 interface AeronaveViewModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export function AeronaveViewModal({
   onEdit,
   onDelete
 }: AeronaveViewModalProps) {
+  useEscKey(isOpen, onClose);
   if (!isOpen || !item) return null
 
   const isGroup = itemsGroup && itemsGroup.length > 0

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileText, Database, Calendar, Building2, MapPin, Info, Edit, Download, ExternalLink, ShieldCheck, Trash2, Paperclip } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
+import { useEscKey } from '../../../hooks/useEscKey';
 
 interface CertificateDetailsModalProps {
     isOpen: boolean;
@@ -30,14 +31,7 @@ export function CertificateDetailsModal({
         }
     }, [isOpen, certificate]);
 
-    // Handle ESC key
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-        if (isOpen) window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose]);
+    useEscKey(isOpen, onClose);
 
     const fetchRelatedFiles = async () => {
         if (!certificate) return;

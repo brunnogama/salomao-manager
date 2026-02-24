@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Loader2, Search, UserCheck, UserMinus } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Partner } from '../../../types/controladoria';
+import { useEscKey } from '../../../hooks/useEscKey';
 
 interface Props {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
+  useEscKey(isOpen, onClose);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(false);
   const [newName, setNewName] = useState('');
@@ -49,7 +51,7 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
     }
   };
 
-  const filteredPartners = partners.filter(p => 
+  const filteredPartners = partners.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -58,7 +60,7 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
   return (
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100">
-        
+
         <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <h3 className="text-lg font-black text-[#0a192f] uppercase tracking-tight">Gerenciar Sócios</h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-all">
@@ -69,14 +71,14 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
         <div className="p-8 pb-4">
           {/* Adicionar Novo */}
           <div className="flex gap-2 mb-6">
-            <input 
+            <input
               type="text"
               className="flex-1 bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
               placeholder="Nome do novo sócio"
               value={newName}
               onChange={e => setNewName(e.target.value)}
             />
-            <button 
+            <button
               onClick={handleAdd}
               disabled={loading || !newName.trim()}
               className="bg-[#1e3a8a] text-white p-3 rounded-xl hover:bg-[#112240] transition-all disabled:opacity-50"
@@ -88,7 +90,7 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
           {/* Barra de Busca Interna */}
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
+            <input
               type="text"
               className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-2 text-xs font-bold uppercase tracking-widest outline-none focus:border-[#1e3a8a] transition-all"
               placeholder="Filtrar sócios..."
@@ -107,7 +109,7 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
                     </p>
                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{p.status === 'active' ? 'Ativo' : 'Inativo'}</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => toggleStatus(p)}
                     className={`p-2 rounded-lg transition-all ${p.status === 'active' ? 'text-emerald-600 hover:bg-emerald-50' : 'text-amber-500 hover:bg-amber-50'}`}
                   >
@@ -122,7 +124,7 @@ export function PartnerManagerModal({ isOpen, onClose, onUpdate }: Props) {
             )}
           </div>
         </div>
-        
+
         <div className="px-8 py-4 bg-gray-50 border-t border-gray-100">
           <p className="text-[9px] font-black text-center text-gray-400 uppercase tracking-tighter">
             Gerenciamento centralizado de Sócios

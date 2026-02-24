@@ -9,6 +9,7 @@ import { maskCNPJ, maskMoney, maskHon, toTitleCase } from '../utils/masks';
 import { decodeCNJ } from '../utils/cnjDecoder';
 import { addDays } from 'date-fns';
 import { toast } from 'sonner';
+import { useEscKey } from '../../../hooks/useEscKey';
 
 // Componentes Modularizados
 import { OptionManager } from './components/OptionManager';
@@ -39,6 +40,8 @@ export function ContractFormModal(props: Props) {
     processes, currentProcess, setCurrentProcess, editingProcessIndex, handleProcessAction, editProcess, removeProcess,
     newIntermediateFee, setNewIntermediateFee, addIntermediateFee, removeIntermediateFee, getStatusLabel
   } = props;
+
+  useEscKey(isOpen, onClose);
 
   const [localLoading, setLocalLoading] = useState(false);
   const [documents, setDocuments] = useState<ContractDocument[]>([]);
@@ -345,22 +348,6 @@ export function ContractFormModal(props: Props) {
     formData.other_fees, formData.other_fees_installments
   ]);
 
-  // Handle ESC key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
 
   // --- FUNÇÕES AUXILIARES (MANTIDAS) ---
 

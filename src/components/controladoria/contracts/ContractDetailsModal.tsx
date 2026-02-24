@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Edit, Trash2, User, FileText, Briefcase, MapPin, History as HistoryIcon, Hourglass, CalendarCheck, Calculator, Paperclip, CheckCircle2, Clock, ChevronsRight, Download } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Contract, ContractProcess, ContractDocument } from '../../../types/controladoria';
+import { useEscKey } from '../../../hooks/useEscKey';
 
 // ROTA CORRIGIDA: Subindo 1 nível para sair de /contracts e entrar em /utils (ambos dentro de controladoria)
 import { parseCurrency, safeDate } from '../utils/masks';
@@ -65,6 +66,7 @@ export function ContractDetailsModal({
   canEdit = false,
   canDelete = false
 }: Props) {
+  useEscKey(isOpen, onClose);
   if (!isOpen || !contract) return null;
 
   const handleDownload = async (e: React.MouseEvent, doc: ContractDocument) => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CheckCircle2, X, AlertCircle, Info } from 'lucide-react';
 
 export interface AlertModalProps {
@@ -18,6 +18,22 @@ export function AlertModal({
     confirmText = 'OK',
     variant = 'success'
 }: AlertModalProps) {
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        if (isOpen) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     const getVariantStyles = () => {

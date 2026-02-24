@@ -1,4 +1,5 @@
 import { X, Edit, Trash2, Calendar, User, Truck, FileText, Tag, Layers, DollarSign, Hash, Percent, ArrowRight, CheckCircle, Paperclip, Info } from 'lucide-react'
+import { useEscKey } from '../../hooks/useEscKey'
 
 interface FamiliaViewModalProps {
   item: any
@@ -9,6 +10,7 @@ interface FamiliaViewModalProps {
 }
 
 export function FamiliaViewModal({ item, isOpen, onClose, onDelete, onEdit }: FamiliaViewModalProps) {
+  useEscKey(isOpen, onClose)
   if (!isOpen || !item) return null
 
   const formatCurrency = (val: number) => {
@@ -38,7 +40,7 @@ export function FamiliaViewModal({ item, isOpen, onClose, onDelete, onEdit }: Fa
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md transition-all">
       <div className="bg-white w-full max-w-5xl rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] flex flex-col border border-white/20">
-        
+
         {/* Header Compacto */}
         <div className="px-8 py-5 border-b border-gray-50 flex justify-between items-center bg-white flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -57,7 +59,7 @@ export function FamiliaViewModal({ item, isOpen, onClose, onDelete, onEdit }: Fa
 
         {/* Content Ajustado para caber sem scroll */}
         <div className="px-8 py-6 space-y-5 overflow-hidden">
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Card de Valor Menor */}
             <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 flex items-center justify-between col-span-1">
@@ -65,16 +67,15 @@ export function FamiliaViewModal({ item, isOpen, onClose, onDelete, onEdit }: Fa
                 <p className="text-[9px] font-black text-blue-600/60 uppercase tracking-widest">Valor Total</p>
                 <p className="text-2xl font-black text-[#1e3a8a]">{formatCurrency(item.valor)}</p>
               </div>
-              <div className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${
-                item.status === 'Pago' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-              }`}>
+              <div className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${item.status === 'Pago' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                }`}>
                 {item.status}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 col-span-2">
-              <BadgeField icon={Calendar} label="Vencimento" value={formatDate(item.vencimento)} colorClass={{bg: 'bg-blue-100', text: 'text-blue-600'}} />
-              <BadgeField icon={Calendar} label="Envio" value={formatDate(item.data_envio)} colorClass={{bg: 'bg-purple-100', text: 'text-purple-600'}} />
+              <BadgeField icon={Calendar} label="Vencimento" value={formatDate(item.vencimento)} colorClass={{ bg: 'bg-blue-100', text: 'text-blue-600' }} />
+              <BadgeField icon={Calendar} label="Envio" value={formatDate(item.data_envio)} colorClass={{ bg: 'bg-purple-100', text: 'text-purple-600' }} />
             </div>
           </div>
 
@@ -99,10 +100,10 @@ export function FamiliaViewModal({ item, isOpen, onClose, onDelete, onEdit }: Fa
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <BadgeField icon={Paperclip} label="Recibo" value={item.recibo} />
-              <BadgeField icon={Paperclip} label="Boleto" value={item.boleto} />
-              <BadgeField icon={Paperclip} label="O.S." value={item.os} />
-              <BadgeField icon={Paperclip} label="Comprovante" value={item.comprovante} />
+            <BadgeField icon={Paperclip} label="Recibo" value={item.recibo} />
+            <BadgeField icon={Paperclip} label="Boleto" value={item.boleto} />
+            <BadgeField icon={Paperclip} label="O.S." value={item.os} />
+            <BadgeField icon={Paperclip} label="Comprovante" value={item.comprovante} />
           </div>
 
           <div className="space-y-2">

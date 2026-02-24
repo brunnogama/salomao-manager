@@ -1,14 +1,15 @@
 // src/components/finance/components/FinanceModalCliente.tsx
 import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Save, 
+import {
+  X,
+  Save,
   Loader2,
   Building2,
   Mail as MailIcon,
   FileText
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { useEscKey } from '../../../hooks/useEscKey';
 
 interface FinanceModalClienteProps {
   isOpen: boolean;
@@ -21,11 +22,12 @@ interface FinanceModalClienteProps {
   } | null;
 }
 
-export function FinanceModalCliente({ 
-  isOpen, 
-  onClose, 
-  clienteEditando 
+export function FinanceModalCliente({
+  isOpen,
+  onClose,
+  clienteEditando
 }: FinanceModalClienteProps) {
+  useEscKey(isOpen, onClose);
   const [loading, setLoading] = useState(false);
   const [searchingCNPJ, setSearchingCNPJ] = useState(false);
   const [cnpj, setCnpj] = useState('');
@@ -66,7 +68,7 @@ export function FinanceModalCliente({
     const cleaned = formatted.replace(/\D/g, '');
     if (cleaned.length === 14 && !clienteEditando) {
       setSearchingCNPJ(true);
-      
+
       // Buscar no banco primeiro
       const { data: existing } = await supabase
         .from('finance_clientes')
@@ -90,7 +92,7 @@ export function FinanceModalCliente({
           console.error('Erro ao buscar CNPJ:', error);
         }
       }
-      
+
       setSearchingCNPJ(false);
     }
   };
@@ -144,7 +146,7 @@ export function FinanceModalCliente({
   return (
     <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-gray-200">
-        
+
         {/* HEADER */}
         <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
           <div className="flex items-center gap-3">
@@ -160,8 +162,8 @@ export function FinanceModalCliente({
               </p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-white/70 hover:text-white transition-colors p-2 rounded-xl hover:bg-white/10"
           >
             <X className="h-6 w-6" />
@@ -169,7 +171,7 @@ export function FinanceModalCliente({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          
+
           {/* CNPJ */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-black text-[#0a192f] uppercase tracking-wider ml-1 flex items-center justify-between">
@@ -183,7 +185,7 @@ export function FinanceModalCliente({
             </label>
             <div className="relative">
               <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input 
+              <input
                 type="text"
                 value={cnpj}
                 onChange={(e) => handleCNPJChange(e.target.value)}
@@ -204,7 +206,7 @@ export function FinanceModalCliente({
             </label>
             <div className="relative">
               <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input 
+              <input
                 type="text"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
@@ -222,7 +224,7 @@ export function FinanceModalCliente({
             </label>
             <div className="relative">
               <MailIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input 
+              <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

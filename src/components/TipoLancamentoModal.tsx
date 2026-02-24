@@ -1,4 +1,5 @@
 import { X, Plane, DollarSign } from 'lucide-react'
+import { useEscKey } from '../hooks/useEscKey'
 import { OrigemLancamento } from '../types/AeronaveTypes'
 
 interface TipoLancamentoModalProps {
@@ -8,12 +9,14 @@ interface TipoLancamentoModalProps {
 }
 
 export function TipoLancamentoModal({ isOpen, onClose, onSelect }: TipoLancamentoModalProps) {
+  useEscKey(isOpen, onClose)
+
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        
+
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <h3 className="text-sm font-black uppercase tracking-widest text-gray-800">Selecione o Tipo</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">

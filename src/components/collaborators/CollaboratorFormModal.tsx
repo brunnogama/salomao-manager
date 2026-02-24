@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Settings2, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Collaborator, Partner } from '../../types/controladoria';
+import { useEscKey } from '../../hooks/useEscKey';
 import { SearchableSelect } from '../SearchableSelect'; // Ajustado para o caminho correto do componente
 import { PartnerManagerModal } from './modals/PartnerManagerModal';
 import { CollaboratorManagerModal } from './modals/CollaboratorManagerModal';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }: Props) {
+  useEscKey(isOpen, onClose);
   const [loading, setLoading] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [leaders, setLeaders] = useState<Collaborator[]>([]);

@@ -1,5 +1,6 @@
 import React from 'react'
 import { X, Lock, Loader2 } from 'lucide-react'
+import { useEscKey } from '../../hooks/useEscKey'
 
 interface UserModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface UserModalProps {
 export function UserModal({
   isOpen, loading, editingUser, userForm, setUserForm, onClose, onSave, onToggleModule
 }: UserModalProps) {
+  useEscKey(isOpen, onClose)
   if (!isOpen) return null;
 
   return (

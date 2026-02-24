@@ -4,6 +4,7 @@ import { Dialog, Transition } from '@headlessui/react'
 import { X, Save, Gift, Calendar, Clock, UserCircle, ChevronDown, Plus, Trash2, Loader2, MapPin, Info, Building2, Mail, Phone, User, Briefcase } from 'lucide-react'
 import { IMaskInput } from 'react-imask'
 import { supabase } from '../../lib/supabase'
+import { useEscKey } from '../../hooks/useEscKey'
 import { logAction } from '../../lib/logger'
 import { ClientDataLegacy, mapClientToDb, mapDbToClient } from '../../types/client'
 import { SearchableSelect } from './SearchableSelect'
@@ -17,6 +18,7 @@ interface NewClientModalProps {
 }
 
 export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableName = 'clientes' }: NewClientModalProps) {
+  useEscKey(isOpen, onClose)
   const [activeTab, setActiveTab] = useState<'geral' | 'endereco' | 'historico'>('geral')
   const [brindeOptions, setBrindeOptions] = useState<string[]>(['Brinde VIP', 'Brinde Médio', 'Não Recebe', 'Outro'])
 

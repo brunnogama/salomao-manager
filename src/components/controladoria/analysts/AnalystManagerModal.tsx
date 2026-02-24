@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { X, Plus, Edit, Trash2, Save } from 'lucide-react';
 import { Analyst } from '../../../types/controladoria';
+import { useEscKey } from '../../../hooks/useEscKey';
 
 interface Props {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
+  useEscKey(isOpen, onClose);
   const [analysts, setAnalysts] = useState<Analyst[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
       .from('analysts')
       .select('*')
       .order('name', { ascending: true });
-    
+
     if (data) setAnalysts(data);
     setLoading(false);
   };
@@ -43,12 +45,12 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
       if (editingId) {
         const { error } = await supabase
           .from('analysts')
-          .update({ 
+          .update({
             name: formData.name.trim(),
             email: formData.email.trim()
           })
           .eq('id', editingId);
-        
+
         if (error) throw error;
 
         setFormData({ name: '', email: '' });
@@ -58,14 +60,14 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
       } else {
         const { data, error } = await supabase
           .from('analysts')
-          .insert([{ 
+          .insert([{
             name: formData.name.trim(),
             email: formData.email.trim(),
             active: true
           }])
           .select()
           .single();
-        
+
         if (error) throw error;
 
         setFormData({ name: '', email: '' });
@@ -83,7 +85,7 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
 
   const handleEdit = (analyst: Analyst) => {
     setEditingId(analyst.id);
-    setFormData({ 
+    setFormData({
       name: analyst.name,
       email: analyst.email || ''
     });
@@ -91,16 +93,16 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir este analista?')) return;
-    
+
     setLoading(true);
     try {
       const { error } = await supabase
         .from('analysts')
         .update({ active: false })
         .eq('id', id);
-      
+
       if (error) throw error;
-      
+
       fetchAnalysts();
       onUpdate();
     } catch (error: any) {
@@ -186,7 +188,7 @@ export function AnalystManagerModal({ isOpen, onClose, onUpdate }: Props) {
                       <p className="text-xs text-gray-500">{analyst.email}</p>
                     )}
                   </div>
-                  
+
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleEdit(analyst)}

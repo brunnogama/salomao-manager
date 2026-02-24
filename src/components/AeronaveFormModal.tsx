@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
 import { GerenciadorOpcoesModal } from './GerenciadorOpcoesModal'
 import { MissaoSelect } from './MissaoSelect'
+import { useEscKey } from '../hooks/useEscKey'
 
 interface AeronaveFormModalProps {
   isOpen: boolean;
@@ -200,6 +201,7 @@ export function AeronaveFormModal({
   onSave,
   onSuccess
 }: AeronaveFormModalProps) {
+  useEscKey(isOpen, onClose);
 
   // --- Estados de Listas Dinâmicas ---
   const [tiposOpcoes, setTiposOpcoes] = useState<string[]>([])

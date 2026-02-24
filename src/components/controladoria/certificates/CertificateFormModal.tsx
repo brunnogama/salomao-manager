@@ -3,6 +3,7 @@ import { X, Save, Upload, Settings2, ChevronDown } from 'lucide-react';
 import { SearchableSelect } from '../../SearchableSelect';
 import { CertificateNameManagerModal } from './modals/CertificateNameManagerModal';
 import { CertificateAgencyManagerModal } from './modals/CertificateAgencyManagerModal';
+import { useEscKey } from '../../../hooks/useEscKey';
 import { maskCNPJ } from '../utils/masks';
 
 interface CertificateFormData {
@@ -60,14 +61,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
         }
     }, [initialData]);
 
-    // Handle ESC key
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-        if (isOpen) window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose]);
+    useEscKey(isOpen, onClose);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Save, Settings2, Plus, Trash2, Edit2, Percent, Calculator, ChevronDown, Check, Upload } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useEscKey } from '../../hooks/useEscKey'
 
 interface FamiliaFormModalProps {
   isOpen: boolean
@@ -10,6 +11,7 @@ interface FamiliaFormModalProps {
 }
 
 export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: FamiliaFormModalProps) {
+  useEscKey(isOpen, onClose)
   const [formData, setFormData] = useState<any>({
     vencimento: '', titular: '', fornecedor: '', descricao_servico: '',
     tipo: '', categoria: '', valor: '', nota_fiscal: '', fatura: '', recibo: '',
@@ -65,7 +67,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Limpeza dos dados para evitar erro 400 (Bad Request)
     // No Postgres, campos de data e número não aceitam string vazia ('')
     const cleanedData = {
@@ -82,7 +84,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
     // Remove campos de sistema que o Supabase não aceita em INSERT/UPDATE
     delete cleanedData.created_at;
     delete cleanedData.criado_em;
-    
+
     onSave(cleanedData);
   };
 
@@ -126,23 +128,22 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
     return (
       <div className="space-y-1 flex flex-col h-full relative" onClick={(e) => e.stopPropagation()}>
         <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">{label}</label>
-        <div 
+        <div
           onClick={() => setActiveDropdown(isDropdownOpen ? null : name)}
-          className={`w-full h-[34px] px-3 flex items-center justify-between bg-gray-100/50 border rounded-xl text-xs transition-all cursor-pointer group ${
-            isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/10 bg-white' : 'border-gray-200'
-          }`}
+          className={`w-full h-[34px] px-3 flex items-center justify-between bg-gray-100/50 border rounded-xl text-xs transition-all cursor-pointer group ${isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/10 bg-white' : 'border-gray-200'
+            }`}
         >
           <span className={`truncate font-medium ${!value ? 'text-gray-400' : 'text-[#112240]'}`}>
             {value || 'Selecione...'}
           </span>
           <div className="flex items-center gap-1">
-             <button 
-              type="button" 
+            <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsManageModalOpen({ open: true, field: name });
                 setActiveDropdown(null);
-              }} 
+              }}
               className="p-1 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-lg transition-all"
             >
               <Settings2 className="w-3 h-3" />
@@ -155,15 +156,14 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
           <div className="absolute top-[38px] left-0 w-full bg-white border border-gray-100 shadow-2xl rounded-xl z-[100] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="max-h-[150px] overflow-y-auto py-1 custom-scrollbar">
               {optionsList.map((opt: string) => (
-                <div 
+                <div
                   key={opt}
                   onClick={() => {
-                    setFormData({...formData, [name]: opt});
+                    setFormData({ ...formData, [name]: opt });
                     setActiveDropdown(null);
                   }}
-                  className={`px-3 py-1.5 text-xs font-medium flex items-center justify-between transition-colors cursor-pointer ${
-                    value === opt ? 'bg-blue-50 text-blue-700' : 'text-[#112240] hover:bg-gray-50'
-                  }`}
+                  className={`px-3 py-1.5 text-xs font-medium flex items-center justify-between transition-colors cursor-pointer ${value === opt ? 'bg-blue-50 text-blue-700' : 'text-[#112240] hover:bg-gray-50'
+                    }`}
                 >
                   {opt}
                   {value === opt && <Check className="w-3 h-3" />}
@@ -181,7 +181,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 bg-[#0a192f]/60 backdrop-blur-md transition-all">
       <div className="bg-white w-full max-w-5xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-white/20">
-        
+
         <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white flex-shrink-0">
           <div>
             <h3 className="text-xl font-black text-[#112240] tracking-tight leading-none">{initialData ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
@@ -198,7 +198,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <div className="space-y-1 flex flex-col h-full">
                 <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Vencimento</label>
-                <input type="date" name="vencimento" value={formData.vencimento} onChange={(e) => setFormData({...formData, vencimento: e.target.value})} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-700" required />
+                <input type="date" name="vencimento" value={formData.vencimento} onChange={(e) => setFormData({ ...formData, vencimento: e.target.value })} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-700" required />
               </div>
               <ManagedSelect label="Titular" name="titular" value={formData.titular} optionsList={options.titular} />
               <ManagedSelect label="Fornecedor" name="fornecedor" value={formData.fornecedor} optionsList={options.fornecedor} />
@@ -212,7 +212,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <div className="space-y-1 flex flex-col h-full">
                 <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Valor (R$)</label>
-                <input type="number" step="0.01" name="valor" value={formData.valor} onChange={(e) => setFormData({...formData, valor: e.target.value})} className="w-full h-[34px] px-3 bg-blue-50/30 border border-blue-100 rounded-xl text-xs font-bold text-blue-700 outline-none focus:ring-2 focus:ring-blue-500/20" required />
+                <input type="number" step="0.01" name="valor" value={formData.valor} onChange={(e) => setFormData({ ...formData, valor: e.target.value })} className="w-full h-[34px] px-3 bg-blue-50/30 border border-blue-100 rounded-xl text-xs font-bold text-blue-700 outline-none focus:ring-2 focus:ring-blue-500/20" required />
               </div>
               <ManagedSelect label="Status" name="status" value={formData.status} optionsList={options.status} />
               <ManagedSelect label="Fator Gerador" name="fator_gerador" value={formData.fator_gerador} optionsList={options.fator_gerador} />
@@ -225,7 +225,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
               </div>
               <div className="space-y-1 flex flex-col h-full">
                 <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Envio</label>
-                <input type="date" name="data_envio" value={formData.data_envio} onChange={(e) => setFormData({...formData, data_envio: e.target.value})} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" />
+                <input type="date" name="data_envio" value={formData.data_envio} onChange={(e) => setFormData({ ...formData, data_envio: e.target.value })} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" />
               </div>
             </div>
           </div>
@@ -233,17 +233,17 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
           <div className="space-y-3">
             <h4 className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] border-b border-blue-50 pb-1">Documentação e GED</h4>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <div className="space-y-1"><label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">NF</label><input name="nota_fiscal" value={formData.nota_fiscal} onChange={(e) => setFormData({...formData, nota_fiscal: e.target.value})} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" /></div>
-              <div className="space-y-1"><label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Fatura</label><input name="fatura" value={formData.fatura} onChange={(e) => setFormData({...formData, fatura: e.target.value})} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" /></div>
-              <div className="space-y-1"><label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Recibo</label><input name="recibo" value={formData.recibo} onChange={(e) => setFormData({...formData, recibo: e.target.value})} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" /></div>
-              <div className="space-y-1"><label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Boleto</label><input name="boleto" value={formData.boleto} onChange={(e) => setFormData({...formData, boleto: e.target.value})} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" /></div>
-              <div className="space-y-1"><label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">O.S.</label><input name="os" value={formData.os} onChange={(e) => setFormData({...formData, os: e.target.value})} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" /></div>
+              <div className="space-y-1"><label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">NF</label><input name="nota_fiscal" value={formData.nota_fiscal} onChange={(e) => setFormData({ ...formData, nota_fiscal: e.target.value })} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" /></div>
+              <div className="space-y-1"><label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Fatura</label><input name="fatura" value={formData.fatura} onChange={(e) => setFormData({ ...formData, fatura: e.target.value })} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" /></div>
+              <div className="space-y-1"><label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Recibo</label><input name="recibo" value={formData.recibo} onChange={(e) => setFormData({ ...formData, recibo: e.target.value })} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" /></div>
+              <div className="space-y-1"><label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Boleto</label><input name="boleto" value={formData.boleto} onChange={(e) => setFormData({ ...formData, boleto: e.target.value })} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" /></div>
+              <div className="space-y-1"><label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">O.S.</label><input name="os" value={formData.os} onChange={(e) => setFormData({ ...formData, os: e.target.value })} className="w-full h-[34px] px-3 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none text-gray-700" /></div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
               <div className="md:col-span-2 space-y-1">
                 <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Descrição do Serviço</label>
-                <input name="descricao_servico" value={formData.descricao_servico} onChange={(e) => setFormData({...formData, descricao_servico: e.target.value})} className="w-full h-[34px] px-4 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-gray-700" placeholder="Resumo do serviço..." />
+                <input name="descricao_servico" value={formData.descricao_servico} onChange={(e) => setFormData({ ...formData, descricao_servico: e.target.value })} className="w-full h-[34px] px-4 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-gray-700" placeholder="Resumo do serviço..." />
               </div>
               <div className="space-y-1">
                 <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Comprovante (GED)</label>
@@ -252,7 +252,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
                   <span className="text-[9px] font-bold text-blue-600 truncate">
                     {formData.comprovante ? (typeof formData.comprovante === 'string' ? 'PDF Vinculado' : formData.comprovante.name) : 'Anexar PDF'}
                   </span>
-                  <input type="file" accept="application/pdf" className="hidden" onChange={(e) => setFormData({...formData, comprovante: e.target.files ? e.target.files[0] : null})} />
+                  <input type="file" accept="application/pdf" className="hidden" onChange={(e) => setFormData({ ...formData, comprovante: e.target.files ? e.target.files[0] : null })} />
                 </label>
               </div>
             </div>
@@ -279,7 +279,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
             <div className="p-6 space-y-4">
               {editingItem ? (
                 <div className="flex gap-2">
-                  <input type="text" value={editingItem.current} onChange={(e) => setEditingItem({...editingItem, current: e.target.value})} className="flex-1 p-2 bg-blue-50 border border-blue-200 rounded-xl text-xs outline-none font-bold text-blue-700" />
+                  <input type="text" value={editingItem.current} onChange={(e) => setEditingItem({ ...editingItem, current: e.target.value })} className="flex-1 p-2 bg-blue-50 border border-blue-200 rounded-xl text-xs outline-none font-bold text-blue-700" />
                   <button type="button" onClick={handleUpdateItem} className="p-2 bg-blue-600 text-white rounded-xl"><Save className="w-4 h-4" /></button>
                 </div>
               ) : (
@@ -316,7 +316,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
               <div className="space-y-1">
                 <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Destino</label>
                 <div className="relative">
-                  <select value={formData.rateio} onChange={(e) => setFormData({...formData, rateio: e.target.value})} className="w-full p-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none appearance-none font-medium text-gray-700">
+                  <select value={formData.rateio} onChange={(e) => setFormData({ ...formData, rateio: e.target.value })} className="w-full p-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-xs outline-none appearance-none font-medium text-gray-700">
                     <option value="">Selecione...</option>
                     {options.titular.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
@@ -325,7 +325,7 @@ export function FamiliaFormModal({ isOpen, onClose, onSave, initialData }: Famil
               </div>
               <div className="space-y-1">
                 <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest px-1">Percentagem (%)</label>
-                <input type="number" value={formData.rateio_porcentagem} onChange={(e) => setFormData({...formData, rateio_porcentagem: e.target.value})} className="w-full p-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-xs font-black outline-none text-gray-700" />
+                <input type="number" value={formData.rateio_porcentagem} onChange={(e) => setFormData({ ...formData, rateio_porcentagem: e.target.value })} className="w-full p-2.5 bg-gray-100/50 border border-gray-200 rounded-xl text-xs font-black outline-none text-gray-700" />
               </div>
               <button type="button" onClick={() => setIsRateioModalOpen(false)} className="w-full py-3 bg-[#1e3a8a] text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Confirmar Rateio</button>
             </div>

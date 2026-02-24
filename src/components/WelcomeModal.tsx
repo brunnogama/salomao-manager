@@ -1,14 +1,16 @@
 import { Fragment, useState, useEffect } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { Shield, Lock, Eye, FileText, CheckCircle, X } from 'lucide-react'
+import { useEscKey } from '../hooks/useEscKey'
 
 export function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false)
+  useEscKey(isOpen, () => setIsOpen(false));
 
   useEffect(() => {
     // Verifica se o usuário já viu o modal
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
-    
+
     if (!hasSeenWelcome) {
       // Aguarda 500ms para o app carregar antes de mostrar
       setTimeout(() => {
@@ -24,7 +26,7 @@ export function WelcomeModal() {
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-[200]" onClose={() => {}}>
+      <Dialog as="div" className="relative z-[200]" onClose={() => { }}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -49,7 +51,7 @@ export function WelcomeModal() {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all">
-                
+
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5">
                   <div className="flex items-center gap-3">
@@ -69,7 +71,7 @@ export function WelcomeModal() {
 
                 {/* Content */}
                 <div className="px-6 py-6 space-y-5">
-                  
+
                   {/* Intro */}
                   <div className="text-center">
                     <p className="text-gray-700 text-sm leading-relaxed">
@@ -79,7 +81,7 @@ export function WelcomeModal() {
 
                   {/* Cards de informação */}
                   <div className="space-y-3">
-                    
+
                     {/* LGPD */}
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                       <div className="flex items-start gap-3">

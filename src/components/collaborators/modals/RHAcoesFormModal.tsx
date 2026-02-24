@@ -8,6 +8,7 @@ import {
     Users
 } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { useEscKey } from '../../hooks/useEscKey'
 
 export interface RHAction {
     id?: string;
@@ -27,6 +28,7 @@ interface RHAcoesFormModalProps {
 }
 
 export function RHAcoesFormModal({ isOpen, onClose, onSave, initialData }: RHAcoesFormModalProps) {
+    useEscKey(isOpen, onClose);
     const [formData, setFormData] = useState<RHAction>({
         title: '',
         event_date: new Date().toISOString().split('T')[0],
