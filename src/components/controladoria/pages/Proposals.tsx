@@ -1196,8 +1196,8 @@ export function Proposals() {
               {/* Page Slider Container */}
               <div className="w-full max-w-[700px] overflow-hidden flex justify-center flex-1">
                 <div
-                  className="flex transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${currentPage * 100}%)`, width: `${totalPages * 100}%` }}
+                  className="flex transition-transform duration-500 ease-in-out w-full"
+                  style={{ transform: `translateX(-${currentPage * 100}%)` }}
                 >
                   {Array.from({ length: totalPages }).map((_, pageIdx) => (
                     <div
