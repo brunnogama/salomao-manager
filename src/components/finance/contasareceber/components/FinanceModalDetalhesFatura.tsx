@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Calendar, DollarSign, Mail, User, FileText, CheckCircle2, Clock, AlertCircle, Phone, Paperclip } from 'lucide-react';
 import { Fatura } from '../hooks/useFinanceContasReceber';
+import { useEscKey } from '../../../../hooks/useEscKey';
 
 interface FinanceModalDetalhesFaturaProps {
     isOpen: boolean;
@@ -9,6 +10,7 @@ interface FinanceModalDetalhesFaturaProps {
 }
 
 export function FinanceModalDetalhesFatura({ isOpen, onClose, fatura }: FinanceModalDetalhesFaturaProps) {
+    useEscKey(isOpen, onClose);
     if (!isOpen || !fatura) return null;
 
     const dataEnvio = new Date(fatura.data_envio);

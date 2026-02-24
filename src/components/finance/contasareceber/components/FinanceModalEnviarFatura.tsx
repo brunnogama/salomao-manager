@@ -16,6 +16,7 @@ import { NumericFormat } from 'react-number-format';
 import { SearchableSelect } from '../../../SearchableSelect';
 import { useFinanceContasReceber } from '../hooks/useFinanceContasReceber';
 import { supabase } from '../../../../lib/supabase';
+import { useEscKey } from '../../../../hooks/useEscKey';
 
 import { Client } from '../../../../types/controladoria';
 import { ClientFormModal } from '../../../controladoria/clients/ClientFormModal';
@@ -57,24 +58,11 @@ export function FinanceModalEnviarFatura({ isOpen, onClose, userEmail }: Finance
   }, [isOpen]);
 
   // Handle ESC key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        // Only close if ClientFormModal is NOT open
-        if (!showClientModal && !showSuccessModal) {
-          onClose();
-        }
-      }
-    };
-
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
+  useEscKey(isOpen, () => {
+    if (!showClientModal && !showSuccessModal) {
+      onClose();
     }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose, showClientModal, showSuccessModal]);
+  });
 
   const loadClientes = async () => {
     const { data } = await supabase

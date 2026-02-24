@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Save, Loader2 } from 'lucide-react';
 import { useFinanceContasReceber } from '../hooks/useFinanceContasReceber';
+import { useEscKey } from '../../../../hooks/useEscKey';
 
 interface FinanceModalEditarDatasProps {
     isOpen: boolean;
@@ -30,14 +31,7 @@ export function FinanceModalEditarDatas({
         }
     }, [isOpen, dataRespostaAtual, dataRadarAtual]);
 
-    // Handle ESC key
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-        if (isOpen) window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose]);
+    useEscKey(isOpen, onClose);
 
     const handleSave = async () => {
         setLoading(true);

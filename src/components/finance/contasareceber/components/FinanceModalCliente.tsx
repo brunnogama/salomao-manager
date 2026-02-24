@@ -8,8 +8,8 @@ import {
   Mail as MailIcon,
   FileText
 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
-import { useEscKey } from '../../../hooks/useEscKey';
+import { supabase } from '../../../../lib/supabase';
+import { useEscKey } from '../../../../hooks/useEscKey';
 
 interface FinanceModalClienteProps {
   isOpen: boolean;

@@ -8,7 +8,7 @@ import {
     Users
 } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
-import { useEscKey } from '../../hooks/useEscKey'
+import { useEscKey } from '../../../hooks/useEscKey'
 
 export interface RHAction {
     id?: string;
