@@ -93,16 +93,17 @@ export function Proposals() {
 
         const contentHeight = previewContentRef.current.scrollHeight;
         if (calculatedSafeHeight > 0) {
-          // Add a larger buffer (26px) to match Word's more conservative vertical spacing and force 5 pages
-          const finalSafeHeight = calculatedSafeHeight - 26;
-          setSafeAreaHeight(finalSafeHeight);
-          const pages = Math.ceil(contentHeight / finalSafeHeight);
+          // Use the exact visible height for the shift to prevent gaps/skips
+          // We add a tiny 6px overlap to avoid splitting lines in half if they land exactly on the edge
+          const shiftUnit = calculatedSafeHeight - 6;
+          setSafeAreaHeight(shiftUnit);
+          const pages = Math.ceil(contentHeight / shiftUnit);
           setTotalPages(pages > 0 ? pages : 1);
         }
       }
     };
 
-    const timeoutId = setTimeout(calculatePages, 300);
+    const timeoutId = setTimeout(calculatePages, 500); // Increased timeout to ensure style stability
     return () => clearTimeout(timeoutId);
   }, [proposalData, customBodyText, isEditingBody, partners]);
 
@@ -1155,9 +1156,9 @@ export function Proposals() {
                         </div>
 
                         {/* Safe Area Container - Header/Footer Protection */}
-                        <div className="absolute inset-0 flex flex-col pt-[18%] pb-[16%]">
+                        <div className="absolute inset-0 flex flex-col pt-[13%] pb-[11%]">
                           {/* Content Clipper */}
-                          <div className="flex-1 overflow-hidden px-[12.1%]">
+                          <div className="flex-1 overflow-hidden px-[12.1%] pt-4">
                             <div
                               style={{
                                 transform: `translateY(-${pageIdx * safeAreaHeight}px)`,
@@ -1165,7 +1166,7 @@ export function Proposals() {
                               }}
                             >
                               {/* The Content itself */}
-                              <div className="text-left text-[#0a192f] text-[10px] leading-relaxed select-none h-fit">
+                              <div className="text-left text-[#0a192f] text-[10px] leading-[1.2] select-none h-fit">
                                 {renderPreviewContent()}
                               </div>
                             </div>
@@ -1191,18 +1192,20 @@ export function Proposals() {
             </div>
           </div>
 
-          {/* Hidden measuring content */}
           <div
-            className="absolute opacity-0 pointer-events-none bg-white shadow-2xl border border-gray-100 overflow-hidden"
-            style={{ width: '850px', padding: 'calc(18% + 14px) 12.1% calc(16% + 14px) 12.1%' }}
+            className="absolute opacity-0 pointer-events-none bg-white overflow-hidden"
+            style={{
+              width: previewContainerRef.current?.offsetWidth ? `${previewContainerRef.current.offsetWidth}px` : '850px',
+              padding: 'calc(13% + 0.5rem) 12.1% 11% 12.1%'
+            }}
           >
             <div ref={previewContentRef}>
-              <div className="text-left text-[#0a192f] text-[10px] leading-relaxed">
+              <div className="text-left text-[#0a192f] text-[10px] leading-[1.2]">
                 {renderPreviewContent()}
               </div>
             </div>
-            <div ref={previewContainerRef} className="aspect-[21/29.7] w-full absolute inset-0 -z-10"></div>
           </div>
+          <div ref={previewContainerRef} className="w-full max-w-[850px] aspect-[21/29.7] absolute opacity-0 pointer-events-none"></div>
         </div>
       </div>
 
