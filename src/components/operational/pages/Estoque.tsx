@@ -18,19 +18,26 @@ interface StockItem {
 export function Estoque() {
     const [stockItems, setStockItems] = useState<StockItem[]>([])
     const [searchTerm, setSearchTerm] = useState('')
+    const [activeStatus, setActiveStatus] = useState('Todos')
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         fetchStock()
-    }, [])
+    }, [activeStatus])
 
     const fetchStock = async () => {
         try {
             setLoading(true)
-            const { data, error } = await supabase
+            let query = supabase
                 .from('operational_stock')
                 .select('*')
                 .order('product', { ascending: true })
+
+            if (activeStatus !== 'Todos') {
+                query = query.eq('status', activeStatus)
+            }
+
+            const { data, error } = await query
 
             if (error) throw error
             if (data) setStockItems(data)
@@ -93,6 +100,21 @@ export function Estoque() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 bg-gray-50/50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
                         />
+                    </div>
+
+                    <div className="flex items-center gap-1.5 p-1 bg-gray-50 rounded-lg border border-gray-100 shrink-0 w-full lg:w-auto overflow-x-auto no-scrollbar">
+                        {['Todos', 'Estoque Confortável', 'Estoque Perigoso', 'Sem Estoque'].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setActiveStatus(status)}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md whitespace-nowrap transition-all text-xs font-bold uppercase tracking-wider ${activeStatus === status
+                                    ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200'
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 border border-transparent'
+                                    }`}
+                            >
+                                {status}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
