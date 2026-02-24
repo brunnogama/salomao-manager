@@ -7,6 +7,7 @@ import {
 import { differenceInMonths, differenceInYears } from 'date-fns'
 import XLSX from 'xlsx-js-style'
 import { supabase } from '../../../lib/supabase'
+import { logAction } from '../../../lib/logger'
 
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { Collaborator, Partner, GEDDocument } from '../../../types/controladoria'
@@ -461,9 +462,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (formData.id) {
         const { error } = await supabase.from('collaborators').update(payload).eq('id', formData.id)
         if (error) throw error
+        await logAction('EDITAR', 'RH', `Editou colaborador: ${formData.name}`, 'Colaboradores')
       } else {
         const { data, error } = await supabase.from('collaborators').insert(payload).select().single()
         if (error) throw error
+        await logAction('CRIAR', 'RH', `Criou novo colaborador: ${formData.name}`, 'Colaboradores')
 
         // Handle Pending GEDs
         if (data && pendingGedDocs.length > 0) {
@@ -519,11 +522,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setPendingGedDocs([])
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, name?: string) => {
     if (!confirm('Deseja excluir este colaborador?')) return
-    await supabase.from('collaborators').delete().eq('id', id)
-    fetchColaboradores()
-    if (selectedColaborador) setSelectedColaborador(null)
+    const { error } = await supabase.from('collaborators').delete().eq('id', id)
+    if (!error) {
+      await logAction('EXCLUIR', 'RH', `Excluiu colaborador: ${name || id}`, 'Colaboradores')
+      fetchColaboradores()
+      if (selectedColaborador) setSelectedColaborador(null)
+    } else {
+      alert('Erro ao excluir: ' + error.message)
+    }
   }
 
   const filtered = colaboradores.filter(c => {

@@ -10,6 +10,7 @@ import { decodeCNJ } from '../utils/cnjDecoder';
 import { addDays } from 'date-fns';
 import { toast } from 'sonner';
 import { useEscKey } from '../../../hooks/useEscKey';
+import { logAction } from '../../../lib/logger';
 
 // Componentes Modularizados
 import { OptionManager } from './components/OptionManager';
@@ -555,10 +556,12 @@ export function ContractFormModal(props: Props) {
       if (formData.id) {
         const { error } = await supabase.from('contracts').update(contractPayload).eq('id', formData.id);
         if (error) throw error;
+        await logAction('EDITAR', 'CONTROLADORIA', `Editou contrato: ${formData.hon_number || formData.client_name}`, 'Contratos');
       } else {
         const { data, error } = await supabase.from('contracts').insert(contractPayload).select().single();
         if (error) throw error;
         savedId = data.id;
+        await logAction('CRIAR', 'CONTROLADORIA', `Criou novo contrato: ${formData.hon_number || formData.client_name}`, 'Contratos');
       }
 
       if (savedId) {

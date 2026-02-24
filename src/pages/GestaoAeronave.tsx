@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import XLSX from 'xlsx-js-style'
 import { supabase } from '../lib/supabase'
+import { logAction } from '../lib/logger'
 
 // Tipos
 import { AeronaveLancamento, OrigemLancamento } from '../types/AeronaveTypes'
@@ -348,11 +349,10 @@ export function GestaoAeronave() {
         .update(cleanData)
         .eq('id', cleanData.id)
       if (error) throw error
-    } else {
-      const { error } = await supabase
-        .from('aeronave_lancamentos')
-        .insert(cleanData)
-      if (error) throw error
+
+      const action = cleanData.id ? 'EDITAR' : 'CRIAR'
+      const msg = cleanData.id ? `Editou lançamento: ${cleanData.descricao || cleanData.nome_missao}` : `Criou lançamento: ${cleanData.descricao || cleanData.nome_missao}`
+      await logAction(action, 'FINANCEIRO', msg, 'Patrimônio')
     }
   }
 

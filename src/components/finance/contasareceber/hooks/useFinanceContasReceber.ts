@@ -1,6 +1,7 @@
 // src/components/finance/contasareceber/hooks/useFinanceContasReceber.ts
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../../lib/supabase';
+import { logAction } from '../../../../lib/logger';
 
 export type FaturaStatus = 'aguardando_resposta' | 'radar' | 'contato_direto' | 'pago';
 
@@ -150,6 +151,8 @@ export function useFinanceContasReceber() {
 
       if (faturaError) throw faturaError;
 
+      await logAction('CRIAR', 'FINANCEIRO', `Enviou fatura para ${params.cliente_nome}: ${params.assunto} (R$ ${params.valor.toFixed(2)})`, 'Financeiro');
+
       // 4. Enviar e-mail (Webhook Make.com)
       try {
         const webhookUrl = import.meta.env.VITE_MAKE_WEBHOOK_URL;
@@ -206,6 +209,9 @@ export function useFinanceContasReceber() {
 
       if (error) throw error;
 
+      const fatura = faturas.find(f => f.id === id);
+      await logAction('EDITAR', 'FINANCEIRO', `Confirmou pagamento da fatura: ${fatura?.cliente_nome} - ${fatura?.assunto}`, 'Financeiro');
+
       await loadFaturas();
     } catch (error) {
       console.error('Erro ao confirmar pagamento:', error);
@@ -231,6 +237,9 @@ export function useFinanceContasReceber() {
 
       if (error) throw error;
 
+      const fatura = faturas.find(f => f.id === id);
+      await logAction('EDITAR', 'FINANCEIRO', `Atualizou status da fatura para ${novoStatus}: ${fatura?.cliente_nome} - ${fatura?.assunto}`, 'Financeiro');
+
       await loadFaturas();
       await loadFaturas();
     } catch (error) {
@@ -248,6 +257,9 @@ export function useFinanceContasReceber() {
         .eq('id', id);
 
       if (error) throw error;
+
+      const fatura = faturas.find(f => f.id === id);
+      await logAction('EXCLUIR', 'FINANCEIRO', `Excluiu fatura: ${fatura?.cliente_nome} - ${fatura?.assunto}`, 'Financeiro');
 
       await loadFaturas();
     } catch (error) {
@@ -278,6 +290,10 @@ export function useFinanceContasReceber() {
         .eq('id', id);
 
       if (error) throw error;
+
+      const fatura = faturas.find(f => f.id === id);
+      await logAction('EDITAR', 'FINANCEIRO', `Alterou datas da fatura: ${fatura?.cliente_nome} - ${fatura?.assunto}`, 'Financeiro');
+
       await loadFaturas();
     } catch (error) {
       console.error('Erro ao atualizar datas:', error);

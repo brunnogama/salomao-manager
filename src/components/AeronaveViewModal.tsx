@@ -1,5 +1,6 @@
 import { X, Edit3, Trash2, CreditCard, FileText, Printer, AlertTriangle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { logAction } from '../lib/logger'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
 import { useEscKey } from '../hooks/useEscKey'
 
@@ -52,6 +53,7 @@ export function AeronaveViewModal({
       if (error) {
         alert('Erro ao excluir.')
       } else {
+        await logAction('EXCLUIR', 'FINANCEIRO', `Excluiu lançamento: ${item.descricao || item.nome_missao}`, 'Patrimônio')
         onDelete()
         onClose()
       }

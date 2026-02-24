@@ -59,7 +59,7 @@ export function Kanban({ userName = 'Usuário', onModuleHome, onLogout }: Kanban
     setTasks(updatedTasks);
 
     await supabase.from('tasks').update({ status: newStatus }).eq('id', draggableId);
-    await logAction('EDITAR', 'KANBAN', `Moveu tarefa para ${newStatus}: ${updatedTasks.find(t => t.id === draggableId)?.title}`);
+    await logAction('EDITAR', 'CRM', `Moveu tarefa para ${newStatus}: ${updatedTasks.find(t => t.id === draggableId)?.title}`, 'Tasks');
   };
 
   const handleAddTask = async (e: React.FormEvent) => {
@@ -67,7 +67,7 @@ export function Kanban({ userName = 'Usuário', onModuleHome, onLogout }: Kanban
     const { data, error } = await supabase.from('tasks').insert([newTask]).select();
     if (!error && data) {
       setTasks([...tasks, data[0] as Task]);
-      await logAction('CRIAR', 'KANBAN', `Nova tarefa: ${newTask.title}`);
+      await logAction('CRIAR', 'CRM', `Nova tarefa: ${newTask.title}`, 'Tasks');
       setIsAddModalOpen(false);
       setNewTask({ title: '', description: '', priority: 'MEDIA', status: 'todo' });
     }
@@ -79,7 +79,7 @@ export function Kanban({ userName = 'Usuário', onModuleHome, onLogout }: Kanban
     const { error } = await supabase.from('tasks').update(editFormData).eq('id', selectedTask.id);
     if (!error) {
       setTasks(tasks.map(t => t.id === selectedTask.id ? { ...t, ...editFormData } : t));
-      await logAction('EDITAR', 'KANBAN', `Editou tarefa: ${editFormData.title}`);
+      await logAction('EDITAR', 'CRM', `Editou tarefa: ${editFormData.title}`, 'Tasks');
       setIsEditMode(false);
       setSelectedTask({ ...selectedTask, ...editFormData });
     }
@@ -91,7 +91,7 @@ export function Kanban({ userName = 'Usuário', onModuleHome, onLogout }: Kanban
       const { error } = await supabase.from('tasks').delete().eq('id', id);
       if (!error) {
         setTasks(tasks.filter(t => t.id !== id));
-        await logAction('EXCLUIR', 'KANBAN', `Removeu tarefa: ${taskToDelete?.title}`);
+        await logAction('EXCLUIR', 'CRM', `Removeu tarefa: ${taskToDelete?.title}`, 'Tasks');
         setIsDetailsModalOpen(false);
       }
     }

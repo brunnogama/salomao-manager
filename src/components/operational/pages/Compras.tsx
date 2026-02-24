@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Trash2, ShoppingCart, Check, X, ChevronRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { logAction } from '../../../lib/logger'
 import { AlertModal } from '../../ui/AlertModal'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 
@@ -170,6 +171,7 @@ export function Compras() {
                 setExpandedCategories(prev => ({ ...prev, [cat]: true }))
 
                 resetModal()
+                await logAction('CRIAR', 'OPERACIONAL', `Adicionou item à lista de compras: ${finalName} (${data.quantity})`, 'Shopping List');
                 showAlert('Sucesso', 'Item adicionado à lista.', 'success')
             }
         } catch (error) {
@@ -190,6 +192,7 @@ export function Compras() {
             if (error) throw error
 
             setItems(prev => prev.filter(i => i.id !== itemToDelete.id))
+            await logAction('EXCLUIR', 'OPERACIONAL', `Removeu item da lista de compras: ${itemToDelete.name}`, 'Shopping List');
             showAlert('Sucesso', 'Item removido da lista.', 'success')
         } catch (error) {
             console.error('Error deleting item:', error)
@@ -212,6 +215,7 @@ export function Compras() {
                 .eq('id', item.id)
 
             if (error) throw error
+            await logAction('EDITAR', 'OPERACIONAL', `${newStatus === 'purchased' ? 'Marceu como comprado' : 'Desmarcou compra'}: ${item.name}`, 'Shopping List');
         } catch (error) {
             console.error('Error updating status:', error)
             fetchItems() // Revert

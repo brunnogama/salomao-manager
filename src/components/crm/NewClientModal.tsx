@@ -93,7 +93,7 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
         : await supabase.from(tableName).insert([dbData])
 
       if (error) throw error
-      await logAction(clientToEdit ? 'UPDATE' : 'CREATE', tableName.toUpperCase(), `${clientToEdit ? 'Editou' : 'Criou'} ${formData.nome}`)
+      await logAction(clientToEdit ? 'EDITAR' : 'CRIAR', 'CRM', `${clientToEdit ? 'Editou' : 'Criou'} prospect: ${formData.nome}`, tableName);
       onSave(formData); onClose()
     } catch (error: any) { alert('Erro ao salvar: ' + error.message) }
   }

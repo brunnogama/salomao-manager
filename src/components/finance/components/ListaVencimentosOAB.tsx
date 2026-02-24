@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Calendar, GraduationCap, AlertCircle, CheckCircle2, Clock, X, DollarSign, Ban } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { logAction } from '../../../lib/logger'
 
 interface VencimentoOAB {
   id: number
@@ -181,6 +182,8 @@ export function ListaVencimentosOAB({ mesAtual, anoAtual }: ListaVencimentosOABP
         }, { onConflict: 'colaborador_id,mes_referencia,ano_referencia' })
 
       if (error) throw error
+
+      await logAction('EDITAR', 'FINANCEIRO', `Atualizou status de pagamento OAB para ${status}: ${selectedVencimento.name}`, 'Financeiro OAB')
 
       await fetchVencimentos()
       setSelectedVencimento(null)

@@ -22,6 +22,7 @@ import { supabase } from '../../../lib/supabase';
 import { KanbanTask, Contract } from '../../../types/controladoria';
 import { KanbanTaskModal } from '../kanban/KanbanTaskModal';
 import { toast } from 'sonner';
+import { logAction } from '../../../lib/logger';
 
 // REMOVIDOS: billing e review
 const columns: Record<string, { id: string; title: string; color: string; accent: string }> = {
@@ -105,6 +106,8 @@ export function Kanban() {
       status: newStatus,
       position: destination.index
     }).eq('id', draggableId);
+
+    await logAction('MOVER', 'CONTROLADORIA', `Moveu tarefa "${movedTask.title}" para ${columns[newStatus].title}`, 'Kanban');
   };
 
   const handleAddTask = () => {
@@ -125,7 +128,11 @@ export function Kanban() {
     if (e) e.stopPropagation();
     if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
 
+    const taskToDelete = tasks.find(t => t.id === id);
     await supabase.from('kanban_tasks').delete().eq('id', id);
+    if (taskToDelete) {
+      await logAction('EXCLUIR', 'CONTROLADORIA', `Excluiu tarefa: ${taskToDelete.title}`, 'Kanban');
+    }
     setTasks(tasks.filter(t => t.id !== id));
     setIsModalOpen(false);
   };
@@ -150,16 +157,20 @@ export function Kanban() {
         .eq('id', editingTask.id);
 
       if (!error) {
+        await logAction('EDITAR', 'CONTROLADORIA', `Editou tarefa: ${cleanData.title || editingTask.title}`, 'Kanban');
         fetchTasks();
       } else {
         toast.error('Erro ao salvar tarefa: ' + error.message);
       }
     } else {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('kanban_tasks')
-        .insert([cleanData]);
+        .insert([cleanData])
+        .select()
+        .single();
 
       if (!error) {
+        await logAction('CRIAR', 'CONTROLADORIA', `Criou tarefa: ${cleanData.title}`, 'Kanban');
         fetchTasks();
       } else {
         toast.error('Erro ao criar tarefa: ' + error.message);

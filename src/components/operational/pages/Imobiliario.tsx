@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Armchair, Plus, Search, MapPin, Tag, Box, Trash2, Pencil, Save, X, RotateCcw } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { logAction } from '../../../lib/logger'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { AlertModal } from '../../ui/AlertModal'
 
@@ -134,6 +135,7 @@ export function Imobiliario() {
 
                 if (error) throw error
                 setAssets(prev => prev.map(a => a.id === editingAsset.id ? { ...a, ...formData } as Asset : a))
+                await logAction('EDITAR', 'OPERACIONAL', `Editou ativo imobiliário: ${formData.name}`, 'Patrimônio');
                 showAlert('Sucesso', 'Ativo atualizado com sucesso.', 'success')
             } else {
                 // Create
@@ -144,7 +146,10 @@ export function Imobiliario() {
                     .single()
 
                 if (error) throw error
-                if (data) setAssets(prev => [...prev, data])
+                if (data) {
+                    setAssets(prev => [...prev, data])
+                    await logAction('CRIAR', 'OPERACIONAL', `Cadastrou novo ativo imobiliário: ${formData.name}`, 'Patrimônio');
+                }
                 showAlert('Sucesso', 'Ativo cadastrado com sucesso.', 'success')
             }
             setIsFormOpen(false)
@@ -164,7 +169,9 @@ export function Imobiliario() {
                 .eq('id', itemToDelete)
 
             if (error) throw error
+            const assetName = assets.find(a => a.id === itemToDelete)?.name
             setAssets(prev => prev.filter(a => a.id !== itemToDelete))
+            await logAction('EXCLUIR', 'OPERACIONAL', `Excluiu ativo imobiliário: ${assetName || itemToDelete}`, 'Patrimônio');
             showAlert('Sucesso', 'Ativo removido com sucesso.', 'success')
         } catch (error: any) {
             showAlert('Erro', 'Erro ao remover ativo: ' + error.message, 'error')

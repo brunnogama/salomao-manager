@@ -42,11 +42,23 @@ export function History() {
         const { data: { user } } = await supabase.auth.getUser()
         let userRole = 'viewer'
         if (user) {
-            const { data: profile } = await supabase
+            // First try by ID
+            let { data: profile } = await supabase
                 .from('user_profiles')
                 .select('role')
                 .eq('id', user.id)
                 .maybeSingle()
+
+            // If not found, try by email (more robust)
+            if (!profile && user.email) {
+                const { data: profileByEmail } = await supabase
+                    .from('user_profiles')
+                    .select('role')
+                    .eq('email', user.email)
+                    .maybeSingle()
+                profile = profileByEmail
+            }
+
             if (profile) userRole = profile.role || 'viewer'
         }
 
