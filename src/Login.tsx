@@ -224,7 +224,7 @@ export default function Login() {
               </span>
             </h2>
             <p className="text-lg text-gray-400 font-medium leading-relaxed max-w-sm">
-              Plataforma unificada para controle do escritório, patrimônio familiar e colaboradores.
+              Plataforma unificada para controle do escritório, secretaria executiva e colaboradores.
             </p>
           </div>
 
