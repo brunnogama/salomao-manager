@@ -52,10 +52,10 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex w-full bg-white overflow-hidden">
+    <div className="min-h-screen flex w-full bg-white">
 
       {/* LADO ESQUERDO - FORMULÁRIO */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 animate-in fade-in duration-1000 bg-[#f8fafc] relative">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 animate-in fade-in duration-1000 bg-[#f8fafc] relative overflow-y-auto">
 
         {/* Decorative subtle background grid */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4=')] opacity-50 z-0"></div>
