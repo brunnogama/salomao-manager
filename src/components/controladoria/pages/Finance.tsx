@@ -389,8 +389,8 @@ export function Finance() {
 
   const statusOptions = [
     { label: 'Todos Status', value: 'all' },
-    { label: 'Pendentes', value: 'pending' },
-    { label: 'Faturados', value: 'paid' },
+    { label: 'A Faturar', value: 'pending' },
+    { label: 'Faturado', value: 'paid' },
     { label: 'Vencidos', value: 'overdue' },
   ];
 
@@ -622,7 +622,7 @@ export function Finance() {
                             <button onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(item.contract!.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-all" title="Baixar Contrato"><FileDown className="w-4 h-4" /></button>
 
                             {item.status === 'pending' ? (
-                              <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-lg hover:bg-emerald-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
+                              <button onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(item); }} className="ml-2 bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1.5 rounded-lg hover:bg-amber-100 text-[9px] font-black uppercase tracking-widest flex items-center transition-all">
                                 <DollarSign className="w-3 h-3 mr-1" /> Faturar
                               </button>
                             ) : (
