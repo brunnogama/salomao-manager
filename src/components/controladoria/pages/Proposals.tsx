@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { FileText, CheckCircle, Search, Plus, Trash2, X, Eye, FileSignature, Loader2, AlertTriangle, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { FileText, CheckCircle, Search, Plus, Trash2, X, Eye, FileSignature, Loader2, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { saveAs } from 'file-saver';
 import { Contract, Partner, ContractProcess, TimelineEvent, Analyst, Collaborator } from '../../../types/controladoria';
 import { ContractFormModal } from '../contracts/ContractFormModal';
 import { generateProposalDocx } from '../../../utils/docxGenerator';
 import { maskMoney, maskCNPJ } from '../utils/masks';
-import { moedaPorExtenso, percentualPorExtenso } from '../../../utils/extenso';
 import { CustomSelect } from '../ui/CustomSelect';
 import { safeParseFloat } from '../utils/contractHelpers';
 
@@ -94,9 +93,10 @@ export function Proposals() {
 
         const contentHeight = previewContentRef.current.scrollHeight;
         if (calculatedSafeHeight > 0) {
-          // Add a small buffer (14px) to ensure text doesn't touch the header/footer boundaries
-          setSafeAreaHeight(calculatedSafeHeight - 14);
-          const pages = Math.ceil(contentHeight / (calculatedSafeHeight - 14));
+          // Add a larger buffer (26px) to match Word's more conservative vertical spacing and force 5 pages
+          const finalSafeHeight = calculatedSafeHeight - 26;
+          setSafeAreaHeight(finalSafeHeight);
+          const pages = Math.ceil(contentHeight / finalSafeHeight);
           setTotalPages(pages > 0 ? pages : 1);
         }
       }
@@ -149,24 +149,22 @@ export function Proposals() {
 
   const fetchLocations = async () => {
     try {
-      const { data, error } = await supabase.from('office_locations').select('name').order('name');
+      const { data, error } = await supabase.from('office_locations').select('city').order('city');
       if (error) {
         console.error("Erro ao buscar office_locations:", error);
       }
 
       let uniqueCities: string[] = [];
       if (data && data.length > 0) {
-        uniqueCities = Array.from(new Set(data.map((loc: any) => loc.name))).filter(Boolean);
+        uniqueCities = Array.from(new Set(data.map((loc: any) => loc.city))).filter(Boolean);
       } else {
-        // Fallback to partner locations if table is empty or misses name
-        uniqueCities = Array.from(new Set(Object.values(PARTNER_LOCATIONS).flat())).sort();
+        // Fallback static locations if DB is empty
+        uniqueCities = ["Rio de Janeiro", "São Paulo", "Brasília", "Vitória", "Salvador", "Florianópolis", "Belém", "Curitiba", "Porto Alegre", "Belo Horizonte"];
       }
 
-      setLocationOptions(uniqueCities.map((city: string) => ({ label: city, value: city })));
-    } catch (e) {
-      console.error(e);
-      const uniqueCities = Array.from(new Set(Object.values(PARTNER_LOCATIONS).flat())).sort();
-      setLocationOptions(uniqueCities.map((city: string) => ({ label: city, value: city })));
+      setLocationOptions(uniqueCities.map(city => ({ label: city, value: city })));
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -478,7 +476,7 @@ export function Proposals() {
     text += `3.13. As partes se comprometem a cumprir toda a legislação aplicável sobre segurança da informação, privacidade e proteção de dados, inclusive a Constituição Federal, o Código de Defesa do Consumidor, o Código Civil, o Marco Civil da Internet (Lei Federal n. 12.965/2014), seu decreto regulamentador (Decreto 8.771/2016), a Lei Geral de Proteção de Dados (Lei Federal n. 13.709/2018), e demais normas setoriais ou gerais sobre o tema, se comprometendo a tratar apenas os dados mencionados e/ou nas formas dispostas neste instrumento mediante instruções expressas do controlador de dados (parte que determina as finalidades e os meios de tratamento de dados pessoais); ou com o devido embasamento legal, sem transferi-los a qualquer terceiro, exceto se expressamente autorizado por este ou outro instrumento que as vincule.\n\n`;
     text += `3.14. As partes concordam em tratar e manter todas e quaisquer informações (escritas ou verbais) como confidenciais, ficando vedado, por ação ou omissão, a revelação de quaisquer informações, documentos entre outros, obtidos nas tratativas e/ou na execução do Contrato, sem prévio e expresso consentimento da outra parte. Tal regra não abrange as informações que se encontram em domínio público nem impede a menção da(o) Contratante como cliente do Escritório.\n\n`;
     text += `3.15. As partes elegem o foro da Comarca da Capital da Cidade do Rio de Janeiro para dirimir todas as controvérsias oriundas do presente instrumento, com renúncia expressa a qualquer outro.\n\n`;
-    text += `O Cliente e o Escritório concordam que esta proposta poderá ser firmada de maneira digital por todos os seus signatários. Para este fim, serão utilizados serviços disponíveis no mercado e amplamente utilizados que possibilitam a segurança de assinatura digital por meio de sistemas de certificação capazes de validar a autoria de assinatura eletrônica, bem como de certificar sua integridade, através de certificado digital emitido no padrão ICP-Brasil, autorizando, inclusive, a sua assinatura digital por meio de plataformas digitais.\n\n`;
+    text += `O Cliente e o Escritório concordam que esta proposta poderá ser firmada de maneira digital por todos os seus signatários. Para este fim, serão utilizados serviços disponíveis no mercado e amplamente utilizados que possibilitam a segurança de assinatura digital por meio de sistemas de certificação capazes de validar a autoria de assinatura eletrônica, bem como de certificar sua integridade, através de certificado digital emitido no padrão ICP-Brasil, autorizando, inclusive, a sua assinatura digital por meio de plataformas digitais.`;
 
     return text;
   };
@@ -732,11 +730,23 @@ export function Proposals() {
         {(customBodyText || generateDefaultBodyText()).split('\n\n').map((paragraph, idx) => {
           const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
 
+          // Component for highlighted text
+          const renderHighlightedText = (text: string) => {
+            const parts = text.split(/(\[.*?\])/g);
+            return parts.map((part, i) =>
+              part.startsWith('[') && part.endsWith(']') ? (
+                <span key={i} className="bg-yellow-200/50 px-1">{part}</span>
+              ) : (
+                part
+              )
+            );
+          };
+
           return (
             <p key={idx} className={isHeading ? 'font-bold mt-4' : ''}>
-              {paragraph}
+              {renderHighlightedText(paragraph)}
             </p>
-          )
+          );
         })}
       </div>
 
