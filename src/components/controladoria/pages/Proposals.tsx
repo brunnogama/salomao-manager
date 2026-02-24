@@ -451,18 +451,15 @@ export function Proposals() {
     });
 
     proposalData.intermediate_fee_clauses.forEach((c) => {
-      if (c.value) {
-        text += `2.${clauseIndex}. Êxito intermediário: ${c.value || '[valor]'}, ${c.description || '[descrição]'}\n\n`;
-        clauseIndex++;
-      }
+      const valText = c.value || '[valor]';
+      text += `2.${clauseIndex}. Êxito intermediário: ${valText}, ${c.description || '[descrição]'}\n\n`;
+      clauseIndex++;
     });
 
     proposalData.final_success_fee_clauses.forEach((c) => {
-      if (c.value) {
-        const valText = c.type === 'currency' ? c.value : `${c.value}%`;
-        text += `2.${clauseIndex}. Honorários finais de êxito de ${valText}, ${c.description || '[descrição]'}\n\n`;
-        clauseIndex++;
-      }
+      const valText = c.value ? (c.type === 'currency' ? c.value : `${c.value}%`) : '[valor/%]';
+      text += `2.${clauseIndex}. Honorários finais de êxito de ${valText}, ${c.description || '[descrição]'}\n\n`;
+      clauseIndex++;
     });
 
     text += `2.${clauseIndex}. Os honorários de êxito serão integralmente devidos pelo Cliente em caso de transação ou rescisão imotivada do presente contrato.\n\n`;
@@ -678,27 +675,27 @@ export function Proposals() {
   const renderPreviewContent = () => (
     <div>
       {/* Date */}
-      <div className="text-right mb-6">
+      <div className="text-right mb-5 leading-5">
         <span className="bg-yellow-200/50 px-1">{proposalData.contractLocation || '[Cidade]'}, {today}</span>.
       </div>
 
       {/* Addressee */}
-      <div className="mb-6 font-bold">
+      <div className="mb-5 font-bold leading-5">
         <p>AO <span className="bg-yellow-200/50 px-1 uppercase">{proposalData.clientName || '[NOME DA EMPRESA CLIENTE]'}</span></p>
         {!proposalData.isPerson && (
-          <p className="mt-1"><span className="bg-yellow-200/50 px-1">{proposalData.cnpj || '[CNPJ da empresa cliente]'}</span></p>
+          <p className="mt-0"><span className="bg-yellow-200/50 px-1">{proposalData.cnpj || '[CNPJ da empresa cliente]'}</span></p>
         )}
       </div>
 
       {/* Ref */}
-      <div className="mb-4">
+      <div className="mb-5 leading-5">
         <p><strong>Ref:</strong> <span className="bg-yellow-200/50 px-1">{proposalData.reference || '[incluir referência da proposta]'}</span></p>
         <p><strong>Cód.:</strong> <span className="bg-yellow-200/50 px-1">[código proposta]</span></p>
       </div>
 
-      <p className="mb-4">Prezados,</p>
+      <p className="mb-5 leading-5">Prezados,</p>
 
-      <p className="text-justify mb-4">
+      <p className="text-justify mb-5 leading-5">
         É com grande honra que <strong>SALOMÃO ADVOGADOS</strong>, neste ato representado, respectivamente, por seus sócios
         {proposalData.selectedPartners.length > 0 ? (
           proposalData.selectedPartners.map((p, idx) => (
@@ -734,7 +731,7 @@ export function Proposals() {
         , vem formular a presente proposta de honorários...
       </p>
 
-      <div className="mb-4 space-y-5 text-justify whitespace-pre-line leading-5 pb-8">
+      <div className="mb-5 text-justify whitespace-pre-line leading-5 pb-5">
         {(customBodyText || generateDefaultBodyText()).split('\n\n').map((paragraph, idx) => {
           const isHeading = /^\d+\.\s*[A-ZÀ-Ú\s]+:$/.test(paragraph);
 
@@ -751,7 +748,7 @@ export function Proposals() {
           };
 
           return (
-            <p key={idx} className={isHeading ? 'font-bold mt-4' : ''}>
+            <p key={idx} className={`${isHeading ? 'font-bold mt-5' : ''} mb-5`}>
               {renderHighlightedText(paragraph)}
             </p>
           );
@@ -759,9 +756,9 @@ export function Proposals() {
       </div>
 
       {/* Signatures */}
-      <div className="text-center mt-12 space-y-8 pb-16">
-        <div>
-          <p className="mb-2">Cordialmente,</p>
+      <div className="text-center mt-10 space-y-10 pb-10">
+        <div className="leading-5">
+          <p className="mb-5">Cordialmente,</p>
           {proposalData.selectedPartners.length > 0 ? proposalData.selectedPartners.map(p => (
             <p key={p.id} className="bg-yellow-200/50 px-1 font-bold block">{p.name}</p>
           )) : (
@@ -770,11 +767,11 @@ export function Proposals() {
           <p className="font-bold">SALOMÃO ADVOGADOS</p>
         </div>
 
-        <div>
+        <div className="leading-5">
           <p className="bg-yellow-200/50 px-1 font-bold inline-block uppercase">{proposalData.clientName || '[CLIENTE]'}</p>
         </div>
 
-        <div className="text-left mt-8">
+        <div className="text-left mt-10 leading-5">
           <p>De acordo em: ___/___/___</p>
         </div>
       </div>
@@ -1165,7 +1162,10 @@ export function Proposals() {
                         {/* Safe Area Container - Header/Footer Protection */}
                         <div className="absolute inset-0 flex flex-col pt-[13%] pb-[11%]">
                           {/* Content Clipper */}
-                          <div className="flex-1 overflow-hidden px-[12.1%] pt-4">
+                          <div
+                            className="overflow-hidden px-[12.1%] pt-4"
+                            style={{ height: safeAreaHeight ? `${safeAreaHeight + 16}px` : 'auto' }}
+                          >
                             <div
                               style={{
                                 transform: `translateY(-${pageIdx * safeAreaHeight}px)`,
