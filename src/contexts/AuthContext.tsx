@@ -41,9 +41,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const signOut = async () => {
         try {
+            // 1. Log action BEFORE clearing storage to preserve session identity
+            await logAction('LOGOUT', 'AUTH', 'Usuário realizou logout', 'Logout')
+
             const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal');
 
-            // 1. Clear Storage
+            // 2. Clear Storage
             localStorage.clear();
             sessionStorage.clear();
 
@@ -52,19 +55,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 localStorage.setItem('hasSeenWelcomeModal', hasSeenWelcome);
             }
 
-            // 2. Clear Cache Storage (Broad Cleanup)
+            // 3. Clear Cache Storage (Broad Cleanup)
             if ('caches' in window) {
                 const keys = await caches.keys();
                 await Promise.all(keys.map(key => caches.delete(key)));
             }
 
-            // 3. Unregister Service Workers
+            // 4. Unregister Service Workers
             if ('serviceWorker' in navigator) {
                 const registrations = await navigator.serviceWorker.getRegistrations();
                 await Promise.all(registrations.map(reg => reg.unregister()));
             }
 
-            // 4. Clear all cookies
+            // 5. Clear all cookies
             const cookies = document.cookie.split(";");
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i];
@@ -73,11 +76,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
             }
 
-            // 5. Supabase SignOut
-            await logAction('LOGOUT', 'AUTH', 'Usuário realizou logout', 'Logout')
+            // 6. Supabase SignOut
             await supabase.auth.signOut();
 
-            // 6. Force Hard Reload to clear in-memory state and ensure CSS/JS freshness
+            // 7. Force Hard Reload to clear in-memory state and ensure CSS/JS freshness
             window.location.href = '/login';
         } catch (error) {
             console.error('❌ Error signing out:', error);
