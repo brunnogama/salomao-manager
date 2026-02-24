@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase'
 interface StockItem {
     id: string
     product_name: string
+    product_code?: string
     entries: number
     exits: number
     balance: number
@@ -145,6 +146,7 @@ export function Estoque() {
                                 <thead>
                                     <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
                                         <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Produto</th>
+                                        <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Código do Produto</th>
                                         <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Entradas</th>
                                         <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Saídas</th>
                                         <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Saldo</th>
@@ -170,6 +172,9 @@ export function Estoque() {
                                             <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="py-4 px-6">
                                                     <span className="font-semibold text-gray-900">{item.product_name}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-sm text-gray-600">{item.product_code || '-'}</span>
                                                 </td>
                                                 <td className="py-4 px-6 text-center">
                                                     <div className="flex items-center justify-center gap-1.5 text-green-600 font-medium">
