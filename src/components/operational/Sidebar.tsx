@@ -74,9 +74,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
     const mainItems = [
         { path: '/operational/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/operational/estoque', label: 'Estoque', icon: Package },
-        { path: '/operational/imobiliario', label: 'Imobiliário', icon: Armchair },
+        { path: '/operational/estoque', label: 'Produtos', icon: Package },
         { path: '/operational/compras', label: 'Compras', icon: ShoppingCart },
+        { path: '/operational/imobiliario', label: 'Imobiliário', icon: Armchair },
     ]
 
     const isActive = (path: string) => activePage === path

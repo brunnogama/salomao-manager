@@ -182,7 +182,7 @@ export function Estoque() {
 
                 <button
                     onClick={handleAddItem}
-                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl hover:bg-[#112240] transition-colors font-medium"
                 >
                     <Plus className="w-4 h-4" />
                     NOVO ITEM
@@ -198,7 +198,7 @@ export function Estoque() {
                             key={cat.id}
                             onClick={() => setActiveCategory(cat.id)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors border ${activeCategory === cat.id
-                                ? 'bg-blue-600 text-white border-blue-600'
+                                ? 'bg-[#1e3a8a] text-white border-[#1e3a8a]'
                                 : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                                 }`}
                         >
@@ -338,7 +338,7 @@ export function Estoque() {
                         <p className="mb-6 max-w-sm mx-auto">Comece adicionando itens para {activeCategory === 'Todos' ? 'o estoque' : `a categoria ${activeCategory}`}.</p>
                         <button
                             onClick={handleAddItem}
-                            className="text-blue-600 font-medium hover:underline text-sm"
+                            className="text-[#1e3a8a] font-medium hover:underline text-sm"
                         >
                             Adicionar primeiro item
                         </button>

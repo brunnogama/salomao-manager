@@ -13,6 +13,7 @@ interface ShoppingItem {
     category: string
     status: 'pending' | 'purchased'
     created_at: string
+    supplier?: string
 }
 
 export function Compras() {
@@ -25,9 +26,13 @@ export function Compras() {
         category: '',
         quantity: 1,
         brand: '',
-        unit_price: 0
+        unit_price: 0,
+        supplier: '',
+        customName: ''
     })
     const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
+    const [categoryProducts, setCategoryProducts] = useState<string[]>([])
+    const [suppliers, setSuppliers] = useState<string[]>([])
 
     const [alertConfig, setAlertConfig] = useState<{
         isOpen: boolean;
@@ -59,7 +64,35 @@ export function Compras() {
 
     useEffect(() => {
         fetchItems()
+        fetchSuppliers()
     }, [])
+
+    const fetchSuppliers = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('operational_fornecedores')
+                .select('nome')
+                .order('nome')
+            if (error) throw error
+            if (data) setSuppliers(data.map(s => s.nome))
+        } catch (error) {
+            console.error('Error fetching suppliers:', error)
+        }
+    }
+
+    const fetchCategoryProducts = async (category: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('operational_items')
+                .select('name')
+                .eq('category', category)
+                .order('name')
+            if (error) throw error
+            if (data) setCategoryProducts(data.map(i => i.name))
+        } catch (error) {
+            console.error('Error fetching category products:', error)
+        }
+    }
 
     const fetchItems = async () => {
         try {
@@ -88,11 +121,13 @@ export function Compras() {
     const resetModal = () => {
         setIsModalOpen(false)
         setModalStep(1)
-        setNewItem({ name: '', category: '', quantity: 1, brand: '', unit_price: 0 })
+        setNewItem({ name: '', category: '', quantity: 1, brand: '', unit_price: 0, supplier: '', customName: '' })
+        setCategoryProducts([])
     }
 
     const handleCategorySelect = (category: string) => {
         setNewItem(prev => ({ ...prev, category }))
+        fetchCategoryProducts(category)
         setModalStep(2)
     }
 
@@ -101,10 +136,14 @@ export function Compras() {
         if (!newItem.name.trim()) return
 
         try {
+            const finalName = newItem.name === 'Outro' ? newItem.customName : newItem.name
+            const { customName, ...restOfItem } = newItem
+
             const { data, error } = await supabase
                 .from('shopping_list_items')
                 .insert({
-                    ...newItem,
+                    ...restOfItem,
+                    name: finalName,
                     status: 'pending'
                 })
                 .select()
@@ -192,7 +231,7 @@ export function Compras() {
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-6 py-2.5 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#112240] transition-colors font-medium flex items-center justify-center gap-2"
                 >
                     <Plus className="w-4 h-4" />
                     Adicionar Item
@@ -228,6 +267,7 @@ export function Compras() {
                                                         <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
                                                         <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
                                                         <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qtd</th>
+                                                        <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fornecedor</th>
                                                         <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unit.</th>
                                                         <th className="text-right py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
                                                     </tr>
@@ -256,6 +296,9 @@ export function Compras() {
                                                             </td>
                                                             <td className="py-3 px-6 text-sm text-gray-600">
                                                                 {item.quantity}
+                                                            </td>
+                                                            <td className="py-3 px-6 text-sm text-gray-600">
+                                                                {item.supplier || '-'}
                                                             </td>
                                                             <td className="py-3 px-6 text-sm text-gray-600">
                                                                 {item.unit_price ? `R$ ${item.unit_price.toFixed(2)}` : '-'}
@@ -288,7 +331,7 @@ export function Compras() {
                         <p className="mb-6 max-w-sm mx-auto">Sua lista de compras está vazia.</p>
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="text-blue-600 font-medium hover:underline text-sm"
+                            className="text-[#1e3a8a] font-medium hover:underline text-sm"
                         >
                             Adicionar primeiro item
                         </button>
@@ -316,7 +359,7 @@ export function Compras() {
                                         <button
                                             key={cat}
                                             onClick={() => handleCategorySelect(cat)}
-                                            className="p-3 border border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-medium text-sm transition-all text-left"
+                                            className="p-3 border border-gray-200 rounded-xl hover:border-[#1e3a8a] hover:bg-blue-50 text-gray-700 font-medium text-sm transition-all text-left"
                                         >
                                             {cat}
                                         </button>
@@ -328,22 +371,40 @@ export function Compras() {
                                         <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Categoria</label>
                                         <div className="text-sm font-semibold text-gray-800 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 flex justify-between items-center">
                                             {newItem.category}
-                                            <button type="button" onClick={() => setModalStep(1)} className="text-blue-600 text-xs hover:underline">Alterar</button>
+                                            <button type="button" onClick={() => setModalStep(1)} className="text-[#1e3a8a] text-xs hover:underline">Alterar</button>
                                         </div>
                                     </div>
 
                                     <div>
                                         <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Nome do Item *</label>
-                                        <input
+                                        <select
                                             required
-                                            type="text"
                                             value={newItem.name}
                                             onChange={e => setNewItem({ ...newItem, name: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                            placeholder="Ex: Detergente"
-                                            autoFocus
-                                        />
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                                        >
+                                            <option value="">Selecione um produto...</option>
+                                            {categoryProducts.map(prod => (
+                                                <option key={prod} value={prod}>{prod}</option>
+                                            ))}
+                                            <option value="Outro">Outro...</option>
+                                        </select>
                                     </div>
+
+                                    {newItem.name === 'Outro' && (
+                                        <div className="animate-in slide-in-from-top-2 duration-200">
+                                            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Especifique o Nome *</label>
+                                            <input
+                                                required
+                                                type="text"
+                                                value={newItem.customName}
+                                                onChange={e => setNewItem({ ...newItem, customName: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                placeholder="Digite o nome do produto"
+                                                autoFocus
+                                            />
+                                        </div>
+                                    )}
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
@@ -370,21 +431,36 @@ export function Compras() {
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Marca (Opcional)</label>
-                                        <input
-                                            type="text"
-                                            value={newItem.brand}
-                                            onChange={e => setNewItem({ ...newItem, brand: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                            placeholder="Ex: Ypê"
-                                        />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Marca (Opcional)</label>
+                                            <input
+                                                type="text"
+                                                value={newItem.brand}
+                                                onChange={e => setNewItem({ ...newItem, brand: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                placeholder="Ex: Ypê"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Fornecedor</label>
+                                            <select
+                                                value={newItem.supplier}
+                                                onChange={e => setNewItem({ ...newItem, supplier: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                                            >
+                                                <option value="">Selecione...</option>
+                                                {suppliers.map(s => (
+                                                    <option key={s} value={s}>{s}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
 
                                     <button
                                         type="submit"
-                                        disabled={!newItem.name.trim()}
-                                        className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 font-bold shadow-lg shadow-blue-500/20 transition-all mt-2"
+                                        disabled={!newItem.name || (newItem.name === 'Outro' && !newItem.customName?.trim())}
+                                        className="w-full py-3 bg-[#1e3a8a] text-white rounded-xl hover:bg-[#112240] disabled:opacity-50 font-bold shadow-lg shadow-blue-500/20 transition-all mt-2"
                                     >
                                         Salvar Item
                                     </button>
