@@ -94,8 +94,9 @@ export function Proposals() {
 
         const contentHeight = previewContentRef.current.scrollHeight;
         if (calculatedSafeHeight > 0) {
-          setSafeAreaHeight(calculatedSafeHeight);
-          const pages = Math.ceil(contentHeight / calculatedSafeHeight);
+          // Add a small buffer (14px) to ensure text doesn't touch the header/footer boundaries
+          setSafeAreaHeight(calculatedSafeHeight - 14);
+          const pages = Math.ceil(contentHeight / (calculatedSafeHeight - 14));
           setTotalPages(pages > 0 ? pages : 1);
         }
       }
@@ -669,7 +670,7 @@ export function Proposals() {
   const today = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
 
   const renderPreviewContent = () => (
-    <div className="pt-4">
+    <div>
       {/* Date */}
       <div className="text-right mb-6">
         <span className="bg-yellow-200/50 px-1">{proposalData.contractLocation || '[Cidade]'}, {today}</span>.
@@ -1118,7 +1119,7 @@ export function Proposals() {
               </button>
 
               {/* Page Slider Container */}
-              <div className="w-full max-w-[700px] overflow-hidden flex justify-center flex-1">
+              <div className="w-full max-w-[850px] overflow-hidden flex justify-center flex-1">
                 <div
                   className="flex transition-transform duration-500 ease-in-out w-full"
                   style={{ transform: `translateX(-${currentPage * 100}%)` }}
@@ -1130,7 +1131,7 @@ export function Proposals() {
                     >
                       {/* A4 Page Simulation */}
                       <div
-                        className="w-full max-w-[700px] aspect-[21/29.7] bg-white shadow-2xl border border-gray-100 overflow-hidden relative"
+                        className="w-full max-w-[850px] aspect-[21/29.7] bg-white shadow-2xl border border-gray-100 overflow-hidden relative"
                       >
                         {/* Header */}
                         <div className="absolute top-0 left-0 w-full pt-8 flex justify-center">
@@ -1146,7 +1147,7 @@ export function Proposals() {
                         {/* Safe Area Container - Header/Footer Protection */}
                         <div className="absolute inset-0 flex flex-col pt-[18%] pb-[16%]">
                           {/* Content Clipper */}
-                          <div className="flex-1 overflow-hidden px-12 md:px-16">
+                          <div className="flex-1 overflow-hidden px-[12.1%]">
                             <div
                               style={{
                                 transform: `translateY(-${pageIdx * safeAreaHeight}px)`,
@@ -1154,7 +1155,7 @@ export function Proposals() {
                               }}
                             >
                               {/* The Content itself */}
-                              <div className="text-left text-[#0a192f] text-[10px] leading-relaxed select-none h-fit pt-4">
+                              <div className="text-left text-[#0a192f] text-[10px] leading-relaxed select-none h-fit">
                                 {renderPreviewContent()}
                               </div>
                             </div>
@@ -1183,7 +1184,7 @@ export function Proposals() {
           {/* Hidden measuring content */}
           <div
             className="absolute opacity-0 pointer-events-none bg-white shadow-2xl border border-gray-100 overflow-hidden"
-            style={{ width: '700px', padding: '18% 4rem 16% 4rem' }}
+            style={{ width: '850px', padding: 'calc(18% + 14px) 12.1% calc(16% + 14px) 12.1%' }}
           >
             <div ref={previewContentRef}>
               <div className="text-left text-[#0a192f] text-[10px] leading-relaxed">
