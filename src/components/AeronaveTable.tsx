@@ -1,4 +1,4 @@
-import { Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle, Pencil, Trash2 } from 'lucide-react'
 import { AeronaveLancamento } from '../types/AeronaveTypes'
 import { useMemo } from 'react'
 
@@ -6,9 +6,11 @@ interface AeronaveTableProps {
   data: AeronaveLancamento[];
   loading: boolean;
   onRowClick: (item: AeronaveLancamento) => void;
+  onEdit: (item: AeronaveLancamento) => void;
+  onDelete: (item: AeronaveLancamento) => void;
 }
 
-export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps) {
+export function AeronaveTable({ data, loading, onRowClick, onEdit, onDelete }: AeronaveTableProps) {
 
   // --- Formatters ---
   const formatCurrency = (val: number | null | undefined) =>
@@ -90,7 +92,8 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
             <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest text-center">Pagamento</th>
             <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest text-right">Valor Pago</th>
             <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest">Tipo Documento</th>
-            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest last:rounded-r-xl">Número</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest">Número</th>
+            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest text-center last:rounded-r-xl w-24">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -166,8 +169,28 @@ export function AeronaveTable({ data, loading, onRowClick }: AeronaveTableProps)
                 </td>
 
                 {/* Número */}
-                <td className="px-4 py-4 text-sm font-bold text-gray-700 last:rounded-r-xl">
+                <td className="px-4 py-4 text-sm font-bold text-gray-700">
                   {item.numero_doc || '-'}
+                </td>
+
+                {/* Ações */}
+                <td className="px-4 py-4 text-center last:rounded-r-xl" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => onEdit(item)}
+                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Editar"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => onDelete(item)}
+                      className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             )

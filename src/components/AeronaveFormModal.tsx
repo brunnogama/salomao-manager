@@ -48,10 +48,10 @@ function SearchableSelect({ value, onChange, options, placeholder = 'Selecione..
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`
-          w-full px-3 py-2 bg-[#f9fafb] border border-gray-200 rounded-xl text-xs font-semibold 
+          w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold 
           flex items-center justify-between transition-all outline-none
-          ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10'}
-          ${isOpen ? 'border-blue-500 ring-2 ring-blue-500/10' : ''}
+          ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-blue-300 focus:border-blue-300 focus:ring-4 focus:ring-blue-500/5'}
+          ${isOpen ? 'border-blue-500 ring-4 ring-blue-500/5' : ''}
         `}
       >
         <span className={value ? 'text-gray-700' : 'text-gray-400'}>
@@ -181,7 +181,7 @@ const CurrencyInput = ({ value, onChange, label, required = false }: any) => {
         <input
           type="text"
           inputMode="numeric"
-          className="w-full pl-10 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all"
+          className="w-full pl-10 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 outline-none focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all shadow-sm"
           value={localValue}
           onChange={handleInputChange}
           onFocus={handleFocus}
@@ -377,7 +377,7 @@ export function AeronaveFormModal({
                     />
                     <button
                       onClick={() => handleOpenConfig('Frota', 'aeronave_frota')}
-                      className="px-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-xl transition-all border border-gray-200 flex items-center justify-center shadow-sm"
+                      className="px-2.5 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl transition-all border border-gray-200 flex items-center justify-center shadow-sm active:scale-95"
                       title="Gerenciar Frota"
                     >
                       <Settings className="h-3.5 w-3.5" />
@@ -438,7 +438,7 @@ export function AeronaveFormModal({
                       />
                       <button
                         onClick={() => handleOpenConfig('Tipos de Despesa', 'aeronave_tipos')}
-                        className="px-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm"
+                        className="px-2.5 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm active:scale-95"
                       >
                         <Settings className="h-3.5 w-3.5" />
                       </button>
@@ -462,7 +462,7 @@ export function AeronaveFormModal({
                     />
                     <button
                       onClick={() => handleOpenConfig('Fornecedores', 'aeronave_fornecedores')}
-                      className="px-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm"
+                      className="px-2.5 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm active:scale-95"
                     >
                       <Settings className="h-3.5 w-3.5" />
                     </button>
@@ -524,7 +524,7 @@ export function AeronaveFormModal({
                       />
                       <button
                         onClick={() => handleOpenConfig('Docs Fiscais', 'aeronave_docs_fiscais')}
-                        className="px-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm"
+                        className="px-2.5 bg-white hover:bg-gray-50 text-gray-400 hover:text-blue-600 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shadow-sm active:scale-95"
                       >
                         <Settings className="h-3.5 w-3.5" />
                       </button>
@@ -567,7 +567,7 @@ export function AeronaveFormModal({
         .input-base {
           width: 100%;
           padding: 0.5rem 0.75rem;
-          background-color: #f9fafb;
+          background-color: #ffffff;
           border: 1px solid #e5e7eb;
           border-radius: 0.75rem;
           font-size: 0.75rem;
@@ -575,11 +575,12 @@ export function AeronaveFormModal({
           color: #374151;
           outline: none;
           transition: all 0.2s;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
         .input-base:focus {
-          border-color: #3b82f6;
+          border-color: #93c5fd;
           background-color: #ffffff;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.05);
         }
         .input-base:disabled {
           background-color: #f3f4f6;

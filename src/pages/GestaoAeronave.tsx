@@ -32,6 +32,7 @@ import { AeronaveFormModal } from '../components/AeronaveFormModal'
 import { AeronaveViewModal } from '../components/AeronaveViewModal'
 import { TipoLancamentoModal } from '../components/TipoLancamentoModal'
 import { AeronaveComparativoComercialParticular } from '../components/AeronaveComparativoComercialParticular'
+import { ConfirmationModal } from '../components/ui/ConfirmationModal'
 
 // Componente de Cards do Comparativo
 function ComparativoCards({ data }: { data: AeronaveLancamento[] }) {
@@ -150,6 +151,11 @@ export function GestaoAeronave() {
   const [selectedItem, setSelectedItem] = useState<AeronaveLancamento | null>(null)
   const [selectedGroup, setSelectedGroup] = useState<AeronaveLancamento[]>([])
   const [selectedOrigemForNew, setSelectedOrigemForNew] = useState<OrigemLancamento>('missao')
+
+  // --- Estado de Deleção ---
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<AeronaveLancamento | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Ref para scroll ao topo
   const topRef = useRef<HTMLDivElement>(null)
@@ -365,6 +371,31 @@ export function GestaoAeronave() {
       : `Criou lançamento: ${cleanData.descricao || cleanData.nome_missao || 'Sem descrição'}`
 
     await logAction(action, 'FINANCEIRO', msg, 'Patrimônio')
+  }
+
+  const handleDeleteLancamento = async () => {
+    if (!itemToDelete) return
+
+    try {
+      setIsDeleting(true)
+      const { error } = await supabase
+        .from('aeronave_lancamentos')
+        .delete()
+        .eq('id', itemToDelete.id)
+
+      if (error) throw error
+
+      await logAction('EXCLUIR', 'FINANCEIRO', `Excluiu lançamento: ${itemToDelete.descricao || itemToDelete.nome_missao || 'Sem descrição'}`, 'Patrimônio')
+
+      setIsDeleteModalOpen(false)
+      setItemToDelete(null)
+      fetchDados()
+    } catch (error) {
+      console.error(error)
+      alert('Erro ao excluir lançamento.')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const handleExportExcel = () => {
@@ -829,6 +860,15 @@ export function GestaoAeronave() {
             data={filteredData}
             loading={loading}
             onRowClick={handleRowClick}
+            onEdit={(item) => {
+              setSelectedItem(item)
+              setSelectedOrigemForNew(item.origem)
+              setIsFormModalOpen(true)
+            }}
+            onDelete={(item) => {
+              setItemToDelete(item)
+              setIsDeleteModalOpen(true)
+            }}
           />
         )}
       </div>
@@ -872,6 +912,17 @@ export function GestaoAeronave() {
           setSelectedItem(null)
           fetchDados()
         }}
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteLancamento}
+        title="Excluir Lançamento"
+        description={`Tem certeza que deseja excluir o lançamento "${itemToDelete?.descricao || itemToDelete?.nome_missao || 'Sem descrição'}"? Esta ação não pode ser desfeita.`}
+        confirmText={isDeleting ? 'Excluindo...' : 'Excluir'}
+        cancelText="Cancelar"
+        variant="danger"
       />
 
     </div>
