@@ -1,38 +1,26 @@
-import { useState } from 'react'
-import {
-    Package,
-    Plus,
-    Search,
-    TrendingUp,
-    AlertTriangle,
-    DollarSign
-} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Package, Plus, Filter, Search, Boxes, Coffee, Building2, UserCircle, Sparkles, Flag, Calendar, Trash2, ShoppingCart } from 'lucide-react'
+import { supabase } from '../../../lib/supabase'
+import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { AlertModal } from '../../ui/AlertModal'
 
-interface EstoqueItem {
-    produto: string;
-    entradas: number;
-    saidas: number;
-    saldo: number;
-    estoqueMinimo: number;
-    status: 'Conforme' | 'Crítico';
-    receitaTotal: number;
-    custoTotal: number;
-    lucroPrejuizo: number;
+interface InventoryItem {
+    id: string
+    name: string
+    quantity: number
+    brand: string
+    unit_price: number
+    category: string
+    product_code: string
+    unit_of_measure: string
+    minimum_stock: number
+    unit_cost: number
 }
 
-const INITIAL_DATA: EstoqueItem[] = [
-    { produto: 'Bacalhau', entradas: 50, saidas: 20, saldo: 30, estoqueMinimo: 10, status: 'Conforme', receitaTotal: 5000, custoTotal: 2000, lucroPrejuizo: 3000 },
-    { produto: 'Azeite', entradas: 100, saidas: 80, saldo: 20, estoqueMinimo: 15, status: 'Conforme', receitaTotal: 8000, custoTotal: 6400, lucroPrejuizo: 1600 },
-    { produto: 'Vinho', entradas: 200, saidas: 190, saldo: 10, estoqueMinimo: 20, status: 'Crítico', receitaTotal: 40000, custoTotal: 38000, lucroPrejuizo: 2000 },
-    { produto: 'Cesta Básica', entradas: 30, saidas: 5, saldo: 25, estoqueMinimo: 5, status: 'Conforme', receitaTotal: 3000, custoTotal: 500, lucroPrejuizo: 2500 },
-    { produto: 'Kit Churrasco', entradas: 40, saidas: 35, saldo: 5, estoqueMinimo: 10, status: 'Crítico', receitaTotal: 12000, custoTotal: 10500, lucroPrejuizo: 1500 },
-]
-
 export function Estoque() {
-    const [items] = useState<EstoqueItem[]>(INITIAL_DATA)
-    const [searchTerm, setSearchTerm] = useState('')
-
+    const [activeCategory, setActiveCategory] = useState('Todos')
+    const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
+    const [itemToDelete, setItemToDelete] = useState<string | null>(null)
     const [alertConfig, setAlertConfig] = useState<{
         isOpen: boolean;
         title: string;
@@ -45,165 +33,329 @@ export function Estoque() {
         variant: 'info'
     })
 
-    const filteredItems = items.filter(item =>
-        item.produto.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(value)
+    const showAlert = (title: string, description: string, variant: 'success' | 'error' | 'info' = 'info') => {
+        setAlertConfig({ isOpen: true, title, description, variant })
     }
 
+    const categories = [
+        { id: 'Todos', label: 'Todos', icon: Boxes },
+        { id: 'Suprimentos', label: 'Suprimentos', icon: Package },
+        { id: 'Facility', label: 'Facility', icon: Building2 },
+        { id: 'Papelaria', label: 'Papelaria', icon: Package },
+        { id: 'Copa', label: 'Copa', icon: Coffee },
+        { id: 'Socios', label: 'Sócios', icon: UserCircle },
+        { id: 'Limpeza', label: 'Limpeza', icon: Sparkles },
+        { id: 'Material Institucional', label: 'Material Inst.', icon: Flag },
+        { id: 'Eventos', label: 'Eventos', icon: Calendar },
+    ]
+
+    useEffect(() => {
+        fetchItems()
+    }, [activeCategory])
+
+    const fetchItems = async () => {
+        try {
+            let query = supabase
+                .from('operational_items')
+                .select('*')
+                .order('name')
+
+            if (activeCategory !== 'Todos') {
+                query = query.eq('category', activeCategory)
+            }
+
+            const { data, error } = await query
+
+            if (error) throw error
+            if (data) setInventoryItems(data)
+        } catch (error) {
+            console.error('Error fetching items:', error)
+        }
+    }
+
+    const handleUpdateItem = async (id: string, field: keyof InventoryItem, value: string | number) => {
+        // Optimistic update
+        setInventoryItems((prev: InventoryItem[]) => prev.map((i: InventoryItem) => i.id === id ? { ...i, [field]: value } : i))
+
+        try {
+            const { error } = await supabase
+                .from('operational_items')
+                .update({ [field]: value })
+                .eq('id', id)
+
+            if (error) throw error
+        } catch (error) {
+            console.error('Error updating item:', error)
+        }
+    }
+
+    const handleAddItem = async () => {
+        const newItem = {
+            name: 'Novo Item',
+            quantity: 0,
+            brand: '',
+            unit_price: 0,
+            category: activeCategory === 'Todos' ? 'Limpeza' : activeCategory, // Default to Limpeza if in All
+            product_code: '',
+            unit_of_measure: 'Unidade',
+            minimum_stock: 0,
+            unit_cost: 0
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('operational_items')
+                .insert(newItem)
+                .select()
+                .single()
+
+            if (error) throw error
+            if (data) setInventoryItems((prev: InventoryItem[]) => [...prev, data])
+        } catch (error) {
+            console.error('Error adding item:', error)
+        }
+    }
+
+    const handleRemoveItem = (id: string) => {
+        setItemToDelete(id)
+    }
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return
+
+        // Optimistic update
+        setInventoryItems((prev: InventoryItem[]) => prev.filter((i: InventoryItem) => i.id !== itemToDelete))
+
+        try {
+            const { error } = await supabase
+                .from('operational_items')
+                .delete()
+                .eq('id', itemToDelete)
+
+            if (error) throw error
+        } catch (error) {
+            console.error('Error deleting item:', error)
+            fetchItems() // Revert on error
+            showAlert('Erro', 'Erro ao excluir item.', 'error')
+        } finally {
+            setItemToDelete(null)
+        }
+    }
+
+    const handleBuyItem = async (item: InventoryItem) => {
+        try {
+            const { error } = await supabase
+                .from('shopping_list_items')
+                .insert({
+                    name: item.name,
+                    brand: item.brand,
+                    quantity: 1,
+                    status: 'pending',
+                    category: item.category,
+                    unit_price: item.unit_price
+                })
+
+            if (error) throw error
+            showAlert('Sucesso', `"${item.name}" adicionado à lista de compras.`, 'success')
+        } catch (error) {
+            console.error('Error adding to shopping list:', error)
+            showAlert('Erro', 'Erro ao adicionar à lista de compras.', 'error')
+        }
+    }
+
+    const filteredItems = activeCategory === 'Todos'
+        ? inventoryItems
+        : inventoryItems.filter((item: InventoryItem) => item.category === activeCategory)
+
     return (
-        <div className="flex flex-col h-full space-y-6 p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-            {/* PAGE HEADER */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
-                        <Package className="h-6 w-6 md:h-7 md:w-7 text-white" />
+        <div className="p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                    <div className="p-3 bg-orange-100 rounded-lg shrink-0">
+                        <Package className="w-6 h-6 text-orange-600" />
                     </div>
                     <div>
-                        <h1 className="text-2xl md:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-                            Controle de Estoque
-                        </h1>
-                        <p className="text-xs md:text-sm font-semibold text-gray-500 mt-1 md:mt-0.5">
-                            Gestão de produtos, entradas, saídas e rentabilidade
-                        </p>
+                        <h1 className="text-2xl sm:text-[30px] font-bold text-gray-800 tracking-tight leading-none">Controle de Estoque</h1>
+                        <p className="text-sm text-gray-500 mt-1">Gerenciamento de itens e insumos.</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Buscar produto..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all w-64"
-                        />
-                    </div>
-                    <button
-                        className="flex items-center gap-2 px-6 py-2 bg-[#1e3a8a] hover:bg-[#112240] text-white rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] transition-all shadow-sm hover:shadow-md active:scale-95"
-                    >
-                        <Plus className="w-4 h-4" />
-                        NOVA ENTRADA
-                    </button>
-                </div>
+                <button
+                    onClick={handleAddItem}
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl hover:bg-[#112240] transition-colors font-medium"
+                >
+                    <Plus className="w-4 h-4" />
+                    NOVO ITEM
+                </button>
             </div>
 
-            {/* STATS OVERVIEW */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                        <Package className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Itens</p>
-                        <p className="text-xl font-black text-[#0a192f]">{items.length}</p>
-                    </div>
-                </div>
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div className="p-2 bg-green-50 text-green-600 rounded-lg">
-                        <TrendingUp className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Lucro Total</p>
-                        <p className="text-xl font-black text-[#0a192f]">{formatCurrency(items.reduce((acc, i) => acc + i.lucroPrejuizo, 0))}</p>
-                    </div>
-                </div>
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
-                        <DollarSign className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Receita Total</p>
-                        <p className="text-xl font-black text-[#0a192f]">{formatCurrency(items.reduce((acc, i) => acc + i.receitaTotal, 0))}</p>
-                    </div>
-                </div>
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div className="p-2 bg-red-50 text-red-600 rounded-lg">
-                        <AlertTriangle className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Críticos</p>
-                        <p className="text-xl font-black text-[#0a192f]">{items.filter(i => i.status === 'Crítico').length}</p>
-                    </div>
-                </div>
+            {/* Category Tabs */}
+            <div className="flex overflow-x-auto pb-4 gap-2 mb-6 custom-scrollbar">
+                {categories.map((cat) => {
+                    const Icon = cat.icon
+                    return (
+                        <button
+                            key={cat.id}
+                            onClick={() => setActiveCategory(cat.id)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors border ${activeCategory === cat.id
+                                ? 'bg-[#1e3a8a] text-white border-[#1e3a8a]'
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                }`}
+                        >
+                            <Icon className="w-4 h-4" />
+                            <span className="text-sm font-medium">{cat.label}</span>
+                        </button>
+                    )
+                })}
             </div>
 
-            <div className="flex-1 overflow-hidden bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
-                <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100">
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Produto</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Entradas</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Saídas</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Saldo</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Estoque Mínimo</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Receita Total</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Custo Total</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Lucro/Prejuízo</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {filteredItems.map((item, index) => (
-                                <tr key={index} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <p className="text-sm font-bold text-[#0a192f]">{item.produto}</p>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className="text-sm font-semibold text-blue-600">{item.entradas}</span>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className="text-sm font-semibold text-orange-600">{item.saidas}</span>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={`text-sm font-bold ${item.saldo <= item.estoqueMinimo ? 'text-red-600' : 'text-gray-700'}`}>
-                                            {item.saldo}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className="text-sm font-medium text-gray-500">{item.estoqueMinimo}</span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${item.status === 'Conforme'
-                                                ? 'bg-green-50 text-green-600 border border-green-100'
-                                                : 'bg-red-50 text-red-600 border border-red-100'
-                                            }`}>
-                                            {item.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <span className="text-sm font-bold text-gray-700">{formatCurrency(item.receitaTotal)}</span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <span className="text-sm font-bold text-gray-700">{formatCurrency(item.custoTotal)}</span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <span className={`text-sm font-black ${item.lucroPrejuizo >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                            {formatCurrency(item.lucroPrejuizo)}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            {/* Filters & Search */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                        type="text"
+                        placeholder={`Buscar em ${activeCategory}...`}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
                 </div>
+                <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100">
+                    <Filter className="w-4 h-4" />
+                    Filtros
+                </button>
+            </div>
 
-                {filteredItems.length === 0 && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                        <div className="p-4 bg-gray-50 rounded-full mb-4">
-                            <Search className="h-8 w-8 text-gray-300" />
+            {/* Table or Placeholder */}
+            {filteredItems.length > 0 ? (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <div className="min-w-[800px]">
+                            <table className="w-full">
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Código do Produto</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Unidade de Medida</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estoque Mínimo</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Custo Unitário</th>
+                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unitário</th>
+                                        <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {filteredItems.map((item) => (
+                                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="py-4 px-6">
+                                                <input
+                                                    type="text"
+                                                    value={item.name}
+                                                    onChange={(e) => handleUpdateItem(item.id, 'name', e.target.value)}
+                                                    className="font-medium text-gray-900 bg-transparent border-none focus:ring-0 p-0 w-full"
+                                                />
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <input
+                                                    type="text"
+                                                    value={item.product_code || ''}
+                                                    onChange={(e) => handleUpdateItem(item.id, 'product_code', e.target.value)}
+                                                    placeholder="Cód..."
+                                                    className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-full"
+                                                />
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <input
+                                                    type="text"
+                                                    value={item.unit_of_measure || ''}
+                                                    onChange={(e) => handleUpdateItem(item.id, 'unit_of_measure', e.target.value)}
+                                                    placeholder="Un..."
+                                                    className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-full"
+                                                />
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="number"
+                                                        value={item.minimum_stock || 0}
+                                                        onChange={(e) => handleUpdateItem(item.id, 'minimum_stock', parseInt(e.target.value))}
+                                                        className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-16"
+                                                    />
+                                                    <span className="text-[10px] text-gray-400 font-medium">/{item.quantity}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="relative">
+                                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={item.unit_cost || 0}
+                                                        onChange={(e) => handleUpdateItem(item.id, 'unit_cost', parseFloat(e.target.value))}
+                                                        className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 pl-6 pr-0 py-0 w-24"
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <div className="relative">
+                                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={item.unit_price || 0}
+                                                        onChange={(e) => handleUpdateItem(item.id, 'unit_price', parseFloat(e.target.value))}
+                                                        className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 pl-6 pr-0 py-0 w-24"
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6 text-right">
+                                                <button
+                                                    onClick={() => handleRemoveItem(item.id)}
+                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleBuyItem(item)}
+                                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                    title="Comprar"
+                                                >
+                                                    <ShoppingCart className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
-                        <p className="text-gray-500 font-medium">Nenhum produto encontrado.</p>
                     </div>
-                )}
-            </div>
+                </div>
+            ) : (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-12 text-center text-gray-500">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Package className="w-8 h-8 text-gray-300" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900">Nenhum item em {activeCategory}</h3>
+                        <p className="mb-6 max-w-sm mx-auto">Comece adicionando itens para {activeCategory === 'Todos' ? 'o estoque' : `a categoria ${activeCategory}`}.</p>
+                        <button
+                            onClick={handleAddItem}
+                            className="text-[#1e3a8a] font-medium hover:underline text-sm"
+                        >
+                            Adicionar primeiro item
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <ConfirmationModal
+                isOpen={!!itemToDelete}
+                onClose={() => setItemToDelete(null)}
+                onConfirm={confirmDelete}
+                title="Excluir Item"
+                description="Tem certeza que deseja remover este item do estoque? Esta ação não pode ser desfeita."
+                variant="danger"
+                confirmText="Excluir"
+                cancelText="Cancelar"
+            />
 
             <AlertModal
                 isOpen={alertConfig.isOpen}
