@@ -1,33 +1,25 @@
 import { useState, useEffect } from 'react'
-import { Boxes, Search, ArrowUpRight, ArrowDownLeft, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
+import { Boxes, Search, Calendar, Store, Hash, Tag, DollarSign } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 
-interface StockItem {
+interface StockLedgerItem {
     id: string
-    product_name: string
-    product_code?: string
-    entries: number
-    exits: number
-    balance: number
-    min_stock: number
-    status: string
-    total_revenue: number
-    total_cost: number
-    total_profit_loss: number
+    sale_date: string
+    product: string
+    store: string
+    quantity: number
+    returned_quantity: number
+    return_date: string
+    sold_quantity: number
+    accumulated_stock: number
+    unit_price: number
+    total_sale_value: number
 }
 
 export function Estoque() {
-    const [activeStatus, setActiveStatus] = useState('Todos')
-    const [stockItems, setStockItems] = useState<StockItem[]>([])
+    const [stockItems, setStockItems] = useState<StockLedgerItem[]>([])
     const [searchTerm, setSearchTerm] = useState('')
     const [loading, setLoading] = useState(true)
-
-    const statusFilters = [
-        { id: 'Todos', label: 'Todos', icon: Boxes },
-        { id: 'Estoque Confortável', label: 'Confortável', icon: CheckCircle2 },
-        { id: 'Estoque Perigoso', label: 'Perigoso', icon: AlertCircle },
-        { id: 'Sem Estoque', label: 'Sem Estoque', icon: XCircle },
-    ]
 
     useEffect(() => {
         fetchStock()
@@ -37,56 +29,35 @@ export function Estoque() {
         try {
             setLoading(true)
             const { data, error } = await supabase
-                .from('operational_stock')
+                .from('operational_stock_ledger')
                 .select('*')
-                .order('product_name')
+                .order('sale_date', { ascending: false })
 
             if (error) throw error
             if (data) setStockItems(data)
         } catch (error) {
-            console.error('Error fetching stock:', error)
+            console.error('Error fetching stock ledger:', error)
         } finally {
             setLoading(false)
         }
     }
 
     const filteredItems = stockItems.filter(item => {
-        const matchesSearch = item.product_name.toLowerCase().includes(searchTerm.toLowerCase())
-        const matchesStatus = activeStatus === 'Todos' || item.status === activeStatus
-        return matchesSearch && matchesStatus
+        const matchesSearch = item.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (item.store && item.store.toLowerCase().includes(searchTerm.toLowerCase()))
+        return matchesSearch
     })
-
-    const getStatusStyles = (status: string) => {
-        switch (status) {
-            case 'Estoque Confortável':
-                return 'bg-green-50 text-green-700 border-green-100'
-            case 'Estoque Perigoso':
-                return 'bg-orange-50 text-orange-700 border-orange-100'
-            case 'Sem Estoque':
-                return 'bg-red-50 text-red-700 border-red-100'
-            default:
-                return 'bg-gray-50 text-gray-700 border-gray-100'
-        }
-    }
-
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'Estoque Confortável':
-                return <CheckCircle2 className="w-3.5 h-3.5" />
-            case 'Estoque Perigoso':
-                return <AlertCircle className="w-3.5 h-3.5" />
-            case 'Sem Estoque':
-                return <XCircle className="w-3.5 h-3.5" />
-            default:
-                return null
-        }
-    }
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
             currency: 'BRL'
         }).format(value)
+    }
+
+    const formatDate = (date: string) => {
+        if (!date) return '-'
+        return new Date(date).toLocaleDateString('pt-BR')
     }
 
     return (
@@ -99,68 +70,49 @@ export function Estoque() {
                     </div>
                     <div>
                         <h1 className="text-2xl md:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">Visão Geral de Estoque</h1>
-                        <p className="text-xs md:text-sm font-semibold text-gray-500 mt-1 md:mt-0.5">Status, entradas, saídas e rentabilidade por produto.</p>
+                        <p className="text-xs md:text-sm font-semibold text-gray-500 mt-1 md:mt-0.5">Histórico de movimentações e saldo (Ledger).</p>
                     </div>
                 </div>
             </div>
 
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
-                {/* Search & Status Filters */}
+                {/* Search */}
                 <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-4 items-center">
                     <div className="relative flex-1 w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input
                             type="text"
-                            placeholder="Buscar produto no estoque..."
+                            placeholder="Buscar por produto ou loja..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 bg-gray-50/50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
                         />
-                    </div>
-
-                    <div className="flex items-center gap-1.5 p-1 bg-gray-50 rounded-lg border border-gray-100 shrink-0 w-full lg:w-auto overflow-x-auto no-scrollbar">
-                        {statusFilters.map((filter) => {
-                            const Icon = filter.icon
-                            return (
-                                <button
-                                    key={filter.id}
-                                    onClick={() => setActiveStatus(filter.id)}
-                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md whitespace-nowrap transition-all text-xs font-bold uppercase tracking-wider ${activeStatus === filter.id
-                                        ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200'
-                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 border border-transparent'
-                                        }`}
-                                >
-                                    <Icon className="w-3.5 h-3.5" />
-                                    {filter.label}
-                                </button>
-                            )
-                        })}
                     </div>
                 </div>
 
                 {/* Table */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="overflow-x-auto custom-scrollbar">
-                        <div className="min-w-[1200px]">
+                        <div className="min-w-[1400px]">
                             <table className="w-full">
                                 <thead>
                                     <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                                        <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Produto</th>
-                                        <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Código do Produto</th>
-                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Entradas</th>
-                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Saídas</th>
-                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Saldo</th>
-                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Est. Mínimo</th>
-                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
-                                        <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Receita Total</th>
-                                        <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Custo Total</th>
-                                        <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Lucro/Prejuízo</th>
+                                        <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest"><Calendar className="inline w-3 h-3 mr-1" /> Data Venda</th>
+                                        <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest"><Tag className="inline w-3 h-3 mr-1" /> Produto</th>
+                                        <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest"><Store className="inline w-3 h-3 mr-1" /> Loja</th>
+                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest"><Hash className="inline w-3 h-3 mr-1" /> Qtd</th>
+                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Qtd Dev.</th>
+                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Data Dev.</th>
+                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Qtd Vend.</th>
+                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Est. Acum.</th>
+                                        <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest"><DollarSign className="inline w-3 h-3 mr-1" /> Preço Unit.</th>
+                                        <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Venda Total</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {loading ? (
                                         <tr>
-                                            <td colSpan={9} className="py-12 text-center text-gray-400">
+                                            <td colSpan={10} className="py-12 text-center text-gray-400">
                                                 <div className="flex flex-col items-center gap-2">
                                                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                                                     <span className="text-sm">Carregando estoque...</span>
@@ -170,58 +122,44 @@ export function Estoque() {
                                     ) : filteredItems.length > 0 ? (
                                         filteredItems.map((item) => (
                                             <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="py-4 px-6">
-                                                    <span className="font-semibold text-gray-900">{item.product_name}</span>
+                                                <td className="py-4 px-6 text-sm text-gray-600 font-medium">
+                                                    {formatDate(item.sale_date)}
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <span className="text-sm text-gray-600">{item.product_code || '-'}</span>
+                                                    <span className="font-semibold text-gray-900">{item.product}</span>
+                                                </td>
+                                                <td className="py-4 px-6 text-sm text-gray-600">
+                                                    {item.store || '-'}
+                                                </td>
+                                                <td className="py-4 px-6 text-center text-sm font-bold text-blue-600">
+                                                    {item.quantity}
+                                                </td>
+                                                <td className="py-4 px-6 text-center text-sm text-red-500 font-medium">
+                                                    {item.returned_quantity}
+                                                </td>
+                                                <td className="py-4 px-6 text-center text-sm text-gray-500 italic">
+                                                    {formatDate(item.return_date)}
+                                                </td>
+                                                <td className="py-4 px-6 text-center text-sm font-bold text-emerald-600">
+                                                    {item.sold_quantity}
                                                 </td>
                                                 <td className="py-4 px-6 text-center">
-                                                    <div className="flex items-center justify-center gap-1.5 text-green-600 font-medium">
-                                                        <ArrowUpRight className="w-3.5 h-3.5" />
-                                                        {item.entries}
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    <div className="flex items-center justify-center gap-1.5 text-red-600 font-medium">
-                                                        <ArrowDownLeft className="w-3.5 h-3.5" />
-                                                        {item.exits}
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${item.balance > 0 ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'
-                                                        }`}>
-                                                        {item.balance}
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
+                                                        {item.accumulated_stock}
                                                     </span>
                                                 </td>
-                                                <td className="py-4 px-6 text-center text-gray-500 font-medium">
-                                                    {item.min_stock}
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <div className="flex justify-center">
-                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getStatusStyles(item.status)}`}>
-                                                            {getStatusIcon(item.status)}
-                                                            {item.status}
-                                                        </span>
-                                                    </div>
-                                                </td>
                                                 <td className="py-4 px-6 text-right font-medium text-gray-600">
-                                                    {formatCurrency(item.total_revenue)}
+                                                    {formatCurrency(item.unit_price)}
                                                 </td>
-                                                <td className="py-4 px-6 text-right font-medium text-gray-600">
-                                                    {formatCurrency(item.total_cost)}
-                                                </td>
-                                                <td className="py-4 px-6 text-right">
-                                                    <span className={`font-bold ${item.total_profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {formatCurrency(item.total_profit_loss)}
-                                                    </span>
+                                                <td className="py-4 px-6 text-right font-black text-[#1e3a8a]">
+                                                    {formatCurrency(item.total_sale_value)}
                                                 </td>
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={9} className="py-12 text-center text-gray-400">
-                                                Nenhum produto encontrado.
+                                            <td colSpan={10} className="py-12 text-center text-gray-400">
+                                                Nenhuma movimentação encontrada.
                                             </td>
                                         </tr>
                                     )}

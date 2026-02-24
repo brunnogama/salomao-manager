@@ -17,6 +17,7 @@ import { MaintenanceSection } from './settings/MaintenanceSection'
 import { RHSection } from './settings/RHSection'
 import { SystemSection } from './settings/SystemSection'
 import { ControladoriaSection } from './settings/ControladoriaSection'
+import { OperationalSection } from './settings/OperationalSection'
 import { BackupSection } from './settings/BackupSection'
 import { SYSTEM_VERSION } from '../config/version'
 
@@ -69,7 +70,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   // --- STATES ---
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
-  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'family' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup'>('menu')
+  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'family' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes'>('menu')
 
   const [users, setUsers] = useState<AppUser[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
@@ -353,7 +354,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   const hasAccessToModule = (modId: string) => {
     if (isSuperAdmin || isAdmin) return true;
     if (['menu', 'historico', 'juridico', 'geral', 'about'].includes(modId)) return true;
-    const keyMap: any = { crm: 'crm', rh: 'collaborators', family: 'family', financial: 'financial', controladoria: 'controladoria' }; // Assumes user permission might track it, but for now mostly Admin
+    const keyMap: any = { crm: 'crm', rh: 'collaborators', family: 'family', financial: 'financial', controladoria: 'controladoria', operacoes: 'operational' }; // Assumes user permission might track it, but for now mostly Admin
 
     // If it's pure Admin module, only admins should see it (already handled by !item.adminOnly check in menu render)
     return currentUserPermissions[keyMap[modId] as keyof UserPermissions] || false;
@@ -362,6 +363,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   const menuItems = [
     { id: 'geral', label: 'Usuários', icon: Shield },
     { id: 'crm', label: 'CRM Brindes', icon: Briefcase },
+    { id: 'operacoes', label: 'Operações', icon: LayoutGrid, adminOnly: true },
     { id: 'controladoria', label: 'Controladoria', icon: Layout, adminOnly: true }, // NEW ITEM
     { id: 'rh', label: 'RH', icon: Users },
     { id: 'family', label: 'Família', icon: Heart },
@@ -546,6 +548,12 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
               onReset={handleControladoriaReset}
               onFactoryReset={handleControladoriaFactoryReset}
               loading={loading}
+            />
+          )}
+
+          {activeModule === 'operacoes' && (
+            <OperationalSection
+              isAdmin={isAdmin}
             />
           )}
 
