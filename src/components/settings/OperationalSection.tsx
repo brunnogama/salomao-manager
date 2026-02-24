@@ -20,7 +20,7 @@ interface ImportRow {
     [key: string]: string | number | undefined
 }
 
-export function OperationalSection({ isAdmin }: OperationalSectionProps) {
+export function OperationalSection({ }: OperationalSectionProps) {
     const [importing, setImporting] = useState(false)
     const [importStats, setImportStats] = useState<{ total: number; success: number; errors: string[] } | null>(null)
 
