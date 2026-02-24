@@ -268,15 +268,15 @@ export function Produtos() {
                         <div className="overflow-x-auto custom-scrollbar">
                             <div className="min-w-[800px]">
                                 <table className="w-full">
-                                    <thead className="bg-gray-50 border-b border-gray-100">
-                                        <tr>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Código do Produto</th>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Unidade de Medida</th>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estoque Mínimo</th>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Custo Unitário</th>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unitário</th>
-                                            <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                                    <thead>
+                                        <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Item</th>
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Código do Produto</th>
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Unidade de Medida</th>
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Estoque Mínimo</th>
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Custo Unitário</th>
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Preço Unitário</th>
+                                            <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">

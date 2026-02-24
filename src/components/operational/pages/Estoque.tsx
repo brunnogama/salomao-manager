@@ -142,17 +142,17 @@ export function Estoque() {
                     <div className="overflow-x-auto custom-scrollbar">
                         <div className="min-w-[1200px]">
                             <table className="w-full">
-                                <thead className="bg-gray-50 border-b border-gray-100">
-                                    <tr>
-                                        <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Produto</th>
-                                        <th className="text-center py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Entradas</th>
-                                        <th className="text-center py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Saídas</th>
-                                        <th className="text-center py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Saldo</th>
-                                        <th className="text-center py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Est. Mínimo</th>
-                                        <th className="text-center py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                        <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Receita Total</th>
-                                        <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Custo Total</th>
-                                        <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Lucro/Prejuízo</th>
+                                <thead>
+                                    <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                                        <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Produto</th>
+                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Entradas</th>
+                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Saídas</th>
+                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Saldo</th>
+                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Est. Mínimo</th>
+                                        <th className="text-center py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                                        <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Receita Total</th>
+                                        <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Custo Total</th>
+                                        <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Lucro/Prejuízo</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">

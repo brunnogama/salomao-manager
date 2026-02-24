@@ -282,15 +282,15 @@ export function Compras() {
                                         <div className="overflow-x-auto custom-scrollbar">
                                             <div className="min-w-[600px]">
                                                 <table className="w-full">
-                                                    <thead className="bg-white border-b border-gray-100">
-                                                        <tr>
-                                                            <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Status</th>
-                                                            <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
-                                                            <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
-                                                            <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qtd</th>
-                                                            <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fornecedor</th>
-                                                            <th className="text-left py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                                                            <th className="text-right py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                                                    <thead>
+                                                        <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest w-12">Status</th>
+                                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Item</th>
+                                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Marca</th>
+                                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Qtd</th>
+                                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Fornecedor</th>
+                                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Preço Unit.</th>
+                                                            <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-50">

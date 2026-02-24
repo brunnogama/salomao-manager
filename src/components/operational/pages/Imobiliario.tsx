@@ -283,15 +283,15 @@ export function Imobiliario() {
                         <div className="overflow-x-auto custom-scrollbar">
                             <div className="min-w-[1000px]">
                                 <table className="w-full">
-                                    <thead className="bg-gray-50 border-b border-gray-100">
-                                        <tr>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Patrimônio</th>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nome/Descrição</th>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Categoria</th>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Local</th>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor</th>
-                                            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                            <th className="text-right py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                                    <thead>
+                                        <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Patrimônio</th>
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Nome/Descrição</th>
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Categoria</th>
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Local</th>
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Valor</th>
+                                            <th className="text-left py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                                            <th className="text-right py-2 px-6 text-[10px] font-black text-white uppercase tracking-widest">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
