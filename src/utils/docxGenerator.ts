@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, Header } from 'docx';
+import { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, Header, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom } from 'docx';
 import { Contract } from '../types/controladoria';
 import { moedaPorExtenso, percentualPorExtenso } from './extenso';
 
@@ -101,9 +101,11 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                         },
                         floating: {
                             horizontalPosition: {
+                                relative: HorizontalPositionRelativeFrom.PAGE,
                                 offset: 0,
                             },
                             verticalPosition: {
+                                relative: VerticalPositionRelativeFrom.PAGE,
                                 offset: 0,
                             },
                             behindText: true,

@@ -805,6 +805,7 @@ export function Proposals() {
               <input
                 type="text"
                 value={clause.value}
+                onChange={(e) => updateClause(type, index, 'value', e.target.value)}
                 onFocus={() => jumpToFieldPage(type)}
                 placeholder={showTypeToggle ? (clause.type === 'currency' ? valuePlaceholder : '0%') : valuePlaceholder}
                 className={`w-full p-3.5 text-sm font-bold text-gray-700 outline-none bg-transparent ${!showTypeToggle ? 'pl-4' : ''}`}
