@@ -18,6 +18,9 @@ interface ParsedDetails {
     ip: string
     user_name: string
     page: string
+    isAudit?: boolean
+    tableName?: string
+    recordId?: string
 }
 
 export function History() {
@@ -35,6 +38,18 @@ export function History() {
     const fetchLogs = async () => {
         setLoading(true)
 
+        // Verificamos o papel do usuário primeiro
+        const { data: { user } } = await supabase.auth.getUser()
+        let userRole = 'viewer'
+        if (user) {
+            const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('role')
+                .eq('id', user.id)
+                .maybeSingle()
+            if (profile) userRole = profile.role || 'viewer'
+        }
+
         let query = supabase
             .from('logs')
             .select('*')
@@ -47,18 +62,54 @@ export function History() {
             query = query.lte('created_at', `${endDate}T23:59:59`)
         }
 
-        if (startDate || endDate) {
-            query = query.limit(1000)
-        } else {
-            query = query.limit(500) // Aumentado para suportar abas
+        const { data: logsData, error: logsError } = await query.limit(500)
+
+        let combinedLogs: any[] = logsData || []
+
+        // Se for admin, buscamos também os audit_logs (retroativo/profundo)
+        if (userRole === 'admin') {
+            let auditQuery = supabase
+                .from('audit_logs')
+                .select('*')
+                .order('changed_at', { ascending: false })
+
+            if (startDate) {
+                auditQuery = auditQuery.gte('changed_at', `${startDate}T00:00:00`)
+            }
+            if (endDate) {
+                auditQuery = auditQuery.lte('changed_at', `${endDate}T23:59:59`)
+            }
+
+            const { data: auditData, error: auditError } = await auditQuery.limit(500)
+            if (auditError) console.error('Erro ao buscar audit_logs:', auditError)
+
+            if (auditData) {
+                const mappedAudit = auditData.map((a: any) => ({
+                    id: `audit-${a.id}`,
+                    created_at: a.changed_at,
+                    user_email: a.user_email || 'Sistema',
+                    action: a.action,
+                    module: 'BANCO (Audit)',
+                    details: JSON.stringify({
+                        info: `Alteração profunda na tabela ${a.table_name}`,
+                        ip: 'BANCO',
+                        user_name: a.user_email?.split('@')[0] || 'Sistema',
+                        page: a.table_name,
+                        isAudit: true,
+                        tableName: a.table_name,
+                        recordId: a.record_id
+                    })
+                }))
+                combinedLogs = [...combinedLogs, ...mappedAudit].sort((a, b) =>
+                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                )
+            }
         }
 
-        const { data, error } = await query
-
-        if (error) {
-            console.error(error)
+        if (logsError) {
+            console.error(logsError)
         } else {
-            setLogs(data || [])
+            setLogs(combinedLogs)
         }
         setLoading(false)
     }
@@ -141,6 +192,16 @@ export function History() {
         const wb = XLSX.utils.book_new()
         XLSX.utils.book_append_sheet(wb, ws, "Logs")
         XLSX.writeFile(wb, `Historico_${activeTab === 'activities' ? 'Atividades' : 'Acessos'}.xlsx`)
+    }
+
+    const formatAuditInfo = (parsed: ParsedDetails) => {
+        if (!parsed.isAudit) return parsed.info
+        return (
+            <div className="flex flex-col gap-1">
+                <span className="font-black text-[#1e3a8a]">{parsed.info}</span>
+                <span className="text-[9px] opacity-70">Registro ID: {parsed.recordId}</span>
+            </div>
+        )
     }
 
     // Obter lista única de páginas/módulos para o filtro
@@ -356,9 +417,9 @@ export function History() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 min-w-[300px]">
-                                            <p className="text-[11px] font-medium text-gray-600 leading-relaxed italic">
-                                                {parsed.info}
-                                            </p>
+                                            <div className="text-[11px] font-medium text-gray-600 leading-relaxed italic">
+                                                {formatAuditInfo(parsed)}
+                                            </div>
                                         </td>
                                     </tr>
                                 )

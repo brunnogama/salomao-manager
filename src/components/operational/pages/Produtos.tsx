@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Package, Plus, Search, Boxes, Coffee, Building2, UserCircle, Sparkles, Flag, Calendar, Trash2, ShoppingCart, X } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { logAction } from '../../../lib/logger'
 import { ConfirmationModal } from '../../ui/ConfirmationModal'
 import { AlertModal } from '../../ui/AlertModal'
 import { useEscKey } from '../../../hooks/useEscKey'
@@ -94,6 +95,7 @@ export function Produtos() {
                 .eq('id', id)
 
             if (error) throw error
+            await logAction('EDITAR', 'OPERACIONAL', `Atualizou campo ${field} para ${value} no produto ID ${id}`, 'Produtos')
         } catch (error) {
             console.error('Error updating item:', error)
             fetchItems() // Revert to server state on error
@@ -144,6 +146,7 @@ export function Produtos() {
             if (data) {
                 setInventoryItems((prev: InventoryItem[]) => [...prev, data])
                 resetModal()
+                await logAction('CRIAR', 'OPERACIONAL', `Criou novo produto: ${newItem.name} (${newItem.category})`, 'Produtos')
                 showAlert('Sucesso', 'Item adicionado ao estoque.', 'success')
             }
         } catch (error) {
@@ -169,6 +172,7 @@ export function Produtos() {
                 .eq('id', itemToDelete)
 
             if (error) throw error
+            await logAction('EXCLUIR', 'OPERACIONAL', `Removeu produto ID ${itemToDelete} do estoque`, 'Produtos')
         } catch (error) {
             console.error('Error deleting item:', error)
             fetchItems() // Revert on error
