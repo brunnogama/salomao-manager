@@ -14,6 +14,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   const [allowedModules, setAllowedModules] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isPending, setIsPending] = useState(false)
 
 
   useEffect(() => {
@@ -36,13 +37,17 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
 
             if (isUserAdmin) {
               setAllowedModules(['crm', 'family', 'collaborators', 'operational', 'financial', 'executive', 'legal-control'])
+              setIsPending(false)
             } else {
-              setAllowedModules(data.allowed_modules || [])
+              const modules = data.allowed_modules || []
+              setAllowedModules(modules)
+              setIsPending(modules.length === 0)
             }
           } else {
             console.warn('Perfil de usuário não encontrado.')
             setAllowedModules([])
             setIsAdmin(false)
+            setIsPending(true)
           }
         }
       } catch (error) {
@@ -139,6 +144,42 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             {description}
           </p>
         </div>
+      </div>
+    )
+  }
+
+
+  if (isPending) {
+    return (
+      <div className="h-screen w-screen bg-[#0a192f] flex flex-col items-center justify-center p-6 text-center">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a192f] to-[#112240] z-0" />
+
+        <div className="relative z-10 max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-10 shadow-2xl">
+          <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl mx-auto flex items-center justify-center mb-8 shadow-lg shadow-orange-500/20">
+            <Lock className="h-10 w-10 text-white" />
+          </div>
+
+          <h1 className="text-2xl font-black text-white mb-4 tracking-tight text-center">
+            Acesso <span className="text-[#d4af37]">Pendente</span>
+          </h1>
+
+          <p className="text-blue-100/70 text-sm font-medium leading-relaxed mb-10 text-center">
+            Olá, <span className="text-white font-bold">{userName}</span>. Sua conta foi identificada, mas você ainda não possui módulos liberados.
+            Contate o administrador (Márcio Gama) para aprovar seu acesso.
+          </p>
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-xl bg-white/10 text-white font-bold hover:bg-white/20 transition-all border border-white/10"
+          >
+            <LogOut className="h-5 w-5 rotate-180" />
+            Sair do Sistema
+          </button>
+        </div>
+
+        <p className="relative z-10 mt-8 text-[10px] font-black text-blue-200/30 uppercase tracking-[0.3em]">
+          © 2026 Salomão Advogados
+        </p>
       </div>
     )
   }

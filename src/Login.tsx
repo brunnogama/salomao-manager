@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './lib/supabase'
 import { logAction } from './lib/logger'
-import { User, Lock, ArrowRight, Loader2, LayoutGrid, Eye, EyeOff, Scale } from 'lucide-react'
+import { User, Lock, ArrowRight, Loader2, LayoutGrid, Eye, EyeOff, Scale, Mail } from 'lucide-react'
 import { SYSTEM_VERSION } from './config/version'
 export default function Login() {
   const [emailPrefix, setEmailPrefix] = useState('')
@@ -28,6 +28,25 @@ export default function Login() {
     } catch (err: any) {
       setError('Credenciais inválidas. Verifique usuário e senha.')
     } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleOutlookLogin = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          scopes: 'email profile',
+          redirectTo: window.location.origin
+        }
+      })
+      if (error) throw error
+    } catch (err: any) {
+      console.error('Erro Outlook Login:', err)
+      setError('Erro ao abrir janela do Outlook.')
       setLoading(false)
     }
   }
@@ -162,6 +181,26 @@ export default function Login() {
                   </div>
                 </div>
               )}
+            </button>
+
+            {/* Divisor Outlook */}
+            <div className="relative flex items-center py-2">
+              <div className="flex-grow border-t border-gray-200/60"></div>
+              <span className="flex-shrink mx-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">ou</span>
+              <div className="flex-grow border-t border-gray-200/60"></div>
+            </div>
+
+            {/* Botão Outlook */}
+            <button
+              type="button"
+              onClick={handleOutlookLogin}
+              disabled={loading}
+              className="relative w-full flex justify-center items-center py-4 px-6 rounded-2xl text-xs font-black text-[#0a192f] bg-white border border-gray-200 hover:border-blue-200 hover:bg-blue-50/30 focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98] uppercase tracking-widest shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <Mail className="h-4 w-4 text-[#0078d4]" />
+                <span>Entrar com a conta Salomão</span>
+              </div>
             </button>
           </form>
 
