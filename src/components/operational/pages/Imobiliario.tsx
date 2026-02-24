@@ -215,35 +215,33 @@ export function Imobiliario() {
 
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
 
-                <div className="flex overflow-x-auto pb-4 gap-2 custom-scrollbar">
-                    {locations.map((loc) => (
-                        <button
-                            key={loc.id}
-                            onClick={() => setActiveLocation(loc.id)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-all border ${activeLocation === loc.id
-                                ? 'bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md'
-                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                                }`}
-                        >
-                            <MapPin className="w-4 h-4" />
-                            <span className="text-sm font-medium">{loc.label}</span>
-                        </button>
-                    ))}
-                </div>
-
-                {/* Filters & Search */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-1">
+                <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-4 items-center mb-6">
+                    <div className="relative flex-1 w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Buscar por patrimônio, descrição ou nome..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-gray-900"
+                            className="w-full pl-10 pr-4 py-2 bg-gray-50/50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium text-gray-900"
                         />
                     </div>
-                    {/* Placeholder for advanced filters if needed */}
+
+                    <div className="flex items-center gap-1.5 p-1 bg-gray-50 rounded-lg border border-gray-100 shrink-0 w-full lg:w-auto overflow-x-auto no-scrollbar">
+                        {locations.map((loc) => (
+                            <button
+                                key={loc.id}
+                                onClick={() => setActiveLocation(loc.id)}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md whitespace-nowrap transition-all text-xs font-bold uppercase tracking-wider ${activeLocation === loc.id
+                                    ? 'bg-white text-[#1e3a8a] shadow-sm border border-gray-200'
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 border border-transparent'
+                                    }`}
+                            >
+                                <MapPin className="w-3.5 h-3.5" />
+                                {loc.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Stats Cards */}
