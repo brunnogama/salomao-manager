@@ -1053,12 +1053,17 @@ export function Proposals() {
                   {/* A4 Page Simulation */}
                   <div
                     className="w-full max-w-[500px] aspect-[21/29.7] bg-white shadow-2xl border border-gray-100 overflow-hidden relative"
-                    style={{
-                      backgroundImage: "url('/papel-timbrado.png')",
-                      backgroundSize: '100% 100%',
-                      backgroundRepeat: 'no-repeat'
-                    }}
                   >
+                    {/* Header */}
+                    <div className="absolute top-0 left-0 w-full pt-8 flex justify-center">
+                      <img src="/logo-salomao.png" className="h-10 object-contain" alt="Logo" />
+                    </div>
+
+                    {/* Footer */}
+                    <div className="absolute bottom-0 left-0 w-full pb-8 px-12 flex justify-between items-end">
+                      <img src="/rodape1.png" className="h-6 object-contain" alt="Rodapé 1" />
+                      <img src="/rodape2.png" className="h-6 object-contain" alt="Rodapé 2" />
+                    </div>
                     {/* Safe Area Container - Header/Footer Protection */}
                     <div className="absolute inset-0 flex flex-col pt-[18%] pb-[16%]">
                       {/* Content Clipper */}

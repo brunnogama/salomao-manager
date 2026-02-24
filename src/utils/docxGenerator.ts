@@ -54,8 +54,12 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
     const location = data.location || "Rio de Janeiro";
     const dateLine = `${location}, ${today}`;
 
-    // Fetch the full letterhead image
-    const letterheadBuffer = await fetchImage('/papel-timbrado.png');
+    // Fetch images
+    const [logoBuffer, footer1Buffer, footer2Buffer] = await Promise.all([
+        fetchImage('/logo-salomao.png'),
+        fetchImage('/rodape1.png'),
+        fetchImage('/rodape2.png')
+    ]);
 
     const standardFont = "Arial";
     const boldFont = "Arial";
@@ -88,27 +92,47 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
 
     // --- SECTIONS ---
 
-    // Full Page Background (Letterhead)
+    // Header with centered logo
     const header = new Header({
         children: [
             new Paragraph({
+                alignment: AlignmentType.CENTER,
                 children: [
                     new ImageRun({
-                        data: letterheadBuffer,
+                        data: logoBuffer,
                         transformation: {
-                            width: 595, // A4 width pts
-                            height: 842, // A4 height pts
+                            width: 180, // Adjusted width
+                            height: 48,  // Adjusted height
                         },
-                        floating: {
-                            horizontalPosition: {
-                                offset: 0,
-                            },
-                            verticalPosition: {
-                                offset: 0,
-                            },
-                            behindText: true,
+                    }),
+                ],
+            }),
+        ],
+    });
+
+    // Footer with two distributed images
+    const footer = new Header({
+        children: [
+            new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                    new ImageRun({
+                        data: footer1Buffer,
+                        transformation: {
+                            width: 200, 
+                            height: 35,
                         },
-                    } as any),
+                    }),
+                    new TextRun({
+                        text: " ".repeat(40), // Spacing between images
+                    }),
+                    new ImageRun({
+                        data: footer2Buffer,
+                        transformation: {
+                            width: 200,
+                            height: 35,
+                        },
+                    }),
                 ],
             }),
         ],
@@ -269,6 +293,7 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
                     }
                 },
                 headers: { default: header },
+                footers: { default: footer },
                 children: docChildren,
             },
         ],
