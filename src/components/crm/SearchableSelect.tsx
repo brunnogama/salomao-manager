@@ -223,13 +223,6 @@ export function SearchableSelect({
 
               let top: number | undefined = rect.bottom;
               let bottom: number | undefined = undefined;
-              const spaceBelow = window.innerHeight - rect.bottom;
-
-              if (spaceBelow < 250 && rect.top > 250) {
-                top = undefined;
-                // Calculate bottom relative to the viewport
-                bottom = window.innerHeight - rect.top;
-              }
 
               setCoords({
                 top,

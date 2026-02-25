@@ -3,7 +3,7 @@ import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock,
-  Link as LinkIcon, Copy, CheckCircle2
+  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw
 } from 'lucide-react'
 
 import XLSX from 'xlsx-js-style'
@@ -568,6 +568,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setShowFormModal(true)
     // Clear pending
     setPendingGedDocs([])
+    markAsViewed(colaborador.id, !!colaborador.cadastro_atualizado);
   }
 
   const handleDelete = (colaborador: Collaborator) => {
@@ -1044,7 +1045,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
     )
   }
 
+  const markAsViewed = async (id: string, isUpdated: boolean) => {
+    if (isUpdated) {
+      await supabase.from('collaborators').update({ cadastro_atualizado: false }).eq('id', id);
+      setColaboradores(prev => prev.map(c => c.id === id ? { ...c, cadastro_atualizado: false } : c));
+    }
+  }
+
   const handleRowClick = (c: Collaborator) => {
+    markAsViewed(c.id, !!c.cadastro_atualizado);
     const formattedC = {
       ...c,
       birthday: formatDateToDisplay(c.birthday),
@@ -1084,10 +1093,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
               {colaboradores.filter(c => c.cadastro_atualizado && c.status === 'active').length > 0 && (
                 <button
                   onClick={() => setShowUpdatedOnly(!showUpdatedOnly)}
-                  className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider relative group outline-none overflow-hidden
+                  className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center relative group outline-none overflow-hidden
                     ${showUpdatedOnly
                       ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
-                      : 'bg-[#1e3a8a] text-white border-[#1e3a8a] animate-pulse hover:bg-[#112240] shadow-lg'
+                      : 'bg-[#1e3a8a] text-white border-[#1e3a8a] hover:bg-[#112240] shadow-lg'
                     }
                   `}
                   title={showUpdatedOnly ? "Mostrar Todos" : "Ver Cadastros Atualizados"}
@@ -1098,7 +1107,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                     </span>
                   )}
-                  {showUpdatedOnly ? "Ver Todos" : `Novidades (${colaboradores.filter(c => c.cadastro_atualizado && c.status === 'active').length})`}
+                  <RefreshCcw className={`h-4 w-4 sm:h-5 sm:w-5 ${!showUpdatedOnly ? 'animate-spin-slow' : ''}`} />
                 </button>
               )}
               <button

@@ -137,6 +137,8 @@ export interface Collaborator {
   teams?: { name: string }; // Joined field
   rateios?: { id: string; name: string };
 
+  cadastro_atualizado?: boolean;
+
   created_at?: string;
   updated_at?: string;
 }
