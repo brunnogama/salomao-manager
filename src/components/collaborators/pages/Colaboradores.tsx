@@ -975,6 +975,19 @@ export function Colaboradores({ }: ColaboradoresProps) {
     )
   }
 
+  const handleRowClick = (c: Collaborator) => {
+    const formattedC = {
+      ...c,
+      birthday: formatDateToDisplay(c.birthday),
+      hire_date: formatDateToDisplay(c.hire_date),
+      termination_date: formatDateToDisplay(c.termination_date),
+      oab_emissao: formatDateToDisplay(c.oab_emissao),
+      escolaridade_previsao_conclusao: formatDateToDisplay(c.escolaridade_previsao_conclusao)
+    };
+    setSelectedColaborador(formattedC as Collaborator);
+    setActiveDetailTab(1);
+  }
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6">
 
