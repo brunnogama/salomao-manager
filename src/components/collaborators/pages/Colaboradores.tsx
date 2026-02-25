@@ -848,7 +848,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
     if (activeTab === 4) {
       if (isViewMode) {
         // Helpers
-        const getLookupName = (list: any[], id?: string | number) => list.find(item => String(item.id) === String(id))?.name || id
+        const getLookupName = (list: any[], id?: string | number) => {
+          if (!id) return '';
+          const found = list.find(item => String(item.id) === String(id))?.name;
+          if (found) return found;
+          if (typeof id === 'string' && id.length >= 32 && id.includes('-')) return '';
+          return id;
+        }
 
         // Calculate Duration
         let duration = null
@@ -921,7 +927,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     <DetailRow label="Data Desligamento" value={formatDateToDisplay(data.termination_date)} icon={Calendar} />
                     <DetailRow label="Iniciativa" value={getLookupName(terminationInitiatives, data.termination_initiative_id)} />
                     <DetailRow label="Tipo" value={getLookupName(terminationTypes, data.termination_type_id)} />
-                    <DetailRow label="Motivo" value={getLookupName(terminationReasons, data.termination_reason_id) || data.termination_reason_id} />
+                    <DetailRow label="Motivo" value={getLookupName(terminationReasons, data.termination_reason_id)} />
                   </div>
                 </div>
 

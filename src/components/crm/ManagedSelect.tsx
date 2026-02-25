@@ -48,6 +48,7 @@ export function ManagedSelect({
 
     const dropdownRef = useRef<HTMLDivElement>(null)
     const managingRef = useRef<HTMLDivElement>(null)
+    const isFetchedRef = useRef(false)
 
     const fetchItems = async () => {
         setLoading(true)
@@ -69,10 +70,15 @@ export function ManagedSelect({
 
     // Fetch when opening dropdown or managing, or when filter changes
     useEffect(() => {
-        if (isOpen || isManaging) {
+        if ((isOpen || isManaging || value) && !isFetchedRef.current) {
             fetchItems()
+            isFetchedRef.current = true
         }
-    }, [isOpen, isManaging, filter?.value, tableName])
+    }, [isOpen, isManaging, value, filter?.value, tableName])
+
+    useEffect(() => {
+        isFetchedRef.current = false
+    }, [tableName, filter?.value])
 
     // Close on click outside
     useEffect(() => {
