@@ -70,7 +70,7 @@ export function UserModal({
               <Lock className="h-3 w-3" /> Módulos Permitidos
             </label>
             <div className="grid grid-cols-2 gap-3">
-              {['crm', 'controladoria', 'collaborators', 'family', 'financial', 'operational', 'executive'].map(m => (
+              {['crm', 'controladoria', 'collaborators', 'financial', 'operational', 'executive'].map(m => (
                 <label key={m} className="flex items-center gap-2 p-2 bg-white border border-gray-200 rounded cursor-pointer hover:bg-blue-50 transition-colors">
                   <input
                     type="checkbox"
@@ -80,12 +80,11 @@ export function UserModal({
                   />
                   <span className="text-sm font-medium text-gray-700 capitalize">
                     {m === 'collaborators' ? 'RH' :
-                      m === 'family' ? 'Família' :
-                        m === 'financial' ? 'Financeiro' :
-                          m === 'operational' ? 'Operacional' :
-                            m === 'controladoria' ? 'Controladoria' :
-                              m === 'executive' ? 'Secretaria Executiva' :
-                                m === 'crm' ? 'CRM Brindes' : m}
+                      m === 'financial' ? 'Financeiro' :
+                        m === 'operational' ? 'Operacional' :
+                          m === 'controladoria' ? 'Controladoria' :
+                            m === 'executive' ? 'Secretaria Executiva' :
+                              m === 'crm' ? 'CRM Brindes' : m}
                   </span>
                 </label>
               ))}

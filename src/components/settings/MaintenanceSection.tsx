@@ -1,7 +1,7 @@
-import { AlertTriangle, Trash2, Database, Users, Heart, DollarSign } from 'lucide-react'
+import { AlertTriangle, Trash2, Database, Users, DollarSign } from 'lucide-react'
 
 interface MaintenanceSectionProps {
-  type: 'rh' | 'family' | 'financial'
+  type: 'rh' | 'financial'
   isAdmin: boolean
   onReset: () => void
   onResetSecondary?: () => void
@@ -49,23 +49,6 @@ export function MaintenanceSection({ type, isAdmin, onReset, onResetSecondary, o
           buttonLabel: 'Resetar Ponto',
           buttonColor: 'bg-green-600 hover:bg-green-700',
           action: onResetTertiary
-        }
-      ]
-    },
-    family: {
-      title: 'Manutenção Família',
-      icon: Heart,
-      color: 'text-purple-700',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200',
-      sections: [
-        {
-          title: 'Dados Familiares',
-          description: 'Remove todos os dados financeiros da família',
-          table: 'familia_salomao_dados',
-          buttonLabel: 'Resetar Base Familiar',
-          buttonColor: 'bg-purple-600 hover:bg-purple-700',
-          action: onReset
         }
       ]
     },

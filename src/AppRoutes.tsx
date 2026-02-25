@@ -5,7 +5,6 @@ import { AuthLayout } from './layouts/AuthLayout';
 import { ModuleSelector } from './components/ModuleSelector';
 import Login from './Login';
 import ResetPassword from './ResetPassword';
-import { UnderConstruction } from './components/UnderConstruction';
 import FichaCadastral from './pages/FichaCadastral';
 import { Presentation } from './pages/presentation/Presentation';
 import { BackupService } from './lib/BackupService';
@@ -123,7 +122,6 @@ export function AppRoutes() {
     // Mapeamento de chaves de módulo para rotas
     const moduleRoutes: Record<string, string> = {
         crm: '/crm/dashboard',
-        family: '/family/dashboard',
         collaborators: '/rh/dashboard',
         operational: '/operational/dashboard',
         financial: '/financeiro/dashboard',
@@ -242,7 +240,6 @@ export function AppRoutes() {
                 </Route>
 
                 {/* Fallback for under construction modules */}
-                <Route path="/family/*" element={<UnderConstruction moduleName="family" onBack={() => navigate('/')} />} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
 

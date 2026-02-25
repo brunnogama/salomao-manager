@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   Shield, Users, History as HistoryIcon, Code,
-  Briefcase, EyeOff, LayoutGrid, Heart, DollarSign, Grid,
+  Briefcase, EyeOff, LayoutGrid, DollarSign, Grid,
   CheckCircle, AlertCircle, Trash2, AlertTriangle,
   UserCircle, LogOut, Settings as SettingsIcon, Layout, Info, Database
 } from 'lucide-react'
@@ -23,7 +23,7 @@ import { SYSTEM_VERSION } from '../config/version'
 
 // --- INTERFACES & CONSTANTS ---
 interface UserPermissions {
-  geral: boolean; crm: boolean; family: boolean;
+  geral: boolean; crm: boolean;
   collaborators: boolean; operational: boolean; financial: boolean;
 }
 
@@ -33,7 +33,7 @@ interface AppUser {
 }
 
 const DEFAULT_PERMISSIONS: UserPermissions = {
-  geral: true, crm: true, family: false, collaborators: false, operational: false, financial: false
+  geral: true, crm: true, collaborators: false, operational: false, financial: false
 }
 
 const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
@@ -70,7 +70,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   // --- STATES ---
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' })
-  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'family' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes'>('menu')
+  const [activeModule, setActiveModule] = useState<'menu' | 'geral' | 'crm' | 'juridico' | 'rh' | 'financial' | 'historico' | 'sistema' | 'about' | 'controladoria' | 'backup' | 'operacoes'>('menu')
 
   const [users, setUsers] = useState<AppUser[]>([])
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
@@ -104,7 +104,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
 
       if (emailLower === SUPER_ADMIN_EMAIL.toLowerCase()) {
         setCurrentUserRole('admin');
-        setCurrentUserPermissions({ geral: true, crm: true, family: true, collaborators: true, operational: true, financial: true });
+        setCurrentUserPermissions({ geral: true, crm: true, collaborators: true, operational: true, financial: true });
         return;
       }
 
@@ -115,7 +115,6 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
         setCurrentUserPermissions({
           geral: true,
           crm: modules.includes('crm'),
-          family: modules.includes('family'),
           collaborators: modules.includes('collaborators') || modules.includes('rh'),
           operational: modules.includes('operational'),
           financial: modules.includes('financial')
@@ -354,7 +353,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
   const hasAccessToModule = (modId: string) => {
     if (isSuperAdmin || isAdmin) return true;
     if (['menu', 'historico', 'juridico', 'geral', 'about'].includes(modId)) return true;
-    const keyMap: any = { crm: 'crm', rh: 'collaborators', family: 'family', financial: 'financial', controladoria: 'controladoria', operacoes: 'operational' }; // Assumes user permission might track it, but for now mostly Admin
+    const keyMap: any = { crm: 'crm', rh: 'collaborators', financial: 'financial', controladoria: 'controladoria', operacoes: 'operational' }; // Assumes user permission might track it, but for now mostly Admin
 
     // If it's pure Admin module, only admins should see it (already handled by !item.adminOnly check in menu render)
     return currentUserPermissions[keyMap[modId] as keyof UserPermissions] || false;
@@ -366,7 +365,6 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
     { id: 'operacoes', label: 'Operações', icon: LayoutGrid, adminOnly: true },
     { id: 'controladoria', label: 'Controladoria', icon: Layout, adminOnly: true }, // NEW ITEM
     { id: 'rh', label: 'RH', icon: Users },
-    { id: 'family', label: 'Família', icon: Heart },
     { id: 'financial', label: 'Financeiro', icon: DollarSign },
     { id: 'historico', label: 'Histórico', icon: HistoryIcon },
     { id: 'backup', label: 'Backup', icon: Database, adminOnly: true },
@@ -566,9 +564,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
             />
           )}
 
-          {activeModule === 'family' && (
-            <MaintenanceSection type="family" isAdmin={isAdmin} onReset={() => openResetModal('familia_salomao_dados', 'Família', 'Resetou base da família', 'Remove todos os dados financeiros da família')} />
-          )}
+
 
           {activeModule === 'financial' && (
             <MaintenanceSection type="financial" isAdmin={isAdmin} onReset={() => openResetModal('financeiro_aeronave', 'Financeiro', 'Resetou base da aeronave', 'Remove todos os lançamentos financeiros da aeronave')} />

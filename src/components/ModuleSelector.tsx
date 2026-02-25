@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay, Heart } from 'lucide-react'
+import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { logAction } from '../lib/logger'
 
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
-  onSelect: (module: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'settings' | 'executive' | 'controladoria') => void;
+  onSelect: (module: 'crm' | 'collaborators' | 'operational' | 'financial' | 'settings' | 'executive' | 'controladoria') => void;
   userName: string;
 }
 
@@ -37,7 +37,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             setIsAdmin(isUserAdmin)
 
             if (isUserAdmin) {
-              setAllowedModules(['crm', 'family', 'collaborators', 'operational', 'financial', 'executive', 'controladoria'])
+              setAllowedModules(['crm', 'collaborators', 'operational', 'financial', 'executive', 'controladoria'])
               setIsPending(false)
             } else {
               const modules = data.allowed_modules || []
@@ -90,7 +90,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   }
 
   const renderCard = (
-    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'executive' | 'controladoria',
+    key: 'crm' | 'collaborators' | 'operational' | 'financial' | 'executive' | 'controladoria',
     title: string,
     description: string,
     Icon: any,
@@ -320,15 +320,6 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             Briefcase,
             'from-purple-600',
             'to-purple-700'
-          )}
-
-          {renderCard(
-            'family',
-            'Família',
-            'Gestão patrimonial, financeira e pessoal do núcleo familiar.',
-            Heart,
-            'from-rose-600',
-            'to-rose-700'
           )}
 
           {renderCard(
