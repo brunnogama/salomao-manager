@@ -116,7 +116,7 @@ export function ManagedSelect({
         }
     }, [isOpen]);
 
-    const selectedItem = items.find(i => i.id === value)
+    const selectedItem = items.find(i => value && String(i.id) === String(value))
 
     const filteredItems = items.filter(i =>
         i.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -248,7 +248,7 @@ export function ManagedSelect({
                                                 }}
                                                 className={`
                           w-full text-left px-3 py-2 rounded-lg transition-all text-sm
-                          ${value === item.id ? 'bg-blue-50 border border-blue-200 text-blue-700 font-semibold' : 'hover:bg-gray-50 border border-transparent text-gray-600'}
+                          ${value && String(value) === String(item.id) ? 'bg-blue-50 border border-blue-200 text-blue-700 font-semibold' : 'hover:bg-gray-50 border border-transparent text-gray-600'}
                         `}
                                             >
                                                 {item.name}

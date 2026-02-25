@@ -73,10 +73,18 @@ export function InformacoesProfissionaisSection({
             <label className="flex items-center gap-1 cursor-pointer group">
               <input
                 type="checkbox"
+                checked={!!formData.cpf && formData.ctps_numero === formData.cpf.replace(/\D/g, '').slice(0, 11)}
                 className="w-3 h-3 text-[#1e3a8a] bg-gray-100 border-gray-300 rounded focus:ring-[#1e3a8a] cursor-pointer"
                 onChange={(e) => {
-                  if (e.target.checked && formData.cpf) {
-                    setFormData({ ...formData, ctps_numero: formData.cpf.replace(/\D/g, '').slice(0, 11) })
+                  if (e.target.checked) {
+                    if (formData.cpf) {
+                      setFormData({ ...formData, ctps_numero: formData.cpf.replace(/\D/g, '').slice(0, 11) })
+                    } else {
+                      alert('Preencha o CPF na aba Dados Pessoais primeiro.');
+                      e.target.checked = false;
+                    }
+                  } else {
+                    setFormData({ ...formData, ctps_numero: '' })
                   }
                 }}
               />

@@ -48,18 +48,7 @@ export function DadosCorporativosSection({
         <Briefcase className="h-4 w-4" /> Dados Corporativos
       </h3>
 
-      {/* 1. Rateio (Always Visible) */}
-      <div className="bg-gray-50/50 p-4 rounded-xl space-y-4 border border-gray-100">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ManagedSelect
-            label="Rateio"
-            value={formData.rateio_id || ''}
-            onChange={v => setFormData({ ...formData, rateio_id: v })}
-            tableName="rateios"
-            placeholder="Selecione o Rateio..."
-          />
-        </div>
-      </div>
+      {/* 1. Rateio moved below into the main grid */}
 
       {/* TABS */}
       <div className="flex p-1 bg-gray-100 rounded-xl gap-1">
@@ -94,9 +83,21 @@ export function DadosCorporativosSection({
               <SearchableSelect
                 label="Status"
                 value={formData.status || 'active'}
-                onChange={(v) => setFormData({ ...formData, status: v as 'active' | 'inactive' })}
+                onChange={(v) => {
+                  const newStatus = v as 'active' | 'inactive';
+                  setFormData({ ...formData, status: newStatus });
+                  if (newStatus === 'inactive') setActiveTab('desligamento');
+                }}
                 options={[{ name: 'Ativo', id: 'active' }, { name: 'Inativo', id: 'inactive' }]}
                 uppercase={false}
+              />
+
+              <ManagedSelect
+                label="Rateio"
+                value={formData.rateio_id || ''}
+                onChange={v => setFormData({ ...formData, rateio_id: v })}
+                tableName="rateios"
+                placeholder="Selecione..."
               />
 
               <div>

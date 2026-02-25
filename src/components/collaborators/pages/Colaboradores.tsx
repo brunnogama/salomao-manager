@@ -210,7 +210,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   const toTitleCase = (str: string) => {
     if (!str) return ''
-    return str.toLowerCase().split(' ').map(word => (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word).join(' ');
+    const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
+    const acronyms = ['clt', 'pj', 'cpf', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
+    return str.toLowerCase().split(' ').map(word => {
+      if (romanNumerals.includes(word) || acronyms.includes(word)) return word.toUpperCase();
+      return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
+    }).join(' ');
   }
 
 
@@ -695,7 +700,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 <DetailRow label="Identidade (RG)" value={data.rg} />
                 <DetailRow label="Nascimento" value={formatDateToDisplay(data.birthday)} icon={Calendar} />
                 <DetailRow label="Gênero" value={data.gender} />
-                <DetailRow label="E-mail" value={data.email} />
                 <DetailRow label="Est. Civil" value={data.civil_status} />
                 <DetailRow label="Filhos" value={data.has_children ? 'Sim' : 'Não'} />
                 {data.has_children && <DetailRow label="Quantidade" value={data.children_count} />}
@@ -730,7 +734,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             <div className="col-span-1 md:col-span-2">
               <DetailRow label="Observações" value={data.observacoes} />
             </div>
-          </div>
+          </div >
         )
       } else {
         // FORM MODE
@@ -819,10 +823,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 <DetailRow label="Subnível" value={data.escolaridade_subnivel} />
               )}
               <div className="col-span-1 md:col-span-2">
-                <DetailRow label="Instituição" value={getLookupName(educationInstitutions, data.escolaridade_instituicao) || (data.escolaridade_instituicao?.length === 36 ? '' : data.escolaridade_instituicao)} icon={Building2} />
+                <DetailRow label="Instituição" value={getLookupName(educationInstitutions, data.escolaridade_instituicao)} icon={Building2} />
               </div>
               <div className="col-span-1 md:col-span-2">
-                <DetailRow label="Curso" value={getLookupName(educationCourses, data.escolaridade_curso) || (data.escolaridade_curso?.length === 36 ? '' : data.escolaridade_curso)} />
+                <DetailRow label="Curso" value={getLookupName(educationCourses, data.escolaridade_curso)} />
               </div>
               <DetailRow label="Matrícula" value={data.escolaridade_matricula} />
               <DetailRow label="Semestre" value={data.escolaridade_semestre} />
@@ -850,8 +854,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
         // Helpers
         const getLookupName = (list: any[], id?: string | number) => {
           if (!id) return '';
-          const found = list.find(item => String(item.id) === String(id))?.name;
+          const found = list.find(item => String(item.id) === String(id) || String(item.name) === String(id))?.name;
           if (found) return found;
+          // Return the ID itself if it doesn't look like a UUID, to safely display manual inserts
           if (typeof id === 'string' && id.length >= 32 && id.includes('-')) return '';
           return id;
         }
