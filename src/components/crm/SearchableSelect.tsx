@@ -215,20 +215,20 @@ export function SearchableSelect({
             if (!isOpen && dropdownRef.current) {
               const rect = dropdownRef.current.getBoundingClientRect();
 
-              let left = rect.left + window.scrollX;
+              let left = rect.left;
               if (align === 'right') {
                 const width = dropdownWidth && typeof dropdownWidth === 'number' ? dropdownWidth : rect.width;
-                left = (rect.right + window.scrollX) - width;
+                left = rect.right - width;
               }
 
-              let top: number | undefined = rect.bottom + window.scrollY;
+              let top: number | undefined = rect.bottom;
               let bottom: number | undefined = undefined;
               const spaceBelow = window.innerHeight - rect.bottom;
 
               if (spaceBelow < 300 && rect.top > 300) {
                 top = undefined;
-                // Calculate bottom relative to the viewport + scroll
-                bottom = window.innerHeight - rect.top - window.scrollY;
+                // Calculate bottom relative to the viewport
+                bottom = window.innerHeight - rect.top;
               }
 
               setCoords({
