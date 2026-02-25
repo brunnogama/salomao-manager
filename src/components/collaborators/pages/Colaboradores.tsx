@@ -95,6 +95,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [generatedLinks, setGeneratedLinks] = useState<{ name: string, url: string }[]>([])
   const [showLinksModal, setShowLinksModal] = useState(false)
   const [generatingLinks, setGeneratingLinks] = useState(false)
+  const [sendingEmailStatus, setSendingEmailStatus] = useState<Record<number, boolean>>({})
   const [showUpdatedOnly, setShowUpdatedOnly] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -1447,66 +1448,73 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 <p>Nesta seção você tem acesso aos links únicos. <strong>Atenção:</strong> Os links expiram em exatos 7 dias contados a partir de agora. Após expirarem, o colaborador precisará que você gere e envie um novo link.</p>
               </div>
 
-              {generatedLinks.map((link, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-white border border-gray-200 p-3 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0 font-bold">
-                    {link.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#0a192f] truncate">{toTitleCase(link.name)}</p>
-                    <p className="text-xs text-blue-600 font-medium truncate">{link.url}</p>
-                  </div>
+              {generatedLinks.map((link, idx) => {
+                const isSendingEmail = sendingEmailStatus[idx] || false;
+                return (
+                  <div key={idx} className="flex items-center gap-3 bg-white border border-gray-200 p-3 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0 font-bold">
+                      {link.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-[#0a192f] truncate">{toTitleCase(link.name)}</p>
+                      <p className="text-xs text-blue-600 font-medium truncate">{link.url}</p>
+                    </div>
 
-                  {/* EMail action */}
-                  <button
-                    onClick={async () => {
-                      try {
-                        const colabEmail = colaboradores.find(c => c.name === link.name)?.email;
+                    {/* EMail action */}
+                    <button
+                      disabled={isSendingEmail}
+                      onClick={async () => {
+                        setSendingEmailStatus(prev => ({ ...prev, [idx]: true }));
+                        try {
+                          const colabEmail = colaboradores.find(c => c.name === link.name)?.email;
 
-                        if (!colabEmail) {
-                          showAlert('Erro', `O colaborador ${link.name} não possui um e-mail corporativo cadastrado.`, 'error');
-                          return;
+                          if (!colabEmail) {
+                            showAlert('Erro', `O colaborador ${link.name} não possui um e-mail corporativo cadastrado.`, 'error');
+                            return;
+                          }
+
+                          const response = await fetch('https://hook.us2.make.com/gnjdu1yhp0w74l1b71mf68xlzpy03m7l', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              nome_colaborador: link.name,
+                              email_colaborador: colabEmail,
+                              link_atualizacao: link.url
+                            })
+                          });
+
+                          if (response.ok) {
+                            showAlert('Sucesso', `E-mail enviado para o Make.com (${colabEmail})!`, 'success');
+                          } else {
+                            throw new Error('Falha no envio para o Make.com');
+                          }
+                        } catch (error) {
+                          showAlert('Erro', 'Ocorreu um erro ao enviar para o Make.com. Verifique o console.', 'error');
+                          console.error(error);
+                        } finally {
+                          setSendingEmailStatus(prev => ({ ...prev, [idx]: false }));
                         }
+                      }}
+                      className="p-2.5 bg-gray-50 hover:bg-blue-50 text-gray-500 hover:text-blue-600 rounded-lg transition-colors border border-gray-200 border-dashed group-hover:border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Enviar este link por E-mail (Make.com)"
+                    >
+                      {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                    </button>
 
-                        const response = await fetch('https://hook.us2.make.com/gnjdu1yhp0w74l1b71mf68xlzpy03m7l', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            nome_colaborador: link.name,
-                            email_colaborador: colabEmail,
-                            link_atualizacao: link.url
-                          })
-                        });
-
-                        if (response.ok) {
-                          showAlert('Sucesso', `E-mail enviado para o Make.com (${colabEmail})!`, 'success');
-                        } else {
-                          throw new Error('Falha no envio para o Make.com');
-                        }
-                      } catch (error) {
-                        showAlert('Erro', 'Ocorreu um erro ao enviar para o Make.com. Verifique o console.', 'error');
-                        console.error(error);
-                      }
-                    }}
-                    className="p-2.5 bg-gray-50 hover:bg-blue-50 text-gray-500 hover:text-blue-600 rounded-lg transition-colors border border-gray-200 border-dashed group-hover:border-blue-200"
-                    title="Enviar este link por E-mail (Make.com)"
-                  >
-                    <Mail className="h-4 w-4" />
-                  </button>
-
-                  {/* Copy action */}
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(`Olá ${toTitleCase(link.name)}, por favor, atualize seus dados no sistema através deste link único: ${link.url}`);
-                      showAlert('Sucesso', 'Mensagem pronta copiada para a área de transferência!', 'success');
-                    }}
-                    className="p-2.5 bg-gray-50 hover:bg-amber-50 text-gray-500 hover:text-amber-600 rounded-lg transition-colors border border-gray-200 border-dashed group-hover:border-amber-200"
-                    title="Copiar mensagem pronta com o link"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
+                    {/* Copy action */}
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`Olá ${toTitleCase(link.name)}, por favor, atualize seus dados no sistema através deste link único: ${link.url}`);
+                        showAlert('Sucesso', 'Mensagem pronta copiada para a área de transferência!', 'success');
+                      }}
+                      className="p-2.5 bg-gray-50 hover:bg-amber-50 text-gray-500 hover:text-amber-600 rounded-lg transition-colors border border-gray-200 border-dashed group-hover:border-amber-200"
+                      title="Copiar mensagem pronta com o link"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
