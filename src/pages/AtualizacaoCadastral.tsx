@@ -57,8 +57,8 @@ export default function AtualizacaoCadastral() {
 
                 // Carrega lookups de escolaridade
                 const [instRes, coursesRes] = await Promise.all([
-                    supabase.from('education_institutions').select('*').order('name'),
-                    supabase.from('education_courses').select('*').order('name')
+                    supabase.rpc('get_education_institutions'),
+                    supabase.rpc('get_education_courses')
                 ]);
 
                 if (!instRes.error && instRes.data) setEducationInstitutions(instRes.data);
