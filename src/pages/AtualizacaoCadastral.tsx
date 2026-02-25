@@ -6,7 +6,6 @@ import { Collaborator } from '../types/controladoria';
 import { DadosPessoaisSection } from '../components/collaborators/components/DadosPessoaisSection';
 import { EnderecoSection } from '../components/collaborators/components/EnderecoSection';
 import { DadosEscolaridadeSection } from '../components/collaborators/components/DadosEscolaridadeSection';
-import logoSalomao from '../components/images/logo-salomao.png';
 
 const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
 const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14)
@@ -231,7 +230,7 @@ export default function AtualizacaoCadastral() {
             <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-10">
                     <div className="inline-flex items-center justify-center mb-6">
-                        <img src={logoSalomao} alt="Salomão" className="h-[74px] object-contain" />
+                        <img src="/logo-salomao.png" alt="Salomão" className="h-[74px] object-contain" />
                     </div>
                     <h1 className="text-3xl font-black text-[#0a192f] tracking-tight">Atualização Cadastral</h1>
                     <p className="text-gray-500 mt-2 max-w-lg mx-auto">Por favor, revise atentamente suas informações pessoais, endereço e escolaridade abaixo. Atualize o que for necessário e clique em salvar.</p>
