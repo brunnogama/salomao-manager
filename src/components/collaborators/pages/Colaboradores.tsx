@@ -1475,7 +1475,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                           const response = await fetch('https://hook.us2.make.com/4iyw1gkn1695z1snc8x9hwn6qpydcctx', {
                             method: 'POST',
-                            mode: 'no-cors',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               nome_colaborador: link.name,
