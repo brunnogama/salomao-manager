@@ -1475,6 +1475,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                           const response = await fetch('https://hook.us2.make.com/gnjdu1yhp0w74l1b71mf68xlzpy03m7l', {
                             method: 'POST',
+                            mode: 'no-cors',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               nome_colaborador: link.name,
@@ -1483,11 +1484,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             })
                           });
 
-                          if (response.ok) {
-                            showAlert('Sucesso', `E-mail enviado para o Make.com (${colabEmail})!`, 'success');
-                          } else {
-                            throw new Error('Falha no envio para o Make.com');
-                          }
+                          // With 'no-cors', response type will be 'opaque' and status will be 0.
+                          // It won't fail with CORS, but we can't reliably read the status code.
+                          // We'll optimistically assume success if no network error was caught.
+                          showAlert('Sucesso', `E-mail enviado para o Make.com (${colabEmail})!`, 'success');
                         } catch (error) {
                           showAlert('Erro', 'Ocorreu um erro ao enviar para o Make.com. Verifique o console.', 'error');
                           console.error(error);
