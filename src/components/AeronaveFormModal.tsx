@@ -282,11 +282,6 @@ export function AeronaveFormModal({
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
 
-      // Regra de Negócio: Se alterar o valor pago, reflete no valor total do doc automaticamente
-      if (field === 'valor_pago' && (!prev.valor_total_doc || prev.valor_total_doc === 0)) {
-        newData.valor_total_doc = value;
-      }
-
       return newData;
     });
   }
