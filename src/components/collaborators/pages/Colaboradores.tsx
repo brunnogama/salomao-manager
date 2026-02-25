@@ -81,6 +81,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [terminationTypes, setTerminationTypes] = useState<{ id: string; name: string }[]>([])
   const [terminationReasons, setTerminationReasons] = useState<{ id: string; name: string }[]>([])
   const [costCenters, setCostCenters] = useState<{ id: string; name: string }[]>([])
+  const [educationInstitutions, setEducationInstitutions] = useState<{ id: string; name: string }[]>([])
+  const [educationCourses, setEducationCourses] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
@@ -264,7 +266,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
         termInitiativesRes,
         termTypesRes,
         termReasonsRes,
-        costCentersRes
+        costCentersRes,
+        eduInstRes,
+        eduCourseRes
       ] = await Promise.all([
         supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name)`).order('name'),
         supabase.from('roles').select('id, name'),
@@ -275,7 +279,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
         supabase.from('termination_initiatives').select('id, name'),
         supabase.from('termination_types').select('id, name'),
         supabase.from('termination_reasons').select('id, name'),
-        supabase.from('cost_centers').select('id, name')
+        supabase.from('cost_centers').select('id, name'),
+        supabase.from('education_institutions').select('id, name'),
+        supabase.from('education_courses').select('id, name')
       ])
 
       if (colabRes.error) throw colabRes.error
@@ -291,6 +297,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (termTypesRes.data) setTerminationTypes(termTypesRes.data)
       if (termReasonsRes.data) setTerminationReasons(termReasonsRes.data)
       if (costCentersRes.data) setCostCenters(costCentersRes.data)
+      if (eduInstRes.data) setEducationInstitutions(eduInstRes.data)
+      if (eduCourseRes.data) setEducationCourses(eduCourseRes.data)
 
       const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
       const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
@@ -811,10 +819,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 <DetailRow label="Subnível" value={data.escolaridade_subnivel} />
               )}
               <div className="col-span-1 md:col-span-2">
-                <DetailRow label="Instituição" value={data.escolaridade_instituicao} icon={Building2} />
+                <DetailRow label="Instituição" value={getLookupName(educationInstitutions, data.escolaridade_instituicao) || (data.escolaridade_instituicao?.length === 36 ? '' : data.escolaridade_instituicao)} icon={Building2} />
               </div>
               <div className="col-span-1 md:col-span-2">
-                <DetailRow label="Curso" value={data.escolaridade_curso} />
+                <DetailRow label="Curso" value={getLookupName(educationCourses, data.escolaridade_curso) || (data.escolaridade_curso?.length === 36 ? '' : data.escolaridade_curso)} />
               </div>
               <DetailRow label="Matrícula" value={data.escolaridade_matricula} />
               <DetailRow label="Semestre" value={data.escolaridade_semestre} />
@@ -1556,7 +1564,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
           {Icon && <Icon className="h-3 w-3" />}
           {label}
         </p>
-        <p className="text-sm font-bold text-[#0a192f] break-all">{value || '-'}</p>
+        <p className="text-sm font-bold text-[#0a192f] break-words">{value || '-'}</p>
       </div>
     )
   }

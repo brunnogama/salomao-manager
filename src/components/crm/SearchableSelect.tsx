@@ -60,10 +60,10 @@ export function SearchableSelect({
     }).join(' ');
   };
 
-  // Carrega opções dinâmicas apenas quando abrir e se ainda não buscou
+  // Carrega opções dinâmicas apenas quando abrir ou houver valor inicial e se ainda não buscou
   useEffect(() => {
     if (table) {
-      if (isOpen && !isFetchedRef.current) {
+      if ((isOpen || value) && !isFetchedRef.current) {
         fetchOptions();
       }
     } else {
@@ -71,7 +71,7 @@ export function SearchableSelect({
         setOptions(externalOptions);
       }
     }
-  }, [table, isOpen, externalOptions]);
+  }, [table, isOpen, externalOptions, value]);
 
   const fetchOptions = async () => {
     if (!table) return;
