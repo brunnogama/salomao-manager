@@ -688,313 +688,72 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
   // LAYOUT FUNCTIONS
   const renderModalContent = (activeTab: number, isViewMode: boolean, data: Partial<Collaborator>) => {
+    const currentData = isViewMode ? data : formData;
+    const currentSetData = isViewMode ? () => { } : setFormData;
+
     // 1. DADOS PESSOAIS
     if (activeTab === 1) {
-      if (isViewMode) {
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="space-y-6">
-              <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Informações Pessoais</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="CPF" value={data.cpf} />
-                <DetailRow label="Identidade (RG)" value={data.rg} />
-                <DetailRow label="Nascimento" value={formatDateToDisplay(data.birthday)} icon={Calendar} />
-                <DetailRow label="Gênero" value={data.gender} />
-                <DetailRow label="Est. Civil" value={data.civil_status} />
-                <DetailRow label="Filhos" value={data.has_children ? 'Sim' : 'Não'} />
-                {data.has_children && <DetailRow label="Quantidade" value={data.children_count} />}
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Endereço</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="CEP" value={data.zip_code} />
-                <DetailRow label="Estado" value={data.state} />
-              </div>
-              <DetailRow label="Logradouro" value={`${data.address || ''}${data.address_number ? `, ${data.address_number}` : ''}` || '-'} />
-              <DetailRow label="Complemento" value={data.address_complement} />
-              <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="Bairro" value={data.neighborhood} />
-                <DetailRow label="Cidade" value={data.city} />
-              </div>
-            </div>
-
-            {/* Dados de Emergência */}
-            <div className="col-span-1 md:col-span-2 pt-4 border-t border-gray-100">
-              <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-4">Dados de Emergência</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <DetailRow label="Nome" value={data.emergencia_nome} />
-                <DetailRow label="Telefone" value={data.emergencia_telefone} />
-                <DetailRow label="Parentesco" value={data.emergencia_parentesco} />
-              </div>
-            </div>
-
-            {/* Observações */}
-            <div className="col-span-1 md:col-span-2">
-              <DetailRow label="Observações" value={data.observacoes} />
-            </div>
-          </div >
-        )
-      } else {
-        // FORM MODE
-        return (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-            {/* FORM MODE - Photo moved to sidebar */}
-            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-              <DadosPessoaisSection
-                formData={formData}
-                setFormData={setFormData}
-                maskCPF={maskCPF}
-                maskDate={maskDate}
-              />
-            </div>
-            <EnderecoSection
-              formData={formData}
-              setFormData={setFormData}
-              maskCEP={maskCEP}
-              handleCepBlur={handleCepBlur}
-            />
-          </div>
-        )
-      }
+      return (
+        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <DadosPessoaisSection
+            formData={currentData}
+            setFormData={currentSetData}
+            maskCPF={maskCPF}
+            maskDate={maskDate}
+            isViewMode={isViewMode}
+          />
+          <EnderecoSection
+            formData={currentData}
+            setFormData={currentSetData}
+            maskCEP={maskCEP}
+            handleCepBlur={isViewMode ? () => { } : handleCepBlur}
+            isViewMode={isViewMode}
+          />
+        </div>
+      )
     }
 
     // 2. DADOS PROFISSIONAIS
     if (activeTab === 2) {
-      if (isViewMode) {
-        return (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="space-y-6">
-                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Registro Profissional (OAB)</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <DetailRow label="Número OAB" value={data.oab_numero} />
-                  <DetailRow label="Estado OAB" value={data.oab_uf} />
-                  {/* Renamed Label to Emissão OAB */}
-                  <DetailRow label="Emissão OAB" value={formatDateToDisplay(data.oab_emissao)} icon={Calendar} />
-                  {data.gender === 'Masculino' && <DetailRow label="Dispensa Militar" value={data.dispensa_militar} />}
-                </div>
-                {data.oab_tipo && <DetailRow label="Tipo de Inscrição" value={data.oab_tipo} />}
-              </div>
-
-              <div className="space-y-6">
-                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2">Outros Documentos</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <DetailRow label="PIS/PASEP" value={data.pis || data.pis_pasep} />
-                    <DetailRow label="Matrícula e-Social" value={data.matricula_esocial} />
-                  </div>
-                  <DetailRow label="CTPS (Carteira de Trabalho)" value={data.ctps || data.ctps_numero} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <DetailRow label="Série CTPS" value={data.ctps_serie} />
-                    <DetailRow label="UF CTPS" value={data.ctps_uf} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      } else {
-        return (
-          <div className="animate-in slide-in-from-right-4 duration-300">
-            <InformacoesProfissionaisSection
-              formData={formData}
-              setFormData={setFormData}
-              maskDate={maskDate}
-            />
-          </div>
-        )
-      }
+      return (
+        <div className="animate-in slide-in-from-right-4 duration-300">
+          <InformacoesProfissionaisSection
+            formData={currentData}
+            setFormData={currentSetData}
+            maskDate={maskDate}
+            isViewMode={isViewMode}
+          />
+        </div>
+      )
     }
 
     // 3. ESCOLARIDADE
     if (activeTab === 3) {
-      if (isViewMode) {
-        return (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-[#1e3a8a]" />
-              <h3 className="text-lg font-bold text-[#0a192f]">Dados de Escolaridade</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-              <DetailRow label="Nível de Escolaridade" value={data.escolaridade_nivel} icon={GraduationCap} />
-              {data.escolaridade_subnivel && (
-                <DetailRow label="Subnível" value={data.escolaridade_subnivel} />
-              )}
-              <div className="col-span-1 md:col-span-2">
-                <DetailRow label="Instituição" value={getLookupName(educationInstitutions, data.escolaridade_instituicao)} icon={Building2} />
-              </div>
-              <div className="col-span-1 md:col-span-2">
-                <DetailRow label="Curso" value={getLookupName(educationCourses, data.escolaridade_curso)} />
-              </div>
-              <DetailRow label="Matrícula" value={data.escolaridade_matricula} />
-              <DetailRow label="Semestre" value={data.escolaridade_semestre} />
-              <DetailRow label="Previsão de Conclusão" value={formatDateToDisplay(data.escolaridade_previsao_conclusao)} icon={Calendar} />
-            </div>
-          </div>
-        )
-      } else {
-        return (
-          <div className="animate-in slide-in-from-right-4 duration-300">
-            <DadosEscolaridadeSection
-              formData={formData}
-              setFormData={setFormData}
-              maskDate={maskDate}
-              handleRefresh={handleRefresh}
-            />
-          </div>
-        )
-      }
+      return (
+        <div className="animate-in slide-in-from-right-4 duration-300">
+          <DadosEscolaridadeSection
+            formData={currentData}
+            setFormData={currentSetData}
+            maskDate={maskDate}
+            handleRefresh={handleRefresh}
+            isViewMode={isViewMode}
+          />
+        </div>
+      )
     }
 
     // 4. CORPORATIVO
     if (activeTab === 4) {
-      if (isViewMode) {
-        // Helpers
-        const getLookupName = (list: any[], id?: string | number) => {
-          if (!id) return '';
-          const found = list.find(item => String(item.id) === String(id) || String(item.name) === String(id))?.name;
-          if (found) return found;
-          // Return the ID itself if it doesn't look like a UUID, to safely display manual inserts
-          if (typeof id === 'string' && id.length >= 32 && id.includes('-')) return '';
-          return id;
-        }
-
-        // Calculate Duration
-        let duration = null
-        if (data.hire_date && data.termination_date) {
-          try {
-            const parseDate = (dString: string) => {
-              // Handle ISO YYYY-MM-DD
-              if (dString.includes('-')) {
-                const [year, month, day] = dString.split('-').map(Number)
-                return new Date(year, month - 1, day)
-              }
-              // Handle DD/MM/YYYY
-              if (dString.includes('/')) {
-                const [day, month, year] = dString.split('/').map(Number)
-                return new Date(year, month - 1, day)
-              }
-              return new Date()
-            }
-
-            const start = parseDate(data.hire_date)
-            const end = parseDate(data.termination_date)
-
-            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-              const years = differenceInYears(end, start)
-              const months = differenceInMonths(end, start) % 12
-              duration = { years, months }
-            }
-          } catch (e) { }
-        }
-
-        return (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-
-            {/* RATEIO & STATUS */}
-            <div>
-              <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-4">Rateio & Status</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <DetailRow label="Rateio" value={getLookupName(rateios, data.rateio_id)} />
-                <DetailRow label="Status" value={data.status === 'active' ? 'Ativo' : 'Inativo'} />
-                <DetailRow label="Área" value={data.area} />
-              </div>
-            </div>
-
-            {/* CONTRATAÇÃO */}
-            <div>
-              <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-4">Contratação</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-6">
-                <DetailRow label="Data de Admissão" value={formatDateToDisplay(data.hire_date)} icon={Calendar} />
-                <DetailRow label="Motivo Contratação" value={getLookupName(hiringReasons, data.hiring_reason_id)} />
-                <DetailRow label="Tipo Contrato" value={data.contract_type} />
-
-                <div className="md:col-span-1"><DetailRow label="Email Corporativo" value={data.email} icon={Mail} /></div>
-                <DetailRow label="Sócio Responsável" value={(data as any).partner?.name || getLookupName(partners, data.partner_id)} />
-                <DetailRow label="Líder Direto" value={(data as any).leader?.name || getLookupName(colaboradores, data.leader_id)} />
-
-                <DetailRow label="Equipe/Área" value={(data as any).teams?.name || getLookupName(teams, data.equipe)} />
-                <DetailRow label="Cargo" value={(data as any).roles?.name || getLookupName(roles, data.role)} />
-                <DetailRow label="Centro de Custo" value={getLookupName(costCenters, data.centro_custo)} />
-
-                <DetailRow label="Local" value={(data as any).locations?.name || getLookupName(locations, data.local)} icon={Building2} />
-              </div>
-            </div>
-
-            {/* DESLIGAMENTO */}
-            {data.termination_date && (
-              <div>
-                <h3 className="text-[9px] font-black text-red-300 uppercase tracking-widest border-b border-red-100 pb-2 mb-4">Desligamento</h3>
-                <div className="bg-red-50/50 p-4 rounded-xl border border-red-100 mb-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <DetailRow label="Data Desligamento" value={formatDateToDisplay(data.termination_date)} icon={Calendar} />
-                    <DetailRow label="Iniciativa" value={getLookupName(terminationInitiatives, data.termination_initiative_id)} />
-                    <DetailRow label="Tipo" value={getLookupName(terminationTypes, data.termination_type_id)} />
-                    <DetailRow label="Motivo" value={getLookupName(terminationReasons, data.termination_reason_id)} />
-                  </div>
-                </div>
-
-                {/* TIMELINE */}
-                {duration && (
-                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-in zoom-in-95 duration-500">
-                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                      <Clock className="h-4 w-4" /> Linha do Tempo
-                    </h4>
-
-                    <div className="relative pt-2 pb-6 px-4">
-                      {/* Bar */}
-                      <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -translate-y-1/2 rounded-full" />
-                      <div className="absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-[#1e3a8a] to-red-500 -translate-y-1/2 rounded-full opacity-20" />
-
-                      <div className="flex justify-between relative z-10">
-                        {/* Start Point */}
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-[#1e3a8a] shadow ring-4 ring-white" />
-                          <div className="text-center">
-                            <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Admissão</p>
-                            <p className="text-xs font-bold text-[#1e3a8a]">{formatDateToDisplay(data.hire_date)}</p>
-                          </div>
-                        </div>
-
-                        {/* Mid Duration */}
-                        <div className="bg-white px-4 py-1 rounded-full border border-gray-200 shadow-sm">
-                          <p className="text-xs font-bold text-gray-600">
-                            {duration.years > 0 && `${duration.years} ano${duration.years > 1 ? 's' : ''}`}
-                            {duration.years > 0 && duration.months > 0 && ' e '}
-                            {duration.months > 0 && `${duration.months} m${duration.months > 1 ? 'eses' : 'ês'}`}
-                            {duration.years === 0 && duration.months === 0 && 'Recente'}
-                          </p>
-                        </div>
-
-                        {/* End Point */}
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-red-500 shadow ring-4 ring-white" />
-                          <div className="text-center">
-                            <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Desligamento</p>
-                            <p className="text-xs font-bold text-red-600">{formatDateToDisplay(data.termination_date)}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )
-      } else {
-        return (
-          <div className="animate-in slide-in-from-right-4 duration-300">
-            <DadosCorporativosSection
-              formData={formData}
-              setFormData={setFormData}
-              maskDate={maskDate}
-            />
-          </div>
-        )
-      }
+      return (
+        <div className="animate-in slide-in-from-right-4 duration-300">
+          <DadosCorporativosSection
+            formData={currentData}
+            setFormData={currentSetData}
+            maskDate={maskDate}
+            isViewMode={isViewMode}
+          />
+        </div>
+      )
     }
 
 
@@ -1113,27 +872,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
     // 6. HISTÓRICO
     if (activeTab === 6) {
-      if (isViewMode) {
-        return (
-          <div className="animate-in slide-in-from-right-4 duration-300">
-            <HistoricoSection
-              formData={formData}
-              setFormData={setFormData}
-              maskDate={maskDate}
-            />
-          </div>
-        )
-      } else {
-        return (
-          <div className="animate-in slide-in-from-right-4 duration-300">
-            <HistoricoSection
-              formData={formData}
-              setFormData={setFormData}
-              maskDate={maskDate}
-            />
-          </div>
-        )
-      }
+      return (
+        <div className="animate-in slide-in-from-right-4 duration-300">
+          <HistoricoSection
+            formData={currentData}
+            setFormData={currentSetData}
+            maskDate={maskDate}
+            isViewMode={isViewMode}
+          />
+        </div>
+      )
     }
 
     return null

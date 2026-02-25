@@ -9,12 +9,14 @@ interface DadosCorporativosSectionProps {
   formData: Partial<Collaborator>
   setFormData: (data: Partial<Collaborator>) => void
   maskDate: (value: string) => string
+  isViewMode?: boolean
 }
 
 export function DadosCorporativosSection({
   formData,
   setFormData,
-  maskDate
+  maskDate,
+  isViewMode = false
 }: DadosCorporativosSectionProps) {
   const [activeTab, setActiveTab] = useState<'contratacao' | 'desligamento'>('contratacao')
 
@@ -48,6 +50,22 @@ export function DadosCorporativosSection({
         <Briefcase className="h-4 w-4" /> Dados Corporativos
       </h3>
 
+      {/* STATUS MENU */}
+      <div className="md:w-1/3">
+        <SearchableSelect
+          label="Status"
+          value={formData.status || 'active'}
+          onChange={(v) => {
+            const newStatus = v as 'active' | 'inactive';
+            setFormData({ ...formData, status: newStatus });
+            if (newStatus === 'inactive') setActiveTab('desligamento');
+          }}
+          options={[{ name: 'Ativo', id: 'active' }, { name: 'Inativo', id: 'inactive' }]}
+          uppercase={false}
+          disabled={isViewMode}
+        />
+      </div>
+
       {/* 1. Rateio moved below into the main grid */}
 
       {/* TABS */}
@@ -64,10 +82,11 @@ export function DadosCorporativosSection({
         </button>
         <button
           type="button"
+          disabled={formData.status !== 'inactive'}
           onClick={() => setActiveTab('desligamento')}
           className={`flex-1 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${activeTab === 'desligamento'
             ? 'bg-white text-red-700 shadow-sm'
-            : 'text-gray-400 hover:text-gray-600'
+            : formData.status !== 'inactive' ? 'text-gray-300 cursor-not-allowed opacity-50' : 'text-gray-400 hover:text-gray-600'
             }`}
         >
           Desligamento
@@ -80,17 +99,6 @@ export function DadosCorporativosSection({
           /* CONTRATAÇÃO TAB */
           <div className="bg-blue-50/30 p-6 rounded-xl space-y-6 border border-blue-100/50">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <SearchableSelect
-                label="Status"
-                value={formData.status || 'active'}
-                onChange={(v) => {
-                  const newStatus = v as 'active' | 'inactive';
-                  setFormData({ ...formData, status: newStatus });
-                  if (newStatus === 'inactive') setActiveTab('desligamento');
-                }}
-                options={[{ name: 'Ativo', id: 'active' }, { name: 'Inativo', id: 'inactive' }]}
-                uppercase={false}
-              />
 
               <ManagedSelect
                 label="Rateio"
@@ -98,6 +106,7 @@ export function DadosCorporativosSection({
                 onChange={v => setFormData({ ...formData, rateio_id: v })}
                 tableName="rateios"
                 placeholder="Selecione..."
+                disabled={isViewMode}
               />
 
               <div>
@@ -105,11 +114,13 @@ export function DadosCorporativosSection({
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
-                    className="w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                    className={`w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                     value={formData.hire_date || ''}
                     onChange={e => setFormData({ ...formData, hire_date: maskDate(e.target.value) })}
                     maxLength={10}
                     placeholder="DD/MM/AAAA"
+                    disabled={isViewMode}
+                    readOnly={isViewMode}
                   />
                 </div>
               </div>
@@ -119,16 +130,19 @@ export function DadosCorporativosSection({
                 value={formData.hiring_reason_id || ''}
                 onChange={v => setFormData({ ...formData, hiring_reason_id: v })}
                 tableName="hiring_reasons"
+                disabled={isViewMode}
               />
 
               {/* Row 2 */}
               <div className="md:col-span-1">
                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">E-mail Corporativo</label>
                 <input
-                  className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                  className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                   value={formData.email || ''}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
                   placeholder="email@exemplo.com"
+                  disabled={isViewMode}
+                  readOnly={isViewMode}
                 />
               </div>
 
@@ -137,6 +151,7 @@ export function DadosCorporativosSection({
                 value={formData.partner_id || ''}
                 onChange={v => setFormData({ ...formData, partner_id: v })}
                 tableName="partners"
+                disabled={isViewMode}
               />
 
               <ManagedSelect
@@ -144,6 +159,7 @@ export function DadosCorporativosSection({
                 value={formData.leader_id || ''}
                 onChange={v => setFormData({ ...formData, leader_id: v })}
                 tableName="collaborators"
+                disabled={isViewMode}
               />
 
               {/* Row 3 */}
@@ -156,6 +172,7 @@ export function DadosCorporativosSection({
                   { id: 'Jurídica', name: 'Jurídica' }
                 ]}
                 uppercase={false}
+                disabled={isViewMode}
               />
 
 
@@ -164,6 +181,7 @@ export function DadosCorporativosSection({
                 value={formData.equipe || ''}
                 onChange={v => setFormData({ ...formData, equipe: v })}
                 tableName="teams"
+                disabled={isViewMode}
               />
 
               <ManagedSelect
@@ -171,6 +189,7 @@ export function DadosCorporativosSection({
                 value={formData.role || ''}
                 onChange={v => setFormData({ ...formData, role: v })}
                 tableName="roles"
+                disabled={isViewMode}
               />
 
               <SearchableSelect
@@ -185,6 +204,7 @@ export function DadosCorporativosSection({
                   { id: 'PJ', name: 'PJ' }
                 ]}
                 uppercase={false}
+                disabled={isViewMode}
               />
 
               {/* Row 4 */}
@@ -193,6 +213,7 @@ export function DadosCorporativosSection({
                 value={formData.local || ''}
                 onChange={v => setFormData({ ...formData, local: v })}
                 tableName="locations"
+                disabled={isViewMode}
               />
 
               <ManagedSelect
@@ -200,6 +221,7 @@ export function DadosCorporativosSection({
                 value={formData.centro_custo || ''}
                 onChange={v => setFormData({ ...formData, centro_custo: v })}
                 tableName="cost_centers"
+                disabled={isViewMode}
               />
             </div>
           </div>
@@ -213,11 +235,13 @@ export function DadosCorporativosSection({
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
-                      className="w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                      className={`w-full pl-9 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                       value={formData.termination_date || ''}
                       onChange={e => setFormData({ ...formData, termination_date: maskDate(e.target.value) })}
                       maxLength={10}
                       placeholder="DD/MM/AAAA"
+                      disabled={isViewMode}
+                      readOnly={isViewMode}
                     />
                   </div>
                 </div>
@@ -233,6 +257,7 @@ export function DadosCorporativosSection({
                     })
                   }}
                   tableName="termination_initiatives"
+                  disabled={isViewMode}
                 />
 
                 <ManagedSelect
@@ -240,6 +265,7 @@ export function DadosCorporativosSection({
                   value={formData.termination_type_id || ''}
                   onChange={v => setFormData({ ...formData, termination_type_id: v })}
                   tableName="termination_types"
+                  disabled={isViewMode}
                 />
 
                 <ManagedSelect
@@ -254,7 +280,7 @@ export function DadosCorporativosSection({
                   extraInsertFields={formData.termination_initiative_id ? {
                     initiative_id: formData.termination_initiative_id
                   } : undefined}
-                  disabled={!formData.termination_initiative_id}
+                  disabled={!formData.termination_initiative_id || isViewMode}
                   placeholder={!formData.termination_initiative_id ? "Selecione a Iniciativa primeiro..." : "Selecione o Motivo..."}
                 />
               </div>

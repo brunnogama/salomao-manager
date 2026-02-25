@@ -13,12 +13,14 @@ interface InformacoesProfissionaisSectionProps {
   formData: Partial<Collaborator>
   setFormData: (data: Partial<Collaborator>) => void
   maskDate: (value: string) => string
+  isViewMode?: boolean
 }
 
 export function InformacoesProfissionaisSection({
   formData,
   setFormData,
-  maskDate
+  maskDate,
+  isViewMode = false
 }: InformacoesProfissionaisSectionProps) {
   return (
     <section className="space-y-4">
@@ -33,10 +35,12 @@ export function InformacoesProfissionaisSection({
             Número OAB
           </label>
           <input
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.oab_numero || ''}
             onChange={e => setFormData({ ...formData, oab_numero: e.target.value })}
             placeholder="Ex: 123456"
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
@@ -47,6 +51,7 @@ export function InformacoesProfissionaisSection({
           options={ESTADOS_BRASIL_UF.map(uf => ({ name: uf }))}
           placeholder="Selecione..."
           uppercase={true}
+          disabled={isViewMode}
         />
 
         <div>
@@ -54,11 +59,13 @@ export function InformacoesProfissionaisSection({
             Emissão OAB
           </label>
           <input
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.oab_emissao || ''}
             onChange={e => setFormData({ ...formData, oab_emissao: maskDate(e.target.value) })}
             maxLength={10}
             placeholder="DD/MM/AAAA"
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
       </div>
@@ -73,18 +80,19 @@ export function InformacoesProfissionaisSection({
             <label className="flex items-center gap-1 cursor-pointer group">
               <input
                 type="checkbox"
-                checked={!!formData.cpf && formData.ctps_numero === formData.cpf.replace(/\D/g, '').slice(0, 11)}
+                checked={!!formData.cpf && (formData.ctps_numero || formData.ctps) === formData.cpf.replace(/\D/g, '').slice(0, 11)}
                 className="w-3 h-3 text-[#1e3a8a] bg-gray-100 border-gray-300 rounded focus:ring-[#1e3a8a] cursor-pointer"
+                disabled={isViewMode}
                 onChange={(e) => {
                   if (e.target.checked) {
                     if (formData.cpf) {
-                      setFormData({ ...formData, ctps_numero: formData.cpf.replace(/\D/g, '').slice(0, 11) })
+                      setFormData({ ...formData, ctps_numero: formData.cpf.replace(/\D/g, '').slice(0, 11), ctps: formData.cpf.replace(/\D/g, '').slice(0, 11) })
                     } else {
                       alert('Preencha o CPF na aba Dados Pessoais primeiro.');
                       e.target.checked = false;
                     }
                   } else {
-                    setFormData({ ...formData, ctps_numero: '' })
+                    setFormData({ ...formData, ctps_numero: '', ctps: '' })
                   }
                 }}
               />
@@ -92,11 +100,13 @@ export function InformacoesProfissionaisSection({
             </label>
           </div>
           <input
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
-            value={formData.ctps_numero || ''}
-            onChange={e => setFormData({ ...formData, ctps_numero: e.target.value.replace(/\D/g, '') })}
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.ctps_numero || formData.ctps || ''}
+            onChange={e => setFormData({ ...formData, ctps_numero: e.target.value.replace(/\D/g, ''), ctps: e.target.value.replace(/\D/g, '') })}
             maxLength={11}
             placeholder="999999"
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
         <div>
@@ -104,11 +114,13 @@ export function InformacoesProfissionaisSection({
             CTPS Série
           </label>
           <input
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.ctps_serie || ''}
             onChange={e => setFormData({ ...formData, ctps_serie: e.target.value.replace(/\D/g, '').slice(0, 4) })}
             maxLength={4}
             placeholder="0000"
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
         <SearchableSelect
@@ -118,6 +130,7 @@ export function InformacoesProfissionaisSection({
           options={ESTADOS_BRASIL_UF.map(uf => ({ name: uf }))}
           placeholder="UF"
           uppercase={true}
+          disabled={isViewMode}
         />
       </div>
 
@@ -128,11 +141,13 @@ export function InformacoesProfissionaisSection({
             PIS/PASEP
           </label>
           <input
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.pis_pasep || ''}
             onChange={e => setFormData({ ...formData, pis_pasep: e.target.value.replace(/\D/g, '').slice(0, 11) })}
             maxLength={11}
             placeholder="99999999999"
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
@@ -141,10 +156,12 @@ export function InformacoesProfissionaisSection({
             Matrícula e-Social
           </label>
           <input
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.matricula_esocial || ''}
             onChange={e => setFormData({ ...formData, matricula_esocial: e.target.value })}
             placeholder="Matrícula"
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
@@ -154,10 +171,12 @@ export function InformacoesProfissionaisSection({
               Dispensa Militar
             </label>
             <input
-              className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={formData.dispensa_militar || ''}
               onChange={e => setFormData({ ...formData, dispensa_militar: e.target.value.replace(/[^\d.]/g, '') })}
               placeholder="99.999.999999.9"
+              disabled={isViewMode}
+              readOnly={isViewMode}
             />
           </div>
         )}

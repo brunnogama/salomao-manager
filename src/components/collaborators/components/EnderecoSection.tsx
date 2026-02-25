@@ -20,32 +20,36 @@ interface EnderecoSectionProps {
   setFormData: (data: Partial<Collaborator>) => void
   maskCEP: (value: string) => string
   handleCepBlur: () => void
+  isViewMode?: boolean
 }
 
-export function EnderecoSection({ 
-  formData, 
-  setFormData, 
-  maskCEP, 
-  handleCepBlur 
+export function EnderecoSection({
+  formData,
+  setFormData,
+  maskCEP,
+  handleCepBlur,
+  isViewMode = false
 }: EnderecoSectionProps) {
   return (
     <section className="space-y-4">
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
         <MapPin className="h-4 w-4" /> Endereço
       </h3>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* CEP - Mapeado para zip_code */}
         <div>
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             CEP
           </label>
-          <input 
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.zip_code || ''} 
-            onChange={e => setFormData({ ...formData, zip_code: maskCEP(e.target.value) })} 
-            onBlur={handleCepBlur} 
-            maxLength={9} 
+          <input
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.zip_code || ''}
+            onChange={e => setFormData({ ...formData, zip_code: maskCEP(e.target.value) })}
+            onBlur={handleCepBlur}
+            maxLength={9}
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
@@ -54,10 +58,12 @@ export function EnderecoSection({
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Logradouro
           </label>
-          <input 
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.address || ''} 
-            onChange={e => setFormData({ ...formData, address: e.target.value })} 
+          <input
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.address || ''}
+            onChange={e => setFormData({ ...formData, address: e.target.value })}
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
@@ -66,10 +72,12 @@ export function EnderecoSection({
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Número
           </label>
-          <input 
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.address_number || ''} 
-            onChange={e => setFormData({ ...formData, address_number: e.target.value })} 
+          <input
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.address_number || ''}
+            onChange={e => setFormData({ ...formData, address_number: e.target.value })}
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
@@ -78,10 +86,12 @@ export function EnderecoSection({
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Complemento
           </label>
-          <input 
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.address_complement || ''} 
-            onChange={e => setFormData({ ...formData, address_complement: e.target.value })} 
+          <input
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.address_complement || ''}
+            onChange={e => setFormData({ ...formData, address_complement: e.target.value })}
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
@@ -90,10 +100,12 @@ export function EnderecoSection({
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Bairro
           </label>
-          <input 
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.neighborhood || ''} 
-            onChange={e => setFormData({ ...formData, neighborhood: e.target.value })} 
+          <input
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.neighborhood || ''}
+            onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
@@ -102,19 +114,22 @@ export function EnderecoSection({
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Cidade
           </label>
-          <input 
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" 
-            value={formData.city || ''} 
-            onChange={e => setFormData({ ...formData, city: e.target.value })} 
+          <input
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.city || ''}
+            onChange={e => setFormData({ ...formData, city: e.target.value })}
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
         {/* Estado - Mapeado para state */}
-        <SearchableSelect 
-          label="Estado" 
-          value={formData.state || ''} 
-          onChange={v => setFormData({ ...formData, state: v })} 
-          options={ESTADOS_BRASIL.map(e => ({ name: e.nome }))} 
+        <SearchableSelect
+          label="Estado"
+          value={formData.state || ''}
+          onChange={v => setFormData({ ...formData, state: v })}
+          options={ESTADOS_BRASIL.map(e => ({ name: e.nome }))}
+          disabled={isViewMode}
         />
       </div>
     </section>

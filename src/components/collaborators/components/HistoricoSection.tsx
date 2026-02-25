@@ -8,9 +8,10 @@ interface HistoricoSectionProps {
     formData: Partial<Collaborator>
     setFormData: React.Dispatch<React.SetStateAction<Partial<Collaborator>>>
     maskDate: (v: string) => string
+    isViewMode?: boolean
 }
 
-export function HistoricoSection({ formData, setFormData, maskDate }: HistoricoSectionProps) {
+export function HistoricoSection({ formData, setFormData, maskDate, isViewMode = false }: HistoricoSectionProps) {
     const [activeSection, setActiveSection] = useState<'none' | 'warnings' | 'absences' | 'observations'>('none')
     const [loading, setLoading] = useState(false)
     const [refreshKey, setRefreshKey] = useState(0)
@@ -225,6 +226,7 @@ export function HistoricoSection({ formData, setFormData, maskDate }: HistoricoS
                                 placeholder="Selecione o motivo..."
                                 value={warningReason}
                                 onChange={setWarningReason}
+                                disabled={isViewMode}
                                 options={[
                                     { id: 'Comportamental', name: 'Comportamental' },
                                     { id: 'Técnica', name: 'Técnica' },
@@ -238,23 +240,27 @@ export function HistoricoSection({ formData, setFormData, maskDate }: HistoricoS
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Descrição Detalhada</label>
                                 <textarea
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm min-h-[120px] focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all resize-none"
+                                    className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm min-h-[120px] focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all resize-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     placeholder="Descreva o ocorrido..."
                                     value={warningDesc}
                                     onChange={e => setWarningDesc(e.target.value)}
+                                    disabled={isViewMode}
+                                    readOnly={isViewMode}
                                 />
                             </div>
 
-                            <div className="flex justify-end pt-4">
-                                <button
-                                    onClick={handleSaveWarning}
-                                    disabled={loading || !warningReason}
-                                    className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-red-700 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                    Salvar Ocorrência
-                                </button>
-                            </div>
+                            {!isViewMode && (
+                                <div className="flex justify-end pt-4">
+                                    <button
+                                        onClick={handleSaveWarning}
+                                        disabled={loading || !warningReason}
+                                        className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-red-700 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                        Salvar Ocorrência
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -292,22 +298,26 @@ export function HistoricoSection({ formData, setFormData, maskDate }: HistoricoS
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Início</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all"
+                                        className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                         placeholder="DD/MM/AAAA"
                                         maxLength={10}
                                         value={absenceStart}
                                         onChange={e => setAbsenceStart(maskDate(e.target.value))}
+                                        disabled={isViewMode}
+                                        readOnly={isViewMode}
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fim</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all"
+                                        className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                         placeholder="DD/MM/AAAA"
                                         maxLength={10}
                                         value={absenceEnd}
                                         onChange={e => setAbsenceEnd(maskDate(e.target.value))}
+                                        disabled={isViewMode}
+                                        readOnly={isViewMode}
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -321,23 +331,27 @@ export function HistoricoSection({ formData, setFormData, maskDate }: HistoricoS
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Observações (Opcional)</label>
                                 <textarea
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm min-h-[100px] focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all resize-none"
+                                    className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm min-h-[100px] focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all resize-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     placeholder="Observações adicionais sobre o período..."
                                     value={absenceObs}
                                     onChange={e => setAbsenceObs(e.target.value)}
+                                    disabled={isViewMode}
+                                    readOnly={isViewMode}
                                 />
                             </div>
 
-                            <div className="flex justify-end pt-4">
-                                <button
-                                    onClick={handleSaveAbsence}
-                                    disabled={loading || !absenceStart || !absenceEnd}
-                                    className="flex items-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-[#112240] hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                    Registrar Ausência
-                                </button>
-                            </div>
+                            {!isViewMode && (
+                                <div className="flex justify-end pt-4">
+                                    <button
+                                        onClick={handleSaveAbsence}
+                                        disabled={loading || !absenceStart || !absenceEnd}
+                                        className="flex items-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-[#112240] hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                        Registrar Ausência
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -354,23 +368,27 @@ export function HistoricoSection({ formData, setFormData, maskDate }: HistoricoS
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Histórico de Anotações</label>
                                 <textarea
-                                    className="w-full bg-yellow-50/30 border border-gray-200 rounded-xl p-6 text-sm min-h-[300px] focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all resize-none font-medium leading-relaxed"
+                                    className={`w-full bg-yellow-50/30 border border-gray-200 rounded-xl p-6 text-sm min-h-[300px] focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all resize-none font-medium leading-relaxed ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     placeholder="Digite aqui observações gerais, anotações de reuniões ou pontos de atenção sobre o colaborador..."
                                     value={obsText}
                                     onChange={e => setObsText(e.target.value)}
+                                    disabled={isViewMode}
+                                    readOnly={isViewMode}
                                 />
                             </div>
 
-                            <div className="flex justify-end pt-4">
-                                <button
-                                    onClick={handleSaveObs}
-                                    disabled={loading}
-                                    className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-amber-600 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                    Salvar Observações
-                                </button>
-                            </div>
+                            {!isViewMode && (
+                                <div className="flex justify-end pt-4">
+                                    <button
+                                        onClick={handleSaveObs}
+                                        disabled={loading}
+                                        className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-amber-600 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                        Salvar Observações
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

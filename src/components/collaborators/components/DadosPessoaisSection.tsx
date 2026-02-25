@@ -9,13 +9,15 @@ interface DadosPessoaisSectionProps {
   setFormData: (data: Partial<Collaborator>) => void
   maskCPF: (value: string) => string
   maskDate: (value: string) => string
+  isViewMode?: boolean
 }
 
 export function DadosPessoaisSection({
   formData,
   setFormData,
   maskCPF,
-  maskDate
+  maskDate,
+  isViewMode = false
 }: DadosPessoaisSectionProps) {
   return (
     <section className="space-y-4">
@@ -30,9 +32,11 @@ export function DadosPessoaisSection({
             Nome Completo
           </label>
           <input
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.name || ''}
             onChange={e => setFormData({ ...formData, name: e.target.value })}
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
@@ -43,6 +47,7 @@ export function DadosPessoaisSection({
             value={formData.gender || ''}
             onChange={v => setFormData({ ...formData, gender: v })}
             options={[{ name: 'Masculino' }, { name: 'Feminino' }, { name: 'Outro' }]}
+            disabled={isViewMode}
           />
         </div>
 
@@ -53,11 +58,13 @@ export function DadosPessoaisSection({
               Identidade (RG)
             </label>
             <input
-              className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={formData.rg || ''}
               onChange={e => setFormData({ ...formData, rg: e.target.value })}
               maxLength={20}
               placeholder="Ex: 12.345.678-9"
+              disabled={isViewMode}
+              readOnly={isViewMode}
             />
           </div>
           <div>
@@ -65,11 +72,13 @@ export function DadosPessoaisSection({
               CPF
             </label>
             <input
-              className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={formData.cpf || ''}
               onChange={e => setFormData({ ...formData, cpf: maskCPF(e.target.value) })}
               maxLength={14}
               placeholder="000.000.000-00"
+              disabled={isViewMode}
+              readOnly={isViewMode}
             />
           </div>
         </div>
@@ -80,11 +89,13 @@ export function DadosPessoaisSection({
             Data Nascimento
           </label>
           <input
-            className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
             value={formData.birthday || ''}
             onChange={e => setFormData({ ...formData, birthday: maskDate(e.target.value) })}
             maxLength={10}
             placeholder="DD/MM/AAAA"
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 
@@ -96,6 +107,7 @@ export function DadosPessoaisSection({
               value={formData.has_children ? 'Sim' : 'Não'}
               onChange={v => setFormData({ ...formData, has_children: v === 'Sim', children_count: v === 'Sim' ? (formData.children_count || 1) : 0 })}
               options={[{ name: 'Sim' }, { name: 'Não' }]}
+              disabled={isViewMode}
             />
           </div>
           <div>
@@ -106,8 +118,8 @@ export function DadosPessoaisSection({
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, children_count: Math.max(0, (formData.children_count || 0) - 1) })}
-                disabled={!formData.has_children}
-                className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50"
+                disabled={!formData.has_children || isViewMode}
+                className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8"
               >
                 <Minus className="h-4 w-4" />
               </button>
@@ -119,8 +131,8 @@ export function DadosPessoaisSection({
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, children_count: (formData.children_count || 0) + 1 })}
-                disabled={!formData.has_children}
-                className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50"
+                disabled={!formData.has_children || isViewMode}
+                className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8"
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -140,10 +152,12 @@ export function DadosPessoaisSection({
               Nome
             </label>
             <input
-              className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={formData.emergencia_nome || ''}
               onChange={e => setFormData({ ...formData, emergencia_nome: e.target.value })}
               placeholder="Nome do contato"
+              disabled={isViewMode}
+              readOnly={isViewMode}
             />
           </div>
           <div className="md:col-span-1">
@@ -151,10 +165,12 @@ export function DadosPessoaisSection({
               Telefone
             </label>
             <input
-              className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={formData.emergencia_telefone || ''}
               onChange={e => setFormData({ ...formData, emergencia_telefone: e.target.value })} // Simple text for now, could add mask later if requested
               placeholder="(00) 00000-0000"
+              disabled={isViewMode}
+              readOnly={isViewMode}
             />
           </div>
           <div className="md:col-span-1">
@@ -171,6 +187,7 @@ export function DadosPessoaisSection({
                 { name: 'Outro' }
               ]}
               placeholder="Selecione"
+              disabled={isViewMode}
             />
           </div>
         </div>
@@ -182,10 +199,12 @@ export function DadosPessoaisSection({
           Observações
         </label>
         <textarea
-          className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium min-h-[80px]"
+          className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium min-h-[80px] ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
           value={formData.observacoes || ''}
           onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
           placeholder="Observações gerais sobre o colaborador..."
+          disabled={isViewMode}
+          readOnly={isViewMode}
         />
       </div>
     </section>

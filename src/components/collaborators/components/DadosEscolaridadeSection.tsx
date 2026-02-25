@@ -11,6 +11,7 @@ interface DadosEscolaridadeSectionProps {
     setFormData: React.Dispatch<React.SetStateAction<Partial<Collaborator>>>
     maskDate: (v: string) => string
     handleRefresh?: () => void
+    isViewMode?: boolean
 }
 
 const educationLevelOptions = [
@@ -28,7 +29,7 @@ const postGradOptions = [
     { id: 'Pós-Doutorado', label: 'Pós-Doutorado', value: 'Pós-Doutorado' }
 ]
 
-export function DadosEscolaridadeSection({ formData, setFormData, maskDate, handleRefresh }: DadosEscolaridadeSectionProps) {
+export function DadosEscolaridadeSection({ formData, setFormData, maskDate, handleRefresh, isViewMode = false }: DadosEscolaridadeSectionProps) {
     // Institution States
     const [showAddInstitution, setShowAddInstitution] = useState(false)
     const [newInstName, setNewInstName] = useState('')
@@ -119,9 +120,9 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                         {educationLevelOptions.map((level) => (
                             <div
                                 key={level.id}
-                                onClick={() => handleLevelChange(level.value)}
+                                onClick={() => { if (!isViewMode) handleLevelChange(level.value) }}
                                 className={`
-                                    cursor-pointer rounded-lg border p-3 flex flex-col items-center justify-center gap-2 transition-all
+                                    ${isViewMode ? 'cursor-default opacity-80' : 'cursor-pointer'} rounded-lg border p-3 flex flex-col items-center justify-center gap-2 transition-all
                                     ${formData.escolaridade_nivel === level.value
                                         ? 'bg-[#1e3a8a] border-[#1e3a8a] text-white shadow-md'
                                         : 'bg-white border-gray-200 text-gray-600 hover:border-[#1e3a8a]/50 hover:bg-blue-50/50'
@@ -145,9 +146,9 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                             {postGradOptions.map((type) => (
                                 <div
                                     key={type.id}
-                                    onClick={() => setFormData(prev => ({ ...prev, escolaridade_subnivel: type.value }))}
+                                    onClick={() => { if (!isViewMode) setFormData(prev => ({ ...prev, escolaridade_subnivel: type.value })) }}
                                     className={`
-                                        cursor-pointer px-4 py-2 rounded-full border text-[11px] font-bold transition-all
+                                        ${isViewMode ? 'cursor-default opacity-80' : 'cursor-pointer'} px-4 py-2 rounded-full border text-[11px] font-bold transition-all
                                         ${formData.escolaridade_subnivel === type.value
                                             ? 'bg-[#1e3a8a] border-[#1e3a8a] text-white shadow-sm'
                                             : 'bg-white border-gray-200 text-gray-600 hover:border-[#1e3a8a] hover:text-[#1e3a8a]'
@@ -169,16 +170,18 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                         <div className="relative col-span-1 md:col-span-2 space-y-1.5" key={`inst-${refreshKey}`}>
                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center justify-between">
                                 <span>Nome da Instituição</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddInstitution(!showAddInstitution)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAddInstitution
-                                        ? 'bg-[#1e3a8a] text-white shadow-md'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    <Plus className="h-3.5 w-3.5" /> Adicionar
-                                </button>
+                                {!isViewMode && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddInstitution(!showAddInstitution)}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAddInstitution
+                                            ? 'bg-[#1e3a8a] text-white shadow-md'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        <Plus className="h-3.5 w-3.5" /> Adicionar
+                                    </button>
+                                )}
                             </label>
 
                             <SearchableSelect
@@ -188,6 +191,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                                 table="education_institutions"
                                 onRefresh={handleRefresh}
                                 className="w-full"
+                                disabled={isViewMode}
                             />
 
                             {/* PAINEL DE ADICIONAR INSTITUIÇÃO */}
@@ -246,16 +250,18 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                         <div className="relative col-span-1 md:col-span-2 space-y-1.5" key={`course-${refreshKey}`}>
                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center justify-between">
                                 <span>Curso</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddCourse(!showAddCourse)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAddCourse
-                                        ? 'bg-[#1e3a8a] text-white shadow-md'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    <Plus className="h-3.5 w-3.5" /> Adicionar
-                                </button>
+                                {!isViewMode && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddCourse(!showAddCourse)}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${showAddCourse
+                                            ? 'bg-[#1e3a8a] text-white shadow-md'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        <Plus className="h-3.5 w-3.5" /> Adicionar
+                                    </button>
+                                )}
                             </label>
 
                             <SearchableSelect
@@ -265,6 +271,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                                 table="education_courses"
                                 onRefresh={handleRefresh}
                                 className="w-full"
+                                disabled={isViewMode}
                             />
 
                             {/* PAINEL DE ADICIONAR CURSO */}
@@ -332,8 +339,10 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                                     type="text"
                                     value={formData.escolaridade_matricula || ''}
                                     onChange={(e) => setFormData(prev => ({ ...prev, escolaridade_matricula: e.target.value }))}
-                                    className="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-300 focus:outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] transition-all"
+                                    className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-300 focus:outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     placeholder="Número da matrícula"
+                                    disabled={isViewMode}
+                                    readOnly={isViewMode}
                                 />
                             </div>
                         </div>
@@ -351,8 +360,10 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                                     type="text"
                                     value={formData.escolaridade_semestre || ''}
                                     onChange={(e) => setFormData(prev => ({ ...prev, escolaridade_semestre: e.target.value }))}
-                                    className="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-300 focus:outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] transition-all"
+                                    className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-300 focus:outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     placeholder="Ex: 5º Semestre"
+                                    disabled={isViewMode}
+                                    readOnly={isViewMode}
                                 />
                             </div>
                         </div>
@@ -371,8 +382,10 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                                     value={formData.escolaridade_previsao_conclusao || ''}
                                     onChange={(e) => setFormData(prev => ({ ...prev, escolaridade_previsao_conclusao: maskDate(e.target.value) }))}
                                     maxLength={10}
-                                    className="w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-300 focus:outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] transition-all"
+                                    className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-300 focus:outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     placeholder="DD/MM/AAAA"
+                                    disabled={isViewMode}
+                                    readOnly={isViewMode}
                                 />
                             </div>
                         </div>
