@@ -47,7 +47,7 @@ export function SearchableSelect({
   const [searchTerm, setSearchTerm] = useState('');
   const [options, setOptions] = useState<Option[]>([]);
   const [loading, setLoading] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [coords, setCoords] = useState({ top: 0 as number | undefined, bottom: undefined as number | undefined, left: 0, width: 0 });
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isFetchedRef = useRef(false);
@@ -55,7 +55,13 @@ export function SearchableSelect({
   const formatText = (str: string) => {
     if (!str) return '';
     if (uppercase) return str.toUpperCase();
+
+    // Explicit exclusions that must be uppercase
+    const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
+    const acronyms = ['clt', 'pj', 'cpf', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
+
     return str.toLowerCase().split(' ').map(word => {
+      if (romanNumerals.includes(word) || acronyms.includes(word)) return word.toUpperCase();
       return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
     }).join(' ');
   };
@@ -137,7 +143,8 @@ export function SearchableSelect({
       id="select-portal-root"
       className="fixed bg-white border border-gray-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[10000]"
       style={{
-        top: `${coords.top + 8}px`,
+        top: coords.top !== undefined ? `${coords.top + 8}px` : undefined,
+        bottom: coords.bottom !== undefined ? `${coords.bottom + 8}px` : undefined,
         left: `${coords.left}px`,
         width: dropdownWidth ? (typeof dropdownWidth === 'number' ? `${dropdownWidth}px` : dropdownWidth) : `${coords.width}px`,
         maxHeight: '300px'
@@ -214,8 +221,19 @@ export function SearchableSelect({
                 left = (rect.right + window.scrollX) - width;
               }
 
+              let top: number | undefined = rect.bottom + window.scrollY;
+              let bottom: number | undefined = undefined;
+              const spaceBelow = window.innerHeight - rect.bottom;
+
+              if (spaceBelow < 300 && rect.top > 300) {
+                top = undefined;
+                // Calculate bottom relative to the viewport + scroll
+                bottom = window.innerHeight - rect.top - window.scrollY;
+              }
+
               setCoords({
-                top: rect.bottom + window.scrollY,
+                top,
+                bottom,
                 left,
                 width: rect.width
               });

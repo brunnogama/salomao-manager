@@ -45,6 +45,7 @@ export function ManagedSelect({
     // Management States
     const [newItemName, setNewItemName] = useState('')
     const [editingItem, setEditingItem] = useState<Item | null>(null)
+    const [openUpwards, setOpenUpwards] = useState(false)
 
     const dropdownRef = useRef<HTMLDivElement>(null)
     const managingRef = useRef<HTMLDivElement>(null)
@@ -101,6 +102,19 @@ export function ManagedSelect({
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [isManaging])
+
+    // Calculate dropdown direction
+    useEffect(() => {
+        if (isOpen && dropdownRef.current) {
+            const rect = dropdownRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            if (spaceBelow < 250 && rect.top > 250) {
+                setOpenUpwards(true);
+            } else {
+                setOpenUpwards(false);
+            }
+        }
+    }, [isOpen]);
 
     const selectedItem = items.find(i => i.id === value)
 
@@ -203,7 +217,7 @@ export function ManagedSelect({
 
                     {/* DROPDOWN */}
                     {isOpen && (
-                        <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[50]">
+                        <div className={`absolute left-0 w-full bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[50] ${openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
                             <div className="p-2 border-b border-gray-100 bg-gray-50">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
