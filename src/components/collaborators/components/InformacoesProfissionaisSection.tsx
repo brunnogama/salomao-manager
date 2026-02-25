@@ -66,14 +66,28 @@ export function InformacoesProfissionaisSection({
       {/* CTPS Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-            CTPS Número
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest">
+              CTPS Número
+            </label>
+            <label className="flex items-center gap-1 cursor-pointer group">
+              <input
+                type="checkbox"
+                className="w-3 h-3 text-[#1e3a8a] bg-gray-100 border-gray-300 rounded focus:ring-[#1e3a8a] cursor-pointer"
+                onChange={(e) => {
+                  if (e.target.checked && formData.cpf) {
+                    setFormData({ ...formData, ctps_numero: formData.cpf.replace(/\D/g, '').slice(0, 11) })
+                  }
+                }}
+              />
+              <span className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest group-hover:text-[#112240] transition-colors">Digital</span>
+            </label>
+          </div>
           <input
             className="w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
             value={formData.ctps_numero || ''}
-            onChange={e => setFormData({ ...formData, ctps_numero: e.target.value.replace(/\D/g, '').slice(0, 7) })}
-            maxLength={7}
+            onChange={e => setFormData({ ...formData, ctps_numero: e.target.value.replace(/\D/g, '') })}
+            maxLength={11}
             placeholder="999999"
           />
         </div>

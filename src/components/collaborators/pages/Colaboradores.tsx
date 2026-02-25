@@ -22,6 +22,7 @@ import { InformacoesProfissionaisSection } from '../components/InformacoesProfis
 import { DadosEscolaridadeSection } from '../components/DadosEscolaridadeSection'
 import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
+import { HistoricoSection } from '../components/HistoricoSection'
 
 // ... existing imports
 
@@ -126,7 +127,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
     { id: 2, label: 'Dados Profissionais', icon: GraduationCap },
     { id: 3, label: 'Dados de Escolaridade', icon: BookOpen },
     { id: 4, label: 'Dados Corporativos', icon: Briefcase },
-    { id: 5, label: 'GED', icon: Files }
+    { id: 5, label: 'GED', icon: Files },
+    { id: 6, label: 'Histórico', icon: Clock }
   ]
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -1090,6 +1092,31 @@ export function Colaboradores({ }: ColaboradoresProps) {
       )
     }
 
+    // 6. HISTÓRICO
+    if (activeTab === 6) {
+      if (isViewMode) {
+        return (
+          <div className="animate-in slide-in-from-right-4 duration-300">
+            <HistoricoSection
+              formData={formData}
+              setFormData={setFormData}
+              maskDate={maskDate}
+            />
+          </div>
+        )
+      } else {
+        return (
+          <div className="animate-in slide-in-from-right-4 duration-300">
+            <HistoricoSection
+              formData={formData}
+              setFormData={setFormData}
+              maskDate={maskDate}
+            />
+          </div>
+        )
+      }
+    }
+
     return null
   }
 
@@ -1104,7 +1131,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   ) => {
     return (
       <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-        <div className="bg-white rounded-[2rem] w-full max-w-6xl h-[90vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">
+        <div className="bg-white rounded-[2rem] w-full max-w-7xl h-[90vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">
 
           {/* Left Sidebar */}
           <div className="w-80 bg-white border-r border-gray-100 flex flex-col py-10 px-6 shrink-0 overflow-y-auto no-scrollbar">
