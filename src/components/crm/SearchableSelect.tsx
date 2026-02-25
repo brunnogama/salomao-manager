@@ -52,15 +52,16 @@ export function SearchableSelect({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isFetchedRef = useRef(false);
 
-  const formatText = (str: string) => {
+  const formatText = (str: any) => {
     if (!str) return '';
-    if (uppercase) return str.toUpperCase();
+    const safeStr = String(str);
+    if (uppercase) return safeStr.toUpperCase();
 
     // Explicit exclusions that must be uppercase
     const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
     const acronyms = ['clt', 'pj', 'cpf', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
 
-    return str.toLowerCase().split(' ').map(word => {
+    return safeStr.toLowerCase().split(' ').map(word => {
       if (romanNumerals.includes(word) || acronyms.includes(word)) return word.toUpperCase();
       return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
     }).join(' ');
@@ -90,7 +91,7 @@ export function SearchableSelect({
 
       if (error) throw error;
       if (data) {
-        setOptions(data);
+        setOptions(data as Option[]);
         isFetchedRef.current = true;
         if (onRefresh) onRefresh();
       }
@@ -121,15 +122,15 @@ export function SearchableSelect({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getName = (opt: Option) => opt.name || opt.nome || opt.label || opt.value || '';
+  const getName = (opt: Option) => String(opt.name || opt.nome || opt.label || opt.value || '');
   const getId = (opt: Option) => opt.id || opt.value || Math.random();
 
   const filteredOptions = options.filter(opt =>
-    getName(opt).toLowerCase().includes(searchTerm.toLowerCase())
+    getName(opt).toLowerCase().includes((searchTerm || '').toLowerCase())
   );
 
   const selectedOption = options.find(opt =>
-    (opt.id?.toString() === value) || (getName(opt).toLowerCase() === value.toLowerCase())
+    (opt.id?.toString() === String(value)) || (getName(opt).toLowerCase() === String(value || '').toLowerCase())
   );
 
   const handleClearSelection = (e: React.MouseEvent) => {
@@ -173,7 +174,7 @@ export function SearchableSelect({
         ) : filteredOptions.length > 0 ? (
           <div className="space-y-1">
             {filteredOptions.map((opt) => {
-              const isSelected = (opt.id?.toString() === value) || (getName(opt).toLowerCase() === value.toLowerCase());
+              const isSelected = (opt.id?.toString() === String(value)) || (getName(opt).toLowerCase() === String(value || '').toLowerCase());
               return (
                 <button
                   key={getId(opt)}

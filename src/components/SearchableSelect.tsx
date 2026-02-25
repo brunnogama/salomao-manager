@@ -103,7 +103,7 @@ export function SearchableSelect({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getName = (opt: Option) => opt.name || opt.nome || opt.label || opt.value || '';
+  const getName = (opt: Option) => String(opt.name || opt.nome || opt.label || opt.value || '');
   const getId = (opt: Option) => opt.id || opt.value || Math.random();
 
   const filteredOptions = options.filter(opt =>
