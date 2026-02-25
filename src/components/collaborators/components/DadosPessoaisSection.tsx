@@ -100,7 +100,7 @@ export function DadosPessoaisSection({
         </div>
 
         {/* Filhos e Quantidade */}
-        <div className={`md:col-span-2 grid ${formData.has_children ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
+        <div className={`md:col-span-1 grid ${formData.has_children ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
           <div>
             <SearchableSelect
               label="Filhos"
@@ -113,14 +113,14 @@ export function DadosPessoaisSection({
           {formData.has_children && (
             <div>
               <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                Quantidade
+                Qtd
               </label>
               <div className="flex items-center h-[42px] bg-gray-100/50 border border-gray-200 rounded-xl px-2">
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, children_count: Math.max(0, (formData.children_count || 0) - 1) })}
                   disabled={!formData.has_children || isViewMode}
-                  className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8"
+                  className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8 flex items-center justify-center"
                 >
                   <Minus className="h-4 w-4" />
                 </button>
@@ -133,7 +133,7 @@ export function DadosPessoaisSection({
                   type="button"
                   onClick={() => setFormData({ ...formData, children_count: (formData.children_count || 0) + 1 })}
                   disabled={!formData.has_children || isViewMode}
-                  className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8"
+                  className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8 flex items-center justify-center"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
@@ -148,10 +148,10 @@ export function DadosPessoaisSection({
         <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
           Dados de Emergência
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-2">
             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-              Nome
+              Nome do Contato
             </label>
             <input
               className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
@@ -186,6 +186,7 @@ export function DadosPessoaisSection({
                 { name: 'Irmã(o)' },
                 { name: 'Tio(a)' },
                 { name: 'Avô(ó)' },
+                { name: 'Cônjuge' },
                 { name: 'Outro' }
               ]}
               placeholder="Selecione"

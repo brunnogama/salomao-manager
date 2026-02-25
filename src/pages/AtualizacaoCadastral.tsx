@@ -152,11 +152,14 @@ export default function AtualizacaoCadastral() {
                 emergencia_nome: formData.emergencia_nome,
                 emergencia_telefone: formData.emergencia_telefone,
                 emergencia_parentesco: formData.emergencia_parentesco,
+                zip_code: formData.zip_code,
+                address: formData.address,
                 address_number: formData.address_number,
                 address_complement: formData.address_complement,
                 neighborhood: formData.neighborhood,
                 city: formData.city,
                 state: formData.state,
+                observacoes: formData.observacoes,
 
                 // Escolaridade
                 escolaridade_nivel: formData.escolaridade_nivel,
