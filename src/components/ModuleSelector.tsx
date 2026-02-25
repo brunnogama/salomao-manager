@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay } from 'lucide-react'
+import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay, Heart } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { logAction } from '../lib/logger'
 
 import { supabase } from '../lib/supabase'
 
 interface ModuleSelectorProps {
-  onSelect: (module: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'settings' | 'executive' | 'legal-control') => void;
+  onSelect: (module: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'settings' | 'executive' | 'controladoria') => void;
   userName: string;
 }
 
@@ -37,7 +37,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             setIsAdmin(isUserAdmin)
 
             if (isUserAdmin) {
-              setAllowedModules(['crm', 'family', 'collaborators', 'operational', 'financial', 'executive', 'legal-control'])
+              setAllowedModules(['crm', 'family', 'collaborators', 'operational', 'financial', 'executive', 'controladoria'])
               setIsPending(false)
             } else {
               const modules = data.allowed_modules || []
@@ -73,6 +73,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   }, [])
 
   const handleLogout = async () => {
+
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal')
     localStorage.clear()
     sessionStorage.clear()
@@ -89,7 +90,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   }
 
   const renderCard = (
-    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'executive' | 'legal-control',
+    key: 'crm' | 'family' | 'collaborators' | 'operational' | 'financial' | 'executive' | 'controladoria',
     title: string,
     description: string,
     Icon: any,
@@ -322,6 +323,15 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           )}
 
           {renderCard(
+            'family',
+            'Família',
+            'Gestão patrimonial, financeira e pessoal do núcleo familiar.',
+            Heart,
+            'from-rose-600',
+            'to-rose-700'
+          )}
+
+          {renderCard(
             'collaborators',
             'Recursos Humanos',
             'Gestão estratégica de pessoas, benefícios e departamento pessoal.',
@@ -349,7 +359,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           )}
 
           {renderCard(
-            'legal-control',
+            'controladoria',
             'Controladoria Jurídica',
             'Análise indicativa e controle de prazos processuais.',
             Scale,
@@ -358,6 +368,7 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           )}
         </div>
       </main>
+
 
       {/* Footer */}
       <footer className="py-4 border-t border-white/10 bg-[#0a192f]/50 backdrop-blur-sm relative z-10 shrink-0">

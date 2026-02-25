@@ -128,7 +128,7 @@ export function AppRoutes() {
         operational: '/operational/dashboard',
         financial: '/financeiro/dashboard',
         executive: '/executivo/dashboard',
-        'legal-control': '/controladoria/dashboard',
+        controladoria: '/controladoria/dashboard',
         settings: '/configuracoes'
     };
 
