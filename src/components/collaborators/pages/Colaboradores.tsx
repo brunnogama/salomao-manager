@@ -1140,7 +1140,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
               ) : (
                 <>
                   {filtered.filter(c => c.status === 'active').map((c) => (
-                    <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab(1); }} className="hover:bg-blue-50/30 cursor-pointer transition-colors group">
+                    <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-blue-50/30 cursor-pointer transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
@@ -1182,7 +1182,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     </tr>
                   )}
                   {filtered.filter(c => c.status !== 'active').map(c => (
-                    <tr key={c.id} onClick={() => { setSelectedColaborador(c); setActiveDetailTab(1); }} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
+                    <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
