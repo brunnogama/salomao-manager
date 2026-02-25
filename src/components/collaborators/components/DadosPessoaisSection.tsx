@@ -100,8 +100,8 @@ export function DadosPessoaisSection({
         </div>
 
         {/* Filhos e Quantidade */}
-        <div className={`md:col-span-2 grid ${formData.has_children ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
-          <div>
+        <div className={`md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-4`}>
+          <div className="md:col-span-2">
             <SearchableSelect
               label="Filhos"
               value={formData.has_children ? 'Sim' : 'Não'}
@@ -111,7 +111,7 @@ export function DadosPessoaisSection({
             />
           </div>
           {formData.has_children && (
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
                 Qtd
               </label>
