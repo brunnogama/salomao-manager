@@ -276,6 +276,8 @@ export default function AtualizacaoCadastral() {
                                 setFormData={setFormData}
                                 maskDate={maskDate}
                                 isViewMode={false}
+                                educationInstitutions={educationInstitutions}
+                                educationCourses={educationCourses}
                             />
                         </div>
                     </div>

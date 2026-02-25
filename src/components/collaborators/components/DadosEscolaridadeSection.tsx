@@ -14,7 +14,6 @@ interface DadosEscolaridadeSectionProps {
     isViewMode?: boolean
     educationInstitutions?: any[]
     educationCourses?: any[]
-    getLookupName?: (lookup: any[], id: any) => any
 }
 
 const educationLevelOptions = [
@@ -32,7 +31,7 @@ const postGradOptions = [
     { id: 'Pós-Doutorado', label: 'Pós-Doutorado', value: 'Pós-Doutorado' }
 ]
 
-export function DadosEscolaridadeSection({ formData, setFormData, maskDate, handleRefresh, isViewMode = false }: DadosEscolaridadeSectionProps) {
+export function DadosEscolaridadeSection({ formData, setFormData, maskDate, handleRefresh, isViewMode = false, educationInstitutions, educationCourses }: DadosEscolaridadeSectionProps) {
     // Institution States
     const [showAddInstitution, setShowAddInstitution] = useState(false)
     const [newInstName, setNewInstName] = useState('')
@@ -191,7 +190,8 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                                 value={formData.escolaridade_instituicao || ''}
                                 onChange={(val) => setFormData(prev => ({ ...prev, escolaridade_instituicao: val }))}
                                 placeholder="Selecione a instituição..."
-                                table="education_institutions"
+                                table={educationInstitutions ? undefined : "education_institutions"}
+                                options={educationInstitutions}
                                 onRefresh={handleRefresh}
                                 className="w-full"
                                 disabled={isViewMode}
@@ -271,7 +271,8 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, hand
                                 value={formData.escolaridade_curso || ''}
                                 onChange={(val) => setFormData(prev => ({ ...prev, escolaridade_curso: val }))}
                                 placeholder="Selecione o curso..."
-                                table="education_courses"
+                                table={educationCourses ? undefined : "education_courses"}
+                                options={educationCourses}
                                 onRefresh={handleRefresh}
                                 className="w-full"
                                 disabled={isViewMode}
