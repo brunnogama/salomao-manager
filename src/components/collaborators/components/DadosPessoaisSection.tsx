@@ -1,5 +1,5 @@
 // src/components/collaborators/components/DadosPessoaisSection.tsx
-import React from 'react'
+
 import { User, Plus, Minus } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
@@ -100,7 +100,7 @@ export function DadosPessoaisSection({
         </div>
 
         {/* Filhos e Quantidade */}
-        <div className="md:col-span-2 grid grid-cols-2 gap-4">
+        <div className={`md:col-span-2 grid ${formData.has_children ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
           <div>
             <SearchableSelect
               label="Filhos"
@@ -110,34 +110,36 @@ export function DadosPessoaisSection({
               disabled={isViewMode}
             />
           </div>
-          <div>
-            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-              Quantidade
-            </label>
-            <div className="flex items-center h-[42px] bg-gray-100/50 border border-gray-200 rounded-xl px-2">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, children_count: Math.max(0, (formData.children_count || 0) - 1) })}
-                disabled={!formData.has_children || isViewMode}
-                className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <input
-                className="w-full bg-transparent text-center text-sm font-medium text-gray-700 outline-none"
-                value={formData.children_count || 0}
-                readOnly
-              />
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, children_count: (formData.children_count || 0) + 1 })}
-                disabled={!formData.has_children || isViewMode}
-                className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
+          {formData.has_children && (
+            <div>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                Quantidade
+              </label>
+              <div className="flex items-center h-[42px] bg-gray-100/50 border border-gray-200 rounded-xl px-2">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, children_count: Math.max(0, (formData.children_count || 0) - 1) })}
+                  disabled={!formData.has_children || isViewMode}
+                  className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <input
+                  className="w-full bg-transparent text-center text-sm font-medium text-gray-700 outline-none"
+                  value={formData.children_count || 0}
+                  readOnly
+                />
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, children_count: (formData.children_count || 0) + 1 })}
+                  disabled={!formData.has_children || isViewMode}
+                  className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

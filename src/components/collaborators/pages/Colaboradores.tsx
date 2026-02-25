@@ -4,7 +4,7 @@ import {
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock
 } from 'lucide-react'
-import { differenceInMonths, differenceInYears } from 'date-fns'
+
 import XLSX from 'xlsx-js-style'
 import { supabase } from '../../../lib/supabase'
 import { logAction } from '../../../lib/logger'
@@ -23,7 +23,7 @@ import { DadosEscolaridadeSection } from '../components/DadosEscolaridadeSection
 import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
 import { HistoricoSection } from '../components/HistoricoSection'
-
+import { PeriodoAusenciasSection } from '../components/PeriodoAusenciasSection'
 // ... existing imports
 
 interface Role { id: string | number; name: string }
@@ -129,8 +129,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
     { id: 2, label: 'Dados Profissionais', icon: GraduationCap },
     { id: 3, label: 'Dados de Escolaridade', icon: BookOpen },
     { id: 4, label: 'Dados Corporativos', icon: Briefcase },
-    { id: 5, label: 'GED', icon: Files },
-    { id: 6, label: 'Histórico', icon: Clock }
+    { id: 5, label: 'Período de Ausências', icon: Calendar },
+    { id: 6, label: 'Histórico', icon: Clock },
+    { id: 7, label: 'GED', icon: Files }
   ]
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -227,7 +228,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const formatDateToDisplay = (isoDate: string | undefined | null) => {
     if (!isoDate) return ''
     if (isoDate.includes('/')) return isoDate
-    const [y, m, d] = isoDate.split('-')
+    const cleanDate = isoDate.split('T')[0]
+    const [y, m, d] = cleanDate.split('-')
     return `${d}/${m}/${y}`
   }
 
@@ -757,8 +759,35 @@ export function Colaboradores({ }: ColaboradoresProps) {
     }
 
 
-    // 5. GED
+    // 5. PERÍODO DE AUSÊNCIAS
     if (activeTab === 5) {
+      return (
+        <div className="animate-in slide-in-from-right-4 duration-300">
+          <PeriodoAusenciasSection
+            formData={currentData}
+            maskDate={maskDate}
+            isViewMode={isViewMode}
+          />
+        </div>
+      )
+    }
+
+    // 6. HISTÓRICO
+    if (activeTab === 6) {
+      return (
+        <div className="animate-in slide-in-from-right-4 duration-300">
+          <HistoricoSection
+            formData={currentData}
+            setFormData={currentSetData}
+            maskDate={maskDate}
+            isViewMode={isViewMode}
+          />
+        </div>
+      )
+    }
+
+    // 7. GED
+    if (activeTab === 7) {
       // Content logic for GED corresponds to View/Edit similarly except upload allowed in Form
       // In View Mode, we allow upload too, so logic is shared mostly, but let's implement the GED UI
       // For simplicity, using same UI for both mode as it allows management
@@ -870,20 +899,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
       )
     }
 
-    // 6. HISTÓRICO
-    if (activeTab === 6) {
-      return (
-        <div className="animate-in slide-in-from-right-4 duration-300">
-          <HistoricoSection
-            formData={currentData}
-            setFormData={currentSetData}
-            maskDate={maskDate}
-            isViewMode={isViewMode}
-          />
-        </div>
-      )
-    }
-
     return null
   }
 
@@ -894,7 +909,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setActiveTab: (id: number) => void,
     children: React.ReactNode,
     footer?: React.ReactNode,
-    sidebarContent?: React.ReactNode
+    sidebarContent?: React.ReactNode,
+    isEditMode: boolean = false
   ) => {
     return (
       <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -917,15 +933,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     key={step.id}
                     onClick={() => setActiveTab(step.id)}
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left relative group ${isActive
-                      ? 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm'
+                      ? isEditMode ? 'text-amber-600 bg-amber-50 font-bold shadow-sm' : 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm'
                       : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
                       }`}
                   >
-                    <div className={`p-1 rounded-lg transition-colors ${isActive ? 'text-[#1e3a8a]' : 'text-gray-300 group-hover:text-gray-500'}`}>
+                    <div className={`p-1 rounded-lg transition-colors ${isActive ? (isEditMode ? 'text-amber-600' : 'text-[#1e3a8a]') : 'text-gray-300 group-hover:text-gray-500'}`}>
                       <Icon className="h-5 w-5" />
                     </div>
                     <span className="text-[10px] uppercase tracking-[0.2em]">{step.label}</span>
-                    {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 bg-[#1e3a8a] rounded-r-full" />}
+                    {isActive && <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 ${isEditMode ? 'bg-amber-500' : 'bg-[#1e3a8a]'} rounded-r-full`} />}
                   </button>
                 )
               })}
@@ -1257,7 +1273,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
           photoInputRef={photoInputRef}
           setPhotoPreview={setPhotoPreview}
           onPhotoSelected={setSelectedPhotoFile}
-        />
+        />,
+        true // isEditMode = true for the form modal
       )}
 
       {viewingPhoto && (
