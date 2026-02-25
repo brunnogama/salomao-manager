@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
-  GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock
+  GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock,
+  Link as LinkIcon, Copy, CheckCircle2
 } from 'lucide-react'
 
 import XLSX from 'xlsx-js-style'
@@ -88,6 +89,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
   const [activeDetailTab, setActiveDetailTab] = useState(1)
   const [activeFormTab, setActiveFormTab] = useState(1)
+
+  // Magic Link State
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [generatedLinks, setGeneratedLinks] = useState<{ name: string, url: string }[]>([])
+  const [showLinksModal, setShowLinksModal] = useState(false)
+  const [generatingLinks, setGeneratingLinks] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLider, setFilterLider] = useState('')
@@ -688,6 +695,65 @@ export function Colaboradores({ }: ColaboradoresProps) {
     XLSX.writeFile(wb, fileName);
   };
 
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const activeIds = filtered.filter(c => c.status === 'active').map(c => c.id);
+      setSelectedIds(activeIds);
+    } else {
+      setSelectedIds([]);
+    }
+  }
+
+  const handleSelect = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+    e.stopPropagation();
+    if (e.target.checked) {
+      setSelectedIds(prev => [...prev, id]);
+    } else {
+      setSelectedIds(prev => prev.filter(item => item !== id));
+    }
+  }
+
+  const handleGenerateLinks = async () => {
+    if (selectedIds.length === 0) return;
+    setGeneratingLinks(true);
+
+    try {
+      const newLinks: { name: string, url: string }[] = [];
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + 7); // 7 days from now
+
+      for (const id of selectedIds) {
+        const token = crypto.randomUUID();
+        const { error } = await supabase
+          .from('collaborators')
+          .update({
+            update_token: token,
+            update_token_expires_at: expirationDate.toISOString()
+          })
+          .eq('id', id);
+
+        if (error) throw error;
+
+        const colab = colaboradores.find(c => c.id === id);
+        if (colab) {
+          newLinks.push({
+            name: colab.name,
+            url: `${window.location.origin}/atualizacao-cadastral/${token}`
+          });
+        }
+      }
+
+      setGeneratedLinks(newLinks);
+      setShowLinksModal(true);
+      setSelectedIds([]);
+      showAlert('Sucesso', 'Links mágicos gerados com sucesso! Eles são válidos por 7 dias.', 'success');
+    } catch (error: any) {
+      showAlert('Erro', 'Falha ao gerar links: ' + error.message, 'error');
+    } finally {
+      setGeneratingLinks(false);
+    }
+  }
+
   // LAYOUT FUNCTIONS
   const renderModalContent = (activeTab: number, isViewMode: boolean, data: Partial<Collaborator>) => {
     const currentData = isViewMode ? data : formData;
@@ -1043,6 +1109,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <Plus className="h-4 w-4" />
               Novo Colab.
             </button>
+
+            {/* Generate Links Action - Conditionally Shown */}
+            {selectedIds.length > 0 && (
+              <button
+                onClick={handleGenerateLinks}
+                disabled={generatingLinks}
+                className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-4 py-2 sm:py-2.5 rounded-xl font-bold uppercase tracking-wider transition-all shadow-lg text-[10px] sm:text-xs"
+              >
+                {generatingLinks ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
+                Gerar Links ({selectedIds.length})
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1114,6 +1192,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
           <table className="w-full min-w-[1000px]">
             <thead className="sticky top-0 z-10">
               <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                <th className="px-6 py-4 w-12 text-center border-b border-white/10">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded text-[#1e3a8a] border-white/20 bg-white/10 focus:ring-amber-500 cursor-pointer"
+                    onChange={handleSelectAll}
+                    checked={filtered.filter(c => c.status === 'active').length > 0 && selectedIds.length === filtered.filter(c => c.status === 'active').length}
+                  />
+                </th>
                 <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Colaborador</th>
                 <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Cargo</th>
                 <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Sócio</th>
@@ -1141,6 +1227,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 <>
                   {filtered.filter(c => c.status === 'active').map((c) => (
                     <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-blue-50/30 cursor-pointer transition-colors group">
+                      <td className="px-6 py-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded text-[#1e3a8a] border-gray-300 focus:ring-[#1e3a8a] cursor-pointer"
+                          checked={selectedIds.includes(c.id)}
+                          onChange={(e) => handleSelect(e, c.id)}
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
@@ -1176,13 +1270,17 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   ))}
                   {filtered.some(c => c.status !== 'active') && (
                     <tr className="bg-gray-50/50">
-                      <td colSpan={6} className="px-6 py-3 border-y border-gray-100">
+                      <td colSpan={7} className="px-6 py-3 border-y border-gray-100">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inativos</p>
                       </td>
                     </tr>
                   )}
                   {filtered.filter(c => c.status !== 'active').map(c => (
                     <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
+                      <td className="px-6 py-4 w-12 text-center">
+                        {/* Disabled checkbox for inactive users */}
+                        <input type="checkbox" disabled className="w-4 h-4 rounded border-gray-200 bg-gray-100 cursor-not-allowed opacity-50" />
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
@@ -1296,6 +1394,69 @@ export function Colaboradores({ }: ColaboradoresProps) {
             <X className="h-8 w-8" />
           </button>
           <img src={viewingPhoto} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default" onClick={e => e.stopPropagation()} alt="Visualização" />
+        </div>
+      )}
+
+      {/* LINKS MODAL */}
+      {showLinksModal && (
+        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl w-full max-w-3xl flex flex-col overflow-hidden shadow-2xl relative">
+            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                  <LinkIcon className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-[#0a192f]">Links de Atualização Copiáveis</h3>
+                  <p className="text-xs text-gray-500 font-medium">Envie estes links únicos para cada colaborador.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowLinksModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[60vh] space-y-4">
+              <div className="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm mb-4 border border-blue-100 flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <p>Nesta seção você tem acesso aos links únicos. <strong>Atenção:</strong> Os links expiram em exatos 7 dias contados a partir de agora. Após expirarem, o colaborador precisará que você gere e envie um novo link.</p>
+              </div>
+
+              {generatedLinks.map((link, idx) => (
+                <div key={idx} className="flex items-center gap-3 bg-white border border-gray-200 p-3 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0 font-bold">
+                    {link.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#0a192f] truncate">{toTitleCase(link.name)}</p>
+                    <p className="text-xs text-blue-600 font-medium truncate">{link.url}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`Olá ${toTitleCase(link.name)}, por favor, atualize seus dados no sistema através deste link único: ${link.url}`);
+                      showAlert('Sucesso', 'Mensagem pronta copiada para a área de transferência!', 'success');
+                    }}
+                    className="p-2.5 bg-gray-50 hover:bg-amber-50 text-gray-500 hover:text-amber-600 rounded-lg transition-colors border border-gray-200 border-dashed group-hover:border-amber-200"
+                    title="Copiar mensagem pronta com o link"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setShowLinksModal(false)}
+                className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-[#112240] transition-colors shadow-lg"
+              >
+                Concluí
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
