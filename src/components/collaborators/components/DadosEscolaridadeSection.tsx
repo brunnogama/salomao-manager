@@ -12,6 +12,9 @@ interface DadosEscolaridadeSectionProps {
     maskDate: (v: string) => string
     handleRefresh?: () => void
     isViewMode?: boolean
+    educationInstitutions?: any[]
+    educationCourses?: any[]
+    getLookupName?: (lookup: any[], id: any) => any
 }
 
 const educationLevelOptions = [

@@ -95,6 +95,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [generatedLinks, setGeneratedLinks] = useState<{ name: string, url: string }[]>([])
   const [showLinksModal, setShowLinksModal] = useState(false)
   const [generatingLinks, setGeneratingLinks] = useState(false)
+  const [showUpdatedOnly, setShowUpdatedOnly] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLider, setFilterLider] = useState('')
@@ -480,6 +481,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       // Prepare data for save: Convert DD/MM/YYYY back to YYYY-MM-DD
       const dataToSave = {
         ...formData,
+        cadastro_atualizado: false,
         birthday: formatDateToISO(formData.birthday) || null,
         hire_date: formatDateToISO(formData.hire_date) || null,
         termination_date: formatDateToISO(formData.termination_date) || null,
@@ -578,7 +580,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const matchPartner = filterPartner ? String(c.partner_id) === filterPartner : true
     const matchLocal = filterLocal ? String(c.local) === filterLocal : true
     const matchCargo = filterCargo ? String(c.role) === filterCargo : true
-    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo
+    const matchUpdated = showUpdatedOnly ? c.cadastro_atualizado === true : true
+    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchUpdated
   })
 
   const handleExportXLSX = () => {
@@ -1078,16 +1081,26 @@ export function Colaboradores({ }: ColaboradoresProps) {
         <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto justify-end mt-2 md:mt-0 custom-scrollbar">
           <div className="flex items-center gap-3 min-w-max">
             <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  const url = window.location.origin + '/ficha-cadastral';
-                  window.open(url, '_blank');
-                }}
-                className="p-2 sm:p-2.5 text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors border border-blue-100 flex items-center justify-center"
-                title="Copiar Link Ficha Cadastral"
-              >
-                <Users className="h-4 w-4 sm:h-5 sm:w-5" />
-              </button>
+              {colaboradores.filter(c => c.cadastro_atualizado && c.status === 'active').length > 0 && (
+                <button
+                  onClick={() => setShowUpdatedOnly(!showUpdatedOnly)}
+                  className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider relative group outline-none overflow-hidden
+                    ${showUpdatedOnly
+                      ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
+                      : 'bg-[#1e3a8a] text-white border-[#1e3a8a] animate-pulse hover:bg-[#112240] shadow-lg'
+                    }
+                  `}
+                  title={showUpdatedOnly ? "Mostrar Todos" : "Ver Cadastros Atualizados"}
+                >
+                  {!showUpdatedOnly && (
+                    <span className="absolute top-1 right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                  )}
+                  {showUpdatedOnly ? "Ver Todos" : `Novidades (${colaboradores.filter(c => c.cadastro_atualizado && c.status === 'active').length})`}
+                </button>
+              )}
               <button
                 onClick={handleExportXLSX}
                 className="p-2 sm:p-2.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-100 flex items-center justify-center"
@@ -1434,6 +1447,45 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     <p className="text-sm font-bold text-[#0a192f] truncate">{toTitleCase(link.name)}</p>
                     <p className="text-xs text-blue-600 font-medium truncate">{link.url}</p>
                   </div>
+
+                  {/* EMail action */}
+                  <button
+                    onClick={async () => {
+                      try {
+                        const colabEmail = colaboradores.find(c => c.name === link.name)?.email;
+
+                        if (!colabEmail) {
+                          showAlert('Erro', `O colaborador ${link.name} não possui um e-mail corporativo cadastrado.`, 'error');
+                          return;
+                        }
+
+                        const response = await fetch('https://hook.us2.make.com/gnjdu1yhp0w74l1b71mf68xlzpy03m7l', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            nome_colaborador: link.name,
+                            email_colaborador: colabEmail,
+                            link_atualizacao: link.url
+                          })
+                        });
+
+                        if (response.ok) {
+                          showAlert('Sucesso', `E-mail enviado para o Make.com (${colabEmail})!`, 'success');
+                        } else {
+                          throw new Error('Falha no envio para o Make.com');
+                        }
+                      } catch (error) {
+                        showAlert('Erro', 'Ocorreu um erro ao enviar para o Make.com. Verifique o console.', 'error');
+                        console.error(error);
+                      }
+                    }}
+                    className="p-2.5 bg-gray-50 hover:bg-blue-50 text-gray-500 hover:text-blue-600 rounded-lg transition-colors border border-gray-200 border-dashed group-hover:border-blue-200"
+                    title="Enviar este link por E-mail (Make.com)"
+                  >
+                    <Mail className="h-4 w-4" />
+                  </button>
+
+                  {/* Copy action */}
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(`Olá ${toTitleCase(link.name)}, por favor, atualize seus dados no sistema através deste link único: ${link.url}`);

@@ -5,7 +5,6 @@ import { AuthLayout } from './layouts/AuthLayout';
 import { ModuleSelector } from './components/ModuleSelector';
 import Login from './Login';
 import ResetPassword from './ResetPassword';
-import FichaCadastral from './pages/FichaCadastral';
 import AtualizacaoCadastral from './pages/AtualizacaoCadastral';
 import { Presentation } from './pages/presentation/Presentation';
 import { BackupService } from './lib/BackupService';
@@ -145,7 +144,6 @@ export function AppRoutes() {
             </Route>
 
             {/* Public Routes accessible by everyone (including logged in users) */}
-            <Route path="/ficha-cadastral" element={<FichaCadastral />} />
             <Route path="/atualizacao-cadastral/:token" element={<AtualizacaoCadastral />} />
 
             {/* Protected Routes */}

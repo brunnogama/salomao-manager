@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Loader2, CheckCircle2, User, Building2, Save } from 'lucide-react';
+import { Loader2, CheckCircle2, User, Save } from 'lucide-react';
 import { Collaborator } from '../types/controladoria';
 import { DadosPessoaisSection } from '../components/collaborators/components/DadosPessoaisSection';
 import { EnderecoSection } from '../components/collaborators/components/EnderecoSection';
+import { DadosEscolaridadeSection } from '../components/collaborators/components/DadosEscolaridadeSection';
+import logoSalomao from '../components/images/logo-salomao.png';
 
 const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
 const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14)
@@ -41,6 +43,10 @@ export default function AtualizacaoCadastral() {
 
     const [formData, setFormData] = useState<Partial<Collaborator>>({});
 
+    // Lookups for Education
+    const [educationInstitutions, setEducationInstitutions] = useState<any[]>([]);
+    const [educationCourses, setEducationCourses] = useState<any[]>([]);
+
     useEffect(() => {
         const fetchCollaboratorData = async () => {
             try {
@@ -49,6 +55,15 @@ export default function AtualizacaoCadastral() {
                     setLoading(false);
                     return;
                 }
+
+                // Carrega lookups de escolaridade
+                const [instRes, coursesRes] = await Promise.all([
+                    supabase.from('education_institutions').select('*').order('name'),
+                    supabase.from('education_courses').select('*').order('name')
+                ]);
+
+                if (!instRes.error && instRes.data) setEducationInstitutions(instRes.data);
+                if (!coursesRes.error && coursesRes.data) setEducationCourses(coursesRes.data);
 
                 const { data, error } = await supabase.rpc('get_collaborator_by_token', {
                     p_token: token
@@ -138,13 +153,20 @@ export default function AtualizacaoCadastral() {
                 emergencia_nome: formData.emergencia_nome,
                 emergencia_telefone: formData.emergencia_telefone,
                 emergencia_parentesco: formData.emergencia_parentesco,
-                zip_code: formData.zip_code,
-                address: formData.address,
                 address_number: formData.address_number,
                 address_complement: formData.address_complement,
                 neighborhood: formData.neighborhood,
                 city: formData.city,
-                state: formData.state
+                state: formData.state,
+
+                // Escolaridade
+                escolaridade_nivel: formData.escolaridade_nivel,
+                escolaridade_subnivel: formData.escolaridade_subnivel,
+                escolaridade_instituicao: formData.escolaridade_instituicao,
+                escolaridade_matricula: formData.escolaridade_matricula,
+                escolaridade_semestre: formData.escolaridade_semestre,
+                escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null,
+                escolaridade_curso: formData.escolaridade_curso
             };
 
             const { error: updateError } = await supabase.rpc('update_collaborator_by_token', {
@@ -208,11 +230,11 @@ export default function AtualizacaoCadastral() {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-10 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center p-4 bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
-                        <Building2 className="h-10 w-10 text-[#1e3a8a]" />
+                    <div className="inline-flex items-center justify-center mb-6">
+                        <img src={logoSalomao} alt="Salomão" className="h-[74px] object-contain" />
                     </div>
                     <h1 className="text-3xl font-black text-[#0a192f] tracking-tight">Atualização Cadastral</h1>
-                    <p className="text-gray-500 mt-2 max-w-lg mx-auto">Por favor, revise atentamente suas informações pessoais e de endereço abaixo. Atualize o que for necessário e clique em salvar.</p>
+                    <p className="text-gray-500 mt-2 max-w-lg mx-auto">Por favor, revise atentamente suas informações pessoais, endereço e escolaridade abaixo. Atualize o que for necessário e clique em salvar.</p>
                 </div>
 
                 <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden relative">
@@ -248,6 +270,12 @@ export default function AtualizacaoCadastral() {
                                 setFormData={setFormData}
                                 maskCEP={maskCEP}
                                 handleCepBlur={handleCepBlur}
+                                isViewMode={false}
+                            />
+                            <DadosEscolaridadeSection
+                                formData={formData}
+                                setFormData={setFormData}
+                                maskDate={maskDate}
                                 isViewMode={false}
                             />
                         </div>
