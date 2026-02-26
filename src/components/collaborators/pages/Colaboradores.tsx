@@ -1047,7 +1047,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             </div>
 
             {/* Scrollable Body */}
-            <div className="flex-1 overflow-y-auto px-12 py-6 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto px-12 py-6 pb-32 custom-scrollbar">
               {children}
             </div>
 

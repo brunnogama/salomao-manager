@@ -236,7 +236,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 items-end">
                                 {/* UF da Instituição e Instituição (Mesma linha) */}
                                 <div className="space-y-1.5 col-span-1 md:col-span-1">
                                     <SearchableSelect
