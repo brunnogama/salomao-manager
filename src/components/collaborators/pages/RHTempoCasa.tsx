@@ -412,15 +412,17 @@ export function RHTempoCasa() {
 
       if (!areaMap.has(areaName)) areaMap.set(areaName, { totalYears: 0, count: 0 })
 
-      const years = calculateTenure(c.hire_date!, referenceDate)
-      const entry = areaMap.get(areaName)!
-      entry.totalYears += years
-      entry.count++
+      if (c.hire_date) {
+        const years = calculateTenure(c.hire_date, referenceDate)
+        const entry = areaMap.get(areaName)!
+        entry.totalYears += years
+        entry.count++
+      }
     })
 
     return Array.from(areaMap.entries()).map(([name, data]) => ({
       name,
-      avg: parseFloat((data.totalYears / data.count).toFixed(2))
+      avg: data.count > 0 ? parseFloat((data.totalYears / data.count).toFixed(2)) : 0
     })).sort((a, b) => b.avg - a.avg)
   }, [activeDataAtRefDate, referenceDate])
 
@@ -432,10 +434,12 @@ export function RHTempoCasa() {
       const leaderName = c.leader?.name || 'Não Definido'
       if (!leaderMap.has(leaderName)) leaderMap.set(leaderName, { totalYears: 0, count: 0 })
 
-      const years = calculateTenure(c.hire_date!, referenceDate)
-      const entry = leaderMap.get(leaderName)!
-      entry.totalYears += years
-      entry.count++
+      if (c.hire_date) {
+        const years = calculateTenure(c.hire_date, referenceDate)
+        const entry = leaderMap.get(leaderName)!
+        entry.totalYears += years
+        entry.count++
+      }
     })
 
     // Filter out small sample sizes? Maybe leaders with < 2 people? existing logic usually keeps all.
@@ -443,7 +447,7 @@ export function RHTempoCasa() {
       .filter(([name]) => name !== 'Não Definido') // Optional: hide undefined leaders
       .map(([name, data]) => ({
         name,
-        avg: parseFloat((data.totalYears / data.count).toFixed(2))
+        avg: data.count > 0 ? parseFloat((data.totalYears / data.count).toFixed(2)) : 0
       })).sort((a, b) => b.avg - a.avg)
   }, [activeDataAtRefDate, referenceDate])
 

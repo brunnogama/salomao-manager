@@ -498,7 +498,7 @@ export function RHEvolucaoPessoal() {
     let yOffset = -35 // Default Up (Top)
 
     if (position === 'bottom') {
-      yOffset = 15 // Shift down below the point
+      yOffset = 10 // Shift down below the point
     } else {
       yOffset = -35 // Shift up above the point
     }
@@ -676,7 +676,7 @@ export function RHEvolucaoPessoal() {
         </div>
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={headcountChartData} margin={{ top: 50, right: 40, left: 10, bottom: 35 }}>
+            <AreaChart data={headcountChartData} margin={{ top: 50, right: 40, left: 10, bottom: 50 }}>
               <defs>
                 <linearGradient id="colorAdmin" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.1} />
@@ -693,7 +693,7 @@ export function RHEvolucaoPessoal() {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: COLORS.text, fontSize: 11 }}
-                dy={10}
+                dy={25}
                 padding={{ left: 30, right: 30 }} // Add padding to X-axis to prevent label clipping
               />
               <YAxis
@@ -838,7 +838,7 @@ export function RHEvolucaoPessoal() {
           </div>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={yearlyHiringFlow} margin={{ top: 50, right: 30, left: 10, bottom: 20 }}>
+              <AreaChart data={yearlyHiringFlow} margin={{ top: 50, right: 30, left: 10, bottom: 35 }}>
                 <defs>
                   <linearGradient id="colorAdminFlow" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3} />
@@ -850,7 +850,7 @@ export function RHEvolucaoPessoal() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} dy={20} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
@@ -891,7 +891,7 @@ export function RHEvolucaoPessoal() {
           </div>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={yearlyTurnoverFlow} margin={{ top: 50, right: 30, left: 10, bottom: 20 }}>
+              <AreaChart data={yearlyTurnoverFlow} margin={{ top: 50, right: 30, left: 10, bottom: 35 }}>
                 <defs>
                   <linearGradient id="colorAdminTurn" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.3} />
@@ -903,7 +903,7 @@ export function RHEvolucaoPessoal() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} dy={20} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
