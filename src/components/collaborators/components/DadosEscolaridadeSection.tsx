@@ -259,7 +259,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                                     Instituição
                                                     {loadingData && <Loader2 className="h-3 w-3 animate-spin text-[#1e3a8a] ml-1" />}
                                                 </span>
-                                                <span className="text-[8px] text-gray-500 font-normal normal-case tracking-normal">
+                                                <span className="text-[8px] text-amber-500 font-bold normal-case tracking-normal">
                                                     (Selecione "Outra" caso não encontre na lista)
                                                 </span>
                                             </span> as any
@@ -281,7 +281,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                                 type="text"
                                                 value={item.instituicao === ' ' ? '' : item.instituicao}
                                                 onChange={(e) => updateEducation(item.id, 'instituicao', e.target.value)}
-                                                className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                className={`w-full pl-10 pr-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                 placeholder="Digite o nome da instituição..."
                                                 disabled={isViewMode}
                                                 autoFocus
@@ -308,7 +308,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                                 type="text"
                                                 value={item.curso === ' ' ? '' : item.curso}
                                                 onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
-                                                className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                className={`w-full px-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                 placeholder="Digite o nome do curso..."
                                                 disabled={isViewMode}
                                                 autoFocus

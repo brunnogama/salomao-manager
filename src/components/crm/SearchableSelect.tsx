@@ -128,9 +128,10 @@ export function SearchableSelect({
   const getName = (opt: Option) => String(opt.name || opt.nome || opt.label || opt.value || '');
   const getId = (opt: Option) => opt.id || opt.value || Math.random();
 
-  const filteredOptions = options.filter(opt =>
-    getName(opt).toLowerCase().includes((searchTerm || '').toLowerCase())
-  );
+  const filteredOptions = options.filter(opt => {
+    const searchTarget = String(opt.label || getName(opt)).toLowerCase();
+    return searchTarget.includes((searchTerm || '').toLowerCase());
+  });
 
   const selectedOption = options.find(opt =>
     (opt.id?.toString() === String(value)) || (getName(opt).toLowerCase() === String(value || '').toLowerCase())
