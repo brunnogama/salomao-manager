@@ -30,27 +30,32 @@ const ESTADOS_BRASIL = [
 export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isViewMode = false }: DadosEscolaridadeSectionProps) {
     const [institutions, setInstitutions] = useState<{ id: string, uf: string, name: string }[]>([])
     const [courses, setCourses] = useState<{ id: string, name: string }[]>([])
+    const [postCourses, setPostCourses] = useState<{ id: string, name: string }[]>([])
     const [loadingData, setLoadingData] = useState(false)
 
     useEffect(() => {
         const fetchData = async () => {
             setLoadingData(true)
             try {
-                const [instRes, coursesRes] = await Promise.all([
+                const [instRes, coursesRes, postCoursesRes] = await Promise.all([
                     supabase.rpc('get_education_institutions'),
-                    supabase.rpc('get_education_courses')
+                    supabase.rpc('get_education_courses'),
+                    supabase.rpc('get_education_post_courses')
                 ]);
 
                 if (instRes.error) throw instRes.error;
                 if (coursesRes.error) throw coursesRes.error;
+                if (postCoursesRes.error) throw postCoursesRes.error;
 
                 setInstitutions(instRes.data || []);
                 setCourses(coursesRes.data || []);
+                setPostCourses(postCoursesRes.data || []);
             } catch (error) {
                 console.warn("Failed to load education data from Supabase", error)
                 // Fallback can be added here if needed, but currently relying on DB
                 setInstitutions([]);
                 setCourses([]);
+                setPostCourses([]);
             } finally {
                 setLoadingData(false)
             }
@@ -105,7 +110,8 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
         const history = formData.education_history || []
         const filtered = history.filter(h => h.nivel === nivel)
 
-        const courseOptions = [...courses.map(c => ({ name: c.name })), { name: 'Outro' }]
+        const activeCoursesList = nivel === 'Graduação' ? courses : postCourses;
+        const courseOptions = [...activeCoursesList.map(c => ({ name: c.name })), { name: 'Outro' }]
 
         return (
             <div className="space-y-4 w-full">
@@ -151,7 +157,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                     }
 
                     // Check if current course is "Outro" (not in list)
-                    const isCustomCourse = item.curso !== undefined && item.curso !== '' && !courses.find(c => c.name === item.curso);
+                    const isCustomCourse = item.curso !== undefined && item.curso !== '' && !activeCoursesList.find(c => c.name === item.curso);
                     const displayCourseValue = isCustomCourse ? 'Outro' : (item.curso || '');
 
                     // Check if current institution is "Outra" (not in UF list)
