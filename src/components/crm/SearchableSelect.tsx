@@ -229,6 +229,15 @@ export function SearchableSelect({
               let top: number | undefined = rect.bottom;
               let bottom: number | undefined = undefined;
 
+              const spaceBelow = window.innerHeight - rect.bottom;
+              const spaceAbove = rect.top;
+              const dropdownMaxHeight = 250; // Approximated max height for the dropdown
+
+              if (spaceBelow < dropdownMaxHeight && spaceAbove > spaceBelow) {
+                top = undefined;
+                bottom = window.innerHeight - rect.top;
+              }
+
               setCoords({
                 top,
                 bottom,
