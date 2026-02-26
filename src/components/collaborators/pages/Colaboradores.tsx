@@ -1001,29 +1001,31 @@ export function Colaboradores({ }: ColaboradoresProps) {
     isEditMode: boolean = false
   ) => {
     return (
-      <div className="absolute inset-0 z-[100] bg-gray-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+      <div className="fixed inset-0 z-[100] bg-gray-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
 
         {/* PAGE HEADER */}
-        <div className="flex items-center justify-between bg-white px-8 py-5 border-b border-gray-200 shadow-sm shrink-0">
-          <div className="flex items-center gap-6">
-            <button
-              onClick={onClose}
-              className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-all hover:-translate-x-1"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-black text-[#0a192f] tracking-tight">{title}</h1>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
-                {isEditMode ? 'Formulário de Cadastro' : 'Visualização do Perfil'}
-              </p>
+        <div className="bg-white border-b border-gray-200 shadow-sm shrink-0">
+          <div className="flex items-center justify-between w-full max-w-[1600px] mx-auto px-6 py-4">
+            <div className="flex items-center gap-6">
+              <button
+                onClick={onClose}
+                className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-all hover:-translate-x-1"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-black text-[#0a192f] tracking-tight">{title}</h1>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
+                  {isEditMode ? 'Formulário de Cadastro' : 'Visualização do Perfil'}
+                </p>
+              </div>
             </div>
+            {footer && (
+              <div className="flex items-center gap-4">
+                {footer}
+              </div>
+            )}
           </div>
-          {footer && (
-            <div className="flex items-center gap-4">
-              {footer}
-            </div>
-          )}
         </div>
 
         {/* PAGE BODY */}
