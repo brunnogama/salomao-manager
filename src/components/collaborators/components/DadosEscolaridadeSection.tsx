@@ -164,6 +164,13 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                     const isCustomInstitution = item.instituicao !== undefined && item.instituicao !== '' && currentUF && !institutions.find(i => i.uf === currentUF && i.name === item.instituicao);
                     const displayInstValue = isCustomInstitution ? 'Outra' : (item.instituicao || '');
 
+                    const formatDisplayDate = (d: string | undefined) => {
+                        if (!d) return '';
+                        if (d.includes('/')) return d;
+                        const [y, m, day] = d.split('T')[0].split('-');
+                        return `${day}/${m}/${y}`;
+                    };
+
                     return (
                         <div key={item.id} className="relative bg-gray-50/50 border border-gray-200 rounded-xl p-5 space-y-4 animate-in slide-in-from-top-2">
                             {!isViewMode && (
@@ -332,7 +339,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Previsão de Conclusão</label>
                                             <input
                                                 type="text"
-                                                value={item.previsao_conclusao || ''}
+                                                value={formatDisplayDate(item.previsao_conclusao)}
                                                 onChange={(e) => updateEducation(item.id, 'previsao_conclusao', maskDate(e.target.value))}
                                                 maxLength={10}
                                                 className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
