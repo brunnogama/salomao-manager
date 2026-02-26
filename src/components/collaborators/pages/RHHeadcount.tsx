@@ -255,17 +255,63 @@ export function RHHeadcount() {
   }, [activeData])
 
   // 3. Collaborators per Team Leader
-  const leaderData = useMemo(() => {
-    const map = new Map<string, number>()
+  const { leaderJuridicoSocios, leaderJuridicoLideres, leaderAdmin } = useMemo(() => {
+    const leaderMap = new Map<string, { count: number, members: Collaborator[] }>()
     activeData.forEach(c => {
-      const leader = c.leader?.name || 'Não Definido'
-      map.set(leader, (map.get(leader) || 0) + 1)
+      const leaderName = c.leader?.name || 'Não Definido'
+      if (!leaderMap.has(leaderName)) leaderMap.set(leaderName, { count: 0, members: [] })
+      const entry = leaderMap.get(leaderName)!
+      entry.count++
+      entry.members.push(c)
     })
 
-    return Array.from(map.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-  }, [activeData])
+    const allLeaders = Array.from(leaderMap.entries())
+      .filter(([name]) => name !== 'Não Definido')
+      .map(([name, data]) => {
+        let category: 'Jurídico - Sócios' | 'Jurídico - Líderes' | 'Administrativo' = 'Administrativo'
+        const normalizedLeaderName = normalizeString(name)
+        const leaderObj = colaboradores.find(c => normalizeString(c.name) === normalizedLeaderName)
+
+        if (leaderObj) {
+          const segment = getSegment(leaderObj)
+          if (segment === 'Jurídico') {
+            const roleName = normalizeString(leaderObj.roles?.name || String(leaderObj.role || ''))
+            if (roleName.includes('socio') || roleName.includes('sócio')) {
+              category = 'Jurídico - Sócios'
+            } else {
+              category = 'Jurídico - Líderes'
+            }
+          } else {
+            category = 'Administrativo'
+          }
+        } else {
+          // Fallback based on team members
+          let juridicoCount = 0;
+          let adminCount = 0;
+          data.members.forEach(m => {
+            if (getSegment(m) === 'Jurídico') juridicoCount++;
+            else adminCount++;
+          })
+          if (juridicoCount > adminCount) {
+            category = 'Jurídico - Líderes'
+          } else {
+            category = 'Administrativo'
+          }
+        }
+
+        return {
+          name,
+          category,
+          value: data.count
+        }
+      }).sort((a, b) => b.value - a.value)
+
+    return {
+      leaderJuridicoSocios: allLeaders.filter(l => l.category === 'Jurídico - Sócios'),
+      leaderJuridicoLideres: allLeaders.filter(l => l.category === 'Jurídico - Líderes'),
+      leaderAdmin: allLeaders.filter(l => l.category === 'Administrativo'),
+    }
+  }, [activeData, colaboradores])
 
   // 4. Legal Role Distribution (Cargo do Jurídico)
   const legalRoleData = useMemo(() => {
@@ -592,25 +638,84 @@ export function RHHeadcount() {
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lideranças</p>
             </div>
           </div>
-          <div className="w-full" style={{ height: Math.max(300, leaderData.length * 35) }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={leaderData} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                  width={250}
-                />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
-                <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
-                  <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="flex flex-col gap-8 w-full">
+            {leaderJuridicoSocios.length > 0 && (
+              <div className="flex flex-col">
+                <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Jurídico: Sócios</h4>
+                <div className="w-full" style={{ height: Math.max(80, leaderJuridicoSocios.length * 35) }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={leaderJuridicoSocios} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                      <XAxis type="number" hide />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                        width={250}
+                      />
+                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                      <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
+                        <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {leaderJuridicoLideres.length > 0 && (
+              <div className="flex flex-col">
+                <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Jurídico: Líderes</h4>
+                <div className="w-full" style={{ height: Math.max(80, leaderJuridicoLideres.length * 35) }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={leaderJuridicoLideres} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                      <XAxis type="number" hide />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                        width={250}
+                      />
+                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                      <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
+                        <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {leaderAdmin.length > 0 && (
+              <div className="flex flex-col">
+                <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Administrativo</h4>
+                <div className="w-full" style={{ height: Math.max(80, leaderAdmin.length * 35) }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={leaderAdmin} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                      <XAxis type="number" hide />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                        width={250}
+                      />
+                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                      <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
+                        <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
