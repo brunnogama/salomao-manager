@@ -241,7 +241,14 @@ export function RHTurnover() {
     for (let m = startMonth; m <= endMonth; m++) {
       monthsCnt++
       const activesInMonth = colaboradores.filter(c => {
-        if (!wasActiveInMonth(c, year, m)) return false
+        // If "Todos os anos" is selected, just use current active status.
+        // Otherwise, run the historical `wasActiveInMonth` check.
+        if (filterYear === 'todos') {
+          if (c.status !== 'active') return false
+        } else {
+          if (!wasActiveInMonth(c, year, m)) return false
+        }
+
         if (filterTeam !== 'todos' && String(c.equipe || '') !== filterTeam) return false
         const leaderValue = c.leader_id ? String(c.leader_id) : (c.partner?.id ? String(c.partner.id) : null)
         if (filterLeader !== 'todos' && leaderValue !== filterLeader) return false

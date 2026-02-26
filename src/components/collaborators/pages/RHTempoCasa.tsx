@@ -65,13 +65,13 @@ const getSegment = (colaborador: Collaborator): Segment => {
   return 'Administrativo'
 }
 
-const isActiveAtDate = (c: Collaborator, date: Date) => {
+const isActiveAtDate = (c: Collaborator, date: Date | null) => {
   const hireDate = c.hire_date ? new Date(c.hire_date + 'T12:00:00') : null
   const termDate = c.termination_date ? new Date(c.termination_date + 'T12:00:00') : null
 
   if (!hireDate) return false
-  if (hireDate > date) return false
-  if (termDate && termDate <= date) return false
+  if (date && hireDate > date) return false
+  if (termDate && date && termDate <= date) return false
 
   return true
 }
@@ -81,9 +81,10 @@ const getYearFromDate = (dateStr?: string) => {
   return new Date(dateStr + 'T12:00:00').getFullYear()
 }
 
-const calculateTenure = (hireDateStr: string, refDate: Date = new Date()) => {
+const calculateTenure = (hireDateStr: string, refDate: Date | null = new Date()) => {
   const hireDate = new Date(hireDateStr + 'T12:00:00')
-  const diffTime = Math.abs(refDate.getTime() - hireDate.getTime())
+  const actualRefDate = refDate || new Date()
+  const diffTime = Math.abs(actualRefDate.getTime() - hireDate.getTime())
   const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25)
   return diffYears
 }
@@ -258,6 +259,12 @@ export function RHTempoCasa() {
     let year = now.getFullYear()
     let month = now.getMonth()
 
+    if (filterYear === 'todos' || filterYear === 'Anos') {
+      if (filterMonth === 'todos') {
+        return null;
+      }
+    }
+
     if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
       year = parseInt(filterYear)
       if (filterMonth !== 'todos') {
@@ -280,7 +287,11 @@ export function RHTempoCasa() {
   const activeDataAtRefDate = useMemo(() => {
     return colaboradores.filter(c => {
       // 1. Must be active at reference date
-      if (!isActiveAtDate(c, referenceDate)) return false
+      if (referenceDate) {
+        if (!isActiveAtDate(c, referenceDate)) return false
+      } else {
+        if (c.status !== 'active') return false
+      }
 
       // 2. Local Filter
       if (filterLocal !== 'todos') {

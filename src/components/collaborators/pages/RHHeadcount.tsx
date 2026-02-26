@@ -151,6 +151,13 @@ export function RHHeadcount() {
     let year = now.getFullYear()
     let month = now.getMonth()
 
+    // If 'todos', then we just use 'active' status without date bounds
+    if (filterYear === 'todos' || filterYear === 'Anos') {
+      if (filterMonth === 'todos') {
+        return null;
+      }
+    }
+
     if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
       year = parseInt(filterYear)
       if (filterMonth !== 'todos') {
@@ -175,8 +182,13 @@ export function RHHeadcount() {
   // Active Data at Reference Date (Filtered by Local)
   const activeData = useMemo(() => {
     return colaboradores.filter(c => {
-      // 1. Must be active at reference date
-      if (!isActiveAtDate(c, referenceDate)) return false
+      // 1. Must be active at reference date (if specific date filtered)
+      if (referenceDate) {
+        if (!isActiveAtDate(c, referenceDate)) return false
+      } else {
+        // Default to just current active status if no specific date is queried
+        if (c.status !== 'active') return false
+      }
 
       // 2. Local Filter
       if (filterLocal !== 'todos') {

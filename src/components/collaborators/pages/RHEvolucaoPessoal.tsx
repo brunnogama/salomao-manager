@@ -204,16 +204,16 @@ export function RHEvolucaoPessoal() {
   }, [filterYear, filterMonth])
 
   const totalActive = useMemo(() => {
-    return filteredData.filter(c => isActiveAtDate(c, referenceDate)).length
-  }, [filteredData, referenceDate])
+    return filteredData.filter(c => c.status === 'active').length
+  }, [filteredData])
 
   const totalActiveAdmin = useMemo(() => {
-    return filteredData.filter(c => isActiveAtDate(c, referenceDate) && getSegment(c) === 'Administrativo').length
-  }, [filteredData, referenceDate])
+    return filteredData.filter(c => c.status === 'active' && getSegment(c) === 'Administrativo').length
+  }, [filteredData])
 
   const totalActiveLegal = useMemo(() => {
-    return filteredData.filter(c => isActiveAtDate(c, referenceDate) && getSegment(c) === 'Jurídico').length
-  }, [filteredData, referenceDate])
+    return filteredData.filter(c => c.status === 'active' && getSegment(c) === 'Jurídico').length
+  }, [filteredData])
 
   // --- Charts Data Preparation ---
 
