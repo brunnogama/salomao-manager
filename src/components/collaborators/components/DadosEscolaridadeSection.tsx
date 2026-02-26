@@ -17,7 +17,7 @@ const postGradOptions = ['Especialização', 'MBA', 'Mestrado', 'Doutorado', 'P�
 const commonCourses = [
     'Administração', 'Direito', 'Contabilidade', 'Engenharia Civil', 'Engenharia de Produção',
     'Engenharia de Software', 'Sistemas de Informação', 'Ciência da Computação', 'Economia',
-    'Marketing', 'Gestão de Recursos Humanos', 'Gestão Financeira', 'Psicologia', 'Design'
+    'Marketing', 'Gestão de Recursos Humanos', 'Gestão Financeira', 'Psicologia', 'Design', 'Outro'
 ]
 
 export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isViewMode = false }: DadosEscolaridadeSectionProps) {
@@ -32,7 +32,9 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                 // Fetch from HipoLabs for Brazil
                 const response = await fetch('http://universities.hipolabs.com/search?country=Brazil')
                 const data = await response.json()
-                // Deduplicate and sort
+                // Deduplicate and sort, optionally we can filter out common non-portuguese words but the API is mostly OK
+                // The issue with datalist not showing might be due to the input list lacking the correct id linkage or browser behavior. 
+                // Using autoComplete="off" and ensuring the ID matches is crucial.
                 const uniqueNames = Array.from(new Set(data.map((u: any) => u.name))).sort() as string[]
                 setUniversities(uniqueNames.map(n => ({ name: n })))
             } catch (error) {
@@ -173,14 +175,15 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                     </div>
                                     <input
                                         type="text"
-                                        list="universities-list"
+                                        list={`universities-list-${item.id}`} // Unique ID per item for datalist
                                         value={item.instituicao || ''}
                                         onChange={(e) => updateEducation(item.id, 'instituicao', e.target.value)}
                                         className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-300 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                         placeholder="Digite ou selecione a universidade..."
                                         disabled={isViewMode}
+                                        autoComplete="off"
                                     />
-                                    <datalist id="universities-list">
+                                    <datalist id={`universities-list-${item.id}`}>
                                         {universities.map((uni, idx) => (
                                             <option key={idx} value={uni.name} />
                                         ))}
@@ -193,24 +196,51 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
                                     Curso
                                 </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <BookOpen className="h-4 w-4 text-gray-400" />
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <BookOpen className="h-4 w-4 text-[#1e3a8a]" />
+                                        </div>
+                                        <select
+                                            value={item.curso && !commonCourses.includes(item.curso) ? 'Outro' : (item.curso || '')}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === 'Outro') {
+                                                    // When selecting Outro, we just initialize it with a recognizable emptyish state to show the text input
+                                                    updateEducation(item.id, 'curso', ' ');
+                                                } else {
+                                                    updateEducation(item.id, 'curso', val);
+                                                }
+                                            }}
+                                            className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-300 focus:ring-1 focus:ring-[#1e3a8a] outline-none appearance-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                            disabled={isViewMode}
+                                        >
+                                            <option value="" disabled>Selecione o curso...</option>
+                                            {commonCourses.map((c, idx) => (
+                                                <option key={idx} value={c}>{c}</option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                            <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </div>
                                     </div>
-                                    <input
-                                        type="text"
-                                        list="courses-list"
-                                        value={item.curso || ''}
-                                        onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
-                                        className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-300 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                        placeholder="Digite ou selecione o curso..."
-                                        disabled={isViewMode}
-                                    />
-                                    <datalist id="courses-list">
-                                        {commonCourses.map((c, idx) => (
-                                            <option key={idx} value={c} />
-                                        ))}
-                                    </datalist>
+
+                                    {/* Campo Outro (Texto Livre) */}
+                                    {item.curso !== undefined && !commonCourses.includes(item.curso) && item.curso !== '' && (
+                                        <div className="relative mt-2 animate-in fade-in zoom-in duration-200">
+                                            <input
+                                                type="text"
+                                                value={item.curso === ' ' ? '' : item.curso}
+                                                onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
+                                                className={`w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                placeholder="Digite o nome do curso..."
+                                                disabled={isViewMode}
+                                                autoFocus
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
