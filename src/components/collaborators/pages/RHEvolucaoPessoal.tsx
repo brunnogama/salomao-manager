@@ -495,12 +495,12 @@ export function RHEvolucaoPessoal() {
     const { x, y, value, fill, position } = props;
 
     // Explicit positioning logic
-    let yOffset = -35 // Default Up (Top)
+    let yOffset = -25 // Default Up (Top)
 
     if (position === 'bottom') {
       yOffset = 10 // Shift down below the point
     } else {
-      yOffset = -35 // Shift up above the point
+      yOffset = -25 // Shift up above the point
     }
 
     return (
@@ -837,7 +837,7 @@ export function RHEvolucaoPessoal() {
             <UserPlus className="w-4 h-4 text-[#ea580c]" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Contratações (Anual)</h3>
           </div>
-          <div className="h-[250px] w-full">
+          <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={yearlyHiringFlow} margin={{ top: 50, right: 30, left: 10, bottom: 35 }}>
                 <defs>
@@ -890,7 +890,7 @@ export function RHEvolucaoPessoal() {
             <UserMinus className="w-4 h-4 text-[#1e3a8a]" />
             <h3 className="text-sm font-black text-gray-800 uppercase tracking-wide">Fluxo de Desligamentos (Anual)</h3>
           </div>
-          <div className="h-[250px] w-full">
+          <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={yearlyTurnoverFlow} margin={{ top: 50, right: 30, left: 10, bottom: 35 }}>
                 <defs>
