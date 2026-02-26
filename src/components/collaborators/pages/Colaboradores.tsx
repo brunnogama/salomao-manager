@@ -582,6 +582,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setSelectedPhotoFile(null)
     setActiveFormTab(1)
     setShowFormModal(true)
+    setSelectedColaborador(null)
     // Clear pending
     setPendingGedDocs([])
     markAsViewed(colaborador.id, !!colaborador.cadastro_atualizado);
@@ -1002,7 +1003,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     isEditMode: boolean = false
   ) => {
     return (
-      <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="absolute inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
         <div className="bg-white rounded-[2rem] w-full max-w-7xl max-h-[95vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">
 
           {/* Left Sidebar */}
