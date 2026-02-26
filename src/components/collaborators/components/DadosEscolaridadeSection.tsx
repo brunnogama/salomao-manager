@@ -246,7 +246,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             const sigla = ESTADOS_BRASIL.find(e => e.nome === v)?.sigla || v;
                                             updateEducation(item.id, 'instituicao_uf', sigla)
                                         }}
-                                        options={ESTADOS_BRASIL.map(e => ({ name: e.nome }))}
+                                        options={ESTADOS_BRASIL.map(e => ({ name: e.nome, label: `${e.nome} - ${e.sigla}` }))}
                                         disabled={isViewMode}
                                     />
                                 </div>
@@ -254,9 +254,14 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                 <div className="space-y-1.5 col-span-1 md:col-span-1">
                                     <SearchableSelect
                                         label={
-                                            <span className="flex items-center justify-between w-full">
-                                                Instituição
-                                                {loadingData && <Loader2 className="h-3 w-3 animate-spin text-[#1e3a8a] ml-1" />}
+                                            <span className="flex flex-col w-full gap-0.5">
+                                                <span className="flex items-center justify-between w-full">
+                                                    Instituição
+                                                    {loadingData && <Loader2 className="h-3 w-3 animate-spin text-[#1e3a8a] ml-1" />}
+                                                </span>
+                                                <span className="text-[8px] text-gray-500 font-normal normal-case tracking-normal">
+                                                    (Selecione "Outra" caso não encontre na lista)
+                                                </span>
                                             </span> as any
                                         }
                                         value={displayInstValue}
