@@ -250,6 +250,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                         onChange={(v) => updateEducation(item.id, 'instituicao', v)}
                                         options={ufInstitutions}
                                         disabled={isViewMode || !currentUF}
+                                        disableFormatting={true}
                                     />
 
                                     {/* Campo Outro (Texto Livre) */}
@@ -279,6 +280,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                         onChange={(v) => updateEducation(item.id, 'curso', v)}
                                         options={courseOptions}
                                         disabled={isViewMode}
+                                        disableFormatting={true}
                                     />
 
                                     {/* Campo Outro (Texto Livre) */}
@@ -311,9 +313,9 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                                 disabled={isViewMode}
                                             />
                                         </div>
-                                        <div className="space-y-1.5 pt-[19px]">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Semestre Atual</label>
                                             <SearchableSelect
-                                                label="Semestre Atual"
                                                 value={item.semestre || ''}
                                                 onChange={(v) => updateEducation(item.id, 'semestre', v)}
                                                 options={semestres.map(sem => ({ name: sem }))}

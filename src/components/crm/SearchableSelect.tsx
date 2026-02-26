@@ -24,6 +24,7 @@ interface SearchableSelectProps {
   className?: string;
   onRefresh?: () => void;
   uppercase?: boolean;
+  disableFormatting?: boolean;
   dropdownWidth?: string | number; // Largura personalizada do dropdown
   align?: 'left' | 'right'; // Alinhamento do dropdown
 }
@@ -40,6 +41,7 @@ export function SearchableSelect({
   className = "",
   onRefresh,
   uppercase = false,
+  disableFormatting = false,
   dropdownWidth,
   align = 'left'
 }: SearchableSelectProps) {
@@ -56,6 +58,7 @@ export function SearchableSelect({
     if (!str) return '';
     const safeStr = String(str);
     if (uppercase) return safeStr.toUpperCase();
+    if (disableFormatting) return safeStr;
 
     // Explicit exclusions that must be uppercase
     const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
