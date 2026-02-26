@@ -494,9 +494,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
       // Robust cleaning of the payload
       const payload: any = {};
       Object.entries(dataToSave).forEach(([key, value]) => {
-        // Skip metadata, joined objects/arrays, and photo fields (handled separately)
+        // Skip metadata, joined objects, and photo fields (handled separately)
         if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios'].includes(key)) return;
-        if (value !== null && typeof value === 'object') return;
+        if (value !== null && typeof value === 'object' && !Array.isArray(value)) return;
 
         // Map empty strings to null for better DB consistency
         payload[key] = value === '' ? null : value;
@@ -1070,7 +1070,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
       hire_date: formatDateToDisplay(c.hire_date),
       termination_date: formatDateToDisplay(c.termination_date),
       oab_emissao: formatDateToDisplay(c.oab_emissao),
-      escolaridade_previsao_conclusao: formatDateToDisplay(c.escolaridade_previsao_conclusao)
+      escolaridade_previsao_conclusao: formatDateToDisplay(c.escolaridade_previsao_conclusao),
+      children_data: c.children_data?.map((child: any) => ({
+        ...child,
+        birth_date: formatDateToDisplay(child.birth_date)
+      })) || [],
+      education_history: c.education_history?.map((edu: any) => ({
+        ...edu,
+        previsao_conclusao: formatDateToDisplay(edu.previsao_conclusao)
+      })) || []
     };
     setSelectedColaborador(formattedC as Collaborator);
     setActiveDetailTab(1);
