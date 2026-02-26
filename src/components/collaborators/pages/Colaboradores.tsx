@@ -774,7 +774,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     }
   }
 
-  // LAYOUT FUNCTIONS
+  // LAYOUT FUNCTIONS (MODAL PARA VIEW / PAGINA PARA FORMULARIO)
   const renderModalContent = (activeTab: number, isViewMode: boolean, data: Partial<Collaborator>) => {
     const currentData = isViewMode ? data : formData;
     const currentSetData = isViewMode ? () => { } : setFormData;
@@ -990,6 +990,81 @@ export function Colaboradores({ }: ColaboradoresProps) {
     return null
   }
 
+  // Layout Original em Modal (Exclusivo para Visualização)
+  const renderModalLayout = (
+    title: string,
+    onClose: () => void,
+    activeTab: number,
+    setActiveTab: (id: number) => void,
+    children: React.ReactNode,
+    footer?: React.ReactNode,
+    sidebarContent?: React.ReactNode,
+    isEditMode: boolean = false
+  ) => {
+    return (
+      <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="bg-white rounded-[2rem] w-full max-w-7xl max-h-[95vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">
+
+          {/* Left Sidebar */}
+          <div className="w-80 bg-white border-r border-gray-100 flex flex-col py-10 px-6 shrink-0 overflow-y-auto no-scrollbar">
+            {/* Photo Area */}
+            <div className="mb-10 flex justify-center">
+              {sidebarContent}
+            </div>
+
+            {/* Vertical Tabs */}
+            <div className="space-y-1 w-full">
+              {formSteps.map((step) => {
+                const Icon = step.icon
+                const isActive = activeTab === step.id
+                return (
+                  <button
+                    key={step.id}
+                    onClick={() => setActiveTab(step.id)}
+                    className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left relative group ${isActive
+                      ? isEditMode ? 'text-amber-600 bg-amber-50 font-bold shadow-sm' : 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm'
+                      : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                      }`}
+                  >
+                    <div className={`p-1 rounded-lg transition-colors ${isActive ? (isEditMode ? 'text-amber-600' : 'text-[#1e3a8a]') : 'text-gray-300 group-hover:text-gray-500'}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-[0.2em]">{step.label}</span>
+                    {isActive && <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 ${isEditMode ? 'bg-amber-500' : 'bg-[#1e3a8a]'} rounded-r-full`} />}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Right Content */}
+          <div className="flex-1 flex flex-col min-w-0 bg-[#fafafa]">
+            {/* Content Header (Title + Close) */}
+            <div className="px-12 py-8 pb-2 flex justify-between items-center shrink-0">
+              <h2 className="text-3xl font-black text-[#0a192f] tracking-tight">{title}</h2>
+              <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-all text-gray-400 hover:text-red-500">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto px-12 py-6 pb-32 custom-scrollbar">
+              {children}
+            </div>
+
+            {/* Footer */}
+            {footer && (
+              <div className="px-12 py-6 bg-white border-t border-gray-100 flex justify-end gap-3 shrink-0">
+                {footer}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Layout Espaçoso em Tela Cheia (Exclusivo para Formulários)
   const renderPageLayout = (
     title: string,
     onClose: () => void,
@@ -1404,8 +1479,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
         </div>
       </div>
 
-      {/* VIEW PAGE */}
-      {selectedColaborador && renderPageLayout(
+      {/* VIEW MODAL (Original Window) */}
+      {selectedColaborador && renderModalLayout(
         toTitleCase(selectedColaborador.name),
         () => setSelectedColaborador(null),
         activeDetailTab,
@@ -1421,7 +1496,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             </button>
             <button
               onClick={() => handleEdit(selectedColaborador)}
-              className="px-6 py-3 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
+              className="px-6 py-2.5 bg-[#1e3a8a] hover:bg-[#112240] text-white font-black text-[9px] uppercase tracking-[0.2em] rounded-xl hover:shadow-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
             >
               <Pencil className="h-4 w-4" /> Editar Perfil
             </button>
@@ -1439,7 +1514,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         </div>
       )}
 
-      {/* FORM PAGE */}
+      {/* FORM PAGE (Full Page Layout) */}
       {showFormModal && renderPageLayout(
         formData.id ? 'Editar Colaborador' : 'Novo Colaborador',
         () => setShowFormModal(false),
