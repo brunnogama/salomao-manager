@@ -41,7 +41,7 @@ export function InformacoesProfissionaisSection({
               <button
                 type="button"
                 onClick={() => {
-                  const currentOabs = formData.oabs || (formData.oab_numero ? [{ numero: formData.oab_numero, uf: formData.oab_uf || '', tipo: 'Principal', validade: formData.oab_emissao || '' }] : []);
+                  const currentOabs = formData.oabs || [];
                   setFormData({
                     ...formData,
                     oabs: [...currentOabs, { numero: '', uf: '', tipo: 'Suplementar', validade: '' }]
@@ -55,7 +55,7 @@ export function InformacoesProfissionaisSection({
             )}
           </div>
 
-          {(formData.oabs?.length ? formData.oabs : (formData.oab_numero ? [{ numero: formData.oab_numero || '', uf: formData.oab_uf || '', tipo: 'Principal', validade: formData.oab_emissao || '' }] : [{ numero: '', uf: '', tipo: 'Principal', validade: '' }])).map((oab, index) => (
+          {(formData.oabs?.length ? formData.oabs : [{ numero: '', uf: '', tipo: 'Principal', validade: '' }]).map((oab, index) => (
             <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100 relative group">
               {oab.tipo === 'Principal' ? (
                 <div className="absolute -top-2 -left-2 bg-[#1e3a8a] text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-sm z-10">

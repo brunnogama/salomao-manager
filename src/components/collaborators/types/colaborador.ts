@@ -35,9 +35,6 @@ export interface Colaborador {
   termination_date?: string
 
   // Informações Profissionais (OAB) - Mapeado conforme banco de dados
-  oab_numero?: string
-  oab_state?: string
-  oab_validade?: string
   oabs?: {
     id?: string;
     numero: string;

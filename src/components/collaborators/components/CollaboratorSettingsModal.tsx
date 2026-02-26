@@ -200,10 +200,6 @@ export function CollaboratorSettingsModal({ isOpen, onClose, onSuccess }: Collab
                         termination_reason_id: findId(terminationReasons, String(row['Motivo Desligamento'] || '')),
 
                         // Professional
-                        oab_numero: String(row['OAB Número'] || row['Número da OAB'] || ''),
-                        oab_uf: row['OAB UF']?.trim().toUpperCase().substring(0, 2),
-                        oab_emissao: parseDate(row['OAB Emissão']),
-                        oab_tipo: row['Tipo Inscrição OAB'],
                         pis: row['PIS/PASEP'],
                         matricula_esocial: row['Matrícula e-Social'],
                         dispensa_militar: row['Dispensa Militar'],

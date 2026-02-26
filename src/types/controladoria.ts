@@ -66,8 +66,6 @@ export interface Collaborator {
   roles?: { name: string }; // Joined field
   hire_date?: string;
   termination_date?: string;
-  oab_numero?: string;
-  oab_uf?: string;
   oab_vencimento?: string;
   oabs?: {
     id?: string;
@@ -141,7 +139,6 @@ export interface Collaborator {
   tituloseleitor?: string;
   reservista?: string;
   pis?: string;
-  oab_tipo?: string;
 
   // Filhos
   has_children?: boolean;
