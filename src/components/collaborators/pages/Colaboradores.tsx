@@ -231,6 +231,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
   const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14)
   const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
+  const maskRG = (v: string) => v.replace(/\D/g, '').replace(/(\d{8})(\d{1,2})/, '$1-$2').slice(0, 10)
+  const maskPhone = (v: string) => {
+    const raw = v.replace(/\D/g, '')
+    if (raw.length <= 10) return raw.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').slice(0, 14)
+    return raw.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').slice(0, 15)
+  }
 
   const formatDateToDisplay = (isoDate: string | undefined | null) => {
     if (!isoDate) return ''
@@ -782,6 +788,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
             setFormData={currentSetData}
             maskCPF={maskCPF}
             maskDate={maskDate}
+            maskRG={maskRG}
+            maskPhone={maskPhone}
             isViewMode={isViewMode}
           />
           <EnderecoSection
@@ -993,7 +1001,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     isEditMode: boolean = false
   ) => {
     return (
-      <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300 overflow-hidden">
+      <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
         <div className="bg-white rounded-[2rem] w-full max-w-7xl max-h-[90vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">
 
           {/* Left Sidebar */}
@@ -1109,24 +1117,35 @@ export function Colaboradores({ }: ColaboradoresProps) {
           <div className="flex items-center gap-3 min-w-max">
             <div className="flex gap-2">
               {colaboradores.filter(c => c.cadastro_atualizado && c.status === 'active').length > 0 && (
-                <button
-                  onClick={() => setShowUpdatedOnly(!showUpdatedOnly)}
-                  className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center relative group outline-none overflow-hidden
-                    ${showUpdatedOnly
-                      ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
-                      : 'bg-[#1e3a8a] text-white border-[#1e3a8a] hover:bg-[#112240] shadow-lg'
-                    }
-                  `}
-                  title={showUpdatedOnly ? "Mostrar Todos" : "Ver Cadastros Atualizados"}
-                >
-                  {!showUpdatedOnly && (
-                    <span className="absolute top-1 right-1 flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                    </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setShowUpdatedOnly(!showUpdatedOnly)}
+                    className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center relative group outline-none overflow-hidden
+                      ${showUpdatedOnly
+                        ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
+                        : 'bg-[#1e3a8a] text-white border-[#1e3a8a] hover:bg-[#112240] shadow-lg'
+                      }
+                    `}
+                    title={showUpdatedOnly ? "Filtro Ativado" : "Ver Cadastros Atualizados"}
+                  >
+                    {!showUpdatedOnly && (
+                      <span className="absolute top-1 right-1 flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                      </span>
+                    )}
+                    <RefreshCcw className={`h-4 w-4 sm:h-5 sm:w-5 ${!showUpdatedOnly ? 'animate-spin-slow' : ''}`} />
+                  </button>
+                  {showUpdatedOnly && (
+                    <button
+                      onClick={() => setShowUpdatedOnly(false)}
+                      className="p-2 sm:p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 flex items-center justify-center"
+                      title="Limpar Filtro"
+                    >
+                      <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </button>
                   )}
-                  <RefreshCcw className={`h-4 w-4 sm:h-5 sm:w-5 ${!showUpdatedOnly ? 'animate-spin-slow' : ''}`} />
-                </button>
+                </div>
               )}
               <button
                 onClick={handleExportXLSX}
@@ -1181,15 +1200,24 @@ export function Colaboradores({ }: ColaboradoresProps) {
           </div>
 
           {/* Search Bar - Expanded */}
-          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all">
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
             <Search className="h-4 w-4 text-gray-400 mr-3 shrink-0" />
             <input
               type="text"
               placeholder="Buscar..."
-              className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400"
+              className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400 pr-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+                title="Limpar busca"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
           {/* Filters Row - Auto-sizing */}
@@ -1245,7 +1273,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Sócio</th>
                 <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Líder</th>
                 <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-right text-[10px] font-black text-white uppercase tracking-wider">Ações</th>
+                <th className="px-6 py-4 text-right text-[10px] font-black text-white uppercase tracking-wider pr-8 rounded-tr-xl">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

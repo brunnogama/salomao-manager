@@ -8,6 +8,7 @@ export interface Partner {
   email?: string;
   phone?: string;
   active: boolean; // Mapeado para 'status' no banco (active/inactive)
+  status?: 'active' | 'inactive';
   weekly_goal?: number;
   cpf?: string;
   birthday?: string;

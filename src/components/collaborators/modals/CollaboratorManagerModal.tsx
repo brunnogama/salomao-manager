@@ -91,11 +91,20 @@ export function CollaboratorManagerModal({ isOpen, onClose, onUpdate }: Props) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-2 text-xs font-bold uppercase tracking-widest outline-none focus:border-[#1e3a8a] transition-all"
+              className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-10 py-2 text-xs font-bold uppercase tracking-widest outline-none focus:border-[#1e3a8a] transition-all"
               placeholder="Filtrar nomes..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                title="Limpar busca"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">

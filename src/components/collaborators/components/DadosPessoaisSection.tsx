@@ -9,6 +9,8 @@ interface DadosPessoaisSectionProps {
   setFormData: (data: Partial<Collaborator>) => void
   maskCPF: (value: string) => string
   maskDate: (value: string) => string
+  maskRG: (value: string) => string
+  maskPhone: (value: string) => string
   isViewMode?: boolean
 }
 
@@ -17,6 +19,8 @@ export function DadosPessoaisSection({
   setFormData,
   maskCPF,
   maskDate,
+  maskRG,
+  maskPhone,
   isViewMode = false
 }: DadosPessoaisSectionProps) {
   return (
@@ -60,9 +64,9 @@ export function DadosPessoaisSection({
             <input
               className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={formData.rg || ''}
-              onChange={e => setFormData({ ...formData, rg: e.target.value })}
-              maxLength={20}
-              placeholder="Ex: 12.345.678-9"
+              onChange={e => setFormData({ ...formData, rg: maskRG(e.target.value) })}
+              maxLength={10}
+              placeholder="Digite a Identidade"
               disabled={isViewMode}
               readOnly={isViewMode}
             />
@@ -76,7 +80,7 @@ export function DadosPessoaisSection({
               value={formData.cpf || ''}
               onChange={e => setFormData({ ...formData, cpf: maskCPF(e.target.value) })}
               maxLength={14}
-              placeholder="000.000.000-00"
+              placeholder="Digite o CPF"
               disabled={isViewMode}
               readOnly={isViewMode}
             />
@@ -252,8 +256,9 @@ export function DadosPessoaisSection({
             <input
               className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={formData.emergencia_telefone || ''}
-              onChange={e => setFormData({ ...formData, emergencia_telefone: e.target.value })} // Simple text for now, could add mask later if requested
-              placeholder="(00) 00000-0000"
+              onChange={e => setFormData({ ...formData, emergencia_telefone: maskPhone(e.target.value) })}
+              maxLength={15}
+              placeholder="Digite o Telefone"
               disabled={isViewMode}
               readOnly={isViewMode}
             />
