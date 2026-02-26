@@ -750,8 +750,8 @@ export function RHTempoCasa() {
                 data={legalExperienceData}
                 cx="50%"
                 cy="50%"
-                innerRadius={80}
-                outerRadius={110}
+                innerRadius={65} // Reduced to give labels more room
+                outerRadius={95} // Reduced to give labels more room
                 paddingAngle={5}
                 dataKey="value"
                 label={renderCustomPieLabel}
