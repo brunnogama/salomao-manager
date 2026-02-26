@@ -288,7 +288,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         termReasonsRes,
         costCentersRes
       ] = await Promise.all([
-        supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name)`).order('name'),
+        supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name), oab_number(*)`).order('name'),
         supabase.from('roles').select('id, name'),
         supabase.from('locations').select('id, name'),
         supabase.from('teams').select('id, name'),
@@ -320,6 +320,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
       const enrichedData = colabRes.data?.map(c => ({
         ...c,
+        oabs: c.oab_number?.map((o: any) => ({
+          id: o.id,
+          numero: o.numero,
+          uf: o.uf,
+          tipo: o.tipo,
+          validade: o.validade
+        })) || [],
         photo_url: c.photo_url || c.foto_url,
         roles: { name: rolesMap.get(String(c.role)) || c.role },
         locations: { name: locsMap.get(String(c.local)) || c.local },
@@ -501,7 +508,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       const payload: any = {};
       Object.entries(dataToSave).forEach(([key, value]) => {
         // Skip metadata, joined objects, and photo fields (handled separately)
-        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios'].includes(key)) return;
+        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs'].includes(key)) return;
         if (value !== null && typeof value === 'object' && !Array.isArray(value)) return;
 
         // Map empty strings to null for better DB consistency
@@ -511,6 +518,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       // Maintain consistency: use foto_url as the database column
       payload.foto_url = photoUrl;
 
+      let savedColabId = formData.id;
       if (formData.id) {
         const { error } = await supabase.from('collaborators').update(payload).eq('id', formData.id)
         if (error) throw error
@@ -518,6 +526,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       } else {
         const { data, error } = await supabase.from('collaborators').insert(payload).select().single()
         if (error) throw error
+        savedColabId = data.id;
         await logAction('CRIAR', 'RH', `Criou novo colaborador: ${formData.name}`, 'Colaboradores')
 
         // Handle Pending GEDs
@@ -538,6 +547,30 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 tipo_arquivo: doc.file.type
               })
             }
+          }
+        }
+      }
+
+      // Handle OABs
+      if (savedColabId) {
+        const roleName = roles.find(r => String(r.id) === String(formData.role))?.name?.toLowerCase() || '';
+        const isAdvogadoOuSocio = roleName.includes('advogado') || roleName.includes('sócio') || roleName.includes('socio');
+        const shouldSaveOabs = formData.area === 'Jurídica' && isAdvogadoOuSocio;
+
+        await supabase.from('oab_number').delete().eq('colaborador_id', savedColabId);
+
+        if (shouldSaveOabs) {
+          const validOabs = (formData.oabs || []).filter((o: any) => o.numero && o.uf);
+          if (validOabs.length > 0) {
+            const oabPayload = validOabs.map((o: any) => ({
+              colaborador_id: savedColabId,
+              numero: o.numero,
+              uf: o.uf,
+              tipo: o.tipo || 'Suplementar',
+              validade: formatDateToISO(o.validade) || null
+            }));
+            const { error: oabError } = await supabase.from('oab_number').insert(oabPayload);
+            if (oabError) console.error("Erro ao salvar OAB:", oabError);
           }
         }
       }
@@ -566,6 +599,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
       hire_date: formatDateToDisplay(colaborador.hire_date),
       termination_date: formatDateToDisplay(colaborador.termination_date),
       oab_emissao: formatDateToDisplay(colaborador.oab_emissao),
+      oabs: colaborador.oabs?.map((o: any) => ({
+        ...o,
+        validade: formatDateToDisplay(o.validade)
+      })) || [],
       escolaridade_previsao_conclusao: formatDateToDisplay(colaborador.escolaridade_previsao_conclusao),
       children_data: colaborador.children_data?.map((child: any) => ({
         ...child,
@@ -633,9 +670,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
       'Estado': c.state,
 
       // 2. DADOS PROFISSIONAIS
-      'OAB Número': c.oab_numero,
-      'OAB UF': c.oab_uf,
-      'OAB Emissão': formatDateToDisplay(c.oab_emissao),
+      'OAB Número': c.oabs?.find(o => o.tipo === 'Principal')?.numero || c.oab_numero || '',
+      'OAB UF': c.oabs?.find(o => o.tipo === 'Principal')?.uf || c.oab_uf || '',
+      'OAB Emissão': formatDateToDisplay(c.oabs?.find(o => o.tipo === 'Principal')?.validade || c.oab_emissao) || '',
       'Tipo Inscrição OAB': c.oab_tipo,
       'PIS/PASEP': c.pis || c.pis_pasep,
       'Matrícula e-Social': c.matricula_esocial,
@@ -813,6 +850,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
             setFormData={currentSetData}
             maskDate={maskDate}
             isViewMode={isViewMode}
+            showOab={(() => {
+              const roleName = roles.find(r => String(r.id) === String(currentData.role))?.name?.toLowerCase() || '';
+              return currentData.area === 'Jurídica' && (roleName.includes('advogado') || roleName.includes('sócio') || roleName.includes('socio'));
+            })()}
           />
         </div>
       )

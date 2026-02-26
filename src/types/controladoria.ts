@@ -69,6 +69,13 @@ export interface Collaborator {
   oab_numero?: string;
   oab_uf?: string;
   oab_vencimento?: string;
+  oabs?: {
+    id?: string;
+    numero: string;
+    uf: string;
+    tipo: string;
+    validade?: string;
+  }[];
 
   // Novos campos
   contract_type?: string;
