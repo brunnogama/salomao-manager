@@ -694,6 +694,7 @@ export function RHEvolucaoPessoal() {
                 tickLine={false}
                 tick={{ fill: COLORS.text, fontSize: 11 }}
                 dy={25}
+                height={60}
                 padding={{ left: 30, right: 30 }} // Add padding to X-axis to prevent label clipping
               />
               <YAxis
@@ -850,7 +851,7 @@ export function RHEvolucaoPessoal() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} dy={20} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} dy={20} height={60} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
@@ -903,7 +904,7 @@ export function RHEvolucaoPessoal() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} dy={20} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} padding={{ left: 20, right: 20 }} dy={20} height={60} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
