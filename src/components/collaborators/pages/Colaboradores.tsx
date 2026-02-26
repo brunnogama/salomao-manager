@@ -1001,35 +1001,41 @@ export function Colaboradores({ }: ColaboradoresProps) {
     isEditMode: boolean = false
   ) => {
     return (
-      <div className="fixed inset-0 z-[100] bg-gray-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+      <div className="absolute inset-0 z-[100] bg-gray-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
 
-        {/* PAGE HEADER */}
-        <div className="bg-white border-b border-gray-200 shadow-sm shrink-0">
-          <div className="flex items-center justify-between w-full max-w-[1600px] mx-auto px-6 py-4">
-            <div className="flex items-center gap-6">
-              <button
-                onClick={onClose}
-                className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-all hover:-translate-x-1"
-              >
-                <X className="w-6 h-6" />
-              </button>
+        {/* PAGE HEADER COMPLETO - Restored to System Standard */}
+        <div className="flex items-center justify-between bg-white px-8 py-5 border-b border-gray-200 shadow-sm shrink-0">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onClose}
+              className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-all hover:-translate-x-1 shrink-0"
+              title="Voltar"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-4 border-l border-gray-200 pl-4 ml-2">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
+                <Users className="h-6 w-6 text-white" />
+              </div>
               <div>
-                <h1 className="text-2xl font-black text-[#0a192f] tracking-tight">{title}</h1>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
-                  {isEditMode ? 'Formulário de Cadastro' : 'Visualização do Perfil'}
+                <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+                  {title}
+                </h1>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">
+                  {isEditMode ? 'Formulário de Cadastro' : 'Visualização de Perfil'}
                 </p>
               </div>
             </div>
-            {footer && (
-              <div className="flex items-center gap-4">
-                {footer}
-              </div>
-            )}
           </div>
+          {footer && (
+            <div className="flex items-center gap-4">
+              {footer}
+            </div>
+          )}
         </div>
 
         {/* PAGE BODY */}
-        <div className="flex-1 flex overflow-hidden w-full max-w-[1600px] mx-auto bg-white border-x border-gray-100 shadow-sm">
+        <div className="flex-1 flex overflow-hidden w-full max-w-[1700px] mx-auto bg-white border-x border-gray-100 shadow-sm">
 
           {/* Left Sidebar */}
           <div className="w-80 bg-gray-50/50 border-r border-gray-100 flex flex-col py-10 px-6 shrink-0 overflow-y-auto no-scrollbar">
