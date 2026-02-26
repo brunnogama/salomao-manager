@@ -224,25 +224,28 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                             )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                                {/* UF da Instituição */}
+                                {/* UF da Instituição e Instituição (Mesma linha) */}
                                 <div className="space-y-1.5 col-span-1 md:col-span-1">
                                     <SearchableSelect
                                         label="UF da Instituição"
-                                        value={currentUF}
-                                        onChange={(v) => updateEducation(item.id, 'instituicao_uf', v)}
-                                        options={ESTADOS_BRASIL.map(e => ({ name: e.sigla }))}
+                                        value={ESTADOS_BRASIL.find(e => e.sigla === currentUF)?.nome || currentUF}
+                                        onChange={(v) => {
+                                            const sigla = ESTADOS_BRASIL.find(e => e.nome === v)?.sigla || v;
+                                            updateEducation(item.id, 'instituicao_uf', sigla)
+                                        }}
+                                        options={ESTADOS_BRASIL.map(e => ({ name: e.nome }))}
                                         disabled={isViewMode}
                                     />
                                 </div>
 
-                                {/* Instituição */}
                                 <div className="space-y-1.5 col-span-1 md:col-span-1">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center justify-between">
-                                        <span>Instituição</span>
-                                        {loadingData && <Loader2 className="h-3 w-3 animate-spin text-[#1e3a8a]" />}
-                                    </label>
                                     <SearchableSelect
-                                        label="Instituição"
+                                        label={
+                                            <span className="flex items-center justify-between w-full">
+                                                Instituição
+                                                {loadingData && <Loader2 className="h-3 w-3 animate-spin text-[#1e3a8a] ml-1" />}
+                                            </span> as any
+                                        }
                                         value={displayInstValue}
                                         onChange={(v) => updateEducation(item.id, 'instituicao', v)}
                                         options={ufInstitutions}
@@ -259,7 +262,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                                 type="text"
                                                 value={item.instituicao === ' ' ? '' : item.instituicao}
                                                 onChange={(e) => updateEducation(item.id, 'instituicao', e.target.value)}
-                                                className={`w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                 placeholder="Digite o nome da instituição..."
                                                 disabled={isViewMode}
                                                 autoFocus
@@ -285,7 +288,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                                 type="text"
                                                 value={item.curso === ' ' ? '' : item.curso}
                                                 onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
-                                                className={`w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                 placeholder="Digite o nome do curso..."
                                                 disabled={isViewMode}
                                                 autoFocus
@@ -308,7 +311,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                                 disabled={isViewMode}
                                             />
                                         </div>
-                                        <div className="space-y-1.5 pt-[18px]">
+                                        <div className="space-y-1.5 pt-[19px]">
                                             <SearchableSelect
                                                 label="Semestre Atual"
                                                 value={item.semestre || ''}
