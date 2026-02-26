@@ -1001,8 +1001,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
     isEditMode: boolean = false
   ) => {
     return (
-      <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-        <div className="bg-white rounded-[2rem] w-full max-w-7xl max-h-[90vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">
+      <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex justify-end animate-in fade-in duration-300">
+        <div className="bg-white rounded-l-[2rem] w-[95vw] max-w-7xl h-full flex overflow-hidden animate-in slide-in-from-right-1/2 duration-500 shadow-2xl border-l border-gray-200 relative">
 
           {/* Left Sidebar */}
           <div className="w-80 bg-white border-r border-gray-100 flex flex-col py-10 px-6 shrink-0 overflow-y-auto no-scrollbar">
