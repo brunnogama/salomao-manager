@@ -25,21 +25,45 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
     const [universities, setUniversities] = useState<{ name: string }[]>([])
     const [loadingUnis, setLoadingUnis] = useState(false)
 
+    // Fallback static list of major Brazilian universities to ensure the UI always works
+    // even when APIs fail.
+    const fallbackUniversities = [
+        'Universidade de São Paulo (USP)', 'Universidade Estadual de Campinas (UNICAMP)',
+        'Universidade Federal do Rio de Janeiro (UFRJ)', 'Universidade Federal de Minas Gerais (UFMG)',
+        'Universidade Federal do Rio Grande do Sul (UFRGS)', 'Universidade Estadual Paulista (UNESP)',
+        'Universidade de Brasília (UnB)', 'Universidade Federal de Santa Catarina (UFSC)',
+        'Universidade Federal do Paraná (UFPR)', 'Pontifícia Universidade Católica do Rio de Janeiro (PUC-Rio)',
+        'Pontifícia Universidade Católica de São Paulo (PUC-SP)', 'Universidade Federal de Pernambuco (UFPE)',
+        'Pontifícia Universidade Católica do Rio Grande do Sul (PUCRS)', 'Universidade Federal do Ceará (UFC)',
+        'Universidade do Estado do Rio de Janeiro (UERJ)', 'Universidade Federal de São Carlos (UFSCar)',
+        'Universidade Federal da Bahia (UFBA)', 'Universidade Federal do Rio Grande do Norte (UFRN)',
+        'Universidade Federal de Goiás (UFG)', 'Universidade Presbiteriana Mackenzie',
+        'Fundação Getulio Vargas (FGV)', 'Universidade Estácio de Sá', 'Universidade Paulista (UNIP)',
+        'Centro Universitário Carioca (UniCarioca)', 'Ibmec', 'Insper'
+    ].sort();
+
     // Ensure we fetch universities once
     useEffect(() => {
         const fetchUnis = async () => {
             setLoadingUnis(true)
             try {
-                // Fetch from HipoLabs for Brazil
-                const response = await fetch('https://universities.hipolabs.com/search?country=Brazil')
+                // Fetch from reliable Github raw content since HipoLabs domain has HTTPS/Connection Refused issues
+                const response = await fetch('https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json')
+
+                if (!response.ok) throw new Error('API fetch failed');
+
                 const data = await response.json()
-                // Deduplicate and sort, optionally we can filter out common non-portuguese words but the API is mostly OK
-                // The issue with datalist not showing might be due to the input list lacking the correct id linkage or browser behavior. 
-                // Using autoComplete="off" and ensuring the ID matches is crucial.
-                const uniqueNames = Array.from(new Set(data.map((u: any) => u.name))).sort() as string[]
-                setUniversities(uniqueNames.map(n => ({ name: n })))
+                const brazilUnis = data.filter((u: any) => u.country === 'Brazil')
+
+                if (brazilUnis.length > 0) {
+                    const uniqueNames = Array.from(new Set(brazilUnis.map((u: any) => u.name))).sort() as string[]
+                    setUniversities(uniqueNames.map(n => ({ name: n })))
+                } else {
+                    setUniversities(fallbackUniversities.map(n => ({ name: n })))
+                }
             } catch (error) {
-                console.error("Failed to load universities", error)
+                console.warn("Failed to load global universities, using fallback list", error)
+                setUniversities(fallbackUniversities.map(n => ({ name: n })))
             } finally {
                 setLoadingUnis(false)
             }
@@ -226,7 +250,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
 
                             {/* Fields varying by status */}
                             {item.status === 'Cursando' ? (
-                                <>
+                                <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Matrícula</label>
                                         <input
@@ -247,7 +271,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             disabled={isViewMode}
                                         />
                                     </div>
-                                    <div className="space-y-1.5 col-span-1 md:col-span-2">
+                                    <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Previsão de Conclusão</label>
                                         <input
                                             type="text"
@@ -259,7 +283,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             disabled={isViewMode}
                                         />
                                     </div>
-                                </>
+                                </div>
                             ) : (
                                 <div className="space-y-1.5 col-span-1 md:col-span-2">
                                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ano de Conclusão</label>
