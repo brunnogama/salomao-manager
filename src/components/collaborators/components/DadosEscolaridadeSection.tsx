@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, GraduationCap, Loader2, BookOpen, Building, Trash2 } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
+import { SearchableSelect } from '../../crm/SearchableSelect'
 
 interface DadosEscolaridadeSectionProps {
     formData: Partial<Collaborator>
@@ -30,7 +31,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
             setLoadingUnis(true)
             try {
                 // Fetch from HipoLabs for Brazil
-                const response = await fetch('http://universities.hipolabs.com/search?country=Brazil')
+                const response = await fetch('https://universities.hipolabs.com/search?country=Brazil')
                 const data = await response.json()
                 // Deduplicate and sort, optionally we can filter out common non-portuguese words but the API is mostly OK
                 // The issue with datalist not showing might be due to the input list lacking the correct id linkage or browser behavior. 
@@ -193,55 +194,34 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
 
                             {/* Curso */}
                             <div className="space-y-1.5 col-span-1 md:col-span-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                                    Curso
-                                </label>
-                                <div className="space-y-2">
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <BookOpen className="h-4 w-4 text-[#1e3a8a]" />
-                                        </div>
-                                        <select
-                                            value={item.curso && !commonCourses.includes(item.curso) ? 'Outro' : (item.curso || '')}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                if (val === 'Outro') {
-                                                    // When selecting Outro, we just initialize it with a recognizable emptyish state to show the text input
-                                                    updateEducation(item.id, 'curso', ' ');
-                                                } else {
-                                                    updateEducation(item.id, 'curso', val);
-                                                }
-                                            }}
-                                            className={`w-full pl-10 pr-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-300 focus:ring-1 focus:ring-[#1e3a8a] outline-none appearance-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                            disabled={isViewMode}
-                                        >
-                                            <option value="" disabled>Selecione o curso...</option>
-                                            {commonCourses.map((c, idx) => (
-                                                <option key={idx} value={c}>{c}</option>
-                                            ))}
-                                        </select>
-                                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                            <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </div>
-                                    </div>
+                                <SearchableSelect
+                                    label="Curso"
+                                    value={item.curso && !commonCourses.includes(item.curso) ? 'Outro' : (item.curso || '')}
+                                    onChange={(v) => {
+                                        if (v === 'Outro') {
+                                            updateEducation(item.id, 'curso', ' ');
+                                        } else {
+                                            updateEducation(item.id, 'curso', v);
+                                        }
+                                    }}
+                                    options={commonCourses.map(c => ({ name: c }))}
+                                    disabled={isViewMode}
+                                />
 
-                                    {/* Campo Outro (Texto Livre) */}
-                                    {item.curso !== undefined && !commonCourses.includes(item.curso) && item.curso !== '' && (
-                                        <div className="relative mt-2 animate-in fade-in zoom-in duration-200">
-                                            <input
-                                                type="text"
-                                                value={item.curso === ' ' ? '' : item.curso}
-                                                onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
-                                                className={`w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                placeholder="Digite o nome do curso..."
-                                                disabled={isViewMode}
-                                                autoFocus
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                {/* Campo Outro (Texto Livre) */}
+                                {item.curso !== undefined && !commonCourses.includes(item.curso) && item.curso !== '' && (
+                                    <div className="relative mt-2 animate-in fade-in zoom-in duration-200">
+                                        <input
+                                            type="text"
+                                            value={item.curso === ' ' ? '' : item.curso}
+                                            onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
+                                            className={`w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-gray-400 focus:ring-1 focus:ring-[#1e3a8a] outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                            placeholder="Digite o nome do curso..."
+                                            disabled={isViewMode}
+                                            autoFocus
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Fields varying by status */}
@@ -258,19 +238,14 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             disabled={isViewMode}
                                         />
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Semestre Atual</label>
-                                        <select
+                                    <div className="space-y-1.5 pt-[18px]">
+                                        <SearchableSelect
+                                            label="Semestre Atual"
                                             value={item.semestre || ''}
-                                            onChange={(e) => updateEducation(item.id, 'semestre', e.target.value)}
+                                            onChange={(v) => updateEducation(item.id, 'semestre', v)}
+                                            options={semestres.map(sem => ({ name: sem }))}
                                             disabled={isViewMode}
-                                            className={`w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-[#0a192f] focus:ring-1 outline-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                        >
-                                            <option value="">Selecione...</option>
-                                            {semestres.map(sem => (
-                                                <option key={sem} value={sem}>{sem}</option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
                                     <div className="space-y-1.5 col-span-1 md:col-span-2">
                                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Previsão de Conclusão</label>
