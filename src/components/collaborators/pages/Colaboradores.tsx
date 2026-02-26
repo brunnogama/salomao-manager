@@ -1079,7 +1079,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
       <div className="absolute inset-0 z-[100] bg-gray-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
 
         {/* PAGE HEADER COMPLETO - Restored to System Standard */}
-        <div className="flex items-center justify-between bg-white px-8 py-5 border-b border-gray-200 shadow-sm shrink-0">
+        {/* PAGE HEADER COMPLETO - Restored to System Standard */}
+        <div className="flex items-center justify-between bg-white px-8 py-4 border-b border-gray-200 shadow-sm shrink-0">
           <div className="flex items-center gap-4">
             <button
               onClick={onClose}
@@ -1113,9 +1114,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
         <div className="flex-1 flex overflow-hidden w-full max-w-[1700px] mx-auto bg-white border-x border-gray-100 shadow-sm">
 
           {/* Left Sidebar */}
-          <div className="w-80 bg-gray-50/50 border-r border-gray-100 flex flex-col py-10 px-6 shrink-0 overflow-y-auto no-scrollbar">
+          <div className="w-80 bg-gray-50/50 border-r border-gray-100 flex flex-col py-6 px-6 shrink-0 overflow-y-auto no-scrollbar">
             {/* Photo Area */}
-            <div className="mb-10 flex justify-center">
+            <div className="mb-6 flex justify-center">
               {sidebarContent}
             </div>
 
