@@ -141,10 +141,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
       { id: 4, label: 'Dados Corporativos', icon: Briefcase }
     ];
 
-    if (isAdvogadoSocioJuridica) {
-      steps.push({ id: 8, label: 'OAB', icon: BookOpen });
-    } else {
-      steps.push({ id: 2, label: 'Dados Profissionais', icon: GraduationCap });
+    if (currentData.area && currentData.role) {
+      if (isAdvogadoSocioJuridica) {
+        steps.push({ id: 8, label: 'OAB', icon: BookOpen });
+      } else {
+        steps.push({ id: 2, label: 'Dados Profissionais', icon: GraduationCap });
+      }
     }
 
     steps.push(
