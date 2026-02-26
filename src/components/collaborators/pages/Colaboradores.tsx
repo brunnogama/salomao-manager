@@ -1473,7 +1473,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             return;
                           }
 
-                          const response = await fetch('https://hook.us2.make.com/4iyw1gkn1695z1snc8x9hwn6qpydcctx', {
+                          const response = await fetch('https://hook.us2.make.com/5lv612jlqx6cqnfwu5qnivxgsvkcphwq', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
