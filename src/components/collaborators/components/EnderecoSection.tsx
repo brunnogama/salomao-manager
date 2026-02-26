@@ -54,7 +54,7 @@ export function EnderecoSection({
         </div>
 
         {/* Logradouro - Mapeado para address */}
-        <div className="md:col-span-3">
+        <div className="md:col-span-2">
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Logradouro
           </label>
@@ -82,7 +82,7 @@ export function EnderecoSection({
         </div>
 
         {/* Complemento - Mapeado para address_complement */}
-        <div>
+        <div className="md:col-span-1">
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Complemento
           </label>
@@ -96,7 +96,7 @@ export function EnderecoSection({
         </div>
 
         {/* Bairro - Mapeado para neighborhood */}
-        <div>
+        <div className="md:col-span-1">
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Bairro
           </label>
@@ -110,7 +110,7 @@ export function EnderecoSection({
         </div>
 
         {/* Cidade - Mapeado para city */}
-        <div>
+        <div className="md:col-span-1">
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Cidade
           </label>
@@ -124,13 +124,15 @@ export function EnderecoSection({
         </div>
 
         {/* Estado - Mapeado para state */}
-        <SearchableSelect
-          label="Estado"
-          value={formData.state || ''}
-          onChange={v => setFormData({ ...formData, state: v })}
-          options={ESTADOS_BRASIL.map(e => ({ name: e.nome }))}
-          disabled={isViewMode}
-        />
+        <div className="md:col-span-1">
+          <SearchableSelect
+            label="Estado"
+            value={formData.state || ''}
+            onChange={v => setFormData({ ...formData, state: v })}
+            options={ESTADOS_BRASIL.map(e => ({ name: e.nome }))}
+            disabled={isViewMode}
+          />
+        </div>
       </div>
     </section>
   )
