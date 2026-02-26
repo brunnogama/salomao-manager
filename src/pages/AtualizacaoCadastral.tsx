@@ -178,6 +178,7 @@ export default function AtualizacaoCadastral() {
                 escolaridade_curso: formData.escolaridade_curso,
                 education_history: formData.education_history?.map(edu => ({
                     ...edu,
+                    instituicao_uf: edu.instituicao_uf || null,
                     previsao_conclusao: formatDateToISO(edu.previsao_conclusao) || null
                 }))
             };

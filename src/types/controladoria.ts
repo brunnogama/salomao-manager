@@ -91,6 +91,7 @@ export interface Collaborator {
     nivel: 'Graduação' | 'Pós-Graduação' | string;
     subnivel?: string;
     instituicao: string;
+    instituicao_uf?: string; // Novo campo
     curso: string;
     status: 'Cursando' | 'Formado(a)';
     matricula?: string;

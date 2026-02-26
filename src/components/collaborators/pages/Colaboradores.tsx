@@ -280,9 +280,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         termInitiativesRes,
         termTypesRes,
         termReasonsRes,
-        costCentersRes,
-        eduInstRes,
-        eduCourseRes
+        costCentersRes
       ] = await Promise.all([
         supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name)`).order('name'),
         supabase.from('roles').select('id, name'),
@@ -488,6 +486,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         })),
         education_history: formData.education_history?.map(edu => ({
           ...edu,
+          instituicao_uf: edu.instituicao_uf || null,
           previsao_conclusao: formatDateToISO(edu.previsao_conclusao) || null
         }))
       };
