@@ -8,8 +8,24 @@ import { EnderecoSection } from '../components/collaborators/components/Endereco
 import { DadosEscolaridadeSection } from '../components/collaborators/components/DadosEscolaridadeSection';
 
 const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
-const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14)
+const maskCPF = (v: string) => {
+    v = v.replace(/\D/g, '')
+    v = v.replace(/(\d{3})(\d)/, '$1.$2')
+    v = v.replace(/(\d{3})(\d)/, '$1.$2')
+    v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    return v.slice(0, 14)
+}
 const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
+const maskRG = (v: string) => {
+    v = v.replace(/\D/g, '')
+    v = v.replace(/(\d{8})(\d{1})/, '$1-$2')
+    return v.slice(0, 10)
+}
+const maskPhone = (v: string) => {
+    const raw = v.replace(/\D/g, '')
+    if (raw.length <= 10) return raw.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').slice(0, 14)
+    return raw.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').slice(0, 15)
+}
 
 const ESTADOS_BRASIL = [
     { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },
@@ -277,6 +293,8 @@ export default function AtualizacaoCadastral() {
                                 setFormData={setFormData}
                                 maskCPF={maskCPF}
                                 maskDate={maskDate}
+                                maskRG={maskRG}
+                                maskPhone={maskPhone}
                                 isViewMode={false}
                             />
                             <EnderecoSection
