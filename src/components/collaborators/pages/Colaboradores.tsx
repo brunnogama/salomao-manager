@@ -519,7 +519,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
         birthday: formatDateToISO(formData.birthday) || null,
         hire_date: formatDateToISO(formData.hire_date) || null,
         termination_date: formatDateToISO(formData.termination_date) || null,
-        oab_emissao: formatDateToISO(formData.oab_emissao) || null,
         escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null,
         children_data: formData.children_data?.map(c => ({
           ...c,
@@ -536,7 +535,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       const payload: any = {};
       Object.entries(dataToSave).forEach(([key, value]) => {
         // Skip metadata, joined objects, and photo fields (handled separately)
-        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs'].includes(key)) return;
+        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao'].includes(key)) return;
         if (value !== null && typeof value === 'object' && !Array.isArray(value)) return;
 
         // Map empty strings to null for better DB consistency
@@ -698,10 +697,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
       'Estado': c.state,
 
       // 2. DADOS PROFISSIONAIS
-      'OAB Número': c.oabs?.find(o => o.tipo === 'Principal')?.numero || c.oab_numero || '',
-      'OAB UF': c.oabs?.find(o => o.tipo === 'Principal')?.uf || c.oab_uf || '',
-      'OAB Emissão': formatDateToDisplay(c.oabs?.find(o => o.tipo === 'Principal')?.validade || c.oab_emissao) || '',
-      'Tipo Inscrição OAB': c.oab_tipo,
+      'OAB Número': c.oabs?.find(o => o.tipo === 'Principal')?.numero || '',
+      'OAB UF': c.oabs?.find(o => o.tipo === 'Principal')?.uf || '',
+      'OAB Validade': formatDateToDisplay(c.oabs?.find(o => o.tipo === 'Principal')?.validade) || '',
+      'Tipo Inscrição OAB': c.oabs?.find(o => o.tipo === 'Principal')?.tipo || '',
       'PIS/PASEP': c.pis || c.pis_pasep,
       'Matrícula e-Social': c.matricula_esocial,
       'Dispensa Militar': c.dispensa_militar,
