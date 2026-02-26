@@ -253,7 +253,6 @@ export function RHHeadcount() {
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 15) // Top 15
   }, [activeData])
 
   // 4. Legal Role Distribution (Cargo do Jurídico)
@@ -539,10 +538,10 @@ export function RHHeadcount() {
       </div>
 
       {/* 3. Charts Row 1: Local & Leaders */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         {/* Local & Area (Stacked Bar) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:col-span-1">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
               <MapIcon className="w-5 h-5" />
@@ -571,17 +570,17 @@ export function RHHeadcount() {
         </div>
 
         {/* Collaborators per Team Leader */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:col-span-2">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
               <Users className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-800 tracking-tight">Colaboradores por Líder</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Top 15 Lideranças</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lideranças</p>
             </div>
           </div>
-          <div className="h-[300px] w-full">
+          <div className="w-full" style={{ height: Math.max(300, leaderData.length * 35) }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={leaderData} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
@@ -592,7 +591,7 @@ export function RHHeadcount() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                  width={150}
+                  width={250}
                 />
                 <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
                 <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">

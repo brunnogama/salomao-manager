@@ -434,7 +434,6 @@ export function RHTempoCasa() {
         name,
         avg: parseFloat((data.totalYears / data.count).toFixed(2))
       })).sort((a, b) => b.avg - a.avg)
-      .slice(0, 15) // Top 15?
   }, [activeDataAtRefDate, referenceDate])
 
   // 4. Legal Concentration by Experience
@@ -698,7 +697,7 @@ export function RHTempoCasa() {
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Liderança de Equipes</p>
             </div>
           </div>
-          <div className="h-[300px] w-full">
+          <div className="w-full" style={{ height: Math.max(300, tenureByLeaderData.length * 35) }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={tenureByLeaderData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
@@ -709,7 +708,7 @@ export function RHTempoCasa() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                  width={120}
+                  width={250}
                 />
                 <Tooltip cursor={{ fill: '#f3f4f6' }} content={renderCustomTooltip} />
                 <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
