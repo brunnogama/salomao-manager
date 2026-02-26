@@ -1121,7 +1121,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             </div>
 
             {/* Vertical Tabs */}
-            <div className="space-y-1 w-full">
+            <div className="space-y-0.5 w-full">
               {formSteps.map((step) => {
                 const Icon = step.icon
                 const isActive = activeTab === step.id
@@ -1129,7 +1129,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   <button
                     key={step.id}
                     onClick={() => setActiveTab(step.id)}
-                    className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left relative group ${isActive
+                    className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left relative group ${isActive
                       ? isEditMode ? 'text-amber-600 bg-amber-50 font-bold shadow-sm border border-amber-100/50' : 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm border border-blue-100/50'
                       : 'text-gray-500 hover:bg-white hover:shadow-sm hover:border-gray-100 border border-transparent'
                       }`}
