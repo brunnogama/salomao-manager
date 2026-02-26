@@ -82,8 +82,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [terminationTypes, setTerminationTypes] = useState<{ id: string; name: string }[]>([])
   const [terminationReasons, setTerminationReasons] = useState<{ id: string; name: string }[]>([])
   const [costCenters, setCostCenters] = useState<{ id: string; name: string }[]>([])
-  const [educationInstitutions, setEducationInstitutions] = useState<{ id: string; name: string }[]>([])
-  const [educationCourses, setEducationCourses] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
@@ -295,9 +293,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         supabase.from('termination_initiatives').select('id, name'),
         supabase.from('termination_types').select('id, name'),
         supabase.from('termination_reasons').select('id, name'),
-        supabase.from('cost_centers').select('id, name'),
-        supabase.from('education_institutions').select('id, name'),
-        supabase.from('education_courses').select('id, name')
+        supabase.from('cost_centers').select('id, name')
       ])
 
       if (colabRes.error) throw colabRes.error
@@ -313,8 +309,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (termTypesRes.data) setTerminationTypes(termTypesRes.data)
       if (termReasonsRes.data) setTerminationReasons(termReasonsRes.data)
       if (costCentersRes.data) setCostCenters(costCentersRes.data)
-      if (eduInstRes.data) setEducationInstitutions(eduInstRes.data)
-      if (eduCourseRes.data) setEducationCourses(eduCourseRes.data)
 
       const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
       const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
@@ -487,7 +481,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
         hire_date: formatDateToISO(formData.hire_date) || null,
         termination_date: formatDateToISO(formData.termination_date) || null,
         oab_emissao: formatDateToISO(formData.oab_emissao) || null,
-        escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null
+        escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null,
+        children_data: formData.children_data?.map(c => ({
+          ...c,
+          birth_date: formatDateToISO(c.birth_date) || null
+        })),
+        education_history: formData.education_history?.map(edu => ({
+          ...edu,
+          previsao_conclusao: formatDateToISO(edu.previsao_conclusao) || null
+        }))
       };
 
       // Robust cleaning of the payload
@@ -559,7 +561,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
       hire_date: formatDateToDisplay(colaborador.hire_date),
       termination_date: formatDateToDisplay(colaborador.termination_date),
       oab_emissao: formatDateToDisplay(colaborador.oab_emissao),
-      escolaridade_previsao_conclusao: formatDateToDisplay(colaborador.escolaridade_previsao_conclusao)
+      escolaridade_previsao_conclusao: formatDateToDisplay(colaborador.escolaridade_previsao_conclusao),
+      children_data: colaborador.children_data?.map((child: any) => ({
+        ...child,
+        birth_date: formatDateToDisplay(child.birth_date)
+      })) || [],
+      education_history: colaborador.education_history?.map((edu: any) => ({
+        ...edu,
+        previsao_conclusao: formatDateToDisplay(edu.previsao_conclusao)
+      })) || []
     };
 
     setFormData(formattedColaborador)

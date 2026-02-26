@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Loader2, CheckCircle2, User, Save } from 'lucide-react';
@@ -42,10 +42,6 @@ export default function AtualizacaoCadastral() {
 
     const [formData, setFormData] = useState<Partial<Collaborator>>({});
 
-    // Lookups for Education
-    const [educationInstitutions, setEducationInstitutions] = useState<any[]>([]);
-    const [educationCourses, setEducationCourses] = useState<any[]>([]);
-
     useEffect(() => {
         const fetchCollaboratorData = async () => {
             try {
@@ -55,14 +51,13 @@ export default function AtualizacaoCadastral() {
                     return;
                 }
 
-                // Carrega lookups de escolaridade
+                // Carrega lookups de escolaridade (Não mais necessários no magic link, agora a section usa API própria)
+                /* // Removido
                 const [instRes, coursesRes] = await Promise.all([
                     supabase.rpc('get_education_institutions'),
                     supabase.rpc('get_education_courses')
                 ]);
-
-                if (!instRes.error && instRes.data) setEducationInstitutions(instRes.data);
-                if (!coursesRes.error && coursesRes.data) setEducationCourses(coursesRes.data);
+                */
 
                 const { data, error } = await supabase.rpc('get_collaborator_by_token', {
                     p_token: token
@@ -87,7 +82,15 @@ export default function AtualizacaoCadastral() {
 
                 const formattedColaborador = {
                     ...data,
-                    birthday: formatDateToDisplay(data.birthday)
+                    birthday: formatDateToDisplay(data.birthday),
+                    children_data: data.children_data?.map((child: any) => ({
+                        ...child,
+                        birth_date: formatDateToDisplay(child.birth_date)
+                    })) || [],
+                    education_history: data.education_history?.map((edu: any) => ({
+                        ...edu,
+                        previsao_conclusao: formatDateToDisplay(edu.previsao_conclusao)
+                    })) || []
                 };
 
                 setFormData(formattedColaborador);
@@ -149,6 +152,10 @@ export default function AtualizacaoCadastral() {
                 civil_status: formData.civil_status,
                 has_children: formData.has_children,
                 children_count: formData.children_count,
+                children_data: formData.children_data?.map(c => ({
+                    ...c,
+                    birth_date: formatDateToISO(c.birth_date) || null
+                })),
                 emergencia_nome: formData.emergencia_nome,
                 emergencia_telefone: formData.emergencia_telefone,
                 emergencia_parentesco: formData.emergencia_parentesco,
@@ -168,7 +175,11 @@ export default function AtualizacaoCadastral() {
                 escolaridade_matricula: formData.escolaridade_matricula,
                 escolaridade_semestre: formData.escolaridade_semestre,
                 escolaridade_previsao_conclusao: formatDateToISO(formData.escolaridade_previsao_conclusao) || null,
-                escolaridade_curso: formData.escolaridade_curso
+                escolaridade_curso: formData.escolaridade_curso,
+                education_history: formData.education_history?.map(edu => ({
+                    ...edu,
+                    previsao_conclusao: formatDateToISO(edu.previsao_conclusao) || null
+                }))
             };
 
             const { error: updateError } = await supabase.rpc('update_collaborator_by_token', {
@@ -279,8 +290,6 @@ export default function AtualizacaoCadastral() {
                                 setFormData={setFormData}
                                 maskDate={maskDate}
                                 isViewMode={false}
-                                educationInstitutions={educationInstitutions}
-                                educationCourses={educationCourses}
                             />
                         </div>
                     </div>

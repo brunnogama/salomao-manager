@@ -86,6 +86,18 @@ export interface Collaborator {
   escolaridade_semestre?: string;
   escolaridade_previsao_conclusao?: string;
   escolaridade_curso?: string;
+  education_history?: {
+    id: string;
+    nivel: 'Graduação' | 'Pós-Graduação' | string;
+    subnivel?: string;
+    instituicao: string;
+    curso: string;
+    status: 'Cursando' | 'Formado(a)';
+    matricula?: string;
+    semestre?: string;
+    previsao_conclusao?: string;
+    ano_conclusao?: string;
+  }[];
 
   // Novos Campos (Solicitados)
   rg?: string;
@@ -125,6 +137,11 @@ export interface Collaborator {
   // Filhos
   has_children?: boolean;
   children_count?: number;
+  children_data?: {
+    id: string;
+    name: string;
+    birth_date: string;
+  }[];
 
   hiring_reasons?: { id: string; name: string };
   termination_initiatives?: { id: string; name: string };

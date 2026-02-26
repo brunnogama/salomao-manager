@@ -84,7 +84,7 @@ export function DadosPessoaisSection({
         </div>
 
         {/* Data de Nascimento */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-1">
           <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
             Data Nascimento
           </label>
@@ -99,13 +99,40 @@ export function DadosPessoaisSection({
           />
         </div>
 
+        {/* Estado Civil */}
+        <div className="md:col-span-1">
+          <SearchableSelect
+            label="Estado Civil"
+            value={formData.civil_status || ''}
+            onChange={v => setFormData({ ...formData, civil_status: v })}
+            options={[
+              { name: 'Solteiro(a)' },
+              { name: 'Casado(a)' },
+              { name: 'Separado(a) Judicialmente' },
+              { name: 'Divorciado(a)' },
+              { name: 'Viúvo(a)' }
+            ]}
+            disabled={isViewMode}
+          />
+        </div>
+
         {/* Filhos e Quantidade */}
         <div className={`md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-4`}>
           <div className="md:col-span-2">
             <SearchableSelect
               label="Filhos"
               value={formData.has_children ? 'Sim' : 'Não'}
-              onChange={v => setFormData({ ...formData, has_children: v === 'Sim', children_count: v === 'Sim' ? (formData.children_count || 1) : 0 })}
+              onChange={v => {
+                const hasChildren = v === 'Sim';
+                const count = hasChildren ? Math.max(formData.children_count || 1, 1) : 0;
+                let newChildrenData = formData.children_data || [];
+                if (hasChildren && newChildrenData.length === 0) {
+                  newChildrenData = [{ id: crypto.randomUUID(), name: '', birth_date: '' }];
+                } else if (!hasChildren) {
+                  newChildrenData = [];
+                }
+                setFormData({ ...formData, has_children: hasChildren, children_count: count, children_data: newChildrenData });
+              }}
               options={[{ name: 'Sim' }, { name: 'Não' }]}
               disabled={isViewMode}
             />
@@ -113,13 +140,20 @@ export function DadosPessoaisSection({
           {formData.has_children && (
             <div className="md:col-span-2">
               <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                Qtd
+                Quantidade
               </label>
               <div className="flex items-center h-[42px] bg-gray-100/50 border border-gray-200 rounded-xl px-2">
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, children_count: Math.max(0, (formData.children_count || 0) - 1) })}
-                  disabled={!formData.has_children || isViewMode}
+                  onClick={() => {
+                    const currentCount = formData.children_count || 0;
+                    if (currentCount > 1) {
+                      const newCount = currentCount - 1;
+                      const newChildrenData = (formData.children_data || []).slice(0, newCount);
+                      setFormData({ ...formData, children_count: newCount, children_data: newChildrenData });
+                    }
+                  }}
+                  disabled={!formData.has_children || isViewMode || (formData.children_count || 0) <= 1}
                   className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8 flex items-center justify-center"
                 >
                   <Minus className="h-4 w-4" />
@@ -131,13 +165,62 @@ export function DadosPessoaisSection({
                 />
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, children_count: (formData.children_count || 0) + 1 })}
+                  onClick={() => {
+                    const newCount = (formData.children_count || 0) + 1;
+                    const newChildrenData = [...(formData.children_data || []), { id: crypto.randomUUID(), name: '', birth_date: '' }];
+                    setFormData({ ...formData, children_count: newCount, children_data: newChildrenData });
+                  }}
                   disabled={!formData.has_children || isViewMode}
                   className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8 flex items-center justify-center"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Render Children Fields dynamically */}
+          {formData.has_children && formData.children_data && formData.children_data.length > 0 && (
+            <div className="md:col-span-4 space-y-4 mt-2">
+              {formData.children_data.map((child, index) => (
+                <div key={child.id || index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                      Nome do Filho(a) {index + 1}
+                    </label>
+                    <input
+                      className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      value={child.name || ''}
+                      onChange={e => {
+                        const newChildrenData = [...(formData.children_data || [])];
+                        newChildrenData[index] = { ...newChildrenData[index], name: e.target.value };
+                        setFormData({ ...formData, children_data: newChildrenData });
+                      }}
+                      placeholder={`Nome do ${index + 1}º filho`}
+                      disabled={isViewMode}
+                      readOnly={isViewMode}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                      Data de Nascimento
+                    </label>
+                    <input
+                      className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      value={child.birth_date || ''}
+                      onChange={e => {
+                        const newChildrenData = [...(formData.children_data || [])];
+                        newChildrenData[index] = { ...newChildrenData[index], birth_date: maskDate(e.target.value) };
+                        setFormData({ ...formData, children_data: newChildrenData });
+                      }}
+                      maxLength={10}
+                      placeholder="DD/MM/AAAA"
+                      disabled={isViewMode}
+                      readOnly={isViewMode}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
