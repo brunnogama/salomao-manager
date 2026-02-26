@@ -20,6 +20,7 @@ import { useDatabaseSync } from '../../../hooks/useDatabaseSync'
 import { DadosPessoaisSection } from '../components/DadosPessoaisSection'
 import { EnderecoSection } from '../components/EnderecoSection'
 import { InformacoesProfissionaisSection } from '../components/InformacoesProfissionaisSection'
+import { OABSection } from '../components/OABSection'
 import { DadosEscolaridadeSection } from '../components/DadosEscolaridadeSection'
 import { DadosCorporativosSection } from '../components/DadosCorporativosSection'
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
@@ -131,15 +132,30 @@ export function Colaboradores({ }: ColaboradoresProps) {
   // Inicializa estado vazio por padrão conforme solicitado
   const [formData, setFormData] = useState<Partial<Collaborator>>({ status: 'active', state: '' })
 
-  const formSteps = [
-    { id: 1, label: 'Dados Pessoais', icon: User },
-    { id: 2, label: 'Dados Profissionais', icon: GraduationCap },
-    { id: 3, label: 'Dados de Escolaridade', icon: BookOpen },
-    { id: 4, label: 'Dados Corporativos', icon: Briefcase },
-    { id: 5, label: 'Período de Ausências', icon: Calendar },
-    { id: 6, label: 'Histórico', icon: Clock },
-    { id: 7, label: 'GED', icon: Files }
-  ]
+  const getFormSteps = (currentData: Partial<Collaborator>) => {
+    const roleName = roles.find(r => String(r.id) === String(currentData.role))?.name?.toLowerCase() || '';
+    const isAdvogadoSocioJuridica = currentData.area === 'Jurídica' && (roleName.includes('advogado') || roleName.includes('sócio') || roleName.includes('socio'));
+
+    const steps = [
+      { id: 1, label: 'Dados Pessoais', icon: User },
+      { id: 4, label: 'Dados Corporativos', icon: Briefcase }
+    ];
+
+    if (isAdvogadoSocioJuridica) {
+      steps.push({ id: 8, label: 'OAB', icon: BookOpen });
+    } else {
+      steps.push({ id: 2, label: 'Dados Profissionais', icon: GraduationCap });
+    }
+
+    steps.push(
+      { id: 3, label: 'Dados de Escolaridade', icon: BookOpen },
+      { id: 5, label: 'Período de Ausências', icon: Calendar },
+      { id: 6, label: 'Histórico', icon: Clock },
+      { id: 7, label: 'GED', icon: Files }
+    );
+
+    return steps;
+  }
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null)
@@ -848,12 +864,21 @@ export function Colaboradores({ }: ColaboradoresProps) {
           <InformacoesProfissionaisSection
             formData={currentData}
             setFormData={currentSetData}
+            isViewMode={isViewMode}
+          />
+        </div>
+      )
+    }
+
+    // 8. OAB
+    if (activeTab === 8) {
+      return (
+        <div className="animate-in slide-in-from-right-4 duration-300">
+          <OABSection
+            formData={currentData}
+            setFormData={currentSetData}
             maskDate={maskDate}
             isViewMode={isViewMode}
-            showOab={(() => {
-              const roleName = roles.find(r => String(r.id) === String(currentData.role))?.name?.toLowerCase() || '';
-              return currentData.area === 'Jurídica' && (roleName.includes('advogado') || roleName.includes('sócio') || roleName.includes('socio'));
-            })()}
           />
         </div>
       )
@@ -1041,8 +1066,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
     children: React.ReactNode,
     footer?: React.ReactNode,
     sidebarContent?: React.ReactNode,
-    isEditMode: boolean = false
+    isEditMode: boolean = false,
+    currentData: Partial<Collaborator> = {}
   ) => {
+    const currentSteps = getFormSteps(currentData);
     return (
       <div className="absolute inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
         <div className="bg-white rounded-[2rem] w-full max-w-7xl max-h-[95vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">
@@ -1056,7 +1083,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
             {/* Vertical Tabs */}
             <div className="space-y-1 w-full">
-              {formSteps.map((step) => {
+              {currentSteps.map((step) => {
                 const Icon = step.icon
                 const isActive = activeTab === step.id
                 return (
@@ -1115,8 +1142,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
     children: React.ReactNode,
     footer?: React.ReactNode,
     sidebarContent?: React.ReactNode,
-    isEditMode: boolean = false
+    isEditMode: boolean = false,
+    currentData: Partial<Collaborator> = {}
   ) => {
+    const currentSteps = getFormSteps(currentData);
     return (
       <div className="absolute inset-0 z-[100] bg-gray-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
 
@@ -1164,7 +1193,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
             {/* Vertical Tabs */}
             <div className="space-y-0.5 w-full">
-              {formSteps.map((step) => {
+              {currentSteps.map((step) => {
                 const Icon = step.icon
                 const isActive = activeTab === step.id
                 return (
@@ -1554,7 +1583,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <span className="text-5xl font-black text-white opacity-50">{selectedColaborador.name?.charAt(0).toUpperCase()}</span>
             </div>
           )}
-        </div>
+        </div>,
+        false,
+        selectedColaborador
       )}
 
       {/* FORM PAGE (Full Page Layout) */}
@@ -1588,7 +1619,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
           setPhotoPreview={setPhotoPreview}
           onPhotoSelected={setSelectedPhotoFile}
         />,
-        true // isEditMode = true for the form modal
+        true, // isEditMode = true for the form modal
+        formData
       )}
 
       {viewingPhoto && (
