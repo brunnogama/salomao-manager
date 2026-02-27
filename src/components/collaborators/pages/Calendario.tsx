@@ -6,8 +6,6 @@ import {
   Users,
   Sparkles,
   PartyPopper,
-  Clock,
-  Filter,
   X,
   Plus,
   Save,
@@ -53,9 +51,8 @@ const MESES = [
 ]
 
 export function Calendario() {
-  const { colaboradores, loading: colabsLoading } = useColaboradores()
+  const { colaboradores } = useColaboradores()
   const [eventos, setEventos] = useState<Evento[]>([])
-  const [loadingEventos, setLoadingEventos] = useState(true)
 
   const collaborators = useMemo(() => {
     return colaboradores
@@ -88,14 +85,12 @@ export function Calendario() {
   }, [])
 
   const fetchData = async () => {
-    setLoadingEventos(true)
     const { data: evs } = await supabase
       .from('eventos')
       .select('*')
       .order('data_evento')
 
     if (evs) setEventos(evs)
-    setLoadingEventos(false)
   }
 
   const handleSaveEvento = async () => {
@@ -186,7 +181,10 @@ export function Calendario() {
   }
 
   const calcularDiasRestantes = (dia: number, mes: number): number => {
+    // Pegar o 'hoje' resetado para meia noite do timezone local
     const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+
     const anoAtual = hoje.getFullYear()
     let proximoAniversario = new Date(anoAtual, mes, dia)
 
@@ -200,16 +198,16 @@ export function Calendario() {
 
   const processarAniversarios = (): AniversarioData[] => {
     const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
     const aniversarios: AniversarioData[] = []
 
     collaborators.forEach((colab: any) => {
       if (colab.birthday) {
-        const nascimento = new Date(colab.birthday)
-        const nascimentoCorrigido = new Date(nascimento.valueOf() + nascimento.getTimezoneOffset() * 60000)
-
-        const dia = nascimentoCorrigido.getDate()
-        const mes = nascimentoCorrigido.getMonth()
-        const ano = nascimentoCorrigido.getFullYear()
+        // Parse da data ISO (ex: "1990-02-27")
+        const [anoStr, mesStr, diaStr] = colab.birthday.split('T')[0].split('-')
+        const dia = parseInt(diaStr, 10)
+        const mes = parseInt(mesStr, 10) - 1 // Mês em JavaScript é zero-based
+        const ano = parseInt(anoStr, 10)
 
         const diasRestantes = calcularDiasRestantes(dia, mes)
 
@@ -231,9 +229,7 @@ export function Calendario() {
 
   const aniversarios = processarAniversarios()
 
-  const aniversariosDoMes = (mes: number, _ano: number): AniversarioData[] => {
-    return aniversarios.filter(a => a.mes === mes)
-  }
+
 
   const eventosDoMes = (mes: number, ano: number) => {
     return eventos.filter(e => {
@@ -243,7 +239,7 @@ export function Calendario() {
   }
 
   const getAniversariosHoje = () => aniversarios.filter(a => a.isHoje)
-  const getAniversariosEstaSemana = () => aniversarios.filter(a => a.isEstaSemana && !a.isHoje)
+
   const getAniversariosEsteMes = () => aniversarios.filter(a => a.isEsteMes)
   const getProximosAniversarios = () => {
     return aniversarios.slice(0, 20)
