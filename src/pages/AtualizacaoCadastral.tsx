@@ -182,6 +182,7 @@ export default function AtualizacaoCadastral() {
                 })),
                 emergencia_nome: formData.emergencia_nome,
                 emergencia_parentesco: formData.emergencia_parentesco,
+                emergencia_telefone: formData.emergencia_telefone,
                 zip_code: formData.zip_code,
                 address: formData.address,
                 address_number: formData.address_number,
@@ -197,7 +198,6 @@ export default function AtualizacaoCadastral() {
                 banco_conta: formData.banco_conta,
                 pix_tipo: formData.pix_tipo,
                 pix_chave: formData.pix_chave,
-                observacoes: formData.observacoes,
 
                 // Escolaridade
                 escolaridade_nivel: formData.escolaridade_nivel,
