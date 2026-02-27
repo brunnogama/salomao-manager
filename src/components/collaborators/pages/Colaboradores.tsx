@@ -6,7 +6,7 @@ import {
   Link as LinkIcon, Copy, CheckCircle2, RefreshCcw
 } from 'lucide-react'
 
-import XLSX from 'xlsx-js-style'
+import { exportColaboradoresXLSX } from '../utils/exportColaboradores'
 import { supabase } from '../../../lib/supabase'
 import { logAction } from '../../../lib/logger'
 
@@ -26,6 +26,19 @@ import { DadosCorporativosSection } from '../components/DadosCorporativosSection
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
 import { HistoricoSection } from '../components/HistoricoSection'
 import { PeriodoAusenciasSection } from '../components/PeriodoAusenciasSection'
+import { CollaboratorModalLayout, CollaboratorPageLayout } from '../components/CollaboratorLayouts'
+
+import {
+  ESTADOS_BRASIL,
+  toTitleCase,
+  maskCEP,
+  maskCPF,
+  maskDate,
+  maskRG,
+  maskPhone,
+  formatDateToDisplay,
+  formatDateToISO
+} from '../utils/colaboradoresUtils'
 // ... existing imports
 
 interface Role { id: string | number; name: string }
@@ -39,42 +52,14 @@ interface ColaboradoresProps {
 }
 
 
-const ESTADOS_BRASIL = [
-  { sigla: 'AC', nome: 'Acre' },
-  { sigla: 'AL', nome: 'Alagoas' },
-  { sigla: 'AP', nome: 'Amapá' },
-  { sigla: 'AM', nome: 'Amazonas' },
-  { sigla: 'BA', nome: 'Bahia' },
-  { sigla: 'CE', nome: 'Ceará' },
-  { sigla: 'DF', nome: 'Distrito Federal' },
-  { sigla: 'ES', nome: 'Espírito Santo' },
-  { sigla: 'GO', nome: 'Goiás' },
-  { sigla: 'MA', nome: 'Maranhão' },
-  { sigla: 'MT', nome: 'Mato Grosso' },
-  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
-  { sigla: 'MG', nome: 'Minas Gerais' },
-  { sigla: 'PA', nome: 'Pará' },
-  { sigla: 'PB', nome: 'Paraíba' },
-  { sigla: 'PR', nome: 'Paraná' },
-  { sigla: 'PE', nome: 'Pernambuco' },
-  { sigla: 'PI', nome: 'Piauí' },
-  { sigla: 'RJ', nome: 'Rio de Janeiro' },
-  { sigla: 'RN', nome: 'Rio Grande do Norte' },
-  { sigla: 'RS', nome: 'Rio Grande do Sul' },
-  { sigla: 'RO', nome: 'Rondônia' },
-  { sigla: 'RR', nome: 'Roraima' },
-  { sigla: 'SC', nome: 'Santa Catarina' },
-  { sigla: 'SP', nome: 'São Paulo' },
-  { sigla: 'SE', nome: 'Sergipe' },
-  { sigla: 'TO', nome: 'Tocantins' }
-]
+
 
 export function Colaboradores({ }: ColaboradoresProps) {
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
   const [partners, setPartners] = useState<Partial<Partner>[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [locations, setLocations] = useState<Location[]>([])
-  const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
+  const [, setTeams] = useState<{ id: string; name: string }[]>([])
 
   // Lookup Tables State
   const [rateios, setRateios] = useState<{ id: string; name: string }[]>([])
@@ -82,7 +67,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [terminationInitiatives, setTerminationInitiatives] = useState<{ id: string; name: string }[]>([])
   const [terminationTypes, setTerminationTypes] = useState<{ id: string; name: string }[]>([])
   const [terminationReasons, setTerminationReasons] = useState<{ id: string; name: string }[]>([])
-  const [costCenters, setCostCenters] = useState<{ id: string; name: string }[]>([])
+  const [, setCostCenters] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
@@ -103,10 +88,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
 
-  const getLookupName = (list: { id: string; name: string }[], id?: string) => {
-    if (!id) return ''
-    return list.find(i => i.id === id)?.name || ''
-  }
+
 
   // Options for FilterSelect
   const liderOptions = React.useMemo(() => [
@@ -234,52 +216,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     }
   }, [selectedColaborador, activeDetailTab])
 
-  const toTitleCase = (str: string) => {
-    if (!str) return ''
-    const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
-    const acronyms = ['clt', 'pj', 'cpf', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
-    return str.toLowerCase().split(' ').map(word => {
-      if (romanNumerals.includes(word) || acronyms.includes(word)) return word.toUpperCase();
-      return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
-    }).join(' ');
-  }
 
-
-
-  const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
-  const maskCPF = (v: string) => {
-    v = v.replace(/\D/g, '')
-    v = v.replace(/(\d{3})(\d)/, '$1.$2')
-    v = v.replace(/(\d{3})(\d)/, '$1.$2')
-    v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-    return v.slice(0, 14)
-  }
-  const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
-  const maskRG = (v: string) => {
-    v = v.replace(/\D/g, '')
-    v = v.replace(/(\d{8})(\d{1})/, '$1-$2') // Formato comum: 99999999-9
-    return v.slice(0, 10)
-  }
-  const maskPhone = (v: string) => {
-    const raw = v.replace(/\D/g, '')
-    if (raw.length <= 10) return raw.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').slice(0, 14)
-    return raw.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').slice(0, 15)
-  }
-
-  const formatDateToDisplay = (isoDate: string | undefined | null) => {
-    if (!isoDate) return ''
-    if (isoDate.includes('/')) return isoDate
-    const cleanDate = isoDate.split('T')[0]
-    const [y, m, d] = cleanDate.split('-')
-    return `${d}/${m}/${y}`
-  }
-
-  const formatDateToISO = (displayDate: string | undefined | null) => {
-    if (!displayDate) return ''
-    if (displayDate.includes('-')) return displayDate
-    const [d, m, y] = displayDate.split('/')
-    return `${y}-${m}-${d}`
-  }
 
   const handleCepBlur = async () => {
     const cep = formData.zip_code?.replace(/\D/g, '')
@@ -667,117 +604,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
   })
 
   const handleExportXLSX = () => {
-    // 1. Sort Data: Active first, then Inactive
-    const sortedData = [...filtered].sort((a, b) => {
-      if (a.status === b.status) return a.name.localeCompare(b.name);
-      return a.status === 'active' ? -1 : 1;
-    });
-
-    const dataToExport = sortedData.map(c => ({
-      'ID': c.id,
-      // 1. DADOS PESSOAIS
-      'Nome Completo': c.name,
-      'CPF': c.cpf,
-      'RG': c.rg,
-      'Data Nascimento': formatDateToDisplay(c.birthday),
-      'Gênero': c.gender,
-      'Estado Civil': c.civil_status,
-      'Possui Filhos?': c.has_children ? 'Sim' : 'Não',
-      'Quantidade de Filhos': c.children_count || 0,
-      'Nome Emergência': c.emergencia_nome,
-      'Telefone Emergência': c.emergencia_telefone,
-      'Parentesco Emergência': c.emergencia_parentesco,
-      'Observações': c.observacoes,
-      'CEP': c.zip_code,
-      'Endereço': c.address,
-      'Número': c.address_number,
-      'Complemento': c.address_complement,
-      'Bairro': c.neighborhood,
-      'Cidade': c.city,
-      'Estado': c.state,
-
-      // 2. DADOS PROFISSIONAIS
-      'OAB Número': c.oabs?.find(o => o.tipo === 'Principal')?.numero || '',
-      'OAB UF': c.oabs?.find(o => o.tipo === 'Principal')?.uf || '',
-      'OAB Validade': formatDateToDisplay(c.oabs?.find(o => o.tipo === 'Principal')?.validade) || '',
-      'Tipo Inscrição OAB': c.oabs?.find(o => o.tipo === 'Principal')?.tipo || '',
-      'PIS/PASEP': c.pis || c.pis_pasep,
-      'Matrícula e-Social': c.matricula_esocial,
-      'Dispensa Militar': c.dispensa_militar,
-      'CTPS': c.ctps || c.ctps_numero,
-      'Série CTPS': c.ctps_serie,
-      'UF CTPS': c.ctps_uf,
-
-      // 3. DADOS DE ESCOLARIDADE
-      'Nível Escolaridade': c.escolaridade_nivel,
-      'Subnível': c.escolaridade_subnivel,
-      'Instituição': c.escolaridade_instituicao,
-      'Curso': c.escolaridade_curso,
-      'Matrícula Escolar': c.escolaridade_matricula,
-      'Semestre': c.escolaridade_semestre,
-      'Previsão Conclusão': formatDateToDisplay(c.escolaridade_previsao_conclusao),
-
-      // 4. DADOS CORPORATIVOS
-      'Status': c.status === 'active' ? 'Ativo' : 'Inativo',
-      'Rateio': getLookupName(rateios, c.rateio_id),
-      'Data Admissão': formatDateToDisplay(c.hire_date),
-      'Motivo Contratação': getLookupName(hiringReasons, c.hiring_reason_id),
-      'Tipo Contrato': c.contract_type,
-      'Email Corporativo': c.email,
-      'Sócio Responsável': (c as any).partner?.name || getLookupName(partners as any[], c.partner_id),
-      'Líder Direto': (c as any).leader?.name || getLookupName(colaboradores as any[], c.leader_id),
-      'Equipe/Área': (c as any).teams?.name || c.equipe,
-      'Cargo': (c as any).roles?.name || c.role,
-      'Centro de Custo': c.centro_custo,
-      'Local': (c as any).locations?.name || c.local,
-
-      // 5. HISTÓRICO (DESLIGAMENTO)
-      'Data Desligamento': formatDateToDisplay(c.termination_date),
-      'Iniciativa Desligamento': getLookupName(terminationInitiatives, c.termination_initiative_id),
-      'Tipo Desligamento': getLookupName(terminationTypes, c.termination_type_id),
-      'Motivo Desligamento': getLookupName(terminationReasons, c.termination_reason_id),
-      'Observações Histórico': c.history_observations
-    }));
-
-    const now = new Date();
-    const formattedDate = now.toLocaleDateString('pt-BR').replace(/\//g, '-');
-    const formattedTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', '-');
-    const fileName = `Colaboradores_${formattedDate}_${formattedTime}.xlsx`;
-
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-
-    // Apply Styles
-    // Range gives us the dimensions Ex: "A1:Z100"
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-
-    // Iterate rows (skipping header 0)
-    for (let R = 1; R <= range.e.r; ++R) {
-      // Check status in the data source (sortedData[R-1])
-      const isInactive = sortedData[R - 1]?.status !== 'active';
-
-      if (isInactive) {
-        // Encode cell address for 'Nome Completo' (Column A -> 0)
-        const cellAddress = XLSX.utils.encode_cell({ r: R, c: 0 }); // 0 is Name column index
-
-        if (!ws[cellAddress]) continue;
-
-        // Apply Red Font Style
-        ws[cellAddress].s = {
-          font: {
-            color: { rgb: "FF0000" },
-            bold: true
-          }
-        };
-      }
-    }
-
-    // Auto-width for columns (Optional but good)
-    const wscols = Object.keys(dataToExport[0] || {}).map(() => ({ wch: 20 }));
-    ws['!cols'] = wscols;
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Colaboradores");
-    XLSX.writeFile(wb, fileName);
+    exportColaboradoresXLSX({
+      filtered,
+      rateios,
+      hiringReasons,
+      partners,
+      colaboradores,
+      terminationInitiatives,
+      terminationTypes,
+      terminationReasons
+    })
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1080,67 +916,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
     isEditMode: boolean = false,
     currentData: Partial<Collaborator> = {}
   ) => {
-    const currentSteps = getFormSteps(currentData);
     return (
-      <div className="absolute inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-        <div className="bg-white rounded-[2rem] w-full max-w-7xl max-h-[95vh] flex overflow-hidden animate-in zoom-in-50 duration-300 shadow-2xl border border-gray-200 relative">
-
-          {/* Left Sidebar */}
-          <div className="w-80 bg-white border-r border-gray-100 flex flex-col py-10 px-6 shrink-0 overflow-y-auto no-scrollbar">
-            {/* Photo Area */}
-            <div className="mb-10 flex justify-center">
-              {sidebarContent}
-            </div>
-
-            {/* Vertical Tabs */}
-            <div className="space-y-1 w-full">
-              {currentSteps.map((step) => {
-                const Icon = step.icon
-                const isActive = activeTab === step.id
-                return (
-                  <button
-                    key={step.id}
-                    onClick={() => setActiveTab(step.id)}
-                    className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left relative group ${isActive
-                      ? isEditMode ? 'text-amber-600 bg-amber-50 font-bold shadow-sm' : 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm'
-                      : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
-                      }`}
-                  >
-                    <div className={`p-1 rounded-lg transition-colors ${isActive ? (isEditMode ? 'text-amber-600' : 'text-[#1e3a8a]') : 'text-gray-300 group-hover:text-gray-500'}`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <span className="text-[10px] uppercase tracking-[0.2em]">{step.label}</span>
-                    {isActive && <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 ${isEditMode ? 'bg-amber-500' : 'bg-[#1e3a8a]'} rounded-r-full`} />}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Right Content */}
-          <div className="flex-1 flex flex-col min-w-0 bg-[#fafafa]">
-            {/* Content Header (Title + Close) */}
-            <div className="px-12 py-8 pb-2 flex justify-between items-center shrink-0">
-              <h2 className="text-3xl font-black text-[#0a192f] tracking-tight">{title}</h2>
-              <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-all text-gray-400 hover:text-red-500">
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            {/* Scrollable Body */}
-            <div className="flex-1 overflow-y-auto px-12 py-6 pb-32 custom-scrollbar">
-              {children}
-            </div>
-
-            {/* Footer */}
-            {footer && (
-              <div className="px-12 py-6 bg-white border-t border-gray-100 flex justify-end gap-3 shrink-0">
-                {footer}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <CollaboratorModalLayout
+        title={title}
+        onClose={onClose}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        children={children}
+        footer={footer}
+        sidebarContent={sidebarContent}
+        isEditMode={isEditMode}
+        currentSteps={getFormSteps(currentData)}
+      />
     )
   }
 
@@ -1156,85 +943,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
     isEditMode: boolean = false,
     currentData: Partial<Collaborator> = {}
   ) => {
-    const currentSteps = getFormSteps(currentData);
     return (
-      <div className="absolute inset-0 z-[100] bg-gray-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
-
-        {/* PAGE HEADER COMPLETO - Restored to System Standard */}
-        {/* PAGE HEADER COMPLETO - Restored to System Standard */}
-        <div className="flex items-center justify-between bg-white px-8 py-4 border-b border-gray-200 shadow-sm shrink-0">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onClose}
-              className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-all hover:-translate-x-1 shrink-0"
-              title="Voltar"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <div className="flex items-center gap-4 border-l border-gray-200 pl-4 ml-2">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
-                <Users className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-                  {title}
-                </h1>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">
-                  {isEditMode ? 'Formulário de Cadastro' : 'Visualização de Perfil'}
-                </p>
-              </div>
-            </div>
-          </div>
-          {footer && (
-            <div className="flex items-center gap-4">
-              {footer}
-            </div>
-          )}
-        </div>
-
-        {/* PAGE BODY */}
-        <div className="flex-1 flex overflow-hidden w-full max-w-[1700px] mx-auto bg-white border-x border-gray-100 shadow-sm">
-
-          {/* Left Sidebar */}
-          <div className="w-80 bg-gray-50/50 border-r border-gray-100 flex flex-col py-6 px-6 shrink-0 overflow-y-auto no-scrollbar">
-            {/* Photo Area */}
-            <div className="mb-6 flex justify-center">
-              {sidebarContent}
-            </div>
-
-            {/* Vertical Tabs */}
-            <div className="space-y-0.5 w-full">
-              {currentSteps.map((step) => {
-                const Icon = step.icon
-                const isActive = activeTab === step.id
-                return (
-                  <button
-                    key={step.id}
-                    onClick={() => setActiveTab(step.id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left relative group ${isActive
-                      ? isEditMode ? 'text-amber-600 bg-amber-50 font-bold shadow-sm border border-amber-100/50' : 'text-[#1e3a8a] bg-blue-50 font-bold shadow-sm border border-blue-100/50'
-                      : 'text-gray-500 hover:bg-white hover:shadow-sm hover:border-gray-100 border border-transparent'
-                      }`}
-                  >
-                    <div className={`p-1.5 rounded-lg transition-colors ${isActive ? (isEditMode ? 'text-amber-600 bg-amber-100' : 'text-white bg-[#1e3a8a]') : 'text-gray-400 group-hover:text-gray-600 bg-gray-100 group-hover:bg-gray-200'}`}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <span className="text-[10px] uppercase tracking-[0.2em]">{step.label}</span>
-                    {isActive && <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 ${isEditMode ? 'bg-amber-500' : 'bg-[#1e3a8a]'} rounded-r-full`} />}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Right Content */}
-          <div className="flex-1 overflow-y-auto bg-white custom-scrollbar">
-            <div className="max-w-5xl mx-auto px-12 py-10 pb-32">
-              {children}
-            </div>
-          </div>
-        </div>
-      </div>
+      <CollaboratorPageLayout
+        title={title}
+        onClose={onClose}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        children={children}
+        footer={footer}
+        sidebarContent={sidebarContent}
+        isEditMode={isEditMode}
+        currentSteps={getFormSteps(currentData)}
+      />
     )
   }
 
@@ -1696,7 +1416,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             return;
                           }
 
-                          const response = await fetch('https://hook.us2.make.com/5lv612jlqx6cqnfwu5qnivxgsvkcphwq', {
+                          await fetch('https://hook.us2.make.com/5lv612jlqx6cqnfwu5qnivxgsvkcphwq', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -1794,18 +1514,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
     return (
       <div className={`${sz} rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center font-black text-white shadow-md`}>
         {name?.charAt(0).toUpperCase()}
-      </div>
-    )
-  }
-
-  function DetailRow({ label, value, icon: Icon }: any) {
-    return (
-      <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 transition-all hover:bg-white hover:shadow-sm">
-        <p className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-1 mb-1 tracking-widest">
-          {Icon && <Icon className="h-3 w-3" />}
-          {label}
-        </p>
-        <p className="text-sm font-bold text-[#0a192f] break-words">{value || '-'}</p>
       </div>
     )
   }

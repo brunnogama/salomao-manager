@@ -27,5 +27,40 @@ export const formatDateDisplay = (str?: string) => {
 }
 
 export const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
-export const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').slice(0, 14)
+
+export const maskCPF = (v: string) => {
+  let val = v.replace(/\D/g, '')
+  val = val.replace(/(\d{3})(\d)/, '$1.$2')
+  val = val.replace(/(\d{3})(\d)/, '$1.$2')
+  val = val.replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+  return val.slice(0, 14)
+}
+
 export const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
+
+export const maskRG = (v: string) => {
+  let val = v.replace(/\D/g, '')
+  val = val.replace(/(\d{8})(\d{1})/, '$1-$2') // Formato comum: 99999999-9
+  return val.slice(0, 10)
+}
+
+export const maskPhone = (v: string) => {
+  const raw = v.replace(/\D/g, '')
+  if (raw.length <= 10) return raw.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').slice(0, 14)
+  return raw.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').slice(0, 15)
+}
+
+export const formatDateToDisplay = (isoDate: string | undefined | null) => {
+  if (!isoDate) return ''
+  if (isoDate.includes('/')) return isoDate
+  const cleanDate = isoDate.split('T')[0]
+  const [y, m, d] = cleanDate.split('-')
+  return `${d}/${m}/${y}`
+}
+
+export const formatDateToISO = (displayDate: string | undefined | null) => {
+  if (!displayDate) return ''
+  if (displayDate.includes('-')) return displayDate
+  const [d, m, y] = displayDate.split('/')
+  return `${y}-${m}-${d}`
+}

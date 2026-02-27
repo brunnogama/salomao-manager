@@ -34,163 +34,17 @@ import { useColaboradores } from '../hooks/useColaboradores'
 import { Collaborator } from '../../../types/controladoria'
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 
-// --- Types & Interfaces ---
-
-type Segment = 'Administrativo' | 'Jurídico'
-
-// --- Helper Functions ---
-
-const normalizeString = (str?: string) => {
-  if (!str) return ''
-  return str.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
-
-const getSegment = (colaborador: Collaborator): Segment => {
-  const area = normalizeString(colaborador.area)
-  if (area === 'administrativa' || area === 'administrativo') return 'Administrativo'
-  if (area === 'juridica' || area === 'juridico') return 'Jurídico'
-
-  const roleName = colaborador.roles?.name || String(colaborador.role || '')
-  const teamName = colaborador.teams?.name || String(colaborador.equipe || '')
-
-  const role = normalizeString(roleName)
-  const team = normalizeString(teamName)
-
-  const legalKeywords = ['advogado', 'juridico', 'estagiario de direito', 'estagiario', 'socio']
-
-  if (legalKeywords.some(k => role.includes(k) || team.includes(k))) {
-    return 'Jurídico'
-  }
-
-  return 'Administrativo'
-}
-
-const isActiveAtDate = (c: Collaborator, date: Date | null) => {
-  const hireDate = c.hire_date ? new Date(c.hire_date + 'T12:00:00') : null
-  const termDate = c.termination_date ? new Date(c.termination_date + 'T12:00:00') : null
-
-  if (!hireDate) return false
-  if (date && hireDate > date) return false
-  if (termDate && date && termDate <= date) return false
-
-  return true
-}
-
-const getYearFromDate = (dateStr?: string) => {
-  if (!dateStr) return null
-  return new Date(dateStr + 'T12:00:00').getFullYear()
-}
-
-const calculateTenure = (hireDateStr: string, refDate: Date | null = new Date()) => {
-  const hireDate = new Date(hireDateStr + 'T12:00:00')
-  const actualRefDate = refDate || new Date()
-  const diffTime = Math.abs(actualRefDate.getTime() - hireDate.getTime())
-  const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25)
-  return diffYears
-}
-
-const formatYears = (years: number | undefined | null) => {
-  if (years === undefined || years === null || isNaN(years)) return '0 anos'
-  if (years === 0) return '0 anos'
-  if (years < 1) return '< 1 ano'
-  return `${years.toFixed(1)} anos`.replace('.', ',')
-}
-
-// --- Custom Label (Replicação do balão azul do Datalabels) ---
-// --- Custom Label (Replicação do balão azul do Datalabels) ---
-const renderCustomDataLabel = (props: any) => {
-  const { x, y, value, fill, position } = props;
-
-  // Explicit positioning logic
-  let yOffset = -35 // Default Up (Top)
-
-  if (position === 'bottom') {
-    yOffset = 15 // Shift down below the point
-  } else {
-    yOffset = -35 // Shift up above the point
-  }
-
-  const formattedValue = typeof value === 'number' ? value.toFixed(1).replace('.', ',') : value
-
-  return (
-    <g>
-      <rect
-        x={x - 17}
-        y={y + yOffset} // Adjusted Y
-        width={34}
-        height={18}
-        rx={4}
-        fill={fill}
-      />
-      <text
-        x={x}
-        y={y + yOffset + 12} // Centered in rect
-        fill="white"
-        textAnchor="middle"
-        fontSize="10px"
-        fontWeight="bold"
-      >
-        {formattedValue}
-      </text>
-    </g>
-  );
-};
-
-const renderCustomPieLabel = (props: any) => {
-  const { cx, cy, midAngle, outerRadius, value, fill } = props;
-
-  if (!cx || !cy) return null;
-
-  const RADIAN = Math.PI / 180;
-  const x = cx + (outerRadius + 30) * Math.cos(-midAngle * RADIAN);
-  const y = cy + (outerRadius + 30) * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <g>
-      <rect
-        x={x - 12}
-        y={y - 9}
-        width={24}
-        height={18}
-        rx={4}
-        fill={fill} // Use slice color
-      />
-      <text
-        x={x}
-        y={y}
-        fill="white"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize="10px"
-        fontWeight="bold"
-      >
-        {value}
-      </text>
-    </g>
-  );
-};
-
-// --- Custom Tooltip ---
-const renderCustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-3 border border-gray-200 shadow-xl rounded-xl min-w-[140px] z-50">
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center justify-between gap-3 mb-1">
-            <span className="text-[10px] font-bold uppercase" style={{ color: entry.color }}>
-              {entry.name}
-            </span>
-            <span className="text-xs font-black text-gray-700">
-              {typeof entry.value === 'number' ? entry.value.toFixed(1) + ' anos' : entry.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    )
-  }
-  return null
-}
+import {
+  getSegment,
+  getYearFromDate,
+  calculateTenure,
+  isActiveAtDate,
+  formatYears,
+  normalizeString
+} from '../utils/rhChartUtils'
+import { RHChartTooltip } from '../components/RHChartTooltip'
+import { RHChartDataLabel } from '../components/RHChartDataLabel'
+import { RHChartPieLabel } from '../components/RHChartPieLabel'
 
 // --- Main Component ---
 
@@ -671,7 +525,7 @@ export function RHTempoCasa() {
                 tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }}
                 unit="a"
               />
-              <Tooltip content={renderCustomTooltip} />
+              <Tooltip content={RHChartTooltip} />
               <Legend />
               <Area
                 type="monotone"
@@ -682,7 +536,7 @@ export function RHTempoCasa() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.primary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.primary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Administrativo" content={(props) => renderCustomDataLabel({ ...props, fill: COLORS.primary, position: "top" })} />
+                <LabelList dataKey="Administrativo" content={(props) => RHChartDataLabel({ ...props, fill: COLORS.primary, position: "top" })} />
               </Area>
               <Area
                 type="monotone"
@@ -693,7 +547,7 @@ export function RHTempoCasa() {
                 dot={{ r: 4, fill: '#ffffff', stroke: COLORS.secondary, strokeWidth: 2 }}
                 activeDot={{ r: 6, fill: COLORS.secondary, strokeWidth: 0 }}
               >
-                <LabelList dataKey="Jurídico" content={(props) => renderCustomDataLabel({ ...props, fill: COLORS.secondary, position: "bottom" })} />
+                <LabelList dataKey="Jurídico" content={(props) => RHChartDataLabel({ ...props, fill: COLORS.secondary, position: "bottom" })} />
               </Area>
             </AreaChart>
           </ResponsiveContainer>
@@ -727,7 +581,7 @@ export function RHTempoCasa() {
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                   width={120}
                 />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} content={renderCustomTooltip} />
+                <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                 <Bar dataKey="avg" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
                   {tenureByAreaData.map((entry, index) => {
                     const normalized = normalizeString(entry.name)
@@ -769,7 +623,7 @@ export function RHTempoCasa() {
                         tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                         width={250}
                       />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={renderCustomTooltip} />
+                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                       <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
                         <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
                       </Bar>
@@ -795,7 +649,7 @@ export function RHTempoCasa() {
                         tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                         width={250}
                       />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={renderCustomTooltip} />
+                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                       <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
                         <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
                       </Bar>
@@ -821,7 +675,7 @@ export function RHTempoCasa() {
                         tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                         width={250}
                       />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={renderCustomTooltip} />
+                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                       <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
                         <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
                       </Bar>
@@ -857,14 +711,14 @@ export function RHTempoCasa() {
                 outerRadius={95} // Reduced to give labels more room
                 paddingAngle={5}
                 dataKey="value"
-                label={renderCustomPieLabel}
+                label={RHChartPieLabel}
                 labelLine={false}
               >
                 {legalExperienceData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS.pie[index % COLORS.pie.length]} />
                 ))}
               </Pie>
-              <Tooltip content={renderCustomTooltip} />
+              <Tooltip content={RHChartTooltip} />
               <Legend verticalAlign="bottom" height={36} />
             </PieChart>
           </ResponsiveContainer>

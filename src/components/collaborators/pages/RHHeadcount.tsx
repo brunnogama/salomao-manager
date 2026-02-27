@@ -34,68 +34,14 @@ import { useColaboradores } from '../hooks/useColaboradores'
 import { Collaborator } from '../../../types/controladoria'
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 
-// --- Types & Interfaces ---
-
-type Segment = 'Administrativo' | 'Jurídico'
-
-// --- Helper Functions ---
-
-const normalizeString = (str?: string) => {
-  if (!str) return ''
-  return str.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
-
-const getSegment = (colaborador: Collaborator): Segment => {
-  const area = normalizeString(colaborador.area)
-  if (area === 'administrativa' || area === 'administrativo') return 'Administrativo'
-  if (area === 'juridica' || area === 'juridico') return 'Jurídico'
-
-  const roleName = colaborador.roles?.name || String(colaborador.role || '')
-  const teamName = colaborador.teams?.name || String(colaborador.equipe || '')
-
-  const role = normalizeString(roleName)
-  const team = normalizeString(teamName)
-
-  const legalKeywords = ['advogado', 'juridico', 'estagiario de direito', 'estagiario', 'socio']
-
-  if (legalKeywords.some(k => role.includes(k) || team.includes(k))) {
-    return 'Jurídico'
-  }
-
-  return 'Administrativo'
-}
-
-const isActiveAtDate = (c: Collaborator, date: Date) => {
-  const hireDate = c.hire_date ? new Date(c.hire_date + 'T12:00:00') : null
-  const termDate = c.termination_date ? new Date(c.termination_date + 'T12:00:00') : null
-
-  if (!hireDate) return false
-  if (hireDate > date) return false
-  if (termDate && termDate <= date) return false
-
-  return true
-}
-
-const getYearFromDate = (dateStr?: string) => {
-  if (!dateStr) return null
-  return new Date(dateStr + 'T12:00:00').getFullYear()
-}
-
-const calculateAge = (birthday?: string) => {
-  if (!birthday) return null
-  try {
-    const birthDate = new Date(birthday + 'T12:00:00')
-    const today = new Date()
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const m = today.getMonth() - birthDate.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-    return age
-  } catch (e) {
-    return null
-  }
-}
+import {
+  getSegment,
+  isActiveAtDate,
+  getYearFromDate,
+  calculateAge,
+  normalizeString
+} from '../utils/rhChartUtils'
+import { RHChartTooltip } from '../components/RHChartTooltip'
 
 
 // --- Main Component ---
@@ -464,33 +410,6 @@ export function RHHeadcount() {
     }
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border border-gray-200 shadow-xl rounded-xl min-w-[140px] z-50">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex flex-col mb-1 last:mb-0">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[10px] font-bold uppercase" style={{ color: entry.color }}>
-                  {entry.name}
-                </span>
-                <span className="text-xs font-black text-gray-700">{entry.value}</span>
-              </div>
-              {entry.payload && entry.payload.avgAge !== undefined && (
-                <div className="text-right mt-0.5">
-                  <span className="text-[9px] font-bold text-gray-400">
-                    MÉDIA: {entry.payload.avgAge} ANOS
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )
-    }
-    return null
-  }
 
 
   if (loading) {
@@ -615,7 +534,7 @@ export function RHHeadcount() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={RHChartTooltip} />
                 <Legend />
                 <Bar dataKey="Administrativo" stackId="a" fill={COLORS.primary} radius={[0, 0, 4, 4]}>
                 </Bar>
@@ -655,7 +574,7 @@ export function RHHeadcount() {
                         tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                         width={250}
                       />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                       <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
                         <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
                       </Bar>
@@ -681,7 +600,7 @@ export function RHHeadcount() {
                         tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                         width={250}
                       />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                       <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
                         <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
                       </Bar>
@@ -707,7 +626,7 @@ export function RHHeadcount() {
                         tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                         width={250}
                       />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                       <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
                         <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
                       </Bar>
@@ -803,7 +722,7 @@ export function RHHeadcount() {
                   })}
                 </Pie>
                 <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={RHChartTooltip} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -839,7 +758,7 @@ export function RHHeadcount() {
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                   width={90}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
+                <Tooltip content={RHChartTooltip} cursor={{ fill: '#f3f4f6' }} />
                 <Legend iconType="circle" />
                 <Bar
                   dataKey="Masculino"
@@ -891,7 +810,7 @@ export function RHHeadcount() {
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                   width={90}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
+                <Tooltip content={RHChartTooltip} cursor={{ fill: '#f3f4f6' }} />
                 <Legend iconType="circle" />
                 <Bar
                   dataKey="Masculino"
@@ -943,7 +862,7 @@ export function RHHeadcount() {
                   tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
                   width={140}
                 />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                 <Bar dataKey="value" name="Qtd" radius={[0, 4, 4, 0]} barSize={20} fill={COLORS.secondary}>
                   <LabelList dataKey="value" position="right" fill={COLORS.secondary} fontSize={10} fontWeight={700} />
                 </Bar>
@@ -969,7 +888,7 @@ export function RHHeadcount() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltip />} />
+                <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                 <Bar dataKey="value" name="Qtd" radius={[4, 4, 0, 0]} barSize={40} fill={COLORS.secondary}>
                   <LabelList dataKey="value" position="top" fill={COLORS.secondary} fontSize={10} fontWeight={700} />
                 </Bar>

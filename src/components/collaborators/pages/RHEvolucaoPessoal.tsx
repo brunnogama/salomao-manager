@@ -27,60 +27,15 @@ import {
 } from 'recharts'
 import { Scale } from 'lucide-react'
 import { useColaboradores } from '../hooks/useColaboradores'
-import { Collaborator } from '../../../types/controladoria'
+
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 
-// --- Types & Interfaces ---
-
-type Segment = 'Administrativo' | 'Jurídico'
-
-// --- Helper Functions ---
-
-const normalizeString = (str?: string) => {
-  if (!str) return ''
-  return str.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
-
-const getSegment = (colaborador: Collaborator): Segment => {
-  // 1. Try to use the explicit 'area' field if available
-  const area = normalizeString(colaborador.area)
-  if (area === 'administrativa' || area === 'administrativo') return 'Administrativo'
-  if (area === 'juridica' || area === 'juridico') return 'Jurídico'
-
-  // 2. Fallback to keywords in Role/Team
-  // Access safe navigation for roles.name because role might be ID now
-  const roleName = colaborador.roles?.name || String(colaborador.role || '')
-  const teamName = colaborador.teams?.name || String(colaborador.equipe || '')
-
-  const role = normalizeString(roleName)
-  const team = normalizeString(teamName)
-
-  // Keywords indicating Legal sector
-  const legalKeywords = ['advogado', 'juridico', 'estagiario de direito', 'estagiario', 'socio']
-
-  // Checks
-  if (legalKeywords.some(k => role.includes(k) || team.includes(k))) {
-    return 'Jurídico'
-  }
-
-  return 'Administrativo'
-}
-
-const isActiveAtDate = (c: Collaborator, date: Date) => {
-  const hireDate = c.hire_date ? new Date(c.hire_date + 'T12:00:00') : null
-  const termDate = c.termination_date ? new Date(c.termination_date + 'T12:00:00') : null
-
-  if (!hireDate) return false
-  if (hireDate > date) return false
-  if (termDate && termDate <= date) return false
-
-  return true
-}
-
-const getYearFromDate = (dateStr?: string) => {
-  if (!dateStr) return null
-  return new Date(dateStr + 'T12:00:00').getFullYear()
-}
+import {
+  getSegment,
+  isActiveAtDate,
+  getYearFromDate,
+  Segment
+} from '../utils/rhChartUtils'
 
 const formatCompact = (val: number | undefined | null) => {
   if (val === undefined || val === null || isNaN(val)) return '0'
@@ -174,34 +129,6 @@ export function RHEvolucaoPessoal() {
   }, [colaboradores, filterLocal, filterPartner])
 
   // --- KPI Calculations ---
-  // Determine reference date for KPIs
-  const referenceDate = useMemo(() => {
-    const now = new Date()
-    let year = now.getFullYear()
-    let month = now.getMonth()
-
-    if (filterYear !== 'todos' && filterYear !== 'Todos os anos') {
-      year = parseInt(filterYear)
-      // If specific year selected, check month
-      if (filterMonth !== 'todos') {
-        month = parseInt(filterMonth)
-        // Set to last day of that month
-        return new Date(year, month + 1, 0, 23, 59, 59)
-      } else {
-        // If only year selected, use end of year (or current date if current year?)
-        // Usually "2023" means "End of 2023" for stats
-        if (year === now.getFullYear()) return now
-        return new Date(year, 11, 31, 23, 59, 59)
-      }
-    } else {
-      // If "Todos" years selected, but specific month? (Weird case, assume current year's month)
-      if (filterMonth !== 'todos') {
-        month = parseInt(filterMonth)
-        return new Date(year, month + 1, 0, 23, 59, 59)
-      }
-    }
-    return now
-  }, [filterYear, filterMonth])
 
   const totalActive = useMemo(() => {
     return filteredData.filter(c => c.status === 'active').length

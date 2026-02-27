@@ -33,132 +33,19 @@ import {
   Cell
 } from 'recharts'
 import { useColaboradores } from '../hooks/useColaboradores'
-import { Collaborator } from '../../../types/controladoria'
+
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 
-// --- Types & Interfaces ---
-type Segment = 'Administrativo' | 'Jurídico'
-
-// --- Helper Functions ---
-const normalizeString = (str?: string) => {
-  if (!str) return ''
-  return str.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
-
-const getSegment = (colaborador: Collaborator): Segment => {
-  const area = normalizeString(colaborador.area)
-  if (area === 'administrativa' || area === 'administrativo') return 'Administrativo'
-  if (area === 'juridica' || area === 'juridico') return 'Jurídico'
-
-  const roleName = colaborador.roles?.name || String(colaborador.role || '')
-  const teamName = colaborador.teams?.name || String(colaborador.equipe || '')
-
-  const role = normalizeString(roleName)
-  const team = normalizeString(teamName)
-
-  const legalKeywords = ['advogado', 'juridico', 'estagiario de direito', 'estagiario', 'socio']
-
-  if (legalKeywords.some(k => role.includes(k) || team.includes(k))) {
-    return 'Jurídico'
-  }
-
-  return 'Administrativo'
-}
-
-const getYearFromDate = (dateStr?: string) => {
-  if (!dateStr) return null
-  return new Date(dateStr + 'T12:00:00').getFullYear()
-}
-
-const calculateTenure = (hireDateStr: string, termDateStr: string) => {
-  const hireDate = new Date(hireDateStr + 'T12:00:00')
-  const termDate = new Date(termDateStr + 'T12:00:00')
-  const diffTime = Math.abs(termDate.getTime() - hireDate.getTime())
-  const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25)
-  return diffYears
-}
-
-// Check if collaborator was active at ANY time during the month
-const wasActiveInMonth = (c: Collaborator, year: number, month: number) => {
-  const hireDate = c.hire_date ? new Date(c.hire_date + 'T12:00:00') : null
-  const termDate = c.termination_date ? new Date(c.termination_date + 'T12:00:00') : null
-
-  const startOfMonth = new Date(year, month, 1)
-  const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59)
-
-  if (!hireDate) return false
-  if (hireDate > endOfMonth) return false
-  if (termDate && termDate < startOfMonth) return false
-
-  return true
-}
-
-const formatYears = (years: number | undefined | null) => {
-  if (years === undefined || years === null || isNaN(years)) return '0 anos'
-  if (years === 0) return '0 anos'
-  if (years < 1) return '< 1 ano'
-  return `${years.toFixed(1)} anos`.replace('.', ',')
-}
-
-// --- Custom Labels & Tooltips ---
-const renderCustomDataLabel = (props: any) => {
-  const { x, y, value, fill, position } = props;
-  let yOffset = -35
-  if (position === 'bottom') yOffset = 15
-
-  const formattedValue = typeof value === 'number' ?
-    (Number.isInteger(value) ? value : value.toFixed(1).replace('.', ','))
-    : value
-
-  return (
-    <g>
-      <rect x={x - 17} y={y + yOffset} width={34} height={18} rx={4} fill={fill} />
-      <text x={x} y={y + yOffset + 12} fill="white" textAnchor="middle" fontSize="10px" fontWeight="bold">
-        {formattedValue}{props.percent ? '%' : ''}
-      </text>
-    </g>
-  );
-};
-
-const renderCustomPieLabel = (props: any) => {
-  const { cx, cy, midAngle, outerRadius, value, fill } = props;
-  if (!cx || !cy) return null;
-  const RADIAN = Math.PI / 180;
-  const x = cx + (outerRadius + 30) * Math.cos(-midAngle * RADIAN);
-  const y = cy + (outerRadius + 30) * Math.sin(-midAngle * RADIAN);
-  return (
-    <g>
-      <rect x={x - 12} y={y - 9} width={24} height={18} rx={4} fill={fill} />
-      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="10px" fontWeight="bold">
-        {value}
-      </text>
-    </g>
-  );
-};
-
-const renderCustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-3 border border-gray-200 shadow-xl rounded-xl min-w-[140px] z-50">
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center justify-between gap-3 mb-1">
-            <span className="text-[10px] font-bold uppercase" style={{ color: entry.color }}>
-              {entry.name}
-            </span>
-            <span className="text-xs font-black text-gray-700">
-              {typeof entry.value === 'number' ?
-                (Number.isInteger(entry.value) ? entry.value : entry.value.toFixed(1))
-                : entry.value}
-              {entry.dataKey && String(entry.dataKey).toLowerCase().includes('taxa') ? '%' : ''}
-            </span>
-          </div>
-        ))}
-      </div>
-    )
-  }
-  return null
-}
+import {
+  getSegment,
+  getYearFromDate,
+  calculateTenure,
+  wasActiveInMonth,
+  formatYears
+} from '../utils/rhChartUtils'
+import { RHChartTooltip } from '../components/RHChartTooltip'
+import { RHChartDataLabel } from '../components/RHChartDataLabel'
+import { RHChartPieLabel } from '../components/RHChartPieLabel'
 
 export function RHTurnover() {
   const { colaboradores, loading, teams: masterTeams, partners: masterPartners } = useColaboradores()
@@ -299,7 +186,7 @@ export function RHTurnover() {
 
   const tempoCasaDesligados = useMemo(() => {
     if (filteredTerminations.length === 0) return 0
-    const sum = filteredTerminations.reduce((acc, c) => acc + (c.hire_date ? calculateTenure(c.hire_date, c.termination_date!) : 0), 0)
+    const sum = filteredTerminations.reduce((acc, c) => acc + (c.hire_date ? calculateTenure(c.hire_date, null, c.termination_date!) : 0), 0)
     return sum / filteredTerminations.length
   }, [filteredTerminations])
 
@@ -352,7 +239,7 @@ export function RHTurnover() {
 
     filteredTerminations.forEach(c => {
       if (!c.hire_date) return
-      const years = calculateTenure(c.hire_date, c.termination_date!)
+      const years = calculateTenure(c.hire_date, null, c.termination_date!)
       if (years < 0.5) buckets['< 6 meses']++
       else if (years <= 1) buckets['6m a 1 ano']++
       else if (years <= 3) buckets['1 a 3 anos']++
@@ -553,10 +440,10 @@ export function RHTurnover() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} dy={10} />
                 <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} unit="%" />
                 <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} />
-                <Tooltip content={renderCustomTooltip} />
+                <Tooltip content={RHChartTooltip} />
                 <Legend />
                 <Area yAxisId="left" type="monotone" dataKey="Taxa de Turnover" stroke={COLORS.danger} fill="url(#gradTurnover)" strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: COLORS.danger, strokeWidth: 2 }}>
-                  <LabelList dataKey="Taxa de Turnover" content={(props) => renderCustomDataLabel({ ...props, fill: COLORS.danger, position: "top", percent: true })} />
+                  <LabelList dataKey="Taxa de Turnover" content={(props) => RHChartDataLabel({ ...props, fill: COLORS.danger, position: "top", percent: true })} />
                 </Area>
                 <Bar yAxisId="right" dataKey="Desligamentos" fill={COLORS.primary} radius={[4, 4, 0, 0]} barSize={20} opacity={0.3} />
               </AreaChart>
@@ -587,13 +474,13 @@ export function RHTurnover() {
                     outerRadius={90}
                     paddingAngle={5}
                     dataKey="value"
-                    label={renderCustomPieLabel}
+                    label={RHChartPieLabel}
                     labelLine={false}
                   >
                     <Cell fill={COLORS.pie[0]} /> {/* Blue for Vol */}
                     <Cell fill={COLORS.pie[1]} /> {/* Red for Invol */}
                   </Pie>
-                  <Tooltip content={renderCustomTooltip} />
+                  <Tooltip content={RHChartTooltip} />
                   <Legend verticalAlign="bottom" height={36} />
                 </PieChart>
               </ResponsiveContainer>
@@ -626,7 +513,7 @@ export function RHTurnover() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 10 }} />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} content={renderCustomTooltip} />
+                <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                 <Bar dataKey="value" fill={COLORS.primary} radius={[4, 4, 0, 0]} barSize={30} name="Qtd">
                   <LabelList dataKey="value" position="top" fill={COLORS.primary} fontSize={10} fontWeight={700} />
                 </Bar>
@@ -654,7 +541,7 @@ export function RHTurnover() {
                 <BarChart data={terminationsByRole} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 9, fontWeight: 600 }} width={120} />
-                  <Tooltip cursor={{ fill: '#f3f4f6' }} content={renderCustomTooltip} />
+                  <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                   <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 4, 4, 0]} barSize={15} name="Qtd">
                     <LabelList dataKey="count" position="right" fill={COLORS.text} fontSize={10} fontWeight={700} />
                   </Bar>
@@ -671,7 +558,7 @@ export function RHTurnover() {
                 <BarChart data={terminationsByTeam} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 9, fontWeight: 600 }} width={120} />
-                  <Tooltip cursor={{ fill: '#f3f4f6' }} content={renderCustomTooltip} />
+                  <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
                   <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={15} name="Qtd">
                     <LabelList dataKey="count" position="right" fill={COLORS.text} fontSize={10} fontWeight={700} />
                   </Bar>
