@@ -100,7 +100,13 @@ export function CertificateDetailsModal({
         if (!file.file_url) return;
         const toastId = toast.loading('Preparando download...');
         try {
-            const { data, error } = await supabase.storage.from('ged-documentos').download(file.file_url);
+            // Extrai o caminho relativo (ex: 'certidoes/123_arquivo.pdf') da URL pública inteira
+            let filePath = file.file_url;
+            if (filePath.includes('/public/ged-documentos/')) {
+                filePath = filePath.split('/public/ged-documentos/')[1];
+            }
+
+            const { data, error } = await supabase.storage.from('ged-documentos').download(filePath);
             if (error) throw error;
             const url = URL.createObjectURL(data);
             const a = document.createElement('a');
