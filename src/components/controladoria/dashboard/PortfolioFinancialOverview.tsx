@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import {
-  Camera, Clock, CheckCircle2, PieChart, FileSignature, HeartHandshake, XCircle
+  Camera, Clock, CheckCircle2, PieChart, FileSignature, HeartHandshake, XCircle, Lightbulb
 } from 'lucide-react';
 import { formatMoney } from './dashboardHelpers';
 
@@ -50,8 +50,11 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
         </div>
 
         {/* Explicação Dinâmica */}
-        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
-          Atualmente, nossa carteira possui <strong>{metrics.geral?.emAnalise || 0}</strong> casos sob análise, <strong>{metrics.geral?.propostasAtivas || 0}</strong> propostas ativas enviadas aos clientes e <strong>{metrics.geral?.fechados || 0}</strong> contratos fechados em andamento. Além disso, contabilizamos <strong>{metrics.geral?.probono || 0}</strong> casos pro bono e um histórico de <strong>{metrics.geral?.rejeitados || 0}</strong> propostas rejeitadas.
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            Atualmente, {metrics.geral?.emAnalise === 0 ? 'não possuímos casos sob análise,' : <>nossa carteira possui <strong>{metrics.geral?.emAnalise}</strong> casos sob análise,</>} {metrics.geral?.propostasAtivas === 0 ? 'nenhuma proposta ativa enviada aos clientes' : <><strong>{metrics.geral?.propostasAtivas}</strong> propostas ativas enviadas aos clientes</>} e {metrics.geral?.fechados === 0 ? 'nenhum contrato fechado em andamento.' : <><strong>{metrics.geral?.fechados}</strong> contratos fechados em andamento.</>} Além disso, {metrics.geral?.probono === 0 ? 'não contabilizamos casos pro bono' : <>contabilizamos <strong>{metrics.geral?.probono}</strong> casos pro bono</>} e {metrics.geral?.rejeitados === 0 ? 'não possuímos histórico de propostas rejeitadas.' : <>um histórico de <strong>{metrics.geral?.rejeitados}</strong> propostas rejeitadas.</>}
+          </div>
         </div>
 
         {/* Cards de Status */}
@@ -174,8 +177,16 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
         </div>
 
         {/* Explicação Dinâmica */}
-        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
-          O valor total da nossa carteira de contratos fechados é de <strong>{formatMoney(totalCarteira)}</strong>, sendo <strong>{formatMoney(metrics.geral?.totalFechadoPL || 0)}</strong> em honorários pró-labore e <strong>{formatMoney(metrics.geral?.totalFechadoExito || 0)}</strong> em estimativa de êxito. Além disso, temos um potencial de <strong>{formatMoney(totalNegociacao)}</strong> em propostas atualmente enviadas aguardando negociação.
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            {totalCarteira === 0 ? (
+              'Ainda não há valor consolidado na carteira de contratos fechados. '
+            ) : (
+              <>O valor total da nossa carteira de contratos fechados é de <strong>{formatMoney(totalCarteira)}</strong>, sendo <strong>{formatMoney(metrics.geral?.totalFechadoPL || 0)}</strong> em honorários pró-labore e <strong>{formatMoney(metrics.geral?.totalFechadoExito || 0)}</strong> em estimativa de êxito. </>
+            )}
+            {totalNegociacao === 0 ? 'Não há potencial financeiro em propostas aguardando negociação no momento.' : <>Além disso, temos um potencial de <strong>{formatMoney(totalNegociacao)}</strong> em propostas atualmente enviadas aguardando negociação.</>}
+          </div>
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-8 flex-1'>

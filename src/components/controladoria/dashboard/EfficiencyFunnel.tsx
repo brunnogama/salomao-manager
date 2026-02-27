@@ -1,4 +1,4 @@
-import { Clock, ArrowRight, XCircle, CheckCircle2, FileText, Users, TrendingDown } from 'lucide-react';
+import { Clock, ArrowRight, XCircle, CheckCircle2, FileText, Users, TrendingDown, Lightbulb } from 'lucide-react';
 
 interface EfficiencyFunnelProps {
   funil: any;
@@ -37,8 +37,17 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
       </div>
 
       {/* Explicação Dinâmica */}
-      <div className="mb-8 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
-        Recebemos desde <strong>junho de 2025</strong> um total de <strong>{funil.totalEntrada} prospects</strong>. Deste total, <strong>{funil.perdaAnalise}</strong> foram rejeitadas, <strong>{emAnalise}</strong> continuam em análise pelo escritório e <strong>{funil.qualificadosProposta}</strong> avançaram para a fase de proposta. Destes <strong>{funil.qualificadosProposta}</strong>, fechamos <strong>{funil.fechados}</strong> contratos{funil.perdaNegociacao > 0 && <span>, <strong>{funil.perdaNegociacao}</strong> foram recusadas</span>} e estamos com <strong>{emNegociacao}</strong> propostas enviadas aos clientes e aguardando resposta.
+      <div className="mb-8 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+        <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+        <div>
+          {funil.totalEntrada === 0 ? (
+            'Ainda não recebemos nenhum prospect desde junho de 2025.'
+          ) : (
+            <>
+              Recebemos desde <strong>junho de 2025</strong> um total de <strong>{funil.totalEntrada} {funil.totalEntrada === 1 ? 'prospect' : 'prospects'}</strong>. Deste total, {funil.perdaAnalise === 0 ? 'nenhum foi rejeitado' : <><strong>{funil.perdaAnalise}</strong> foram rejeitados</>}, {emAnalise === 0 ? 'ninguém continua em análise' : <><strong>{emAnalise}</strong> continuam em análise pelo escritório</>} e {funil.qualificadosProposta === 0 ? 'nenhum avançou' : <><strong>{funil.qualificadosProposta}</strong> avançaram</>} para a fase de proposta. Destes <strong>{funil.qualificadosProposta}</strong>, {funil.fechados === 0 ? 'ainda não fechamos contratos' : <>fechamos <strong>{funil.fechados}</strong> contratos</>}{funil.perdaNegociacao > 0 && <span>, <strong>{funil.perdaNegociacao}</strong> foram recusadas</span>} e {emNegociacao === 0 ? 'não há propostas enviadas aguardando resposta' : <>estamos com <strong>{emNegociacao}</strong> propostas enviadas aos clientes e aguardando resposta</>}.
+            </>
+          )}
+        </div>
       </div>
 
       {/* Grid Layout Principal do Pipeline */}

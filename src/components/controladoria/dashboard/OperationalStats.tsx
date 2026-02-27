@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ban, FileSignature, CheckCircle2, AlertCircle, Percent, TrendingDown } from 'lucide-react';
+import { Ban, FileSignature, CheckCircle2, AlertCircle, Percent, TrendingDown, Lightbulb } from 'lucide-react';
 
 interface OperationalStatsProps {
   rejectionData: {
@@ -39,8 +39,17 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
         </div>
 
         {/* Explicação Dinâmica */}
-        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
-          Do total de propostas que não avançaram, a principal causa foi <strong>{rejectionData.reasons[0]?.label || 'não informada'}</strong>, representando <strong>{rejectionData.reasons[0]?.percent?.toFixed(1) || 0}%</strong> das recusas, sendo que a maior fonte de declínio partiu de <strong>{rejectionData.sources[0]?.label || 'não identificada'}</strong> (com <strong>{rejectionData.sources[0]?.percent?.toFixed(1) || 0}%</strong>).
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            {rejectionData.reasons.length === 0 ? (
+              'Não há dados de propostas declinadas para análise.'
+            ) : (
+              <>
+                Do total de propostas que não avançaram, a principal causa foi <strong>{rejectionData.reasons[0]?.label || 'não informada'}</strong>, representando <strong>{rejectionData.reasons[0]?.percent?.toFixed(1) || 0}%</strong> das recusas, sendo que a maior fonte de declínio partiu de <strong>{rejectionData.sources[0]?.label || 'não identificada'}</strong> (com <strong>{rejectionData.sources[0]?.percent?.toFixed(1) || 0}%</strong>).
+              </>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -152,8 +161,17 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
         </div>
 
         {/* Explicação Dinâmica */}
-        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
-          Dos <strong>{totalAssinaturasCalculo}</strong> contratos fechados recentemente, <strong>{metrics?.geral?.assinados || 0}</strong> já tiveram suas assinaturas físicas confirmadas, enquanto <strong>{metrics?.geral?.naoAssinados || 0}</strong> (cerca de <strong>{percentualSemAssinatura.toFixed(1)}%</strong>) ainda aguardam a conclusão dessa etapa.
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            {totalAssinaturasCalculo === 0 ? (
+              'Não há contratos fechados recentemente para análise de assinatura.'
+            ) : (
+              <>
+                Dos <strong>{totalAssinaturasCalculo}</strong> contratos fechados recentemente, {metrics?.geral?.assinados === 0 ? 'nenhum teve assinatura física confirmada' : <><strong>{metrics?.geral?.assinados}</strong> já tiveram suas assinaturas físicas confirmadas</>}, enquanto {metrics?.geral?.naoAssinados === 0 ? 'não há contratos aguardando assinatura' : <><strong>{metrics?.geral?.naoAssinados}</strong> (cerca de <strong>{percentualSemAssinatura.toFixed(1)}%</strong>) ainda aguardam a conclusão dessa etapa</>}.
+              </>
+            )}
+          </div>
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>

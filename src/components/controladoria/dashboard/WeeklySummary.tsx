@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  CalendarDays, Layers, ArrowUpRight, GitCommit
+  CalendarDays, Layers, ArrowUpRight, GitCommit, Lightbulb
 } from 'lucide-react';
 import { FinItem } from './FinItem';
 
@@ -32,8 +32,11 @@ export function WeeklySummary({ metrics }: WeeklySummaryProps) {
       </div>
 
       {/* Explicação Dinâmica */}
-      <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
-        Nesta semana, registramos movimentações em <strong>{metrics.semana.totalUnico || 0}</strong> casos únicos no sistema, incluindo <strong>{metrics.semana.novos || 0}</strong> novos prospectos que entraram para análise. Em termos de produtividade, nossa equipe formulou <strong>{metrics.semana.propQtd || 0}</strong> propostas e fechamos com sucesso <strong>{metrics.semana.fechQtd || 0}</strong> contratos. Houve também <strong>{metrics.semana.rejeitados || 0}</strong> recusas (negociações perdidas) e trabalhamos em <strong>{metrics.semana.probono || 0}</strong> atuações pro bono.
+      <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+        <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+        <div>
+          Nesta semana, {metrics.semana.totalUnico === 0 ? 'não registramos movimentações em casos únicos no sistema' : <>registramos movimentações em <strong>{metrics.semana.totalUnico}</strong> casos únicos no sistema</>}, {metrics.semana.novos === 0 ? 'e nenhum prospect entrou para análise.' : <>incluindo <strong>{metrics.semana.novos}</strong> novos prospects que entraram para análise.</>} Em termos de produtividade, {metrics.semana.propQtd === 0 ? 'nossa equipe não formulou propostas e' : <>nossa equipe formulou <strong>{metrics.semana.propQtd}</strong> propostas e</>} {metrics.semana.fechQtd === 0 ? 'não fechamos novos contratos.' : <>fechamos com sucesso <strong>{metrics.semana.fechQtd}</strong> contratos.</>} {metrics.semana.rejeitados === 0 ? 'Não houve recusas (negociações perdidas)' : <>Houve <strong>{metrics.semana.rejeitados}</strong> recusas (negociações perdidas)</>} e {metrics.semana.probono === 0 ? 'não tivemos atuações pro bono.' : <>trabalhamos em <strong>{metrics.semana.probono}</strong> atuações pro bono.</>}
+        </div>
       </div>
 
       {/* Cards Grid */}

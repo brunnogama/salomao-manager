@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, BarChart4, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { BarChart3, BarChart4, TrendingUp, TrendingDown, Minus, Lightbulb } from 'lucide-react';
 import { formatMoney, formatCompact } from './dashboardHelpers';
 import { EmptyState } from '../ui/EmptyState';
 import { Line } from 'react-chartjs-2';
@@ -338,8 +338,11 @@ export function EvolutionCharts({
         </div>
 
         {/* Explicação Dinâmica */}
-        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
-          No acumulado dos últimos 12 meses, registramos a entrada de <strong>{totalEntrada12}</strong> novos prospectos, com uma média de <strong>{mediaEntrada}</strong> análises por mês. Comparando o volume atual com o mês anterior, observamos {diffEntrada > 0 ? <span>um crescimento de <strong>+{diffEntrada}</strong></span> : diffEntrada < 0 ? <span>uma redução de <strong>{diffEntrada}</strong></span> : <span>estabilidade no número de</span>} novas entradas neste período.
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            No acumulado dos últimos 12 meses, {totalEntrada12 === 0 ? 'não registramos a entrada de novos prospects' : <>registramos a entrada de <strong>{totalEntrada12}</strong> novos prospects</>}, com uma média de <strong>{mediaEntrada}</strong> análises por mês. Comparando o volume atual com o mês anterior, observamos {diffEntrada > 0 ? <>um crescimento de <strong>+{diffEntrada}</strong></> : diffEntrada < 0 ? <>uma redução de <strong>{diffEntrada}</strong></> : <>estabilidade no número de</>} novas entradas neste período.
+          </div>
         </div>
 
         {/* Gráfico */}
@@ -421,8 +424,11 @@ export function EvolutionCharts({
         </div>
 
         {/* Explicação Dinâmica */}
-        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
-          Nossa expansão financeira nos últimos 12 meses apresenta a elaboração de <strong>{formatMoney(statsPropostas.total)}</strong> em propostas enviadas aos clientes (com ticket médio mensal de <strong>{formatMoney(statsPropostas.media)}</strong>) versus a concretização de <strong>{formatMoney(statsFinanceiro.total)}</strong> em contratos firmados, que impulsionam um ganho recorrente médio de <strong>{formatMoney(statsFinanceiro.media)}</strong> mensais para a carteira do escritório.
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            Nossa expansão financeira nos últimos 12 meses apresenta {statsPropostas.total === 0 ? 'nenhuma proposta enviada aos clientes' : <>a elaboração de <strong>{formatMoney(statsPropostas.total)}</strong> em propostas enviadas aos clientes (com ticket médio mensal de <strong>{formatMoney(statsPropostas.media)}</strong>)</>} versus {statsFinanceiro.total === 0 ? 'nenhum contrato firmado' : <>a concretização de <strong>{formatMoney(statsFinanceiro.total)}</strong> em contratos firmados, que impulsionam um ganho recorrente médio de <strong>{formatMoney(statsFinanceiro.media)}</strong> mensais para a carteira do escritório</>}.
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6">
