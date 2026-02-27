@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Upload, Settings2, ChevronDown, Trash2, Plus, ExternalLink } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
 import { SearchableSelect } from '../../SearchableSelect';
 import { CertificateNameManagerModal } from './modals/CertificateNameManagerModal';
 import { CertificateAgencyManagerModal } from './modals/CertificateAgencyManagerModal';
@@ -90,6 +91,36 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
     const getRealName = (idOrName: string) => nameDict[idOrName] || idOrName;
 
     if (!isOpen) return null;
+
+    const fetchPartnerOabs = async (partnerIndex: number, collaboratorId: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('oab_number')
+                .select('*')
+                .eq('collaborator_id', collaboratorId)
+                .order('tipo', { ascending: true }); // Assume 'Principal' comes first usually or handles it in UI. 
+
+            if (error) throw error;
+
+            const newPartners = [...(formData.contract_partners || [])];
+
+            if (data && data.length > 0) {
+                // Mapeia para o formato esperado no form
+                newPartners[partnerIndex].oabs = data.map((oab: any) => ({
+                    numero: oab.numero,
+                    uf: oab.uf,
+                    tipo: oab.tipo || 'Suplementar'
+                }));
+            } else {
+                // Se não tem OAB, deixa um em branco Principal
+                newPartners[partnerIndex].oabs = [{ numero: '', uf: '', tipo: 'Principal' }];
+            }
+
+            setFormData(prev => ({ ...prev, contract_partners: newPartners }));
+        } catch (err) {
+            console.error('Erro ao buscar OABs do sócio:', err);
+        }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -397,10 +428,24 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                                         label="Nome do Sócio"
                                                         placeholder="Buscar colaborador..."
                                                         value={partner.collaborator_id || partner.name}
-                                                        onChange={(val) => {
+                                                        onChange={(val, item) => {
                                                             const newPartners = [...(formData.contract_partners || [])];
-                                                            newPartners[pIndex] = { ...newPartners[pIndex], collaborator_id: val, name: val };
+
+                                                            // O SearchableSelect modificado agora passa o item completo
+                                                            const collaboratorId = item?.id || val;
+                                                            const collaboratorName = item?.name || val;
+
+                                                            newPartners[pIndex] = {
+                                                                ...newPartners[pIndex],
+                                                                collaborator_id: collaboratorId,
+                                                                name: collaboratorName
+                                                            };
                                                             setFormData({ ...formData, contract_partners: newPartners });
+
+                                                            // Busca as OABs preexistentes do colaborador
+                                                            if (collaboratorId) {
+                                                                fetchPartnerOabs(pIndex, collaboratorId);
+                                                            }
                                                         }}
                                                         table="collaborators"
                                                         nameField="name"

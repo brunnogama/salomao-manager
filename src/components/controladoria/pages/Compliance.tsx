@@ -389,6 +389,37 @@ export function Compliance() {
       }
 
       toast.success('Certidão salva com sucesso!', { id: toastId });
+
+      // Sincronizar as OABs dos sócios de Contrato Social de volta para a tabela oab_number
+      if (payload.alteration !== null && payload.contract_partners.length > 0) {
+        try {
+          for (const partner of payload.contract_partners) {
+            if (!partner.collaborator_id) continue;
+
+            // 1. Remove as OABs antigas desse colaborador na tabela oab_number
+            await supabase.from('oab_number').delete().eq('collaborator_id', partner.collaborator_id);
+
+            // 2. Insere as novas cadastradas no modal
+            if (partner.oabs && partner.oabs.length > 0) {
+              const oabsToInsert = partner.oabs.filter((oab: any) => oab.numero !== '').map((oab: any) => ({
+                collaborator_id: partner.collaborator_id,
+                numero: oab.numero,
+                uf: oab.uf,
+                tipo: oab.tipo || 'Suplementar',
+                validade: null // Contrato social não pede validade da OAB, por padrão fica vazio ou você pode adaptar 
+              }));
+
+              if (oabsToInsert.length > 0) {
+                await supabase.from('oab_number').insert(oabsToInsert);
+              }
+            }
+          }
+        } catch (syncError) {
+          console.error('Erro ao sincronizar OABs com os colaboradores:', syncError);
+          toast.error('Certidão salva, mas houve erro ao atualizar OABs dos colaboradores.');
+        }
+      }
+
       setIsModalOpen(false);
       setEditingCertificate(null);
       fetchCertificates();
