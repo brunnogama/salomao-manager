@@ -1,5 +1,4 @@
 import { Clock, ArrowRight, XCircle, CheckCircle2, FileText, Users, TrendingDown } from 'lucide-react';
-import { formatMoney } from './dashboardHelpers';
 
 interface EfficiencyFunnelProps {
   funil: any;
@@ -52,7 +51,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
                 <div className="flex items-end gap-2">
                   <div className="flex flex-col gap-0.5 mt-2 ml-1">
                     <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.totalEntrada}</span>
-                    <span className="text-xs font-bold text-gray-400">consultas</span>
+                    <span className="text-xs font-bold text-gray-400">análises</span>
                   </div>
                 </div>
               </div>
@@ -119,13 +118,6 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
                     <div className="h-full bg-blue-400 rounded-full transition-all duration-1000" style={{ width: `${funil.taxaConversaoProposta}%` }}></div>
                   </div>
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-blue-100/50 flex items-center justify-between">
-                  <div>
-                    <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Em Negociação</p>
-                    <p className="text-sm font-bold text-blue-900">{formatMoney(funil.valorPropostas)}</p>
-                  </div>
-                </div>
               </div>
 
               {/* Drop-off Negociação */}
@@ -188,13 +180,6 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
                   <span className="text-[10px] font-bold text-green-500">{(funil.totalEntrada > 0 ? (funil.fechados / funil.totalEntrada) * 100 : 0).toFixed(1)}% do total</span>
                   <div className="h-1.5 w-full bg-green-50 rounded-full mt-1 overflow-hidden">
                     <div className="h-full bg-green-500 rounded-full transition-all duration-1000" style={{ width: `${funil.totalEntrada > 0 ? (funil.fechados / funil.totalEntrada) * 100 : 0}%` }}></div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-green-100/50 flex items-center justify-between">
-                  <div>
-                    <p className="text-[9px] font-black text-green-400 uppercase tracking-widest">Receita Gerada</p>
-                    <p className="text-sm font-bold text-green-900">{formatMoney(funil.valorFechados)}</p>
                   </div>
                 </div>
               </div>
