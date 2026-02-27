@@ -372,8 +372,8 @@ export function Compliance() {
         file_url: fileUrl,
         file_name: fileName,
         status: data.status || 'Válida',
-        alteration: data.name === 'Contrato Social' ? data.alteration : null,
-        contract_partners: data.name === 'Contrato Social' ? data.contract_partners : []
+        alteration: (nameDict[data.name] || data.name) === 'Contrato Social' ? data.alteration : null,
+        contract_partners: (nameDict[data.name] || data.name) === 'Contrato Social' ? data.contract_partners : []
       };
 
       toast.loading('Salvando registro no banco de dados...', { id: toastId });
@@ -924,6 +924,7 @@ export function Compliance() {
         onSave={handleSaveCertificate}
         locationsList={locationsList}
         initialData={editingCertificate || undefined}
+        nameDict={nameDict}
       />
 
       <CertificateDetailsModal

@@ -289,7 +289,7 @@ export function CertificateDetailsModal({
                                     </div>
                                 )}
 
-                                {certificate.name === 'Contrato Social' && certificate.contract_partners && certificate.contract_partners.length > 0 && (
+                                {(nameDict[certificate.name] || certificate.name) === 'Contrato Social' && certificate.contract_partners && certificate.contract_partners.length > 0 && (
                                     <div className="space-y-6 pt-6 border-t border-gray-100">
                                         <h4 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
                                             Sócios no Contrato Social

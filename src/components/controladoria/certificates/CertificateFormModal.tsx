@@ -33,9 +33,10 @@ interface Props {
     onSave: (data: CertificateFormData) => void;
     locationsList: { name: string; cnpj?: string }[];
     initialData?: CertificateFormData;
+    nameDict?: Record<string, string>;
 }
 
-export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, initialData }: Props) {
+export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, initialData, nameDict = {} }: Props) {
     const [isLocalDropdownOpen, setIsLocalDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -85,6 +86,8 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const getRealName = (idOrName: string) => nameDict[idOrName] || idOrName;
 
     if (!isOpen) return null;
 
@@ -155,14 +158,14 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                 value={formData.name}
                                 onChange={(val) => {
                                     setFormData({ ...formData, name: val });
-                                    if (val !== 'Contrato Social') setActiveTab('geral');
+                                    if (getRealName(val) !== 'Contrato Social') setActiveTab('geral');
                                 }}
                                 table="certificate_names"
                                 nameField="name"
                             />
                         </div>
 
-                        {formData.name === 'Contrato Social' && (
+                        {getRealName(formData.name) === 'Contrato Social' && (
                             <div className="flex space-x-2 border-b border-gray-100 mb-6">
                                 <button
                                     type="button"
@@ -183,7 +186,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
 
                         {activeTab === 'geral' ? (
                             <>
-                                {formData.name === 'Contrato Social' && (
+                                {getRealName(formData.name) === 'Contrato Social' && (
                                     <div>
                                         <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Alteração</label>
                                         <input
@@ -197,140 +200,140 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                 )}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="relative" ref={dropdownRef}>
-                                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Local *</label>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsLocalDropdownOpen(!isLocalDropdownOpen)}
-                                    className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-all bg-white flex items-center justify-between group hover:border-[#1e3a8a]"
-                                >
-                                    <span className={formData.location ? "text-gray-900 font-medium" : "text-gray-400"}>
-                                        {formData.location || "Selecione um local"}
-                                    </span>
-                                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isLocalDropdownOpen ? 'rotate-180' : ''} group-hover:text-[#1e3a8a]`} />
-                                </button>
+                                        <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Local *</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsLocalDropdownOpen(!isLocalDropdownOpen)}
+                                            className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-all bg-white flex items-center justify-between group hover:border-[#1e3a8a]"
+                                        >
+                                            <span className={formData.location ? "text-gray-900 font-medium" : "text-gray-400"}>
+                                                {formData.location || "Selecione um local"}
+                                            </span>
+                                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isLocalDropdownOpen ? 'rotate-180' : ''} group-hover:text-[#1e3a8a]`} />
+                                        </button>
 
-                                {isLocalDropdownOpen && (
-                                    <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                        <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                                            {locationsList.map((loc) => (
-                                                <button
-                                                    key={loc.name}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setFormData({
-                                                            ...formData,
-                                                            location: loc.name,
-                                                            cnpj: loc.cnpj ? maskCNPJ(loc.cnpj) : formData.cnpj
-                                                        });
-                                                        setIsLocalDropdownOpen(false);
-                                                    }}
-                                                    className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-gray-50 flex items-center justify-between ${formData.location === loc.name ? 'bg-blue-50 text-[#1e3a8a] font-bold' : 'text-gray-700 font-medium'
-                                                        }`}
-                                                >
-                                                    {loc.name}
-                                                    {formData.location === loc.name && (
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a]" />
+                                        {isLocalDropdownOpen && (
+                                            <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                                <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                                                    {locationsList.map((loc) => (
+                                                        <button
+                                                            key={loc.name}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    location: loc.name,
+                                                                    cnpj: loc.cnpj ? maskCNPJ(loc.cnpj) : formData.cnpj
+                                                                });
+                                                                setIsLocalDropdownOpen(false);
+                                                            }}
+                                                            className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-gray-50 flex items-center justify-between ${formData.location === loc.name ? 'bg-blue-50 text-[#1e3a8a] font-bold' : 'text-gray-700 font-medium'
+                                                                }`}
+                                                        >
+                                                            {loc.name}
+                                                            {formData.location === loc.name && (
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-[#1e3a8a]" />
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                    {locationsList.length === 0 && (
+                                                        <div className="px-4 py-8 text-center text-gray-400 text-xs italic">
+                                                            Nenhum local disponível
+                                                        </div>
                                                     )}
-                                                </button>
-                                            ))}
-                                            {locationsList.length === 0 && (
-                                                <div className="px-4 py-8 text-center text-gray-400 text-xs italic">
-                                                    Nenhum local disponível
                                                 </div>
-                                            )}
-                                        </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
 
-                            <div>
-                                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">CNPJ da Certidão</label>
-                                <input
-                                    type="text"
-                                    placeholder="00.000.000/0000-00"
-                                    className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors"
-                                    value={formData.cnpj}
-                                    onChange={e => setFormData({ ...formData, cnpj: maskCNPJ(e.target.value) })}
-                                />
-                            </div>
-                        </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">CNPJ da Certidão</label>
+                                        <input
+                                            type="text"
+                                            placeholder="00.000.000/0000-00"
+                                            className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors"
+                                            value={formData.cnpj}
+                                            onChange={e => setFormData({ ...formData, cnpj: maskCNPJ(e.target.value) })}
+                                        />
+                                    </div>
+                                </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Data Emissão *</label>
-                                <input
-                                    type="date"
-                                    required
-                                    className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors"
-                                    value={formData.issueDate}
-                                    onChange={e => setFormData({ ...formData, issueDate: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Data Vencimento *</label>
-                                <input
-                                    type="date"
-                                    required
-                                    className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors"
-                                    value={formData.dueDate}
-                                    onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
-                                />
-                            </div>
-                        </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Data Emissão *</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors"
+                                            value={formData.issueDate}
+                                            onChange={e => setFormData({ ...formData, issueDate: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Data Vencimento *</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors"
+                                            value={formData.dueDate}
+                                            onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
 
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest">Cartório/Órgão *</label>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsAgencyModalOpen(true)}
-                                    className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-tighter flex items-center gap-1 hover:underline"
-                                >
-                                    <Settings2 className="w-3 h-3" /> Gerenciar
-                                </button>
-                            </div>
-                            <SearchableSelect
-                                placeholder="Selecione ou busque o órgão"
-                                value={formData.agency}
-                                onChange={(val) => setFormData({ ...formData, agency: val })}
-                                table="certificate_agencies"
-                                nameField="name"
-                            />
-                        </div>
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-xs font-black text-gray-700 uppercase tracking-widest">Cartório/Órgão *</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsAgencyModalOpen(true)}
+                                            className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-tighter flex items-center gap-1 hover:underline"
+                                        >
+                                            <Settings2 className="w-3 h-3" /> Gerenciar
+                                        </button>
+                                    </div>
+                                    <SearchableSelect
+                                        placeholder="Selecione ou busque o órgão"
+                                        value={formData.agency}
+                                        onChange={(val) => setFormData({ ...formData, agency: val })}
+                                        table="certificate_agencies"
+                                        nameField="name"
+                                    />
+                                </div>
 
-                        <div>
-                            <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Observações Internas</label>
-                            <textarea
-                                rows={3}
-                                className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors resize-none"
-                                placeholder="Notas adicionais sobre esta certidão..."
-                                value={formData.observations}
-                                onChange={e => setFormData({ ...formData, observations: e.target.value })}
-                            />
-                        </div>
+                                <div>
+                                    <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Observações Internas</label>
+                                    <textarea
+                                        rows={3}
+                                        className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors resize-none"
+                                        placeholder="Notas adicionais sobre esta certidão..."
+                                        value={formData.observations}
+                                        onChange={e => setFormData({ ...formData, observations: e.target.value })}
+                                    />
+                                </div>
 
-                        <div>
-                            <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Arquivo da Certidão (GED) *</label>
-                            <div
-                                className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer relative ${isDragging ? 'border-[#1e3a8a] bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                            >
-                                <input
-                                    type="file"
-                                    onChange={handleFileChange}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    required={!initialData} // Só é obrigatório se for novo
-                                    accept=".pdf,.png,.jpg,.jpeg"
-                                />
-                                <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-[#1e3a8a]' : 'text-gray-400'}`} />
-                                <p className="text-sm font-semibold text-gray-600">
-                                    {formData.file ? formData.file.name : (initialData?.fileUrl ? 'Arquivo enviado anteriormente. Clique para substituir.' : (isDragging ? 'Solte o arquivo aqui' : 'Clique ou arraste o arquivo aqui'))}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">PDF, PNG, JPG (Max. 10MB)</p>
-                            </div>
-                        </div>
+                                <div>
+                                    <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Arquivo da Certidão (GED) *</label>
+                                    <div
+                                        className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer relative ${isDragging ? 'border-[#1e3a8a] bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}
+                                        onDragOver={handleDragOver}
+                                        onDragLeave={handleDragLeave}
+                                        onDrop={handleDrop}
+                                    >
+                                        <input
+                                            type="file"
+                                            onChange={handleFileChange}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                            required={!initialData} // Só é obrigatório se for novo
+                                            accept=".pdf,.png,.jpg,.jpeg"
+                                        />
+                                        <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-[#1e3a8a]' : 'text-gray-400'}`} />
+                                        <p className="text-sm font-semibold text-gray-600">
+                                            {formData.file ? formData.file.name : (initialData?.fileUrl ? 'Arquivo enviado anteriormente. Clique para substituir.' : (isDragging ? 'Solte o arquivo aqui' : 'Clique ou arraste o arquivo aqui'))}
+                                        </p>
+                                        <p className="text-xs text-gray-400 mt-1">PDF, PNG, JPG (Max. 10MB)</p>
+                                    </div>
+                                </div>
                             </>
                         ) : (
                             <div className="space-y-6">
@@ -355,7 +358,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                         <Plus className="w-3 h-3" /> Adicionar Sócio
                                     </button>
                                 </div>
-                                
+
                                 {(!formData.contract_partners || formData.contract_partners.length === 0) ? (
                                     <div className="p-8 text-center bg-gray-50 rounded-xl border border-gray-100">
                                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nenhum sócio adicionado</p>
@@ -376,7 +379,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
-                                                
+
                                                 <div className="mb-4 pr-8">
                                                     <SearchableSelect
                                                         label="Nome do Sócio"
@@ -412,7 +415,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                                             + Suplementar
                                                         </button>
                                                     </div>
-                                                    
+
                                                     {partner.oabs && partner.oabs.map((oab: any, oIndex: number) => (
                                                         <div key={oIndex} className="grid grid-cols-12 gap-3 items-end">
                                                             <div className="col-span-5 relative">
