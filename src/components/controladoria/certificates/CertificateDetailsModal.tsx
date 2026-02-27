@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Database, Calendar, Building2, MapPin, Info, Edit, Download, ExternalLink, ShieldCheck, Trash2, Paperclip } from 'lucide-react';
+import { FileText, Database, Calendar, Building2, MapPin, Info, Edit, Download, ExternalLink, ShieldCheck, Trash2, Paperclip, X } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 import { useEscKey } from '../../../hooks/useEscKey';
@@ -37,13 +37,20 @@ export function CertificateDetailsModal({
         if (!certificate) return;
         setLoadingFiles(true);
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('certificates')
                 .select('*')
                 .eq('name', certificate.name)
-                .eq('location', certificate.location)
                 .not('file_url', 'is', null)
                 .order('due_date', { ascending: false });
+
+            if (certificate.location) {
+                query = query.eq('location', certificate.location);
+            } else {
+                query = query.filter('location', 'is', null);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
             setRelatedFiles(data || []);
@@ -56,7 +63,13 @@ export function CertificateDetailsModal({
 
     if (!isOpen || !certificate) return null;
 
-    const getCertName = (c: any) => nameDict[c.name] || c.name || 'Certidão';
+    const getCertName = (c: any) => {
+        let name = nameDict[c.name] || c.name || 'Certidão';
+        if (name === 'Contrato Social' && c.alteration) {
+            name = `${name} - ${c.alteration}`;
+        }
+        return name;
+    };
     const getAgencyName = (c: any) => agencyDict[c.agency] || c.agency || 'Não informado';
 
     const formatDate = (dateStr: string) => {
@@ -87,7 +100,13 @@ export function CertificateDetailsModal({
         if (!file.file_url) return;
         const toastId = toast.loading('Preparando download...');
         try {
-            const { data, error } = await supabase.storage.from('ged-documentos').download(file.file_url);
+            // Extrai o caminho relativo (ex: 'certidoes/123_arquivo.pdf') da URL pública inteira
+            let filePath = file.file_url;
+            if (filePath.includes('/public/ged-documentos/')) {
+                filePath = filePath.split('/public/ged-documentos/')[1];
+            }
+
+            const { data, error } = await supabase.storage.from('ged-documentos').download(filePath);
             if (error) throw error;
             const url = URL.createObjectURL(data);
             const a = document.createElement('a');
@@ -189,9 +208,9 @@ export function CertificateDetailsModal({
                 {/* Right Content */}
                 <div className="flex-1 flex flex-col min-w-0 bg-gray-50/50">
                     {/* Header bar within content area */}
-                    <div className="px-10 py-6 border-b border-gray-100 bg-white flex justify-between items-center shrink-0">
+                    <div className="px-10 py-6 border-b border-gray-100 bg-white flex justify-between items-start shrink-0">
                         <div>
-                            <h3 className="text-xl font-black text-gray-900 leading-tight">
+                            <h3 className="text-xl font-black text-gray-900 leading-tight pr-4">
                                 {getCertName(certificate)}
                             </h3>
                             <div className="flex items-center gap-3 mt-1">
@@ -201,6 +220,13 @@ export function CertificateDetailsModal({
                                 )}
                             </div>
                         </div>
+                        <button
+                            onClick={onClose}
+                            className="p-2 sm:p-2.5 bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 rounded-xl transition-colors border border-gray-100 shadow-sm shrink-0"
+                            title="Fechar Detalhes"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
                     </div>
 
                     {/* Scrollable Content */}
@@ -282,6 +308,38 @@ export function CertificateDetailsModal({
                                         </div>
                                     </div>
                                 )}
+
+                                {(nameDict[certificate.name] || certificate.name) === 'Contrato Social' && certificate.contract_partners && certificate.contract_partners.length > 0 && (
+                                    <div className="space-y-6 pt-6 border-t border-gray-100">
+                                        <h4 className="text-sm font-black text-[#0a192f] uppercase tracking-widest flex items-center gap-2">
+                                            Sócios no Contrato Social
+                                        </h4>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {certificate.contract_partners.map((partner: any, idx: number) => (
+                                                <div key={idx} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+                                                    <div className="absolute top-0 left-0 w-1 h-full bg-[#1e3a8a]" />
+                                                    <h5 className="text-sm font-bold text-gray-900 mb-4">{partner.name || partner.collaborator_id}</h5>
+
+                                                    {partner.oabs && partner.oabs.length > 0 ? (
+                                                        <div className="space-y-2">
+                                                            {partner.oabs.map((oab: any, oIndex: number) => (
+                                                                <div key={oIndex} className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-lg">
+                                                                    <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${oab.tipo === 'Principal' ? 'bg-[#1e3a8a] text-white' : 'bg-gray-300 text-gray-700'}`}>
+                                                                        {oab.tipo}
+                                                                    </span>
+                                                                    <span className="text-xs font-mono font-medium text-gray-700">OAB: {oab.numero || '-'}</span>
+                                                                    <span className="text-xs font-bold text-gray-500 border-l border-gray-200 pl-3">UF: {oab.uf || '-'}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs text-gray-400 italic">Nenhuma OAB cadastrada.</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -353,7 +411,7 @@ export function CertificateDetailsModal({
                                                             <Download className="w-4 h-4" />
                                                         </button>
                                                         <a
-                                                            href={supabase.storage.from('ged-documentos').getPublicUrl(file.file_url).data.publicUrl}
+                                                            href={file.file_url}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors bg-white border border-gray-100 shadow-sm"

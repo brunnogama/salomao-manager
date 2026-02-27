@@ -15,7 +15,7 @@ interface Option {
 interface SearchableSelectProps {
   label?: string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, item?: any) => void;
   placeholder?: string;
   table?: string; // Nome da tabela no Supabase para buscar opções
   nameField?: string; // Campo do nome na tabela (padrão: 'name')
@@ -119,7 +119,7 @@ export function SearchableSelect({
 
   const handleClearSelection = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onChange('');
+    onChange('', null);
     setIsOpen(false);
   };
 
@@ -188,7 +188,7 @@ export function SearchableSelect({
                       key={getId(opt)}
                       type="button"
                       onClick={() => {
-                        onChange(opt.id?.toString() || getName(opt));
+                        onChange(opt.id?.toString() || getName(opt), opt);
                         setIsOpen(false);
                         setSearchTerm('');
                       }}

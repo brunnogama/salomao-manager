@@ -62,7 +62,7 @@ export function SearchableSelect({
 
     // Explicit exclusions that must be uppercase
     const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
-    const acronyms = ['clt', 'pj', 'cpf', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
+    const acronyms = ['clt', 'pj', 'cpf', 'cnpj', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
 
     return safeStr.toLowerCase().split(' ').map(word => {
       if (romanNumerals.includes(word) || acronyms.includes(word)) return word.toUpperCase();

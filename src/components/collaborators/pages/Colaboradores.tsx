@@ -36,6 +36,7 @@ import {
   maskDate,
   maskRG,
   maskPhone,
+  maskCNPJ,
   formatDateToDisplay,
   formatDateToISO
 } from '../utils/colaboradoresUtils'
@@ -119,7 +120,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const isAdvogadoSocioJuridica = currentData.area === 'Jurídica' && (roleName.includes('advogado') || roleName.includes('sócio') || roleName.includes('socio'));
 
     const steps = [
-      { id: 1, label: 'Dados Pessoais', icon: User },
+      { id: 1, label: 'Dados Pessoais e Bancários', icon: User },
       { id: 4, label: 'Dados Corporativos', icon: Briefcase }
     ];
 
@@ -691,6 +692,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             maskDate={maskDate}
             maskRG={maskRG}
             maskPhone={maskPhone}
+            maskCNPJ={maskCNPJ}
             isViewMode={isViewMode}
           />
           <EnderecoSection
@@ -700,6 +702,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
             handleCepBlur={isViewMode ? () => { } : handleCepBlur}
             isViewMode={isViewMode}
           />
+          {/* Observações - Movido para o final da aba 1 */}
+          <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+              Observações
+            </label>
+            <textarea
+              className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium min-h-[80px] ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+              value={currentData.observacoes || ''}
+              onChange={e => currentSetData({ ...currentData, observacoes: e.target.value })}
+              placeholder="Observações gerais sobre o colaborador..."
+              disabled={isViewMode}
+              readOnly={isViewMode}
+            />
+          </div>
         </div>
       )
     }

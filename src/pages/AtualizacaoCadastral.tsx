@@ -26,6 +26,14 @@ const maskPhone = (v: string) => {
     if (raw.length <= 10) return raw.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').slice(0, 14)
     return raw.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').slice(0, 15)
 }
+const maskCNPJ = (v: string) => {
+    let val = v.replace(/\D/g, '')
+    val = val.replace(/^(\d{2})(\d)/, '$1.$2')
+    val = val.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    val = val.replace(/\.(\d{3})(\d)/, '.$1/$2')
+    val = val.replace(/(\d{4})(\d)/, '$1-$2')
+    return val.slice(0, 18)
+}
 
 const ESTADOS_BRASIL = [
     { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },
@@ -42,7 +50,7 @@ const ESTADOS_BRASIL = [
 const toTitleCase = (str: string) => {
     if (!str) return ''
     const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
-    const acronyms = ['clt', 'pj', 'cpf', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
+    const acronyms = ['clt', 'pj', 'cpf', 'cnpj', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
     return str.toLowerCase().split(' ').map(word => {
         if (romanNumerals.includes(word) || acronyms.includes(word)) return word.toUpperCase();
         return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
@@ -59,6 +67,8 @@ export default function AtualizacaoCadastral() {
     const [formData, setFormData] = useState<Partial<Collaborator>>({});
 
     useEffect(() => {
+        window.scrollTo(0, 0);
+
         const fetchCollaboratorData = async () => {
             try {
                 if (!token) {
@@ -173,8 +183,8 @@ export default function AtualizacaoCadastral() {
                     birth_date: formatDateToISO(c.birth_date) || null
                 })),
                 emergencia_nome: formData.emergencia_nome,
-                emergencia_telefone: formData.emergencia_telefone,
                 emergencia_parentesco: formData.emergencia_parentesco,
+                emergencia_telefone: formData.emergencia_telefone,
                 zip_code: formData.zip_code,
                 address: formData.address,
                 address_number: formData.address_number,
@@ -182,7 +192,14 @@ export default function AtualizacaoCadastral() {
                 neighborhood: formData.neighborhood,
                 city: formData.city,
                 state: formData.state,
-                observacoes: formData.observacoes,
+                email_pessoal: formData.email_pessoal,
+                forma_pagamento: formData.forma_pagamento,
+                banco_nome: formData.banco_nome,
+                banco_tipo_conta: formData.banco_tipo_conta,
+                banco_agencia: formData.banco_agencia,
+                banco_conta: formData.banco_conta,
+                pix_tipo: formData.pix_tipo,
+                pix_chave: formData.pix_chave,
 
                 // Escolaridade
                 escolaridade_nivel: formData.escolaridade_nivel,
@@ -295,6 +312,7 @@ export default function AtualizacaoCadastral() {
                                 maskDate={maskDate}
                                 maskRG={maskRG}
                                 maskPhone={maskPhone}
+                                maskCNPJ={maskCNPJ}
                                 isViewMode={false}
                             />
                             <EnderecoSection

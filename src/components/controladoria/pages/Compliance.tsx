@@ -151,7 +151,13 @@ export function Compliance() {
   };
 
   // Resolve os nomes reais, misturando as chaves do dicionário com dados antigos
-  const getCertName = (c: any) => nameDict[c.name] || c.name || '';
+  const getCertName = (c: any) => {
+    let name = nameDict[c.name] || c.name || '';
+    if (name === 'Contrato Social' && c.alteration) {
+      name = `${name} - ${c.alteration}`;
+    }
+    return name;
+  };
   const getAgencyName = (c: any) => agencyDict[c.agency] || c.agency || '';
 
   const formatDate = (dateStr: string) => {
@@ -365,7 +371,9 @@ export function Compliance() {
         location: data.location,
         file_url: fileUrl,
         file_name: fileName,
-        status: data.status || 'Válida'
+        status: data.status || 'Válida',
+        alteration: (nameDict[data.name] || data.name) === 'Contrato Social' ? data.alteration : null,
+        contract_partners: (nameDict[data.name] || data.name) === 'Contrato Social' ? data.contract_partners : []
       };
 
       toast.loading('Salvando registro no banco de dados...', { id: toastId });
@@ -381,6 +389,37 @@ export function Compliance() {
       }
 
       toast.success('Certidão salva com sucesso!', { id: toastId });
+
+      // Sincronizar as OABs dos sócios de Contrato Social de volta para a tabela oab_number
+      if (payload.alteration !== null && payload.contract_partners.length > 0) {
+        try {
+          for (const partner of payload.contract_partners) {
+            if (!partner.collaborator_id) continue;
+
+            // 1. Remove as OABs antigas desse colaborador na tabela oab_number
+            await supabase.from('oab_number').delete().eq('colaborador_id', partner.collaborator_id);
+
+            // 2. Insere as novas cadastradas no modal
+            if (partner.oabs && partner.oabs.length > 0) {
+              const oabsToInsert = partner.oabs.filter((oab: any) => oab.numero !== '').map((oab: any) => ({
+                colaborador_id: partner.collaborator_id,
+                numero: oab.numero,
+                uf: oab.uf,
+                tipo: oab.tipo || 'Suplementar',
+                validade: null // Contrato social não pede validade da OAB, por padrão fica vazio ou você pode adaptar 
+              }));
+
+              if (oabsToInsert.length > 0) {
+                await supabase.from('oab_number').insert(oabsToInsert);
+              }
+            }
+          }
+        } catch (syncError) {
+          console.error('Erro ao sincronizar OABs com os colaboradores:', syncError);
+          toast.error('Certidão salva, mas houve erro ao atualizar OABs dos colaboradores.');
+        }
+      }
+
       setIsModalOpen(false);
       setEditingCertificate(null);
       fetchCertificates();
@@ -418,6 +457,8 @@ export function Compliance() {
       fileUrl: cert.file_url,
       fileName: cert.file_name,
       observations: cert.observations,
+      alteration: cert.alteration,
+      contract_partners: cert.contract_partners || [],
     } as any);
     setIsModalOpen(true);
   };
@@ -914,6 +955,7 @@ export function Compliance() {
         onSave={handleSaveCertificate}
         locationsList={locationsList}
         initialData={editingCertificate || undefined}
+        nameDict={nameDict}
       />
 
       <CertificateDetailsModal

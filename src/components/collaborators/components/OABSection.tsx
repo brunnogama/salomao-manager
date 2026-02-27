@@ -28,6 +28,23 @@ export function OABSection({
             </h3>
 
             <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 mb-4">
+                    <div>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                            PIS/PASEP
+                        </label>
+                        <input
+                            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            value={formData.pis_pasep || ''}
+                            onChange={e => setFormData({ ...formData, pis_pasep: e.target.value.replace(/\D/g, '').slice(0, 11) })}
+                            maxLength={11}
+                            placeholder="99999999999"
+                            disabled={isViewMode}
+                            readOnly={isViewMode}
+                        />
+                    </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                     <h4 className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest flex items-center gap-2">
                         Inscrições OAB
@@ -135,23 +152,7 @@ export function OABSection({
                     </div>
                 ))}
 
-                {/* PIS/PASEP Field included in OAB tab as requested */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 mt-4 border-t border-gray-100">
-                    <div>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                            PIS/PASEP
-                        </label>
-                        <input
-                            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                            value={formData.pis_pasep || ''}
-                            onChange={e => setFormData({ ...formData, pis_pasep: e.target.value.replace(/\D/g, '').slice(0, 11) })}
-                            maxLength={11}
-                            placeholder="99999999999"
-                            disabled={isViewMode}
-                            readOnly={isViewMode}
-                        />
-                    </div>
-                </div>
+
             </div>
         </section>
     )

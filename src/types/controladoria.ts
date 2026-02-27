@@ -43,7 +43,8 @@ export interface Collaborator {
   partner?: { id: string; name: string }; // Joined field
   leader_id?: string; // Vínculo com o Líder Direto
   leader?: { id: string; name: string }; // Joined field
-  email?: string;
+  email?: string; // E-mail Corporativo
+  email_pessoal?: string; // E-mail Pessoal
   phone?: string;
   status: 'active' | 'inactive';
   cpf?: string;
@@ -116,6 +117,15 @@ export interface Collaborator {
   matricula_esocial?: string;
   observacoes?: string;
   oab_emissao?: string;
+
+  // Dados Bancários
+  forma_pagamento?: string;
+  banco_nome?: string;
+  banco_tipo_conta?: string;
+  banco_agencia?: string;
+  banco_conta?: string;
+  pix_tipo?: string;
+  pix_chave?: string;
 
   // Novos Campos (Rateio e Desligamento)
   rateio_id?: string;

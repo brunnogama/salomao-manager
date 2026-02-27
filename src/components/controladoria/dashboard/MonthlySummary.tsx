@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  CalendarRange, Layers, ArrowUpRight, GitCommit
+  CalendarRange, Layers, ArrowUpRight, GitCommit, Lightbulb
 } from 'lucide-react';
 import { FinItem } from './FinItem';
 
@@ -28,6 +28,14 @@ export function MonthlySummary({ metrics }: MonthlySummaryProps) {
               Performance mensal consolidada
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Explicação Dinâmica */}
+      <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+        <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+        <div>
+          Neste mês, {metrics.mes.totalUnico === 0 ? 'não registramos movimentações em casos únicos no sistema' : <>registramos movimentações em <strong>{metrics.mes.totalUnico}</strong> casos únicos no sistema</>}, {metrics.mes.analysis === 0 ? 'e nenhum prospect entrou para análise.' : <>incluindo <strong>{metrics.mes.analysis}</strong> novos prospects que entraram para análise.</>} Em termos de produtividade, {metrics.mes.propQtd === 0 ? 'não formulamos propostas e' : <>formulamos <strong>{metrics.mes.propQtd}</strong> propostas e</>} {metrics.mes.fechQtd === 0 ? 'não fechamos novos contratos.' : <>fechamos com sucesso <strong>{metrics.mes.fechQtd}</strong> novos contratos.</>} Além disto, {metrics.mes.rejected === 0 ? 'não registramos oportunidades perdidas' : <>registramos <strong>{metrics.mes.rejected}</strong> oportunidades perdidas</>} e {metrics.mes.probono === 0 ? 'não tivemos casos na categoria pro bono.' : <>prestamos apoio a <strong>{metrics.mes.probono}</strong> casos na categoria pro bono.</>}
         </div>
       </div>
 

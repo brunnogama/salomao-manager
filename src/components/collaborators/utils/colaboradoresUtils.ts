@@ -13,7 +13,7 @@ export const ESTADOS_BRASIL = [
 export const toTitleCase = (str: string) => {
   if (!str) return ''
   const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
-  const acronyms = ['clt', 'pj', 'cpf', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
+  const acronyms = ['clt', 'pj', 'cpf', 'cnpj', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
   return str.toLowerCase().split(' ').map(word => {
     if (romanNumerals.includes(word) || acronyms.includes(word)) return word.toUpperCase();
     return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
@@ -34,6 +34,15 @@ export const maskCPF = (v: string) => {
   val = val.replace(/(\d{3})(\d)/, '$1.$2')
   val = val.replace(/(\d{3})(\d{1,2})$/, '$1-$2')
   return val.slice(0, 14)
+}
+
+export const maskCNPJ = (v: string) => {
+  let val = v.replace(/\D/g, '')
+  val = val.replace(/^(\d{2})(\d)/, '$1.$2')
+  val = val.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+  val = val.replace(/\.(\d{3})(\d)/, '.$1/$2')
+  val = val.replace(/(\d{4})(\d)/, '$1-$2')
+  return val.slice(0, 18)
 }
 
 export const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)

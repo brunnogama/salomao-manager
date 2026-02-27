@@ -60,7 +60,7 @@ export function InformacoesProfissionaisSection({
             value={formData.ctps_numero || formData.ctps || ''}
             onChange={e => setFormData({ ...formData, ctps_numero: e.target.value.replace(/\D/g, ''), ctps: e.target.value.replace(/\D/g, '') })}
             maxLength={11}
-            placeholder="999999"
+            placeholder="Digite o número"
             disabled={isViewMode}
             readOnly={isViewMode}
           />
@@ -74,7 +74,7 @@ export function InformacoesProfissionaisSection({
             value={formData.ctps_serie || ''}
             onChange={e => setFormData({ ...formData, ctps_serie: e.target.value.replace(/\D/g, '').slice(0, 4) })}
             maxLength={4}
-            placeholder="0000"
+            placeholder="Digite a série"
             disabled={isViewMode}
             readOnly={isViewMode}
           />
@@ -101,7 +101,7 @@ export function InformacoesProfissionaisSection({
             value={formData.pis_pasep || ''}
             onChange={e => setFormData({ ...formData, pis_pasep: e.target.value.replace(/\D/g, '').slice(0, 11) })}
             maxLength={11}
-            placeholder="99999999999"
+            placeholder="Digite o PIS/PASEP"
             disabled={isViewMode}
             readOnly={isViewMode}
           />

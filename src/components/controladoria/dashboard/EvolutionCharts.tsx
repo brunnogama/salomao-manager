@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, BarChart4, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { BarChart3, BarChart4, TrendingUp, TrendingDown, Minus, Lightbulb } from 'lucide-react';
 import { formatMoney, formatCompact } from './dashboardHelpers';
 import { EmptyState } from '../ui/EmptyState';
 import { Line } from 'react-chartjs-2';
@@ -38,6 +38,7 @@ interface EvolutionChartsProps {
   mediasFinanceiras: { pl: number, exito: number };
   statsPropostas: { total: number, media: number, diff: number };
   statsFinanceiro: { total: number, media: number, diff: number };
+  funilTotalEntrada?: number;
 }
 
 export function EvolutionCharts({
@@ -47,11 +48,12 @@ export function EvolutionCharts({
   mediasPropostas,
   mediasFinanceiras,
   statsPropostas,
-  statsFinanceiro
+  statsFinanceiro,
+  funilTotalEntrada
 }: EvolutionChartsProps) {
 
   // Cálculos Entrada de Casos
-  const totalEntrada12 = evolucaoMensal.reduce((acc, curr) => acc + curr.qtd, 0);
+  const totalEntrada12 = funilTotalEntrada !== undefined ? funilTotalEntrada : evolucaoMensal.reduce((acc, curr) => acc + curr.qtd, 0);
   const mediaEntrada = evolucaoMensal.length > 0 ? (totalEntrada12 / evolucaoMensal.length).toFixed(1) : '0';
   const ultimoQtd = evolucaoMensal.length > 0 ? evolucaoMensal[evolucaoMensal.length - 1].qtd : 0;
   const penultimoQtd = evolucaoMensal.length > 1 ? evolucaoMensal[evolucaoMensal.length - 2].qtd : 0;
@@ -337,6 +339,14 @@ export function EvolutionCharts({
           </div>
         </div>
 
+        {/* Explicação Dinâmica */}
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            No acumulado dos últimos 12 meses, {totalEntrada12 === 0 ? 'não registramos a entrada de novos prospects' : <>registramos a entrada de <strong>{totalEntrada12}</strong> novos prospects</>}, com uma média de <strong>{mediaEntrada}</strong> análises por mês. Comparando o volume atual com o mês anterior, observamos {diffEntrada > 0 ? <>um crescimento de <strong>+{diffEntrada}</strong></> : diffEntrada < 0 ? <>uma redução de <strong>{diffEntrada}</strong></> : <>estabilidade no número de</>} novas entradas neste período.
+          </div>
+        </div>
+
         {/* Gráfico */}
         <div className='mb-6'>
           {evolucaoMensal.length === 0 ? (
@@ -415,6 +425,14 @@ export function EvolutionCharts({
           </div>
         </div>
 
+        {/* Explicação Dinâmica */}
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
+          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            Nossa expansão financeira nos últimos 12 meses apresenta {statsPropostas.total === 0 ? 'nenhuma proposta enviada aos clientes' : <>a elaboração de <strong>{formatMoney(statsPropostas.total)}</strong> em propostas enviadas aos clientes (com ticket médio mensal de <strong>{formatMoney(statsPropostas.media)}</strong>)</>} versus {statsFinanceiro.total === 0 ? 'nenhum contrato firmado' : <>a concretização de <strong>{formatMoney(statsFinanceiro.total)}</strong> em contratos firmados, que impulsionam um ganho recorrente médio de <strong>{formatMoney(statsFinanceiro.media)}</strong> mensais para a carteira do escritório</>}.
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-6">
 
           {/* LADO ESQUERDO - PROPOSTAS */}
@@ -422,11 +440,11 @@ export function EvolutionCharts({
             <div>
               <div className='flex justify-between items-start mb-5'>
                 <div>
-                  <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.15em]">
-                    Evolução de Propostas
+                  <p className="inline-flex text-[11px] font-black text-blue-700 bg-blue-50 px-2.5 py-1 rounded uppercase tracking-[0.15em]">
+                    Propostas Enviadas
                   </p>
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-1">
-                    Valores em R$
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-2">
+                    Evolução em R$
                   </p>
                 </div>
                 <div className='flex flex-col items-end gap-0.5'>
@@ -492,11 +510,11 @@ export function EvolutionCharts({
             <div>
               <div className='flex justify-between items-start mb-5'>
                 <div>
-                  <p className="text-[11px] font-black text-green-600 uppercase tracking-[0.15em]">
-                    Evolução de Fechamentos
+                  <p className="inline-flex text-[11px] font-black text-green-700 bg-green-50 px-2.5 py-1 rounded uppercase tracking-[0.15em]">
+                    Contratos Fechados
                   </p>
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-1">
-                    Valores em R$
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-2">
+                    Evolução em R$
                   </p>
                 </div>
                 <div className='flex flex-col items-end gap-0.5'>
