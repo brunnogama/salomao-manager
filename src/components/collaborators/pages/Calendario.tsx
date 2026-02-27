@@ -378,22 +378,22 @@ export function Calendario() {
         </div>
 
         {/* DESTAQUES DO DIA */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
           {/* ANIVERSÁRIOS DE HOJE */}
-          {aniversariosHoje.length > 0 ? (
-            <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 rounded-2xl shadow-xl border-2 border-[#d4af37]/30 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#d4af37]/20">
-                <div className="p-3 bg-gradient-to-br from-[#d4af37] to-amber-600 rounded-xl shadow-lg">
-                  <Cake className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2">
-                    🎉 Aniversariantes de Hoje!
-                  </h2>
-                  <p className="text-xs font-semibold text-gray-600">Não esqueça de parabenizar</p>
-                </div>
+          <div className="lg:col-span-1 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 rounded-2xl shadow-xl border-2 border-[#d4af37]/30 p-6 animate-in fade-in slide-in-from-top-4 duration-500 h-full">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#d4af37]/20">
+              <div className="p-3 bg-gradient-to-br from-[#d4af37] to-amber-600 rounded-xl shadow-lg shrink-0">
+                <Cake className="h-6 w-6 text-white" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="min-w-0">
+                <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2 truncate">
+                  🎉 Aniversariantes de Hoje!
+                </h2>
+                <p className="text-xs font-semibold text-gray-600 truncate">Não esqueça de parabenizar</p>
+              </div>
+            </div>
+            {aniversariosHoje.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4">
                 {aniversariosHoje.map((aniv) => (
                   <div
                     key={aniv.colaborador.id}
@@ -404,14 +404,14 @@ export function Calendario() {
                         <img
                           src={aniv.colaborador.photo_url}
                           alt={aniv.colaborador.name}
-                          className="w-16 h-16 rounded-xl object-cover border-4 border-[#d4af37] shadow-lg"
+                          className="w-16 h-16 rounded-xl object-cover border-4 border-[#d4af37] shadow-lg shrink-0"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-2xl font-black border-4 border-[#d4af37]/30 shadow-lg">
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-2xl font-black border-4 border-[#d4af37]/30 shadow-lg shrink-0">
                           {aniv.colaborador.name.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="font-black text-[#0a192f] truncate">{formatName(aniv.colaborador.name)}</p>
                         <p className="text-xs font-semibold text-gray-600 truncate">{toTitleCase(aniv.colaborador.role)}</p>
                       </div>
@@ -419,23 +419,27 @@ export function Calendario() {
                   </div>
                 ))}
               </div>
-            </div>
-          ) : <div className="hidden"></div>}
+            ) : (
+              <div className="text-center py-8 text-sm text-gray-500 font-medium italic">
+                Nenhum aniversariante hoje
+              </div>
+            )}
+          </div>
 
           {/* EVENTOS DE HOJE */}
-          {eventosHoje.length > 0 ? (
-            <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-50 rounded-2xl shadow-xl border-2 border-emerald-500/30 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-emerald-500/20">
-                <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg">
-                  <CalendarEventIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2">
-                    📅 Eventos de Hoje!
-                  </h2>
-                  <p className="text-xs font-semibold text-gray-600">Acontecimentos e Feriados de hoje</p>
-                </div>
+          <div className="lg:col-span-2 bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-50 rounded-2xl shadow-xl border-2 border-emerald-500/30 p-6 animate-in fade-in slide-in-from-top-4 duration-500 h-full">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-emerald-500/20">
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg shrink-0">
+                <CalendarEventIcon className="h-6 w-6 text-white" />
               </div>
+              <div className="min-w-0">
+                <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2 truncate">
+                  📅 Eventos de Hoje!
+                </h2>
+                <p className="text-xs font-semibold text-gray-600 truncate">Acontecimentos e Feriados de hoje</p>
+              </div>
+            </div>
+            {eventosHoje.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {eventosHoje.map((evento, idx) => (
                   <div
@@ -454,8 +458,12 @@ export function Calendario() {
                   </div>
                 ))}
               </div>
-            </div>
-          ) : <div className="hidden"></div>}
+            ) : (
+              <div className="text-center py-8 text-sm text-gray-500 font-medium italic">
+                Nenhum evento para hoje
+              </div>
+            )}
+          </div>
         </div>
 
         {/* BLOCOS: ANIVERSARIANTES | EVENTOS */}
