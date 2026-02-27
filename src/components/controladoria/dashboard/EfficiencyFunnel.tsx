@@ -15,7 +15,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
           </div>
           <div>
             <h2 className='text-[22px] font-black text-[#0a192f] tracking-tight'>
-              Pipeline de Eficiência
+              Funil de Captação Jurídica
             </h2>
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
               Conversão e Ciclo de Vida
@@ -49,7 +49,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
               </div>
               <div className="flex items-end gap-2">
                 <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.totalEntrada}</span>
-                <span className="text-xs font-bold text-gray-400 mb-1">leads</span>
+                <span className="text-xs font-bold text-gray-400 mb-1">consultas</span>
               </div>
             </div>
 
@@ -58,7 +58,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
               <div className="mt-3 md:absolute md:-bottom-[80px] md:left-4 md:right-4 bg-red-50/50 border border-red-100/50 rounded-xl p-3 flex items-center justify-between text-red-800 z-10 backdrop-blur-sm">
                 <div className="flex items-center gap-2">
                   <XCircle className="w-4 h-4 text-red-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Perda em Análise</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Rejeitadas</span>
                 </div>
                 <span className="text-sm font-black text-red-600">{funil.perdaAnalise}</span>
               </div>
@@ -114,7 +114,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
               <div className="mt-3 md:absolute md:-bottom-[80px] md:left-4 md:right-4 bg-red-50/50 border border-red-100/50 rounded-xl p-3 flex items-center justify-between text-red-800 z-10 backdrop-blur-sm">
                 <div className="flex items-center gap-2">
                   <XCircle className="w-4 h-4 text-red-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Perda Negociação</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Propostas Recusadas</span>
                 </div>
                 <span className="text-sm font-black text-red-600">{funil.perdaNegociacao}</span>
               </div>
@@ -157,11 +157,11 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
-                <h3 className="text-xs font-black text-green-800 uppercase tracking-widest">Fechados</h3>
+                <h3 className="text-xs font-black text-green-800 uppercase tracking-widest">Contratos Fechados</h3>
               </div>
               <div className="flex items-end gap-2">
                 <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.fechados}</span>
-                <span className="text-xs font-bold text-gray-400 mb-1">ganhos</span>
+                <span className="text-xs font-bold text-gray-400 mb-1">assinados</span>
               </div>
             </div>
 
