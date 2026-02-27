@@ -141,7 +141,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
         }
 
         const totalValueStr = totalOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        if (!breakdown || breakdown.length <= 1) return null;
+        if (!Array.isArray(breakdown) || breakdown.length <= 1) return null;
 
         const totalCalculated = breakdown.reduce((acc, curr) => acc + parseCurrency(curr.value), 0);
         const diff = Math.abs(totalOriginal - totalCalculated);
@@ -204,7 +204,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
         if (typeof rawVal === 'string') totalOriginal = rawVal ? parseCurrency(rawVal) : 0;
         const countStr = interimInstallments;
 
-        if (!totalOriginal || totalOriginal <= 0 || !countStr || countStr === '1x' || !breakdown || breakdown.length === 0) return null;
+        if (!totalOriginal || totalOriginal <= 0 || !countStr || countStr === '1x' || !Array.isArray(breakdown) || breakdown.length === 0) return null;
 
         const totalValueStr = totalOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const totalCalculated = breakdown.reduce((acc, curr) => acc + parseCurrency(curr.value), 0);
@@ -360,7 +360,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                         <div className="space-y-2">
                             <FinancialInputWithInstallments label="Pró-Labore (R$)" value={safeString(formatForInput(formData.pro_labore))} onChangeValue={(v: any) => setFormData({ ...formData, pro_labore: v })} installments={formData.pro_labore_installments} onChangeInstallments={(v: any) => setFormData({ ...formData, pro_labore_installments: v })} onAdd={() => handleAddToList('pro_labore_extras', 'pro_labore', 'pro_labore_extras_installments', 'pro_labore_installments')} clause={(formData as any).pro_labore_clause} onChangeClause={(v: any) => setFormData({ ...formData, pro_labore_clause: v } as any)} />
                             <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
-                                {(formData as any).pro_labore_extras?.map((val: string, idx: number) => {
+                                {ensureArray((formData as any).pro_labore_extras).map((val: string, idx: number) => {
                                     const clauses = ensureArray((formData as any).pro_labore_extras_clauses);
                                     const installments = ensureArray((formData as any).pro_labore_extras_installments);
                                     return (
@@ -377,7 +377,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                         <div className="space-y-2">
                             <FinancialInputWithInstallments label="Fixo Mensal (R$)" value={safeString(formatForInput(formData.fixed_monthly_fee))} onChangeValue={(v: any) => setFormData({ ...formData, fixed_monthly_fee: v })} installments={formData.fixed_monthly_fee_installments} onChangeInstallments={(v: any) => setFormData({ ...formData, fixed_monthly_fee_installments: v })} onAdd={() => handleAddToList('fixed_monthly_extras', 'fixed_monthly_fee', 'fixed_monthly_extras_installments', 'fixed_monthly_fee_installments')} clause={(formData as any).fixed_monthly_fee_clause} onChangeClause={(v: any) => setFormData({ ...formData, fixed_monthly_fee_clause: v } as any)} />
                             <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
-                                {(formData as any).fixed_monthly_extras?.map((val: string, idx: number) => {
+                                {ensureArray((formData as any).fixed_monthly_extras).map((val: string, idx: number) => {
                                     const clauses = ensureArray((formData as any).fixed_monthly_extras_clauses);
                                     const installments = ensureArray((formData as any).fixed_monthly_extras_installments);
                                     return (
@@ -394,7 +394,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                         <div className="space-y-2">
                             <FinancialInputWithInstallments label="Êxito Intermediário" value={newIntermediateFee} onChangeValue={setNewIntermediateFee} installments={interimInstallments} onChangeInstallments={setInterimInstallments} onAdd={handleAddIntermediateFee} clause={interimClause} onChangeClause={setInterimClause} />
                             <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
-                                {formData.intermediate_fees?.map((fee: string, idx: number) => {
+                                {ensureArray(formData.intermediate_fees).map((fee: string, idx: number) => {
                                     const clauses = ensureArray((formData as any).intermediate_fees_clauses);
                                     const installments = ensureArray((formData as any).intermediate_fees_installments);
                                     return (
@@ -411,7 +411,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                         <div className="space-y-2">
                             <FinancialInputWithInstallments label="Êxito Final (R$)" value={safeString(formatForInput(formData.final_success_fee))} onChangeValue={(v: any) => setFormData({ ...formData, final_success_fee: v })} installments={formData.final_success_fee_installments} onChangeInstallments={(v: any) => setFormData({ ...formData, final_success_fee_installments: v })} onAdd={() => handleAddToList('final_success_extras', 'final_success_fee', 'final_success_extras_installments', 'final_success_fee_installments')} clause={(formData as any).final_success_fee_clause} onChangeClause={(v: any) => setFormData({ ...formData, final_success_fee_clause: v } as any)} />
                             <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
-                                {(formData as any).final_success_extras?.map((val: string, idx: number) => {
+                                {ensureArray((formData as any).final_success_extras).map((val: string, idx: number) => {
                                     const clauses = ensureArray((formData as any).final_success_extras_clauses);
                                     const installments = ensureArray((formData as any).final_success_extras_installments);
                                     return (
@@ -433,7 +433,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                                 <button className="bg-salomao-blue text-white px-3 rounded-r-lg hover:bg-blue-900" type="button" onClick={() => handleAddToList('percent_extras', 'final_success_percent')}><Plus className="w-4 h-4" /></button>
                             </div>
                             <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
-                                {(formData as any).percent_extras?.map((val: string, idx: number) => {
+                                {ensureArray((formData as any).percent_extras).map((val: string, idx: number) => {
                                     const clauses = ensureArray((formData as any).percent_extras_clauses);
                                     return (
                                         <div key={idx} onClick={() => { const newList = [...(formData as any).percent_extras]; const newClausesList = [...ensureArray((formData as any).percent_extras_clauses)]; const valToEdit = newList[idx]; const clauseToEdit = newClausesList[idx]; newList.splice(idx, 1); newClausesList.splice(idx, 1); setFormData({ ...formData, final_success_percent: valToEdit, final_success_percent_clause: clauseToEdit, percent_extras: newList, percent_extras_clauses: newClausesList } as any); }} className="bg-white border border-blue-100 px-2 py-1.5 rounded-lg text-xs text-blue-800 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-50" title="Clique para editar">
@@ -448,7 +448,7 @@ export function StatusAndDatesSection(props: StatusAndDatesSectionProps) {
                         <div className="space-y-2">
                             <FinancialInputWithInstallments label="Outros Honorários (R$)" value={safeString(formatForInput(formData.other_fees))} onChangeValue={(v: any) => setFormData({ ...formData, other_fees: v })} installments={formData.other_fees_installments} onChangeInstallments={(v: any) => setFormData({ ...formData, other_fees_installments: v })} onAdd={() => handleAddToList('other_fees_extras', 'other_fees', 'other_fees_extras_installments', 'other_fees_installments')} clause={(formData as any).other_fees_clause} onChangeClause={(v: any) => setFormData({ ...formData, other_fees_clause: v } as any)} />
                             <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
-                                {(formData as any).other_fees_extras?.map((val: string, idx: number) => {
+                                {ensureArray((formData as any).other_fees_extras).map((val: string, idx: number) => {
                                     const clauses = ensureArray((formData as any).other_fees_extras_clauses);
                                     const installments = ensureArray((formData as any).other_fees_extras_installments);
                                     return (
