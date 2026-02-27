@@ -1,9 +1,6 @@
-import { BookOpen, Search, Loader2 } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
-import { useState } from 'react'
-import { supabase } from '../../../lib/supabase'
-import { toast } from 'sonner'
 
 const ESTADOS_BRASIL_UF = [
     'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -24,82 +21,6 @@ export function OABSection({
     maskDate,
     isViewMode = false
 }: OABSectionProps) {
-    const [isConsultingCNA, setIsConsultingCNA] = useState(false);
-
-    const handleConsultarCNA = async () => {
-        if (!formData.name && !formData.cpf) {
-            toast.error('Preencha o Nome ou CPF na aba Inicial para consultar o CNA.');
-            return;
-        }
-
-        setIsConsultingCNA(true);
-        try {
-            const { data, error } = await supabase.functions.invoke('consultar-cna', {
-                body: {
-                    nome: formData.name,
-                    cpf: formData.cpf
-                }
-            });
-
-            if (error) throw error;
-
-            const advogados = data;
-
-            if (!advogados || advogados.length === 0) {
-                toast.error('Nenhum resultado encontrado no CNA para os dados informados.');
-                return;
-            }
-
-            if (advogados.length > 1 && !formData.cpf) {
-                toast.warning('Foram encontrados múltiplos resultados com este nome. Por favor, preencha o CPF na aba Inicial para uma busca exata.');
-                return;
-            }
-
-            const advogado = advogados[0];
-            const inscricoes = advogado.inscricoes || [];
-
-            if (inscricoes.length === 0) {
-                toast.error('Resultados encontrados, mas sem inscrições detalhadas.');
-                return;
-            }
-
-            const mappedOabs = inscricoes.map((insc: any) => ({
-                numero: insc.numero || insc.numeroInscricao || '',
-                uf: insc.uf || '',
-                tipo: insc.tipo === 'Principal' || insc.tipo === 'Transferencia' ? 'Principal' : 'Suplementar',
-                validade: ''
-            }));
-
-            let hasPrincipal = false;
-            const finalOabs = mappedOabs.map((o: any) => {
-                if (['Principal', 'Transferencia', 'Originaria'].includes(o.tipo)) {
-                    if (!hasPrincipal) {
-                        hasPrincipal = true;
-                        return { ...o, tipo: 'Principal' };
-                    }
-                    return { ...o, tipo: 'Suplementar' };
-                }
-                return { ...o, tipo: 'Suplementar' };
-            });
-
-            if (finalOabs.length > 0 && !hasPrincipal) {
-                finalOabs[0].tipo = 'Principal';
-            }
-
-            setFormData({
-                ...formData,
-                oabs: finalOabs
-            });
-
-            toast.success(`Dados atualizados com sucesso (${advogado.nome}).`);
-        } catch (err: any) {
-            console.error('Erro ao consultar CNA:', err);
-            toast.error('Falha ao consultar o CNA. Tente novamente mais tarde.');
-        } finally {
-            setIsConsultingCNA(false);
-        }
-    }
-
     return (
         <section className="space-y-4">
             <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
@@ -125,23 +46,9 @@ export function OABSection({
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <h4 className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest flex items-center gap-2">
-                            Inscrições OAB
-                        </h4>
-                        {!isViewMode && (
-                            <button
-                                type="button"
-                                onClick={handleConsultarCNA}
-                                disabled={isConsultingCNA}
-                                className="flex items-center gap-2 text-[9px] font-black uppercase text-white bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 px-3 py-1.5 rounded-lg transition-colors shadow-sm disabled:opacity-50"
-                                title="Consultar dados no Cadastro Nacional dos Advogados"
-                            >
-                                {isConsultingCNA ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
-                                Consultar no CNA
-                            </button>
-                        )}
-                    </div>
+                    <h4 className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest flex items-center gap-2">
+                        Inscrições OAB
+                    </h4>
                     {!isViewMode && (
                         <button
                             type="button"
