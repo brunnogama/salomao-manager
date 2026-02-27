@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useColaboradores } from '../hooks/useColaboradores'
+import { getFeriadosDoAno } from '../utils/holidays'
 
 interface Colaborador {
   id: string | number;
@@ -90,7 +91,16 @@ export function Calendario() {
       .select('*')
       .order('data_evento')
 
-    if (evs) setEventos(evs)
+    const feriados = getFeriadosDoAno(new Date().getFullYear()).map((f, idx) => ({
+      ...f,
+      id: -(idx + 1) // IDs negativos para feriados
+    })) as Evento[]
+
+    if (evs) {
+      setEventos([...feriados, ...evs])
+    } else {
+      setEventos([...feriados])
+    }
   }
 
   const handleSaveEvento = async () => {
@@ -272,6 +282,8 @@ export function Calendario() {
   const aniversariosHoje = getAniversariosHoje()
   const aniversariosEsteMes = getAniversariosEsteMes()
 
+  const eventosHoje = getProximosEventos().filter(e => e.isHoje)
+
   // Agrupamento de eventos para a lista lateral
 
 
@@ -384,6 +396,41 @@ export function Calendario() {
                     <div className="flex-1">
                       <p className="font-black text-[#0a192f]">{formatName(aniv.colaborador.name)}</p>
                       <p className="text-xs font-semibold text-gray-600">{toTitleCase(aniv.colaborador.role)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* EVENTOS DE HOJE */}
+        {eventosHoje.length > 0 && (
+          <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-50 rounded-2xl shadow-xl border-2 border-emerald-500/30 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-emerald-500/20">
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg">
+                <CalendarEventIcon className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2">
+                  📅 Eventos de Hoje!
+                </h2>
+                <p className="text-xs font-semibold text-gray-600">Acontecimentos e Feriados de hoje</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {eventosHoje.map((evento, idx) => (
+                <div
+                  key={evento.id || idx}
+                  className="bg-white rounded-xl p-5 shadow-lg border-2 border-emerald-500/50 hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-emerald-500"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white text-2xl font-black border-4 border-emerald-500/30 shadow-lg shrink-0">
+                      {evento.tipo.includes('Feriado') ? <Sparkles className="h-8 w-8" /> : evento.tipo === 'Reunião' ? <Users className="h-8 w-8" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-8 w-8" /> : <CalendarEventIcon className="h-8 w-8" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-black text-[#0a192f] leading-tight">{evento.titulo}</p>
+                      <p className="text-xs font-semibold text-gray-600 mt-1">{evento.tipo}</p>
                     </div>
                   </div>
                 </div>
