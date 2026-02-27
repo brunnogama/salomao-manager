@@ -102,21 +102,29 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
 
             if (error) throw error;
 
-            const newPartners = [...(formData.contract_partners || [])];
+            setFormData(prev => {
+                const updatedPartners = [...(prev.contract_partners || [])];
 
-            if (data && data.length > 0) {
-                // Mapeia para o formato esperado no form
-                newPartners[partnerIndex].oabs = data.map((oab: any) => ({
-                    numero: oab.numero,
-                    uf: oab.uf,
-                    tipo: oab.tipo || 'Suplementar'
-                }));
-            } else {
-                // Se não tem OAB, deixa um em branco Principal
-                newPartners[partnerIndex].oabs = [{ numero: '', uf: '', tipo: 'Principal' }];
-            }
+                if (data && data.length > 0) {
+                    // Mapeia para o formato esperado no form
+                    updatedPartners[partnerIndex] = {
+                        ...updatedPartners[partnerIndex],
+                        oabs: data.map((oab: any) => ({
+                            numero: oab.numero,
+                            uf: oab.uf,
+                            tipo: oab.tipo || 'Suplementar'
+                        }))
+                    };
+                } else {
+                    // Se não tem OAB, deixa um em branco Principal
+                    updatedPartners[partnerIndex] = {
+                        ...updatedPartners[partnerIndex],
+                        oabs: [{ numero: '', uf: '', tipo: 'Principal' }]
+                    };
+                }
 
-            setFormData(prev => ({ ...prev, contract_partners: newPartners }));
+                return { ...prev, contract_partners: updatedPartners };
+            });
         } catch (err) {
             console.error('Erro ao buscar OABs do sócio:', err);
         }
