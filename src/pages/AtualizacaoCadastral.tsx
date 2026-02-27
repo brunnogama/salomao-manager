@@ -26,6 +26,14 @@ const maskPhone = (v: string) => {
     if (raw.length <= 10) return raw.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').slice(0, 14)
     return raw.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').slice(0, 15)
 }
+const maskCNPJ = (v: string) => {
+    let val = v.replace(/\D/g, '')
+    val = val.replace(/^(\d{2})(\d)/, '$1.$2')
+    val = val.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    val = val.replace(/\.(\d{3})(\d)/, '.$1/$2')
+    val = val.replace(/(\d{4})(\d)/, '$1-$2')
+    return val.slice(0, 18)
+}
 
 const ESTADOS_BRASIL = [
     { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },
@@ -302,6 +310,7 @@ export default function AtualizacaoCadastral() {
                                 maskDate={maskDate}
                                 maskRG={maskRG}
                                 maskPhone={maskPhone}
+                                maskCNPJ={maskCNPJ}
                                 isViewMode={false}
                             />
                             <EnderecoSection

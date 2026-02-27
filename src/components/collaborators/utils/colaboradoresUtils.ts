@@ -36,6 +36,15 @@ export const maskCPF = (v: string) => {
   return val.slice(0, 14)
 }
 
+export const maskCNPJ = (v: string) => {
+  let val = v.replace(/\D/g, '')
+  val = val.replace(/^(\d{2})(\d)/, '$1.$2')
+  val = val.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+  val = val.replace(/\.(\d{3})(\d)/, '.$1/$2')
+  val = val.replace(/(\d{4})(\d)/, '$1-$2')
+  return val.slice(0, 18)
+}
+
 export const maskDate = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').slice(0, 10)
 
 export const maskRG = (v: string) => {

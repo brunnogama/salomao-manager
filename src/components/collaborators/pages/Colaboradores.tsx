@@ -36,6 +36,7 @@ import {
   maskDate,
   maskRG,
   maskPhone,
+  maskCNPJ,
   formatDateToDisplay,
   formatDateToISO
 } from '../utils/colaboradoresUtils'
@@ -691,6 +692,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
             maskDate={maskDate}
             maskRG={maskRG}
             maskPhone={maskPhone}
+            maskCNPJ={maskCNPJ}
             isViewMode={isViewMode}
           />
           <EnderecoSection

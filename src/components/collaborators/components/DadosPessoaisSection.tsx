@@ -12,6 +12,7 @@ interface DadosPessoaisSectionProps {
   maskDate: (value: string) => string
   maskRG: (value: string) => string
   maskPhone: (value: string) => string
+  maskCNPJ: (value: string) => string
   isViewMode?: boolean
 }
 
@@ -22,6 +23,7 @@ export function DadosPessoaisSection({
   maskDate,
   maskRG,
   maskPhone,
+  maskCNPJ,
   isViewMode = false
 }: DadosPessoaisSectionProps) {
   const [bancos, setBancos] = useState<{ name: string }[]>([])
@@ -359,6 +361,7 @@ export function DadosPessoaisSection({
                 options={[
                   { name: 'Telefone' },
                   { name: 'CPF' },
+                  { name: 'CNPJ' },
                   { name: 'E-mail' },
                   { name: 'Chave Aleatória' }
                 ]}
@@ -375,11 +378,16 @@ export function DadosPessoaisSection({
                 value={formData.pix_chave || ''}
                 onChange={e => {
                   let val = e.target.value
-                  if (formData.pix_tipo === 'Telefone') val = maskPhone(val)
-                  else if (formData.pix_tipo === 'CPF') val = maskCPF(val)
+                  if (formData.pix_tipo === 'Telefone') {
+                    val = maskPhone(val)
+                  } else if (formData.pix_tipo === 'CPF') {
+                    val = maskCPF(val)
+                  } else if (formData.pix_tipo === 'CNPJ') {
+                    val = maskCNPJ(val)
+                  }
                   setFormData({ ...formData, pix_chave: val })
                 }}
-                maxLength={formData.pix_tipo === 'CPF' ? 14 : formData.pix_tipo === 'Telefone' ? 15 : undefined}
+                maxLength={formData.pix_tipo === 'CNPJ' ? 18 : formData.pix_tipo === 'CPF' ? 14 : formData.pix_tipo === 'Telefone' ? 15 : undefined}
                 placeholder="Digite a chave PIX"
                 disabled={isViewMode || !formData.pix_tipo}
                 readOnly={isViewMode}
