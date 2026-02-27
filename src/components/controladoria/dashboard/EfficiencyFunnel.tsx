@@ -40,12 +40,12 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
 
           {/* ETAPA 1: START - PROSPECTS */}
           <div className="flex-1 flex flex-col relative group">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm group-hover:shadow-md group-hover:border-indigo-200 transition-all z-20 relative h-full min-h-[140px] flex flex-col justify-center border-t-4 border-t-indigo-500">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm group-hover:shadow-md group-hover:border-amber-300 transition-all z-20 relative h-full min-h-[140px] flex flex-col justify-center border-t-4 border-t-amber-500">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
                   <Users className="w-4 h-4" />
                 </div>
-                <h3 className="text-xs font-black text-indigo-900 uppercase tracking-widest">Prospects</h3>
+                <h3 className="text-xs font-black text-amber-900 uppercase tracking-widest">Prospects</h3>
               </div>
               <div className="flex items-end gap-2">
                 <div className="flex flex-col gap-0.5 mt-2 ml-1">

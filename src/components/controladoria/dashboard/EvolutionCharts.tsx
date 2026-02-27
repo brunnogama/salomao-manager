@@ -422,11 +422,11 @@ export function EvolutionCharts({
             <div>
               <div className='flex justify-between items-start mb-5'>
                 <div>
-                  <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.15em]">
-                    Evolução de Propostas
+                  <p className="inline-flex text-[11px] font-black text-blue-700 bg-blue-50 px-2.5 py-1 rounded uppercase tracking-[0.15em]">
+                    Propostas Enviadas
                   </p>
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-1">
-                    Valores em R$
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-2">
+                    Evolução em R$
                   </p>
                 </div>
                 <div className='flex flex-col items-end gap-0.5'>
@@ -492,11 +492,11 @@ export function EvolutionCharts({
             <div>
               <div className='flex justify-between items-start mb-5'>
                 <div>
-                  <p className="text-[11px] font-black text-green-600 uppercase tracking-[0.15em]">
-                    Evolução de Fechamentos
+                  <p className="inline-flex text-[11px] font-black text-green-700 bg-green-50 px-2.5 py-1 rounded uppercase tracking-[0.15em]">
+                    Contratos Fechados
                   </p>
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-1">
-                    Valores em R$
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider mt-2">
+                    Evolução em R$
                   </p>
                 </div>
                 <div className='flex flex-col items-end gap-0.5'>
