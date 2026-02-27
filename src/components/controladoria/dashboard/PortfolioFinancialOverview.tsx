@@ -314,7 +314,5 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
         </div>
       </div>
     </div>
-      </div >
-    </div >
   );
 }
