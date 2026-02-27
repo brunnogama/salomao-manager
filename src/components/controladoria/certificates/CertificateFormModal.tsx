@@ -442,7 +442,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                                             const newPartners = [...(formData.contract_partners || [])];
 
                                                             // O SearchableSelect modificado agora passa o item completo
-                                                            const collaboratorId = item?.colaborador_id || item?.collaborator_id || item?.id || val;
+                                                            const collaboratorId = item?.id || val;
                                                             const collaboratorName = item?.name || val;
 
                                                             newPartners[pIndex] = {
@@ -457,7 +457,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                                                 fetchPartnerOabs(pIndex, collaboratorId);
                                                             }
                                                         }}
-                                                        table="partners"
+                                                        table="collaborators"
                                                         nameField="name"
                                                     />
                                                 </div>
