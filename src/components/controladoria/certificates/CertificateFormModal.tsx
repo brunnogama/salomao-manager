@@ -391,7 +391,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-widest">
-                                        Sócios no Contato Social
+                                        Sócios no Contrato Social
                                     </h3>
                                     <button
                                         type="button"
@@ -400,8 +400,8 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                             setFormData({
                                                 ...formData,
                                                 contract_partners: [
-                                                    ...currentPartners,
-                                                    { collaborator_id: '', name: '', oabs: [{ numero: '', uf: '', tipo: 'Principal' }] }
+                                                    { collaborator_id: '', name: '', oabs: [{ numero: '', uf: '', tipo: 'Principal' }] },
+                                                    ...currentPartners
                                                 ]
                                             });
                                         }}
