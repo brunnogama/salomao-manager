@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Database, Calendar, Building2, MapPin, Info, Edit, Download, ExternalLink, ShieldCheck, Trash2, Paperclip } from 'lucide-react';
+import { FileText, Database, Calendar, Building2, MapPin, Info, Edit, Download, ExternalLink, ShieldCheck, Trash2, Paperclip, X } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'sonner';
 import { useEscKey } from '../../../hooks/useEscKey';
@@ -208,9 +208,9 @@ export function CertificateDetailsModal({
                 {/* Right Content */}
                 <div className="flex-1 flex flex-col min-w-0 bg-gray-50/50">
                     {/* Header bar within content area */}
-                    <div className="px-10 py-6 border-b border-gray-100 bg-white flex justify-between items-center shrink-0">
+                    <div className="px-10 py-6 border-b border-gray-100 bg-white flex justify-between items-start shrink-0">
                         <div>
-                            <h3 className="text-xl font-black text-gray-900 leading-tight">
+                            <h3 className="text-xl font-black text-gray-900 leading-tight pr-4">
                                 {getCertName(certificate)}
                             </h3>
                             <div className="flex items-center gap-3 mt-1">
@@ -220,6 +220,13 @@ export function CertificateDetailsModal({
                                 )}
                             </div>
                         </div>
+                        <button
+                            onClick={onClose}
+                            className="p-2 sm:p-2.5 bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 rounded-xl transition-colors border border-gray-100 shadow-sm shrink-0"
+                            title="Fechar Detalhes"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
                     </div>
 
                     {/* Scrollable Content */}
@@ -404,7 +411,7 @@ export function CertificateDetailsModal({
                                                             <Download className="w-4 h-4" />
                                                         </button>
                                                         <a
-                                                            href={supabase.storage.from('ged-documentos').getPublicUrl(file.file_url).data.publicUrl}
+                                                            href={file.file_url}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors bg-white border border-gray-100 shadow-sm"
