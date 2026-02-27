@@ -91,7 +91,7 @@ export function Calendario() {
       .select('*')
       .order('data_evento')
 
-    const feriados = getFeriadosDoAno(new Date().getFullYear()).map((f, idx) => ({
+    const feriados = getFeriadosDoAno(new Date().getFullYear()).map((f: any, idx: number) => ({
       ...f,
       id: -(idx + 1) // IDs negativos para feriados
     })) as Evento[]
@@ -322,37 +322,53 @@ export function Calendario() {
 
         {/* TOOLBAR & STATS */}
         <div className="flex flex-col xl:flex-row gap-4 items-center justify-between">
-          <div className="flex gap-4 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-            <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 shadow-lg">
-                <Sparkles className="h-5 w-5 text-white" />
+          <div className="flex w-full overflow-x-auto pb-2 xl:pb-0 justify-between items-center gap-6">
+
+            {/* ESQUERDA: ANIVERSÁRIOS */}
+            <div className="flex gap-4">
+              <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 shadow-lg">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Aniver. Hoje</p>
+                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{aniversariosHoje.length}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Aniver. Hoje</p>
-                <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{aniversariosHoje.length}</p>
+
+              <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 shadow-lg">
+                  <PartyPopper className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Aniver. Mês</p>
+                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{aniversariosEsteMes.length}</p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 shadow-lg">
-                <PartyPopper className="h-5 w-5 text-white" />
+            {/* DIREITA: EVENTOS */}
+            <div className="flex gap-4">
+              <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg">
+                  <CalendarEventIcon className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Eventos Hoje</p>
+                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{eventosHoje.length}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Aniver. Mês</p>
-                <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{aniversariosEsteMes.length}</p>
+
+              <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg">
+                  <CalendarEventIcon className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Eventos Mês</p>
+                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{eventosDoMes(selectedMonth, selectedYear).length}</p>
+                </div>
               </div>
             </div>
-
-            <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg">
-                <CalendarEventIcon className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Eventos Mês</p>
-                <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{eventosDoMes(selectedMonth, selectedYear).length}</p>
-              </div>
-            </div>
-
 
           </div>
 
@@ -361,83 +377,86 @@ export function Calendario() {
           </div>
         </div>
 
-        {/* ANIVERSÁRIOS DE HOJE */}
-        {aniversariosHoje.length > 0 && (
-          <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 rounded-2xl shadow-xl border-2 border-[#d4af37]/30 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#d4af37]/20">
-              <div className="p-3 bg-gradient-to-br from-[#d4af37] to-amber-600 rounded-xl shadow-lg">
-                <Cake className="h-6 w-6 text-white" />
+        {/* DESTAQUES DO DIA */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+          {/* ANIVERSÁRIOS DE HOJE */}
+          {aniversariosHoje.length > 0 ? (
+            <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 rounded-2xl shadow-xl border-2 border-[#d4af37]/30 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#d4af37]/20">
+                <div className="p-3 bg-gradient-to-br from-[#d4af37] to-amber-600 rounded-xl shadow-lg">
+                  <Cake className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2">
+                    🎉 Aniversariantes de Hoje!
+                  </h2>
+                  <p className="text-xs font-semibold text-gray-600">Não esqueça de parabenizar</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2">
-                  🎉 Aniversariantes de Hoje!
-                </h2>
-                <p className="text-xs font-semibold text-gray-600">Não esqueça de parabenizar</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {aniversariosHoje.map((aniv) => (
-                <div
-                  key={aniv.colaborador.id}
-                  className="bg-white rounded-xl p-5 shadow-lg border-2 border-[#d4af37]/50 hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-[#d4af37]"
-                >
-                  <div className="flex items-center gap-3">
-                    {aniv.colaborador.photo_url ? (
-                      <img
-                        src={aniv.colaborador.photo_url}
-                        alt={aniv.colaborador.name}
-                        className="w-16 h-16 rounded-xl object-cover border-4 border-[#d4af37] shadow-lg"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-2xl font-black border-4 border-[#d4af37]/30 shadow-lg">
-                        {aniv.colaborador.name.charAt(0).toUpperCase()}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {aniversariosHoje.map((aniv) => (
+                  <div
+                    key={aniv.colaborador.id}
+                    className="bg-white rounded-xl p-5 shadow-lg border-2 border-[#d4af37]/50 hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-[#d4af37]"
+                  >
+                    <div className="flex items-center gap-3">
+                      {aniv.colaborador.photo_url ? (
+                        <img
+                          src={aniv.colaborador.photo_url}
+                          alt={aniv.colaborador.name}
+                          className="w-16 h-16 rounded-xl object-cover border-4 border-[#d4af37] shadow-lg"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-2xl font-black border-4 border-[#d4af37]/30 shadow-lg">
+                          {aniv.colaborador.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <p className="font-black text-[#0a192f] truncate">{formatName(aniv.colaborador.name)}</p>
+                        <p className="text-xs font-semibold text-gray-600 truncate">{toTitleCase(aniv.colaborador.role)}</p>
                       </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="font-black text-[#0a192f]">{formatName(aniv.colaborador.name)}</p>
-                      <p className="text-xs font-semibold text-gray-600">{toTitleCase(aniv.colaborador.role)}</p>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          ) : <div className="hidden"></div>}
 
-        {/* EVENTOS DE HOJE */}
-        {eventosHoje.length > 0 && (
-          <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-50 rounded-2xl shadow-xl border-2 border-emerald-500/30 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-emerald-500/20">
-              <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg">
-                <CalendarEventIcon className="h-6 w-6 text-white" />
+          {/* EVENTOS DE HOJE */}
+          {eventosHoje.length > 0 ? (
+            <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-50 rounded-2xl shadow-xl border-2 border-emerald-500/30 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-emerald-500/20">
+                <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg">
+                  <CalendarEventIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2">
+                    📅 Eventos de Hoje!
+                  </h2>
+                  <p className="text-xs font-semibold text-gray-600">Acontecimentos e Feriados de hoje</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2">
-                  📅 Eventos de Hoje!
-                </h2>
-                <p className="text-xs font-semibold text-gray-600">Acontecimentos e Feriados de hoje</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {eventosHoje.map((evento, idx) => (
-                <div
-                  key={evento.id || idx}
-                  className="bg-white rounded-xl p-5 shadow-lg border-2 border-emerald-500/50 hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-emerald-500"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white text-2xl font-black border-4 border-emerald-500/30 shadow-lg shrink-0">
-                      {evento.tipo.includes('Feriado') ? <Sparkles className="h-8 w-8" /> : evento.tipo === 'Reunião' ? <Users className="h-8 w-8" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-8 w-8" /> : <CalendarEventIcon className="h-8 w-8" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-black text-[#0a192f] leading-tight">{evento.titulo}</p>
-                      <p className="text-xs font-semibold text-gray-600 mt-1">{evento.tipo}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {eventosHoje.map((evento, idx) => (
+                  <div
+                    key={evento.id || idx}
+                    className="bg-white rounded-xl p-5 shadow-lg border-2 border-emerald-500/50 hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-emerald-500"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white text-2xl font-black border-4 border-emerald-500/30 shadow-lg shrink-0">
+                        {evento.tipo.includes('Feriado') ? <Sparkles className="h-8 w-8" /> : evento.tipo === 'Reunião' ? <Users className="h-8 w-8" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-8 w-8" /> : <CalendarEventIcon className="h-8 w-8" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-[#0a192f] leading-tight truncate">{evento.titulo}</p>
+                        <p className="text-xs font-semibold text-gray-600 mt-1 truncate">{evento.tipo}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          ) : <div className="hidden"></div>}
+        </div>
 
         {/* BLOCOS: ANIVERSARIANTES | EVENTOS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 w-full">
