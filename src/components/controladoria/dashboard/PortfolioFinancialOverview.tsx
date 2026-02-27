@@ -48,6 +48,12 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
             </div>
           </div>
         </div>
+
+        {/* Explicação Dinâmica */}
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
+          Atualmente, nossa carteira possui <strong>{metrics.geral?.emAnalise || 0}</strong> casos sob análise, <strong>{metrics.geral?.propostasAtivas || 0}</strong> propostas ativas enviadas aos clientes e <strong>{metrics.geral?.fechados || 0}</strong> contratos fechados em andamento. Além disso, contabilizamos <strong>{metrics.geral?.probono || 0}</strong> casos pro bono e um histórico de <strong>{metrics.geral?.rejeitados || 0}</strong> propostas rejeitadas.
+        </div>
+
         {/* Cards de Status */}
         <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3'>
 
@@ -165,6 +171,11 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
           <p className='text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-[48px]'>
             Visão consolidada de oportunidades e receita garantida
           </p>
+        </div>
+
+        {/* Explicação Dinâmica */}
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
+          O valor total da nossa carteira de contratos fechados é de <strong>{formatMoney(totalCarteira)}</strong>, sendo <strong>{formatMoney(metrics.geral?.totalFechadoPL || 0)}</strong> em honorários pró-labore e <strong>{formatMoney(metrics.geral?.totalFechadoExito || 0)}</strong> em estimativa de êxito. Além disso, temos um potencial de <strong>{formatMoney(totalNegociacao)}</strong> em propostas atualmente enviadas aguardando negociação.
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-8 flex-1'>
@@ -303,5 +314,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
         </div>
       </div>
     </div>
+      </div >
+    </div >
   );
 }

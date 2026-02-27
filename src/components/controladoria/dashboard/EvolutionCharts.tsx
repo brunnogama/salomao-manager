@@ -337,6 +337,11 @@ export function EvolutionCharts({
           </div>
         </div>
 
+        {/* Explicação Dinâmica */}
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
+          No acumulado dos últimos 12 meses, registramos a entrada de <strong>{totalEntrada12}</strong> novos prospectos, com uma média de <strong>{mediaEntrada}</strong> análises por mês. Comparando o volume atual com o mês anterior, observamos {diffEntrada > 0 ? <span>um crescimento de <strong>+{diffEntrada}</strong></span> : diffEntrada < 0 ? <span>uma redução de <strong>{diffEntrada}</strong></span> : <span>estabilidade no número de</span>} novas entradas neste período.
+        </div>
+
         {/* Gráfico */}
         <div className='mb-6'>
           {evolucaoMensal.length === 0 ? (
@@ -413,6 +418,11 @@ export function EvolutionCharts({
               </h2>
             </div>
           </div>
+        </div>
+
+        {/* Explicação Dinâmica */}
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
+          Nossa expansão financeira nos últimos 12 meses apresenta a elaboração de <strong>{formatMoney(statsPropostas.total)}</strong> em propostas enviadas aos clientes (com ticket médio mensal de <strong>{formatMoney(statsPropostas.media)}</strong>) versus a concretização de <strong>{formatMoney(statsFinanceiro.total)}</strong> em contratos firmados, que impulsionam um ganho recorrente médio de <strong>{formatMoney(statsFinanceiro.media)}</strong> mensais para a carteira do escritório.
         </div>
 
         <div className="grid grid-cols-1 gap-6">

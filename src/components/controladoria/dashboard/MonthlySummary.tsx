@@ -31,6 +31,11 @@ export function MonthlySummary({ metrics }: MonthlySummaryProps) {
         </div>
       </div>
 
+      {/* Explicação Dinâmica */}
+      <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
+        Neste mês, registramos movimentações em <strong>{metrics.mes.totalUnico || 0}</strong> casos únicos no sistema, incluindo <strong>{metrics.mes.analysis || 0}</strong> novos prospectos que entraram para análise. Em termos de produtividade, formulamos <strong>{metrics.mes.propQtd || 0}</strong> propostas e fechamos com sucesso <strong>{metrics.mes.fechQtd || 0}</strong> novos contratos. Além disto, registramos <strong>{metrics.mes.rejected || 0}</strong> oportunidades perdidas e prestamos apoio a <strong>{metrics.mes.probono || 0}</strong> casos na categoria pro bono.
+      </div>
+
       {/* Cards Grid */}
       <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6'>
 

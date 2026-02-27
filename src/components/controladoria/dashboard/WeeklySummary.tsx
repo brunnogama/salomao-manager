@@ -31,6 +31,11 @@ export function WeeklySummary({ metrics }: WeeklySummaryProps) {
         </div>
       </div>
 
+      {/* Explicação Dinâmica */}
+      <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
+        Nesta semana, registramos movimentações em <strong>{metrics.semana.totalUnico || 0}</strong> casos únicos no sistema, incluindo <strong>{metrics.semana.novos || 0}</strong> novos prospectos que entraram para análise. Em termos de produtividade, nossa equipe formulou <strong>{metrics.semana.propQtd || 0}</strong> propostas e fechamos com sucesso <strong>{metrics.semana.fechQtd || 0}</strong> contratos. Houve também <strong>{metrics.semana.rejeitados || 0}</strong> recusas (negociações perdidas) e trabalhamos em <strong>{metrics.semana.probono || 0}</strong> atuações pro bono.
+      </div>
+
       {/* Cards Grid */}
       <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6'>
 

@@ -5,6 +5,9 @@ interface EfficiencyFunnelProps {
 }
 
 export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
+  const emAnalise = Math.max(0, funil.totalEntrada - funil.perdaAnalise - funil.qualificadosProposta);
+  const emNegociacao = Math.max(0, funil.qualificadosProposta - funil.fechados - (funil.perdaNegociacao || 0));
+
   return (
     <div className='bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all p-6 md:p-8'>
       {/* Header */}
@@ -31,6 +34,11 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
             {funil.totalEntrada > 0 ? ((funil.fechados / funil.totalEntrada) * 100).toFixed(1) : '0'}%
           </div>
         </div>
+      </div>
+
+      {/* Explicação Dinâmica */}
+      <div className="mb-8 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
+        Recebemos desde <strong>junho de 2025</strong> um total de <strong>{funil.totalEntrada} prospects</strong>. Deste total, <strong>{funil.perdaAnalise}</strong> foram rejeitadas, <strong>{emAnalise}</strong> continuam em análise pelo escritório e <strong>{funil.qualificadosProposta}</strong> avançaram para a fase de proposta. Destes <strong>{funil.qualificadosProposta}</strong>, fechamos <strong>{funil.fechados}</strong> contratos{funil.perdaNegociacao > 0 && <span>, <strong>{funil.perdaNegociacao}</strong> foram recusadas</span>} e estamos com <strong>{emNegociacao}</strong> propostas enviadas aos clientes e aguardando resposta.
       </div>
 
       {/* Grid Layout Principal do Pipeline */}

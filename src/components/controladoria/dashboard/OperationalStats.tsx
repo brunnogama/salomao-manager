@@ -38,6 +38,11 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
           </div>
         </div>
 
+        {/* Explicação Dinâmica */}
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
+          Do total de propostas que não avançaram, a principal causa foi <strong>{rejectionData.reasons[0]?.label || 'não informada'}</strong>, representando <strong>{rejectionData.reasons[0]?.percent?.toFixed(1) || 0}%</strong> das recusas, sendo que a maior fonte de declínio partiu de <strong>{rejectionData.sources[0]?.label || 'não identificada'}</strong> (com <strong>{rejectionData.sources[0]?.percent?.toFixed(1) || 0}%</strong>).
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* Por Motivo */}
@@ -144,6 +149,11 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Explicação Dinâmica */}
+        <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm">
+          Dos <strong>{totalAssinaturasCalculo}</strong> contratos fechados recentemente, <strong>{metrics?.geral?.assinados || 0}</strong> já tiveram suas assinaturas físicas confirmadas, enquanto <strong>{metrics?.geral?.naoAssinados || 0}</strong> (cerca de <strong>{percentualSemAssinatura.toFixed(1)}%</strong>) ainda aguardam a conclusão dessa etapa.
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
