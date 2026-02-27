@@ -134,8 +134,8 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
   const dashboardData = useMemo(() => {
     const hoje = new Date();
-    // Data de início para gráficos de 12 meses
-    const dataInicioFixo = new Date(2025, 5, 1);
+    // Data de início para gráficos de 12 meses (forçando UTC local para não perder os primeiros casos do mês)
+    const dataInicioFixo = new Date('2025-06-01T00:00:00');
 
     // --- FILTRAGEM DOS DADOS ---
     const filteredContracts = contracts.filter(c => {
@@ -234,6 +234,7 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     };
 
     let fTotal = 0; let fQualificados = 0; let fFechados = 0;
+    let fValorEntrada = 0; let fValorPropostas = 0; let fValorFechados = 0;
     let fPerdaAnalise = 0; let fPerdaNegociacao = 0;
     let somaDiasProspectProposta = 0; let qtdProspectProposta = 0;
     let somaDiasPropostaFechamento = 0; let qtdPropostaFechamento = 0;
@@ -486,9 +487,16 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
 
       // Funil
       fTotal++;
+      fValorEntrada += (pl + exito + mensal + outros + fixoPontual);
       const chegouEmProposta = c.status === 'proposal' || c.status === 'active' || c.status === 'probono' || (c.status === 'rejected' && c.proposal_date);
-      if (chegouEmProposta) fQualificados++;
-      if (c.status === 'active' || c.status === 'probono') fFechados++;
+      if (chegouEmProposta) {
+        fQualificados++;
+        fValorPropostas += (pl + exito + mensal + outros + fixoPontual);
+      }
+      if (c.status === 'active' || c.status === 'probono') {
+        fFechados++;
+        fValorFechados += (pl + exito + mensal + outros + fixoPontual);
+      }
       else if (c.status === 'rejected') c.proposal_date ? fPerdaNegociacao++ : fPerdaAnalise++;
     });
 
@@ -521,7 +529,25 @@ export function useDashboardData(selectedPartner?: string, selectedLocation?: st
     const maxValProp = Math.max(...propArray.map(i => Math.max(i.pl, i.fixo, i.exito)), 1);
     const propostas12Meses = propArray.map(i => ({ ...i, hPl: (i.pl / maxValProp) * 100, hFixo: (i.fixo / maxValProp) * 100, hExito: (i.exito / maxValProp) * 100 }));
 
-    const funil = { totalEntrada: fTotal, qualificadosProposta: fQualificados, fechados: fFechados, perdaAnalise: fPerdaAnalise, perdaNegociacao: fPerdaNegociacao, taxaConversaoProposta: fTotal > 0 ? ((fQualificados / fTotal) * 100).toFixed(1) : '0', taxaConversaoFechamento: fQualificados > 0 ? ((fFechados / fQualificados) * 100).toFixed(1) : '0', taxaRejeicao: fTotal > 0 ? (((fPerdaAnalise + fPerdaNegociacao) / fTotal) * 100).toFixed(1) : '0', tempoMedioProspectProposta: qtdProspectProposta > 0 ? Math.round(somaDiasProspectProposta / qtdProspectProposta) : 0, tempoMedioPropostaFechamento: qtdPropostaFechamento > 0 ? Math.round(somaDiasPropostaFechamento / qtdPropostaFechamento) : 0, tempoMedioRejeicao: qtdProspectRejeicao > 0 ? Math.round(somaDiasProspectRejeicao / qtdProspectRejeicao) : 0 };
+    const funil = {
+      totalEntrada: fTotal,
+      qualificadosProposta: fQualificados,
+      fechados: fFechados,
+      valorEntrada: fValorEntrada,
+      valorPropostas: fValorPropostas,
+      valorFechados: fValorFechados,
+      perdaAnalise: fPerdaAnalise,
+      perdaNegociacao: fPerdaNegociacao,
+      taxaConversaoProposta: fTotal > 0 ? ((fQualificados / fTotal) * 100).toFixed(1) : '0',
+      taxaConversaoFechamento: fQualificados > 0 ? ((fFechados / fQualificados) * 100).toFixed(1) : '0',
+      taxaRejeicao: fTotal > 0 ? (((fPerdaAnalise + fPerdaNegociacao) / fTotal) * 100).toFixed(1) : '0',
+      tempoMedioProspectProposta: qtdProspectProposta > 0 ? Math.round(somaDiasProspectProposta / qtdProspectProposta) : 0,
+      tempoMedioPropostaFechamento: qtdPropostaFechamento > 0 ? Math.round(somaDiasPropostaFechamento / qtdPropostaFechamento) : 0,
+      tempoMedioRejeicao: qtdProspectRejeicao > 0 ? Math.round(somaDiasProspectRejeicao / qtdProspectRejeicao) : 0,
+      diffEntrada: mExecutivo.mesAtual.novos - mExecutivo.mesAnterior.novos,
+      diffPropostas: mExecutivo.mesAtual.propQtd - mExecutivo.mesAnterior.propQtd,
+      diffFechados: mExecutivo.mesAtual.fechQtd - mExecutivo.mesAnterior.fechQtd
+    };
 
     const mesesGrafico = []; let iteradorGrafico = new Date(dataInicioFixo); while (iteradorGrafico <= hoje) { const key = iteradorGrafico.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }); mesesGrafico.push({ mes: key, qtd: mapaMeses[key] || 0, altura: 0 }); iteradorGrafico.setMonth(iteradorGrafico.getMonth() + 1); } const maxQtd = Math.max(...mesesGrafico.map((m) => m.qtd), 1); mesesGrafico.forEach((m) => (m.altura = (m.qtd / maxQtd) * 100));
     const evolucaoMensal = mesesGrafico;

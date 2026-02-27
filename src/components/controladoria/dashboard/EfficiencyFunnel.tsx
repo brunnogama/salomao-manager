@@ -1,4 +1,5 @@
-import { Clock, TrendingDown, ArrowRight, XCircle, CheckCircle2, FileText, Users } from 'lucide-react';
+import { Clock, TrendingDown, ArrowRight, XCircle, CheckCircle2, FileText, Users, TrendingUp, Minus } from 'lucide-react';
+import { formatMoney } from './dashboardHelpers';
 
 interface EfficiencyFunnelProps {
   funil: any;
@@ -48,8 +49,21 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
                 <h3 className="text-xs font-black text-indigo-900 uppercase tracking-widest">Entrada</h3>
               </div>
               <div className="flex items-end gap-2">
-                <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.totalEntrada}</span>
-                <span className="text-xs font-bold text-gray-400 mb-1">consultas</span>
+                <div className="flex flex-col gap-0.5 mt-2 ml-1">
+                  <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.totalEntrada}</span>
+                  <span className="text-xs font-bold text-gray-400">consultas</span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-indigo-100/50 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Potencial Bruto</p>
+                  <p className="text-sm font-bold text-indigo-900">{formatMoney(funil.valorEntrada)}</p>
+                </div>
+                <div className={`flex items-center gap-1 text-[10px] font-bold ${funil.diffEntrada > 0 ? 'text-emerald-500' : funil.diffEntrada < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                  {funil.diffEntrada > 0 ? <TrendingUp className="w-3 h-3" /> : funil.diffEntrada < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                  {funil.diffEntrada > 0 ? `+${funil.diffEntrada}` : funil.diffEntrada} MTD
+                </div>
               </div>
             </div>
 
@@ -106,8 +120,29 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
                 <h3 className="text-xs font-black text-blue-900 uppercase tracking-widest">Propostas</h3>
               </div>
               <div className="flex items-end gap-2">
-                <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.qualificadosProposta}</span>
-                <span className="text-xs font-bold text-gray-400 mb-1">enviadas</span>
+                <div className="flex flex-col gap-0.5 mt-2 ml-1">
+                  <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.qualificadosProposta}</span>
+                  <span className="text-xs font-bold text-gray-400">enviadas</span>
+                </div>
+              </div>
+
+              {/* Barra de Progresso vs Entrada */}
+              <div className="mt-2 text-right">
+                <span className="text-[10px] font-bold text-blue-500">{funil.taxaConversaoProposta}% do total</span>
+                <div className="h-1.5 w-full bg-blue-50 rounded-full mt-1 overflow-hidden">
+                  <div className="h-full bg-blue-400 rounded-full transition-all duration-1000" style={{ width: `${funil.taxaConversaoProposta}%` }}></div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-blue-100/50 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Em Negociação</p>
+                  <p className="text-sm font-bold text-blue-900">{formatMoney(funil.valorPropostas)}</p>
+                </div>
+                <div className={`flex items-center gap-1 text-[10px] font-bold ${funil.diffPropostas > 0 ? 'text-emerald-500' : funil.diffPropostas < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                  {funil.diffPropostas > 0 ? <TrendingUp className="w-3 h-3" /> : funil.diffPropostas < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                  {funil.diffPropostas > 0 ? `+${funil.diffPropostas}` : funil.diffPropostas} MTD
+                </div>
               </div>
             </div>
 
@@ -164,8 +199,29 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
                 <h3 className="text-xs font-black text-green-800 uppercase tracking-widest">Contratos Fechados</h3>
               </div>
               <div className="flex items-end gap-2">
-                <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.fechados}</span>
-                <span className="text-xs font-bold text-gray-400 mb-1">assinados</span>
+                <div className="flex flex-col gap-0.5 mt-2 ml-1">
+                  <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.fechados}</span>
+                  <span className="text-xs font-bold text-gray-400">assinados</span>
+                </div>
+              </div>
+
+              {/* Barra de Progresso vs Entrada */}
+              <div className="mt-2 text-right">
+                <span className="text-[10px] font-bold text-green-500">{(funil.totalEntrada > 0 ? (funil.fechados / funil.totalEntrada) * 100 : 0).toFixed(1)}% do total</span>
+                <div className="h-1.5 w-full bg-green-50 rounded-full mt-1 overflow-hidden">
+                  <div className="h-full bg-green-500 rounded-full transition-all duration-1000" style={{ width: `${funil.totalEntrada > 0 ? (funil.fechados / funil.totalEntrada) * 100 : 0}%` }}></div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-green-100/50 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-black text-green-400 uppercase tracking-widest">Receita Gerada</p>
+                  <p className="text-sm font-bold text-green-900">{formatMoney(funil.valorFechados)}</p>
+                </div>
+                <div className={`flex items-center gap-1 text-[10px] font-bold ${funil.diffFechados > 0 ? 'text-emerald-500' : funil.diffFechados < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                  {funil.diffFechados > 0 ? <TrendingUp className="w-3 h-3" /> : funil.diffFechados < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                  {funil.diffFechados > 0 ? `+${funil.diffFechados}` : funil.diffFechados} MTD
+                </div>
               </div>
             </div>
 
