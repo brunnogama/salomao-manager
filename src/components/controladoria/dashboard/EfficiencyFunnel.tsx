@@ -36,7 +36,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
       {/* Grid Layout Principal do Pipeline */}
       <div className='relative w-full max-w-5xl mx-auto'>
 
-        <div className="flex flex-col md:flex-row items-stretch justify-between gap-4 md:gap-0 relative z-10">
+        <div className="flex flex-col lg:flex-row items-stretch justify-between gap-6 lg:gap-2 relative z-10 w-full">
 
           {/* ETAPA 1: START - PROSPECTS */}
           <div className="flex-1 flex flex-col relative group">
@@ -69,17 +69,12 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
             </div>
 
             {/* CONEXÃO 1 -> 2 */}
-            <div className="hidden md:flex flex-col items-center justify-center w-28 relative z-0 shrink-0">
-              {/* Barra chevron única */}
-              <div className="absolute top-1/2 left-0 w-[120%] h-8 bg-gradient-to-r from-indigo-100 to-blue-200 -translate-y-1/2 -z-10 -mr-6" style={{ clipPath: 'polygon(0 25%, calc(100% - 15px) 25%, 100% 50%, calc(100% - 15px) 75%, 0 75%)' }}></div>
-
-              {/* Etiqueta Conversão */}
-              <div className="bg-white border border-indigo-100 shadow-sm rounded-full px-2 py-1 -mt-5 text-[10px] font-black text-indigo-600 uppercase tracking-wider whitespace-nowrap z-10">
+            <div className="hidden lg:flex flex-col items-center justify-center w-12 shrink-0 z-10 text-gray-300">
+              <div className="bg-white border border-indigo-100 shadow-sm rounded-full px-2 py-1 mb-2 text-[10px] font-black text-indigo-600 uppercase tracking-wider whitespace-nowrap z-10">
                 {funil.taxaConversaoProposta}%
               </div>
-
-              {/* Etiqueta Tempo */}
-              <div className="flex items-center gap-1 mt-[26px] text-gray-400 bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded z-10">
+              <ArrowRight className="w-8 h-8 text-indigo-200" />
+              <div className="flex items-center gap-1 mt-2 text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full z-10">
                 <Clock className="w-3 h-3" />
                 <span className="text-[10px] font-bold">{funil.tempoMedioProspectProposta}d</span>
               </div>
@@ -133,17 +128,12 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
             </div>
 
             {/* CONEXÃO 2 -> 3 */}
-            <div className="hidden md:flex flex-col items-center justify-center w-28 relative z-0 shrink-0">
-              {/* Barra chevron única */}
-              <div className="absolute top-1/2 left-0 w-[120%] h-8 bg-gradient-to-r from-blue-100 to-green-200 -translate-y-1/2 -z-10 -mr-6" style={{ clipPath: 'polygon(0 25%, calc(100% - 15px) 25%, 100% 50%, calc(100% - 15px) 75%, 0 75%)' }}></div>
-
-              {/* Etiqueta Conversão */}
-              <div className="bg-white border border-blue-100 shadow-sm rounded-full px-2 py-1 -mt-5 text-[10px] font-black text-blue-600 uppercase tracking-wider whitespace-nowrap z-10">
+            <div className="hidden lg:flex flex-col items-center justify-center w-12 shrink-0 z-10 text-gray-300">
+              <div className="bg-white border border-blue-100 shadow-sm rounded-full px-2 py-1 mb-2 text-[10px] font-black text-blue-600 uppercase tracking-wider whitespace-nowrap z-10">
                 {funil.taxaConversaoFechamento}%
               </div>
-
-              {/* Etiqueta Tempo */}
-              <div className="flex items-center gap-1 mt-[26px] text-gray-400 bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded z-10">
+              <ArrowRight className="w-8 h-8 text-blue-200" />
+              <div className="flex items-center gap-1 mt-2 text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full z-10">
                 <Clock className="w-3 h-3" />
                 <span className="text-[10px] font-bold">{funil.tempoMedioPropostaFechamento}d</span>
               </div>
