@@ -117,6 +117,14 @@ export interface Collaborator {
   observacoes?: string;
   oab_emissao?: string;
 
+  // Dados Bancários
+  forma_pagamento?: string;
+  banco_nome?: string;
+  banco_tipo_conta?: string;
+  banco_agencia_conta?: string;
+  pix_tipo?: string;
+  pix_chave?: string;
+
   // Novos Campos (Rateio e Desligamento)
   rateio_id?: string;
   hiring_reason_id?: string;

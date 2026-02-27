@@ -1,6 +1,7 @@
 // src/components/collaborators/components/DadosPessoaisSection.tsx
 
-import { User, Plus, Minus } from 'lucide-react'
+import { User, Plus, Minus, Landmark } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 
@@ -23,6 +24,20 @@ export function DadosPessoaisSection({
   maskPhone,
   isViewMode = false
 }: DadosPessoaisSectionProps) {
+  const [bancos, setBancos] = useState<{ name: string }[]>([])
+
+  useEffect(() => {
+    fetch('https://brasilapi.com.br/api/banks/v1')
+      .then(res => res.json())
+      .then(data => {
+        const validBanks = data
+          .filter((b: any) => b.name && b.code)
+          .map((b: any) => ({ name: `${b.code} - ${b.name}` }))
+        setBancos(validBanks)
+      })
+      .catch(err => console.error("Erro ao buscar bancos:", err))
+  }, [])
+
   return (
     <section className="space-y-4">
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
@@ -230,6 +245,121 @@ export function DadosPessoaisSection({
         </div>
       </div>
 
+      {/* Dados Bancários */}
+      <div className="mt-6 pt-4 border-t border-gray-100">
+        <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <Landmark className="h-4 w-4" /> Dados Bancários
+        </h4>
+        <div className="mb-4">
+          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+            Forma de Pagamento
+          </label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="radio"
+                name="forma_pagamento"
+                className="w-4 h-4 text-[#1e3a8a] focus:ring-[#1e3a8a] border-gray-300"
+                checked={formData.forma_pagamento === 'Agência e conta'}
+                onChange={() => setFormData({ ...formData, forma_pagamento: 'Agência e conta', pix_tipo: '', pix_chave: '' })}
+                disabled={isViewMode}
+              />
+              <span className="font-medium">Agência e conta</span>
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="radio"
+                name="forma_pagamento"
+                className="w-4 h-4 text-[#1e3a8a] focus:ring-[#1e3a8a] border-gray-300"
+                checked={formData.forma_pagamento === 'PIX'}
+                onChange={() => setFormData({ ...formData, forma_pagamento: 'PIX', banco_nome: '', banco_tipo_conta: '', banco_agencia_conta: '' })}
+                disabled={isViewMode}
+              />
+              <span className="font-medium">PIX</span>
+            </label>
+          </div>
+        </div>
+
+        {formData.forma_pagamento === 'Agência e conta' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-300">
+            <div className="md:col-span-1">
+              <SearchableSelect
+                label="Banco"
+                value={formData.banco_nome || ''}
+                onChange={v => setFormData({ ...formData, banco_nome: v })}
+                options={bancos}
+                placeholder="Selecione o banco"
+                disabled={isViewMode}
+              />
+            </div>
+            <div className="md:col-span-1">
+              <SearchableSelect
+                label="Tipo de Conta"
+                value={formData.banco_tipo_conta || ''}
+                onChange={v => setFormData({ ...formData, banco_tipo_conta: v })}
+                options={[{ name: 'Conta Corrente' }, { name: 'Conta Poupança' }]}
+                placeholder="Selecione"
+                disabled={isViewMode}
+              />
+            </div>
+            <div className="md:col-span-1">
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                Conta
+              </label>
+              <input
+                className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                value={formData.banco_agencia_conta || ''}
+                onChange={e => setFormData({ ...formData, banco_agencia_conta: e.target.value })}
+                placeholder="Digite a conta (e agência)"
+                disabled={isViewMode}
+                readOnly={isViewMode}
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.forma_pagamento === 'PIX' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-300">
+            <div className="md:col-span-1">
+              <SearchableSelect
+                label="Tipo de Chave PIX"
+                value={formData.pix_tipo || ''}
+                onChange={v => {
+                  setFormData({ ...formData, pix_tipo: v, pix_chave: '' })
+                }}
+                options={[
+                  { name: 'Telefone' },
+                  { name: 'CPF' },
+                  { name: 'E-mail' },
+                  { name: 'Chave Aleatória' }
+                ]}
+                placeholder="Selecione o tipo"
+                disabled={isViewMode}
+              />
+            </div>
+            <div className="md:col-span-1">
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                Chave PIX
+              </label>
+              <input
+                className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                value={formData.pix_chave || ''}
+                onChange={e => {
+                  let val = e.target.value
+                  if (formData.pix_tipo === 'Telefone') val = maskPhone(val)
+                  else if (formData.pix_tipo === 'CPF') val = maskCPF(val)
+                  setFormData({ ...formData, pix_chave: val })
+                }}
+                maxLength={formData.pix_tipo === 'CPF' ? 14 : formData.pix_tipo === 'Telefone' ? 15 : undefined}
+                placeholder="Digite a chave PIX"
+                disabled={isViewMode || !formData.pix_tipo}
+                readOnly={isViewMode}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Dados de Emergência */}
       <div className="mt-6 pt-4 border-t border-gray-100">
         <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -282,21 +412,6 @@ export function DadosPessoaisSection({
             />
           </div>
         </div>
-      </div>
-
-      {/* Observações */}
-      <div className="mt-6">
-        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-          Observações
-        </label>
-        <textarea
-          className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium min-h-[80px] ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-          value={formData.observacoes || ''}
-          onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
-          placeholder="Observações gerais sobre o colaborador..."
-          disabled={isViewMode}
-          readOnly={isViewMode}
-        />
       </div>
     </section>
   )
