@@ -67,15 +67,17 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
 
           {/* CONEXÃO 1 -> 2 */}
           <div className="hidden md:flex flex-col items-center justify-center w-24 relative z-0 shrink-0">
-            {/* Linha Tracejada */}
-            <div className="absolute top-1/2 left-0 right-0 h-0.5 border-t-2 border-dashed border-gray-200 -translate-y-1/2 -z-10"></div>
+            {/* Linha de Fluxo Contínua */}
+            <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-100 to-blue-200 rounded-full -translate-y-1/2 -z-10"></div>
 
             {/* Etiqueta Conversão */}
             <div className="bg-white border border-gray-100 shadow-sm rounded-full px-2 py-1 mb-2 text-[10px] font-black text-indigo-600 uppercase tracking-wider whitespace-nowrap z-10">
               {funil.taxaConversaoProposta}%
             </div>
 
-            <ArrowRight className="w-5 h-5 text-gray-300 relative z-10" />
+            <div className="bg-white rounded-full shadow-sm p-0.5 relative z-10 text-blue-400">
+              <ArrowRight className="w-4 h-4" />
+            </div>
 
             {/* Etiqueta Tempo */}
             <div className="flex items-center gap-1 mt-2 text-gray-400 bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded z-10">
@@ -123,15 +125,17 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
 
           {/* CONEXÃO 2 -> 3 */}
           <div className="hidden md:flex flex-col items-center justify-center w-24 relative z-0 shrink-0">
-            {/* Linha Tracejada */}
-            <div className="absolute top-1/2 left-0 right-0 h-0.5 border-t-2 border-dashed border-gray-200 -translate-y-1/2 -z-10"></div>
+            {/* Linha de Fluxo Contínua */}
+            <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-100 to-green-200 rounded-full -translate-y-1/2 -z-10"></div>
 
             {/* Etiqueta Conversão */}
             <div className="bg-white border border-gray-100 shadow-sm rounded-full px-2 py-1 mb-2 text-[10px] font-black text-blue-600 uppercase tracking-wider whitespace-nowrap z-10">
               {funil.taxaConversaoFechamento}%
             </div>
 
-            <ArrowRight className="w-5 h-5 text-gray-300 relative z-10" />
+            <div className="bg-white rounded-full shadow-sm p-0.5 relative z-10 text-green-400">
+              <ArrowRight className="w-4 h-4" />
+            </div>
 
             {/* Etiqueta Tempo */}
             <div className="flex items-center gap-1 mt-2 text-gray-400 bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded z-10">
