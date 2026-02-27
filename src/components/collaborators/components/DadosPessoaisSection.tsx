@@ -41,7 +41,7 @@ export function DadosPessoaisSection({
   return (
     <section className="space-y-4">
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
-        <User className="h-4 w-4" /> Dados Pessoais e Bancários
+        <User className="h-4 w-4" /> Dados Pessoais
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -132,6 +132,22 @@ export function DadosPessoaisSection({
               { name: 'Viúvo(a)' }
             ]}
             disabled={isViewMode}
+          />
+        </div>
+
+        {/* E-mail Pessoal */}
+        <div className="md:col-span-4">
+          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+            E-mail Pessoal
+          </label>
+          <input
+            type="email"
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.email || ''}
+            onChange={e => setFormData({ ...formData, email: e.target.value })}
+            placeholder="Digite o e-mail pessoal"
+            disabled={isViewMode}
+            readOnly={isViewMode}
           />
         </div>
 

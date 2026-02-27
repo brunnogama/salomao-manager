@@ -119,7 +119,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const isAdvogadoSocioJuridica = currentData.area === 'Jurídica' && (roleName.includes('advogado') || roleName.includes('sócio') || roleName.includes('socio'));
 
     const steps = [
-      { id: 1, label: 'Dados Pessoais', icon: User },
+      { id: 1, label: 'Dados Pessoais e Bancários', icon: User },
       { id: 4, label: 'Dados Corporativos', icon: Briefcase }
     ];
 
