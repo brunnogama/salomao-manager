@@ -146,27 +146,27 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
 
       const { data: existingProfile } = await supabase
         .from('user_profiles')
-        .select('id')
+        .select('id, user_id')
         .eq('email', emailNormalizado)
         .maybeSingle();
 
       let error;
 
       if (existingProfile) {
+        // Se já existe, checamos se ele está pendente (user_id === null)
+        const newUserId = existingProfile.user_id ? existingProfile.user_id : (existingProfile.id || crypto.randomUUID());
+
         const { error: updateError } = await supabase
           .from('user_profiles')
           .update({
+            user_id: newUserId, // Garante que o usuário sai da fila passando a ter um user_id válido
             role: roleFinal,
             allowed_modules: userForm.allowed_modules
           })
           .eq('email', emailNormalizado);
         error = updateError;
       } else {
-        const specialUsers: Record<string, string> = {
-          'bruna.cardoso@salomaoadv.com.br': '6c9be206-8a36-4f18-8557-5d28d80929a4',
-          'kaua.mombrine@salomaoadv.com.br': 'bcb197e1-2480-4c8e-81ec-1aa8bb3a98fc'
-        };
-        const targetId = specialUsers[emailNormalizado];
+        const targetId = crypto.randomUUID();
 
         const { error: insertError } = await supabase
           .from('user_profiles')

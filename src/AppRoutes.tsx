@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { ShieldAlert, LogOut } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import { MainLayout } from './layouts/MainLayout';
 import { AuthLayout } from './layouts/AuthLayout';
@@ -72,11 +73,40 @@ import { useState } from 'react';
 
 // Wrapper for Protected Routes to inject props
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-    const { session, loading } = useAuth();
+    const { session, loading, isAuthorized, signOut } = useAuth();
 
-    if (loading) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>;
+    if (loading || isAuthorized === null) return <div className="h-screen w-full flex items-center justify-center bg-[#112240]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>;
 
     if (!session) return <Navigate to="/login" replace />;
+
+    if (isAuthorized === false) {
+        return (
+            <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4=')] opacity-50 z-0"></div>
+                <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-[#1e3a8a] via-[#d4af37] to-[#1e3a8a]"></div>
+
+                <div className="bg-white p-10 rounded-3xl shadow-2xl border border-gray-100 max-w-md w-full text-center relative z-10 animate-in zoom-in-95 duration-500">
+                    <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                        <ShieldAlert className="w-10 h-10 text-[#1e3a8a]" />
+                    </div>
+                    <h1 className="text-2xl font-black text-[#0a192f] mb-3 tracking-tight">Acesso Restrito</h1>
+                    <p className="text-gray-500 text-sm mb-8 leading-relaxed font-medium">
+                        Sua conta foi vinculada com sucesso, mas o seu perfil está <strong className="text-gray-800 font-bold">aguardando autorização</strong> do administrador para acessar o sistema.
+                    </p>
+                    <button
+                        onClick={signOut}
+                        className="w-full py-4 px-6 bg-[#0a192f] hover:bg-[#112240] text-white rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        Sair da Conta
+                    </button>
+                </div>
+                <div className="mt-8 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    Salomão Manager © {new Date().getFullYear()}
+                </div>
+            </div>
+        );
+    }
 
     return children;
 };

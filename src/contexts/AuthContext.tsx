@@ -9,6 +9,7 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     isResettingPassword: boolean;
     user: any; // Using any to match existing usage in App.tsx temporarily, should be refined
+    isAuthorized: boolean | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,12 +18,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const [isResettingPassword, setIsResettingPassword] = useState(false);
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+    const checkAuthorization = async (currentSession: Session | null) => {
+        if (!currentSession?.user) {
+            setIsAuthorized(false);
+            setLoading(false);
+            return;
+        }
+
+        const email = currentSession.user.email?.toLowerCase();
+        if (!email) {
+            setIsAuthorized(false);
+            setLoading(false);
+            return;
+        }
+
+        if (email === 'marcio.gama@salomaoadv.com.br') {
+            setIsAuthorized(true);
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .select('user_id')
+                .eq('email', email)
+                .maybeSingle();
+
+            if (error) {
+                console.error('Erro ao verificar autorização:', error);
+                setIsAuthorized(false);
+            } else if (data && data.user_id) {
+                // Tem perfil e o user_id não é nulo -> Autorizado
+                setIsAuthorized(true);
+            } else if (data && !data.user_id) {
+                // Tem perfil mas user_id é nulo -> Pendente na fila
+                setIsAuthorized(false);
+            } else {
+                // Não tem perfil -> Insere na fila (user_id = null)
+                // O nome pode ser extraído do metadata se disponível
+                // const name = currentSession.user.user_metadata?.name || currentSession.user.user_metadata?.full_name || email.split('@')[0];
+                const { error: insertError } = await supabase
+                    .from('user_profiles')
+                    .insert({
+                        email: email,
+                        role: 'user',
+                        allowed_modules: ['crm'] // Permissões padrão
+                    });
+
+                if (insertError) console.error('Erro ao inserir na fila de autorização:', insertError);
+                setIsAuthorized(false);
+            }
+        } catch (err) {
+            console.error('Falha na autorização:', err);
+            setIsAuthorized(false);
+        }
+
+        setLoading(false);
+    };
 
     useEffect(() => {
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
-            setLoading(false);
+            checkAuthorization(session);
         });
 
         // Listen for auth changes
@@ -33,6 +94,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setSession(session);
             if (event === 'PASSWORD_RECOVERY') {
                 setIsResettingPassword(true);
+            }
+            if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+                checkAuthorization(session);
+            } else if (event === 'SIGNED_OUT') {
+                setIsAuthorized(false);
+                setLoading(false);
             }
         });
 
@@ -93,7 +160,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         signOut,
         isResettingPassword,
-        user: session?.user ?? null
+        user: session?.user ?? null,
+        isAuthorized
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
