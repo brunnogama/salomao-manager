@@ -67,6 +67,8 @@ export default function AtualizacaoCadastral() {
     const [formData, setFormData] = useState<Partial<Collaborator>>({});
 
     useEffect(() => {
+        window.scrollTo(0, 0);
+
         const fetchCollaboratorData = async () => {
             try {
                 if (!token) {
