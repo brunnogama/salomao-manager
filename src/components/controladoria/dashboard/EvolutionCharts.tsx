@@ -38,6 +38,7 @@ interface EvolutionChartsProps {
   mediasFinanceiras: { pl: number, exito: number };
   statsPropostas: { total: number, media: number, diff: number };
   statsFinanceiro: { total: number, media: number, diff: number };
+  funilTotalEntrada?: number;
 }
 
 export function EvolutionCharts({
@@ -47,11 +48,12 @@ export function EvolutionCharts({
   mediasPropostas,
   mediasFinanceiras,
   statsPropostas,
-  statsFinanceiro
+  statsFinanceiro,
+  funilTotalEntrada
 }: EvolutionChartsProps) {
 
   // Cálculos Entrada de Casos
-  const totalEntrada12 = evolucaoMensal.reduce((acc, curr) => acc + curr.qtd, 0);
+  const totalEntrada12 = funilTotalEntrada !== undefined ? funilTotalEntrada : evolucaoMensal.reduce((acc, curr) => acc + curr.qtd, 0);
   const mediaEntrada = evolucaoMensal.length > 0 ? (totalEntrada12 / evolucaoMensal.length).toFixed(1) : '0';
   const ultimoQtd = evolucaoMensal.length > 0 ? evolucaoMensal[evolucaoMensal.length - 1].qtd : 0;
   const penultimoQtd = evolucaoMensal.length > 1 ? evolucaoMensal[evolucaoMensal.length - 2].qtd : 0;

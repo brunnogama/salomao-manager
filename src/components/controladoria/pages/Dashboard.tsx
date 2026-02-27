@@ -160,6 +160,7 @@ export function Dashboard({ }: Props) {
           mediasFinanceiras={mediasFinanceiras}
           statsPropostas={statsPropostas}
           statsFinanceiro={statsFinanceiro}
+          funilTotalEntrada={funil.totalEntrada}
         />
 
         {/* Operacional & Sócios */}
