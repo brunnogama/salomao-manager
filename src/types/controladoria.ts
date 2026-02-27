@@ -121,7 +121,8 @@ export interface Collaborator {
   forma_pagamento?: string;
   banco_nome?: string;
   banco_tipo_conta?: string;
-  banco_agencia_conta?: string;
+  banco_agencia?: string;
+  banco_conta?: string;
   pix_tipo?: string;
   pix_chave?: string;
 

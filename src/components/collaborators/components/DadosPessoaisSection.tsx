@@ -41,7 +41,7 @@ export function DadosPessoaisSection({
   return (
     <section className="space-y-4">
       <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
-        <User className="h-4 w-4" /> Dados Pessoais
+        <User className="h-4 w-4" /> Dados Pessoais e Bancários
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -272,7 +272,7 @@ export function DadosPessoaisSection({
                 name="forma_pagamento"
                 className="w-4 h-4 text-[#1e3a8a] focus:ring-[#1e3a8a] border-gray-300"
                 checked={formData.forma_pagamento === 'PIX'}
-                onChange={() => setFormData({ ...formData, forma_pagamento: 'PIX', banco_nome: '', banco_tipo_conta: '', banco_agencia_conta: '' })}
+                onChange={() => setFormData({ ...formData, forma_pagamento: 'PIX', banco_nome: '', banco_tipo_conta: '', banco_agencia: '', banco_conta: '' })}
                 disabled={isViewMode}
               />
               <span className="font-medium">PIX</span>
@@ -281,7 +281,7 @@ export function DadosPessoaisSection({
         </div>
 
         {formData.forma_pagamento === 'Agência e conta' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in duration-300">
             <div className="md:col-span-1">
               <SearchableSelect
                 label="Banco"
@@ -304,13 +304,26 @@ export function DadosPessoaisSection({
             </div>
             <div className="md:col-span-1">
               <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                Agência
+              </label>
+              <input
+                className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                value={formData.banco_agencia || ''}
+                onChange={e => setFormData({ ...formData, banco_agencia: e.target.value })}
+                placeholder="Digite a agência"
+                disabled={isViewMode}
+                readOnly={isViewMode}
+              />
+            </div>
+            <div className="md:col-span-1">
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
                 Conta
               </label>
               <input
                 className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                value={formData.banco_agencia_conta || ''}
-                onChange={e => setFormData({ ...formData, banco_agencia_conta: e.target.value })}
-                placeholder="Digite a conta (e agência)"
+                value={formData.banco_conta || ''}
+                onChange={e => setFormData({ ...formData, banco_conta: e.target.value })}
+                placeholder="Digite a conta"
                 disabled={isViewMode}
                 readOnly={isViewMode}
               />
