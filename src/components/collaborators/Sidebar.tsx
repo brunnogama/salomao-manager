@@ -58,9 +58,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const mainItems = [
     { path: '/rh/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/rh/colaboradores', label: 'Colaboradores', icon: Users },
     { path: '/rh/calendario', label: 'Calendário', icon: Calendar },
     { path: '/rh/presencial', label: 'Presencial', icon: MapPin },
-    { path: '/rh/colaboradores', label: 'Colaboradores', icon: Users },
     { path: '/rh/evolucao', label: 'Evolução de Pessoal', icon: TrendingUp },
     { path: '/rh/tempo-casa', label: 'Tempo de casa', icon: Clock },
     { path: '/rh/headcount', label: 'Headcount', icon: BarChart3 },
