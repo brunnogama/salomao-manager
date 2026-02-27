@@ -341,15 +341,7 @@ export function Calendario() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg">
-                <Users className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Total Colab.</p>
-                <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{collaborators.length}</p>
-              </div>
-            </div>
+
           </div>
 
           <div className="flex flex-wrap gap-3 w-full xl:w-auto justify-end">
