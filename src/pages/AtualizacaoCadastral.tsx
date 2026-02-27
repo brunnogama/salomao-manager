@@ -173,7 +173,6 @@ export default function AtualizacaoCadastral() {
                     birth_date: formatDateToISO(c.birth_date) || null
                 })),
                 emergencia_nome: formData.emergencia_nome,
-                emergencia_telefone: formData.emergencia_telefone,
                 emergencia_parentesco: formData.emergencia_parentesco,
                 zip_code: formData.zip_code,
                 address: formData.address,
@@ -182,6 +181,14 @@ export default function AtualizacaoCadastral() {
                 neighborhood: formData.neighborhood,
                 city: formData.city,
                 state: formData.state,
+                email_pessoal: formData.email_pessoal,
+                forma_pagamento: formData.forma_pagamento,
+                banco_nome: formData.banco_nome,
+                banco_tipo_conta: formData.banco_tipo_conta,
+                banco_agencia: formData.banco_agencia,
+                banco_conta: formData.banco_conta,
+                pix_tipo: formData.pix_tipo,
+                pix_chave: formData.pix_chave,
                 observacoes: formData.observacoes,
 
                 // Escolaridade
