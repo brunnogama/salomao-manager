@@ -26,7 +26,24 @@ export function InformacoesProfissionaisSection({
         <GraduationCap className="h-4 w-4" /> Dados Profissionais
       </h3>
 
-      {/* CTPS Section */}
+      {/* E-mail Corporativo e CTPS Section */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-4">
+          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+            E-mail Corporativo
+          </label>
+          <input
+            type="email"
+            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+            value={formData.email || ''}
+            onChange={e => setFormData({ ...formData, email: e.target.value })}
+            placeholder="Digite o e-mail corporativo"
+            disabled={isViewMode}
+            readOnly={isViewMode}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <div className="flex items-center justify-between mb-2">
