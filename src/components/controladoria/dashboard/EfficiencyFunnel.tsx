@@ -1,4 +1,4 @@
-import { Clock, TrendingDown, ArrowRight, XCircle, CheckCircle2, FileText, Users, TrendingUp, Minus } from 'lucide-react';
+import { Clock, ArrowRight, XCircle, CheckCircle2, FileText, Users, TrendingDown } from 'lucide-react';
 import { formatMoney } from './dashboardHelpers';
 
 interface EfficiencyFunnelProps {
