@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const { error: insertError } = await supabase
                     .from('user_profiles')
                     .insert({
+                        id: crypto.randomUUID(),
                         email: email,
                         role: 'user',
                         allowed_modules: ['crm'] // Permissões padrão
