@@ -397,12 +397,12 @@ export function Compliance() {
             if (!partner.collaborator_id) continue;
 
             // 1. Remove as OABs antigas desse colaborador na tabela oab_number
-            await supabase.from('oab_number').delete().eq('collaborator_id', partner.collaborator_id);
+            await supabase.from('oab_number').delete().eq('colaborador_id', partner.collaborator_id);
 
             // 2. Insere as novas cadastradas no modal
             if (partner.oabs && partner.oabs.length > 0) {
               const oabsToInsert = partner.oabs.filter((oab: any) => oab.numero !== '').map((oab: any) => ({
-                collaborator_id: partner.collaborator_id,
+                colaborador_id: partner.collaborator_id,
                 numero: oab.numero,
                 uf: oab.uf,
                 tipo: oab.tipo || 'Suplementar',

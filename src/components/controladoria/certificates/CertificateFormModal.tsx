@@ -97,7 +97,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
             const { data, error } = await supabase
                 .from('oab_number')
                 .select('*')
-                .eq('collaborator_id', collaboratorId)
+                .eq('colaborador_id', collaboratorId)
                 .order('tipo', { ascending: true }); // Assume 'Principal' comes first usually or handles it in UI. 
 
             if (error) throw error;
