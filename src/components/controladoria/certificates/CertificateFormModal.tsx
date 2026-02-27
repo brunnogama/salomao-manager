@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Upload, Settings2, ChevronDown } from 'lucide-react';
+import { X, Save, Upload, Settings2, ChevronDown, Trash2, Plus } from 'lucide-react';
 import { SearchableSelect } from '../../SearchableSelect';
 import { CertificateNameManagerModal } from './modals/CertificateNameManagerModal';
 import { CertificateAgencyManagerModal } from './modals/CertificateAgencyManagerModal';
 import { useEscKey } from '../../../hooks/useEscKey';
 import { maskCNPJ } from '../utils/masks';
+
+const ESTADOS_BRASIL_UF = [
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+    'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
 
 interface CertificateFormData {
     id?: string;
@@ -17,6 +23,8 @@ interface CertificateFormData {
     file?: File;
     fileUrl?: string;
     observations?: string;
+    alteration?: string;
+    contract_partners?: any[];
 }
 
 interface Props {
@@ -39,8 +47,11 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
         agency: '',
         location: '',
         observations: '',
+        alteration: '',
+        contract_partners: [],
     });
 
+    const [activeTab, setActiveTab] = useState<'geral' | 'informacoes'>('geral');
     const [isNameModalOpen, setIsNameModalOpen] = useState(false);
     const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -57,6 +68,8 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                 agency: '',
                 location: '',
                 observations: '',
+                alteration: '',
+                contract_partners: [],
             });
         }
     }, [initialData]);
@@ -140,14 +153,50 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                             <SearchableSelect
                                 placeholder="Selecione ou busque a certidão"
                                 value={formData.name}
-                                onChange={(val) => setFormData({ ...formData, name: val })}
+                                onChange={(val) => {
+                                    setFormData({ ...formData, name: val });
+                                    if (val !== 'Contrato Social') setActiveTab('geral');
+                                }}
                                 table="certificate_names"
                                 nameField="name"
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="relative" ref={dropdownRef}>
+                        {formData.name === 'Contrato Social' && (
+                            <div className="flex space-x-2 border-b border-gray-100 mb-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('geral')}
+                                    className={`px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'geral' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    Geral
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('informacoes')}
+                                    className={`px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'informacoes' ? 'border-[#1e3a8a] text-[#1e3a8a]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    Informações
+                                </button>
+                            </div>
+                        )}
+
+                        {activeTab === 'geral' ? (
+                            <>
+                                {formData.name === 'Contrato Social' && (
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Alteração</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Ex: 20ª Alteração ou Consolidado"
+                                            className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-[#1e3a8a] outline-none transition-colors"
+                                            value={formData.alteration || ''}
+                                            onChange={e => setFormData({ ...formData, alteration: e.target.value })}
+                                        />
+                                    </div>
+                                )}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="relative" ref={dropdownRef}>
                                 <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Local *</label>
                                 <button
                                     type="button"
@@ -282,6 +331,151 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                 <p className="text-xs text-gray-400 mt-1">PDF, PNG, JPG (Max. 10MB)</p>
                             </div>
                         </div>
+                            </>
+                        ) : (
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-widest">
+                                        Sócios no Contato Social
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const currentPartners = formData.contract_partners || [];
+                                            setFormData({
+                                                ...formData,
+                                                contract_partners: [
+                                                    ...currentPartners,
+                                                    { collaborator_id: '', name: '', oabs: [{ numero: '', uf: '', tipo: 'Principal' }] }
+                                                ]
+                                            });
+                                        }}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-colors"
+                                    >
+                                        <Plus className="w-3 h-3" /> Adicionar Sócio
+                                    </button>
+                                </div>
+                                
+                                {(!formData.contract_partners || formData.contract_partners.length === 0) ? (
+                                    <div className="p-8 text-center bg-gray-50 rounded-xl border border-gray-100">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nenhum sócio adicionado</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {formData.contract_partners.map((partner, pIndex) => (
+                                            <div key={pIndex} className="bg-gray-50 p-4 rounded-xl border border-gray-200 relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newPartners = [...(formData.contract_partners || [])];
+                                                        newPartners.splice(pIndex, 1);
+                                                        setFormData({ ...formData, contract_partners: newPartners });
+                                                    }}
+                                                    className="absolute top-4 right-4 text-red-400 hover:text-red-600 transition-colors"
+                                                    title="Remover sócio"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                                
+                                                <div className="mb-4 pr-8">
+                                                    <SearchableSelect
+                                                        label="Nome do Sócio"
+                                                        placeholder="Buscar colaborador..."
+                                                        value={partner.collaborator_id || partner.name}
+                                                        onChange={(val) => {
+                                                            const newPartners = [...(formData.contract_partners || [])];
+                                                            newPartners[pIndex] = { ...newPartners[pIndex], collaborator_id: val, name: val };
+                                                            setFormData({ ...formData, contract_partners: newPartners });
+                                                        }}
+                                                        table="collaborators"
+                                                        nameField="name"
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                                            Inscrições OAB do Sócio
+                                                        </h4>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newPartners = [...(formData.contract_partners || [])];
+                                                                const partnerToUpdate = { ...newPartners[pIndex] };
+                                                                const currentOabs = partnerToUpdate.oabs || [];
+                                                                partnerToUpdate.oabs = [...currentOabs, { numero: '', uf: '', tipo: 'Suplementar' }];
+                                                                newPartners[pIndex] = partnerToUpdate;
+                                                                setFormData({ ...formData, contract_partners: newPartners });
+                                                            }}
+                                                            className="text-[9px] font-black text-[#1e3a8a] hover:underline"
+                                                        >
+                                                            + Suplementar
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    {partner.oabs && partner.oabs.map((oab: any, oIndex: number) => (
+                                                        <div key={oIndex} className="grid grid-cols-12 gap-3 items-end">
+                                                            <div className="col-span-5 relative">
+                                                                {oab.tipo === 'Principal' && (
+                                                                    <div className="absolute -top-2 left-2 bg-[#1e3a8a] text-white text-[8px] font-black uppercase px-1 rounded z-10">Principal</div>
+                                                                )}
+                                                                {oab.tipo !== 'Principal' && (
+                                                                    <div className="absolute -top-2 left-2 bg-gray-500 text-white text-[8px] font-black uppercase px-1 rounded z-10">Suplementar</div>
+                                                                )}
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Número OAB"
+                                                                    className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:border-[#1e3a8a] outline-none"
+                                                                    value={oab.numero || ''}
+                                                                    onChange={(e) => {
+                                                                        const newPartners = [...(formData.contract_partners || [])];
+                                                                        const newOabs = [...newPartners[pIndex].oabs];
+                                                                        newOabs[oIndex] = { ...newOabs[oIndex], numero: e.target.value };
+                                                                        newPartners[pIndex].oabs = newOabs;
+                                                                        setFormData({ ...formData, contract_partners: newPartners });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="col-span-5">
+                                                                <SearchableSelect
+                                                                    placeholder="UF"
+                                                                    value={oab.uf || ''}
+                                                                    onChange={(val) => {
+                                                                        const newPartners = [...(formData.contract_partners || [])];
+                                                                        const newOabs = [...newPartners[pIndex].oabs];
+                                                                        newOabs[oIndex] = { ...newOabs[oIndex], uf: val };
+                                                                        newPartners[pIndex].oabs = newOabs;
+                                                                        setFormData({ ...formData, contract_partners: newPartners });
+                                                                    }}
+                                                                    options={ESTADOS_BRASIL_UF.map(uf => ({ name: uf, id: uf }))}
+                                                                />
+                                                            </div>
+                                                            <div className="col-span-2 text-center pb-2">
+                                                                {oab.tipo !== 'Principal' && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const newPartners = [...(formData.contract_partners || [])];
+                                                                            const newOabs = [...newPartners[pIndex].oabs];
+                                                                            newOabs.splice(oIndex, 1);
+                                                                            newPartners[pIndex].oabs = newOabs;
+                                                                            setFormData({ ...formData, contract_partners: newPartners });
+                                                                        }}
+                                                                        className="text-red-400 hover:text-red-600"
+                                                                    >
+                                                                        <X className="w-5 h-5 mx-auto" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </form>
 

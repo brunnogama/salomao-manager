@@ -151,7 +151,13 @@ export function Compliance() {
   };
 
   // Resolve os nomes reais, misturando as chaves do dicionário com dados antigos
-  const getCertName = (c: any) => nameDict[c.name] || c.name || '';
+  const getCertName = (c: any) => {
+    let name = nameDict[c.name] || c.name || '';
+    if (name === 'Contrato Social' && c.alteration) {
+      name = `${name} - ${c.alteration}`;
+    }
+    return name;
+  };
   const getAgencyName = (c: any) => agencyDict[c.agency] || c.agency || '';
 
   const formatDate = (dateStr: string) => {
@@ -365,7 +371,9 @@ export function Compliance() {
         location: data.location,
         file_url: fileUrl,
         file_name: fileName,
-        status: data.status || 'Válida'
+        status: data.status || 'Válida',
+        alteration: data.name === 'Contrato Social' ? data.alteration : null,
+        contract_partners: data.name === 'Contrato Social' ? data.contract_partners : []
       };
 
       toast.loading('Salvando registro no banco de dados...', { id: toastId });
@@ -418,6 +426,8 @@ export function Compliance() {
       fileUrl: cert.file_url,
       fileName: cert.file_name,
       observations: cert.observations,
+      alteration: cert.alteration,
+      contract_partners: cert.contract_partners || [],
     } as any);
     setIsModalOpen(true);
   };
