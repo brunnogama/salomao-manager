@@ -426,13 +426,13 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                                 <div className="mb-4 pr-8">
                                                     <SearchableSelect
                                                         label="Nome do Sócio"
-                                                        placeholder="Buscar colaborador..."
+                                                        placeholder="Buscar sócio..."
                                                         value={partner.collaborator_id || partner.name}
                                                         onChange={(val, item) => {
                                                             const newPartners = [...(formData.contract_partners || [])];
 
-                                                            // O SearchableSelect modificado agora passa o item completo
-                                                            const collaboratorId = item?.id || val;
+                                                            // Na tabela `partners` existe a prop associada `collaborator_id`
+                                                            const collaboratorId = item?.collaborator_id || item?.id || val;
                                                             const collaboratorName = item?.name || val;
 
                                                             newPartners[pIndex] = {
@@ -442,12 +442,12 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                                             };
                                                             setFormData({ ...formData, contract_partners: newPartners });
 
-                                                            // Busca as OABs preexistentes do colaborador
+                                                            // Busca as OABs preexistentes do colaborador na tabela oab_number
                                                             if (collaboratorId) {
                                                                 fetchPartnerOabs(pIndex, collaboratorId);
                                                             }
                                                         }}
-                                                        table="collaborators"
+                                                        table="partners"
                                                         nameField="name"
                                                     />
                                                 </div>
