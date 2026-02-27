@@ -429,10 +429,11 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                                         placeholder="Buscar sócio..."
                                                         value={partner.collaborator_id || partner.name}
                                                         onChange={(val, item) => {
+                                                            console.log("Selecionado:", val, item);
                                                             const newPartners = [...(formData.contract_partners || [])];
 
-                                                            // Na tabela `partners` existe a prop associada `collaborator_id`
-                                                            const collaboratorId = item?.collaborator_id || item?.id || val;
+                                                            // O SearchableSelect modificado agora passa o item completo
+                                                            const collaboratorId = item?.colaborador_id || item?.collaborator_id || item?.id || val;
                                                             const collaboratorName = item?.name || val;
 
                                                             newPartners[pIndex] = {
@@ -442,7 +443,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                                             };
                                                             setFormData({ ...formData, contract_partners: newPartners });
 
-                                                            // Busca as OABs preexistentes do colaborador na tabela oab_number
+                                                            // Busca as OABs preexistentes do colaborador
                                                             if (collaboratorId) {
                                                                 fetchPartnerOabs(pIndex, collaboratorId);
                                                             }
