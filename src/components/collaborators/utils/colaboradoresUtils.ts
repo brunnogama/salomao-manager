@@ -13,7 +13,7 @@ export const ESTADOS_BRASIL = [
 export const toTitleCase = (str: string) => {
   if (!str) return ''
   const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
-  const acronyms = ['clt', 'pj', 'cpf', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
+  const acronyms = ['clt', 'pj', 'cpf', 'cnpj', 'rg', 'cnh', 'oab', 'rh', 'ti', 'ceo', 'cfo', 'pis', 'pasep', 'ctps'];
   return str.toLowerCase().split(' ').map(word => {
     if (romanNumerals.includes(word) || acronyms.includes(word)) return word.toUpperCase();
     return (word.length > 2) ? word.charAt(0).toUpperCase() + word.slice(1) : word;
