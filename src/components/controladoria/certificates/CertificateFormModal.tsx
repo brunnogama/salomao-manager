@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Upload, Settings2, ChevronDown, Trash2, Plus } from 'lucide-react';
+import { X, Save, Upload, Settings2, ChevronDown, Trash2, Plus, ExternalLink } from 'lucide-react';
 import { SearchableSelect } from '../../SearchableSelect';
 import { CertificateNameManagerModal } from './modals/CertificateNameManagerModal';
 import { CertificateAgencyManagerModal } from './modals/CertificateAgencyManagerModal';
@@ -329,10 +329,22 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                                         />
                                         <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-[#1e3a8a]' : 'text-gray-400'}`} />
                                         <p className="text-sm font-semibold text-gray-600">
-                                            {formData.file ? formData.file.name : (initialData?.fileUrl ? 'Arquivo enviado anteriormente. Clique para substituir.' : (isDragging ? 'Solte o arquivo aqui' : 'Clique ou arraste o arquivo aqui'))}
+                                            {formData.file ? formData.file.name : (initialData?.fileUrl ? 'Arquivo enviado anteriormente. Clique ou arraste para substituir.' : (isDragging ? 'Solte o arquivo aqui' : 'Clique ou arraste o arquivo aqui'))}
                                         </p>
                                         <p className="text-xs text-gray-400 mt-1">PDF, PNG, JPG (Max. 10MB)</p>
                                     </div>
+                                    {!formData.file && initialData?.fileUrl && (
+                                        <div className="mt-3 flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => window.open(initialData.fileUrl, '_blank')}
+                                                className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#1e3a8a] bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors border border-blue-100"
+                                            >
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                                Visualizar Arquivo Atual
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         ) : (

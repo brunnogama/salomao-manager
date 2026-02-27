@@ -37,13 +37,20 @@ export function CertificateDetailsModal({
         if (!certificate) return;
         setLoadingFiles(true);
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('certificates')
                 .select('*')
                 .eq('name', certificate.name)
-                .eq('location', certificate.location)
                 .not('file_url', 'is', null)
                 .order('due_date', { ascending: false });
+
+            if (certificate.location) {
+                query = query.eq('location', certificate.location);
+            } else {
+                query = query.filter('location', 'is', null);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
             setRelatedFiles(data || []);
