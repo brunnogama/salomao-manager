@@ -101,6 +101,7 @@ export function CertificateFormModal({ isOpen, onClose, onSave, locationsList, i
                 .order('tipo', { ascending: true }); // Assume 'Principal' comes first usually or handles it in UI. 
 
             if (error) throw error;
+            console.log("Raw OAB Data fetched from DB:", data);
 
             setFormData(prev => {
                 const updatedPartners = [...(prev.contract_partners || [])];
