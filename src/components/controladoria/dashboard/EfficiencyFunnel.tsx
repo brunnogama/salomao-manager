@@ -58,7 +58,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
 
               {/* Drop-off Análise (Mobile: baixo, Desktop: em baixo do card) */}
               {funil.perdaAnalise > 0 && (
-                <div className="mt-3 md:absolute md:-bottom-[80px] md:left-4 md:right-4 bg-red-50/50 border border-red-100/50 rounded-xl p-3 flex items-center justify-between text-red-800 z-10 backdrop-blur-sm">
+                <div className="mt-3 lg:absolute lg:-bottom-[80px] lg:left-4 lg:right-4 bg-red-50/50 border border-red-100/50 rounded-xl p-3 flex items-center justify-between text-red-800 z-10 backdrop-blur-sm">
                   <div className="flex items-center gap-2">
                     <XCircle className="w-4 h-4 text-red-400" />
                     <span className="text-[10px] font-bold uppercase tracking-wider">Rejeitadas</span>
@@ -81,8 +81,8 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
             </div>
 
             {/* Seta Mobile */}
-            <div className="md:hidden flex flex-col items-center justify-center py-2 text-gray-300">
-              <div className="flex items-center gap-4 text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full mb-2">
+            <div className="lg:hidden flex flex-col items-center justify-center py-4 text-gray-300">
+              <div className="flex items-center gap-4 text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full mb-3">
                 <span>{funil.taxaConversaoProposta}% convertem</span>
                 <div className="w-1 h-1 rounded-full bg-gray-300"></div>
                 <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {funil.tempoMedioProspectProposta}d</span>
@@ -117,7 +117,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
 
               {/* Drop-off Negociação */}
               {funil.perdaNegociacao > 0 && (
-                <div className="mt-3 md:absolute md:-bottom-[80px] md:left-4 md:right-4 bg-red-50/50 border border-red-100/50 rounded-xl p-3 flex items-center justify-between text-red-800 z-10 backdrop-blur-sm">
+                <div className="mt-3 lg:absolute lg:-bottom-[80px] lg:left-4 lg:right-4 bg-red-50/50 border border-red-100/50 rounded-xl p-3 flex items-center justify-between text-red-800 z-10 backdrop-blur-sm">
                   <div className="flex items-center gap-2">
                     <XCircle className="w-4 h-4 text-red-500" />
                     <span className="text-[10px] font-bold uppercase tracking-wider">Propostas Recusadas</span>
@@ -140,8 +140,8 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
             </div>
 
             {/* Seta Mobile */}
-            <div className="md:hidden flex flex-col items-center justify-center py-2 text-gray-300">
-              <div className="flex items-center gap-4 text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full mb-2">
+            <div className="lg:hidden flex flex-col items-center justify-center py-4 text-gray-300">
+              <div className="flex items-center gap-4 text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full mb-3">
                 <span>{funil.taxaConversaoFechamento}% assinam</span>
                 <div className="w-1 h-1 rounded-full bg-gray-300"></div>
                 <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {funil.tempoMedioPropostaFechamento}d</span>
@@ -175,7 +175,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
               </div>
 
               {/* Tempo Médio Global (Opcional - Info Box) */}
-              <div className="mt-3 md:absolute md:-bottom-[80px] md:left-4 md:right-4 bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center justify-between text-gray-600 z-10">
+              <div className="mt-3 lg:absolute lg:-bottom-[80px] lg:left-4 lg:right-4 bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center justify-between text-gray-600 z-10">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-gray-400" />
                   <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Ciclo Médio</span>
@@ -187,7 +187,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
           </div>
 
           {/* Helper visual para criar espaço para as boxes de drop-off no desktop */}
-          <div className="hidden md:block h-[100px] w-full pointer-events-none"></div>
+          <div className="hidden lg:block h-[100px] w-full pointer-events-none"></div>
 
         </div>
       </div>
