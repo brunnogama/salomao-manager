@@ -53,6 +53,15 @@ export function EvolutionCharts({
 }: EvolutionChartsProps) {
 
   // Cálculos Entrada de Casos
+  const mesesCount = Math.max(
+    evolucaoMensal?.length || 0,
+    propostas12Meses?.length || 0,
+    financeiro12Meses?.length || 0
+  ) || 1;
+  const periodTextTitle = mesesCount >= 12 ? '12 Meses' : `${mesesCount} ${mesesCount === 1 ? 'Mês' : 'Meses'}`;
+  const periodTextLower = mesesCount >= 12 ? '12 meses' : `${mesesCount} ${mesesCount === 1 ? 'mês' : 'meses'}`;
+  const periodTextShort = mesesCount >= 12 ? '12m' : `${mesesCount}m`;
+
   const totalEntrada12 = funilTotalEntrada !== undefined ? funilTotalEntrada : evolucaoMensal.reduce((acc, curr) => acc + curr.qtd, 0);
   const mediaEntrada = evolucaoMensal.length > 0 ? (totalEntrada12 / evolucaoMensal.length).toFixed(1) : '0';
   const ultimoQtd = evolucaoMensal.length > 0 ? evolucaoMensal[evolucaoMensal.length - 1].qtd : 0;
@@ -333,7 +342,7 @@ export function EvolutionCharts({
                 Entrada de Casos
               </h2>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
-                Volume de novos negócios nos últimos 12 meses
+                Volume de novos negócios nos últimos {periodTextLower}
               </p>
             </div>
           </div>
@@ -344,7 +353,7 @@ export function EvolutionCharts({
         <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
           <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div>
-            No acumulado dos últimos 12 meses, {totalEntrada12 === 0 ? 'não registramos a entrada de novos prospects' : <>registramos a entrada de <strong>{totalEntrada12}</strong> novos prospects</>}, com uma média de <strong>{mediaEntrada}</strong> análises por mês. Comparando o volume atual com o mês anterior, observamos {diffEntrada > 0 ? <>um crescimento de <strong>+{diffEntrada}</strong></> : diffEntrada < 0 ? <>uma redução de <strong>{diffEntrada}</strong></> : <>estabilidade no número de</>} novas entradas neste período.
+            No acumulado dos últimos {periodTextLower}, {totalEntrada12 === 0 ? 'não registramos a entrada de novos prospects' : <>registramos a entrada de <strong>{totalEntrada12}</strong> novos prospects</>}, com uma média de <strong>{mediaEntrada}</strong> análises por mês. Comparando o volume atual com o mês anterior, observamos {diffEntrada > 0 ? <>um crescimento de <strong>+{diffEntrada}</strong></> : diffEntrada < 0 ? <>uma redução de <strong>{diffEntrada}</strong></> : <>estabilidade no número de</>} novas entradas neste período.
           </div>
         </div>
 
@@ -370,7 +379,7 @@ export function EvolutionCharts({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5 border-t border-gray-100">
           <div className="flex flex-col gap-1 p-4 rounded-xl bg-white border border-gray-200 border-l-4 border-l-[#0a192f] transition-all hover:shadow-md">
             <span className="text-[9px] font-black text-gray-500 uppercase tracking-wider mb-1">
-              Volume Total (12m)
+              Volume Total ({periodTextShort})
             </span>
             <div className="flex items-baseline gap-2">
               <span className="text-[24px] font-black text-[#0a192f] tracking-tight">
@@ -420,17 +429,18 @@ export function EvolutionCharts({
             </div>
             <div>
               <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
-                Evolução Financeira (12 Meses)
+                Evolução Financeira ({periodTextTitle})
               </h2>
             </div>
           </div>
+          <CopyChartButton targetId="chart-evolucao-financeira" />
         </div>
 
         {/* Explicação Dinâmica */}
         <div className="mb-6 bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-[13px] text-blue-900 leading-relaxed shadow-sm flex gap-3 items-start">
           <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div>
-            Nossa expansão financeira nos últimos 12 meses apresenta {statsPropostas.total === 0 ? 'nenhuma proposta enviada aos clientes' : <>a elaboração de <strong>{formatMoney(statsPropostas.total)}</strong> em propostas enviadas aos clientes (com ticket médio mensal de <strong>{formatMoney(statsPropostas.media)}</strong>)</>} versus {statsFinanceiro.total === 0 ? 'nenhum contrato firmado' : <>a concretização de <strong>{formatMoney(statsFinanceiro.total)}</strong> em contratos firmados, que impulsionam um ganho recorrente médio de <strong>{formatMoney(statsFinanceiro.media)}</strong> mensais para a carteira do escritório</>}.
+            Nossa expansão financeira nos últimos {periodTextLower} apresenta {statsPropostas.total === 0 ? 'nenhuma proposta enviada aos clientes' : <>a elaboração de <strong>{formatMoney(statsPropostas.total)}</strong> em propostas enviadas aos clientes (com ticket médio mensal de <strong>{formatMoney(statsPropostas.media)}</strong>)</>} versus {statsFinanceiro.total === 0 ? 'nenhum contrato firmado' : <>a concretização de <strong>{formatMoney(statsFinanceiro.total)}</strong> em contratos firmados, que impulsionam um ganho recorrente médio de <strong>{formatMoney(statsFinanceiro.media)}</strong> mensais para a carteira do escritório</>}.
           </div>
         </div>
 
@@ -478,7 +488,7 @@ export function EvolutionCharts({
             <div className="grid grid-cols-3 gap-3 pt-5 mt-5 border-t border-gray-100">
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] text-gray-400 uppercase font-black tracking-wider">
-                  Total (12m)
+                  Total ({periodTextShort})
                 </span>
                 <span className="text-sm font-bold text-gray-800">
                   {formatMoney(statsPropostas.total)}
@@ -548,7 +558,7 @@ export function EvolutionCharts({
             <div className="grid grid-cols-3 gap-3 pt-5 mt-5 border-t border-gray-100">
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] text-gray-400 uppercase font-black tracking-wider">
-                  Total (12m)
+                  Total ({periodTextShort})
                 </span>
                 <span className="text-sm font-bold text-gray-800">
                   {formatMoney(statsFinanceiro.total)}

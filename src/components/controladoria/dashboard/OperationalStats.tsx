@@ -36,6 +36,7 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
               </p>
             </div>
           </div>
+          <CopyChartButton targetId="chart-analise-rejeicoes" />
         </div>
 
         {/* Explicação Dinâmica */}
@@ -72,7 +73,7 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
                 rejectionData.reasons.map((item, idx) => (
                   <div key={idx} className="group">
                     <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-xs font-bold text-gray-700 flex-1 truncate" title={item.label}>
+                      <span className="text-xs font-bold text-gray-700 flex-[1] truncate whitespace-nowrap" title={item.label}>
                         {item.label}
                       </span>
                       <div className="flex items-baseline gap-2 ml-2">
@@ -114,7 +115,7 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
                 rejectionData.sources.map((item, idx) => (
                   <div key={idx} className="group">
                     <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-xs font-bold text-gray-700 flex-1 truncate" title={item.label}>
+                      <span className="text-xs font-bold text-gray-700 flex-[1] truncate whitespace-nowrap" title={item.label}>
                         {item.label}
                       </span>
                       <div className="flex items-baseline gap-2 ml-2">
@@ -141,7 +142,7 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
       </div>
 
       {/* --- STATUS DE ASSINATURA --- */}
-      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
+      <div id="chart-status-assinatura" className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 relative'>
 
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
@@ -158,6 +159,7 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
               </p>
             </div>
           </div>
+          <CopyChartButton targetId="chart-status-assinatura" />
         </div>
 
         {/* Explicação Dinâmica */}
@@ -179,8 +181,8 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
           {/* Card 1: Assinados */}
           <div className='bg-white p-5 rounded-xl border border-gray-200 border-l-4 border-l-green-600 shadow-sm hover:shadow-md transition-all'>
             <div className='flex items-start justify-between mb-4'>
-              <div className='flex-1'>
-                <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3'>
+              <div className='flex-[1]'>
+                <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3 whitespace-nowrap overflow-hidden text-ellipsis'>
                   Contratos Assinados
                 </p>
                 <p className='text-[30px] font-black text-[#0a192f] tracking-tight leading-none'>
@@ -201,8 +203,8 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
           {/* Card 2: Pendentes */}
           <div className='bg-white p-5 rounded-xl border border-gray-200 border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-all'>
             <div className='flex items-start justify-between mb-4'>
-              <div className='flex-1'>
-                <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3'>
+              <div className='flex-[1]'>
+                <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3 whitespace-nowrap'>
                   Pendentes
                 </p>
                 <p className='text-[30px] font-black text-[#0a192f] tracking-tight leading-none'>
@@ -223,8 +225,8 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
           {/* Card 3: Percentual */}
           <div className='bg-white p-5 rounded-xl border border-gray-200 border-l-4 border-l-gray-600 shadow-sm hover:shadow-md transition-all'>
             <div className='flex items-start justify-between mb-4'>
-              <div className='flex-1'>
-                <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3'>
+              <div className='flex-[1]'>
+                <p className='text-[9px] text-gray-500 font-black uppercase tracking-widest mb-3 whitespace-nowrap'>
                   % Pendente
                 </p>
                 <p className='text-[30px] font-black text-[#0a192f] tracking-tight leading-none'>

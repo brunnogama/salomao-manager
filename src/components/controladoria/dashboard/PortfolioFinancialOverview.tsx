@@ -3,7 +3,6 @@ import {
   Camera, Clock, CheckCircle2, PieChart, FileSignature, HeartHandshake, XCircle, Lightbulb
 } from 'lucide-react';
 import { formatMoney } from './dashboardHelpers';
-import { usePresentation } from '../../../contexts/PresentationContext';
 import { CopyChartButton } from '../ui/CopyChartButton';
 
 interface PortfolioFinancialOverviewProps {
@@ -49,6 +48,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
               </p>
             </div>
           </div>
+          <CopyChartButton targetId="chart-fotografia-carteira" />
         </div>
 
         {/* Explicação Dinâmica */}
@@ -173,9 +173,12 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
               Fotografia Financeira Total
             </h2>
           </div>
-          <p className='text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-[48px]'>
-            Visão consolidada de oportunidades e receita garantida
-          </p>
+          <div className='flex items-center gap-4'>
+            <p className='text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hidden sm:block'>
+              Visão consolidada de oportunidades e receita
+            </p>
+            <CopyChartButton targetId="chart-volume-financeiro" />
+          </div>
         </div>
 
         {/* Explicação Dinâmica */}
@@ -201,27 +204,27 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
               </p>
               <div className='space-y-3'>
                 {/* Items */}
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Pró-labore</span>
-                  <span className='text-[20px] font-black text-gray-700 tracking-tight'>
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className='text-xs font-semibold text-gray-500 whitespace-nowrap'>Pró-labore</span>
+                  <span className='text-[20px] font-black text-gray-700 tracking-tight whitespace-nowrap'>
                     {formatMoney(metrics.geral.valorEmNegociacaoPL)}
                   </span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Êxito Total</span>
-                  <span className='text-[20px] font-black text-gray-700 tracking-tight'>
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className='text-xs font-semibold text-gray-500 whitespace-nowrap'>Êxito Total</span>
+                  <span className='text-[20px] font-black text-gray-700 tracking-tight whitespace-nowrap'>
                     {formatMoney(metrics.geral.valorEmNegociacaoExito)}
                   </span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Fixo Mensal</span>
-                  <span className='text-[20px] font-black text-gray-700 tracking-tight'>
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className='text-xs font-semibold text-gray-500 whitespace-nowrap'>Fixo Mensal</span>
+                  <span className='text-[20px] font-black text-gray-700 tracking-tight whitespace-nowrap'>
                     {formatMoney((metrics.geral as any).valorEmNegociacaoMensal || 0)}
                   </span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Outros Honorários</span>
-                  <span className='text-[20px] font-black text-gray-700 tracking-tight'>
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className='text-xs font-semibold text-gray-500 whitespace-nowrap'>Outros Honorários</span>
+                  <span className='text-[20px] font-black text-gray-700 tracking-tight whitespace-nowrap'>
                     {formatMoney((metrics.geral as any).valorEmNegociacaoOutros || 0)}
                   </span>
                 </div>
@@ -267,27 +270,27 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
               </p>
               <div className='space-y-3'>
                 {/* Items */}
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Pró-labore</span>
-                  <span className='text-[20px] font-black text-green-700 tracking-tight'>
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className='text-xs font-semibold text-gray-500 whitespace-nowrap'>Pró-labore</span>
+                  <span className='text-[20px] font-black text-green-700 tracking-tight whitespace-nowrap'>
                     {formatMoney(metrics.geral.totalFechadoPL)}
                   </span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Êxito Total</span>
-                  <span className='text-[20px] font-black text-green-700 tracking-tight'>
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className='text-xs font-semibold text-gray-500 whitespace-nowrap'>Êxito Total</span>
+                  <span className='text-[20px] font-black text-green-700 tracking-tight whitespace-nowrap'>
                     {formatMoney(metrics.geral.totalFechadoExito)}
                   </span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Fixo Mensal</span>
-                  <span className='text-[20px] font-black text-green-700 tracking-tight'>
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className='text-xs font-semibold text-gray-500 whitespace-nowrap'>Fixo Mensal</span>
+                  <span className='text-[20px] font-black text-green-700 tracking-tight whitespace-nowrap'>
                     {formatMoney(metrics.geral.receitaRecorrenteAtiva)}
                   </span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className='text-xs font-semibold text-gray-500'>Outros Honorários</span>
-                  <span className='text-[20px] font-black text-green-700 tracking-tight'>
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className='text-xs font-semibold text-gray-500 whitespace-nowrap'>Outros Honorários</span>
+                  <span className='text-[20px] font-black text-green-700 tracking-tight whitespace-nowrap'>
                     {formatMoney((metrics.geral as any).totalFechadoOutros || 0)}
                   </span>
                 </div>
