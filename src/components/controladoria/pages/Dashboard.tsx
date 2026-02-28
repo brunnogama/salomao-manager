@@ -105,7 +105,7 @@ export function Dashboard({ }: Props) {
       {/* 4. GRÁFICOS E FUNCIONALIDADES DA CONTROLADORIA */}
       <div className="space-y-6 pb-12">
         {/* Visão Geral */}
-        <EfficiencyFunnel funil={funil} />
+        <EfficiencyFunnel funil={funil} evolucaoMensal={evolucaoMensal} />
         <PortfolioFinancialOverview metrics={metrics} />
         <div className="grid grid-cols-1 gap-6">
           <WeeklySummary metrics={metrics} />

@@ -1,13 +1,19 @@
-import { Clock, ArrowRight, XCircle, CheckCircle2, FileText, Users, TrendingDown, Lightbulb } from 'lucide-react';
+import { Clock, XCircle, CheckCircle2, FileText, Users, TrendingDown, Lightbulb } from 'lucide-react';
 import { CopyChartButton } from '../ui/CopyChartButton';
 
 interface EfficiencyFunnelProps {
   funil: any;
+  evolucaoMensal?: any[];
 }
 
-export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
+export function EfficiencyFunnel({ funil, evolucaoMensal }: EfficiencyFunnelProps) {
   const emAnalise = Math.max(0, funil.totalEntrada - funil.perdaAnalise - funil.qualificadosProposta);
   const emNegociacao = Math.max(0, funil.qualificadosProposta - funil.fechados - (funil.perdaNegociacao || 0));
+
+  const mesesCount = evolucaoMensal && evolucaoMensal.length > 0 ? evolucaoMensal.length : 1;
+  const mediaEntrada = (funil.totalEntrada / mesesCount).toFixed(1);
+  const totalRejeitadas = funil.perdaAnalise + (funil.perdaNegociacao || 0);
+  const rejectPercent = funil.totalEntrada > 0 ? ((totalRejeitadas / funil.totalEntrada) * 100).toFixed(1) : '0';
 
   return (
     <div id="chart-funil-captacao" className='bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all p-6 md:p-8 relative'>
@@ -45,170 +51,162 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
       </div>
 
       {/* Grid Layout Principal do Pipeline */}
-      <div className='relative w-full max-w-5xl mx-auto'>
+      <div className='relative w-full max-w-6xl mx-auto'>
 
-        <div className="flex flex-col lg:flex-row items-stretch justify-between gap-6 lg:gap-2 relative z-10 w-full">
+        {/* Timeline do Ciclo Médio Trazida para Cima */}
+        <div className="mb-10 relative flex items-center justify-between w-full max-w-3xl mx-auto px-4 sm:px-12">
+          {/* Linha de fundo */}
+          <div className="absolute left-8 sm:left-16 right-8 sm:right-16 top-1/2 -translate-y-1/2 h-1 bg-gray-100 rounded-full z-0"></div>
+
+          {/* Node 1: Prospects */}
+          <div className="relative z-10 flex flex-col items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-amber-500 ring-4 ring-amber-50"></div>
+            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Prospects</span>
+          </div>
+
+          {/* Info 1 -> 2 */}
+          <div className="relative z-10 flex flex-col items-center bg-white px-3 sm:px-4 py-1.5 rounded-full border border-gray-100 shadow-sm text-center">
+            <div className="flex items-center gap-1.5 text-indigo-600">
+              <Clock className="w-3.5 h-3.5" />
+              <span className="text-xs sm:text-sm font-black">{funil.tempoMedioProspectProposta}d</span>
+            </div>
+            <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-wider">Até Proposta</span>
+          </div>
+
+          {/* Node 2: Propostas */}
+          <div className="relative z-10 flex flex-col items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-blue-500 ring-4 ring-blue-50"></div>
+            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Propostas</span>
+          </div>
+
+          {/* Info 2 -> 3 */}
+          <div className="relative z-10 flex flex-col items-center bg-white px-3 sm:px-4 py-1.5 rounded-full border border-gray-100 shadow-sm text-center">
+            <div className="flex items-center gap-1.5 text-blue-600">
+              <Clock className="w-3.5 h-3.5" />
+              <span className="text-xs sm:text-sm font-black">{funil.tempoMedioPropostaFechamento}d</span>
+            </div>
+            <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-wider">Até Fechar</span>
+          </div>
+
+          {/* Node 3: Fechados */}
+          <div className="relative z-10 flex flex-col items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-green-500 ring-4 ring-green-50"></div>
+            <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Fechados</span>
+          </div>
+        </div>
+
+        {/* Cards principais */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10 w-full">
 
           {/* ETAPA 1: START - PROSPECTS */}
-          <div className="flex-1 flex flex-col relative group">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm group-hover:shadow-md group-hover:border-amber-300 transition-all z-20 relative h-full min-h-[140px] flex flex-col justify-center border-t-4 border-t-amber-500">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
-                  <Users className="w-4 h-4" />
-                </div>
-                <h3 className="text-xs font-black text-amber-900 uppercase tracking-widest">Prospects</h3>
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all flex flex-col justify-center border-t-4 border-t-amber-500">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                <Users className="w-4 h-4" />
               </div>
-              <div className="flex items-end gap-2">
-                <div className="flex flex-col gap-0.5 mt-2 ml-1">
-                  <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.totalEntrada}</span>
-                  <span className="text-xs font-bold text-gray-400">análises</span>
-                </div>
-              </div>
+              <h3 className="text-xs font-black text-amber-900 uppercase tracking-widest">Prospects</h3>
+            </div>
+            <div className="flex flex-col gap-0.5 mt-2 ml-1">
+              <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.totalEntrada}</span>
+              <span className="text-xs font-bold text-gray-400">análises totais</span>
             </div>
 
-            {/* Drop-off Análise (Mobile: baixo, Desktop: em baixo do card) */}
-            {funil.perdaAnalise > 0 && (
-              <div className="mt-3 lg:absolute lg:-bottom-[80px] lg:left-4 lg:right-4 bg-red-50/50 border border-red-100/50 rounded-xl p-3 flex items-center justify-between text-red-800 z-10 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <XCircle className="w-4 h-4 text-red-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Rejeitadas</span>
-                </div>
-                <span className="text-sm font-black text-red-600">{funil.perdaAnalise}</span>
+            <div className="mt-4 pt-4 border-t border-amber-50 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider block mb-0.5">Média Mensal</span>
+                <span className="text-lg font-black text-amber-600 leading-none">{mediaEntrada}</span>
               </div>
-            )}
-          </div>
-
-          {/* CONEXÃO 1 -> 2 */}
-          <div className="hidden lg:flex flex-col items-center justify-center w-12 shrink-0 z-10 text-gray-300">
-            <div className="bg-white border border-indigo-100 shadow-sm rounded-full px-2 py-1 mb-2 text-[10px] font-black text-indigo-600 uppercase tracking-wider whitespace-nowrap z-10">
-              {funil.taxaConversaoProposta}%
             </div>
-            <ArrowRight className="w-8 h-8 text-indigo-200" />
-            <div className="flex items-center gap-1 mt-2 text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full z-10">
-              <Clock className="w-3 h-3" />
-              <span className="text-[10px] font-bold">{funil.tempoMedioProspectProposta}d</span>
-            </div>
-          </div>
-
-          {/* Seta Mobile */}
-          <div className="lg:hidden flex flex-col items-center justify-center py-4 text-gray-300">
-            <div className="flex items-center gap-4 text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full mb-3">
-              <span>{funil.taxaConversaoProposta}% convertem</span>
-              <div className="w-1 h-1 rounded-full bg-gray-300"></div>
-              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {funil.tempoMedioProspectProposta}d</span>
-            </div>
-            <ArrowRight className="w-5 h-5 rotate-90" />
           </div>
 
           {/* ETAPA 2: PROPOSTAS */}
-          <div className="flex-1 flex flex-col relative group">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm group-hover:shadow-md group-hover:border-blue-200 transition-all z-20 relative h-full min-h-[140px] flex flex-col justify-center border-t-4 border-t-blue-500">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <h3 className="text-xs font-black text-blue-900 uppercase tracking-widest">Propostas</h3>
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex flex-col justify-center border-t-4 border-t-blue-500">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                <FileText className="w-4 h-4" />
               </div>
-              <div className="flex items-end gap-2">
-                <div className="flex flex-col gap-0.5 mt-2 ml-1">
-                  <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.qualificadosProposta}</span>
-                  <span className="text-xs font-bold text-gray-400">enviadas</span>
-                </div>
-              </div>
+              <h3 className="text-xs font-black text-blue-900 uppercase tracking-widest">Propostas</h3>
+            </div>
+            <div className="flex flex-col gap-0.5 mt-2 ml-1">
+              <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.qualificadosProposta}</span>
+              <span className="text-xs font-bold text-gray-400">enviadas</span>
+            </div>
 
-              {/* Barra de Progresso vs Entrada */}
-              <div className="mt-2 text-right">
-                <span className="text-[10px] font-bold text-blue-500">{funil.taxaConversaoProposta}% do total</span>
-                <div className="h-1.5 w-full bg-blue-50 rounded-full mt-1 overflow-hidden">
+            <div className="mt-4 pt-4 border-t border-blue-50 flex items-end justify-between gap-1">
+              <div>
+                <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider block mb-0.5">Conversão Local</span>
+                <span className="text-xl font-black text-blue-600 leading-none">
+                  {funil.taxaConversaoProposta}%
+                </span>
+              </div>
+              <div className="w-[55%] flex flex-col justify-end">
+                <span className="text-[8px] font-bold text-blue-500 text-right block mb-1 whitespace-nowrap">do total de análises</span>
+                <div className="h-1.5 w-full bg-blue-50 rounded-full overflow-hidden shrink-0">
                   <div className="h-full bg-blue-400 rounded-full transition-all duration-1000" style={{ width: `${funil.taxaConversaoProposta}%` }}></div>
                 </div>
               </div>
             </div>
-
-            {/* Drop-off Negociação */}
-            {funil.perdaNegociacao > 0 && (
-              <div className="mt-3 lg:absolute lg:-bottom-[80px] lg:left-4 lg:right-4 bg-red-50/50 border border-red-100/50 rounded-xl p-3 flex items-center justify-between text-red-800 z-10 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <XCircle className="w-4 h-4 text-red-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Propostas Rejeitadas</span>
-                </div>
-                <span className="text-sm font-black text-red-600">{funil.perdaNegociacao}</span>
-              </div>
-            )}
-          </div>
-
-          {/* CONEXÃO 2 -> 3 */}
-          <div className="hidden lg:flex flex-col items-center justify-center w-12 shrink-0 z-10 text-gray-300">
-            <div className="bg-white border border-blue-100 shadow-sm rounded-full px-2 py-1 mb-2 text-[10px] font-black text-blue-600 uppercase tracking-wider whitespace-nowrap z-10">
-              {funil.taxaConversaoFechamento}%
-            </div>
-            <ArrowRight className="w-8 h-8 text-blue-200" />
-            <div className="flex items-center gap-1 mt-2 text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full z-10">
-              <Clock className="w-3 h-3" />
-              <span className="text-[10px] font-bold">{funil.tempoMedioPropostaFechamento}d</span>
-            </div>
-          </div>
-
-          {/* Seta Mobile */}
-          <div className="lg:hidden flex flex-col items-center justify-center py-4 text-gray-300">
-            <div className="flex items-center gap-4 text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full mb-3">
-              <span>{funil.taxaConversaoFechamento}% assinam</span>
-              <div className="w-1 h-1 rounded-full bg-gray-300"></div>
-              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {funil.tempoMedioPropostaFechamento}d</span>
-            </div>
-            <ArrowRight className="w-5 h-5 rotate-90" />
           </div>
 
           {/* ETAPA 3: FECHADOS */}
-          <div className="flex-1 flex flex-col relative group">
-            <div className="bg-[#f8fdf9] border border-green-200 rounded-2xl p-6 shadow-sm group-hover:shadow-md group-hover:border-green-300 transition-all z-20 relative h-full min-h-[140px] flex flex-col justify-center border-t-4 border-t-green-500 group">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-                <h3 className="text-xs font-black text-green-800 uppercase tracking-widest">Contratos Fechados</h3>
+          <div className="bg-[#f8fdf9] border border-green-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-green-300 transition-all flex flex-col justify-center border-t-4 border-t-green-500">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700">
+                <CheckCircle2 className="w-4 h-4" />
               </div>
-              <div className="flex items-end gap-2">
-                <div className="flex flex-col gap-0.5 mt-2 ml-1">
-                  <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.fechados}</span>
-                  <span className="text-xs font-bold text-gray-400">assinados</span>
-                </div>
-              </div>
+              <h3 className="text-xs font-black text-green-800 uppercase tracking-widest">Fechados</h3>
+            </div>
+            <div className="flex flex-col gap-0.5 mt-2 ml-1">
+              <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{funil.fechados}</span>
+              <span className="text-xs font-bold text-gray-400">contratos assinados</span>
+            </div>
 
-              {/* Barra de Progresso vs Entrada e Conversão Global Integrada */}
-              <div className="mt-4 pt-4 border-t border-green-100 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-black text-green-700 uppercase tracking-wider block mb-0.5">Conversão Global</span>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-green-600 leading-none">
-                      {funil.totalEntrada > 0 ? ((funil.fechados / funil.totalEntrada) * 100).toFixed(1) : '0'}%
-                    </span>
-                  </div>
-                </div>
-                <div className="w-3/5">
-                  <span className="text-[9px] font-bold text-green-500 text-right block mb-1">do total de análises</span>
-                  <div className="h-2 w-full bg-green-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 rounded-full transition-all duration-1000" style={{ width: `${funil.totalEntrada > 0 ? (funil.fechados / funil.totalEntrada) * 100 : 0}%` }}></div>
-                  </div>
+            <div className="mt-4 pt-4 border-t border-green-100 flex items-end justify-between gap-1">
+              <div>
+                <span className="text-[9px] font-black text-green-700 uppercase tracking-wider block mb-0.5">Conversão Global</span>
+                <span className="text-xl font-black text-green-600 leading-none">
+                  {funil.totalEntrada > 0 ? ((funil.fechados / funil.totalEntrada) * 100).toFixed(1) : '0'}%
+                </span>
+              </div>
+              <div className="w-[55%] flex flex-col justify-end">
+                <span className="text-[8px] font-bold text-green-500 text-right block mb-1 whitespace-nowrap">do total de análises</span>
+                <div className="h-1.5 w-full bg-green-100 rounded-full overflow-hidden shrink-0">
+                  <div className="h-full bg-green-500 rounded-full transition-all duration-1000" style={{ width: `${funil.totalEntrada > 0 ? (funil.fechados / funil.totalEntrada) * 100 : 0}%` }}></div>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Tempo Médio Global (Opcional - Info Box) */}
-            <div className="mt-3 lg:absolute lg:-bottom-[80px] lg:left-4 lg:right-4 bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center justify-between text-gray-600 z-10">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-gray-400" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Ciclo Médio</span>
+          {/* ETAPA 4: REJEITADAS */}
+          <div className="bg-white border border-red-100 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-red-300 transition-all flex flex-col justify-center border-t-4 border-t-red-500">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+                <XCircle className="w-4 h-4" />
               </div>
-              <span className="text-sm font-black text-[#0a192f]">{funil.tempoMedioProspectProposta + funil.tempoMedioPropostaFechamento}d</span>
+              <h3 className="text-xs font-black text-red-900 uppercase tracking-widest">Rejeitadas</h3>
+            </div>
+            <div className="flex flex-col gap-0.5 mt-2 ml-1">
+              <span className="text-4xl font-black text-[#0a192f] tracking-tighter leading-none">{totalRejeitadas}</span>
+              <span className="text-xs font-bold text-gray-400">operações perdidas</span>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-red-50 flex items-end justify-between gap-1">
+              <div>
+                <span className="text-[9px] font-black text-red-700 uppercase tracking-wider block mb-0.5">Taxa de Rejeição</span>
+                <span className="text-xl font-black text-red-600 leading-none">
+                  {rejectPercent}%
+                </span>
+              </div>
+              <div className="w-[55%] flex flex-col justify-end">
+                <span className="text-[8px] font-bold text-red-400 text-right block mb-1 whitespace-nowrap">do total de análises</span>
+                <div className="h-1.5 w-full bg-red-50 rounded-full overflow-hidden shrink-0">
+                  <div className="h-full bg-red-500 rounded-full transition-all duration-1000" style={{ width: `${rejectPercent}%` }}></div>
+                </div>
+              </div>
             </div>
           </div>
 
         </div>
-
-        {/* Helper visual para criar espaço para as boxes de drop-off no desktop */}
-        <div className="hidden lg:block h-[100px] w-full pointer-events-none"></div>
-
       </div>
     </div>
   );
