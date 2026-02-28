@@ -1,6 +1,4 @@
 import { useRef, useState, useEffect } from 'react';
-import html2canvas from 'html2canvas';
-import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import {
   Loader2,
@@ -31,8 +29,6 @@ export function Dashboard({ }: Props) {
   const [partnersList, setPartnersList] = useState<{ id: string, name: string }[]>([]);
   const [locationsList, setLocationsList] = useState<string[]>([]);
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null);
-  const [exporting, setExporting] = useState(false);
-  const dashboardRef = useRef<HTMLDivElement>(null);
 
   // Hook de Dados Profundo da Controladoria
   const {
@@ -63,42 +59,6 @@ export function Dashboard({ }: Props) {
     if (user) {
       const { data: profile } = await supabase.from('user_profiles').select('role').eq('id', user.id).maybeSingle();
       if (profile) setUserRole(profile.role as any);
-    }
-  };
-
-  // Função de Exportação da Controladoria
-  const handleExportAndEmail = async () => {
-    if (!dashboardRef.current) return;
-    setExporting(true);
-    try {
-      const canvas = await html2canvas(dashboardRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#F8FAFC',
-        windowWidth: 1920,
-        ignoreElements: (el) => el.id === 'dashboard-filters'
-      });
-
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          toast.error('Erro ao gerar imagem.');
-          return;
-        }
-        navigator.clipboard.write([
-          new ClipboardItem({ 'image/png': blob })
-        ]).then(() => {
-          toast.success('Dashboard copiado para a área de transferência!');
-        }).catch(err => {
-          console.error("Erro ao copiar para clipboard:", err);
-          toast.error('Erro ao copiar para a área de transferência.');
-        });
-      }, 'image/png');
-
-    } catch (error) {
-      console.error("Erro ao exportar:", error);
-      toast.error('Ocorreu um erro ao exportar o dashboard.');
-    } finally {
-      setExporting(false);
     }
   };
 
@@ -136,8 +96,6 @@ export function Dashboard({ }: Props) {
             selectedLocation={selectedLocation}
             setSelectedLocation={setSelectedLocation}
             locationsList={locationsList}
-            exporting={exporting}
-            onExport={handleExportAndEmail}
             hideTitle={true}
             className="!p-0 !border-0 !shadow-none !bg-transparent"
           />
@@ -145,7 +103,7 @@ export function Dashboard({ }: Props) {
       </div>
 
       {/* 4. GRÁFICOS E FUNCIONALIDADES DA CONTROLADORIA */}
-      <div ref={dashboardRef} className="space-y-6 pb-12">
+      <div className="space-y-6 pb-12">
         {/* Visão Geral */}
         <EfficiencyFunnel funil={funil} />
         <PortfolioFinancialOverview metrics={metrics} />

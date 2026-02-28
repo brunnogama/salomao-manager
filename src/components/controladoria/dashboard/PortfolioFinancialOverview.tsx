@@ -3,6 +3,8 @@ import {
   Camera, Clock, CheckCircle2, PieChart, FileSignature, HeartHandshake, XCircle, Lightbulb
 } from 'lucide-react';
 import { formatMoney } from './dashboardHelpers';
+import { usePresentation } from '../../../contexts/PresentationContext';
+import { CopyChartButton } from '../ui/CopyChartButton';
 
 interface PortfolioFinancialOverviewProps {
   metrics: any;
@@ -30,7 +32,7 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
     <div className="flex flex-col gap-6">
 
       {/* Linha 1: Fotografia da Carteira Atual (Cards) */}
-      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
+      <div id="chart-fotografia-carteira" className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 relative'>
 
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
@@ -159,10 +161,10 @@ export function PortfolioFinancialOverview({ metrics }: PortfolioFinancialOvervi
       </div>
 
       {/* Linha 2: Fotografia Financeira Total */}
-      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
+      <div id="chart-volume-financeiro" className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 relative'>
 
         {/* Header */}
-        <div className='mb-6 pb-5 border-b border-gray-100'>
+        <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
           <div className='flex items-center gap-3 mb-2'>
             <div className='p-2 rounded-xl bg-[#0a192f] text-white shadow-lg'>
               <Camera className='w-5 h-5' />

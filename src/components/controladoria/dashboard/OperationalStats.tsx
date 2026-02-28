@@ -1,5 +1,5 @@
-import React from 'react';
 import { Ban, FileSignature, CheckCircle2, AlertCircle, Percent, TrendingDown, Lightbulb } from 'lucide-react';
+import { CopyChartButton } from '../ui/CopyChartButton';
 
 interface OperationalStatsProps {
   rejectionData: {
@@ -19,7 +19,7 @@ export function OperationalStats({ rejectionData, metrics }: OperationalStatsPro
   return (
     <>
       {/* --- ANÁLISE DE REJEIÇÕES --- */}
-      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
+      <div id="chart-analise-rejeicoes" className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 relative'>
 
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>

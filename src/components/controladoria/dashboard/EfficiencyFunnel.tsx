@@ -1,4 +1,5 @@
 import { Clock, ArrowRight, XCircle, CheckCircle2, FileText, Users, TrendingDown, Lightbulb } from 'lucide-react';
+import { CopyChartButton } from '../ui/CopyChartButton';
 
 interface EfficiencyFunnelProps {
   funil: any;
@@ -9,7 +10,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
   const emNegociacao = Math.max(0, funil.qualificadosProposta - funil.fechados - (funil.perdaNegociacao || 0));
 
   return (
-    <div className='bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all p-6 md:p-8'>
+    <div id="chart-funil-captacao" className='bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all p-6 md:p-8 relative'>
       {/* Header */}
       <div className='mb-8 flex items-center justify-between border-b border-gray-100 pb-5'>
         <div className='flex items-center gap-4'>
@@ -26,7 +27,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
           </div>
         </div>
 
-        {/* Taxa de Sucesso Global foi movida para o Card de Fechamentos */}
+        <CopyChartButton targetId="chart-funil-captacao" />
       </div>
 
       {/* Explicação Dinâmica */}

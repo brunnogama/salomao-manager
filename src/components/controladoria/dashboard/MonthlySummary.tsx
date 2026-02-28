@@ -1,7 +1,7 @@
-import React from 'react';
 import {
   CalendarRange, Layers, ArrowUpRight, GitCommit, Lightbulb
 } from 'lucide-react';
+import { CopyChartButton } from '../ui/CopyChartButton';
 import { FinItem } from './FinItem';
 
 interface MonthlySummaryProps {
@@ -12,7 +12,7 @@ export function MonthlySummary({ metrics }: MonthlySummaryProps) {
 
 
   return (
-    <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
+    <div id="chart-resumo-mes" className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 relative'>
 
       {/* Header */}
       <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
@@ -29,6 +29,7 @@ export function MonthlySummary({ metrics }: MonthlySummaryProps) {
             </p>
           </div>
         </div>
+        <CopyChartButton targetId="chart-resumo-mes" />
       </div>
 
       {/* Explicação Dinâmica */}

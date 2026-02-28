@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, MapPin, Loader2, Mail, Maximize2, Minimize2 } from 'lucide-react';
+import { LayoutDashboard, Users, MapPin, Maximize2, Minimize2 } from 'lucide-react';
 import { usePresentation } from '../../../contexts/PresentationContext';
 
 interface DashboardHeaderProps {
@@ -10,8 +10,6 @@ interface DashboardHeaderProps {
   selectedLocation: string;
   setSelectedLocation: (val: string) => void;
   locationsList: string[];
-  exporting: boolean;
-  onExport: () => void;
   hideTitle?: boolean;
   className?: string;
 }
@@ -26,8 +24,6 @@ export function DashboardHeader({
   selectedLocation,
   setSelectedLocation,
   locationsList,
-  exporting,
-  onExport,
   hideTitle = false,
   className = ""
 }: DashboardHeaderProps) {
@@ -100,22 +96,6 @@ export function DashboardHeader({
               <Maximize2 className="w-4 h-4" />
             )}
           </button>
-
-          {/* Botão de Exportar */}
-          <div id="export-button-container" className="w-full sm:w-auto mt-2 sm:mt-0">
-            <button
-              onClick={onExport}
-              disabled={exporting}
-              title="Enviar E-mail"
-              className="flex justify-center items-center w-10 h-10 bg-[#1e3a8a] text-white rounded-xl hover:bg-[#112240] shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {exporting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Mail className="w-4 h-4" />
-              )}
-            </button>
-          </div>
         </div>
       </div>
     </div>

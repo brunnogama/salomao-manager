@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Briefcase, Banknote, TrendingUp, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Briefcase, Users } from 'lucide-react';
 import { formatMoney } from './dashboardHelpers';
+import { CopyChartButton } from '../ui/CopyChartButton';
 import { PartnerDetailModal } from './PartnerDetailModal';
 
 interface PartnerStatsProps {
@@ -12,7 +13,7 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
 
   return (
     <>
-      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
+      <div id="chart-contratos-socio" className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 relative'>
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
           <div className='flex items-center gap-3'>
@@ -28,6 +29,8 @@ export function PartnerStats({ contractsByPartner }: PartnerStatsProps) {
               </p>
             </div>
           </div>
+
+          <CopyChartButton targetId="chart-contratos-socio" />
         </div>
 
         {/* Grid de Sócios */}

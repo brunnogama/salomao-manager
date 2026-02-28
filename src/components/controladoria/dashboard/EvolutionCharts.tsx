@@ -1,7 +1,7 @@
-import React from 'react';
 import { BarChart3, BarChart4, TrendingUp, TrendingDown, Minus, Lightbulb } from 'lucide-react';
 import { formatMoney, formatCompact } from './dashboardHelpers';
 import { EmptyState } from '../ui/EmptyState';
+import { CopyChartButton } from '../ui/CopyChartButton';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -320,7 +320,7 @@ export function EvolutionCharts({
   return (
     <>
       {/* 5. ENTRADA DE CASOS (12 MESES) */}
-      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
+      <div id="chart-entrada-casos" className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 relative'>
 
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
@@ -330,13 +330,14 @@ export function EvolutionCharts({
             </div>
             <div>
               <h2 className='text-[20px] font-black text-[#0a192f] tracking-tight'>
-                Entrada de Casos (12 Meses)
+                Entrada de Casos
               </h2>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
-                A partir de Junho de 2025
+                Volume de novos negócios nos últimos 12 meses
               </p>
             </div>
           </div>
+          <CopyChartButton targetId="chart-entrada-casos" />
         </div>
 
         {/* Explicação Dinâmica */}
@@ -409,7 +410,7 @@ export function EvolutionCharts({
       </div>
 
       {/* 6. EVOLUÇÃO FINANCEIRA (12 MESES) */}
-      <div className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6'>
+      <div id="chart-evolucao-financeira" className='bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-6 relative'>
 
         {/* Header */}
         <div className='mb-6 pb-5 border-b border-gray-100 flex items-center justify-between'>
