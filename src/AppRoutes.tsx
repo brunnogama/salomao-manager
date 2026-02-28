@@ -7,6 +7,7 @@ import { ModuleSelector } from './components/ModuleSelector';
 import Login from './Login';
 import ResetPassword from './ResetPassword';
 import AtualizacaoCadastral from './pages/AtualizacaoCadastral';
+import ReportControladoria from './pages/ReportControladoria';
 import { Presentation } from './pages/presentation/Presentation';
 import { BackupService } from './lib/BackupService';
 import { useEffect } from 'react';
@@ -175,6 +176,7 @@ export function AppRoutes() {
 
             {/* Public Routes accessible by everyone (including logged in users) */}
             <Route path="/atualizacao-cadastral/:token" element={<AtualizacaoCadastral />} />
+            <Route path="/report/controladoria" element={<ReportControladoria />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
