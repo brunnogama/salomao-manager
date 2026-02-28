@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Loader2, AlertTriangle, Scale } from 'lucide-react';
 import { Dashboard as ControlDashboard } from '../components/controladoria/pages/Dashboard';
+import { supabase } from '../lib/supabase'; // Assuming supabase client is exported from this path
 
 export default function ReportControladoria() {
     const [searchParams] = useSearchParams();
     const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
+    const [authError, setAuthError] = useState<string | null>(null);
     const tokenUrl = searchParams.get('token');
 
     useEffect(() => {
-        async function validateToken() {
+        async function validateTokenAndLogin() {
             if (!tokenUrl) {
                 setIsValidToken(false);
                 return;
@@ -22,23 +24,44 @@ export default function ReportControladoria() {
                 const EXPECTED_REPORT_TOKEN = import.meta.env.VITE_REPORT_TOKEN || 'SLM-CTRL-89XF-2026';
 
                 if (tokenUrl === EXPECTED_REPORT_TOKEN) {
-                    setIsValidToken(true);
+                    // Precisamos fazer login silencioso para passar pelo RLS (Segurança de Linhas) do Supabase
+                    const botEmail = import.meta.env.VITE_REPORT_USER;
+                    const botPass = import.meta.env.VITE_REPORT_PASSWORD;
+
+                    if (!botEmail || !botPass) {
+                        setAuthError("Credenciais do robô ausentes no arquivo .env");
+                        setIsValidToken(false);
+                        return;
+                    }
+
+                    const { error } = await supabase.auth.signInWithPassword({
+                        email: botEmail,
+                        password: botPass,
+                    });
+
+                    if (error) {
+                        setAuthError("O autorizador do robô falhou (Email/Senha inválidos no .env).");
+                        setIsValidToken(false);
+                    } else {
+                        setIsValidToken(true);
+                    }
                 } else {
                     setIsValidToken(false);
                 }
             } catch (err) {
                 setIsValidToken(false);
+                setAuthError("Ocorreu um erro inesperado durante a validação.");
             }
         }
 
-        validateToken();
+        validateTokenAndLogin();
     }, [tokenUrl]);
 
     if (isValidToken === null) {
         return (
             <div className="h-screen w-full flex flex-col items-center justify-center bg-white">
                 <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] mb-4" />
-                <p className="text-gray-500 font-medium text-sm animate-pulse">Preparando Relatório...</p>
+                <p className="text-gray-500 font-medium text-sm animate-pulse">Autenticando Robô na Nuvem...</p>
             </div>
         );
     }
@@ -47,9 +70,9 @@ export default function ReportControladoria() {
         return (
             <div className="h-screen w-full flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
                 <AlertTriangle className="h-16 w-16 text-amber-500 mb-6 drop-shadow-sm" />
-                <h1 className="text-2xl font-black text-[#0a192f] mb-2 tracking-tight">Falha de Autorização</h1>
+                <h1 className="text-2xl font-black text-[#0a192f] mb-2 tracking-tight">Cofre Fechado</h1>
                 <p className="text-gray-500 max-w-sm mb-8 leading-relaxed">
-                    O token fornecido para a visualização deste relatório expirou ou é inválido. Solicite um novo link ao administrador.
+                    {authError || "O token fornecido expirou ou é inválido."}
                 </p>
             </div>
         );
