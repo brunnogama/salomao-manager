@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import {
   Loader2,
@@ -75,25 +75,28 @@ export function Dashboard({ }: Props) {
         scale: 2,
         useCORS: true,
         backgroundColor: '#F8FAFC',
+        windowWidth: 1920,
         ignoreElements: (el) => el.id === 'dashboard-filters'
       });
-      const imgData = canvas.toDataURL('image/png');
-      const dateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
 
-      const link = document.createElement('a');
-      link.href = imgData;
-      link.download = `Relatorio_Controladoria_${dateStr}.png`;
-      link.click();
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error('Erro ao gerar imagem.');
+          return;
+        }
+        navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]).then(() => {
+          toast.success('Dashboard copiado para a área de transferência!');
+        }).catch(err => {
+          console.error("Erro ao copiar para clipboard:", err);
+          toast.error('Erro ao copiar para a área de transferência.');
+        });
+      }, 'image/png');
 
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Relatorio_Controladoria_${dateStr}.pdf`);
-
-      window.location.href = `mailto:?subject=Panorama%20Controladoria&body=Segue%20anexo.`;
     } catch (error) {
       console.error("Erro ao exportar:", error);
+      toast.error('Ocorreu um erro ao exportar o dashboard.');
     } finally {
       setExporting(false);
     }
