@@ -26,14 +26,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
           </div>
         </div>
 
-        {/* Taxa de Sucesso Global */}
-        <div className="hidden sm:flex flex-col items-end">
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Conversão Global</span>
-          <div className="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg border border-green-100 font-bold text-sm shadow-sm flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
-            {funil.totalEntrada > 0 ? ((funil.fechados / funil.totalEntrada) * 100).toFixed(1) : '0'}%
-          </div>
-        </div>
+        {/* Taxa de Sucesso Global foi movida para o Card de Fechamentos */}
       </div>
 
       {/* Explicação Dinâmica */}
@@ -44,7 +37,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
             'Ainda não recebemos nenhum prospect desde junho de 2025.'
           ) : (
             <>
-              Recebemos desde <strong>junho de 2025</strong> um total de <strong>{funil.totalEntrada} {funil.totalEntrada === 1 ? 'prospect' : 'prospects'}</strong>. Deste total, {funil.perdaAnalise === 0 ? 'nenhum foi rejeitado' : <><strong>{funil.perdaAnalise}</strong> foram rejeitados</>}, {emAnalise === 0 ? 'ninguém continua em análise' : <><strong>{emAnalise}</strong> continuam em análise pelo escritório</>} e {funil.qualificadosProposta === 0 ? 'nenhum avançou' : <><strong>{funil.qualificadosProposta}</strong> avançaram</>} para a fase de proposta. Destes <strong>{funil.qualificadosProposta}</strong>, {funil.fechados === 0 ? 'ainda não fechamos contratos' : <>fechamos <strong>{funil.fechados}</strong> contratos</>}{funil.perdaNegociacao > 0 && <span>, <strong>{funil.perdaNegociacao}</strong> foram recusadas</span>} e {emNegociacao === 0 ? 'não há propostas enviadas aguardando resposta' : <>estamos com <strong>{emNegociacao}</strong> propostas enviadas aos clientes e aguardando resposta</>}.
+              Recebemos desde <strong>junho de 2025</strong> um total de <strong>{funil.totalEntrada} {funil.totalEntrada === 1 ? 'prospect' : 'prospects'}</strong>. Deste total, {funil.perdaAnalise === 0 ? 'nenhum foi rejeitado' : <><strong>{funil.perdaAnalise}</strong> foram rejeitados</>}, {emAnalise === 0 ? 'ninguém continua em análise' : <><strong>{emAnalise}</strong> continuam em análise pelo escritório</>} e {funil.qualificadosProposta === 0 ? 'nenhum avançou' : <><strong>{funil.qualificadosProposta}</strong> avançaram</>} para a fase de proposta. Destes <strong>{funil.qualificadosProposta}</strong>, {funil.fechados === 0 ? 'ainda não fechamos contratos' : <>fechamos <strong>{funil.fechados}</strong> contratos</>}{funil.perdaNegociacao > 0 && <span>, <strong>{funil.perdaNegociacao}</strong> foram rejeitadas</span>} e {emNegociacao === 0 ? 'não há propostas enviadas aguardando resposta' : <>estamos com <strong>{emNegociacao}</strong> propostas enviadas aos clientes e aguardando resposta</>}.
             </>
           )}
         </div>
@@ -136,7 +129,7 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
               <div className="mt-3 lg:absolute lg:-bottom-[80px] lg:left-4 lg:right-4 bg-red-50/50 border border-red-100/50 rounded-xl p-3 flex items-center justify-between text-red-800 z-10 backdrop-blur-sm">
                 <div className="flex items-center gap-2">
                   <XCircle className="w-4 h-4 text-red-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Propostas Recusadas</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Propostas Rejeitadas</span>
                 </div>
                 <span className="text-sm font-black text-red-600">{funil.perdaNegociacao}</span>
               </div>
@@ -181,11 +174,21 @@ export function EfficiencyFunnel({ funil }: EfficiencyFunnelProps) {
                 </div>
               </div>
 
-              {/* Barra de Progresso vs Entrada */}
-              <div className="mt-2 text-right">
-                <span className="text-[10px] font-bold text-green-500">{(funil.totalEntrada > 0 ? (funil.fechados / funil.totalEntrada) * 100 : 0).toFixed(1)}% do total</span>
-                <div className="h-1.5 w-full bg-green-50 rounded-full mt-1 overflow-hidden">
-                  <div className="h-full bg-green-500 rounded-full transition-all duration-1000" style={{ width: `${funil.totalEntrada > 0 ? (funil.fechados / funil.totalEntrada) * 100 : 0}%` }}></div>
+              {/* Barra de Progresso vs Entrada e Conversão Global Integrada */}
+              <div className="mt-4 pt-4 border-t border-green-100 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-black text-green-700 uppercase tracking-wider block mb-0.5">Conversão Global</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-green-600 leading-none">
+                      {funil.totalEntrada > 0 ? ((funil.fechados / funil.totalEntrada) * 100).toFixed(1) : '0'}%
+                    </span>
+                  </div>
+                </div>
+                <div className="w-3/5">
+                  <span className="text-[9px] font-bold text-green-500 text-right block mb-1">do total de análises</span>
+                  <div className="h-2 w-full bg-green-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 rounded-full transition-all duration-1000" style={{ width: `${funil.totalEntrada > 0 ? (funil.fechados / funil.totalEntrada) * 100 : 0}%` }}></div>
+                  </div>
                 </div>
               </div>
             </div>
