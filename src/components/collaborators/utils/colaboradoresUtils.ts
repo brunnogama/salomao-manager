@@ -55,8 +55,13 @@ export const maskRG = (v: string) => {
 
 export const maskPhone = (v: string) => {
   const raw = v.replace(/\D/g, '')
-  if (raw.length <= 10) return raw.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').slice(0, 14)
-  return raw.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').slice(0, 15)
+  // Force 9-digit structure (XX) XXXXX-XXXX
+  return raw.replace(/(\d{2})(\d{1,5})?(\d{1,4})?/, (_, p1, p2, p3) => {
+    let result = `(${p1}`
+    if (p2) result += `) ${p2}`
+    if (p3) result += `-${p3}`
+    return result
+  }).slice(0, 15)
 }
 
 export const formatDateToDisplay = (isoDate: string | undefined | null) => {
