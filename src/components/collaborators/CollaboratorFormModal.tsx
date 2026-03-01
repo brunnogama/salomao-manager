@@ -1,7 +1,7 @@
 // src/components/collaborators/CollaboratorFormModal.tsx
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Settings2, Loader2 } from 'lucide-react';
+import { X, Save, Settings2, Loader2, Linkedin } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Collaborator, Partner } from '../../types/controladoria';
 import { useEscKey } from '../../hooks/useEscKey';
@@ -31,7 +31,8 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
     partner_id: '',
     leader_id: '',
     status: 'active',
-    role: ''
+    role: '',
+    linkedin_url: ''
   });
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
           leader_id: collaborator.leader_id || ''
         });
       } else {
-        setFormData({ name: '', partner_id: '', leader_id: '', status: 'active', role: '' });
+        setFormData({ name: '', partner_id: '', leader_id: '', status: 'active', role: '', linkedin_url: '' });
       }
       setRoleChangeDate('');
       fetchData();
@@ -160,15 +161,34 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
         </div>
 
         <div className="p-8 space-y-6">
-          {/* Nome */}
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
-            <input
-              type="text"
-              className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a]"
-              value={formData.name || ''}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-            />
+          {/* Nome e LinkedIn (Grid 2 colunas para alinhar lado a lado se desktop) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Nome Completo</label>
+              <input
+                type="text"
+                className="w-full bg-gray-100/50 border border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                value={formData.name || ''}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ex: João da Silva"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">LinkedIn</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Linkedin className="h-4 w-4 text-blue-600" />
+                </div>
+                <input
+                  type="url"
+                  className="w-full bg-gray-100/50 border border-gray-200 rounded-xl py-3 pl-10 pr-3 text-sm font-medium outline-none focus:border-[#1e3a8a] transition-all"
+                  value={formData.linkedin_url || ''}
+                  onChange={e => setFormData({ ...formData, linkedin_url: e.target.value })}
+                  placeholder="https://linkedin.com/in/usuario"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

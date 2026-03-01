@@ -46,6 +46,7 @@ export interface Collaborator {
   email?: string; // E-mail Corporativo
   email_pessoal?: string; // E-mail Pessoal
   phone?: string;
+  linkedin_url?: string;
   status: 'active' | 'inactive';
   cpf?: string;
   birthday?: string;
