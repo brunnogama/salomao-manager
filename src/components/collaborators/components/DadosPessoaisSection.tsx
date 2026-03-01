@@ -1,6 +1,6 @@
 // src/components/collaborators/components/DadosPessoaisSection.tsx
 
-import { User, Plus, Minus, Landmark } from 'lucide-react'
+import { User, Plus, Minus, Landmark, Linkedin } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
@@ -137,20 +137,41 @@ export function DadosPessoaisSection({
           />
         </div>
 
-        {/* E-mail Pessoal */}
-        <div className="md:col-span-4">
-          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-            E-mail Pessoal
-          </label>
-          <input
-            type="email"
-            className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-            value={formData.email_pessoal || ''}
-            onChange={e => setFormData({ ...formData, email_pessoal: e.target.value })}
-            placeholder="Digite o e-mail pessoal"
-            disabled={isViewMode}
-            readOnly={isViewMode}
-          />
+        {/* E-mail Pessoal e LinkedIn */}
+        <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+              E-mail Pessoal
+            </label>
+            <input
+              type="email"
+              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+              value={formData.email_pessoal || ''}
+              onChange={e => setFormData({ ...formData, email_pessoal: e.target.value })}
+              placeholder="Digite o e-mail pessoal"
+              disabled={isViewMode}
+              readOnly={isViewMode}
+            />
+          </div>
+          <div>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+              LinkedIn
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Linkedin className="h-4 w-4 text-blue-600" />
+              </div>
+              <input
+                type="url"
+                className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl py-2.5 pl-10 pr-3 focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                value={formData.linkedin_url || ''}
+                onChange={e => setFormData({ ...formData, linkedin_url: e.target.value })}
+                placeholder="https://linkedin.com/in/usuario"
+                disabled={isViewMode}
+                readOnly={isViewMode}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Filhos e Quantidade */}
