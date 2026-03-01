@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import {
   Loader2,
@@ -103,7 +103,7 @@ export function Dashboard({ }: Props) {
       </div>
 
       {/* 4. GRÁFICOS E FUNCIONALIDADES DA CONTROLADORIA */}
-      <div className="space-y-6 pb-12">
+      <div id="dashboard-content-to-capture" className="space-y-6 pb-12">
         {/* Visão Geral */}
         <EfficiencyFunnel funil={funil} evolucaoMensal={evolucaoMensal} />
         <PortfolioFinancialOverview metrics={metrics} />

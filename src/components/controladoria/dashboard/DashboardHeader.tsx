@@ -1,6 +1,8 @@
-import React from 'react';
-import { LayoutDashboard, Users, MapPin, Maximize2, Minimize2 } from 'lucide-react';
+import { useState } from 'react';
+import { LayoutDashboard, Users, MapPin, Maximize2, Minimize2, Camera, Loader2 } from 'lucide-react';
 import { usePresentation } from '../../../contexts/PresentationContext';
+import html2canvas from 'html2canvas';
+import { toast } from 'sonner';
 
 interface DashboardHeaderProps {
   userRole: 'admin' | 'editor' | 'viewer' | null;
@@ -17,7 +19,6 @@ interface DashboardHeaderProps {
 import { FilterSelect } from '../ui/FilterSelect';
 
 export function DashboardHeader({
-  userRole,
   selectedPartner,
   setSelectedPartner,
   partnersList,
@@ -28,6 +29,46 @@ export function DashboardHeader({
   className = ""
 }: DashboardHeaderProps) {
   const { isPresentationMode, togglePresentationMode } = usePresentation();
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  const handleScreenshot = async () => {
+    const targetElement = document.getElementById('dashboard-content-to-capture');
+    if (!targetElement) {
+      toast.error('Conteúdo do dashboard não encontrado para captura.');
+      return;
+    }
+
+    setIsCapturing(true);
+    try {
+      const canvas = await html2canvas(targetElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#F8FAFC', // Match existing bg-gray-50
+        windowWidth: 1920,
+      });
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error('Erro ao gerar imagem para área de transferência.');
+          return;
+        }
+        navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]).then(() => {
+          toast.success('Screenshot do dashboard copiado para a área de transferência!');
+        }).catch(err => {
+          console.error("Erro ao copiar para clipboard:", err);
+          toast.error('Erro ao acessar a área de transferência.');
+        });
+      }, 'image/png');
+
+    } catch (error) {
+      console.error("Erro ao gerar screenshot:", error);
+      toast.error('Ocorreu um erro ao capturar o dashboard.');
+    } finally {
+      setIsCapturing(false);
+    }
+  };
 
   const partnerOptions = [
     { label: 'Todos os Sócios', value: '' },
@@ -81,6 +122,20 @@ export function DashboardHeader({
             placeholder="Locais"
           />
 
+          {/* Botão de Screenshot */}
+          <button
+            onClick={handleScreenshot}
+            disabled={isCapturing}
+            title="Copiar Screenshot do Dashboard"
+            className="flex justify-center items-center w-10 h-10 rounded-xl shadow-lg transition-all active:scale-95 bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isCapturing ? (
+              <Loader2 className="w-5 h-5 animate-spin text-[#1e3a8a]" />
+            ) : (
+              <Camera className="w-5 h-5" />
+            )}
+          </button>
+
           {/* Botão de Apresentação */}
           <button
             onClick={togglePresentationMode}
@@ -91,9 +146,9 @@ export function DashboardHeader({
               }`}
           >
             {isPresentationMode ? (
-              <Minimize2 className="w-4 h-4" />
+              <Minimize2 className="w-5 h-5" />
             ) : (
-              <Maximize2 className="w-4 h-4" />
+              <Maximize2 className="w-5 h-5" />
             )}
           </button>
         </div>
