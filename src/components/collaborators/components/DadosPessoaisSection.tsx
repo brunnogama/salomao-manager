@@ -161,15 +161,26 @@ export function DadosPessoaisSection({
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Linkedin className="h-4 w-4 text-blue-600" />
               </div>
-              <input
-                type="url"
-                className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl py-2.5 pl-10 pr-3 focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                value={formData.linkedin_url || ''}
-                onChange={e => setFormData({ ...formData, linkedin_url: e.target.value })}
-                placeholder="https://linkedin.com/in/usuario"
-                disabled={isViewMode}
-                readOnly={isViewMode}
-              />
+              {isViewMode && formData.linkedin_url ? (
+                <a
+                  href={formData.linkedin_url.startsWith('http') ? formData.linkedin_url : `https://${formData.linkedin_url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-gray-100/50 border border-gray-200 text-blue-600 text-sm rounded-xl py-2.5 pl-10 pr-3 block outline-none transition-all font-medium hover:underline flex items-center"
+                >
+                  {formData.linkedin_url}
+                </a>
+              ) : (
+                <input
+                  type="url"
+                  className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl py-2.5 pl-10 pr-3 focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  value={formData.linkedin_url || ''}
+                  onChange={e => setFormData({ ...formData, linkedin_url: e.target.value })}
+                  placeholder="https://linkedin.com/in/usuario"
+                  disabled={isViewMode}
+                  readOnly={isViewMode}
+                />
+              )}
             </div>
           </div>
         </div>

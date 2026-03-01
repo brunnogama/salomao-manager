@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight } from 'lucide-react'
+import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { Collaborator } from '../../../types/controladoria'
 import { supabase } from '../../../lib/supabase'
@@ -12,8 +12,11 @@ interface HistoricoSectionProps {
 }
 
 export function HistoricoSection({ formData, setFormData, maskDate, isViewMode = false }: HistoricoSectionProps) {
-    const [activeSection, setActiveSection] = useState<'none' | 'warnings' | 'absences' | 'observations'>('none')
+    const [activeSection, setActiveSection] = useState<'none' | 'roles' | 'warnings' | 'absences' | 'observations'>('roles')
     const [loading, setLoading] = useState(false)
+
+    // --- CARGOS STATE ---
+    const [roleHistory, setRoleHistory] = useState<any[]>([])
 
     // --- ADVERTÊNCIAS STATE ---
     const [warningReason, setWarningReason] = useState('')
@@ -27,6 +30,24 @@ export function HistoricoSection({ formData, setFormData, maskDate, isViewMode =
     useEffect(() => {
         if (formData.history_observations) setObsText(formData.history_observations)
     }, [formData.history_observations])
+
+    // --- EFFECT ---
+    useEffect(() => {
+        if (formData.id) {
+            fetchRoleHistory()
+        }
+    }, [formData.id])
+
+    const fetchRoleHistory = async () => {
+        if (!formData.id) return
+        const { data } = await supabase
+            .from('collaborator_role_history')
+            .select('*')
+            .eq('collaborator_id', formData.id)
+            .order('change_date', { ascending: false })
+
+        if (data) setRoleHistory(data)
+    }
 
     // --- HELPERS ---
 
@@ -76,6 +97,27 @@ export function HistoricoSection({ formData, setFormData, maskDate, isViewMode =
         <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
             {/* BUTTONS GRID */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Cargos */}
+                <button
+                    onClick={() => setActiveSection(activeSection === 'roles' ? 'none' : 'roles')}
+                    className={`
+                        relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        ${activeSection === 'roles'
+                            ? 'bg-blue-50 border-blue-200 shadow-md transform scale-[1.02]'
+                            : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-lg'
+                        }
+                    `}
+                >
+                    <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'roles' ? 'bg-blue-200 text-blue-700' : 'bg-blue-50 text-blue-500 group-hover:bg-blue-100'}`}>
+                        <Briefcase className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Cargos</h3>
+                    <p className="text-[10px] text-gray-500 font-medium">Histórico de mudanças de cargo</p>
+                    <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'roles' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
+                        <ChevronRight className="h-5 w-5 text-blue-500" />
+                    </div>
+                </button>
+
                 {/* Advertências */}
                 <button
                     onClick={() => setActiveSection(activeSection === 'warnings' ? 'none' : 'warnings')}
@@ -126,6 +168,58 @@ export function HistoricoSection({ formData, setFormData, maskDate, isViewMode =
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
                         <History className="h-16 w-16 mb-4 opacity-20" />
                         <p className="text-sm font-medium">Selecione uma opção acima para visualizar</p>
+                    </div>
+                )}
+
+                {/* CARGOS PANEL */}
+                {activeSection === 'roles' && (
+                    <div className="p-8 animate-in fade-in slide-in-from-top-4 duration-300 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-blue-100 pb-4 mb-6">
+                            <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Briefcase className="h-5 w-5" /></div>
+                            <h4 className="text-lg font-black text-[#0a192f]">Histórico de Cargos</h4>
+                        </div>
+
+                        {roleHistory.length > 0 ? (
+                            <div className="space-y-4">
+                                {roleHistory.map((item, index) => {
+                                    const parsedDate = new Date(item.change_date + 'T12:00:00Z');
+                                    let dateText = item.change_date;
+                                    if (!isNaN(parsedDate.getTime())) {
+                                        dateText = parsedDate.toLocaleDateString('pt-BR');
+                                    }
+
+                                    return (
+                                        <div key={item.id || index} className="flex items-start gap-4 p-4 border border-gray-100 rounded-xl bg-gray-50 hover:border-blue-200 transition-colors">
+                                            <div className="p-3 bg-blue-100 text-blue-600 rounded-lg mt-1">
+                                                <Briefcase className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <h5 className="font-bold text-[#0a192f] text-sm uppercase tracking-tight">{item.new_role}</h5>
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-white px-2 py-1 rounded-md shadow-sm border border-gray-100 flex items-center gap-1">
+                                                        <History className="w-3 h-3" />
+                                                        {dateText}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 font-medium">
+                                                    Cargo anterior: <span className="font-bold text-gray-700">{item.previous_role}</span>
+                                                </p>
+                                                {item.duration_days > 0 && (
+                                                    <p className="text-[10px] text-gray-400 mt-2 font-medium">
+                                                        Em cargo anterior: {Math.floor(item.duration_days / 365)}a {Math.floor((item.duration_days % 365) / 30)}v {item.duration_days % 30}d
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12">
+                                <History className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-sm font-medium text-gray-500">Nenhum histórico encontrado para este colaborador.</p>
+                            </div>
+                        )}
                     </div>
                 )}
 

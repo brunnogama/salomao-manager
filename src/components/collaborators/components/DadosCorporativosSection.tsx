@@ -192,6 +192,27 @@ export function DadosCorporativosSection({
                 disabled={isViewMode}
               />
 
+              {formData.original_role && formData.original_role !== formData.role && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Data da Mudança de Cargo</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1e3a8a]" />
+                    <input
+                      className={`w-full pl-9 bg-blue-50/50 border border-blue-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      value={formData.role_change_date || ''}
+                      onChange={e => setFormData({ ...formData, role_change_date: maskDate(e.target.value) })}
+                      maxLength={10}
+                      placeholder="DD/MM/AAAA"
+                      disabled={isViewMode}
+                      readOnly={isViewMode}
+                    />
+                  </div>
+                  <p className="text-[9px] text-gray-500 mt-1 font-medium">
+                    Informe a data em que o colaborador assumirá o novo cargo.
+                  </p>
+                </div>
+              )}
+
               <SearchableSelect
                 label="Tipo da Contratação"
                 value={formData.contract_type || ''}

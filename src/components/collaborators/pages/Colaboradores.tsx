@@ -473,7 +473,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       const payload: any = {};
       Object.entries(dataToSave).forEach(([key, value]) => {
         // Skip metadata, joined objects, and photo fields (handled separately)
-        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao'].includes(key)) return;
+        if (['id', 'created_at', 'updated_at', 'photo_url', 'foto_url', 'roles', 'locations', 'teams', 'partner', 'leader', 'hiring_reasons', 'termination_initiatives', 'termination_types', 'termination_reasons', 'rateios', 'oab_number', 'oabs', 'oab_numero', 'oab_uf', 'oab_tipo', 'oab_emissao', 'original_role', 'role_change_date'].includes(key)) return;
         if (value !== null && typeof value === 'object' && !Array.isArray(value)) return;
 
         // Map empty strings to null for better DB consistency
@@ -485,6 +485,39 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
       let savedColabId = formData.id;
       if (formData.id) {
+        if (formData.original_role && formData.original_role !== formData.role) {
+          try {
+            const { data: lastChange } = await supabase
+              .from('collaborator_role_history')
+              .select('change_date')
+              .eq('collaborator_id', formData.id)
+              .order('change_date', { ascending: false })
+              .limit(1)
+              .single();
+
+            const startDateStr = lastChange?.change_date || formData.hire_date || formData.created_at || new Date().toISOString();
+            const startDate = new Date(startDateStr);
+            const today = new Date();
+            const diffTime = Math.abs(today.getTime() - startDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            const changeDateToUse = formData.role_change_date ? formatDateToISO(formData.role_change_date) : today.toISOString();
+
+            const historyPayload = {
+              collaborator_id: formData.id,
+              previous_role: formData.original_role || 'Não preenchido',
+              new_role: formData.role || 'Não preenchido',
+              duration_days: diffDays,
+              change_date: changeDateToUse
+            };
+
+            const { error: histError } = await supabase.from('collaborator_role_history').insert([historyPayload]);
+            if (histError) console.error('Erro ao salvar histórico de cargo:', histError);
+          } catch (err) {
+            console.error('Erro ao processar histórico de cargo:', err);
+          }
+        }
+
         const { error } = await supabase.from('collaborators').update(payload).eq('id', formData.id)
         if (error) throw error
         await logAction('EDITAR', 'RH', `Editou colaborador: ${formData.name}`, 'Colaboradores')

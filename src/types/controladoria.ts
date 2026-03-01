@@ -65,6 +65,8 @@ export interface Collaborator {
 
   // Profissional
   role?: string;
+  original_role?: string; // Para histórico
+  role_change_date?: string; // Para histórico
   roles?: { name: string }; // Joined field
   hire_date?: string;
   termination_date?: string;
