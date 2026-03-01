@@ -25,6 +25,9 @@ interface Colaborador {
   birthday: string; // Atualizado de data_nascimento
   role: string; // Atualizado de cargo
   photo_url?: string;
+  hire_date?: string;
+  location?: string;
+  leader?: string;
 }
 
 interface Evento {
@@ -63,12 +66,19 @@ export function Calendario() {
         name: c.name,
         birthday: c.birthday,
         role: c.roles?.name || c.role || '',
-        photo_url: c.photo_url || c.foto_url
+        photo_url: c.photo_url || c.foto_url,
+        hire_date: c.hire_date,
+        location: c.locations?.name || c.local || '',
+        leader: c.leader?.name || ''
       }))
   }, [colaboradores])
   const [currentDate] = useState(new Date())
   const selectedMonth = currentDate.getMonth();
   const selectedYear = currentDate.getFullYear();
+
+  // Estados para Modal de Visualização Rápida
+  const [visualizarColaborador, setVisualizarColaborador] = useState<Colaborador | null>(null);
+  const [visualizarEvento, setVisualizarEvento] = useState<Evento | null>(null);
 
   // Estados para o Modal de Evento
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -259,7 +269,7 @@ export function Calendario() {
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
 
-    return eventos
+    const baseEventos = eventos
       .map(e => {
         const dataEvento = new Date(e.data_evento + 'T12:00:00')
         dataEvento.setHours(0, 0, 0, 0)
@@ -274,6 +284,42 @@ export function Calendario() {
           isEstaSemana: diasRestantes <= 7 && diasRestantes >= 0,
         }
       })
+
+    const mochilaEventos: any[] = []
+    collaborators.forEach(c => {
+      if (c.hire_date) {
+        let year, month, day;
+        if (c.hire_date.includes('/')) {
+          [day, month, year] = c.hire_date.split('/');
+        } else {
+          [year, month, day] = c.hire_date.split('T')[0].split('-');
+        }
+
+        if (year && month && day) {
+          const dateAdmissao = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          dateAdmissao.setMonth(dateAdmissao.getMonth() + 3);
+          dateAdmissao.setHours(0, 0, 0, 0);
+
+          const diffTime = dateAdmissao.getTime() - hoje.getTime();
+          const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diasRestantes >= 0) {
+            mochilaEventos.push({
+              id: `mochila-${c.id}`,
+              titulo: `${c.name.split(' ')[0]} completa 3 meses de casa`,
+              tipo: 'Mochila',
+              dataObjeto: dateAdmissao,
+              diasRestantes,
+              isHoje: diasRestantes === 0,
+              isEstaSemana: diasRestantes <= 7 && diasRestantes >= 0,
+              colaboradorRef: c
+            });
+          }
+        }
+      }
+    });
+
+    return [...baseEventos, ...mochilaEventos]
       .filter(e => e.diasRestantes >= 0)
       .sort((a, b) => a.diasRestantes - b.diasRestantes)
       .slice(0, 20)
@@ -377,105 +423,6 @@ export function Calendario() {
           </div>
         </div>
 
-        {/* DESTAQUES DO DIA */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-stretch">
-          {/* ANIVERSÁRIOS DE HOJE */}
-          <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 rounded-2xl shadow-xl border-2 border-[#d4af37]/30 p-4 sm:p-5 animate-in fade-in slide-in-from-top-4 duration-500 flex flex-col">
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#d4af37]/20 shrink-0">
-              <div className="p-2 sm:p-2.5 bg-gradient-to-br from-[#d4af37] to-amber-600 rounded-xl shadow-lg shrink-0">
-                <Cake className="h-5 w-5 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-lg sm:text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2 truncate">
-                  🎉 Aniversariantes de Hoje!
-                </h2>
-                <p className="text-[10px] sm:text-xs font-semibold text-gray-600 truncate">Não esqueça de parabenizar</p>
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col justify-center">
-              {aniversariosHoje.length > 0 ? (
-                <div className="grid grid-cols-1 gap-3">
-                  {aniversariosHoje.map((aniv) => (
-                    <div
-                      key={aniv.colaborador.id}
-                      className="bg-white rounded-xl p-3 sm:p-4 shadow-lg border-2 border-[#d4af37]/50 hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-[#d4af37]"
-                    >
-                      <div className="flex items-center gap-3">
-                        {aniv.colaborador.photo_url ? (
-                          <img
-                            src={aniv.colaborador.photo_url}
-                            alt={aniv.colaborador.name}
-                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-[#d4af37] shadow-sm shrink-0"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-lg sm:text-xl font-black border-2 border-[#d4af37]/30 shadow-sm shrink-0">
-                            {aniv.colaborador.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-black text-[#0a192f] text-sm sm:text-base truncate">{formatName(aniv.colaborador.name)}</p>
-                          <p className="text-[10px] sm:text-xs font-semibold text-gray-600 truncate">{toTitleCase(aniv.colaborador.role)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-4 h-full min-h-[60px]">
-                  <p className="text-xs sm:text-sm text-gray-500 font-medium italic">
-                    Nenhum aniversariante hoje
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* EVENTOS DE HOJE */}
-          <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-50 rounded-2xl shadow-xl border-2 border-emerald-500/30 p-4 sm:p-5 animate-in fade-in slide-in-from-top-4 duration-500 flex flex-col">
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-emerald-500/20 shrink-0">
-              <div className="p-2 sm:p-2.5 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg shrink-0">
-                <CalendarEventIcon className="h-5 w-5 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-lg sm:text-[20px] font-black text-[#0a192f] tracking-tight flex items-center gap-2 truncate">
-                  📅 Eventos de Hoje!
-                </h2>
-                <p className="text-[10px] sm:text-xs font-semibold text-gray-600 truncate">Acontecimentos e Feriados de hoje</p>
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col justify-center">
-              {eventosHoje.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {eventosHoje.map((evento, idx) => (
-                    <div
-                      key={evento.id || idx}
-                      className="bg-white rounded-xl p-3 sm:p-4 shadow-lg border-2 border-emerald-500/50 hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-emerald-500"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white text-xl sm:text-2xl font-black border-2 border-emerald-500/30 shadow-sm shrink-0">
-                          {evento.tipo.includes('Feriado') ? <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" /> : evento.tipo === 'Reunião' ? <Users className="h-5 w-5 sm:h-6 sm:w-6" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5 sm:h-6 sm:w-6" /> : <CalendarEventIcon className="h-5 w-5 sm:h-6 sm:w-6" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-black text-[#0a192f] text-sm sm:text-base leading-tight truncate">{evento.titulo}</p>
-                          <p className="text-[10px] sm:text-xs font-semibold text-gray-600 mt-0.5 truncate">{evento.tipo}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-4 h-full min-h-[60px]">
-                  <p className="text-xs sm:text-sm text-gray-500 font-medium italic">
-                    Nenhum evento para hoje
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
         {/* BLOCOS: ANIVERSARIANTES | EVENTOS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 w-full">
           {/* BLOCO ANIVERSARIANTES */}
@@ -493,7 +440,8 @@ export function Calendario() {
               {getProximosAniversarios().map((aniv) => (
                 <div
                   key={aniv.colaborador.id}
-                  className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg ${aniv.isHoje
+                  onClick={() => setVisualizarColaborador(aniv.colaborador as Colaborador)}
+                  className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer ${aniv.isHoje
                     ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-[#d4af37]/50'
                     : aniv.isEstaSemana
                       ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
@@ -513,7 +461,7 @@ export function Calendario() {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="font-black text-[#0a192f] text-sm truncate">{formatName(aniv.colaborador.name)}</p>
+                      <p className="font-black text-[#0a192f] text-sm truncate">{aniv.isHoje ? '🎉 ' : ''}{formatName(aniv.colaborador.name)}</p>
                       <p className="text-[10px] font-semibold text-gray-600 truncate max-w-[120px] md:max-w-[200px]">{toTitleCase(aniv.colaborador.role)}</p>
                     </div>
                   </div>
@@ -557,7 +505,8 @@ export function Calendario() {
               ) : getProximosEventos().map((evento, idx) => (
                 <div
                   key={idx}
-                  className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg ${evento.isHoje
+                  onClick={() => evento.tipo === 'Mochila' ? setVisualizarColaborador(evento.colaboradorRef as Colaborador) : setVisualizarEvento(evento as Evento)}
+                  className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer ${evento.isHoje
                     ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-500/50'
                     : evento.isEstaSemana
                       ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
@@ -569,7 +518,7 @@ export function Calendario() {
                       {evento.tipo === 'Reunião' ? <Users className="h-5 w-5" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-black text-[#0a192f] text-sm truncate">{evento.titulo}</p>
+                      <p className="font-black text-[#0a192f] text-sm truncate">{evento.isHoje ? '🎉 ' : ''}{evento.titulo}</p>
                       <p className="text-[10px] font-semibold text-gray-600 truncate">{evento.tipo}</p>
                     </div>
                   </div>
@@ -577,13 +526,13 @@ export function Calendario() {
                   <div className="flex items-center gap-4 border-l border-gray-200/50 pl-4 shrink-0">
                     <div className="text-right hidden sm:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        onClick={() => handleEditClick(evento)}
+                        onClick={(e) => { e.stopPropagation(); handleEditClick(evento); }}
                         className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => handleDeleteEvento(evento.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteEvento(evento.id); }}
                         className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -699,6 +648,99 @@ export function Calendario() {
         )}
 
       </div>
+
+      {/* MODAL RESUMO COLABORADOR */}
+      {visualizarColaborador && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarColaborador(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 bg-gradient-to-r from-[#d4af37] to-amber-600 flex items-center justify-between relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
+                <Cake className="w-24 h-24" />
+              </div>
+              <div className="flex items-center gap-3 text-white relative z-10">
+                {visualizarColaborador.photo_url ? (
+                  <img src={visualizarColaborador.photo_url} className="w-12 h-12 rounded-full border-2 border-white object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-bold text-amber-600 bg-white shadow-sm text-xl">
+                    {visualizarColaborador.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{formatName(visualizarColaborador.name)}</h3>
+                  <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarColaborador.role || 'Sem cargo'}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setVisualizarColaborador(null)}
+                className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                <div>
+                  <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local de Atuação</p>
+                  <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.location || 'Não informado'}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
+                <div>
+                  <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Líder Direto</p>
+                  <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.leader || 'Não informado'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL RESUMO EVENTO */}
+      {visualizarEvento && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarEvento(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-between relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
+                <CalendarEventIcon className="w-24 h-24" />
+              </div>
+              <div className="flex items-center gap-3 text-white relative z-10">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{visualizarEvento.titulo}</h3>
+                  <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarEvento.tipo}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setVisualizarEvento(null)}
+                className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              {visualizarEvento.descricao ? (
+                <div className="flex items-start gap-4">
+                  <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                  <div>
+                    <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local / Descrição</p>
+                    <p className="text-[13px] font-semibold text-gray-700 whitespace-pre-line leading-relaxed">{visualizarEvento.descricao}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-4">
+                  <div className="p-3 bg-gray-50 rounded-full mb-2"><AlignLeft className="w-5 h-5 text-gray-300" /></div>
+                  <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400 italic">Nenhuma descrição</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
