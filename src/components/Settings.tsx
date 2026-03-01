@@ -20,6 +20,7 @@ import { ControladoriaSection } from './settings/ControladoriaSection'
 import { OperationalSection } from './settings/OperationalSection'
 import { BackupSection } from './settings/BackupSection'
 import { SYSTEM_VERSION } from '../config/version'
+import { APP_UPDATES } from '../config/updates'
 
 // --- INTERFACES & CONSTANTS ---
 interface UserPermissions {
@@ -38,33 +39,13 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
 
 const SUPER_ADMIN_EMAIL = 'marcio.gama@salomaoadv.com.br';
 
-const CHANGELOG = [
-  {
-    version: '3.1.0', date: '11/02/2026', type: 'feature' as const, title: '⚙️ Configurações Controladoria',
-    changes: [
-      'Nova aba de configurações exclusivas da Controladoria',
-      'Reset modular para Financeiro, Tarefas, Contratos e Clientes',
-      'Zona de perigo com Factory Reset específico para o módulo'
-    ]
-  },
-  {
-    version: '3.0.0', date: '11/02/2026', type: 'feature' as const, title: '🚀 Padronização e Recuperação',
-    changes: [
-      'Padronização de Cabeçalho Geral (Settings)',
-      'Migração de Configurações da Controladoria',
-      'Correção no Display de Colaboradores (Nomes ao invés de IDs)',
-      'Recuperação de Dados de Colaboradores (Fix Join Query)'
-    ]
-  },
-  {
-    version: '2.9.9', date: '04/02/2026', type: 'fix' as const, title: '🛡️ Ajuste Permissão RH/Collaborators',
-    changes: ['Unificação de flags de acesso para o módulo de colaboradores', 'Correção de bypass emergencial']
-  },
-  {
-    version: '2.9.8', date: '03/02/2026', type: 'fix' as const, title: '🛡️ Reset de Segurança e Bypass',
-    changes: ['Remoção de políticas RLS conflitantes (Erro 500)', 'Bypass local prioritário para marcio.gama', 'Sincronização forçada de UUID via Upsert']
-  }
-]
+const CHANGELOG = APP_UPDATES.map(update => ({
+  version: update.version,
+  date: update.date,
+  type: (update.features && update.features.length > 0) ? 'feature' as const : 'fix' as const,
+  title: update.title,
+  changes: [...(update.features || []), ...(update.fixes || [])].slice(0, 5) // Mostra um resumo
+}))
 
 export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void, onLogout?: () => void }) {
   // --- STATES ---

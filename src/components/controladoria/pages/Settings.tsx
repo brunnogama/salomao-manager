@@ -5,6 +5,7 @@ import {
   DollarSign, Briefcase, User, Ban, LogOut, Plane, UserCircle, Grid
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { APP_UPDATES } from '../../../config/updates';
 
 // --- TIPOS ---
 interface UserProfile {
@@ -31,56 +32,13 @@ interface SettingsProps {
 }
 
 // --- DADOS MOCK ---
-const INITIAL_CHANGELOG: ChangeLogItem[] = [
-  {
-    version: '0.1.06',
-    date: '11/01/2026',
-    type: 'feature',
-    title: 'Gerenciamento de Dados',
-    changes: [
-      'Adicionado reset modular (exclusão por módulo).',
-      'Refinamento da área de configurações do sistema.',
-      'Melhoria na segurança de exclusão de dados.'
-    ]
-  },
-  {
-    version: '0.1.05',
-    date: '11/01/2026',
-    type: 'fix',
-    title: 'Estabilização do Sistema',
-    changes: [
-      'Correção crítica no salvamento de Contratos (Erro PGRST204).',
-      'Correção na persistência de valores financeiros (Pró-labore, Êxito).',
-      'Correção no cadastro de Clientes sem CNPJ (erro de chave única).',
-      'Ajuste nos cards de Clientes para permitir edição ao clicar.',
-      'Correção da máscara de moeda no modal de Contratos.',
-      'Implementação de upload de arquivos na fase "Sob Análise".'
-    ]
-  },
-  {
-    version: '0.10',
-    date: '11/01/2026',
-    type: 'feature',
-    title: 'Módulo de Notificações e Financeiro',
-    changes: [
-      'Adicionado botão de notificações no módulo Contratos.',
-      'Integração de alertas de cobrança de assinatura.',
-      'Visualização de totais financeiros nos cards de contrato.',
-      'Dashboard com funil de vendas e evolução financeira.'
-    ]
-  },
-  {
-    version: '0.01',
-    date: '04/01/2026',
-    type: 'feature',
-    title: 'Lançamento Inicial (MVP)',
-    changes: [
-      'Estrutura base do sistema.',
-      'Módulos de Contratos e Clientes.',
-      'Configuração do Supabase.'
-    ]
-  }
-];
+const INITIAL_CHANGELOG: ChangeLogItem[] = APP_UPDATES.map(update => ({
+  version: update.version,
+  date: update.date,
+  type: (update.features && update.features.length > 0) ? 'feature' as const : 'fix' as const,
+  title: update.title,
+  changes: [...(update.features || []), ...(update.fixes || [])].slice(0, 5) // Mostra um resumo
+}));
 
 export function Settings({
   userName = 'Usuário',
