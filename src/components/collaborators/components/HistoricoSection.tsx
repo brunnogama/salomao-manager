@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase } from 'lucide-react'
+import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2 } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { Collaborator } from '../../../types/controladoria'
 import { supabase } from '../../../lib/supabase'
@@ -47,6 +47,21 @@ export function HistoricoSection({ formData, setFormData, maskDate, isViewMode =
             .order('change_date', { ascending: false })
 
         if (data) setRoleHistory(data)
+    }
+
+    // --- DELETE HANDLER ---
+    const handleDeleteRoleHistory = async (id: string) => {
+        if (!confirm('Deseja realmente excluir este registro de histórico?')) return;
+        setLoading(true);
+        try {
+            const { error } = await supabase.from('collaborator_role_history').delete().eq('id', id);
+            if (error) throw error;
+            setRoleHistory(prev => prev.filter(item => item.id !== id));
+        } catch (e: any) {
+            alert('Erro ao excluir histórico: ' + e.message);
+        } finally {
+            setLoading(false);
+        }
     }
 
     // --- HELPERS ---
@@ -209,10 +224,21 @@ export function HistoricoSection({ formData, setFormData, maskDate, isViewMode =
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-start mb-1">
                                                     <h5 className="font-bold text-[#0a192f] text-sm uppercase tracking-tight">{item.new_role}</h5>
-                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-white px-2 py-1 rounded-md shadow-sm border border-gray-100 flex items-center gap-1">
-                                                        <History className="w-3 h-3" />
-                                                        {dateText}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-white px-2 py-1 rounded-md shadow-sm border border-gray-100 flex items-center gap-1">
+                                                            <History className="w-3 h-3" />
+                                                            {dateText}
+                                                        </span>
+                                                        {!isViewMode && (
+                                                            <button
+                                                                onClick={() => handleDeleteRoleHistory(item.id)}
+                                                                className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                                                title="Excluir histórico"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <p className="text-xs text-gray-500 font-medium">
                                                     Cargo anterior: <span className="font-bold text-gray-700">{item.previous_role}</span>
