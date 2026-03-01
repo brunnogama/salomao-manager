@@ -593,6 +593,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     // Format dates for display (DD/MM/YYYY)
     const formattedColaborador = {
       ...colaborador,
+      original_role: colaborador.role,
       birthday: formatDateToDisplay(colaborador.birthday),
       hire_date: formatDateToDisplay(colaborador.hire_date),
       termination_date: formatDateToDisplay(colaborador.termination_date),

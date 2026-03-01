@@ -194,7 +194,16 @@ export function DadosCorporativosSection({
 
               {formData.original_role && formData.original_role !== formData.role && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Data da Mudança de Cargo</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest">Data da Mudança de Cargo</label>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, role: formData.original_role, role_change_date: '' })}
+                      className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase tracking-tighter"
+                    >
+                      Cancelar Mudança
+                    </button>
+                  </div>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1e3a8a]" />
                     <input
