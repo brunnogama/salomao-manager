@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2 } from 'lucide-react'
+import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2, Calendar } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { Collaborator } from '../../../types/controladoria'
 import { supabase } from '../../../lib/supabase'
@@ -193,6 +193,22 @@ export function HistoricoSection({ formData, setFormData, maskDate, isViewMode =
                             <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><Briefcase className="h-5 w-5" /></div>
                             <h4 className="text-lg font-black text-[#0a192f]">Histórico de Cargos</h4>
                         </div>
+
+                        {formData.hire_date && (
+                            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shrink-0">
+                                    <Calendar className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-[#0a192f] font-medium leading-tight">
+                                        <span className="font-bold">{formData.name?.split(' ')[0]}</span> entrou na empresa em <span className="font-bold">{formData.hire_date}</span>
+                                    </p>
+                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">
+                                        Há {Math.max(0, Math.floor((new Date().getTime() - new Date(formData.hire_date.split('/').reverse().join('-') + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)))} dias
+                                    </p>
+                                </div>
+                            </div>
+                        )}
 
                         {roleHistory.length > 0 ? (
                             <div className="space-y-4">
