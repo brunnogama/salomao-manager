@@ -19,6 +19,7 @@ import { supabase } from '../../../lib/supabase'
 import { useColaboradores } from '../hooks/useColaboradores'
 import { getFeriadosDoAno } from '../utils/holidays'
 import { SearchableSelect } from '../../crm/SearchableSelect'
+import { SocioSelector } from '../../crm/SocioSelector'
 
 interface Colaborador {
   id: string | number;
@@ -41,7 +42,8 @@ interface Evento {
   local_tipo?: 'Online' | 'Presencial';
   local_endereco_url?: string;
   participantes_internos?: string[]; // IDs or names
-  participantes_externos?: string; // Free text for now
+  participantes_externos?: { nome: string; email: string }[];
+  participantes_socios?: string[];
 }
 
 interface NovoEventoData {
@@ -53,7 +55,8 @@ interface NovoEventoData {
   local_tipo: 'Online' | 'Presencial';
   local_endereco_url: string;
   participantes_internos: string[];
-  participantes_externos: string;
+  participantes_externos: { nome: string; email: string }[];
+  participantes_socios: string[];
 }
 
 interface AniversarioData {
@@ -102,6 +105,11 @@ export function Calendario() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [savingEvento, setSavingEvento] = useState(false)
   const [editingEvento, setEditingEvento] = useState<number | null>(null) // Changed to number for event ID
+  // Estados locais para inputs do Modal
+  const [currentSocio, setCurrentSocio] = useState('')
+  const [currentExtName, setCurrentExtName] = useState('')
+  const [currentExtEmail, setCurrentExtEmail] = useState('')
+
   const [novoEvento, setNovoEvento] = useState<NovoEventoData>({
     titulo: '',
     data: new Date().toISOString().split('T')[0],
@@ -111,7 +119,8 @@ export function Calendario() {
     local_tipo: 'Online',
     local_endereco_url: '',
     participantes_internos: [],
-    participantes_externos: ''
+    participantes_externos: [],
+    participantes_socios: []
   })
 
   useEffect(() => {
@@ -131,18 +140,39 @@ export function Calendario() {
 
     if (evs) {
       // Map Supabase data to local Evento interface
-      const mappedEvs: Evento[] = evs.map((e: any) => ({
-        id: e.id,
-        titulo: e.title,
-        tipo: e.type,
-        data_evento: e.event_date,
-        descricao: e.description,
-        hora: e.time,
-        local_tipo: e.location_type,
-        local_endereco_url: e.location_address,
-        participantes_internos: e.participants_internal,
-        participantes_externos: e.participants_external,
-      }));
+      const mappedEvs: Evento[] = evs.map((e: any) => {
+        let externos: { nome: string; email: string }[] = [];
+        let socios: string[] = [];
+        if (e.participants_external) {
+          try {
+            const parsed = JSON.parse(e.participants_external)
+            if (Array.isArray(parsed)) {
+              externos = parsed;
+            } else if (parsed && typeof parsed === 'object') {
+              if (parsed.externos) externos = parsed.externos;
+              if (parsed.socios) socios = parsed.socios;
+            } else {
+              externos = [{ nome: e.participants_external, email: '' }]
+            }
+          } catch {
+            externos = [{ nome: e.participants_external, email: '' }]
+          }
+        }
+
+        return ({
+          id: e.id,
+          titulo: e.title,
+          tipo: e.type,
+          data_evento: e.event_date,
+          descricao: e.description,
+          hora: e.time,
+          local_tipo: e.location_type,
+          local_endereco_url: e.location_address,
+          participantes_internos: e.participants_internal,
+          participantes_externos: externos,
+          participantes_socios: socios
+        });
+      });
       setEventos([...feriados, ...mappedEvs])
     } else {
       setEventos([...feriados])
@@ -154,6 +184,11 @@ export function Calendario() {
 
     setSavingEvento(true)
     try {
+      const externalPayload = JSON.stringify({
+        externos: novoEvento.participantes_externos,
+        socios: novoEvento.participantes_socios
+      })
+
       if (editingEvento) {
         // Atualiza evento existente
         const { error } = await supabase
@@ -167,7 +202,7 @@ export function Calendario() {
             location_type: novoEvento.local_tipo,
             location_address: novoEvento.local_endereco_url,
             participants_internal: novoEvento.participantes_internos,
-            participants_external: novoEvento.participantes_externos
+            participants_external: externalPayload
           })
           .eq('id', editingEvento)
 
@@ -185,7 +220,7 @@ export function Calendario() {
             location_type: novoEvento.local_tipo,
             location_address: novoEvento.local_endereco_url,
             participants_internal: novoEvento.participantes_internos,
-            participants_external: novoEvento.participantes_externos
+            participants_external: externalPayload
           }])
 
         if (error) throw error
@@ -194,7 +229,10 @@ export function Calendario() {
       await fetchData()
       setIsModalOpen(false)
       setEditingEvento(null)
-      setNovoEvento({ titulo: '', data: new Date().toISOString().split('T')[0], tipo: 'Reunião', descricao: '', hora: '', local_tipo: 'Online', local_endereco_url: '', participantes_internos: [], participantes_externos: '' })
+      setNovoEvento({ titulo: '', data: new Date().toISOString().split('T')[0], tipo: 'Reunião', descricao: '', hora: '', local_tipo: 'Online', local_endereco_url: '', participantes_internos: [], participantes_externos: [], participantes_socios: [] })
+      setCurrentExtName('')
+      setCurrentExtEmail('')
+      setCurrentSocio('')
       alert(editingEvento ? 'Evento atualizado!' : 'Evento criado!')
     } catch (error) {
       console.error('Erro ao salvar evento:', error)
@@ -226,8 +264,12 @@ export function Calendario() {
       local_tipo: evento.local_tipo || 'Online',
       local_endereco_url: evento.local_endereco_url || '',
       participantes_internos: evento.participantes_internos || [],
-      participantes_externos: evento.participantes_externos || ''
+      participantes_externos: evento.participantes_externos || [],
+      participantes_socios: evento.participantes_socios || []
     })
+    setCurrentExtName('')
+    setCurrentExtEmail('')
+    setCurrentSocio('')
     setIsModalOpen(true)
   }
 
@@ -619,8 +661,8 @@ export function Calendario() {
         {/* MODAL NOVO/EDITAR EVENTO */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh]">
+              <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2 text-white">
                   <CalendarDays className="h-5 w-5" />
                   <h3 className="font-black text-base tracking-tight">{editingEvento ? 'Editar Evento' : 'Novo Evento'}</h3>
@@ -633,7 +675,7 @@ export function Calendario() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
                 <div>
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Título</label>
                   <input
@@ -709,48 +751,137 @@ export function Calendario() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                        <Users className="h-3 w-3" /> Convidados (Sistema) <span className="font-normal">(Selecione a equipe)</span>
-                      </label>
-                      <SearchableSelect
-                        options={collaborators.map(c => ({ value: c.id, label: formatName(c.name) }))}
-                        value={novoEvento.participantes_internos[0] || ''} // Usando como single select por enquanto até que seja atualizado
-                        onChange={(val) => {
-                          if (!novoEvento.participantes_internos.includes(val)) {
-                            setNovoEvento({ ...novoEvento, participantes_internos: [...novoEvento.participantes_internos, val] })
-                          }
-                        }}
-                        placeholder="Pesquisar colaborador..."
-                      />
+                    <div className="space-y-4">
+                      {/* COLABORADORES */}
+                      <div>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                          <Users className="h-3 w-3" /> Convidados (Colaborador)
+                        </label>
+                        <SearchableSelect
+                          options={collaborators.map(c => ({ value: c.id, label: formatName(c.name) }))}
+                          value={''} // Clear after select
+                          onChange={(val) => {
+                            if (!novoEvento.participantes_internos.includes(val)) {
+                              setNovoEvento({ ...novoEvento, participantes_internos: [...novoEvento.participantes_internos, val] })
+                            }
+                          }}
+                          placeholder="Adicionar colaborador..."
+                        />
+                        {novoEvento.participantes_internos.length > 0 && (
+                          <div className="flex gap-2 flex-wrap mt-2">
+                            {novoEvento.participantes_internos.map((id) => {
+                              const colab = collaborators.find(c => c.id === id);
+                              if (!colab) return null;
+                              return (
+                                <div key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-[#1e3a8a]/10 text-[#1e3a8a] border border-[#1e3a8a]/20 rounded-md text-xs font-semibold">
+                                  {formatName(colab.name)}
+                                  <button onClick={() => setNovoEvento({ ...novoEvento, participantes_internos: novoEvento.participantes_internos.filter(i => i !== id) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
 
-                      {novoEvento.participantes_internos.length > 0 && (
-                        <div className="flex gap-2 flex-wrap mt-2">
-                          {novoEvento.participantes_internos.map((id) => {
-                            const colab = collaborators.find(c => c.id === id);
-                            if (!colab) return null;
-                            return (
-                              <div key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-[#1e3a8a]/10 text-[#1e3a8a] border border-[#1e3a8a]/20 rounded-md text-xs font-semibold">
-                                {formatName(colab.name)}
-                                <button onClick={() => setNovoEvento({ ...novoEvento, participantes_internos: novoEvento.participantes_internos.filter(i => i !== id) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
-                              </div>
-                            );
-                          })}
+                      {/* SÓCIOS */}
+                      <div>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                          <Users className="h-3 w-3" /> Convidados (Sócio)
+                        </label>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <SocioSelector
+                              value={currentSocio}
+                              onChange={setCurrentSocio}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (currentSocio && !novoEvento.participantes_socios.includes(currentSocio)) {
+                                setNovoEvento({ ...novoEvento, participantes_socios: [...novoEvento.participantes_socios, currentSocio] })
+                                setCurrentSocio('')
+                              }
+                            }}
+                            className="px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors border border-gray-200 flex items-center justify-center"
+                          >
+                            <Plus className="w-5 h-5" />
+                          </button>
                         </div>
-                      )}
-                    </div>
+                        {novoEvento.participantes_socios.length > 0 && (
+                          <div className="flex gap-2 flex-wrap mt-2">
+                            {novoEvento.participantes_socios.map((socioName, idx) => (
+                              <div key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 rounded-md text-xs font-semibold">
+                                {socioName}
+                                <button onClick={() => setNovoEvento({ ...novoEvento, participantes_socios: novoEvento.participantes_socios.filter(i => i !== socioName) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
-                    <div>
-                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                        <Users className="h-3 w-3" /> Convidados Externos <span className="font-normal">(Nomes separados por vírgula)</span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Ex: João da Silva (Cliente X), Maria..."
-                        value={novoEvento.participantes_externos}
-                        onChange={(e) => setNovoEvento({ ...novoEvento, participantes_externos: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm"
-                      />
+                      {/* EXTERNOS */}
+                      <div>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                          <Users className="h-3 w-3" /> Convidados Externos
+                        </label>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="text"
+                            placeholder="Nome (Ex: João Cliente)"
+                            value={currentExtName}
+                            onChange={(e) => setCurrentExtName(e.target.value)}
+                            className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm w-full"
+                          />
+                          <input
+                            type="email"
+                            placeholder="E-mail"
+                            value={currentExtEmail}
+                            onChange={(e) => setCurrentExtEmail(e.target.value)}
+                            className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm w-full"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (currentExtName.trim()) {
+                                setNovoEvento({
+                                  ...novoEvento,
+                                  participantes_externos: [
+                                    ...novoEvento.participantes_externos,
+                                    { nome: currentExtName.trim(), email: currentExtEmail.trim() }
+                                  ]
+                                })
+                                setCurrentExtName('')
+                                setCurrentExtEmail('')
+                              }
+                            }}
+                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shrink-0"
+                          >
+                            <Plus className="w-5 h-5" />
+                          </button>
+                        </div>
+                        {novoEvento.participantes_externos.length > 0 && (
+                          <div className="flex flex-col gap-2 mt-2">
+                            {novoEvento.participantes_externos.map((ext, idx) => (
+                              <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-semibold text-gray-700">
+                                <div className="flex flex-col min-w-0">
+                                  <span className="truncate">{ext.nome}</span>
+                                  {ext.email && <span className="text-[10px] text-gray-400 font-medium truncate">{ext.email}</span>}
+                                </div>
+                                <button
+                                  onClick={() => setNovoEvento({
+                                    ...novoEvento,
+                                    participantes_externos: novoEvento.participantes_externos.filter((_, i) => i !== idx)
+                                  })}
+                                  className="hover:bg-red-50 text-gray-400 hover:text-red-500 rounded p-1 transition-colors shrink-0"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -888,29 +1019,54 @@ export function Calendario() {
                   </div>
                 </div>
               )}
-              {(visualizarEvento.participantes_internos?.length ? visualizarEvento.participantes_internos.length > 0 : false || visualizarEvento.participantes_externos) && (
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Participantes</p>
-                    {(visualizarEvento.participantes_internos?.length ? visualizarEvento.participantes_internos.length > 0 : false) && (
-                      <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
-                        {visualizarEvento.participantes_internos!.map((id: string) => {
-                          const colab = collaborators.find(c => String(c.id) === String(id));
-                          return colab ? (
-                            <span key={id} className="inline-flex px-1.5 py-0.5 bg-[#1e3a8a]/5 text-[#1e3a8a] rounded text-[10px] font-bold border border-[#1e3a8a]/10 truncate max-w-full">
-                              {formatName(colab.name)}
+              {(
+                (visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) ||
+                (visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) ||
+                (visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0)
+              ) && (
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Participantes</p>
+
+                      {/* INTERNOS */}
+                      {(visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) && (
+                        <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
+                          {visualizarEvento.participantes_internos.map((id: string) => {
+                            const colab = collaborators.find(c => String(c.id) === String(id));
+                            return colab ? (
+                              <span key={id} className="inline-flex px-1.5 py-0.5 bg-[#1e3a8a]/5 text-[#1e3a8a] rounded text-[10px] font-bold border border-[#1e3a8a]/10 truncate max-w-full">
+                                {formatName(colab.name)}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
+
+                      {/* SOCIOS */}
+                      {(visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) && (
+                        <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
+                          {visualizarEvento.participantes_socios.map((nomeSocio, idx) => (
+                            <span key={`socio-${idx}`} className="inline-flex px-1.5 py-0.5 bg-[#d4af37]/10 text-[#d4af37] rounded text-[10px] font-bold border border-[#d4af37]/20 truncate max-w-full">
+                              {nomeSocio} (Sócio)
                             </span>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
-                    {visualizarEvento.participantes_externos && (
-                      <p className="text-[11px] text-gray-600 font-medium leading-tight">Externos: {visualizarEvento.participantes_externos}</p>
-                    )}
+                          ))}
+                        </div>
+                      )}
+
+                      {/* EXTERNOS */}
+                      {(visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0) && (
+                        <div className="flex flex-col gap-0.5 mt-2">
+                          {visualizarEvento.participantes_externos.map((ext, idx) => (
+                            <p key={`ext-${idx}`} className="text-[11px] text-gray-600 font-medium leading-tight">
+                              Externo: {ext.nome} {ext.email && <span className="opacity-70">({ext.email})</span>}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               {visualizarEvento.descricao ? (
                 <div className="flex items-start gap-4 mt-4 pt-4 border-t border-gray-100">
                   <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
