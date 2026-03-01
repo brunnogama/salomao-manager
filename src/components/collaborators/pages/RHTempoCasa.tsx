@@ -175,7 +175,6 @@ export function RHTempoCasa() {
   }
 
   const avgTenureTotal = useMemo(() => calculateAverageTenure(activeDataAtRefDate), [activeDataAtRefDate])
-  const avgTenureAdmin = useMemo(() => calculateAverageTenure(activeDataAtRefDate.filter(c => getSegment(c) === 'Administrativo')), [activeDataAtRefDate])
   const avgTenureLegal = useMemo(() => calculateAverageTenure(activeDataAtRefDate.filter(c => getSegment(c) === 'Jurídico')), [activeDataAtRefDate])
 
 
@@ -281,7 +280,7 @@ export function RHTempoCasa() {
   }, [activeDataAtRefDate, referenceDate])
 
   // 3. Avg Tenure by Leader
-  const { leaderJuridicoSocios, leaderJuridicoLideres, leaderAdmin } = useMemo(() => {
+  const { leaderJuridicoSocios, leaderJuridicoLideres } = useMemo(() => {
     const leaderMap = new Map<string, { totalYears: number, count: number, members: Collaborator[] }>()
 
     activeDataAtRefDate.forEach(c => {
@@ -341,7 +340,6 @@ export function RHTempoCasa() {
     return {
       leaderJuridicoSocios: allLeaders.filter(l => l.category === 'Jurídico - Sócios'),
       leaderJuridicoLideres: allLeaders.filter(l => l.category === 'Jurídico - Líderes'),
-      leaderAdmin: allLeaders.filter(l => l.category === 'Administrativo'),
     }
   }, [activeDataAtRefDate, referenceDate, colaboradores])
 
@@ -448,7 +446,7 @@ export function RHTempoCasa() {
       </div>
 
       {/* 2. KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* General Avg Tenure */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
@@ -471,18 +469,6 @@ export function RHTempoCasa() {
           </div>
           <div className="p-3 bg-[#1e3a8a]/10 rounded-xl">
             <Scale className="h-6 w-6 text-[#1e3a8a]" />
-          </div>
-        </div>
-
-        {/* Admin Avg Tenure */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute right-0 top-0 h-full w-1 bg-[#ea580c]"></div>
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Média Administrativo</p>
-            <p className="text-3xl font-black text-[#ea580c] mt-1">{formatYears(avgTenureAdmin)}</p>
-          </div>
-          <div className="p-3 bg-[#ea580c]/10 rounded-xl">
-            <Briefcase className="h-6 w-6 text-[#ea580c]" />
           </div>
         </div>
       </div>
@@ -595,133 +581,107 @@ export function RHTempoCasa() {
           </div>
         </div>
 
-        {/* Tenure by Leader */}
+        {/* Experience Concentration */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
-              <Users className="w-5 h-5" />
+            <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
+              <Scale className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Tempo Médio por Líder</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Liderança de Equipes</p>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Concentração Jurídico por Experiência</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição de Senioridade</p>
             </div>
           </div>
-          <div className="flex flex-col gap-8 w-full">
-            {leaderJuridicoSocios.length > 0 && (
-              <div className="flex flex-col">
-                <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Jurídico: Sócios</h4>
-                <div className="w-full" style={{ height: Math.max(80, leaderJuridicoSocios.length * 35) }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={leaderJuridicoSocios} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                      <XAxis type="number" hide />
-                      <YAxis
-                        dataKey="name"
-                        type="category"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                        width={250}
-                      />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                      <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
-                        <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-
-            {leaderJuridicoLideres.length > 0 && (
-              <div className="flex flex-col">
-                <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Jurídico: Líderes</h4>
-                <div className="w-full" style={{ height: Math.max(80, leaderJuridicoLideres.length * 35) }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={leaderJuridicoLideres} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                      <XAxis type="number" hide />
-                      <YAxis
-                        dataKey="name"
-                        type="category"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                        width={250}
-                      />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                      <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
-                        <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-
-            {leaderAdmin.length > 0 && (
-              <div className="flex flex-col">
-                <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Administrativo</h4>
-                <div className="w-full" style={{ height: Math.max(80, leaderAdmin.length * 35) }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={leaderAdmin} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                      <XAxis type="number" hide />
-                      <YAxis
-                        dataKey="name"
-                        type="category"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                        width={250}
-                      />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                      <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
-                        <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+          <div className="flex flex-col md:flex-row items-center justify-around h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={legalExperienceData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={65}
+                  outerRadius={95}
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={RHChartPieLabel}
+                  labelLine={false}
+                >
+                  {legalExperienceData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS.pie[index % COLORS.pie.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={RHChartTooltip} />
+                <Legend verticalAlign="bottom" height={36} />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
       </div>
 
-      {/* 5. Experience Concentration (Full Width or Grid? User asked for: "Um gráfico com concentração de jurídico por experiência...") */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+      {/* 5. Tenure by Leader */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
         <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
-            <Scale className="w-5 h-5" />
+          <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
+            <Users className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-gray-800 tracking-tight">Concentração Jurídico por Experiência</h3>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Distribuição de Senioridade</p>
+            <h3 className="text-lg font-black text-gray-800 tracking-tight">Tempo Médio por Líder</h3>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Liderança de Equipes</p>
           </div>
         </div>
-        <div className="flex flex-col md:flex-row items-center justify-around h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={legalExperienceData}
-                cx="50%"
-                cy="50%"
-                innerRadius={65} // Reduced to give labels more room
-                outerRadius={95} // Reduced to give labels more room
-                paddingAngle={5}
-                dataKey="value"
-                label={RHChartPieLabel}
-                labelLine={false}
-              >
-                {legalExperienceData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS.pie[index % COLORS.pie.length]} />
-                ))}
-              </Pie>
-              <Tooltip content={RHChartTooltip} />
-              <Legend verticalAlign="bottom" height={36} />
-            </PieChart>
-          </ResponsiveContainer>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+          {leaderJuridicoSocios.length > 0 && (
+            <div className="flex flex-col">
+              <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Jurídico: Sócios</h4>
+              <div className="w-full" style={{ height: Math.max(80, leaderJuridicoSocios.length * 35) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={leaderJuridicoSocios} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                    <XAxis type="number" hide />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                      width={250}
+                    />
+                    <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
+                    <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
+                      <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {leaderJuridicoLideres.length > 0 && (
+            <div className="flex flex-col">
+              <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Jurídico: Líderes</h4>
+              <div className="w-full" style={{ height: Math.max(80, leaderJuridicoLideres.length * 35) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={leaderJuridicoLideres} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                    <XAxis type="number" hide />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                      width={250}
+                    />
+                    <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
+                    <Bar dataKey="avg" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} name="Anos">
+                      <LabelList dataKey="avg" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} formatter={(val: number) => val.toFixed(1)} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
