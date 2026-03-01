@@ -13,6 +13,8 @@ interface ManagedSelectProps {
     orderBy?: string
     // Optional filter for the dropdown list (e.g. show only reasons for a specific initiative)
     filter?: { column: string, value: string }
+    // Optional client-side filter function evaluated on the fetched items
+    clientFilter?: (item: any) => boolean
     // For 'managed' items that need a foreign key (e.g. adding a reason that needs an initiative_id)
     extraInsertFields?: Record<string, any>
 }
@@ -34,6 +36,7 @@ export function ManagedSelect({
     showManageButton = true,
     orderBy = 'name',
     filter,
+    clientFilter,
     extraInsertFields
 }: ManagedSelectProps) {
     const [isOpen, setIsOpen] = useState(false)
@@ -118,7 +121,9 @@ export function ManagedSelect({
 
     const selectedItem = items.find(i => value && String(i.id) === String(value))
 
-    const filteredItems = items.filter(i =>
+    const activeItems = clientFilter ? items.filter(clientFilter) : items;
+
+    const filteredItems = activeItems.filter(i =>
         i.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
 

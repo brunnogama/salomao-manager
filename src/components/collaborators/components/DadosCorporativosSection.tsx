@@ -166,7 +166,13 @@ export function DadosCorporativosSection({
               <SearchableSelect
                 label="Área"
                 value={formData.area || ''}
-                onChange={(v) => setFormData({ ...formData, area: v as any })}
+                onChange={(v) => {
+                  setFormData({
+                    ...formData,
+                    area: v as any,
+                    role: '' // Clear role when area changes to avoid conflicts
+                  })
+                }}
                 options={[
                   { id: 'Administrativa', name: 'Administrativa' },
                   { id: 'Jurídica', name: 'Jurídica' }
@@ -189,6 +195,16 @@ export function DadosCorporativosSection({
                 value={formData.role || ''}
                 onChange={v => setFormData({ ...formData, role: v })}
                 tableName="roles"
+                clientFilter={(item: any) => {
+                  const roleName = item.name.toLowerCase();
+                  const isJuridico = roleName.includes('advogado') || roleName.includes('sócio') || roleName.includes('socio') || roleName.includes('estagiário') || roleName.includes('estagiario');
+                  if (formData.area === 'Jurídica') {
+                    return isJuridico;
+                  } else if (formData.area === 'Administrativa') {
+                    return !isJuridico;
+                  }
+                  return true; // if no area is selected, show all
+                }}
                 disabled={isViewMode}
               />
 

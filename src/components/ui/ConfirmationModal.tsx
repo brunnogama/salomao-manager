@@ -66,49 +66,50 @@ export function ConfirmationModal({
     const styles = getVariantStyles();
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div
-                className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="p-6">
-                    <div className="flex items-start gap-4">
-                        <div className={`p-3 rounded-full shrink-0 ${styles.iconBg}`}>
-                            <AlertTriangle className={`w-6 h-6 ${styles.iconColor}`} />
-                        </div>
-                        <div className="flex-1 pt-1">
-                            <h3 className="text-lg font-bold text-gray-900 leading-tight mb-2">
-                                {title}
-                            </h3>
-                            <p className="text-sm text-gray-500 leading-relaxed">
-                                {description}
-                            </p>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-500 transition-colors"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
+                <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white">
+                        <AlertTriangle className="h-5 w-5" />
+                        <h3 className="font-black text-base tracking-tight">{title}</h3>
                     </div>
-                </div>
-
-                <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-100">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200 outline-none"
+                        className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all"
                     >
-                        {cancelText}
+                        <X className="h-5 w-5" />
                     </button>
-                    <button
-                        onClick={() => {
-                            onConfirm();
-                            onClose();
-                        }}
-                        className={`px-4 py-2 text-sm font-semibold text-white rounded-lg shadow-sm transition-all focus:ring-4 outline-none ${styles.confirmBtn}`}
-                    >
-                        {confirmText}
-                    </button>
+                </div>
+
+                <div className="p-6 text-center flex flex-col items-center">
+                    <div className={`p-4 rounded-full mb-4 ${styles.iconBg}`}>
+                        <AlertTriangle className={`w-10 h-10 ${styles.iconColor}`} />
+                    </div>
+
+                    <p className="text-sm font-medium text-gray-600 leading-relaxed mb-6">
+                        {description}
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-3 w-full">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-gray-200"
+                        >
+                            {cancelText}
+                        </button>
+                        <button
+                            onClick={() => {
+                                onConfirm();
+                                onClose();
+                            }}
+                            className={`flex-1 px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white rounded-xl transition-all shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.confirmBtn}`}
+                        >
+                            {confirmText}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
