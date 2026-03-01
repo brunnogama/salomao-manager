@@ -24,6 +24,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
 
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const [isLeaderModalOpen, setIsLeaderModalOpen] = useState(false);
+  const [roleChangeDate, setRoleChangeDate] = useState('');
 
   const [formData, setFormData] = useState<Partial<Collaborator>>({
     name: '',
@@ -44,6 +45,7 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
       } else {
         setFormData({ name: '', partner_id: '', leader_id: '', status: 'active', role: '' });
       }
+      setRoleChangeDate('');
       fetchData();
     }
   }, [isOpen, collaborator]);
@@ -93,6 +95,40 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
 
 
       if (collaborator?.id) {
+        if (collaborator.role !== formData.role) {
+          try {
+            // Find the last role change to calculate duration
+            const { data: lastChange } = await supabase
+              .from('collaborator_role_history')
+              .select('change_date')
+              .eq('collaborator_id', collaborator.id)
+              .order('change_date', { ascending: false })
+              .limit(1)
+              .single();
+
+            const startDateStr = lastChange?.change_date || collaborator.hire_date || collaborator.created_at || new Date().toISOString();
+            const startDate = new Date(startDateStr);
+            const today = new Date();
+            const diffTime = Math.abs(today.getTime() - startDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            const changeDateToUse = roleChangeDate || today.toISOString();
+
+            const historyPayload = {
+              collaborator_id: collaborator.id,
+              previous_role: collaborator.role || 'Não preenchido',
+              new_role: formData.role || 'Não preenchido',
+              duration_days: diffDays,
+              change_date: changeDateToUse
+            };
+
+            const { error: histError } = await supabase.from('collaborator_role_history').insert([historyPayload]);
+            if (histError) console.error('Erro ao salvar histórico de cargo:', histError);
+          } catch (err) {
+            console.error('Erro ao processar histórico de cargo:', err);
+          }
+        }
+
         const { error } = await supabase.from('collaborators').update(payload).eq('id', collaborator.id);
         if (error) throw error;
       } else {
@@ -191,6 +227,22 @@ export function CollaboratorFormModal({ isOpen, onClose, collaborator, onSave }:
               placeholder="Ex: Advogado Pleno"
             />
           </div>
+
+          {collaborator?.id && collaborator.role !== formData.role && (
+            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+              <label className="block text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2 ml-1">Data da Mudança de Cargo</label>
+              <input
+                type="date"
+                className="w-full bg-blue-50/50 border border-blue-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-[#1e3a8a] text-[#0a192f]"
+                value={roleChangeDate}
+                onChange={e => setRoleChangeDate(e.target.value)}
+                required
+              />
+              <p className="text-[9px] text-gray-500 mt-1 ml-1 font-medium">
+                Informe a data em que o colaborador assumirá o novo cargo.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">

@@ -32,7 +32,6 @@ import { RHHeadcount } from './components/collaborators/pages/RHHeadcount';
 import { RHTurnover } from './components/collaborators/pages/RHTurnover';
 import { RHVagas } from './components/collaborators/pages/RHVagas';
 import { RHAcoes } from './components/collaborators/pages/RHAcoes';
-import { RHGED } from './components/collaborators/pages/RHGED';
 
 // Financeiro Components
 import { FinanceDashboard } from './components/finance/pages/FinanceDashboard';
@@ -222,7 +221,6 @@ export function AppRoutes() {
                     <Route path="turnover" element={<WithProps Component={RHTurnover} />} />
                     <Route path="vagas" element={<WithProps Component={RHVagas} />} />
                     <Route path="acoes" element={<WithProps Component={RHAcoes} />} />
-                    <Route path="ged" element={<WithProps Component={RHGED} />} />
                 </Route>
 
                 {/* Financeiro */}

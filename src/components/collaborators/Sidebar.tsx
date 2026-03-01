@@ -67,7 +67,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { path: '/rh/turnover', label: 'Turnover', icon: RefreshCw },
     { path: '/rh/vagas', label: 'Vagas', icon: Briefcase },
     { path: '/rh/acoes', label: 'Ações', icon: Megaphone },
-    { path: '/rh/ged', label: 'GED', icon: Folder },
   ]
 
   const isActive = (path: string) => activePage === path
