@@ -8,6 +8,7 @@ import { SidebarFinanceiro } from '../components/finance/SidebarFinanceiro';
 import { Sidebar as ControladoriaSidebar } from '../components/layout/Sidebar';
 import { Sidebar as OperationalSidebar } from '../components/operational/Sidebar';
 import { WelcomeModal } from '../components/WelcomeModal';
+import { UpdateNotificationModal } from '../components/UpdateNotificationModal';
 import { Toaster } from 'sonner';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
@@ -124,6 +125,7 @@ export function MainLayout() {
         >
             <Toaster position="top-right" richColors closeButton />
             <WelcomeModal />
+            <UpdateNotificationModal />
             <InactivityModal
                 isOpen={showInactivityModal}
                 onClose={handleExtendSession}
