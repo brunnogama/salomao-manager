@@ -18,6 +18,7 @@ import {
 import { supabase } from '../../../lib/supabase'
 import { useColaboradores } from '../hooks/useColaboradores'
 import { getFeriadosDoAno } from '../utils/holidays'
+import { SearchableSelect } from '../../crm/SearchableSelect'
 
 interface Colaborador {
   id: string | number;
@@ -36,6 +37,23 @@ interface Evento {
   tipo: string;
   data_evento: string;
   descricao?: string;
+  hora?: string;
+  local_tipo?: 'Online' | 'Presencial';
+  local_endereco_url?: string;
+  participantes_internos?: string[]; // IDs or names
+  participantes_externos?: string; // Free text for now
+}
+
+interface NovoEventoData {
+  titulo: string;
+  data: string;
+  tipo: string;
+  descricao: string;
+  hora: string;
+  local_tipo: 'Online' | 'Presencial';
+  local_endereco_url: string;
+  participantes_internos: string[];
+  participantes_externos: string;
 }
 
 interface AniversarioData {
@@ -83,12 +101,17 @@ export function Calendario() {
   // Estados para o Modal de Evento
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [savingEvento, setSavingEvento] = useState(false)
-  const [editingEvento, setEditingEvento] = useState<Evento | null>(null)
-  const [novoEvento, setNovoEvento] = useState({
+  const [editingEvento, setEditingEvento] = useState<number | null>(null) // Changed to number for event ID
+  const [novoEvento, setNovoEvento] = useState<NovoEventoData>({
     titulo: '',
-    tipo: 'Reunião',
     data: new Date().toISOString().split('T')[0],
-    descricao: ''
+    tipo: 'Reunião',
+    descricao: '',
+    hora: '',
+    local_tipo: 'Online',
+    local_endereco_url: '',
+    participantes_internos: [],
+    participantes_externos: ''
   })
 
   useEffect(() => {
@@ -97,9 +120,9 @@ export function Calendario() {
 
   const fetchData = async () => {
     const { data: evs } = await supabase
-      .from('eventos')
+      .from('events') // Changed from 'eventos' to 'events'
       .select('*')
-      .order('data_evento')
+      .order('event_date') // Changed from 'data_evento' to 'event_date'
 
     const feriados = getFeriadosDoAno(new Date().getFullYear()).map((f: any, idx: number) => ({
       ...f,
@@ -107,7 +130,20 @@ export function Calendario() {
     })) as Evento[]
 
     if (evs) {
-      setEventos([...feriados, ...evs])
+      // Map Supabase data to local Evento interface
+      const mappedEvs: Evento[] = evs.map((e: any) => ({
+        id: e.id,
+        titulo: e.title,
+        tipo: e.type,
+        data_evento: e.event_date,
+        descricao: e.description,
+        hora: e.time,
+        local_tipo: e.location_type,
+        local_endereco_url: e.location_address,
+        participantes_internos: e.participants_internal,
+        participantes_externos: e.participants_external,
+      }));
+      setEventos([...feriados, ...mappedEvs])
     } else {
       setEventos([...feriados])
     }
@@ -119,37 +155,46 @@ export function Calendario() {
     setSavingEvento(true)
     try {
       if (editingEvento) {
+        // Atualiza evento existente
         const { error } = await supabase
-          .from('eventos')
+          .from('events')
           .update({
-            titulo: novoEvento.titulo,
-            tipo: novoEvento.tipo,
-            data_evento: novoEvento.data,
-            descricao: novoEvento.descricao
+            title: novoEvento.titulo,
+            event_date: novoEvento.data,
+            type: novoEvento.tipo,
+            description: novoEvento.descricao,
+            time: novoEvento.hora,
+            location_type: novoEvento.local_tipo,
+            location_address: novoEvento.local_endereco_url,
+            participants_internal: novoEvento.participantes_internos,
+            participants_external: novoEvento.participantes_externos
           })
-          .eq('id', editingEvento.id)
+          .eq('id', editingEvento)
+
         if (error) throw error
       } else {
+        // Cria novo evento
         const { error } = await supabase
-          .from('eventos')
-          .insert({
-            titulo: novoEvento.titulo,
-            tipo: novoEvento.tipo,
-            data_evento: novoEvento.data,
-            descricao: novoEvento.descricao
-          })
+          .from('events')
+          .insert([{
+            title: novoEvento.titulo,
+            event_date: novoEvento.data,
+            type: novoEvento.tipo,
+            description: novoEvento.descricao,
+            time: novoEvento.hora,
+            location_type: novoEvento.local_tipo,
+            location_address: novoEvento.local_endereco_url,
+            participants_internal: novoEvento.participantes_internos,
+            participants_external: novoEvento.participantes_externos
+          }])
+
         if (error) throw error
       }
 
       await fetchData()
       setIsModalOpen(false)
       setEditingEvento(null)
-      setNovoEvento({
-        titulo: '',
-        tipo: 'Reunião',
-        data: new Date().toISOString().split('T')[0],
-        descricao: ''
-      })
+      setNovoEvento({ titulo: '', data: new Date().toISOString().split('T')[0], tipo: 'Reunião', descricao: '', hora: '', local_tipo: 'Online', local_endereco_url: '', participantes_internos: [], participantes_externos: '' })
       alert(editingEvento ? 'Evento atualizado!' : 'Evento criado!')
     } catch (error) {
       console.error('Erro ao salvar evento:', error)
@@ -162,7 +207,7 @@ export function Calendario() {
   const handleDeleteEvento = async (id: number) => {
     if (!confirm('Deseja realmente excluir este evento?')) return
     try {
-      const { error } = await supabase.from('eventos').delete().eq('id', id)
+      const { error } = await supabase.from('events').delete().eq('id', id) // Changed from 'eventos' to 'events'
       if (error) throw error
       await fetchData()
     } catch (error) {
@@ -170,13 +215,18 @@ export function Calendario() {
     }
   }
 
-  const handleEditClick = (evento: any) => {
-    setEditingEvento(evento)
+  const handleEditClick = (evento: Evento) => { // Changed type to Evento
+    setEditingEvento(evento.id) // Store only the ID
     setNovoEvento({
       titulo: evento.titulo,
-      tipo: evento.tipo,
       data: evento.data_evento,
-      descricao: evento.descricao || ''
+      tipo: evento.tipo,
+      descricao: evento.descricao || '',
+      hora: evento.hora || '',
+      local_tipo: evento.local_tipo || 'Online',
+      local_endereco_url: evento.local_endereco_url || '',
+      participantes_internos: evento.participantes_internos || [],
+      participantes_externos: evento.participantes_externos || ''
     })
     setIsModalOpen(true)
   }
@@ -306,7 +356,7 @@ export function Calendario() {
           if (diasRestantes >= 0) {
             mochilaEventos.push({
               id: `mochila-${c.id}`,
-              titulo: `${c.name.split(' ')[0]} completa 3 meses de casa`,
+              titulo: `${formatName(c.name)} completa 3 meses de casa`,
               tipo: 'Mochila',
               dataObjeto: dateAdmissao,
               diasRestantes,
@@ -426,7 +476,7 @@ export function Calendario() {
         {/* BLOCOS: ANIVERSARIANTES | EVENTOS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 w-full">
           {/* BLOCO ANIVERSARIANTES */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[600px] w-full">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[800px] xl:max-h-[85vh] w-full">
             <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-[#d4af37]/10 rounded-xl">
@@ -442,7 +492,7 @@ export function Calendario() {
                   key={aniv.colaborador.id}
                   onClick={() => setVisualizarColaborador(aniv.colaborador as Colaborador)}
                   className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer ${aniv.isHoje
-                    ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-[#d4af37]/50'
+                    ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
                     : aniv.isEstaSemana
                       ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
                       : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
@@ -474,10 +524,10 @@ export function Calendario() {
                       </p>
                     </div>
                     <div className="text-right w-12 sm:w-16">
-                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Faltam</p>
-                      <p className={`font-black text-sm ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{aniv.diasRestantes === 0 ? '' : 'Faltam'}</p>
+                      <p className={`font-black text-sm flex items-center justify-end ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
                         }`}>
-                        {aniv.diasRestantes === 0 ? 'Hoje!' : `${aniv.diasRestantes}d`}
+                        {aniv.diasRestantes === 0 ? <span className="text-[#d4af37] text-base transform scale-110">Hoje</span> : `${aniv.diasRestantes}d`}
                       </p>
                     </div>
                   </div>
@@ -487,7 +537,7 @@ export function Calendario() {
           </div>
 
           {/* BLOCO EVENTOS */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[600px] w-full">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[800px] xl:max-h-[85vh] w-full">
             <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
@@ -507,16 +557,24 @@ export function Calendario() {
                   key={idx}
                   onClick={() => evento.tipo === 'Mochila' ? setVisualizarColaborador(evento.colaboradorRef as Colaborador) : setVisualizarEvento(evento as Evento)}
                   className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer ${evento.isHoje
-                    ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-500/50'
+                    ? 'bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-500 shadow-md transform scale-[1.01] mx-1'
                     : evento.isEstaSemana
                       ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
                       : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
                     }`}
                 >
                   <div className="flex items-center gap-4 min-w-0 pr-2">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-black border-2 shadow-md shrink-0 ${evento.isHoje ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-500/30' : evento.tipo === 'Aniversário' ? 'bg-gradient-to-br from-[#d4af37] to-amber-600 border-[#d4af37]/30' : 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a]/30'}`}>
-                      {evento.tipo === 'Reunião' ? <Users className="h-5 w-5" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
-                    </div>
+                    {evento.tipo === 'Mochila' && (evento as any).colaboradorRef?.photo_url ? (
+                      <img src={(evento as any).colaboradorRef.photo_url} alt={evento.titulo} className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0" />
+                    ) : evento.tipo === 'Mochila' ? (
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white text-lg font-black border-2 border-[#1e3a8a]/30 shadow-md shrink-0">
+                        {(evento as any).colaboradorRef?.name.charAt(0).toUpperCase()}
+                      </div>
+                    ) : (
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-black border-2 shadow-md shrink-0 ${evento.isHoje ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-500/30' : evento.tipo === 'Aniversário' ? 'bg-gradient-to-br from-[#d4af37] to-amber-600 border-[#d4af37]/30' : 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a]/30'}`}>
+                        {evento.tipo === 'Reunião' ? <Users className="h-5 w-5" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <p className="font-black text-[#0a192f] text-sm truncate">{evento.isHoje ? '🎉 ' : ''}{evento.titulo}</p>
                       <p className="text-[10px] font-semibold text-gray-600 truncate">{evento.tipo}</p>
@@ -545,10 +603,10 @@ export function Calendario() {
                       </p>
                     </div>
                     <div className="text-right w-12 sm:w-16">
-                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Faltam</p>
-                      <p className={`font-black text-sm ${evento.isHoje ? 'text-emerald-600' : evento.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{evento.diasRestantes === 0 ? '' : 'Faltam'}</p>
+                      <p className={`font-black text-sm flex items-center justify-end ${evento.isHoje ? 'text-emerald-600' : evento.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
                         }`}>
-                        {evento.diasRestantes === 0 ? 'Hoje!' : `${evento.diasRestantes}d`}
+                        {evento.diasRestantes === 0 ? <span className="text-emerald-600 text-base transform scale-110">Hoje</span> : `${evento.diasRestantes}d`}
                       </p>
                     </div>
                   </div>
@@ -589,26 +647,113 @@ export function Calendario() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Tipo</label>
-                    <select
+                    <SearchableSelect
+                      options={[
+                        { value: 'Reunião', label: 'Reunião' },
+                        { value: 'Aniversário', label: 'Aniversário' },
+                        { value: 'Outros', label: 'Outros' }
+                      ]}
                       value={novoEvento.tipo}
-                      onChange={(e) => setNovoEvento({ ...novoEvento, tipo: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all bg-white font-medium"
-                    >
-                      <option value="Reunião">Reunião</option>
-                      <option value="Aniversário">Aniversário</option>
-                      <option value="Outros">Outros</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Data</label>
-                    <input
-                      type="date"
-                      value={novoEvento.data}
-                      onChange={(e) => setNovoEvento({ ...novoEvento, data: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                      onChange={(val) => setNovoEvento({ ...novoEvento, tipo: val })}
+                      placeholder="Selecione o tipo"
                     />
                   </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Data</label>
+                      <input
+                        type="date"
+                        value={novoEvento.data}
+                        onChange={(e) => setNovoEvento({ ...novoEvento, data: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Hora <span className="font-normal">(Opcional)</span></label>
+                      <input
+                        type="time"
+                        value={novoEvento.hora}
+                        onChange={(e) => setNovoEvento({ ...novoEvento, hora: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                {novoEvento.tipo === 'Reunião' && (
+                  <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Formato</label>
+                        <SearchableSelect
+                          options={[
+                            { value: 'Online', label: 'Online' },
+                            { value: 'Presencial', label: 'Presencial' }
+                          ]}
+                          value={novoEvento.local_tipo}
+                          onChange={(val) => setNovoEvento({ ...novoEvento, local_tipo: val as 'Online' | 'Presencial' })}
+                          placeholder="Selecione o formato"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+                          {novoEvento.local_tipo === 'Online' ? 'URL da Reunião' : 'Endereço'}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={novoEvento.local_tipo === 'Online' ? 'https://meet.google.com/...' : 'Rua, Número, Sala...'}
+                          value={novoEvento.local_endereco_url}
+                          onChange={(e) => setNovoEvento({ ...novoEvento, local_endereco_url: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                        <Users className="h-3 w-3" /> Convidados (Sistema) <span className="font-normal">(Selecione a equipe)</span>
+                      </label>
+                      <SearchableSelect
+                        options={collaborators.map(c => ({ value: c.id, label: formatName(c.name) }))}
+                        value={novoEvento.participantes_internos[0] || ''} // Usando como single select por enquanto até que seja atualizado
+                        onChange={(val) => {
+                          if (!novoEvento.participantes_internos.includes(val)) {
+                            setNovoEvento({ ...novoEvento, participantes_internos: [...novoEvento.participantes_internos, val] })
+                          }
+                        }}
+                        placeholder="Pesquisar colaborador..."
+                      />
+
+                      {novoEvento.participantes_internos.length > 0 && (
+                        <div className="flex gap-2 flex-wrap mt-2">
+                          {novoEvento.participantes_internos.map((id) => {
+                            const colab = collaborators.find(c => c.id === id);
+                            if (!colab) return null;
+                            return (
+                              <div key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-[#1e3a8a]/10 text-[#1e3a8a] border border-[#1e3a8a]/20 rounded-md text-xs font-semibold">
+                                {formatName(colab.name)}
+                                <button onClick={() => setNovoEvento({ ...novoEvento, participantes_internos: novoEvento.participantes_internos.filter(i => i !== id) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                        <Users className="h-3 w-3" /> Convidados Externos <span className="font-normal">(Nomes separados por vírgula)</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: João da Silva (Cliente X), Maria..."
+                        value={novoEvento.participantes_externos}
+                        onChange={(e) => setNovoEvento({ ...novoEvento, participantes_externos: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
@@ -722,8 +867,52 @@ export function Calendario() {
               </button>
             </div>
             <div className="p-6">
+              {visualizarEvento.hora && (
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><CalendarDays className="w-4 h-4" /></div>
+                  <div>
+                    <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Data e Hora</p>
+                    <p className="text-[13px] font-bold text-[#0a192f]">{new Date(visualizarEvento.data_evento + 'T12:00:00').toLocaleDateString('pt-BR')} às {visualizarEvento.hora}</p>
+                  </div>
+                </div>
+              )}
+              {(visualizarEvento.local_tipo || visualizarEvento.local_endereco_url) && (
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                  <div>
+                    <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local</p>
+                    <p className="text-[13px] font-bold text-[#0a192f]">
+                      {visualizarEvento.local_tipo === 'Online' ? '💻 Online' : '📍 Presencial'}
+                      {visualizarEvento.local_endereco_url && <span className="font-normal text-gray-600 ml-1">- {visualizarEvento.local_endereco_url}</span>}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {(visualizarEvento.participantes_internos?.length ? visualizarEvento.participantes_internos.length > 0 : false || visualizarEvento.participantes_externos) && (
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Participantes</p>
+                    {(visualizarEvento.participantes_internos?.length ? visualizarEvento.participantes_internos.length > 0 : false) && (
+                      <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
+                        {visualizarEvento.participantes_internos!.map((id: string) => {
+                          const colab = collaborators.find(c => String(c.id) === String(id));
+                          return colab ? (
+                            <span key={id} className="inline-flex px-1.5 py-0.5 bg-[#1e3a8a]/5 text-[#1e3a8a] rounded text-[10px] font-bold border border-[#1e3a8a]/10 truncate max-w-full">
+                              {formatName(colab.name)}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                    {visualizarEvento.participantes_externos && (
+                      <p className="text-[11px] text-gray-600 font-medium leading-tight">Externos: {visualizarEvento.participantes_externos}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               {visualizarEvento.descricao ? (
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 mt-4 pt-4 border-t border-gray-100">
                   <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
                   <div>
                     <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local / Descrição</p>

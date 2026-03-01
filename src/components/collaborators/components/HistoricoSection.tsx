@@ -21,7 +21,10 @@ const formatDurationExtensive = (totalDays: number) => {
     if (months > 0) parts.push(`${months} ${months > 1 ? 'meses' : 'mês'}`);
     if (days > 0 || parts.length === 0) parts.push(`${days} dia${days !== 1 ? 's' : ''}`);
 
-    return parts.join(' e ');
+    if (parts.length === 0) return '';
+    if (parts.length === 1) return parts[0];
+    const last = parts.pop();
+    return parts.join(', ') + ' e ' + last;
 }
 
 export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, isViewMode = false }: HistoricoSectionProps) {
