@@ -182,11 +182,24 @@ export function HistoricoSection({ formData, setFormData, maskDate, isViewMode =
                         {roleHistory.length > 0 ? (
                             <div className="space-y-4">
                                 {roleHistory.map((item, index) => {
-                                    const parsedDate = new Date(item.change_date + 'T12:00:00Z');
+                                    // Handle dates directly to avoid timezone shifts
                                     let dateText = item.change_date;
-                                    if (!isNaN(parsedDate.getTime())) {
-                                        dateText = parsedDate.toLocaleDateString('pt-BR');
+                                    if (item.change_date && item.change_date.includes('-')) {
+                                        const [year, month, day] = item.change_date.split('T')[0].split('-');
+                                        dateText = `${day}/${month}/${year}`;
                                     }
+
+                                    // Format duration
+                                    const years = Math.floor(item.duration_days / 365);
+                                    const months = Math.floor((item.duration_days % 365) / 30);
+                                    const days = item.duration_days % 30;
+
+                                    const durationParts = [];
+                                    if (years > 0) durationParts.push(`${years} ano${years > 1 ? 's' : ''}`);
+                                    if (months > 0) durationParts.push(`${months} ${(months > 1 ? 'meses' : 'mês')}`);
+                                    if (days > 0 || durationParts.length === 0) durationParts.push(`${days} dia${days !== 1 ? 's' : ''}`);
+
+                                    const durationText = durationParts.join(', ').replace(/, ([^,]*)$/, ' e $1');
 
                                     return (
                                         <div key={item.id || index} className="flex items-start gap-4 p-4 border border-gray-100 rounded-xl bg-gray-50 hover:border-blue-200 transition-colors">
@@ -206,7 +219,7 @@ export function HistoricoSection({ formData, setFormData, maskDate, isViewMode =
                                                 </p>
                                                 {item.duration_days > 0 && (
                                                     <p className="text-[10px] text-gray-400 mt-2 font-medium">
-                                                        Em cargo anterior: {Math.floor(item.duration_days / 365)}a {Math.floor((item.duration_days % 365) / 30)}v {item.duration_days % 30}d
+                                                        Tempo no cargo anterior: <span className="font-bold">{durationText}</span>
                                                     </p>
                                                 )}
                                             </div>

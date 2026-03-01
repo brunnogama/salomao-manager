@@ -503,10 +503,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
             const changeDateToUse = formData.role_change_date ? formatDateToISO(formData.role_change_date) : today.toISOString();
 
+            const previousRoleName = roles.find(r => String(r.id) === String(formData.original_role))?.name || formData.original_role || 'Não preenchido';
+            const newRoleName = roles.find(r => String(r.id) === String(formData.role))?.name || formData.role || 'Não preenchido';
+
             const historyPayload = {
               collaborator_id: formData.id,
-              previous_role: formData.original_role || 'Não preenchido',
-              new_role: formData.role || 'Não preenchido',
+              previous_role: previousRoleName,
+              new_role: newRoleName,
               duration_days: diffDays,
               change_date: changeDateToUse
             };
