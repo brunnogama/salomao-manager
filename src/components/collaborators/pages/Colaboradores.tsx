@@ -734,8 +734,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (advFilterRateio && String(c.rateio_id) !== advFilterRateio) return false;
       if (advFilterAdmissionStart && (!c.hire_date || c.hire_date < advFilterAdmissionStart)) return false;
       if (advFilterAdmissionEnd && (!c.hire_date || c.hire_date > advFilterAdmissionEnd)) return false;
-      if (advFilterPartner && String(c.partner_id) !== advFilterPartner) return false;
-      if (advFilterLeader && String(c.leader_id) !== advFilterLeader) return false;
+
+      if (advFilterPartner && String(c.partner_id) !== advFilterPartner && String((c as any).partner?.name) !== advFilterPartner) return false;
+      if (advFilterLeader && String(c.leader_id) !== advFilterLeader && String((c as any).leader?.name) !== advFilterLeader) return false;
+
       if (advFilterArea && c.area !== advFilterArea) return false;
       if (advFilterTeam && String(c.equipe) !== advFilterTeam && String((c as any).teams?.name) !== advFilterTeam) return false;
       if (advFilterRole && String(c.role) !== advFilterRole && String((c as any).roles?.name) !== advFilterRole) return false;
