@@ -743,6 +743,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
         return targetVals.some(t => t && String(t).toLowerCase() === lowFilter);
       };
 
+      const safeIncludes = (filterVal: string, ...targetVals: (string | undefined | null)[]) => {
+        if (!filterVal) return true;
+        const lowFilter = filterVal.toLowerCase();
+        return targetVals.some(t => t && String(t).toLowerCase().includes(lowFilter));
+      };
+
       if (!safeCompare(advFilterPartner, c.partner_id, (c as any).partner?.name)) return false;
       if (!safeCompare(advFilterLeader, c.leader_id, (c as any).leader?.name)) return false;
 
@@ -751,7 +757,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (!safeCompare(advFilterRole, c.role, (c as any).roles?.name)) return false;
       if (!safeCompare(advFilterContractType, c.contract_type)) return false;
       if (!safeCompare(advFilterLocal, c.local, (c as any).locations?.name)) return false;
-      if (!safeCompare(advFilterTransporteTipo, c.transporte_tipo)) return false;
+      if (!safeIncludes(advFilterTransporteTipo, c.transporte_tipo)) return false;
 
       // Escolares
       if (advFilterGraduationComplete) {

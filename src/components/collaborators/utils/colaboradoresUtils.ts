@@ -64,6 +64,27 @@ export const maskPhone = (v: string) => {
   }).slice(0, 15)
 }
 
+export const formatCurrency = (value: number | string | undefined): string => {
+  if (value === undefined || value === null) return '';
+
+  // Se for string, limpar e converter
+  let numericValue = typeof value === 'string' ? Number(value.replace(/\D/g, '')) / 100 : value;
+  if (isNaN(numericValue)) numericValue = 0;
+
+  return numericValue.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
+export const parseCurrency = (value: string): number => {
+  if (!value) return 0;
+  const numericString = value.replace(/\D/g, '');
+  return Number(numericString) / 100;
+};
+
 export const formatDateToDisplay = (isoDate: string | undefined | null) => {
   if (!isoDate) return ''
   if (isoDate.includes('/')) return isoDate
@@ -77,4 +98,21 @@ export const formatDateToISO = (displayDate: string | undefined | null) => {
   if (displayDate.includes('-')) return displayDate
   const [d, m, y] = displayDate.split('/')
   return `${y}-${m}-${d}`
+}
+
+export const getWorkingDaysInCurrentMonth = (): number => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  let workingDays = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const currentDay = new Date(year, month, d).getDay();
+    // 0 = Sunday, 6 = Saturday
+    if (currentDay !== 0 && currentDay !== 6) {
+      workingDays++;
+    }
+  }
+  return workingDays;
 }

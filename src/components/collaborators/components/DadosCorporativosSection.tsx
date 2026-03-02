@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Briefcase, Calendar, Clock, Bus } from 'lucide-react'
+import { Briefcase, Calendar, Clock, Bus, Plus, X, AlertTriangle } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
@@ -12,6 +12,8 @@ interface DadosCorporativosSectionProps {
   isViewMode?: boolean
 }
 
+import { formatCurrency, parseCurrency, getWorkingDaysInCurrentMonth } from '../utils/colaboradoresUtils';
+
 export function DadosCorporativosSection({
   formData,
   setFormData,
@@ -19,6 +21,31 @@ export function DadosCorporativosSection({
   isViewMode = false
 }: DadosCorporativosSectionProps) {
   const [activeTab, setActiveTab] = useState<'contratacao' | 'desligamento'>('contratacao')
+
+  const [pendingTransportType, setPendingTransportType] = useState('');
+  const [showTransporteModal, setShowTransporteModal] = useState<{
+    type: 'transporte_ida_qtd' | 'transporte_volta_qtd';
+    numValue: number;
+  } | null>(null);
+
+  const selectedTransportes = useMemo(() => {
+    if (!formData.transporte_tipo) return [];
+    return formData.transporte_tipo.split(',').map(s => s.trim()).filter(Boolean);
+  }, [formData.transporte_tipo]);
+
+  const handleAddTransport = () => {
+    if (!pendingTransportType) return;
+    if (selectedTransportes.includes(pendingTransportType)) return;
+
+    const newTransportes = [...selectedTransportes, pendingTransportType];
+    setFormData({ ...formData, transporte_tipo: newTransportes.join(', ') });
+    setPendingTransportType('');
+  };
+
+  const handleRemoveTransport = (tToRemove: string) => {
+    const newTransportes = selectedTransportes.filter(t => t !== tToRemove);
+    setFormData({ ...formData, transporte_tipo: newTransportes.join(', ') });
+  };
 
   // Calculate duration if dates are available
   const duration = useMemo(() => {
@@ -49,12 +76,15 @@ export function DadosCorporativosSection({
     const numValue = isNaN(rawVal) ? 0 : rawVal;
 
     if (numValue > 3) {
-      const isConfirmed = window.confirm(`Atenção: O máximo sugerido é 3. Tem certeza que deseja incluir a quantidade de ${numValue}?`);
-      if (!isConfirmed) {
-        return; // descarta a alteração
-      }
+      // Prevent automatic update and open custom modal
+      setShowTransporteModal({ type: field, numValue });
+      return;
     }
 
+    applyTransporteQtd(field, numValue);
+  };
+
+  const applyTransporteQtd = (field: 'transporte_ida_qtd' | 'transporte_volta_qtd', numValue: number) => {
     const valField = field === 'transporte_ida_qtd' ? 'transporte_ida_valores' : 'transporte_volta_valores';
     const currentArray = formData[valField] || [];
     let newArray = [...currentArray];
@@ -76,7 +106,7 @@ export function DadosCorporativosSection({
 
   const handleTransporteValorChange = (field: 'transporte_ida_valores' | 'transporte_volta_valores', index: number, value: string) => {
     const currentArray = [...(formData[field] || [])];
-    const numVal = parseFloat(value.replace(',', '.'));
+    const numVal = parseCurrency(value);
     currentArray[index] = isNaN(numVal) ? 0 : numVal;
     setFormData({ ...formData, [field]: currentArray });
   };
@@ -84,6 +114,8 @@ export function DadosCorporativosSection({
   const totalIda = (formData.transporte_ida_valores || []).reduce((acc, curr) => acc + (curr || 0), 0);
   const totalVolta = (formData.transporte_volta_valores || []).reduce((acc, curr) => acc + (curr || 0), 0);
   const totalTransporte = totalIda + totalVolta;
+  const workingDays = useMemo(() => getWorkingDaysInCurrentMonth(), []);
+  const monthlyTotalTransporte = totalTransporte * workingDays;
 
   return (
     <section className="space-y-6">
@@ -318,20 +350,51 @@ export function DadosCorporativosSection({
                 <Bus className="h-4 w-4" /> Transporte
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <SearchableSelect
-                  label="Tipo de Transporte"
-                  value={formData.transporte_tipo || ''}
-                  onChange={(v) => setFormData({ ...formData, transporte_tipo: v })}
-                  options={[
-                    { id: 'Integração BU', name: 'Integração BU' },
-                    { id: 'Metrô', name: 'Metrô' },
-                    { id: 'Ônibus', name: 'Ônibus' },
-                    { id: 'Trem', name: 'Trem' },
-                    { id: 'VLT', name: 'VLT' }
-                  ]}
-                  uppercase={false}
-                  disabled={isViewMode}
-                />
+                <div className="flex flex-col gap-2">
+                  <div className="relative">
+                    <SearchableSelect
+                      label="Tipo(s) de Transporte"
+                      value={pendingTransportType}
+                      onChange={setPendingTransportType}
+                      options={[
+                        { id: 'Integração BU', name: 'Integração BU' },
+                        { id: 'Metrô', name: 'Metrô' },
+                        { id: 'Ônibus', name: 'Ônibus' },
+                        { id: 'Trem', name: 'Trem' },
+                        { id: 'VLT', name: 'VLT' }
+                      ]}
+                      uppercase={false}
+                      disabled={isViewMode}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddTransport}
+                      disabled={!pendingTransportType || isViewMode}
+                      className="absolute right-0 bottom-1 flex items-center justify-center h-[42px] w-[50px] bg-[#1e3a8a] text-white rounded-r-xl hover:bg-[#112240] transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed border-none"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </button>
+                  </div>
+                  {/* Selected Chips */}
+                  {selectedTransportes.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedTransportes.map((t, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-[#1e3a8a] text-xs font-bold rounded-lg border border-blue-200 shadow-sm animate-in zoom-in-95">
+                          {t}
+                          {!isViewMode && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTransport(t)}
+                              className="text-gray-400 hover:text-red-500 rounded-full focus:outline-none transition-colors"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <div className="md:col-span-2 grid grid-cols-2 gap-4">
                   {/* IDA */}
@@ -354,11 +417,9 @@ export function DadosCorporativosSection({
                       <div key={`ida_val_${i}`}>
                         <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Ida #{i + 1} (R$)</label>
                         <input
-                          type="number"
-                          step="0.01"
-                          min="0"
+                          type="text"
                           className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                          value={formData.transporte_ida_valores?.[i] || ''}
+                          value={formatCurrency(formData.transporte_ida_valores?.[i])}
                           onChange={e => handleTransporteValorChange('transporte_ida_valores', i, e.target.value)}
                           disabled={isViewMode}
                           readOnly={isViewMode}
@@ -390,11 +451,9 @@ export function DadosCorporativosSection({
                       <div key={`volta_val_${i}`}>
                         <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Volta #{i + 1} (R$)</label>
                         <input
-                          type="number"
-                          step="0.01"
-                          min="0"
+                          type="text"
                           className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                          value={formData.transporte_volta_valores?.[i] || ''}
+                          value={formatCurrency(formData.transporte_volta_valores?.[i])}
                           onChange={e => handleTransporteValorChange('transporte_volta_valores', i, e.target.value)}
                           disabled={isViewMode}
                           readOnly={isViewMode}
@@ -409,9 +468,18 @@ export function DadosCorporativosSection({
               </div>
 
               {(totalIda > 0 || totalVolta > 0) && (
-                <div className="mt-4 p-3 bg-blue-50 text-[#1e3a8a] font-bold text-sm rounded-xl shadow-sm border border-blue-200 flex justify-between items-center">
-                  <span>Custo Total Diário de Transporte:</span>
-                  <span className="text-base">R$ {totalTransporte.toFixed(2)}</span>
+                <div className="mt-4 p-4 bg-blue-50/70 border border-blue-200 rounded-xl shadow-sm space-y-3">
+                  <div className="flex justify-between items-center pb-3 border-b border-blue-200/50">
+                    <span className="text-sm font-bold text-[#1e3a8a]">Custo Total Diário de Transporte:</span>
+                    <span className="text-base font-black text-[#1e3a8a]">R$ {totalTransporte.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-gray-700">Estimativa Mensal (S/ Feriado):</span>
+                      <span className="text-[10px] uppercase text-gray-500 font-bold mt-1">*{workingDays} dias úteis no mês atual</span>
+                    </div>
+                    <span className="text-lg font-black text-emerald-600">R$ {monthlyTotalTransporte.toFixed(2)}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -523,6 +591,47 @@ export function DadosCorporativosSection({
           </div>
         )}
       </div>
+
+      {/* CONFIRMATION MODAL for Transport Limits */}
+      {showTransporteModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[9999] backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
+                <AlertTriangle className="h-8 w-8 text-amber-500" />
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-black text-center text-[#0a192f] tracking-tight mb-4">
+              Limite Excedido
+            </h2>
+
+            <p className="text-center text-gray-600 mb-8 font-medium">
+              Atenção: O máximo sugerido de passagens por trecho é 3. Tem certeza que deseja incluir a quantidade atípica de <strong className="text-amber-600">{showTransporteModal.numValue}</strong>?
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => setShowTransporteModal(null)}
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors uppercase tracking-wider text-xs"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  applyTransporteQtd(showTransporteModal.type, showTransporteModal.numValue);
+                  setShowTransporteModal(null);
+                }}
+                className="flex-1 px-4 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors uppercase tracking-wider shadow-lg shadow-amber-500/30 text-xs"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
