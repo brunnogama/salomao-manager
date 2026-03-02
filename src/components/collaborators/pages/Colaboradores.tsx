@@ -1306,12 +1306,21 @@ export function Colaboradores({ }: ColaboradoresProps) {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleClearAdvancedFilters}
+                className="flex items-center justify-center w-10 h-10 bg-emerald-800 text-white rounded-full hover:bg-emerald-900 transition-all shadow-lg shadow-emerald-800/30 shrink-0"
+                title="Limpar Filtros"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
               <button
                 onClick={handleExportAdvanced}
-                className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-lg active:scale-95 text-xs"
+                className="flex items-center justify-center w-10 h-10 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/30 shrink-0"
+                title={`Exportar (${currentAdvancedFiltered.length})`}
               >
-                <FileSpreadsheet className="h-5 w-5" /> Exportar ({currentAdvancedFiltered.length})
+                <FileSpreadsheet className="h-5 w-5" />
               </button>
             </div>
           )}
