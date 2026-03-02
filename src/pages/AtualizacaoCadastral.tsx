@@ -409,12 +409,13 @@ export default function AtualizacaoCadastral() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-10 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto">
-                <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center mb-6">
-                        <img src="/logo-salomao.png" alt="Salomão" className="h-[74px] object-contain" />
+                {/* Header Horizontal */}
+                <div className="flex items-center gap-5 mb-8">
+                    <img src="/logo-salomao.png" alt="Salomão" className="h-[55px] object-contain shrink-0" />
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-black text-[#0a192f] tracking-tight leading-none mb-1">Atualização Cadastral</h1>
+                        <p className="text-gray-500 text-sm sm:text-base">Por favor, revise seus dados e atualize o que for necessário.</p>
                     </div>
-                    <h1 className="text-3xl font-black text-[#0a192f] tracking-tight">Atualização Cadastral</h1>
-                    <p className="text-gray-500 mt-2 max-w-lg mx-auto">Por favor, revise atentamente suas informações pessoais, endereço e escolaridade abaixo. Atualize o que for necessário e clique em salvar.</p>
                 </div>
 
                 {/* LGPD Banner Destaque Topo */}

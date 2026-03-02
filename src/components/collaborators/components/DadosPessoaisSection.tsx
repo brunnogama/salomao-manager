@@ -439,41 +439,21 @@ export function DadosPessoaisSection({
             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
               Contatos: {formData.emergency_contacts?.length || 0}
             </span>
-            <div className="flex items-center h-[32px] bg-gray-100/50 border border-gray-200 rounded-xl px-1">
-              <button
-                type="button"
-                onClick={() => {
-                  const currentContacts = formData.emergency_contacts || [];
-                  if (currentContacts.length > 0) {
-                    setFormData({
-                      ...formData,
-                      emergency_contacts: currentContacts.slice(0, currentContacts.length - 1)
-                    });
-                  }
-                }}
-                disabled={isViewMode || (formData.emergency_contacts?.length || 0) === 0}
-                className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8 flex items-center justify-center transition-colors"
-                title="Remover Último Contato"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <div className="w-px h-4 bg-gray-300 mx-1"></div>
-              <button
-                type="button"
-                onClick={() => {
-                  const currentContacts = formData.emergency_contacts || [];
-                  setFormData({
-                    ...formData,
-                    emergency_contacts: [...currentContacts, { id: crypto.randomUUID(), nome: '', telefone: '', parentesco: '' }]
-                  });
-                }}
-                disabled={isViewMode}
-                className="p-1 hover:bg-[#1e3a8a]/10 rounded-lg text-[#1e3a8a] disabled:opacity-50 min-w-8 flex items-center justify-center transition-colors"
-                title="Adicionar Contato"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const currentContacts = formData.emergency_contacts || [];
+                setFormData({
+                  ...formData,
+                  emergency_contacts: [...currentContacts, { id: crypto.randomUUID(), nome: '', telefone: '', parentesco: '' }]
+                });
+              }}
+              disabled={isViewMode}
+              className="p-1 hover:bg-[#1e3a8a]/10 rounded-lg text-[#1e3a8a] disabled:opacity-50 min-w-8 flex items-center justify-center transition-colors border border-transparent hover:border-[#1e3a8a]/20"
+              title="Adicionar Contato"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
