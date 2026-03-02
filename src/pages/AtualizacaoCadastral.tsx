@@ -95,7 +95,8 @@ export default function AtualizacaoCadastral() {
     const [formData, setFormData] = useState<Partial<Collaborator>>({});
 
     useEffect(() => {
-        window.scrollTo(0, 0);
+        // Força o scroll para o topo de forma assíncrona para garantir que ocorra após o browser renderizar a view inicial (útil para mobile)
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
 
         const fetchCollaboratorData = async () => {
             try {
@@ -179,11 +180,32 @@ export default function AtualizacaoCadastral() {
     }, [token]);
 
     useEffect(() => {
-        const cep = formData.zip_code?.replace(/\D/g, '')
-        if (cep?.length === 8) {
-            handleCepBlur()
+        const fetchCepData = async (cepValue: string) => {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cepValue}/json/`);
+                const data = await response.json();
+                if (!data.erro) {
+                    const estadoEncontrado = ESTADOS_BRASIL.find(e => e.sigla === data.uf);
+                    setFormData(prev => ({
+                        ...prev,
+                        address: toTitleCase(data.logradouro),
+                        neighborhood: toTitleCase(data.bairro),
+                        city: toTitleCase(data.localidade),
+                        state: estadoEncontrado ? estadoEncontrado.nome : data.uf
+                    }));
+                }
+            } catch (error) {
+                console.error("Erro CEP automático:", error);
+            }
+        };
+
+        const cepRaw = formData.zip_code?.replace(/\D/g, '');
+        if (cepRaw?.length === 8) {
+            // Se já tivermos o endereço preenchido, podemos evitar o fetch desnecessário a menos que o usuário esteja digitando um novo CEP do zero.
+            // Para garantir a reatividade ao digitar 8 números:
+            fetchCepData(cepRaw);
         }
-    }, [formData.zip_code])
+    }, [formData.zip_code]);
 
     const handleCepBlur = async () => {
         const cep = formData.zip_code?.replace(/\D/g, '')

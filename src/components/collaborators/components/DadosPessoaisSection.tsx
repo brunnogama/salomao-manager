@@ -465,27 +465,8 @@ export function DadosPessoaisSection({
           )}
 
           {formData.emergency_contacts?.map((contato, index) => (
-            <div key={contato.id || index} className="grid grid-cols-1 md:grid-cols-4 gap-6 p-4 border border-gray-100 rounded-xl bg-gray-50/50 relative">
-              <div className="absolute top-2 right-2 flex items-center bg-white rounded-lg border border-gray-100 shadow-sm p-1">
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest px-2 mr-1">
-                  Contato #{index + 1}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newContacts = [...(formData.emergency_contacts || [])];
-                    newContacts.splice(index, 1);
-                    setFormData({ ...formData, emergency_contacts: newContacts });
-                  }}
-                  disabled={isViewMode}
-                  className="p-1.5 hover:bg-red-50 rounded-md text-red-500 disabled:opacity-50 flex items-center justify-center transition-colors bg-red-50/50"
-                  title="Excluir"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-
-              <div className="md:col-span-2 pt-2">
+            <div key={contato.id || index} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 border border-gray-100 rounded-xl bg-gray-50/50 relative items-start">
+              <div className="md:col-span-5">
                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
                   Nome do Contato {index + 1}
                 </label>
@@ -502,7 +483,7 @@ export function DadosPessoaisSection({
                   readOnly={isViewMode}
                 />
               </div>
-              <div className="md:col-span-1">
+              <div className="md:col-span-3">
                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
                   Telefone
                 </label>
@@ -520,7 +501,7 @@ export function DadosPessoaisSection({
                   readOnly={isViewMode}
                 />
               </div>
-              <div className="md:col-span-1">
+              <div className="md:col-span-3">
                 <SearchableSelect
                   label="Grau de Parentesco"
                   value={contato.parentesco || ''}
@@ -542,6 +523,21 @@ export function DadosPessoaisSection({
                   placeholder="Selecione"
                   disabled={isViewMode}
                 />
+              </div>
+              <div className="md:col-span-1 flex items-end pb-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newContacts = [...(formData.emergency_contacts || [])];
+                    newContacts.splice(index, 1);
+                    setFormData({ ...formData, emergency_contacts: newContacts });
+                  }}
+                  disabled={isViewMode}
+                  className="p-2 hover:bg-red-50 rounded-xl text-red-500 disabled:opacity-50 flex items-center justify-center transition-colors bg-red-50/50 border border-red-100 h-[42px] w-[42px]"
+                  title="Excluir Contato"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
           ))}

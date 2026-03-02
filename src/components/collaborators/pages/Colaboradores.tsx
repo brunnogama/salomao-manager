@@ -392,11 +392,30 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
 
   useEffect(() => {
-    const cep = formData.zip_code?.replace(/\D/g, '')
-    if (cep?.length === 8) {
-      handleCepBlur()
+    const fetchCepData = async (cepValue: string) => {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cepValue}/json/`);
+        const data = await response.json();
+        if (!data.erro) {
+          const estadoEncontrado = ESTADOS_BRASIL.find((e: any) => e.sigla === data.uf);
+          setFormData(prev => ({
+            ...prev,
+            address: toTitleCase(data.logradouro),
+            neighborhood: toTitleCase(data.bairro),
+            city: toTitleCase(data.localidade),
+            state: estadoEncontrado ? estadoEncontrado.nome : data.uf
+          }));
+        }
+      } catch (error) {
+        console.error("Erro CEP automático:", error);
+      }
+    };
+
+    const cepRaw = formData.zip_code?.replace(/\D/g, '');
+    if (cepRaw?.length === 8) {
+      fetchCepData(cepRaw);
     }
-  }, [formData.zip_code])
+  }, [formData.zip_code]);
 
   const handleCepBlur = async () => {
     const cep = formData.zip_code?.replace(/\D/g, '')
