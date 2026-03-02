@@ -394,16 +394,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
   useEffect(() => {
     const fetchCepData = async (cepValue: string) => {
       try {
-        const response = await fetch(`https://viacep.com.br/ws/${cepValue}/json/`);
+        const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cepValue}`);
         const data = await response.json();
-        if (!data.erro) {
-          const estadoEncontrado = ESTADOS_BRASIL.find((e: any) => e.sigla === data.uf);
+        if (!data.errors && !data.message) {
+          const estadoEncontrado = ESTADOS_BRASIL.find((e: any) => e.sigla === (data.state || data.uf));
           setFormData(prev => ({
             ...prev,
-            address: toTitleCase(data.logradouro),
-            neighborhood: toTitleCase(data.bairro),
-            city: toTitleCase(data.localidade),
-            state: estadoEncontrado ? estadoEncontrado.nome : data.uf
+            address: toTitleCase(data.street || data.logradouro || ''),
+            neighborhood: toTitleCase(data.neighborhood || data.bairro || ''),
+            city: toTitleCase(data.city || data.localidade || ''),
+            state: estadoEncontrado ? estadoEncontrado.nome : (data.state || data.uf || '')
           }));
         }
       } catch (error) {
@@ -421,16 +421,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const cep = formData.zip_code?.replace(/\D/g, '')
     if (cep?.length === 8) {
       try {
-        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cep}`)
         const data = await response.json()
-        if (!data.erro) {
-          const estadoEncontrado = ESTADOS_BRASIL.find(e => e.sigla === data.uf)
+        if (!data.errors && !data.message) {
+          const estadoEncontrado = ESTADOS_BRASIL.find((e: any) => e.sigla === (data.state || data.uf))
           setFormData(prev => ({
             ...prev,
-            address: toTitleCase(data.logradouro),
-            neighborhood: toTitleCase(data.bairro),
-            city: toTitleCase(data.localidade),
-            state: estadoEncontrado ? estadoEncontrado.nome : data.uf
+            address: toTitleCase(data.street || data.logradouro || ''),
+            neighborhood: toTitleCase(data.neighborhood || data.bairro || ''),
+            city: toTitleCase(data.city || data.localidade || ''),
+            state: estadoEncontrado ? estadoEncontrado.nome : (data.state || data.uf || '')
           }))
         }
       } catch (error) { console.error("Erro CEP:", error) }

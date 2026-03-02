@@ -101,10 +101,10 @@ export function NewClientModal({ isOpen, onClose, onSave, clientToEdit, tableNam
   const handleCepBlur = async (e: any) => {
     const cep = e.target.value.replace(/\D/g, '')
     if (cep.length === 8) {
-      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      const res = await fetch(`https://brasilapi.com.br/api/cep/v1/${cep}`)
       const data = await res.json()
-      if (!data.erro) {
-        setFormData(prev => ({ ...prev, endereco: data.logradouro, bairro: data.bairro, cidade: data.localidade, estado: data.uf }))
+      if (!data.errors && !data.message) {
+        setFormData(prev => ({ ...prev, endereco: data.street || data.logradouro || '', bairro: data.neighborhood || data.bairro || '', cidade: data.city || data.localidade || '', estado: data.state || data.uf || '' }))
       }
     }
   }
