@@ -391,6 +391,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
 
 
+  useEffect(() => {
+    const cep = formData.zip_code?.replace(/\D/g, '')
+    if (cep?.length === 8) {
+      handleCepBlur()
+    }
+  }, [formData.zip_code])
+
   const handleCepBlur = async () => {
     const cep = formData.zip_code?.replace(/\D/g, '')
     if (cep?.length === 8) {

@@ -137,7 +137,9 @@ export function TransporteSection({
                             { id: 'Metrô', name: 'Metrô' },
                             { id: 'Ônibus', name: 'Ônibus' },
                             { id: 'Trem', name: 'Trem' },
-                            { id: 'VLT', name: 'VLT' }
+                            { id: 'VLT', name: 'VLT' },
+                            { id: 'Barcas', name: 'Barcas' },
+                            { id: 'Não Optante', name: 'Não Optante' }
                         ]}
                         uppercase={false}
                         disabled={isViewMode}

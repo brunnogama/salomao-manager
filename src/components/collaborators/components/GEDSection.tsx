@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import React from 'react'
 import { Files, Plus, Trash2, FileText, ExternalLink } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { GEDDocument } from '../../../types/controladoria'
@@ -15,6 +15,7 @@ interface GEDSectionProps {
     pendingGedDocs: { file: File, category: string, tempId: string, atestadoDatas?: { inicio: string, fim: string } }[];
     setPendingGedDocs: (updateFn: (prev: any[]) => any[]) => void;
     handleDeleteGed: (doc: GEDDocument) => void;
+    hideDeleteButton?: boolean;
 }
 
 export function GEDSection({
@@ -28,7 +29,8 @@ export function GEDSection({
     gedDocs,
     pendingGedDocs,
     setPendingGedDocs,
-    handleDeleteGed
+    handleDeleteGed,
+    hideDeleteButton = false
 }: GEDSectionProps) {
     return (
         <div className="border-2 border-dashed border-gray-100 rounded-2xl p-6 bg-gray-50/50">
@@ -101,7 +103,9 @@ export function GEDSection({
                         </div>
                         <div className="flex gap-2">
                             <a href={doc.url} target="_blank" rel="noreferrer" className="p-1.5 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded transition-all"><ExternalLink className="h-4 w-4" /></a>
-                            <button onClick={() => handleDeleteGed(doc)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-all"><Trash2 className="h-4 w-4" /></button>
+                            {!hideDeleteButton && (
+                                <button onClick={() => handleDeleteGed(doc)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-all"><Trash2 className="h-4 w-4" /></button>
+                            )}
                         </div>
                     </div>
                 ))}

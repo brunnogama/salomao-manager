@@ -178,6 +178,13 @@ export default function AtualizacaoCadastral() {
         fetchCollaboratorData();
     }, [token]);
 
+    useEffect(() => {
+        const cep = formData.zip_code?.replace(/\D/g, '')
+        if (cep?.length === 8) {
+            handleCepBlur()
+        }
+    }, [formData.zip_code])
+
     const handleCepBlur = async () => {
         const cep = formData.zip_code?.replace(/\D/g, '')
         if (cep?.length === 8) {
@@ -210,9 +217,6 @@ export default function AtualizacaoCadastral() {
             if (selectedGedCategory === 'Atestado Médico' && atestadoDatas.inicio && atestadoDatas.fim) {
                 categoryLabel = `Atestado Médico (${maskDate(atestadoDatas.inicio)} a ${maskDate(atestadoDatas.fim)})`;
             }
-
-            const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-            const finalFileName = `${categoryLabel.replace(/[^a-zA-Z0-9]/g, '_')}_${cleanFileName}`;
 
             const newItem = {
                 file,
@@ -488,6 +492,7 @@ export default function AtualizacaoCadastral() {
                                 pendingGedDocs={pendingGedDocs}
                                 setPendingGedDocs={setPendingGedDocs}
                                 handleDeleteGed={handleDeleteGed}
+                                hideDeleteButton={true}
                             />
                         </div>
                     </div>
