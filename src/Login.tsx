@@ -40,7 +40,7 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
-          scopes: 'email User.Read offline_access openid',
+          scopes: 'email profile openid',
           redirectTo: window.location.origin + '/login'
         }
       })
@@ -95,8 +95,8 @@ export default function Login() {
               type="button"
               onClick={() => setActiveTab('microsoft')}
               className={`flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeTab === 'microsoft'
-                  ? 'bg-white text-[#0a192f] shadow-sm ring-1 ring-gray-200/50'
-                  : 'text-gray-400 hover:text-[#0a192f] hover:bg-white/50'
+                ? 'bg-white text-[#0a192f] shadow-sm ring-1 ring-gray-200/50'
+                : 'text-gray-400 hover:text-[#0a192f] hover:bg-white/50'
                 }`}
             >
               Microsoft
@@ -105,8 +105,8 @@ export default function Login() {
               type="button"
               onClick={() => setActiveTab('credentials')}
               className={`flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeTab === 'credentials'
-                  ? 'bg-white text-[#0a192f] shadow-sm ring-1 ring-gray-200/50'
-                  : 'text-gray-400 hover:text-[#0a192f] hover:bg-white/50'
+                ? 'bg-white text-[#0a192f] shadow-sm ring-1 ring-gray-200/50'
+                : 'text-gray-400 hover:text-[#0a192f] hover:bg-white/50'
                 }`}
             >
               Credenciais
