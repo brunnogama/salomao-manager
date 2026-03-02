@@ -40,7 +40,7 @@ export default function Login() {
         provider: 'azure',
         options: {
           scopes: 'email User.Read offline_access openid',
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin + '/login'
         }
       })
       if (error) throw error
