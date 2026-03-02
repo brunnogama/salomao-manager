@@ -1285,6 +1285,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
         <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto justify-end mt-2 md:mt-0 custom-scrollbar">
           {/* TABS MOVED HERE - OUTSIDE TERNARY */}
           <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
+            {colaboradores.some(c => c.cadastro_atualizado && c.status === 'active') && (
+              <button
+                onClick={() => setShowUpdatedOnly(!showUpdatedOnly)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${showUpdatedOnly ? 'bg-amber-100 text-amber-700 shadow-sm' : 'text-amber-600 hover:text-amber-800 hover:bg-amber-50'}`}
+                title="Ver Cadastros Atualizados"
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Atualizações ({colaboradores.filter(c => c.cadastro_atualizado && c.status === 'active').length})
+              </button>
+            )}
             <button
               onClick={() => setActiveMainTab('Colaboradores')}
               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Colaboradores' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
