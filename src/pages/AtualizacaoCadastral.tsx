@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Loader2, CheckCircle2, User, Save } from 'lucide-react';
@@ -6,6 +6,9 @@ import { Collaborator } from '../types/controladoria';
 import { DadosPessoaisSection } from '../components/collaborators/components/DadosPessoaisSection';
 import { EnderecoSection } from '../components/collaborators/components/EnderecoSection';
 import { DadosEscolaridadeSection } from '../components/collaborators/components/DadosEscolaridadeSection';
+import { TransporteSection } from '../components/collaborators/components/TransporteSection';
+import { GEDSection } from '../components/collaborators/components/GEDSection';
+import { GEDDocument } from '../types/controladoria';
 
 const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
 const maskCPF = (v: string) => {
@@ -68,6 +71,27 @@ export default function AtualizacaoCadastral() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
+    // GED States
+    const [gedDocs, setGedDocs] = useState<GEDDocument[]>([]);
+    const [selectedGedCategory, setSelectedGedCategory] = useState('');
+    const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string, atestadoDatas?: { inicio: string, fim: string } }[]>([]);
+    const gedInputRef = React.useRef<HTMLInputElement>(null);
+    const [atestadoDatas, setAtestadoDatas] = useState({ inicio: '', fim: '' });
+    const gedCategories = [
+        { id: '1', name: 'Documento de Identificação (RG/CNH)' },
+        { id: '2', name: 'CPF' },
+        { id: '3', name: 'Comprovante de Residência' },
+        { id: '4', name: 'Certidão de Nascimento/Casamento' },
+        { id: '5', name: 'Certificado de Escolaridade/Diploma' },
+        { id: '6', name: 'Carteira de Trabalho (CTPS)' },
+        { id: '7', name: 'PIS/PASEP' },
+        { id: '8', name: 'Título de Eleitor' },
+        { id: '9', name: 'Certificado de Reservista' },
+        { id: '10', name: 'Atestado Médico' },
+        { id: '11', name: 'Atestado de Saúde Ocupacional (ASO)' },
+        { id: '12', name: 'Outros' }
+    ];
+
     const [formData, setFormData] = useState<Partial<Collaborator>>({});
 
     useEffect(() => {
@@ -124,6 +148,13 @@ export default function AtualizacaoCadastral() {
                 };
 
                 setFormData(formattedColaborador);
+
+                // Fetch existing GED docs using the found collaborator id
+                const fetchGedDocs = async (colabId: string) => {
+                    const { data } = await supabase.from('ged_colaboradores').select('*').eq('colaborador_id', colabId).order('created_at', { ascending: false });
+                    if (data) setGedDocs(data);
+                };
+                fetchGedDocs(data.id);
             } catch (err: any) {
                 console.error('Erro ao buscar dados:', err);
                 setError('Este link é inválido, já foi utilizado ou expirou. Por favor, solicite um novo link ao RH.');
@@ -154,6 +185,62 @@ export default function AtualizacaoCadastral() {
             } catch (error) { console.error("Erro CEP:", error) }
         }
     }
+
+    const handleGedUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedGedCategory) {
+            // Need a category to upload
+            return;
+        }
+
+        try {
+            let categoryLabel = selectedGedCategory;
+            if (selectedGedCategory === 'Atestado Médico' && atestadoDatas.inicio && atestadoDatas.fim) {
+                categoryLabel = `Atestado Médico (${maskDate(atestadoDatas.inicio)} a ${maskDate(atestadoDatas.fim)})`;
+            }
+
+            const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const finalFileName = `${categoryLabel.replace(/[^a-zA-Z0-9]/g, '_')}_${cleanFileName}`;
+
+            const newItem = {
+                file,
+                category: selectedGedCategory,
+                label: categoryLabel !== selectedGedCategory ? categoryLabel : undefined,
+                tempId: Math.random().toString(36).substring(7),
+                atestadoDatas: selectedGedCategory === 'Atestado Médico' ? { ...atestadoDatas } : undefined
+            };
+
+            setPendingGedDocs(prev => [...prev, newItem]);
+            setSelectedGedCategory('');
+            if (selectedGedCategory === 'Atestado Médico') {
+                setAtestadoDatas({ inicio: '', fim: '' });
+            }
+        } catch (error: any) {
+            console.error('Erro ao processar arquivo:', error);
+            setError('Falha ao preparar o arquivo para envio. Tente novamente.');
+        } finally {
+            if (gedInputRef.current) gedInputRef.current.value = '';
+        }
+    };
+
+    const handleDeleteGed = async (doc: GEDDocument) => {
+        if (!window.confirm(`Tem certeza que deseja excluir o documento: ${doc.nome_arquivo}?`)) return;
+
+        try {
+            const path = doc.url.split('/ged-colaboradores/')[1];
+            if (path) {
+                await supabase.storage.from('ged-colaboradores').remove([path]);
+            }
+            await supabase.from('ged_colaboradores').delete().eq('id', doc.id);
+            if (formData.id) {
+                const { data } = await supabase.from('ged_colaboradores').select('*').eq('colaborador_id', formData.id).order('created_at', { ascending: false });
+                if (data) setGedDocs(data);
+            }
+        } catch (error: any) {
+            console.error('Erro ao excluir documento:', error);
+            setError('Falha ao excluir o documento. Tente novamente.');
+        }
+    };
 
     const handleSave = async () => {
         try {
@@ -217,13 +304,41 @@ export default function AtualizacaoCadastral() {
                     ...edu,
                     instituicao_uf: edu.instituicao_uf || null,
                     previsao_conclusao: formatDateToISO(edu.previsao_conclusao) || null
-                }))
+                })),
+                transportes: formData.transportes || []
             };
 
-            const { error: updateError } = await supabase.rpc('update_collaborator_by_token', {
+            const { data: updatedData, error: updateError } = await supabase.rpc('update_collaborator_by_token', {
                 p_token: token,
                 p_data: dataToSave
             });
+
+            if (updateError) throw updateError;
+
+            // Upload pending GED docs
+            if (updatedData && updatedData.id && pendingGedDocs.length > 0) {
+                for (const doc of pendingGedDocs) {
+                    const cleanFileName = doc.file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                    const categoryLabel = doc.label || doc.category;
+                    const finalFileName = `${categoryLabel.replace(/[^a-zA-Z0-9]/g, '_')}_${cleanFileName}`;
+
+                    const filePath = `ged/${updatedData.id}/${Date.now()}_${finalFileName}`;
+
+                    const { error: upErr } = await supabase.storage.from('ged-colaboradores').upload(filePath, doc.file);
+
+                    if (!upErr) {
+                        const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath);
+                        await supabase.from('ged_colaboradores').insert({
+                            colaborador_id: updatedData.id,
+                            nome_arquivo: finalFileName,
+                            url: publicUrl,
+                            categoria: doc.category,
+                            dados_atestado: doc.atestadoDatas?.inicio ? doc.atestadoDatas : null
+                        });
+                    }
+                }
+                setPendingGedDocs([]);
+            }
 
             if (updateError) throw updateError;
 
@@ -331,6 +446,24 @@ export default function AtualizacaoCadastral() {
                                 setFormData={setFormData}
                                 maskDate={maskDate}
                                 isViewMode={false}
+                            />
+                            <TransporteSection
+                                transportes={formData.transportes || []}
+                                setTransportes={(newT) => setFormData(prev => ({ ...prev, transportes: newT }))}
+                                isViewMode={false}
+                            />
+                            <GEDSection
+                                gedCategories={gedCategories}
+                                selectedGedCategory={selectedGedCategory}
+                                setSelectedGedCategory={setSelectedGedCategory}
+                                atestadoDatas={atestadoDatas}
+                                setAtestadoDatas={setAtestadoDatas}
+                                gedInputRef={gedInputRef}
+                                handleGedUpload={handleGedUpload}
+                                gedDocs={gedDocs}
+                                pendingGedDocs={pendingGedDocs}
+                                setPendingGedDocs={setPendingGedDocs}
+                                handleDeleteGed={handleDeleteGed}
                             />
                         </div>
                     </div>
