@@ -436,16 +436,29 @@ export function Calendario() {
           </div>
           <div>
             <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Calendário
+              Agenda
             </h1>
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
-              Acompanhe os aniversários dos collaborators, reuniões e eventos
+              Acompanhe os aniversários dos colaboradores, reuniões e eventos
             </p>
           </div>
         </div>
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto mt-2 sm:mt-0">
+          <div className="relative flex items-center justify-center p-2 sm:p-2.5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all group overflow-hidden cursor-pointer">
+            <input
+              type="date"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              title="Consultar Data"
+              onClick={(e) => {
+                try {
+                  (e.target as any).showPicker();
+                } catch (err) { }
+              }}
+            />
+            <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#1e3a8a] group-hover:scale-110 transition-transform" />
+          </div>
           <button
             onClick={() => { setEditingEvento(null); setIsModalOpen(true); }}
             className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-[#15803d] to-green-700 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 hover:from-green-700 hover:to-[#15803d]"

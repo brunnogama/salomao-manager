@@ -24,6 +24,7 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate()
   const [userName, setUserName] = useState('Carregando...')
+  const [hasAgendaNotifications, setHasAgendaNotifications] = useState(false)
   const location = useLocation()
   const activePage = location.pathname
 
@@ -47,6 +48,52 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     }
   }
 
+  const checkAgendaNotifications = async () => {
+    try {
+      const hoje = new Date()
+      const dia = hoje.getDate()
+      const mes = hoje.getMonth() + 1
+      const ano = hoje.getFullYear()
+      const hojeStr = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+
+      // 1. Checar eventos de hoje
+      const { data: eventos } = await supabase
+        .from('events')
+        .select('id')
+        .eq('event_date', hojeStr)
+        .limit(1)
+
+      if (eventos && eventos.length > 0) {
+        setHasAgendaNotifications(true)
+        return
+      }
+
+      // 2. Checar aniversariantes
+      const { data: colabs } = await supabase
+        .from('collaborators')
+        .select('birthday')
+        .eq('status', 'active')
+        .not('birthday', 'is', null)
+
+      if (colabs) {
+        const temAniversario = colabs.some(c => {
+          if (!c.birthday) return false
+          const [, mStr, dStr] = c.birthday.split('T')[0].split('-')
+          return parseInt(mStr, 10) === mes && parseInt(dStr, 10) === dia
+        })
+
+        if (temAniversario) {
+          setHasAgendaNotifications(true)
+          return
+        }
+      }
+
+      setHasAgendaNotifications(false)
+    } catch (error) {
+      console.error('Erro ao buscar notificações da agenda:', error)
+    }
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     navigate('/login')
@@ -54,12 +101,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   useEffect(() => {
     fetchUserProfile()
+    checkAgendaNotifications()
   }, [])
 
   const mainItems = [
     { path: '/rh/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/rh/colaboradores', label: 'Colaboradores', icon: Users },
-    { path: '/rh/calendario', label: 'Calendário', icon: Calendar },
+    { path: '/rh/calendario', label: 'Agenda', icon: Calendar },
     { path: '/rh/presencial', label: 'Presencial', icon: MapPin },
     { path: '/rh/evolucao', label: 'Evolução de Pessoal', icon: TrendingUp },
     { path: '/rh/tempo-casa', label: 'Tempo de casa', icon: Clock },
@@ -123,7 +171,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 }`}
             >
               <item.icon className={`h-5 w-5 transition-transform duration-300 ${isActive(item.path) ? 'scale-110' : 'group-hover:scale-110'}`} />
-              <span className="text-sm font-medium">{item.label}</span>
+              <span className="text-sm font-medium flex items-center gap-2">
+                {item.label}
+                {item.path === '/rh/calendario' && hasAgendaNotifications && (
+                  <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]" title="Eventos ou Aniversários Hoje" />
+                )}
+              </span>
               {isActive(item.path) && (
                 <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-blue-400" />
               )}
