@@ -411,7 +411,9 @@ export default function AtualizacaoCadastral() {
             <div className="max-w-4xl mx-auto">
                 {/* Header Horizontal */}
                 <div className="flex items-center gap-5 mb-8">
-                    <img src="/logo-salomao.png" alt="Salomão" className="h-[55px] object-contain shrink-0" />
+                    <div className="shrink-0 bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+                        <img src="/logo-salomao.png" alt="Salomão" className="h-[55px] object-contain" />
+                    </div>
                     <div>
                         <h1 className="text-2xl sm:text-3xl font-black text-[#0a192f] tracking-tight leading-none mb-1">Atualização Cadastral</h1>
                         <p className="text-gray-500 text-sm sm:text-base">Por favor, revise seus dados e atualize o que for necessário.</p>

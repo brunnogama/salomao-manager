@@ -520,7 +520,7 @@ export function DadosPessoaisSection({
                   readOnly={isViewMode}
                 />
               </div>
-              <div className="md:col-span-1 pt-[22px]">
+              <div className="md:col-span-1">
                 <SearchableSelect
                   label="Grau de Parentesco"
                   value={contato.parentesco || ''}
