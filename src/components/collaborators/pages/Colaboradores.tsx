@@ -1719,11 +1719,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   value={advFilterTransporteTipo}
                   onChange={setAdvFilterTransporteTipo}
                   options={[
-                    { id: 'Integração BU', label: 'Integração BU', value: 'Integração BU' },
+                    { id: 'Integração Bilhete Único', label: 'Integração Bilhete Único', value: 'Integração Bilhete Único' },
                     { id: 'Metrô', label: 'Metrô', value: 'Metrô' },
                     { id: 'Ônibus', label: 'Ônibus', value: 'Ônibus' },
                     { id: 'Trem', label: 'Trem', value: 'Trem' },
-                    { id: 'VLT', label: 'VLT', value: 'VLT' }
+                    { id: 'VLT', label: 'VLT', value: 'VLT' },
+                    { id: 'Barcas', label: 'Barcas', value: 'Barcas' },
+                    { id: 'Não Optante', label: 'Não Optante', value: 'Não Optante' }
                   ]}
                   placeholder="Todos..."
                 />

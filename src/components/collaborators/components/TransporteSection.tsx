@@ -30,12 +30,11 @@ export function TransporteSection({
         numValue: number;
     } | null>(null);
 
-    const handleAddTransport = () => {
-        if (!pendingTransportType) return;
-        if (transportes.some(t => t.tipo === pendingTransportType)) return;
+    const handleAddTransport = (type: string) => {
+        if (!type || transportes.some(t => t.tipo === type)) return;
 
         const newTransport = {
-            tipo: pendingTransportType,
+            tipo: type,
             ida_qtd: 0,
             volta_qtd: 0,
             ida_valores: [],
@@ -43,7 +42,6 @@ export function TransporteSection({
         };
 
         setTransportes([...transportes, newTransport]);
-        setPendingTransportType('');
     };
 
     const handleRemoveTransport = (indexToRemove: number) => {
@@ -124,36 +122,6 @@ export function TransporteSection({
             <h4 className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest flex items-center gap-2 mb-6">
                 <Bus className="h-4 w-4" /> Transporte
             </h4>
-
-            {/* Seletor de Tipo para Adicionar Novo */}
-            <div className="flex flex-col gap-2 md:w-1/3 mb-6">
-                <div className="relative">
-                    <SearchableSelect
-                        label="Adicionar Tipo de Transporte"
-                        value={pendingTransportType}
-                        onChange={setPendingTransportType}
-                        options={[
-                            { id: 'Integração Bilhete Único', name: 'Integração Bilhete Único' },
-                            { id: 'Metrô', name: 'Metrô' },
-                            { id: 'Ônibus', name: 'Ônibus' },
-                            { id: 'Trem', name: 'Trem' },
-                            { id: 'VLT', name: 'VLT' },
-                            { id: 'Barcas', name: 'Barcas' },
-                            { id: 'Não Optante', name: 'Não Optante' }
-                        ]}
-                        uppercase={false}
-                        disabled={isViewMode}
-                    />
-                    <button
-                        type="button"
-                        onClick={handleAddTransport}
-                        disabled={!pendingTransportType || isViewMode}
-                        className="absolute right-0 bottom-1 flex items-center justify-center h-[42px] w-[50px] bg-[#1e3a8a] text-white rounded-r-xl hover:bg-[#112240] transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed border-none"
-                    >
-                        <Plus className="h-5 w-5" />
-                    </button>
-                </div>
-            </div>
 
             {/* Blocos de Transporte Selecionados */}
             {transportes.length > 0 && (
@@ -252,6 +220,35 @@ export function TransporteSection({
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Seletor de Tipo para Adicionar Novo */}
+            {!isViewMode && (
+                <div className="flex flex-col gap-2 md:w-1/3 mb-6 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md animate-in slide-in-from-bottom-2">
+                    <SearchableSelect
+                        label="Adicionar Tipo de Transporte"
+                        value={pendingTransportType}
+                        onChange={(val) => {
+                            setPendingTransportType(val);
+                            if (val) {
+                                handleAddTransport(val);
+                                setTimeout(() => setPendingTransportType(''), 10);
+                            }
+                        }}
+                        options={[
+                            { id: 'Integração Bilhete Único', name: 'Integração Bilhete Único' },
+                            { id: 'Metrô', name: 'Metrô' },
+                            { id: 'Ônibus', name: 'Ônibus' },
+                            { id: 'Trem', name: 'Trem' },
+                            { id: 'VLT', name: 'VLT' },
+                            { id: 'Barcas', name: 'Barcas' },
+                            { id: 'Não Optante', name: 'Não Optante' }
+                        ]}
+                        uppercase={false}
+                        disabled={isViewMode}
+                        placeholder="Pesquise o transporte..."
+                    />
                 </div>
             )}
 

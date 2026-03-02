@@ -36,7 +36,7 @@ export function GEDSection({
         <div className="border-2 border-dashed border-gray-100 rounded-2xl p-6 bg-gray-50/50">
             <div className="text-center mb-6">
                 <Files className="h-10 w-10 mx-auto mb-2 text-[#1e3a8a] opacity-50" />
-                <h3 className="text-sm font-bold text-[#0a192f]">Gestão de Documentos</h3>
+                <h3 className="text-sm font-bold text-[#0a192f]">Arquivos Vinculados</h3>
             </div>
 
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6">

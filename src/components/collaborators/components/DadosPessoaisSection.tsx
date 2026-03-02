@@ -1,6 +1,6 @@
 // src/components/collaborators/components/DadosPessoaisSection.tsx
 
-import { User, Plus, Minus, Landmark, Linkedin } from 'lucide-react'
+import { User, Plus, Minus, Landmark, Linkedin, Trash2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
@@ -439,20 +439,41 @@ export function DadosPessoaisSection({
             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
               Contatos: {formData.emergency_contacts?.length || 0}
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                const currentContacts = formData.emergency_contacts || [];
-                setFormData({
-                  ...formData,
-                  emergency_contacts: [...currentContacts, { id: crypto.randomUUID(), nome: '', telefone: '', parentesco: '' }]
-                });
-              }}
-              disabled={isViewMode}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-[#1e3a8a]/20 disabled:opacity-50 transition-colors"
-            >
-              <Plus className="h-3 w-3" /> Adicionar Contato
-            </button>
+            <div className="flex items-center h-[32px] bg-gray-100/50 border border-gray-200 rounded-xl px-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const currentContacts = formData.emergency_contacts || [];
+                  if (currentContacts.length > 0) {
+                    setFormData({
+                      ...formData,
+                      emergency_contacts: currentContacts.slice(0, currentContacts.length - 1)
+                    });
+                  }
+                }}
+                disabled={isViewMode || (formData.emergency_contacts?.length || 0) === 0}
+                className="p-1 hover:bg-gray-200 rounded-lg text-gray-500 disabled:opacity-50 min-w-8 flex items-center justify-center transition-colors"
+                title="Remover Último Contato"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <div className="w-px h-4 bg-gray-300 mx-1"></div>
+              <button
+                type="button"
+                onClick={() => {
+                  const currentContacts = formData.emergency_contacts || [];
+                  setFormData({
+                    ...formData,
+                    emergency_contacts: [...currentContacts, { id: crypto.randomUUID(), nome: '', telefone: '', parentesco: '' }]
+                  });
+                }}
+                disabled={isViewMode}
+                className="p-1 hover:bg-[#1e3a8a]/10 rounded-lg text-[#1e3a8a] disabled:opacity-50 min-w-8 flex items-center justify-center transition-colors"
+                title="Adicionar Contato"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -465,7 +486,10 @@ export function DadosPessoaisSection({
 
           {formData.emergency_contacts?.map((contato, index) => (
             <div key={contato.id || index} className="grid grid-cols-1 md:grid-cols-4 gap-6 p-4 border border-gray-100 rounded-xl bg-gray-50/50 relative">
-              <div className="absolute top-2 right-2">
+              <div className="absolute top-2 right-2 flex items-center bg-white rounded-lg border border-gray-100 shadow-sm p-1">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest px-2 mr-1">
+                  Contato #{index + 1}
+                </span>
                 <button
                   type="button"
                   onClick={() => {
@@ -474,14 +498,14 @@ export function DadosPessoaisSection({
                     setFormData({ ...formData, emergency_contacts: newContacts });
                   }}
                   disabled={isViewMode}
-                  className="p-1 hover:bg-red-100 rounded-lg text-red-500 disabled:opacity-50 min-w-8 flex items-center justify-center transition-colors"
-                  title="Remover Contato"
+                  className="p-1.5 hover:bg-red-50 rounded-md text-red-500 disabled:opacity-50 flex items-center justify-center transition-colors bg-red-50/50"
+                  title="Excluir"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
 
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 pt-2">
                 <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
                   Nome do Contato {index + 1}
                 </label>

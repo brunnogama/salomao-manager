@@ -417,6 +417,19 @@ export default function AtualizacaoCadastral() {
                     <p className="text-gray-500 mt-2 max-w-lg mx-auto">Por favor, revise atentamente suas informações pessoais, endereço e escolaridade abaixo. Atualize o que for necessário e clique em salvar.</p>
                 </div>
 
+                {/* LGPD Banner Destaque Topo */}
+                <div className="bg-emerald-50 border border-emerald-200 shadow-sm rounded-2xl p-4 sm:p-5 flex items-start gap-4 mb-8 rotate-1 hover:rotate-0 transition-transform duration-300 max-w-2xl mx-auto">
+                    <div className="bg-emerald-100 p-2.5 rounded-full text-emerald-600 shrink-0 shadow-inner">
+                        <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div className="pt-0.5">
+                        <h3 className="text-emerald-900 font-bold text-sm mb-1">Privacidade e Proteção de Dados (LGPD)</h3>
+                        <p className="text-emerald-700/90 text-xs sm:text-sm leading-relaxed">
+                            Acesso seguro e restrito. Suas informações são confidenciais e protegidas por criptografia rigorosa liderada pelo RH da Salomão, estritamente conforme as normas da <strong>Lei Geral de Proteção de Dados</strong>.
+                        </p>
+                    </div>
+                </div>
+
                 <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden relative">
 
                     <div className="px-8 py-8 md:px-12 md:py-10 space-y-10">
@@ -428,19 +441,6 @@ export default function AtualizacaoCadastral() {
                             <div>
                                 <h2 className="text-xl font-bold text-[#0a192f]">{formData.name}</h2>
                                 <p className="text-sm font-medium text-gray-500">{formData.email}</p>
-                            </div>
-                        </div>
-
-                        {/* LGPD Banner */}
-                        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 flex items-start gap-4">
-                            <div className="bg-emerald-100 p-2 rounded-xl text-emerald-600 shrink-0">
-                                <ShieldCheck className="w-6 h-6" />
-                            </div>
-                            <div className="pt-0.5">
-                                <h3 className="text-emerald-900 font-bold text-sm mb-1">Ambiente Seguro e Confiável (Adequação à LGPD)</h3>
-                                <p className="text-emerald-700 text-sm leading-relaxed">
-                                    Todas as informações fornecidas e anexadas nesta página estão protegidas em nosso sistema através de criptografia e acesso rigorosamente restrito e auditado pelo setor de Recursos Humanos. Seus dados serão mantidos de forma confidencial e estritamente de acordo com a Lei Geral de Proteção de Dados Pessoais (LGPD).
-                                </p>
                             </div>
                         </div>
 
