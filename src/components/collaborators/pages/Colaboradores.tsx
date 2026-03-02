@@ -735,14 +735,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (advFilterAdmissionStart && (!c.hire_date || c.hire_date < advFilterAdmissionStart)) return false;
       if (advFilterAdmissionEnd && (!c.hire_date || c.hire_date > advFilterAdmissionEnd)) return false;
 
-      if (advFilterPartner && String(c.partner_id) !== advFilterPartner && String((c as any).partner?.name) !== advFilterPartner) return false;
-      if (advFilterLeader && String(c.leader_id) !== advFilterLeader && String((c as any).leader?.name) !== advFilterLeader) return false;
+      const safeCompare = (filterVal: string, ...targetVals: (string | undefined | null)[]) => {
+        if (!filterVal) return true;
+        const lowFilter = filterVal.toLowerCase();
+        return targetVals.some(t => t && String(t).toLowerCase() === lowFilter);
+      };
 
-      if (advFilterArea && c.area !== advFilterArea) return false;
-      if (advFilterTeam && String(c.equipe) !== advFilterTeam && String((c as any).teams?.name) !== advFilterTeam) return false;
-      if (advFilterRole && String(c.role) !== advFilterRole && String((c as any).roles?.name) !== advFilterRole) return false;
-      if (advFilterContractType && c.contract_type !== advFilterContractType) return false;
-      if (advFilterLocal && String(c.local) !== advFilterLocal && String((c as any).locations?.name) !== advFilterLocal) return false;
+      if (!safeCompare(advFilterPartner, c.partner_id, (c as any).partner?.name)) return false;
+      if (!safeCompare(advFilterLeader, c.leader_id, (c as any).leader?.name)) return false;
+
+      if (!safeCompare(advFilterArea, c.area)) return false;
+      if (!safeCompare(advFilterTeam, c.equipe, (c as any).teams?.name)) return false;
+      if (!safeCompare(advFilterRole, c.role, (c as any).roles?.name)) return false;
+      if (!safeCompare(advFilterContractType, c.contract_type)) return false;
+      if (!safeCompare(advFilterLocal, c.local, (c as any).locations?.name)) return false;
 
       // Escolares
       if (advFilterGraduationComplete) {
