@@ -1527,7 +1527,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0 overflow-hidden animate-in slide-in-from-bottom-6 duration-700">
             <div
               ref={listContainerRef}
-              className="flex-1 overflow-auto custom-scrollbar relative pb-4"
+              className="flex-1 overflow-auto custom-scrollbar-table relative pb-4"
             >
               <table className="w-full min-w-[1000px]">
                 <thead className="sticky top-0 z-10">
