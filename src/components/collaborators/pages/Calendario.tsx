@@ -13,7 +13,10 @@ import {
   CalendarDays,
   Calendar as CalendarEventIcon,
   Pencil,
-  Trash2
+  Trash2,
+  Check,
+  Send,
+  Loader2
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useColaboradores } from '../hooks/useColaboradores'
@@ -122,6 +125,10 @@ export function Calendario() {
     participantes_externos: [],
     participantes_socios: []
   })
+
+  // Estados para Aniversários WPP
+  const [selectedAniversariantes, setSelectedAniversariantes] = useState<string[]>([])
+  const [isSendingWpp, setIsSendingWpp] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -341,6 +348,67 @@ export function Calendario() {
 
   const aniversarios = processarAniversarios()
 
+  const handleToggleAniversariante = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedAniversariantes(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  }
+
+  const handleSendWpp = async () => {
+    if (selectedAniversariantes.length === 0) return;
+    setIsSendingWpp(true);
+
+    try {
+      const selecionados = aniversarios.filter(a => selectedAniversariantes.includes(String(a.colaborador.id)));
+
+      const locationsSet = new Set(selecionados.map(a => a.colaborador.location).filter(Boolean));
+      const locations = Array.from(locationsSet);
+      if (locations.length === 0) locations.push('Escritório'); // fallback
+
+      const names = selecionados.map(a => formatName(a.colaborador.name));
+
+      // TEXTO PADRÃO SOLICITADO
+      // "Hoje celebramos os aniversários dos nossos integrantes do (nomes das cidades): (nomes de todos os aniversariantes do dia) Parabéns e que os novos ciclos de vocês sejam repletos de realizações, saúde e muitas alegrias."
+
+      const textoPadrao = `Hoje celebramos os aniversários dos nossos integrantes do ${locations.join(' e ')}: ${names.join(', ')}. Parabéns e que os novos ciclos de vocês sejam repletos de realizações, saúde e muitas alegrias.`;
+
+      // Payload para enviar ao Make.com
+      const payload = {
+        tipo: selecionados.length > 1 ? 'mensal_ou_multiplo' : 'diario',
+        cidades: locations.join(' e '),
+        nomes: names.join(', '),
+        quantidade: selecionados.length,
+        mensagem_pronta: textoPadrao,
+        aniversariantes: selecionados.map(s => ({
+          nome: formatName(s.colaborador.name),
+          cidade: s.colaborador.location || 'Escritório',
+          foto: s.colaborador.photo_url || ''
+        }))
+      };
+
+      const webhookUrl = 'SUA_URL_DO_MAKE_AQUI'; // <- O usuário precisa substituir isso depois
+
+      if (webhookUrl === 'SUA_URL_DO_MAKE_AQUI') {
+        console.log("PAYLOAD QUE SERIA ENVIADO PARA O MAKE:", payload);
+        alert("Por favor, configure a URL do Webhook do Make.com no código (Calendario.tsx). O envio foi simulado no console.");
+      } else {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        alert('Mensagem enviada com sucesso para a automação!');
+        setSelectedAniversariantes([]); // limpa a seleção
+      }
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
+      alert('Erro ao enviar a mensagem. Verifique a URL do Webhook e o console.');
+    } finally {
+      setIsSendingWpp(false);
+    }
+  }
+
 
 
   const eventosDoMes = (mes: number, ano: number) => {
@@ -539,55 +607,79 @@ export function Calendario() {
                 </div>
                 <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Aniversários</h2>
               </div>
+
+              {selectedAniversariantes.length > 0 && (
+                <button
+                  disabled={isSendingWpp}
+                  onClick={handleSendWpp}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all text-xs font-bold uppercase tracking-wider active:scale-95 disabled:opacity-70"
+                >
+                  {isSendingWpp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  Parabenizar ({selectedAniversariantes.length})
+                </button>
+              )}
             </div>
 
             <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
-              {getProximosAniversarios().map((aniv) => (
-                <div
-                  key={aniv.colaborador.id}
-                  onClick={() => setVisualizarColaborador(aniv.colaborador as Colaborador)}
-                  className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer ${aniv.isHoje
-                    ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
-                    : aniv.isEstaSemana
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
-                      : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
-                    }`}
-                >
-                  <div className="flex items-center gap-4 min-w-0 pr-2">
-                    {aniv.colaborador.photo_url ? (
-                      <img
-                        src={aniv.colaborador.photo_url}
-                        alt={aniv.colaborador.name}
-                        className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-lg font-black border-2 border-[#d4af37]/30 shadow-md shrink-0">
-                        {aniv.colaborador.name.charAt(0).toUpperCase()}
+              {getProximosAniversarios().map((aniv) => {
+                const isSelected = selectedAniversariantes.includes(String(aniv.colaborador.id));
+                return (
+                  <div
+                    key={aniv.colaborador.id}
+                    onClick={() => setVisualizarColaborador(aniv.colaborador as Colaborador)}
+                    className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer relative ${aniv.isHoje
+                      ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
+                      : aniv.isEstaSemana
+                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
+                        : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
+                      } ${isSelected ? 'ring-2 ring-green-500 border-transparent' : ''}`}
+                  >
+                    <div className="flex items-center gap-4 min-w-0 pr-2">
+                      <div
+                        onClick={(e) => handleToggleAniversariante(e, String(aniv.colaborador.id))}
+                        className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${isSelected
+                            ? 'bg-green-500 border-green-500 text-white'
+                            : 'border-gray-300 bg-white hover:border-green-500'
+                          }`}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5" />}
                       </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-black text-[#0a192f] text-sm truncate">{aniv.isHoje ? '🎉 ' : ''}{formatName(aniv.colaborador.name)}</p>
-                      <p className="text-[10px] font-semibold text-gray-600 truncate max-w-[120px] md:max-w-[200px]">{toTitleCase(aniv.colaborador.role)}</p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-4 border-l border-gray-200/50 pl-4 shrink-0">
-                    <div className="text-right hidden sm:block">
-                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Data</p>
-                      <p className="font-bold text-[#0a192f] text-xs">
-                        {aniv.dia} {MESES[aniv.mes].substring(0, 3)}
-                      </p>
+                      {aniv.colaborador.photo_url ? (
+                        <img
+                          src={aniv.colaborador.photo_url}
+                          alt={aniv.colaborador.name}
+                          className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-lg font-black border-2 border-[#d4af37]/30 shadow-md shrink-0">
+                          {aniv.colaborador.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-black text-[#0a192f] text-sm truncate">{aniv.isHoje ? '🎉 ' : ''}{formatName(aniv.colaborador.name)}</p>
+                        <p className="text-[10px] font-semibold text-gray-600 truncate max-w-[120px] md:max-w-[200px]">{toTitleCase(aniv.colaborador.role)}</p>
+                      </div>
                     </div>
-                    <div className="text-right w-12 sm:w-16">
-                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{aniv.diasRestantes === 0 ? '' : 'Faltam'}</p>
-                      <p className={`font-black text-sm flex items-center justify-end ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
-                        }`}>
-                        {aniv.diasRestantes === 0 ? <span className="text-[#d4af37] text-base transform scale-110">Hoje</span> : `${aniv.diasRestantes}d`}
-                      </p>
+
+                    <div className="flex items-center gap-4 border-l border-gray-200/50 pl-4 shrink-0">
+                      <div className="text-right hidden sm:block">
+                        <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Data</p>
+                        <p className="font-bold text-[#0a192f] text-xs">
+                          {aniv.dia} {MESES[aniv.mes].substring(0, 3)}
+                        </p>
+                      </div>
+                      <div className="text-right w-12 sm:w-16">
+                        <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{aniv.diasRestantes === 0 ? '' : 'Faltam'}</p>
+                        <p className={`font-black text-sm flex items-center justify-end ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                          }`}>
+                          {aniv.diasRestantes === 0 ? <span className="text-[#d4af37] text-base transform scale-110">Hoje</span> : `${aniv.diasRestantes}d`}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
