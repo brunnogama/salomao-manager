@@ -9,6 +9,21 @@ export interface AppUpdate {
 
 export const APP_UPDATES: AppUpdate[] = [
     {
+        version: '1.2.0',
+        date: '02/03/2026',
+        title: 'Melhorias de RH e Logística de Transporte',
+        description: 'Lançamos um conjunto de novidades voltadas para a otimização de Admissões, Transporte Corporativo e UX Geral da plataforma.',
+        features: [
+            'Alertas Automáticos de RH: O sistema agora notifica a equipe do RH sempre que um colaborador completar 3 meses de casa (Entrega de Mochila) ou for Aniversariante do Dia.',
+            'Gestão Avançada de Transporte: Implementamos o cadastro de múltiplos transportes na aba de Dados Corporativos, contabilizando automaticamente a estimativa de custo mensal baseada em dias úteis.',
+            'Interface Mais Limpa: Reformulamos as abas de Filtros Avançados e o botão de Adição na tela principal de gerenciamento de equipe para ocupar menos espaço e focar no que importa.',
+            'Nova Experiência de Novidades: O modal de novidades do sistema não abre mais repentinamente. Ele foi substituído por um ícone piscante de aviso no menu de módulos.'
+        ],
+        fixes: [
+            'Correção na barra de transbordamento horizontal de tabelas para não encobrir os cabeçalhos.'
+        ]
+    },
+    {
         version: '1.1.0',
         date: '01/03/2026',
         title: 'Atualizações no Calendário e Correções',
