@@ -3,7 +3,7 @@ import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock,
-  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw
+  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, Filter
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX } from '../utils/exportColaboradores'
@@ -92,6 +92,37 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [filterPartner, setFilterPartner] = useState('')
   const [filterLocal, setFilterLocal] = useState('')
   const [filterCargo, setFilterCargo] = useState('')
+
+  // New Tabs State
+  const [activeMainTab, setActiveMainTab] = useState<'Colaboradores' | 'Filtros'>('Colaboradores');
+
+  // Advanced Filters State
+  // Pessoais
+  const [advFilterGender, setAdvFilterGender] = useState('');
+  const [advFilterBirthStart, setAdvFilterBirthStart] = useState('');
+  const [advFilterBirthEnd, setAdvFilterBirthEnd] = useState('');
+  const [advFilterChildren, setAdvFilterChildren] = useState<'all' | 'sim' | 'nao'>('all');
+  const [advFilterStateHome, setAdvFilterStateHome] = useState('');
+
+  // Corporativos
+  const [advFilterStatus, setAdvFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [advFilterRateio, setAdvFilterRateio] = useState('');
+  const [advFilterAdmissionStart, setAdvFilterAdmissionStart] = useState('');
+  const [advFilterAdmissionEnd, setAdvFilterAdmissionEnd] = useState('');
+  const [advFilterPartner, setAdvFilterPartner] = useState('');
+  const [advFilterLeader, setAdvFilterLeader] = useState('');
+  const [advFilterArea, setAdvFilterArea] = useState('');
+  const [advFilterTeam, setAdvFilterTeam] = useState('');
+  const [advFilterRole, setAdvFilterRole] = useState('');
+  const [advFilterContractType, setAdvFilterContractType] = useState('');
+  const [advFilterLocal, setAdvFilterLocal] = useState('');
+
+  // Escolares
+  const [advFilterGraduationComplete, setAdvFilterGraduationComplete] = useState<'all' | 'sim' | 'nao'>('all');
+  const [advFilterPostGraduationComplete, setAdvFilterPostGraduationComplete] = useState<'all' | 'sim' | 'nao'>('all');
+  const [advFilterExpectedCompletion, setAdvFilterExpectedCompletion] = useState('');
+  const [advFilterCompletionYear, setAdvFilterCompletionYear] = useState('');
+
 
 
 
@@ -662,10 +693,67 @@ export function Colaboradores({ }: ColaboradoresProps) {
     const matchUpdated = showUpdatedOnly ? c.cadastro_atualizado === true : true
     return matchSearch && matchLider && matchPartner && matchLocal && matchCargo && matchUpdated
   })
+  const getAdvancedFiltered = () => {
+    return colaboradores.filter(c => {
+      // Pessoais
+      if (advFilterGender && c.gender !== advFilterGender) return false;
+      if (advFilterBirthStart && (!c.birthday || c.birthday < advFilterBirthStart)) return false;
+      if (advFilterBirthEnd && (!c.birthday || c.birthday > advFilterBirthEnd)) return false;
+      if (advFilterChildren !== 'all') {
+        const has = !!c.has_children;
+        if (advFilterChildren === 'sim' && !has) return false;
+        if (advFilterChildren === 'nao' && has) return false;
+      }
+      if (advFilterStateHome && c.state !== advFilterStateHome) return false;
 
-  const handleExportXLSX = () => {
+      // Corporativos
+      if (advFilterStatus !== 'all' && c.status !== advFilterStatus) return false;
+      if (advFilterRateio && String(c.rateio_id) !== advFilterRateio) return false;
+      if (advFilterAdmissionStart && (!c.hire_date || c.hire_date < advFilterAdmissionStart)) return false;
+      if (advFilterAdmissionEnd && (!c.hire_date || c.hire_date > advFilterAdmissionEnd)) return false;
+      if (advFilterPartner && String(c.partner_id) !== advFilterPartner) return false;
+      if (advFilterLeader && String(c.leader_id) !== advFilterLeader) return false;
+      if (advFilterArea && c.area !== advFilterArea) return false;
+      if (advFilterTeam && String(c.equipe) !== advFilterTeam && String((c as any).teams?.name) !== advFilterTeam) return false;
+      if (advFilterRole && String(c.role) !== advFilterRole && String((c as any).roles?.name) !== advFilterRole) return false;
+      if (advFilterContractType && c.contract_type !== advFilterContractType) return false;
+      if (advFilterLocal && String(c.local) !== advFilterLocal && String((c as any).locations?.name) !== advFilterLocal) return false;
+
+      // Escolares
+      if (advFilterGraduationComplete !== 'all') {
+        const hasGrad = c.education_history?.some(e => e.nivel === 'Graduação' && e.status === 'Formado(a)') || (c.escolaridade_nivel === 'Graduação' && !c.escolaridade_previsao_conclusao);
+        if (advFilterGraduationComplete === 'sim' && !hasGrad) return false;
+        if (advFilterGraduationComplete === 'nao' && hasGrad) return false;
+      }
+      if (advFilterPostGraduationComplete !== 'all') {
+        const hasPost = c.education_history?.some(e => e.nivel === 'Pós-Graduação' && e.status === 'Formado(a)') || (c.escolaridade_nivel === 'Pós-Graduação' && !c.escolaridade_previsao_conclusao);
+        if (advFilterPostGraduationComplete === 'sim' && !hasPost) return false;
+        if (advFilterPostGraduationComplete === 'nao' && hasPost) return false;
+      }
+
+      if (advFilterExpectedCompletion) {
+        const prevCourse = c.escolaridade_previsao_conclusao || c.education_history?.find(e => e.status === 'Cursando')?.previsao_conclusao;
+        if (!prevCourse || !prevCourse.includes(advFilterExpectedCompletion)) return false;
+      }
+      if (advFilterCompletionYear) {
+        const compYear = c.education_history?.find(e => e.status === 'Formado(a)')?.ano_conclusao;
+        if (!compYear || !compYear.includes(advFilterCompletionYear)) return false;
+      }
+
+      return true;
+    });
+  };
+
+  const currentAdvancedFiltered = React.useMemo(() => getAdvancedFiltered(), [
+    colaboradores, advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
+    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterPartner, advFilterLeader,
+    advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal,
+    advFilterGraduationComplete, advFilterPostGraduationComplete, advFilterExpectedCompletion, advFilterCompletionYear
+  ]);
+
+  const handleExportAdvanced = () => {
     exportColaboradoresXLSX({
-      filtered,
+      filtered: currentAdvancedFiltered,
       rateios,
       hiringReasons,
       partners,
@@ -675,6 +763,23 @@ export function Colaboradores({ }: ColaboradoresProps) {
       terminationReasons
     })
   };
+
+  const calcAgeRange = (start: string, end: string) => {
+    if (!start || !end) return null;
+    const s = new Date(start);
+    const e = new Date(end);
+    const today = new Date();
+
+    let minAge = today.getFullYear() - e.getFullYear();
+    const m1 = today.getMonth() - e.getMonth();
+    if (m1 < 0 || (m1 === 0 && today.getDate() < e.getDate())) minAge--;
+
+    let maxAge = today.getFullYear() - s.getFullYear();
+    const m2 = today.getMonth() - s.getMonth();
+    if (m2 < 0 || (m2 === 0 && today.getDate() < s.getDate())) maxAge--;
+
+    return `${minAge} a ${maxAge} anos`;
+  }
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -1084,281 +1189,474 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto justify-end mt-2 md:mt-0 custom-scrollbar">
-          <div className="flex items-center gap-3 min-w-max">
-            <div className="flex gap-2">
-              {colaboradores.filter(c => c.cadastro_atualizado && c.status === 'active').length > 0 && (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setShowUpdatedOnly(!showUpdatedOnly)}
-                    className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center relative group outline-none overflow-hidden
-                      ${showUpdatedOnly
-                        ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
-                        : 'bg-[#1e3a8a] text-white border-[#1e3a8a] hover:bg-[#112240] shadow-lg'
-                      }
-                    `}
-                    title={showUpdatedOnly ? "Filtro Ativado" : "Ver Cadastros Atualizados"}
-                  >
-                    {!showUpdatedOnly && (
-                      <span className="absolute top-1 right-1 flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                      </span>
-                    )}
-                    <RefreshCcw className={`h-4 w-4 sm:h-5 sm:w-5 ${!showUpdatedOnly ? 'animate-spin-slow' : ''}`} />
-                  </button>
-                  {showUpdatedOnly && (
+          {activeMainTab === 'Colaboradores' ? (
+            <div className="flex items-center gap-3 min-w-max">
+              <div className="flex gap-2">
+                {colaboradores.filter(c => c.cadastro_atualizado && c.status === 'active').length > 0 && (
+                  <div className="flex items-center gap-1">
                     <button
-                      onClick={() => setShowUpdatedOnly(false)}
-                      className="p-2 sm:p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 flex items-center justify-center"
-                      title="Limpar Filtro"
+                      onClick={() => setShowUpdatedOnly(!showUpdatedOnly)}
+                      className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center relative group outline-none overflow-hidden
+                        ${showUpdatedOnly
+                          ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
+                          : 'bg-[#1e3a8a] text-white border-[#1e3a8a] hover:bg-[#112240] shadow-lg'
+                        }
+                      `}
+                      title={showUpdatedOnly ? "Filtro Ativado" : "Ver Cadastros Atualizados"}
                     >
-                      <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                      {!showUpdatedOnly && (
+                        <span className="absolute top-1 right-1 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                        </span>
+                      )}
+                      <RefreshCcw className={`h-4 w-4 sm:h-5 sm:w-5 ${!showUpdatedOnly ? 'animate-spin-slow' : ''}`} />
                     </button>
-                  )}
-                </div>
+                    {showUpdatedOnly && (
+                      <button
+                        onClick={() => setShowUpdatedOnly(false)}
+                        className="p-2 sm:p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 flex items-center justify-center"
+                        title="Limpar Filtro"
+                      >
+                        <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => {
+                  setFormData({ status: 'active', state: '' })
+                  setPhotoPreview(null)
+                  setActiveFormTab(1)
+                  setShowFormModal(true)
+                }}
+                className="flex bg-[#1e3a8a] text-white px-4 py-2 sm:py-2.5 rounded-xl font-bold uppercase tracking-wider hover:bg-[#112240] transition-all shadow-lg shadow-blue-900/20 items-center justify-center gap-2 text-[10px] sm:text-xs"
+              >
+                <Plus className="h-4 w-4" />
+                Novo Colab.
+              </button>
+
+              {selectedIds.length > 0 && (
+                <button
+                  onClick={handleGenerateLinks}
+                  disabled={generatingLinks}
+                  className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-4 py-2 sm:py-2.5 rounded-xl font-bold uppercase tracking-wider transition-all shadow-lg text-[10px] sm:text-xs"
+                >
+                  {generatingLinks ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
+                  Gerar Links ({selectedIds.length})
+                </button>
               )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
               <button
-                onClick={handleExportXLSX}
-                className="p-2 sm:p-2.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-100 flex items-center justify-center"
-                title="Exportar Excel"
+                onClick={handleExportAdvanced}
+                className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-lg active:scale-95 text-xs"
               >
-                <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5" />
+                <FileSpreadsheet className="h-5 w-5" /> Exportar ({currentAdvancedFiltered.length})
               </button>
             </div>
-
-            <button
-              onClick={() => {
-                setFormData({ status: 'active', state: '' })
-                setPhotoPreview(null)
-                setActiveFormTab(1)
-                setShowFormModal(true)
-              }}
-              className="flex bg-[#1e3a8a] text-white px-4 py-2 sm:py-2.5 rounded-xl font-bold uppercase tracking-wider hover:bg-[#112240] transition-all shadow-lg shadow-blue-900/20 items-center justify-center gap-2 text-[10px] sm:text-xs"
-            >
-              <Plus className="h-4 w-4" />
-              Novo Colab.
-            </button>
-
-            {/* Generate Links Action - Conditionally Shown */}
-            {selectedIds.length > 0 && (
-              <button
-                onClick={handleGenerateLinks}
-                disabled={generatingLinks}
-                className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-4 py-2 sm:py-2.5 rounded-xl font-bold uppercase tracking-wider transition-all shadow-lg text-[10px] sm:text-xs"
-              >
-                {generatingLinks ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
-                Gerar Links ({selectedIds.length})
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* CONTROLS CARD - Search | Filters */}
-      <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
-
-          {/* Active Count Card */}
-          <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
-            <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
-              <Users className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Ativos</p>
-              <p className="text-sm font-bold text-[#1e3a8a] leading-none">{activeCount}</p>
-            </div>
-          </div>
-
-          {/* Search Bar - Expanded */}
-          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
-            <Search className="h-4 w-4 text-gray-400 mr-3 shrink-0" />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400 pr-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
-                title="Limpar busca"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Filters Row - Auto-sizing */}
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
-            <FilterSelect
-              icon={User}
-              value={filterLider}
-              onChange={setFilterLider}
-              options={liderOptions}
-              placeholder="Líder"
-            />
-            <FilterSelect
-              icon={Users}
-              value={filterPartner}
-              onChange={setFilterPartner}
-              options={partnerOptions}
-              placeholder="Sócio"
-            />
-            <FilterSelect
-              icon={Building2}
-              value={filterLocal}
-              onChange={setFilterLocal}
-              options={locationOptions}
-              placeholder="Local"
-            />
-            <FilterSelect
-              icon={Briefcase}
-              value={filterCargo}
-              onChange={setFilterCargo}
-              options={roleOptions}
-              placeholder="Cargo"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Table/Grid */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1 flex flex-col">
-        <div
-          ref={listContainerRef}
-          className="overflow-auto h-full custom-scrollbar"
+      {/* TABS NAVIGATION */}
+      <div className="flex items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex-wrap">
+        <button
+          onClick={() => setActiveMainTab('Colaboradores')}
+          className={`px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none ${activeMainTab === 'Colaboradores' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
         >
-          <table className="w-full min-w-[1000px]">
-            <thead className="sticky top-0 z-10">
-              <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
-                <th className="px-6 py-4 w-12 text-center border-b border-white/10">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded text-[#1e3a8a] border-white/20 bg-white/10 focus:ring-amber-500 cursor-pointer"
-                    onChange={handleSelectAll}
-                    checked={filtered.filter(c => c.status === 'active').length > 0 && selectedIds.length === filtered.filter(c => c.status === 'active').length}
-                  />
-                </th>
-                <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Colaborador</th>
-                <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Cargo</th>
-                <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Sócio</th>
-                <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Líder</th>
-                <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-right text-[10px] font-black text-white uppercase tracking-wider pr-8 rounded-tr-xl">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <Loader2 className="h-8 w-8 text-[#1e3a8a] animate-spin mx-auto mb-2" />
-                    <p className="text-gray-400 text-xs font-medium">Carregando colaboradores...</p>
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                    <UserX className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-xs font-medium">Nenhum colaborador encontrado.</p>
-                  </td>
-                </tr>
-              ) : (
-                <>
-                  {filtered.filter(c => c.status === 'active').map((c) => (
-                    <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-blue-50/30 cursor-pointer transition-colors group">
-                      <td className="px-6 py-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 rounded text-[#1e3a8a] border-gray-300 focus:ring-[#1e3a8a] cursor-pointer"
-                          checked={selectedIds.includes(c.id)}
-                          onChange={(e) => handleSelect(e, c.id)}
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
-                          <div>
-                            <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
-                            <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
-                        <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).teams?.name || c.equipe || '')}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                          {c.status === 'active' ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {filtered.some(c => c.status !== 'active') && (
-                    <tr className="bg-gray-50/50">
-                      <td colSpan={7} className="px-6 py-3 border-y border-gray-100">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inativos</p>
-                      </td>
-                    </tr>
-                  )}
-                  {filtered.filter(c => c.status !== 'active').map(c => (
-                    <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
-                      <td className="px-6 py-4 w-12 text-center">
-                        {/* Disabled checkbox for inactive users */}
-                        <input type="checkbox" disabled className="w-4 h-4 rounded border-gray-200 bg-gray-100 cursor-not-allowed opacity-50" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
-                          <div>
-                            <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                          {c.status === 'active' ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </>
-              )}
-            </tbody>
-          </table>
-        </div>
+          <Users className="h-4 w-4" /> Equipe
+        </button>
+        <button
+          onClick={() => setActiveMainTab('Filtros')}
+          className={`px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none ${activeMainTab === 'Filtros' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+        >
+          <Filter className="h-4 w-4" /> Filtros Avançados
+        </button>
       </div>
+
+      {activeMainTab === 'Colaboradores' && (
+        <>
+          {/* CONTROLS CARD - Search | Filters */}
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+
+              {/* Active Count Card */}
+              <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
+                <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
+                  <Users className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Ativos</p>
+                  <p className="text-sm font-bold text-[#1e3a8a] leading-none">{activeCount}</p>
+                </div>
+              </div>
+
+              {/* Search Bar - Expanded */}
+              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
+                <Search className="h-4 w-4 text-gray-400 mr-3 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400 pr-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+                    title="Limpar busca"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Filters Row - Auto-sizing */}
+              <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
+                <FilterSelect
+                  icon={User}
+                  value={filterLider}
+                  onChange={setFilterLider}
+                  options={liderOptions}
+                  placeholder="Líder"
+                />
+                <FilterSelect
+                  icon={Users}
+                  value={filterPartner}
+                  onChange={setFilterPartner}
+                  options={partnerOptions}
+                  placeholder="Sócio"
+                />
+                <FilterSelect
+                  icon={Building2}
+                  value={filterLocal}
+                  onChange={setFilterLocal}
+                  options={locationOptions}
+                  placeholder="Local"
+                />
+                <FilterSelect
+                  icon={Briefcase}
+                  value={filterCargo}
+                  onChange={setFilterCargo}
+                  options={roleOptions}
+                  placeholder="Cargo"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Table/Grid */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1 flex flex-col">
+            <div
+              ref={listContainerRef}
+              className="overflow-auto h-full custom-scrollbar"
+            >
+              <table className="w-full min-w-[1000px]">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-gradient-to-r from-[#1e3a8a] to-[#112240]">
+                    <th className="px-6 py-4 w-12 text-center border-b border-white/10">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded text-[#1e3a8a] border-white/20 bg-white/10 focus:ring-amber-500 cursor-pointer"
+                        onChange={handleSelectAll}
+                        checked={filtered.filter(c => c.status === 'active').length > 0 && selectedIds.length === filtered.filter(c => c.status === 'active').length}
+                      />
+                    </th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Colaborador</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Cargo</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Sócio</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Líder</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-right text-[10px] font-black text-white uppercase tracking-wider pr-8 rounded-tr-xl">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center">
+                        <Loader2 className="h-8 w-8 text-[#1e3a8a] animate-spin mx-auto mb-2" />
+                        <p className="text-gray-400 text-xs font-medium">Carregando colaboradores...</p>
+                      </td>
+                    </tr>
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                        <UserX className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-xs font-medium">Nenhum colaborador encontrado.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    <>
+                      {filtered.filter(c => c.status === 'active').map((c) => (
+                        <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-blue-50/30 cursor-pointer transition-colors group">
+                          <td className="px-6 py-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 rounded text-[#1e3a8a] border-gray-300 focus:ring-[#1e3a8a] cursor-pointer"
+                              checked={selectedIds.includes(c.id)}
+                              onChange={(e) => handleSelect(e, c.id)}
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
+                              <div>
+                                <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
+                                <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).teams?.name || c.equipe || '')}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
+                              {c.status === 'active' ? 'Ativo' : 'Inativo'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
+                              <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {filtered.some(c => c.status !== 'active') && (
+                        <tr className="bg-gray-50/50">
+                          <td colSpan={7} className="px-6 py-3 border-y border-gray-100">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inativos</p>
+                          </td>
+                        </tr>
+                      )}
+                      {filtered.filter(c => c.status !== 'active').map(c => (
+                        <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
+                          <td className="px-6 py-4 w-12 text-center">
+                            {/* Disabled checkbox for inactive users */}
+                            <input type="checkbox" disabled className="w-4 h-4 rounded border-gray-200 bg-gray-100 cursor-not-allowed opacity-50" />
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
+                              <div>
+                                <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
+                              {c.status === 'active' ? 'Ativo' : 'Inativo'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
+                              <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeMainTab === 'Filtros' && (
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600 space-y-8 flex-1 overflow-auto custom-scrollbar">
+
+          {/* Pessoais */}
+          <div>
+            <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><User className="h-4 w-4" /> Filtros Pessoais</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Gênero</label>
+                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterGender} onChange={e => setAdvFilterGender(e.target.value)}>
+                  <option value="">Todos</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Filhos</label>
+                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterChildren} onChange={e => setAdvFilterChildren(e.target.value as any)}>
+                  <option value="all">Todos</option>
+                  <option value="sim">Sim</option>
+                  <option value="nao">Não</option>
+                </select>
+              </div>
+              <div className="col-span-1 md:col-span-2 relative z-[110]">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Estado (Moradia)</label>
+                <SearchableSelect
+                  value={advFilterStateHome}
+                  onChange={setAdvFilterStateHome}
+                  options={ESTADOS_BRASIL.map(e => ({ id: e.nome, label: e.nome, value: e.nome }))}
+                  placeholder="Selecione..."
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Nasc. (Início e Fim)</label>
+                <div className="flex items-center gap-2">
+                  <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterBirthStart} onChange={e => setAdvFilterBirthStart(e.target.value)} />
+                  <span className="text-gray-400">-</span>
+                  <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterBirthEnd} onChange={e => setAdvFilterBirthEnd(e.target.value)} />
+                </div>
+              </div>
+              <div className="flex items-end pb-2">
+                {advFilterBirthStart && advFilterBirthEnd && (
+                  <div className="bg-blue-50 text-blue-700 text-xs px-3 py-2 rounded-lg font-bold border border-blue-100 flex items-center">
+                    Intervalo Etário Selecionado: &nbsp;<span className="text-[#1e3a8a]">{calcAgeRange(advFilterBirthStart, advFilterBirthEnd)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Corporativos */}
+          <div>
+            <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><Briefcase className="h-4 w-4" /> Filtros Corporativos</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
+                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterStatus} onChange={e => setAdvFilterStatus(e.target.value as any)}>
+                  <option value="all">Todos</option>
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                </select>
+              </div>
+              <div className="relative z-[109]">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Rateio</label>
+                <SearchableSelect
+                  value={advFilterRateio}
+                  onChange={setAdvFilterRateio}
+                  options={rateios.map(r => ({ id: String(r.id), label: r.name, value: String(r.id) }))}
+                  placeholder="Todos..."
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Área</label>
+                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterArea} onChange={e => setAdvFilterArea(e.target.value)}>
+                  <option value="">Todas</option>
+                  <option value="Administrativa">Administrativa</option>
+                  <option value="Jurídica">Jurídica</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Contratação</label>
+                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterContractType} onChange={e => setAdvFilterContractType(e.target.value)}>
+                  <option value="">Todos</option>
+                  <option value="CLT">CLT</option>
+                  <option value="Sócio">Sócio</option>
+                  <option value="Associado">Associado</option>
+                  <option value="Estágio">Estágio</option>
+                  <option value="Jovem Aprendiz">Jovem Aprendiz</option>
+                  <option value="Terceirizado">Terceirizado</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
+
+              <div className="relative z-[108]">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócio Responsável</label>
+                <SearchableSelect value={advFilterPartner} onChange={setAdvFilterPartner} options={partnerOptions as any} placeholder="Todos..." />
+              </div>
+              <div className="relative z-[107]">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Líder Direto</label>
+                <SearchableSelect value={advFilterLeader} onChange={setAdvFilterLeader} options={liderOptions as any} placeholder="Todos..." />
+              </div>
+              <div className="relative z-[106]">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Equipe</label>
+                <SearchableSelect value={advFilterTeam} onChange={setAdvFilterTeam} table="teams" placeholder="Todas..." />
+              </div>
+              <div className="relative z-[105]">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Cargo</label>
+                <SearchableSelect value={advFilterRole} onChange={setAdvFilterRole} options={roleOptions as any} placeholder="Todos..." />
+              </div>
+              <div className="relative z-[104]">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local</label>
+                <SearchableSelect value={advFilterLocal} onChange={setAdvFilterLocal} options={locationOptions as any} placeholder="Todos..." />
+              </div>
+
+              <div className="col-span-1 md:col-span-3">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Admissão (Início e Fim)</label>
+                <div className="flex items-center gap-2 max-w-sm">
+                  <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionStart} onChange={e => setAdvFilterAdmissionStart(e.target.value)} />
+                  <span className="text-gray-400">-</span>
+                  <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterAdmissionEnd} onChange={e => setAdvFilterAdmissionEnd(e.target.value)} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Escolares */}
+          <div>
+            <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><GraduationCap className="h-4 w-4" /> Filtros Escolares</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Graduação Completa</label>
+                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterGraduationComplete} onChange={e => setAdvFilterGraduationComplete(e.target.value as any)}>
+                  <option value="all">Todos</option>
+                  <option value="sim">Sim</option>
+                  <option value="nao">Não</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Pós-Graduação Comp.</label>
+                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterPostGraduationComplete} onChange={e => setAdvFilterPostGraduationComplete(e.target.value as any)}>
+                  <option value="all">Todos</option>
+                  <option value="sim">Sim</option>
+                  <option value="nao">Não</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
+                <input type="text" placeholder="Ex: 2025" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterExpectedCompletion} onChange={e => setAdvFilterExpectedCompletion(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano de Conclusão</label>
+                <input type="text" placeholder="Ex: 2020" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterCompletionYear} onChange={e => setAdvFilterCompletionYear(e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-6 border-t border-gray-100">
+            <button
+              onClick={handleExportAdvanced}
+              className="flex items-center gap-2 px-8 py-3 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-xl active:scale-95 text-xs"
+            >
+              <FileSpreadsheet className="h-5 w-5" /> Gerar Relatório XLSX ({currentAdvancedFiltered.length})
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* VIEW MODAL (Original Window) */}
       {selectedColaborador && renderModalLayout(
