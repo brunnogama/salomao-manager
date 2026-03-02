@@ -85,6 +85,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
+        // Intercept OAuth hash
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+            console.log('🔍 [AuthContext] Hash Detected! Handing over to Supabase...');
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                setSession(session);
+                checkAuthorization(session);
+            });
+            return;
+        }
+
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
