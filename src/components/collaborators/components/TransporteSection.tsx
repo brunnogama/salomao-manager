@@ -133,7 +133,7 @@ export function TransporteSection({
                         value={pendingTransportType}
                         onChange={setPendingTransportType}
                         options={[
-                            { id: 'Integração BU', name: 'Integração BU' },
+                            { id: 'Integração Bilhete Único', name: 'Integração Bilhete Único' },
                             { id: 'Metrô', name: 'Metrô' },
                             { id: 'Ônibus', name: 'Ônibus' },
                             { id: 'Trem', name: 'Trem' },

@@ -22,6 +22,7 @@ BEGIN
     emergencia_nome = p_data->>'emergencia_nome',
     emergencia_telefone = p_data->>'emergencia_telefone',
     emergencia_parentesco = p_data->>'emergencia_parentesco',
+    emergency_contacts = (p_data->'emergency_contacts')::JSONB,
     
     -- Endereço
     zip_code = p_data->>'zip_code',

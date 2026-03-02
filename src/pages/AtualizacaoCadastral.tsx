@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Loader2, CheckCircle2, User, Save } from 'lucide-react';
+import { Loader2, CheckCircle2, User, Save, ShieldCheck } from 'lucide-react';
 import { Collaborator } from '../types/controladoria';
 import { DadosPessoaisSection } from '../components/collaborators/components/DadosPessoaisSection';
 import { EnderecoSection } from '../components/collaborators/components/EnderecoSection';
@@ -134,8 +134,20 @@ export default function AtualizacaoCadastral() {
                     return `${d}/${m}/${y}`
                 }
 
+                // Mapear dados antigos de emergência para o novo array se existir os antigos mas o array estiver vazio
+                let em_contacts = data.emergency_contacts || [];
+                if (!em_contacts.length && (data.emergencia_nome || data.emergencia_telefone || data.emergencia_parentesco)) {
+                    em_contacts = [{
+                        id: crypto.randomUUID(),
+                        nome: data.emergencia_nome || '',
+                        telefone: data.emergencia_telefone || '',
+                        parentesco: data.emergencia_parentesco || ''
+                    }];
+                }
+
                 const formattedColaborador = {
                     ...data,
+                    emergency_contacts: em_contacts,
                     birthday: formatDateToDisplay(data.birthday),
                     children_data: data.children_data?.map((child: any) => ({
                         ...child,
@@ -273,9 +285,7 @@ export default function AtualizacaoCadastral() {
                     ...c,
                     birth_date: formatDateToISO(c.birth_date) || null
                 })),
-                emergencia_nome: formData.emergencia_nome,
-                emergencia_parentesco: formData.emergencia_parentesco,
-                emergencia_telefone: formData.emergencia_telefone,
+                emergency_contacts: formData.emergency_contacts,
                 zip_code: formData.zip_code,
                 address: formData.address,
                 address_number: formData.address_number,
@@ -320,9 +330,9 @@ export default function AtualizacaoCadastral() {
                 for (const doc of pendingGedDocs) {
                     const cleanFileName = doc.file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
                     const categoryLabel = doc.label || doc.category;
-                    const finalFileName = `${categoryLabel.replace(/[^a-zA-Z0-9]/g, '_')}_${cleanFileName}`;
+                    const cleanFinalName = `${categoryLabel.replace(/[^a-zA-Z0-9]/g, '_')}_${cleanFileName}`;
 
-                    const filePath = `ged/${updatedData.id}/${Date.now()}_${finalFileName}`;
+                    const filePath = `ged/${updatedData.id}/${Date.now()}_${cleanFinalName}`;
 
                     const { error: upErr } = await supabase.storage.from('ged-colaboradores').upload(filePath, doc.file);
 
@@ -330,7 +340,7 @@ export default function AtualizacaoCadastral() {
                         const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath);
                         await supabase.from('ged_colaboradores').insert({
                             colaborador_id: updatedData.id,
-                            nome_arquivo: finalFileName,
+                            nome_arquivo: cleanFinalName,
                             url: publicUrl,
                             categoria: doc.category,
                             dados_atestado: doc.atestadoDatas?.inicio ? doc.atestadoDatas : null
@@ -417,6 +427,19 @@ export default function AtualizacaoCadastral() {
                             </div>
                         </div>
 
+                        {/* LGPD Banner */}
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 flex items-start gap-4">
+                            <div className="bg-emerald-100 p-2 rounded-xl text-emerald-600 shrink-0">
+                                <ShieldCheck className="w-6 h-6" />
+                            </div>
+                            <div className="pt-0.5">
+                                <h3 className="text-emerald-900 font-bold text-sm mb-1">Ambiente Seguro e Confiável (Adequação à LGPD)</h3>
+                                <p className="text-emerald-700 text-sm leading-relaxed">
+                                    Todas as informações fornecidas e anexadas nesta página estão protegidas em nosso sistema através de criptografia e acesso rigorosamente restrito e auditado pelo setor de Recursos Humanos. Seus dados serão mantidos de forma confidencial e estritamente de acordo com a Lei Geral de Proteção de Dados Pessoais (LGPD).
+                                </p>
+                            </div>
+                        </div>
+
                         {error && (
                             <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm font-medium text-center">
                                 {error}
@@ -424,6 +447,7 @@ export default function AtualizacaoCadastral() {
                         )}
 
                         <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-700">
+
                             <DadosPessoaisSection
                                 formData={formData}
                                 setFormData={setFormData}

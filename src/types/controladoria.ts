@@ -120,6 +120,12 @@ export interface Collaborator {
   emergencia_nome?: string;
   emergencia_telefone?: string;
   emergencia_parentesco?: string;
+  emergency_contacts?: {
+    id?: string;
+    nome: string;
+    telefone: string;
+    parentesco: string;
+  }[];
   centro_custo?: string;
   motivo_desligamento?: string;
   matricula_esocial?: string;

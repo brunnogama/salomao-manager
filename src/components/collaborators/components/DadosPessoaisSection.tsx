@@ -431,55 +431,116 @@ export function DadosPessoaisSection({
 
       {/* Dados de Emergência */}
       <div className="mt-6 pt-4 border-t border-gray-100">
-        <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-          Dados de Emergência
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-2">
-            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-              Nome do Contato
-            </label>
-            <input
-              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-              value={formData.emergencia_nome || ''}
-              onChange={e => setFormData({ ...formData, emergencia_nome: e.target.value })}
-              placeholder="Nome do contato"
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            Dados de Emergência
+          </h4>
+          <div className="flex items-center gap-3">
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+              Contatos: {formData.emergency_contacts?.length || 0}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const currentContacts = formData.emergency_contacts || [];
+                setFormData({
+                  ...formData,
+                  emergency_contacts: [...currentContacts, { id: crypto.randomUUID(), nome: '', telefone: '', parentesco: '' }]
+                });
+              }}
               disabled={isViewMode}
-              readOnly={isViewMode}
-            />
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-[#1e3a8a]/10 text-[#1e3a8a] rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-[#1e3a8a]/20 disabled:opacity-50 transition-colors"
+            >
+              <Plus className="h-3 w-3" /> Adicionar Contato
+            </button>
           </div>
-          <div className="md:col-span-1">
-            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
-              Telefone
-            </label>
-            <input
-              className={`w-full bg-gray-100/50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-              value={formData.emergencia_telefone || ''}
-              onChange={e => setFormData({ ...formData, emergencia_telefone: maskPhone(e.target.value) })}
-              maxLength={15}
-              placeholder="Digite o Telefone"
-              disabled={isViewMode}
-              readOnly={isViewMode}
-            />
-          </div>
-          <div className="md:col-span-1">
-            <SearchableSelect
-              label="Grau de Parentesco"
-              value={formData.emergencia_parentesco || ''}
-              onChange={v => setFormData({ ...formData, emergencia_parentesco: v })}
-              options={[
-                { name: 'Pai' },
-                { name: 'Mãe' },
-                { name: 'Irmã(o)' },
-                { name: 'Tio(a)' },
-                { name: 'Avô(ó)' },
-                { name: 'Cônjuge' },
-                { name: 'Outro' }
-              ]}
-              placeholder="Selecione"
-              disabled={isViewMode}
-            />
-          </div>
+        </div>
+
+        <div className="space-y-4">
+          {(!formData.emergency_contacts || formData.emergency_contacts.length === 0) && (
+            <div className="text-center py-6 bg-gray-50 border border-gray-100 rounded-xl border-dashed">
+              <p className="text-sm text-gray-500 font-medium">Nenhum contato de emergência cadastrado.</p>
+            </div>
+          )}
+
+          {formData.emergency_contacts?.map((contato, index) => (
+            <div key={contato.id || index} className="grid grid-cols-1 md:grid-cols-4 gap-6 p-4 border border-gray-100 rounded-xl bg-gray-50/50 relative">
+              <div className="absolute top-2 right-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newContacts = [...(formData.emergency_contacts || [])];
+                    newContacts.splice(index, 1);
+                    setFormData({ ...formData, emergency_contacts: newContacts });
+                  }}
+                  disabled={isViewMode}
+                  className="p-1 hover:bg-red-100 rounded-lg text-red-500 disabled:opacity-50 min-w-8 flex items-center justify-center transition-colors"
+                  title="Remover Contato"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                  Nome do Contato {index + 1}
+                </label>
+                <input
+                  className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  value={contato.nome || ''}
+                  onChange={e => {
+                    const newContacts = [...(formData.emergency_contacts || [])];
+                    newContacts[index] = { ...newContacts[index], nome: e.target.value };
+                    setFormData({ ...formData, emergency_contacts: newContacts });
+                  }}
+                  placeholder="Nome do contato"
+                  disabled={isViewMode}
+                  readOnly={isViewMode}
+                />
+              </div>
+              <div className="md:col-span-1">
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                  Telefone
+                </label>
+                <input
+                  className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  value={contato.telefone || ''}
+                  onChange={e => {
+                    const newContacts = [...(formData.emergency_contacts || [])];
+                    newContacts[index] = { ...newContacts[index], telefone: maskPhone(e.target.value) };
+                    setFormData({ ...formData, emergency_contacts: newContacts });
+                  }}
+                  maxLength={15}
+                  placeholder="Digite o Telefone"
+                  disabled={isViewMode}
+                  readOnly={isViewMode}
+                />
+              </div>
+              <div className="md:col-span-1 pt-[22px]">
+                <SearchableSelect
+                  label="Grau de Parentesco"
+                  value={contato.parentesco || ''}
+                  onChange={v => {
+                    const newContacts = [...(formData.emergency_contacts || [])];
+                    newContacts[index] = { ...newContacts[index], parentesco: v };
+                    setFormData({ ...formData, emergency_contacts: newContacts });
+                  }}
+                  options={[
+                    { name: 'Pai' },
+                    { name: 'Mãe' },
+                    { name: 'Irmã(o)' },
+                    { name: 'Tio(a)' },
+                    { name: 'Avô(ó)' },
+                    { name: 'Cônjuge' },
+                    { name: 'Amigo(a)' },
+                    { name: 'Outro' }
+                  ]}
+                  placeholder="Selecione"
+                  disabled={isViewMode}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
