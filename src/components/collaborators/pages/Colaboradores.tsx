@@ -116,6 +116,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterRole, setAdvFilterRole] = useState('');
   const [advFilterContractType, setAdvFilterContractType] = useState('');
   const [advFilterLocal, setAdvFilterLocal] = useState('');
+  const [advFilterTransporteTipo, setAdvFilterTransporteTipo] = useState('');
 
   // Escolares
   const [advFilterGraduationComplete, setAdvFilterGraduationComplete] = useState<'sim' | 'nao' | ''>('');
@@ -140,6 +141,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setAdvFilterRole('');
     setAdvFilterContractType('');
     setAdvFilterLocal('');
+    setAdvFilterTransporteTipo('');
     setAdvFilterGraduationComplete('');
     setAdvFilterPostGraduationComplete('');
     setAdvFilterExpectedCompletion('');
@@ -749,6 +751,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (!safeCompare(advFilterRole, c.role, (c as any).roles?.name)) return false;
       if (!safeCompare(advFilterContractType, c.contract_type)) return false;
       if (!safeCompare(advFilterLocal, c.local, (c as any).locations?.name)) return false;
+      if (!safeCompare(advFilterTransporteTipo, c.transporte_tipo)) return false;
 
       // Escolares
       if (advFilterGraduationComplete) {
@@ -778,7 +781,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const currentAdvancedFiltered = React.useMemo(() => getAdvancedFiltered(), [
     colaboradores, advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
     advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterPartner, advFilterLeader,
-    advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal,
+    advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal, advFilterTransporteTipo,
     advFilterGraduationComplete, advFilterPostGraduationComplete, advFilterExpectedCompletion, advFilterCompletionYear
   ]);
 
@@ -1646,6 +1649,22 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     { id: 'Jovem Aprendiz', label: 'Jovem Aprendiz', value: 'Jovem Aprendiz' },
                     { id: 'Terceirizado', label: 'Terceirizado', value: 'Terceirizado' },
                     { id: 'Outros', label: 'Outros', value: 'Outros' }
+                  ]}
+                  placeholder="Todos..."
+                />
+              </div>
+
+              <div className="relative z-[114]">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Meio de Transporte</label>
+                <SearchableSelect
+                  value={advFilterTransporteTipo}
+                  onChange={setAdvFilterTransporteTipo}
+                  options={[
+                    { id: 'Integração BU', label: 'Integração BU', value: 'Integração BU' },
+                    { id: 'Metrô', label: 'Metrô', value: 'Metrô' },
+                    { id: 'Ônibus', label: 'Ônibus', value: 'Ônibus' },
+                    { id: 'Trem', label: 'Trem', value: 'Trem' },
+                    { id: 'VLT', label: 'VLT', value: 'VLT' }
                   ]}
                   placeholder="Todos..."
                 />

@@ -67,7 +67,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'OAB Emissão': formatDateToDisplay(c.oab_emissao),
         'OAB Validade': formatDateToDisplay(c.oabs?.find((o: any) => o.tipo === 'Principal')?.validade) || '',
         'Tipo Inscrição OAB': c.oabs?.find((o: any) => o.tipo === 'Principal')?.tipo || '',
-        
+
         'PIS/PASEP': c.pis || c.pis_pasep,
         'Título de Eleitor': c.tituloseleitor,
         'Matrícula e-Social': c.matricula_esocial,
@@ -107,6 +107,12 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Cargo': (c as any).roles?.name || c.role,
         'Centro de Custo': c.centro_custo,
         'Local': (c as any).locations?.name || c.local,
+        'Tipo Transporte': c.transporte_tipo || '',
+        'Quantidade Ida': c.transporte_ida_qtd || 0,
+        'Quantidade Volta': c.transporte_volta_qtd || 0,
+        'Total Ida': (c.transporte_ida_valores || []).reduce((acc: number, curr: number) => acc + (curr || 0), 0),
+        'Total Volta': (c.transporte_volta_valores || []).reduce((acc: number, curr: number) => acc + (curr || 0), 0),
+        'Custo Total Transporte': ((c.transporte_ida_valores || []).reduce((acc: number, curr: number) => acc + (curr || 0), 0)) + ((c.transporte_volta_valores || []).reduce((acc: number, curr: number) => acc + (curr || 0), 0)),
 
         'Data Desligamento': formatDateToDisplay(c.termination_date),
         'Iniciativa Desligamento': getLookupName(terminationInitiatives, c.termination_initiative_id),

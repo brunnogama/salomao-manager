@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Briefcase, Calendar, Clock } from 'lucide-react'
+import { Briefcase, Calendar, Clock, Bus } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
@@ -43,6 +43,47 @@ export function DadosCorporativosSection({
       return null
     }
   }, [formData.hire_date, formData.termination_date])
+
+  const handleTransporteQtdChange = (field: 'transporte_ida_qtd' | 'transporte_volta_qtd', value: string) => {
+    const rawVal = parseInt(value, 10);
+    const numValue = isNaN(rawVal) ? 0 : rawVal;
+
+    if (numValue > 3) {
+      const isConfirmed = window.confirm(`Atenção: O máximo sugerido é 3. Tem certeza que deseja incluir a quantidade de ${numValue}?`);
+      if (!isConfirmed) {
+        return; // descarta a alteração
+      }
+    }
+
+    const valField = field === 'transporte_ida_qtd' ? 'transporte_ida_valores' : 'transporte_volta_valores';
+    const currentArray = formData[valField] || [];
+    let newArray = [...currentArray];
+
+    if (newArray.length > numValue) {
+      newArray = newArray.slice(0, numValue);
+    } else {
+      while (newArray.length < numValue) {
+        newArray.push(0);
+      }
+    }
+
+    setFormData({
+      ...formData,
+      [field]: numValue === 0 ? undefined : numValue,
+      [valField]: numValue === 0 ? undefined : newArray
+    });
+  };
+
+  const handleTransporteValorChange = (field: 'transporte_ida_valores' | 'transporte_volta_valores', index: number, value: string) => {
+    const currentArray = [...(formData[field] || [])];
+    const numVal = parseFloat(value.replace(',', '.'));
+    currentArray[index] = isNaN(numVal) ? 0 : numVal;
+    setFormData({ ...formData, [field]: currentArray });
+  };
+
+  const totalIda = (formData.transporte_ida_valores || []).reduce((acc, curr) => acc + (curr || 0), 0);
+  const totalVolta = (formData.transporte_volta_valores || []).reduce((acc, curr) => acc + (curr || 0), 0);
+  const totalTransporte = totalIda + totalVolta;
 
   return (
     <section className="space-y-6">
@@ -269,6 +310,110 @@ export function DadosCorporativosSection({
                 tableName="cost_centers"
                 disabled={isViewMode}
               />
+            </div>
+
+            {/* Nova Seção: TRANSPORTE */}
+            <div className="mt-8 pt-6 border-t border-blue-100/50">
+              <h4 className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest flex items-center gap-2 mb-6">
+                <Bus className="h-4 w-4" /> Transporte
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <SearchableSelect
+                  label="Tipo de Transporte"
+                  value={formData.transporte_tipo || ''}
+                  onChange={(v) => setFormData({ ...formData, transporte_tipo: v })}
+                  options={[
+                    { id: 'Integração BU', name: 'Integração BU' },
+                    { id: 'Metrô', name: 'Metrô' },
+                    { id: 'Ônibus', name: 'Ônibus' },
+                    { id: 'Trem', name: 'Trem' },
+                    { id: 'VLT', name: 'VLT' }
+                  ]}
+                  uppercase={false}
+                  disabled={isViewMode}
+                />
+
+                <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                  {/* IDA */}
+                  <div className="space-y-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <div>
+                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantidade Ida</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        value={formData.transporte_ida_qtd || ''}
+                        onChange={e => handleTransporteQtdChange('transporte_ida_qtd', e.target.value)}
+                        placeholder="Máx 3"
+                        disabled={isViewMode}
+                        readOnly={isViewMode}
+                      />
+                    </div>
+                    {/* Campos de Valor Dinâmicos para Ida */}
+                    {Array.from({ length: formData.transporte_ida_qtd || 0 }).map((_, i) => (
+                      <div key={`ida_val_${i}`}>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Ida #{i + 1} (R$)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                          value={formData.transporte_ida_valores?.[i] || ''}
+                          onChange={e => handleTransporteValorChange('transporte_ida_valores', i, e.target.value)}
+                          disabled={isViewMode}
+                          readOnly={isViewMode}
+                        />
+                      </div>
+                    ))}
+                    {formData.transporte_ida_qtd && formData.transporte_ida_qtd > 0 && (
+                      <div className="text-right text-xs font-bold text-[#1e3a8a]">Total Ida: R$ {totalIda.toFixed(2)}</div>
+                    )}
+                  </div>
+
+                  {/* VOLTA */}
+                  <div className="space-y-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <div>
+                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantidade Volta</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        value={formData.transporte_volta_qtd || ''}
+                        onChange={e => handleTransporteQtdChange('transporte_volta_qtd', e.target.value)}
+                        placeholder="Máx 3"
+                        disabled={isViewMode}
+                        readOnly={isViewMode}
+                      />
+                    </div>
+                    {/* Campos de Valor Dinâmicos para Volta */}
+                    {Array.from({ length: formData.transporte_volta_qtd || 0 }).map((_, i) => (
+                      <div key={`volta_val_${i}`}>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Volta #{i + 1} (R$)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                          value={formData.transporte_volta_valores?.[i] || ''}
+                          onChange={e => handleTransporteValorChange('transporte_volta_valores', i, e.target.value)}
+                          disabled={isViewMode}
+                          readOnly={isViewMode}
+                        />
+                      </div>
+                    ))}
+                    {formData.transporte_volta_qtd && formData.transporte_volta_qtd > 0 && (
+                      <div className="text-right text-xs font-bold text-[#1e3a8a]">Total Volta: R$ {totalVolta.toFixed(2)}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {(totalIda > 0 || totalVolta > 0) && (
+                <div className="mt-4 p-3 bg-blue-50 text-[#1e3a8a] font-bold text-sm rounded-xl shadow-sm border border-blue-200 flex justify-between items-center">
+                  <span>Custo Total Diário de Transporte:</span>
+                  <span className="text-base">R$ {totalTransporte.toFixed(2)}</span>
+                </div>
+              )}
             </div>
           </div>
         ) : (
