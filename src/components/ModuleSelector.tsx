@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay } from 'lucide-react'
+import { UserCog, Briefcase, LogOut, Banknote, Package, Lock, Loader2, Settings, Scale, Users, ShieldCheck, MonitorPlay, Sparkles } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { logAction } from '../lib/logger'
+import { APP_UPDATES } from '../config/updates'
+import { UpdateNotificationModal } from './UpdateNotificationModal'
 
 import { supabase } from '../lib/supabase'
 
@@ -17,6 +19,27 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isPending, setIsPending] = useState(false)
 
+  // --- What's New Notification State ---
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [hasNewUpdate, setHasNewUpdate] = useState(false);
+  const currentUpdate = APP_UPDATES[0];
+
+  useEffect(() => {
+    if (currentUpdate) {
+      const lastSeenVersion = localStorage.getItem('lastSeenUpdateVersion');
+      if (lastSeenVersion !== currentUpdate.version) {
+        setHasNewUpdate(true);
+      }
+    }
+  }, [currentUpdate]);
+
+  const handleOpenUpdateModal = () => {
+    if (currentUpdate) {
+      localStorage.setItem('lastSeenUpdateVersion', currentUpdate.version);
+      setHasNewUpdate(false);
+    }
+    setShowUpdateModal(true);
+  };
 
   useEffect(() => {
     async function fetchPermissions() {
@@ -259,6 +282,19 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
             </div>
           </div>
 
+          {/* What's New Button */}
+          {hasNewUpdate && (
+            <button
+              onClick={handleOpenUpdateModal}
+              className="p-2.5 text-amber-300 hover:text-amber-200 transition-all rounded-full hover:bg-white/10 active:scale-95 animate-pulse hover:animate-none flex items-center justify-center relative"
+              title="Novidades do Sistema"
+            >
+              <Sparkles className="h-5 w-5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span>
+            </button>
+          )}
+
           {isAdmin && (
             <button
               onClick={() => onSelect('settings')}
@@ -369,6 +405,12 @@ export function ModuleSelector({ onSelect, userName }: ModuleSelectorProps) {
           </p>
         </div>
       </footer>
+
+      {/* Modals */}
+      <UpdateNotificationModal
+        isOpen={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+      />
     </div>
   )
 }

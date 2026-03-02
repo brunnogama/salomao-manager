@@ -1,34 +1,20 @@
-import { Fragment, useState, useEffect } from 'react'
+import { Fragment } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { Sparkles, CheckCircle, Bug, Star, X } from 'lucide-react'
-import { useEscKey } from '../hooks/useEscKey'
 import { APP_UPDATES } from '../config/updates'
 
-export function UpdateNotificationModal() {
-    const [isOpen, setIsOpen] = useState(false)
+interface UpdateNotificationModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+export function UpdateNotificationModal({ isOpen, onClose }: UpdateNotificationModalProps) {
     const currentUpdate = APP_UPDATES[0]
 
-    useEscKey(isOpen, () => setIsOpen(false));
-
-    useEffect(() => {
-        // Verifica a última versão de atualização que o usuário viu
-        const lastSeenVersion = localStorage.getItem('lastSeenUpdateVersion')
-
-        // Se não há versão salva ou a versão salva é diferente da versão mais recente, mostra o modal
-        if (currentUpdate && lastSeenVersion !== currentUpdate.version) {
-            // Aguarda um momento para não conflitar com outros modais ou o carregamento da página
-            const timeoutId = setTimeout(() => {
-                setIsOpen(true)
-            }, 1500)
-            return () => clearTimeout(timeoutId)
-        }
-    }, [currentUpdate])
+    if (!currentUpdate) return null;
 
     const handleClose = () => {
-        if (currentUpdate) {
-            localStorage.setItem('lastSeenUpdateVersion', currentUpdate.version)
-        }
-        setIsOpen(false)
+        onClose();
     }
 
     if (!currentUpdate) return null;
@@ -140,7 +126,7 @@ export function UpdateNotificationModal() {
                                         onClick={handleClose}
                                         className="bg-blue-600 text-white font-medium px-8 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 active:scale-95"
                                     >
-                                        Fechar e não mostrar novamente
+                                        Fechar
                                     </button>
                                 </div>
 
