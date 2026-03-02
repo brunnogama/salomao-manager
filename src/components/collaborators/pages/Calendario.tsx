@@ -387,20 +387,15 @@ export function Calendario() {
         }))
       };
 
-      const webhookUrl = 'SUA_URL_DO_MAKE_AQUI'; // <- O usuário precisa substituir isso depois
+      const webhookUrl = 'https://hook.us2.make.com/8f6ve3x2toikhvh7d8fi7ohegc88s5rh';
 
-      if (webhookUrl === 'SUA_URL_DO_MAKE_AQUI') {
-        console.log("PAYLOAD QUE SERIA ENVIADO PARA O MAKE:", payload);
-        alert("Por favor, configure a URL do Webhook do Make.com no código (Calendario.tsx). O envio foi simulado no console.");
-      } else {
-        await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        alert('Mensagem enviada com sucesso para a automação!');
-        setSelectedAniversariantes([]); // limpa a seleção
-      }
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      alert('Mensagem enviada com sucesso para a automação!');
+      setSelectedAniversariantes([]); // limpa a seleção
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       alert('Erro ao enviar a mensagem. Verifique a URL do Webhook e o console.');
@@ -638,8 +633,8 @@ export function Calendario() {
                       <div
                         onClick={(e) => handleToggleAniversariante(e, String(aniv.colaborador.id))}
                         className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${isSelected
-                            ? 'bg-green-500 border-green-500 text-white'
-                            : 'border-gray-300 bg-white hover:border-green-500'
+                          ? 'bg-green-500 border-green-500 text-white'
+                          : 'border-gray-300 bg-white hover:border-green-500'
                           }`}
                       >
                         {isSelected && <Check className="w-3.5 h-3.5" />}
