@@ -436,24 +436,25 @@ export function DadosPessoaisSection({
             Dados de Emergência
           </h4>
           <div className="flex items-center gap-3">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">
               Contatos: {formData.emergency_contacts?.length || 0}
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                const currentContacts = formData.emergency_contacts || [];
-                setFormData({
-                  ...formData,
-                  emergency_contacts: [...currentContacts, { id: crypto.randomUUID(), nome: '', telefone: '', parentesco: '' }]
-                });
-              }}
-              disabled={isViewMode}
-              className="p-1 hover:bg-[#1e3a8a]/10 rounded-lg text-[#1e3a8a] disabled:opacity-50 min-w-8 flex items-center justify-center transition-colors border border-transparent hover:border-[#1e3a8a]/20"
-              title="Adicionar Contato"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
+            {!isViewMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  const currentContacts = formData.emergency_contacts || [];
+                  setFormData({
+                    ...formData,
+                    emergency_contacts: [...currentContacts, { id: crypto.randomUUID(), nome: '', telefone: '', parentesco: '' }]
+                  });
+                }}
+                className="flex items-center gap-1 px-3 py-1 bg-blue-50 hover:bg-blue-100 text-[#1e3a8a] text-xs font-bold uppercase rounded-lg transition-all"
+                title="Adicionar Contato"
+              >
+                <Plus className="h-3.5 w-3.5" /> Adicionar Contato
+              </button>
+            )}
           </div>
         </div>
 

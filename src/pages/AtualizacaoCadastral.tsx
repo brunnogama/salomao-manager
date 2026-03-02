@@ -494,15 +494,15 @@ export default function AtualizacaoCadastral() {
                                 handleCepBlur={handleCepBlur}
                                 isViewMode={false}
                             />
+                            <TransporteSection
+                                transportes={formData.transportes || []}
+                                setTransportes={(newT) => setFormData(prev => ({ ...prev, transportes: newT }))}
+                                isViewMode={false}
+                            />
                             <DadosEscolaridadeSection
                                 formData={formData}
                                 setFormData={setFormData}
                                 maskDate={maskDate}
-                                isViewMode={false}
-                            />
-                            <TransporteSection
-                                transportes={formData.transportes || []}
-                                setTransportes={(newT) => setFormData(prev => ({ ...prev, transportes: newT }))}
                                 isViewMode={false}
                             />
                             <GEDSection
