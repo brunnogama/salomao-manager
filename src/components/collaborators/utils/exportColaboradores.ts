@@ -36,7 +36,7 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
     });
 
     const dataToExport = sortedData.map(c => ({
-        'ID': c.id,
+        'ID': c.matricula_interna || c.id,
         'Nome Completo': c.name,
         'CPF': c.cpf,
         'RG': c.rg,

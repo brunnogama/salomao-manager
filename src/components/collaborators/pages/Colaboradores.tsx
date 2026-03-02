@@ -1580,7 +1580,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
                               <div>
                                 <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
-                                <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-50 text-blue-600 border border-blue-100">{c.matricula_interna}</span>}
+                                  <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -1626,6 +1629,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
                               <div>
                                 <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
+                                {c.matricula_interna && <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[8px] font-bold bg-gray-100 text-gray-500 border border-gray-200">{c.matricula_interna}</span>}
                               </div>
                             </div>
                           </td>
@@ -1917,12 +1921,19 @@ export function Colaboradores({ }: ColaboradoresProps) {
           </>
         ),
         // Sidebar Content (Display Photo)
-        <div className="w-48 h-48 rounded-full overflow-hidden border-[6px] border-white shadow-xl bg-gray-50 flex items-center justify-center cursor-pointer transition-transform hover:scale-105" onClick={() => selectedColaborador.photo_url && setViewingPhoto(selectedColaborador.photo_url)}>
-          {selectedColaborador.photo_url ? (
-            <img src={selectedColaborador.photo_url} className="w-full h-full object-cover" alt={selectedColaborador.name} />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center">
-              <span className="text-5xl font-black text-white opacity-50">{selectedColaborador.name?.charAt(0).toUpperCase()}</span>
+        <div className="flex flex-col items-center">
+          <div className="w-48 h-48 rounded-full overflow-hidden border-[6px] border-white shadow-xl bg-gray-50 flex items-center justify-center cursor-pointer transition-transform hover:scale-105" onClick={() => selectedColaborador.photo_url && setViewingPhoto(selectedColaborador.photo_url)}>
+            {selectedColaborador.photo_url ? (
+              <img src={selectedColaborador.photo_url} className="w-full h-full object-cover" alt={selectedColaborador.name} />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center">
+                <span className="text-5xl font-black text-white opacity-50">{selectedColaborador.name?.charAt(0).toUpperCase()}</span>
+              </div>
+            )}
+          </div>
+          {selectedColaborador.matricula_interna && (
+            <div className="mt-4 px-4 py-1.5 bg-gray-100/80 rounded-full border border-gray-200 shadow-sm">
+              <span className="text-xs font-black text-gray-500 tracking-wider">{selectedColaborador.matricula_interna}</span>
             </div>
           )}
         </div>,

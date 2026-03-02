@@ -38,6 +38,7 @@ export interface Partner {
 
 export interface Collaborator {
   id: string;
+  matricula_interna?: string;
   name: string;
   partner_id?: string; // Vínculo com o Sócio Responsável (tabela partners)
   partner?: { id: string; name: string }; // Joined field
