@@ -372,10 +372,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
   }, [viewingPhoto, showFormModal, selectedColaborador])
 
   useEffect(() => {
-    if (selectedColaborador && activeDetailTab === 5) {
+    if (selectedColaborador && activeDetailTab === 7) {
       fetchGedDocs(selectedColaborador.id)
     }
   }, [selectedColaborador, activeDetailTab])
+
+  useEffect(() => {
+    if (showFormModal && formData.id && activeFormTab === 7) {
+      fetchGedDocs(formData.id)
+    }
+  }, [showFormModal, formData.id, activeFormTab])
 
   // Restore scroll position when modal closes and the list re-renders
   useEffect(() => {
