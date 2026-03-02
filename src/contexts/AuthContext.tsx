@@ -21,6 +21,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
     const checkAuthorization = async (currentSession: Session | null) => {
+        console.log('🔍 [AuthContext] checkAuthorization init. Session exists:', !!currentSession);
+        if (currentSession) {
+            console.log('🔍 [AuthContext] User data:', currentSession.user);
+        }
         if (!currentSession?.user) {
             setIsAuthorized(false);
             setLoading(false);
