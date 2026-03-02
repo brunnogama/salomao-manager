@@ -9,6 +9,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState<'microsoft' | 'credentials'>('microsoft')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,121 +89,164 @@ export default function Login() {
             </div>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
-
-            {/* Input Usuário */}
-            <div className="space-y-1.5">
-              <label className="block text-[10px] font-black text-[#0a192f]/70 uppercase tracking-widest pl-1">
-                Usuário Corporativo
-              </label>
-
-              <div className="group flex rounded-2xl shadow-sm border border-gray-200/80 focus-within:border-[#1e3a8a] focus-within:ring-4 focus-within:ring-[#1e3a8a]/10 overflow-hidden transition-all duration-300 bg-white hover:border-gray-300 hover:shadow-md">
-                <div className="flex items-center pl-4 text-gray-400 group-focus-within:text-[#1e3a8a] transition-colors">
-                  <User className="h-5 w-5" strokeWidth={2} />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={emailPrefix}
-                  onChange={(e) => setEmailPrefix(e.target.value.toLowerCase().replace(/\s/g, ''))}
-                  style={{ caretColor: '#1e3a8a' }}
-                  className="block flex-1 border-0 bg-transparent py-4 pl-3 text-[#0a192f] placeholder:text-gray-300 focus:ring-0 outline-none text-sm font-bold tracking-wide"
-                  placeholder="Seu usuário"
-                />
-                <span className="flex select-none items-center bg-gray-50/50 px-4 text-gray-400 text-xs font-bold border-l border-gray-100 group-focus-within:bg-[#1e3a8a]/[0.02] group-focus-within:text-[#1e3a8a]/70 group-focus-within:border-[#1e3a8a]/20 transition-colors">
-                  @salomaoadv.com.br
-                </span>
-              </div>
-            </div>
-
-            {/* Input Senha */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-end pl-1 pr-2">
-                <label className="block text-[10px] font-black text-[#0a192f]/70 uppercase tracking-widest">
-                  Senha
-                </label>
-                {/* Optional Forgot Password Link */}
-                <a href="#" className="text-[10px] font-bold text-[#1e3a8a] hover:text-[#d4af37] transition-colors">Esqueceu?</a>
-              </div>
-
-              <div className="relative rounded-2xl shadow-sm border border-gray-200/80 focus-within:border-[#1e3a8a] focus-within:ring-4 focus-within:ring-[#1e3a8a]/10 transition-all duration-300 bg-white hover:border-gray-300 hover:shadow-md group">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 group-focus-within:text-[#1e3a8a] transition-colors">
-                  <Lock className="h-5 w-5" strokeWidth={2} />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ caretColor: '#1e3a8a' }}
-                  className="peer block w-full border-0 bg-transparent py-4 pl-12 pr-12 text-[#0a192f] placeholder:text-gray-300 focus:ring-0 outline-none text-sm font-bold tracking-wide"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-[#1e3a8a] focus:outline-none cursor-pointer transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" strokeWidth={2} /> : <Eye className="h-5 w-5" strokeWidth={2} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Mensagem de Erro */}
-            {error && (
-              <div className="p-4 rounded-2xl bg-red-50 text-red-600 text-sm font-bold text-center border border-red-100 animate-in fade-in zoom-in-95 duration-200 shadow-sm flex items-center justify-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-                {error}
-              </div>
-            )}
-
-            {/* Divisor */}
-            <div className="pt-2"></div>
-
-            {/* Botão Acessar */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="relative w-full flex justify-center items-center py-4 px-6 rounded-2xl text-sm font-black text-white bg-[#0a192f] hover:bg-[#112240] focus:outline-none focus:ring-4 focus:ring-[#0a192f]/20 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98] uppercase tracking-widest overflow-hidden shadow-xl shadow-[#0a192f]/10"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-
-              {loading ? (
-                <div className="flex items-center gap-3">
-                  <Loader2 className="h-5 w-5 animate-spin text-[#d4af37]" />
-                  <span>Autenticando...</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <span>Acessar Manager</span>
-                  <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                    <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
-                  </div>
-                </div>
-              )}
-            </button>
-
-            {/* Divisor Outlook */}
-            <div className="relative flex items-center py-2">
-              <div className="flex-grow border-t border-gray-200/60"></div>
-              <span className="flex-shrink mx-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">ou</span>
-              <div className="flex-grow border-t border-gray-200/60"></div>
-            </div>
-
-            {/* Botão Outlook */}
+          {/* Tabs Nav */}
+          <div className="flex p-1 bg-gray-100/80 rounded-2xl mb-8">
             <button
               type="button"
-              onClick={handleOutlookLogin}
-              disabled={loading}
-              className="relative w-full flex justify-center items-center py-4 px-6 rounded-2xl text-xs font-black text-[#0a192f] bg-white border border-gray-200 hover:border-blue-200 hover:bg-blue-50/30 focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98] uppercase tracking-widest shadow-sm"
+              onClick={() => setActiveTab('microsoft')}
+              className={`flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeTab === 'microsoft'
+                  ? 'bg-white text-[#0a192f] shadow-sm ring-1 ring-gray-200/50'
+                  : 'text-gray-400 hover:text-[#0a192f] hover:bg-white/50'
+                }`}
             >
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-[#0078d4]" />
-                <span>Entrar com a conta Salomão</span>
-              </div>
+              Microsoft
             </button>
-          </form>
+            <button
+              type="button"
+              onClick={() => setActiveTab('credentials')}
+              className={`flex-1 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${activeTab === 'credentials'
+                  ? 'bg-white text-[#0a192f] shadow-sm ring-1 ring-gray-200/50'
+                  : 'text-gray-400 hover:text-[#0a192f] hover:bg-white/50'
+                }`}
+            >
+              Credenciais
+            </button>
+          </div>
+
+          <div className="min-h-[280px]">
+            {activeTab === 'microsoft' ? (
+              <div className="space-y-6 flex flex-col items-center justify-center h-full animate-in fade-in zoom-in-95 duration-500">
+                <div className="text-center space-y-3 mb-4">
+                  <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100 shadow-inner">
+                    <svg className="w-8 h-8" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path d="m0 0h10v10h-10z" fill="#f25022" /><path d="m11 0h10v10h-10z" fill="#7fba00" /><path d="m0 11h10v10h-10z" fill="#00a4ef" /><path d="m11 11h10v10h-10z" fill="#ffb900" /></svg>
+                  </div>
+                  <h3 className="text-sm font-bold text-[#0a192f]">Acesso Corporativo</h3>
+                  <p className="text-xs text-gray-400 font-medium">Use sua conta Microsoft do escritório para entrar com segurança.</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleOutlookLogin}
+                  disabled={loading}
+                  className="relative w-full flex justify-center items-center py-4 px-6 rounded-2xl text-sm font-black text-white bg-[#0a192f] hover:bg-[#112240] focus:outline-none focus:ring-4 focus:ring-[#0a192f]/20 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98] tracking-widest overflow-hidden shadow-xl shadow-[#0a192f]/10"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+
+                  {loading ? (
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="h-5 w-5 animate-spin text-[#d4af37]" />
+                      <span className="uppercase">Conectando...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <svg className="w-5 h-5 bg-white p-1 rounded-md" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><path d="m0 0h10v10h-10z" fill="#f25022" /><path d="m11 0h10v10h-10z" fill="#7fba00" /><path d="m0 11h10v10h-10z" fill="#00a4ef" /><path d="m11 11h10v10h-10z" fill="#ffb900" /></svg>
+                      <span className="uppercase font-extrabold tracking-widest mt-0.5">Entrar com Microsoft</span>
+                    </div>
+                  )}
+                </button>
+
+                {/* Mensagem de Erro Microsoft */}
+                {error && (
+                  <div className="p-4 w-full rounded-2xl bg-red-50 text-red-600 text-sm font-bold text-center border border-red-100 animate-in fade-in zoom-in-95 duration-200 shadow-sm flex items-center justify-center gap-2 mt-4">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+                    {error}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleLogin} className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
+                {/* Input Usuário */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-black text-[#0a192f]/70 uppercase tracking-widest pl-1">
+                    Usuário Corporativo
+                  </label>
+
+                  <div className="group flex rounded-2xl shadow-sm border border-gray-200/80 focus-within:border-[#1e3a8a] focus-within:ring-4 focus-within:ring-[#1e3a8a]/10 overflow-hidden transition-all duration-300 bg-white hover:border-gray-300 hover:shadow-md">
+                    <div className="flex items-center pl-4 text-gray-400 group-focus-within:text-[#1e3a8a] transition-colors">
+                      <User className="h-5 w-5" strokeWidth={2} />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={emailPrefix}
+                      onChange={(e) => setEmailPrefix(e.target.value.toLowerCase().replace(/\s/g, ''))}
+                      style={{ caretColor: '#1e3a8a' }}
+                      className="block flex-1 border-0 bg-transparent py-4 pl-3 text-[#0a192f] placeholder:text-gray-300 focus:ring-0 outline-none text-sm font-bold tracking-wide"
+                      placeholder="Seu usuário"
+                    />
+                    <span className="flex select-none items-center bg-gray-50/50 px-4 text-gray-400 text-xs font-bold border-l border-gray-100 group-focus-within:bg-[#1e3a8a]/[0.02] group-focus-within:text-[#1e3a8a]/70 group-focus-within:border-[#1e3a8a]/20 transition-colors">
+                      @salomaoadv.com.br
+                    </span>
+                  </div>
+                </div>
+
+                {/* Input Senha */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-end pl-1 pr-2">
+                    <label className="block text-[10px] font-black text-[#0a192f]/70 uppercase tracking-widest">
+                      Senha
+                    </label>
+                    <a href="#" className="text-[10px] font-bold text-[#1e3a8a] hover:text-[#d4af37] transition-colors">Esqueceu?</a>
+                  </div>
+
+                  <div className="relative rounded-2xl shadow-sm border border-gray-200/80 focus-within:border-[#1e3a8a] focus-within:ring-4 focus-within:ring-[#1e3a8a]/10 transition-all duration-300 bg-white hover:border-gray-300 hover:shadow-md group">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 group-focus-within:text-[#1e3a8a] transition-colors">
+                      <Lock className="h-5 w-5" strokeWidth={2} />
+                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      style={{ caretColor: '#1e3a8a' }}
+                      className="peer block w-full border-0 bg-transparent py-4 pl-12 pr-12 text-[#0a192f] placeholder:text-gray-300 focus:ring-0 outline-none text-sm font-bold tracking-wide"
+                      placeholder="••••••••"
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-[#1e3a8a] focus:outline-none cursor-pointer transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" strokeWidth={2} /> : <Eye className="h-5 w-5" strokeWidth={2} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mensagem de Erro Credenciais */}
+                {error && (
+                  <div className="p-4 rounded-2xl bg-red-50 text-red-600 text-sm font-bold text-center border border-red-100 animate-in fade-in zoom-in-95 duration-200 shadow-sm flex items-center justify-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+                    {error}
+                  </div>
+                )}
+
+                {/* Botão Acessar */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="relative w-full flex justify-center items-center py-4 px-6 rounded-2xl text-sm font-black text-white bg-[#0a192f] hover:bg-[#112240] focus:outline-none focus:ring-4 focus:ring-[#0a192f]/20 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group active:scale-[0.98] uppercase tracking-widest overflow-hidden shadow-xl shadow-[#0a192f]/10 mt-6"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+
+                  {loading ? (
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="h-5 w-5 animate-spin text-[#d4af37]" />
+                      <span>Autenticando...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span>Acessar Manager</span>
+                      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                        <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
+                      </div>
+                    </div>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
 
           <div className="text-center pt-8 border-t border-gray-200/60 flex flex-col items-center gap-2">
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">
