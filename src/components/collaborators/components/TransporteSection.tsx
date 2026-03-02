@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Bus, Plus, X, AlertTriangle } from 'lucide-react'
+import { Bus, X, AlertTriangle } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { formatCurrency, parseCurrency, getWorkingDaysInCurrentMonth } from '../utils/colaboradoresUtils';
 
@@ -132,7 +132,7 @@ export function TransporteSection({
 
                         return (
                             <div key={idx} className="bg-blue-50/40 p-5 rounded-xl border border-blue-100 relative animate-in zoom-in-95">
-                                <div className="flex justify-between items-center mb-4">
+                                <div className={`flex justify-between items-center ${t.tipo !== 'Não Optante' ? 'mb-4' : ''}`}>
                                     <h5 className="font-black text-[#1e3a8a] flex items-center gap-2">
                                         <Bus className="h-4 w-4 text-blue-400" /> {t.tipo}
                                     </h5>
@@ -148,75 +148,77 @@ export function TransporteSection({
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* IDA */}
-                                    <div className="space-y-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantidade Ida</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                value={t.ida_qtd || ''}
-                                                onChange={e => handleTransporteQtdChange(idx, 'ida', e.target.value)}
-                                                placeholder="Máx 3"
-                                                disabled={isViewMode}
-                                                readOnly={isViewMode}
-                                            />
-                                        </div>
-                                        {/* Campos de Valor Dinâmicos para Ida */}
-                                        {Array.from({ length: t.ida_qtd || 0 }).map((_, i) => (
-                                            <div key={`ida_val_${i}`}>
-                                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Ida #{i + 1} (R$)</label>
+                                {t.tipo !== 'Não Optante' && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* IDA */}
+                                        <div className="space-y-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                            <div>
+                                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantidade Ida</label>
                                                 <input
-                                                    type="text"
-                                                    className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                    value={formatCurrency(t.ida_valores?.[i])}
-                                                    onChange={e => handleTransporteValorChange(idx, 'ida', i, e.target.value)}
+                                                    type="number"
+                                                    min="0"
+                                                    className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                    value={t.ida_qtd || ''}
+                                                    onChange={e => handleTransporteQtdChange(idx, 'ida', e.target.value)}
+                                                    placeholder="Máx 3"
                                                     disabled={isViewMode}
                                                     readOnly={isViewMode}
                                                 />
                                             </div>
-                                        ))}
-                                        {t.ida_qtd > 0 && (
-                                            <div className="text-right text-xs font-bold text-[#1e3a8a]">Subtotal: {formatCurrency(totalIda)}</div>
-                                        )}
-                                    </div>
+                                            {/* Campos de Valor Dinâmicos para Ida */}
+                                            {Array.from({ length: t.ida_qtd || 0 }).map((_, i) => (
+                                                <div key={`ida_val_${i}`}>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Ida #{i + 1} (R$)</label>
+                                                    <input
+                                                        type="text"
+                                                        className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        value={formatCurrency(t.ida_valores?.[i])}
+                                                        onChange={e => handleTransporteValorChange(idx, 'ida', i, e.target.value)}
+                                                        disabled={isViewMode}
+                                                        readOnly={isViewMode}
+                                                    />
+                                                </div>
+                                            ))}
+                                            {t.ida_qtd > 0 && (
+                                                <div className="text-right text-xs font-bold text-[#1e3a8a]">Subtotal: {formatCurrency(totalIda)}</div>
+                                            )}
+                                        </div>
 
-                                    {/* VOLTA */}
-                                    <div className="space-y-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                                        <div>
-                                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantidade Volta</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                value={t.volta_qtd || ''}
-                                                onChange={e => handleTransporteQtdChange(idx, 'volta', e.target.value)}
-                                                placeholder="Máx 3"
-                                                disabled={isViewMode}
-                                                readOnly={isViewMode}
-                                            />
-                                        </div>
-                                        {/* Campos de Valor Dinâmicos para Volta */}
-                                        {Array.from({ length: t.volta_qtd || 0 }).map((_, i) => (
-                                            <div key={`volta_val_${i}`}>
-                                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Volta #{i + 1} (R$)</label>
+                                        {/* VOLTA */}
+                                        <div className="space-y-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                            <div>
+                                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantidade Volta</label>
                                                 <input
-                                                    type="text"
-                                                    className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                    value={formatCurrency(t.volta_valores?.[i])}
-                                                    onChange={e => handleTransporteValorChange(idx, 'volta', i, e.target.value)}
+                                                    type="number"
+                                                    min="0"
+                                                    className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                    value={t.volta_qtd || ''}
+                                                    onChange={e => handleTransporteQtdChange(idx, 'volta', e.target.value)}
+                                                    placeholder="Máx 3"
                                                     disabled={isViewMode}
                                                     readOnly={isViewMode}
                                                 />
                                             </div>
-                                        ))}
-                                        {t.volta_qtd > 0 && (
-                                            <div className="text-right text-xs font-bold text-[#1e3a8a]">Subtotal: {formatCurrency(totalVolta)}</div>
-                                        )}
+                                            {/* Campos de Valor Dinâmicos para Volta */}
+                                            {Array.from({ length: t.volta_qtd || 0 }).map((_, i) => (
+                                                <div key={`volta_val_${i}`}>
+                                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Volta #{i + 1} (R$)</label>
+                                                    <input
+                                                        type="text"
+                                                        className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        value={formatCurrency(t.volta_valores?.[i])}
+                                                        onChange={e => handleTransporteValorChange(idx, 'volta', i, e.target.value)}
+                                                        disabled={isViewMode}
+                                                        readOnly={isViewMode}
+                                                    />
+                                                </div>
+                                            ))}
+                                            {t.volta_qtd > 0 && (
+                                                <div className="text-right text-xs font-bold text-[#1e3a8a]">Subtotal: {formatCurrency(totalVolta)}</div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         );
                     })}
@@ -224,7 +226,7 @@ export function TransporteSection({
             )}
 
             {/* Seletor de Tipo para Adicionar Novo */}
-            {!isViewMode && (
+            {!isViewMode && !transportes.some(t => t.tipo === 'Não Optante') && (
                 <div className="flex flex-col gap-2 md:w-1/3 mb-6 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md animate-in slide-in-from-bottom-2">
                     <SearchableSelect
                         label="Adicionar Tipo de Transporte"

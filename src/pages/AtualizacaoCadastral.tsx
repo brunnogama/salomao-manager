@@ -354,11 +354,11 @@ export default function AtualizacaoCadastral() {
             // Upload pending GED docs
             if (updatedData && updatedData.id && pendingGedDocs.length > 0) {
                 for (const doc of pendingGedDocs) {
-                    const cleanFileName = doc.file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                    const extension = doc.file.name.includes('.') ? `.${doc.file.name.split('.').pop()}` : '';
                     const categoryLabel = doc.label || doc.category;
-                    const cleanFinalName = `${categoryLabel.replace(/[^a-zA-Z0-9]/g, '_')}_${cleanFileName}`;
+                    const storageFileName = `${categoryLabel.replace(/[^a-zA-Z0-9]/g, '_')}${extension}`;
 
-                    const filePath = `ged/${updatedData.id}/${Date.now()}_${cleanFinalName}`;
+                    const filePath = `ged/${updatedData.id}/${Date.now()}_${storageFileName}`;
 
                     const { error: upErr } = await supabase.storage.from('ged-colaboradores').upload(filePath, doc.file);
 
@@ -366,7 +366,7 @@ export default function AtualizacaoCadastral() {
                         const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath);
                         await supabase.from('ged_colaboradores').insert({
                             colaborador_id: updatedData.id,
-                            nome_arquivo: cleanFinalName,
+                            nome_arquivo: categoryLabel,
                             url: publicUrl,
                             categoria: doc.category,
                             dados_atestado: doc.atestadoDatas?.inicio ? doc.atestadoDatas : null
@@ -443,14 +443,14 @@ export default function AtualizacaoCadastral() {
                 </div>
 
                 {/* LGPD Banner Destaque Topo */}
-                <div className="bg-emerald-50 border border-emerald-200 shadow-sm rounded-2xl p-4 sm:p-5 flex items-start gap-4 mb-8 rotate-1 hover:rotate-0 transition-transform duration-300 max-w-2xl mx-auto">
+                <div className="bg-emerald-50 border border-emerald-200 shadow-sm rounded-2xl p-4 sm:p-5 flex items-start gap-4 mb-8 transition-transform duration-300 max-w-2xl mx-auto">
                     <div className="bg-emerald-100 p-2.5 rounded-full text-emerald-600 shrink-0 shadow-inner">
                         <ShieldCheck className="w-6 h-6" />
                     </div>
                     <div className="pt-0.5">
                         <h3 className="text-emerald-900 font-bold text-sm mb-1">Privacidade e Proteção de Dados (LGPD)</h3>
                         <p className="text-emerald-700/90 text-xs sm:text-sm leading-relaxed">
-                            Acesso seguro e restrito. Suas informações são confidenciais e protegidas por criptografia rigorosa liderada pelo RH da Salomão, estritamente conforme as normas da <strong>Lei Geral de Proteção de Dados</strong>.
+                            Estes dados são confidenciais e utilizados apenas para fins de gestão interna.
                         </p>
                     </div>
                 </div>

@@ -12,7 +12,7 @@ interface GEDSectionProps {
     gedInputRef: React.RefObject<HTMLInputElement>;
     handleGedUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     gedDocs: GEDDocument[];
-    pendingGedDocs: { file: File, category: string, tempId: string, atestadoDatas?: { inicio: string, fim: string } }[];
+    pendingGedDocs: { file: File, category: string, label?: string, tempId: string, atestadoDatas?: { inicio: string, fim: string } }[];
     setPendingGedDocs: (updateFn: (prev: any[]) => any[]) => void;
     handleDeleteGed: (doc: GEDDocument) => void;
     hideDeleteButton?: boolean;
@@ -116,10 +116,9 @@ export function GEDSection({
                         <div className="flex items-center gap-3 overflow-hidden">
                             <div className="p-1.5 bg-yellow-100 text-yellow-600 rounded"><FileText className="h-4 w-4" /></div>
                             <div className="overflow-hidden">
-                                <p className="text-xs font-bold text-[#0a192f] truncate">{doc.file.name}</p>
+                                <p className="text-xs font-bold text-[#0a192f] truncate">{doc.label || doc.category}</p>
                                 <div className="flex gap-2">
-                                    <span className="text-[9px] bg-yellow-100 text-yellow-700 px-1 py-0.5 rounded uppercase tracking-wider">{doc.category}</span>
-                                    <span className="text-[9px] text-yellow-600 italic">Pendente</span>
+                                    <span className="text-[9px] text-yellow-600 italic px-1 py-0.5">Pendente</span>
                                 </div>
                             </div>
                         </div>
