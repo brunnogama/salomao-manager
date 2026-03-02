@@ -24,27 +24,32 @@ export function DadosCorporativosSection({
 
   const [pendingTransportType, setPendingTransportType] = useState('');
   const [showTransporteModal, setShowTransporteModal] = useState<{
-    type: 'transporte_ida_qtd' | 'transporte_volta_qtd';
+    index: number;
+    type: 'ida' | 'volta';
     numValue: number;
   } | null>(null);
 
-  const selectedTransportes = useMemo(() => {
-    if (!formData.transporte_tipo) return [];
-    return formData.transporte_tipo.split(',').map(s => s.trim()).filter(Boolean);
-  }, [formData.transporte_tipo]);
+  const selectedTransportes = formData.transportes || [];
 
   const handleAddTransport = () => {
     if (!pendingTransportType) return;
-    if (selectedTransportes.includes(pendingTransportType)) return;
+    if (selectedTransportes.some(t => t.tipo === pendingTransportType)) return;
 
-    const newTransportes = [...selectedTransportes, pendingTransportType];
-    setFormData({ ...formData, transporte_tipo: newTransportes.join(', ') });
+    const newTransport = {
+      tipo: pendingTransportType,
+      ida_qtd: 0,
+      volta_qtd: 0,
+      ida_valores: [],
+      volta_valores: []
+    };
+
+    setFormData({ ...formData, transportes: [...selectedTransportes, newTransport] });
     setPendingTransportType('');
   };
 
-  const handleRemoveTransport = (tToRemove: string) => {
-    const newTransportes = selectedTransportes.filter(t => t !== tToRemove);
-    setFormData({ ...formData, transporte_tipo: newTransportes.join(', ') });
+  const handleRemoveTransport = (indexToRemove: number) => {
+    const newTransportes = selectedTransportes.filter((_, idx) => idx !== indexToRemove);
+    setFormData({ ...formData, transportes: newTransportes.length > 0 ? newTransportes : undefined });
   };
 
   // Calculate duration if dates are available
@@ -71,49 +76,72 @@ export function DadosCorporativosSection({
     }
   }, [formData.hire_date, formData.termination_date])
 
-  const handleTransporteQtdChange = (field: 'transporte_ida_qtd' | 'transporte_volta_qtd', value: string) => {
+  const handleTransporteQtdChange = (index: number, type: 'ida' | 'volta', value: string) => {
     const rawVal = parseInt(value, 10);
     const numValue = isNaN(rawVal) ? 0 : rawVal;
 
     if (numValue > 3) {
       // Prevent automatic update and open custom modal
-      setShowTransporteModal({ type: field, numValue });
+      setShowTransporteModal({ index, type, numValue });
       return;
     }
 
-    applyTransporteQtd(field, numValue);
+    applyTransporteQtd(index, type, numValue);
   };
 
-  const applyTransporteQtd = (field: 'transporte_ida_qtd' | 'transporte_volta_qtd', numValue: number) => {
-    const valField = field === 'transporte_ida_qtd' ? 'transporte_ida_valores' : 'transporte_volta_valores';
-    const currentArray = formData[valField] || [];
-    let newArray = [...currentArray];
+  const applyTransporteQtd = (index: number, type: 'ida' | 'volta', numValue: number) => {
+    const currentArray = [...(formData.transportes || [])];
+    const transportToUpdate = { ...currentArray[index] };
 
-    if (newArray.length > numValue) {
-      newArray = newArray.slice(0, numValue);
+    if (type === 'ida') {
+      transportToUpdate.ida_qtd = numValue;
+      transportToUpdate.ida_valores = adjustValuesArray(transportToUpdate.ida_valores || [], numValue);
     } else {
-      while (newArray.length < numValue) {
+      transportToUpdate.volta_qtd = numValue;
+      transportToUpdate.volta_valores = adjustValuesArray(transportToUpdate.volta_valores || [], numValue);
+    }
+
+    currentArray[index] = transportToUpdate;
+    setFormData({ ...formData, transportes: currentArray });
+  };
+
+  const adjustValuesArray = (arr: number[], length: number) => {
+    let newArray = [...arr];
+    if (newArray.length > length) {
+      newArray = newArray.slice(0, length);
+    } else {
+      while (newArray.length < length) {
         newArray.push(0);
       }
     }
-
-    setFormData({
-      ...formData,
-      [field]: numValue === 0 ? undefined : numValue,
-      [valField]: numValue === 0 ? undefined : newArray
-    });
+    return newArray;
   };
 
-  const handleTransporteValorChange = (field: 'transporte_ida_valores' | 'transporte_volta_valores', index: number, value: string) => {
-    const currentArray = [...(formData[field] || [])];
+  const handleTransporteValorChange = (index: number, type: 'ida' | 'volta', valIdx: number, value: string) => {
+    const currentArray = [...(formData.transportes || [])];
+    const transportToUpdate = { ...currentArray[index] };
     const numVal = parseCurrency(value);
-    currentArray[index] = isNaN(numVal) ? 0 : numVal;
-    setFormData({ ...formData, [field]: currentArray });
+
+    if (type === 'ida') {
+      const vals = [...(transportToUpdate.ida_valores || [])];
+      vals[valIdx] = isNaN(numVal) ? 0 : numVal;
+      transportToUpdate.ida_valores = vals;
+    } else {
+      const vals = [...(transportToUpdate.volta_valores || [])];
+      vals[valIdx] = isNaN(numVal) ? 0 : numVal;
+      transportToUpdate.volta_valores = vals;
+    }
+
+    currentArray[index] = transportToUpdate;
+    setFormData({ ...formData, transportes: currentArray });
   };
 
-  const totalIda = (formData.transporte_ida_valores || []).reduce((acc, curr) => acc + (curr || 0), 0);
-  const totalVolta = (formData.transporte_volta_valores || []).reduce((acc, curr) => acc + (curr || 0), 0);
-  const totalTransporte = totalIda + totalVolta;
+  const totalTransporte = selectedTransportes.reduce((acc, t) => {
+    const totalIda = (t.ida_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+    const totalVolta = (t.volta_valores || []).reduce((sum, v) => sum + (v || 0), 0);
+    return acc + totalIda + totalVolta;
+  }, 0);
+
   const workingDays = useMemo(() => getWorkingDaysInCurrentMonth(), []);
   const monthlyTotalTransporte = totalTransporte * workingDays;
 
@@ -349,125 +377,136 @@ export function DadosCorporativosSection({
               <h4 className="text-[10px] font-black text-[#1e3a8a] uppercase tracking-widest flex items-center gap-2 mb-6">
                 <Bus className="h-4 w-4" /> Transporte
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex flex-col gap-2">
-                  <div className="relative">
-                    <SearchableSelect
-                      label="Tipo(s) de Transporte"
-                      value={pendingTransportType}
-                      onChange={setPendingTransportType}
-                      options={[
-                        { id: 'Integração BU', name: 'Integração BU' },
-                        { id: 'Metrô', name: 'Metrô' },
-                        { id: 'Ônibus', name: 'Ônibus' },
-                        { id: 'Trem', name: 'Trem' },
-                        { id: 'VLT', name: 'VLT' }
-                      ]}
-                      uppercase={false}
-                      disabled={isViewMode}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddTransport}
-                      disabled={!pendingTransportType || isViewMode}
-                      className="absolute right-0 bottom-1 flex items-center justify-center h-[42px] w-[50px] bg-[#1e3a8a] text-white rounded-r-xl hover:bg-[#112240] transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed border-none"
-                    >
-                      <Plus className="h-5 w-5" />
-                    </button>
-                  </div>
-                  {/* Selected Chips */}
-                  {selectedTransportes.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {selectedTransportes.map((t, idx) => (
-                        <div key={idx} className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-[#1e3a8a] text-xs font-bold rounded-lg border border-blue-200 shadow-sm animate-in zoom-in-95">
-                          {t}
-                          {!isViewMode && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveTransport(t)}
-                              className="text-gray-400 hover:text-red-500 rounded-full focus:outline-none transition-colors"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
 
-                <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                  {/* IDA */}
-                  <div className="space-y-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                    <div>
-                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantidade Ida</label>
-                      <input
-                        type="number"
-                        min="0"
-                        className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        value={formData.transporte_ida_qtd || ''}
-                        onChange={e => handleTransporteQtdChange('transporte_ida_qtd', e.target.value)}
-                        placeholder="Máx 3"
-                        disabled={isViewMode}
-                        readOnly={isViewMode}
-                      />
-                    </div>
-                    {/* Campos de Valor Dinâmicos para Ida */}
-                    {Array.from({ length: formData.transporte_ida_qtd || 0 }).map((_, i) => (
-                      <div key={`ida_val_${i}`}>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Ida #{i + 1} (R$)</label>
-                        <input
-                          type="text"
-                          className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                          value={formatCurrency(formData.transporte_ida_valores?.[i])}
-                          onChange={e => handleTransporteValorChange('transporte_ida_valores', i, e.target.value)}
-                          disabled={isViewMode}
-                          readOnly={isViewMode}
-                        />
-                      </div>
-                    ))}
-                    {formData.transporte_ida_qtd && formData.transporte_ida_qtd > 0 && (
-                      <div className="text-right text-xs font-bold text-[#1e3a8a]">Total Ida: R$ {totalIda.toFixed(2)}</div>
-                    )}
-                  </div>
-
-                  {/* VOLTA */}
-                  <div className="space-y-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                    <div>
-                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantidade Volta</label>
-                      <input
-                        type="number"
-                        min="0"
-                        className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        value={formData.transporte_volta_qtd || ''}
-                        onChange={e => handleTransporteQtdChange('transporte_volta_qtd', e.target.value)}
-                        placeholder="Máx 3"
-                        disabled={isViewMode}
-                        readOnly={isViewMode}
-                      />
-                    </div>
-                    {/* Campos de Valor Dinâmicos para Volta */}
-                    {Array.from({ length: formData.transporte_volta_qtd || 0 }).map((_, i) => (
-                      <div key={`volta_val_${i}`}>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Volta #{i + 1} (R$)</label>
-                        <input
-                          type="text"
-                          className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                          value={formatCurrency(formData.transporte_volta_valores?.[i])}
-                          onChange={e => handleTransporteValorChange('transporte_volta_valores', i, e.target.value)}
-                          disabled={isViewMode}
-                          readOnly={isViewMode}
-                        />
-                      </div>
-                    ))}
-                    {formData.transporte_volta_qtd && formData.transporte_volta_qtd > 0 && (
-                      <div className="text-right text-xs font-bold text-[#1e3a8a]">Total Volta: R$ {totalVolta.toFixed(2)}</div>
-                    )}
-                  </div>
+              {/* Seletor de Tipo para Adicionar Novo */}
+              <div className="flex flex-col gap-2 md:w-1/3 mb-6">
+                <div className="relative">
+                  <SearchableSelect
+                    label="Adicionar Tipo de Transporte"
+                    value={pendingTransportType}
+                    onChange={setPendingTransportType}
+                    options={[
+                      { id: 'Integração BU', name: 'Integração BU' },
+                      { id: 'Metrô', name: 'Metrô' },
+                      { id: 'Ônibus', name: 'Ônibus' },
+                      { id: 'Trem', name: 'Trem' },
+                      { id: 'VLT', name: 'VLT' }
+                    ]}
+                    uppercase={false}
+                    disabled={isViewMode}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddTransport}
+                    disabled={!pendingTransportType || isViewMode}
+                    className="absolute right-0 bottom-1 flex items-center justify-center h-[42px] w-[50px] bg-[#1e3a8a] text-white rounded-r-xl hover:bg-[#112240] transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed border-none"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
 
-              {(totalIda > 0 || totalVolta > 0) && (
+              {/* Blocos de Transporte Selecionados */}
+              {selectedTransportes.length > 0 && (
+                <div className="space-y-6 mb-6">
+                  {selectedTransportes.map((t, idx) => {
+                    const totalIda = (t.ida_valores || []).reduce((acc, curr) => acc + (curr || 0), 0);
+                    const totalVolta = (t.volta_valores || []).reduce((acc, curr) => acc + (curr || 0), 0);
+
+                    return (
+                      <div key={idx} className="bg-blue-50/40 p-5 rounded-xl border border-blue-100 relative animate-in zoom-in-95">
+                        <div className="flex justify-between items-center mb-4">
+                          <h5 className="font-black text-[#1e3a8a] flex items-center gap-2">
+                            <Bus className="h-4 w-4 text-blue-400" /> {t.tipo}
+                          </h5>
+                          {!isViewMode && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTransport(idx)}
+                              className="text-gray-400 hover:text-red-500 rounded-full focus:outline-none transition-colors border border-gray-200 bg-white p-1"
+                              title="Remover Transporte"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* IDA */}
+                          <div className="space-y-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                            <div>
+                              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantidade Ida</label>
+                              <input
+                                type="number"
+                                min="0"
+                                className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                value={t.ida_qtd || ''}
+                                onChange={e => handleTransporteQtdChange(idx, 'ida', e.target.value)}
+                                placeholder="Máx 3"
+                                disabled={isViewMode}
+                                readOnly={isViewMode}
+                              />
+                            </div>
+                            {/* Campos de Valor Dinâmicos para Ida */}
+                            {Array.from({ length: t.ida_qtd || 0 }).map((_, i) => (
+                              <div key={`ida_val_${i}`}>
+                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Ida #{i + 1} (R$)</label>
+                                <input
+                                  type="text"
+                                  className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                  value={formatCurrency(t.ida_valores?.[i])}
+                                  onChange={e => handleTransporteValorChange(idx, 'ida', i, e.target.value)}
+                                  disabled={isViewMode}
+                                  readOnly={isViewMode}
+                                />
+                              </div>
+                            ))}
+                            {t.ida_qtd > 0 && (
+                              <div className="text-right text-xs font-bold text-[#1e3a8a]">Subtotal: R$ {totalIda.toFixed(2)}</div>
+                            )}
+                          </div>
+
+                          {/* VOLTA */}
+                          <div className="space-y-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                            <div>
+                              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantidade Volta</label>
+                              <input
+                                type="number"
+                                min="0"
+                                className={`w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                value={t.volta_qtd || ''}
+                                onChange={e => handleTransporteQtdChange(idx, 'volta', e.target.value)}
+                                placeholder="Máx 3"
+                                disabled={isViewMode}
+                                readOnly={isViewMode}
+                              />
+                            </div>
+                            {/* Campos de Valor Dinâmicos para Volta */}
+                            {Array.from({ length: t.volta_qtd || 0 }).map((_, i) => (
+                              <div key={`volta_val_${i}`}>
+                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Valor Volta #{i + 1} (R$)</label>
+                                <input
+                                  type="text"
+                                  className={`w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                  value={formatCurrency(t.volta_valores?.[i])}
+                                  onChange={e => handleTransporteValorChange(idx, 'volta', i, e.target.value)}
+                                  disabled={isViewMode}
+                                  readOnly={isViewMode}
+                                />
+                              </div>
+                            ))}
+                            {t.volta_qtd > 0 && (
+                              <div className="text-right text-xs font-bold text-[#1e3a8a]">Subtotal: R$ {totalVolta.toFixed(2)}</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {totalTransporte > 0 && (
                 <div className="mt-4 p-4 bg-blue-50/70 border border-blue-200 rounded-xl shadow-sm space-y-3">
                   <div className="flex justify-between items-center pb-3 border-b border-blue-200/50">
                     <span className="text-sm font-bold text-[#1e3a8a]">Custo Total Diário de Transporte:</span>
@@ -621,7 +660,7 @@ export function DadosCorporativosSection({
               <button
                 type="button"
                 onClick={() => {
-                  applyTransporteQtd(showTransporteModal.type, showTransporteModal.numValue);
+                  applyTransporteQtd(showTransporteModal.index, showTransporteModal.type, showTransporteModal.numValue);
                   setShowTransporteModal(null);
                 }}
                 className="flex-1 px-4 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors uppercase tracking-wider shadow-lg shadow-amber-500/30 text-xs"

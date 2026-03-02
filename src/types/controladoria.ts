@@ -141,11 +141,13 @@ export interface Collaborator {
   area?: 'Administrativa' | 'Jurídica';
 
   // Transporte
-  transporte_tipo?: string;
-  transporte_ida_qtd?: number;
-  transporte_volta_qtd?: number;
-  transporte_ida_valores?: number[];
-  transporte_volta_valores?: number[];
+  transportes?: {
+    tipo: string;
+    ida_qtd: number;
+    volta_qtd: number;
+    ida_valores: number[];
+    volta_valores: number[];
+  }[];
 
   // Campos Adicionais para evitar erros de lint (UI/Form)
   civil_status?: string;

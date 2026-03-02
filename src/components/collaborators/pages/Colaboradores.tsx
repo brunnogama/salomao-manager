@@ -757,7 +757,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (!safeCompare(advFilterRole, c.role, (c as any).roles?.name)) return false;
       if (!safeCompare(advFilterContractType, c.contract_type)) return false;
       if (!safeCompare(advFilterLocal, c.local, (c as any).locations?.name)) return false;
-      if (!safeIncludes(advFilterTransporteTipo, c.transporte_tipo)) return false;
+      if (!safeIncludes(advFilterTransporteTipo, c.transportes?.map(t => t.tipo).join(', '))) return false;
 
       // Escolares
       if (advFilterGraduationComplete) {

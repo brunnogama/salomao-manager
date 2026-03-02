@@ -71,12 +71,8 @@ export const formatCurrency = (value: number | string | undefined): string => {
   let numericValue = typeof value === 'string' ? Number(value.replace(/\D/g, '')) / 100 : value;
   if (isNaN(numericValue)) numericValue = 0;
 
-  return numericValue.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+  const formatted = numericValue.toFixed(2).replace('.', ',');
+  return `R$ ${formatted.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 };
 
 export const parseCurrency = (value: string): number => {
