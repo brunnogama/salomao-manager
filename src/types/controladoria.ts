@@ -88,6 +88,10 @@ export interface Collaborator {
   pis_pasep?: string;
   dispensa_militar?: string;
 
+  // Notificações de RH
+  mochila_entregue?: boolean;
+  ultimo_aniversario_parabenizado?: number;
+
   // Escolaridade
   escolaridade_nivel?: string;
   escolaridade_subnivel?: string;

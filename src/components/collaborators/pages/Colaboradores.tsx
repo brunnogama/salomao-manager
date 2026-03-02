@@ -3,7 +3,7 @@ import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock,
-  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, Filter, FilterX
+  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, Filter, FilterX, BellRing
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX } from '../utils/exportColaboradores'
@@ -27,6 +27,7 @@ import { PhotoUploadSection } from '../components/PhotoUploadSection'
 import { HistoricoSection } from '../components/HistoricoSection'
 import { PeriodoAusenciasSection } from '../components/PeriodoAusenciasSection'
 import { CollaboratorModalLayout, CollaboratorPageLayout } from '../components/CollaboratorLayouts'
+import { useAuth } from '../../../contexts/AuthContext'
 
 import {
   ESTADOS_BRASIL,
@@ -56,6 +57,7 @@ interface ColaboradoresProps {
 
 
 export function Colaboradores({ }: ColaboradoresProps) {
+  const { user } = useAuth();
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
   const [partners, setPartners] = useState<Partial<Partner>[]>([])
   const [roles, setRoles] = useState<Role[]>([])
@@ -147,6 +149,96 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setAdvFilterExpectedCompletion('');
     setAdvFilterCompletionYear('');
   };
+
+  // --- HR Notifications Logic ---
+  const HR_EMAILS = [
+    'tatiana.gomes@salomaoadv.com.br',
+    'kaua.mombrine@salomaoadv.com.br',
+    'karina.prazeres@salomaoadv.com.br',
+    'teste@salomaoadv.com.br'
+  ];
+  const isHRUser = user?.email && HR_EMAILS.includes(user.email.toLowerCase());
+
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [hasShownInitialModal, setHasShownInitialModal] = useState(false);
+
+  const pendingBackpacks = React.useMemo(() => {
+    if (!isHRUser) return [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return colaboradores.filter(c => {
+      if (c.status !== 'active' || !c.hire_date || c.mochila_entregue) return false;
+      const hireDate = new Date(c.hire_date);
+      // Completing exactly 3 months (or more if not delivered)
+      const threeMonthsDate = new Date(hireDate);
+      threeMonthsDate.setMonth(hireDate.getMonth() + 3);
+      threeMonthsDate.setHours(0, 0, 0, 0);
+
+      // Check if the 3-month mark is today or in the past (and not yet delivered)
+      return today >= threeMonthsDate;
+    });
+  }, [colaboradores, isHRUser]);
+
+  const pendingBirthdays = React.useMemo(() => {
+    if (!isHRUser) return [];
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    const currentDay = today.getDate();
+
+    return colaboradores.filter(c => {
+      if (c.status !== 'active' || !c.birthday) return false;
+      if (c.ultimo_aniversario_parabenizado === currentYear) return false;
+
+      // Extract month and day from YYYY-MM-DD
+      const [_, bMonth, bDay] = c.birthday.split('-').map(Number);
+
+      // If the birthday is today or in the past (for THIS year) and not congratulated yet
+      if (currentMonth > bMonth) return true;
+      if (currentMonth === bMonth && currentDay >= bDay) return true;
+      return false;
+    });
+  }, [colaboradores, isHRUser]);
+
+  const totalNotifications = pendingBackpacks.length + pendingBirthdays.length;
+
+  useEffect(() => {
+    if (isHRUser && totalNotifications > 0 && !hasShownInitialModal && !loading) {
+      setShowNotificationsModal(true);
+      setHasShownInitialModal(true);
+    }
+  }, [isHRUser, totalNotifications, hasShownInitialModal, loading]);
+
+  const handleMarkBackpackDelivered = async (colabId: string) => {
+    try {
+      const { error } = await supabase
+        .from('collaborators')
+        .update({ mochila_entregue: true })
+        .eq('id', colabId);
+
+      if (error) throw error;
+      setColaboradores(prev => prev.map(c => c.id === colabId ? { ...c, mochila_entregue: true } : c));
+    } catch (error) {
+      console.error('Error updating backpack status:', error);
+    }
+  };
+
+  const handleMarkBirthdayCongratulated = async (colabId: string) => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const { error } = await supabase
+        .from('collaborators')
+        .update({ ultimo_aniversario_parabenizado: currentYear })
+        .eq('id', colabId);
+
+      if (error) throw error;
+      setColaboradores(prev => prev.map(c => c.id === colabId ? { ...c, ultimo_aniversario_parabenizado: currentYear } : c));
+    } catch (error) {
+      console.error('Error updating birthday status:', error);
+    }
+  };
+
 
   const hasActiveAdvancedFilters = Object.values({
     advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
@@ -1225,9 +1317,23 @@ export function Colaboradores({ }: ColaboradoresProps) {
             <Users className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
-              Colaboradores
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
+                Colaboradores
+              </h1>
+              {isHRUser && totalNotifications > 0 && (
+                <button
+                  onClick={() => setShowNotificationsModal(true)}
+                  className="relative p-2 rounded-full bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors animate-pulse hover:animate-none flex items-center justify-center shrink-0"
+                  title={`${totalNotifications} Notificações de RH`}
+                >
+                  <BellRing className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-white">
+                    {totalNotifications}
+                  </span>
+                </button>
+              )}
+            </div>
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
               Gerencie o time, edite perfis e controle acessos
             </p>
@@ -1317,8 +1423,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <button
                 onClick={handleClearAdvancedFilters}
                 className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center relative outline-none overflow-hidden ${hasActiveAdvancedFilters
-                    ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
-                    : 'bg-white text-gray-400 border-transparent hover:text-red-500 hover:bg-red-50 hover:border-red-100'
+                  ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
+                  : 'bg-white text-gray-400 border-transparent hover:text-red-500 hover:bg-red-50 hover:border-red-100'
                   }`}
                 title="Limpar Filtros"
               >
@@ -1970,6 +2076,101 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-[#112240] transition-colors shadow-lg"
               >
                 Concluí
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HR NOTIFICATIONS MODAL */}
+      {showNotificationsModal && (
+        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden shadow-2xl relative">
+            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                  <BellRing className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-[#0a192f]">Avisos do RH</h3>
+                  <p className="text-xs text-gray-500 font-medium">Você tem {totalNotifications} {totalNotifications === 1 ? 'pendência' : 'pendências'} de hoje.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowNotificationsModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Fechar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[60vh] space-y-6">
+
+              {/* Mochila Section */}
+              {pendingBackpacks.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                    <Briefcase className="h-4 w-4 text-[#1e3a8a]" />
+                    <h4 className="font-bold text-[#0a192f] text-sm uppercase tracking-wider">Entrega de Mochila (3 Meses)</h4>
+                  </div>
+                  {pendingBackpacks.map(c => (
+                    <div key={c.id} className="flex items-center justify-between bg-blue-50/50 border border-blue-100 p-3 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <Avatar src={c.photo_url || c.foto_url} name={c.name} size="sm" />
+                        <div>
+                          <p className="text-sm font-bold text-[#0a192f]">{c.name}</p>
+                          <p className="text-[10px] uppercase font-bold text-gray-500">Admissão: {formatDateToDisplay(c.hire_date)}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleMarkBackpackDelivered(c.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-[10px] font-bold uppercase transition-colors hover:bg-emerald-600"
+                        title="Marcar como Entregue"
+                      >
+                        <CheckCircle2 className="h-3 w-3" /> Entregue
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Aniversariantes Section */}
+              {pendingBirthdays.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                    <User className="h-4 w-4 text-[#1e3a8a]" />
+                    <h4 className="font-bold text-[#0a192f] text-sm uppercase tracking-wider">Aniversariantes do Dia</h4>
+                  </div>
+                  {pendingBirthdays.map(c => (
+                    <div key={c.id} className="flex items-center justify-between bg-amber-50/50 border border-amber-100 p-3 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <Avatar src={c.photo_url || c.foto_url} name={c.name} size="sm" />
+                        <div>
+                          <p className="text-sm font-bold text-[#0a192f]">{c.name}</p>
+                          <p className="text-[10px] uppercase font-bold text-gray-500">Data: {formatDateToDisplay(c.birthday)}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleMarkBirthdayCongratulated(c.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase transition-colors hover:bg-amber-600"
+                        title="Marcar como Feito"
+                      >
+                        <CheckCircle2 className="h-3 w-3" /> Feito
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setShowNotificationsModal(false)}
+                className="px-6 py-2.5 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-[#112240] transition-colors shadow-lg"
+              >
+                Fechar
               </button>
             </div>
           </div>
