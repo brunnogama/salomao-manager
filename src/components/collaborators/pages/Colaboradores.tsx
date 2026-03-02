@@ -1279,6 +1279,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 )}
               </div>
 
+
+
               <button
                 onClick={() => {
                   setFormData({ status: 'active', state: '' })
@@ -1386,20 +1388,6 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   options={roleOptions}
                   placeholder="Cargo"
                 />
-
-                {/* NOVO COLABORADOR ROUND BUTTON */}
-                <button
-                  onClick={() => {
-                    setFormData({ status: 'active', state: '' })
-                    setPhotoPreview(null)
-                    setActiveFormTab(1)
-                    setShowFormModal(true)
-                  }}
-                  className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0 ml-1"
-                  title="Novo Colaborador"
-                >
-                  <Plus className="h-5 w-5" />
-                </button>
               </div>
             </div>
           </div>
