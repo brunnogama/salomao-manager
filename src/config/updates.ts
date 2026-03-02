@@ -9,6 +9,21 @@ export interface AppUpdate {
 
 export const APP_UPDATES: AppUpdate[] = [
     {
+        version: '1.3.0',
+        date: '02/03/2026',
+        title: 'Melhorias de Interface no Link Mágico e Cadastro de Colaboradores',
+        description: 'Implementamos novos ajustes focados em facilitar o preenchimento de dados de emergência, transporte e a leitura da política de privacidade no Link Mágico.',
+        features: [
+            'Botão de Emergência Simplificado: A interface para adição de múltiplos contatos de emergência foi reduzida a um prático botão de (+).',
+            'Privacidade Reforçada: O alerta sobre a proteção de dados (LGPD) foi resumido e movido estrategicamente para o topo do Link Mágico.',
+            'Adição Instantânea de Transporte: O menu de seleção de transporte agora se encontra abaixo da lista, e a adição ocorre imediatamente ao clicar (sem a necessidade do botão +).',
+            'Novos Tipos de Transporte: Adicionamos as opções "Barcas" e "Não Optante", além de corrigir a nomenclatura de "Integração Bilhete Único".'
+        ],
+        fixes: [
+            'O título interno da aba de Gestão de Documentos (GED) no Link Mágico foi renomeado de "Gestão de Documentos" para "Arquivos Vinculados" para maior clareza.'
+        ]
+    },
+    {
         version: '1.2.0',
         date: '02/03/2026',
         title: 'Melhorias de RH e Logística de Transporte',
