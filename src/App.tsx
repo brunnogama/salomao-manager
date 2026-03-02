@@ -16,12 +16,20 @@ export default function App() {
     if (hash && hash.includes('error=')) {
       const params = new URLSearchParams(hash.substring(1));
       const errorDesc = params.get('error_description');
+      const errorCode = params.get('error_code');
+
+      console.error('🚨 [Microsoft OAuth Error Captured]:', {
+        code: errorCode,
+        description: errorDesc,
+        fullHash: hash
+      });
+
       if (errorDesc) {
-        // Usa setTimeout para garantir que o Toast carregou
+        // Aumentando o timeout para dar tempo da aplicação ler/tratar o erro e do usuário ver a URL se precisar testar
         setTimeout(() => {
           // Remove o hash feio da URL silenciosamente sem recarregar
           window.history.replaceState(null, '', window.location.pathname);
-        }, 100);
+        }, 5000);
       }
     }
   }, []);
