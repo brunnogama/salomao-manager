@@ -101,11 +101,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterGender, setAdvFilterGender] = useState('');
   const [advFilterBirthStart, setAdvFilterBirthStart] = useState('');
   const [advFilterBirthEnd, setAdvFilterBirthEnd] = useState('');
-  const [advFilterChildren, setAdvFilterChildren] = useState<'all' | 'sim' | 'nao'>('all');
+  const [advFilterChildren, setAdvFilterChildren] = useState<'sim' | 'nao' | ''>('');
   const [advFilterStateHome, setAdvFilterStateHome] = useState('');
 
   // Corporativos
-  const [advFilterStatus, setAdvFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [advFilterStatus, setAdvFilterStatus] = useState<'active' | 'inactive' | ''>('');
   const [advFilterRateio, setAdvFilterRateio] = useState('');
   const [advFilterAdmissionStart, setAdvFilterAdmissionStart] = useState('');
   const [advFilterAdmissionEnd, setAdvFilterAdmissionEnd] = useState('');
@@ -118,10 +118,33 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterLocal, setAdvFilterLocal] = useState('');
 
   // Escolares
-  const [advFilterGraduationComplete, setAdvFilterGraduationComplete] = useState<'all' | 'sim' | 'nao'>('all');
-  const [advFilterPostGraduationComplete, setAdvFilterPostGraduationComplete] = useState<'all' | 'sim' | 'nao'>('all');
+  const [advFilterGraduationComplete, setAdvFilterGraduationComplete] = useState<'sim' | 'nao' | ''>('');
+  const [advFilterPostGraduationComplete, setAdvFilterPostGraduationComplete] = useState<'sim' | 'nao' | ''>('');
   const [advFilterExpectedCompletion, setAdvFilterExpectedCompletion] = useState('');
   const [advFilterCompletionYear, setAdvFilterCompletionYear] = useState('');
+
+  const handleClearAdvancedFilters = () => {
+    setAdvFilterGender('');
+    setAdvFilterBirthStart('');
+    setAdvFilterBirthEnd('');
+    setAdvFilterChildren('');
+    setAdvFilterStateHome('');
+    setAdvFilterStatus('');
+    setAdvFilterRateio('');
+    setAdvFilterAdmissionStart('');
+    setAdvFilterAdmissionEnd('');
+    setAdvFilterPartner('');
+    setAdvFilterLeader('');
+    setAdvFilterArea('');
+    setAdvFilterTeam('');
+    setAdvFilterRole('');
+    setAdvFilterContractType('');
+    setAdvFilterLocal('');
+    setAdvFilterGraduationComplete('');
+    setAdvFilterPostGraduationComplete('');
+    setAdvFilterExpectedCompletion('');
+    setAdvFilterCompletionYear('');
+  };
 
 
 
@@ -699,7 +722,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (advFilterGender && c.gender !== advFilterGender) return false;
       if (advFilterBirthStart && (!c.birthday || c.birthday < advFilterBirthStart)) return false;
       if (advFilterBirthEnd && (!c.birthday || c.birthday > advFilterBirthEnd)) return false;
-      if (advFilterChildren !== 'all') {
+      if (advFilterChildren) {
         const has = !!c.has_children;
         if (advFilterChildren === 'sim' && !has) return false;
         if (advFilterChildren === 'nao' && has) return false;
@@ -707,7 +730,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (advFilterStateHome && c.state !== advFilterStateHome) return false;
 
       // Corporativos
-      if (advFilterStatus !== 'all' && c.status !== advFilterStatus) return false;
+      if (advFilterStatus && c.status !== advFilterStatus) return false;
       if (advFilterRateio && String(c.rateio_id) !== advFilterRateio) return false;
       if (advFilterAdmissionStart && (!c.hire_date || c.hire_date < advFilterAdmissionStart)) return false;
       if (advFilterAdmissionEnd && (!c.hire_date || c.hire_date > advFilterAdmissionEnd)) return false;
@@ -720,12 +743,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (advFilterLocal && String(c.local) !== advFilterLocal && String((c as any).locations?.name) !== advFilterLocal) return false;
 
       // Escolares
-      if (advFilterGraduationComplete !== 'all') {
+      if (advFilterGraduationComplete) {
         const hasGrad = c.education_history?.some(e => e.nivel === 'Graduação' && e.status === 'Formado(a)') || (c.escolaridade_nivel === 'Graduação' && !c.escolaridade_previsao_conclusao);
         if (advFilterGraduationComplete === 'sim' && !hasGrad) return false;
         if (advFilterGraduationComplete === 'nao' && hasGrad) return false;
       }
-      if (advFilterPostGraduationComplete !== 'all') {
+      if (advFilterPostGraduationComplete) {
         const hasPost = c.education_history?.some(e => e.nivel === 'Pós-Graduação' && e.status === 'Formado(a)') || (c.escolaridade_nivel === 'Pós-Graduação' && !c.escolaridade_previsao_conclusao);
         if (advFilterPostGraduationComplete === 'sim' && !hasPost) return false;
         if (advFilterPostGraduationComplete === 'nao' && hasPost) return false;
@@ -1491,26 +1514,44 @@ export function Colaboradores({ }: ColaboradoresProps) {
       {activeMainTab === 'Filtros' && (
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600 space-y-8 flex-1 overflow-auto custom-scrollbar">
 
+          <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+            <h2 className="text-lg font-bold text-[#1e3a8a]">Opções de Filtro</h2>
+            <button
+              onClick={handleClearAdvancedFilters}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors text-xs font-bold uppercase tracking-wider"
+            >
+              <X className="h-4 w-4" /> Limpar Filtros
+            </button>
+          </div>
+
           {/* Pessoais */}
           <div>
             <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><User className="h-4 w-4" /> Filtros Pessoais</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
+              <div className="relative z-[120]">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Gênero</label>
-                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterGender} onChange={e => setAdvFilterGender(e.target.value)}>
-                  <option value="">Todos</option>
-                  <option value="Masculino">Masculino</option>
-                  <option value="Feminino">Feminino</option>
-                  <option value="Outro">Outro</option>
-                </select>
+                <SearchableSelect
+                  value={advFilterGender}
+                  onChange={setAdvFilterGender}
+                  options={[
+                    { id: 'Masculino', label: 'Masculino', value: 'Masculino' },
+                    { id: 'Feminino', label: 'Feminino', value: 'Feminino' },
+                    { id: 'Outro', label: 'Outro', value: 'Outro' }
+                  ]}
+                  placeholder="Todos..."
+                />
               </div>
-              <div>
+              <div className="relative z-[119]">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Filhos</label>
-                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterChildren} onChange={e => setAdvFilterChildren(e.target.value as any)}>
-                  <option value="all">Todos</option>
-                  <option value="sim">Sim</option>
-                  <option value="nao">Não</option>
-                </select>
+                <SearchableSelect
+                  value={advFilterChildren}
+                  onChange={(val) => setAdvFilterChildren(val as any)}
+                  options={[
+                    { id: 'sim', label: 'Sim', value: 'sim' },
+                    { id: 'nao', label: 'Não', value: 'nao' }
+                  ]}
+                  placeholder="Todos..."
+                />
               </div>
               <div className="col-span-1 md:col-span-2 relative z-[110]">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Estado (Moradia)</label>
@@ -1526,9 +1567,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Período Nasc. (Início e Fim)</label>
                 <div className="flex items-center gap-2">
-                  <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterBirthStart} onChange={e => setAdvFilterBirthStart(e.target.value)} />
+                  <div className="relative w-full">
+                    <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterBirthStart} onChange={e => setAdvFilterBirthStart(e.target.value)} />
+                    {advFilterBirthStart && <button onClick={() => setAdvFilterBirthStart('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full"><X className="h-4 w-4" /></button>}
+                  </div>
                   <span className="text-gray-400">-</span>
-                  <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterBirthEnd} onChange={e => setAdvFilterBirthEnd(e.target.value)} />
+                  <div className="relative w-full">
+                    <input type="date" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterBirthEnd} onChange={e => setAdvFilterBirthEnd(e.target.value)} />
+                    {advFilterBirthEnd && <button onClick={() => setAdvFilterBirthEnd('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full"><X className="h-4 w-4" /></button>}
+                  </div>
                 </div>
               </div>
               <div className="flex items-end pb-2">
@@ -1545,13 +1592,17 @@ export function Colaboradores({ }: ColaboradoresProps) {
           <div>
             <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><Briefcase className="h-4 w-4" /> Filtros Corporativos</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
+              <div className="relative z-[118]">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
-                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterStatus} onChange={e => setAdvFilterStatus(e.target.value as any)}>
-                  <option value="all">Todos</option>
-                  <option value="active">Ativo</option>
-                  <option value="inactive">Inativo</option>
-                </select>
+                <SearchableSelect
+                  value={advFilterStatus}
+                  onChange={(val) => setAdvFilterStatus(val as any)}
+                  options={[
+                    { id: 'active', label: 'Ativo', value: 'active' },
+                    { id: 'inactive', label: 'Inativo', value: 'inactive' }
+                  ]}
+                  placeholder="Todos..."
+                />
               </div>
               <div className="relative z-[109]">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Rateio</label>
@@ -1562,26 +1613,34 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   placeholder="Todos..."
                 />
               </div>
-              <div>
+              <div className="relative z-[116]">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Área</label>
-                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterArea} onChange={e => setAdvFilterArea(e.target.value)}>
-                  <option value="">Todas</option>
-                  <option value="Administrativa">Administrativa</option>
-                  <option value="Jurídica">Jurídica</option>
-                </select>
+                <SearchableSelect
+                  value={advFilterArea}
+                  onChange={setAdvFilterArea}
+                  options={[
+                    { id: 'Administrativa', label: 'Administrativa', value: 'Administrativa' },
+                    { id: 'Jurídica', label: 'Jurídica', value: 'Jurídica' }
+                  ]}
+                  placeholder="Todas..."
+                />
               </div>
-              <div>
+              <div className="relative z-[115]">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Contratação</label>
-                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterContractType} onChange={e => setAdvFilterContractType(e.target.value)}>
-                  <option value="">Todos</option>
-                  <option value="CLT">CLT</option>
-                  <option value="Sócio">Sócio</option>
-                  <option value="Associado">Associado</option>
-                  <option value="Estágio">Estágio</option>
-                  <option value="Jovem Aprendiz">Jovem Aprendiz</option>
-                  <option value="Terceirizado">Terceirizado</option>
-                  <option value="Outros">Outros</option>
-                </select>
+                <SearchableSelect
+                  value={advFilterContractType}
+                  onChange={setAdvFilterContractType}
+                  options={[
+                    { id: 'CLT', label: 'CLT', value: 'CLT' },
+                    { id: 'Sócio', label: 'Sócio', value: 'Sócio' },
+                    { id: 'Associado', label: 'Associado', value: 'Associado' },
+                    { id: 'Estágio', label: 'Estágio', value: 'Estágio' },
+                    { id: 'Jovem Aprendiz', label: 'Jovem Aprendiz', value: 'Jovem Aprendiz' },
+                    { id: 'Terceirizado', label: 'Terceirizado', value: 'Terceirizado' },
+                    { id: 'Outros', label: 'Outros', value: 'Outros' }
+                  ]}
+                  placeholder="Todos..."
+                />
               </div>
 
               <div className="relative z-[108]">
@@ -1620,29 +1679,39 @@ export function Colaboradores({ }: ColaboradoresProps) {
           <div>
             <h3 className="text-sm font-bold text-[#1e3a8a] mb-4 flex items-center gap-2 border-b pb-2"><GraduationCap className="h-4 w-4" /> Filtros Escolares</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
+              <div className="relative z-[110]">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Graduação Completa</label>
-                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterGraduationComplete} onChange={e => setAdvFilterGraduationComplete(e.target.value as any)}>
-                  <option value="all">Todos</option>
-                  <option value="sim">Sim</option>
-                  <option value="nao">Não</option>
-                </select>
+                <SearchableSelect
+                  value={advFilterGraduationComplete}
+                  onChange={(val) => setAdvFilterGraduationComplete(val as any)}
+                  options={[
+                    { id: 'sim', label: 'Sim', value: 'sim' },
+                    { id: 'nao', label: 'Não', value: 'nao' }
+                  ]}
+                  placeholder="Todos..."
+                />
               </div>
-              <div>
+              <div className="relative z-[109]">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Pós-Graduação Comp.</label>
-                <select className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterPostGraduationComplete} onChange={e => setAdvFilterPostGraduationComplete(e.target.value as any)}>
-                  <option value="all">Todos</option>
-                  <option value="sim">Sim</option>
-                  <option value="nao">Não</option>
-                </select>
+                <SearchableSelect
+                  value={advFilterPostGraduationComplete}
+                  onChange={(val) => setAdvFilterPostGraduationComplete(val as any)}
+                  options={[
+                    { id: 'sim', label: 'Sim', value: 'sim' },
+                    { id: 'nao', label: 'Não', value: 'nao' }
+                  ]}
+                  placeholder="Todos..."
+                />
               </div>
-              <div>
+              <div className="relative">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano Prev. Conclusão</label>
-                <input type="text" placeholder="Ex: 2025" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterExpectedCompletion} onChange={e => setAdvFilterExpectedCompletion(e.target.value)} />
+                <input type="text" placeholder="Ex: 2025" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterExpectedCompletion} onChange={e => setAdvFilterExpectedCompletion(e.target.value)} />
+                {advFilterExpectedCompletion && <button onClick={() => setAdvFilterExpectedCompletion('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
               </div>
-              <div>
+              <div className="relative">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ano de Conclusão</label>
-                <input type="text" placeholder="Ex: 2020" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium" value={advFilterCompletionYear} onChange={e => setAdvFilterCompletionYear(e.target.value)} />
+                <input type="text" placeholder="Ex: 2020" className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium pr-8" value={advFilterCompletionYear} onChange={e => setAdvFilterCompletionYear(e.target.value)} />
+                {advFilterCompletionYear && <button onClick={() => setAdvFilterCompletionYear('')} className="absolute right-2 top-[34px] text-gray-400 hover:text-red-500 bg-gray-50 p-0.5 rounded-full z-10"><X className="h-4 w-4" /></button>}
               </div>
             </div>
           </div>
