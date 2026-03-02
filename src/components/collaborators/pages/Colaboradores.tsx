@@ -3,7 +3,7 @@ import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, FileText, ExternalLink, Loader2,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock,
-  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, Filter
+  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, Filter, FilterX
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX } from '../utils/exportColaboradores'
@@ -147,6 +147,13 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setAdvFilterExpectedCompletion('');
     setAdvFilterCompletionYear('');
   };
+
+  const hasActiveAdvancedFilters = Object.values({
+    advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
+    advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterPartner,
+    advFilterLeader, advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal,
+    advFilterTransporteTipo, advFilterGraduationComplete, advFilterPostGraduationComplete, advFilterExpectedCompletion, advFilterCompletionYear
+  }).some(val => val !== '');
 
 
 
@@ -1309,10 +1316,19 @@ export function Colaboradores({ }: ColaboradoresProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleClearAdvancedFilters}
-                className="flex items-center justify-center w-10 h-10 bg-emerald-800 text-white rounded-full hover:bg-emerald-900 transition-all shadow-lg shadow-emerald-800/30 shrink-0"
+                className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center relative outline-none overflow-hidden ${hasActiveAdvancedFilters
+                    ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
+                    : 'bg-white text-gray-400 border-transparent hover:text-red-500 hover:bg-red-50 hover:border-red-100'
+                  }`}
                 title="Limpar Filtros"
               >
-                <X className="h-5 w-5" />
+                {hasActiveAdvancedFilters && (
+                  <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                  </span>
+                )}
+                <FilterX className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
 
               <button
