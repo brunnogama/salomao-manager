@@ -1229,39 +1229,53 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto justify-end mt-2 md:mt-0 custom-scrollbar">
+          {/* TABS MOVED HERE - OUTSIDE TERNARY */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
+            <button
+              onClick={() => setActiveMainTab('Colaboradores')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Colaboradores' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Users className="h-4 w-4" /> Equipe
+            </button>
+            <button
+              onClick={() => setActiveMainTab('Filtros')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Filtros' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Filter className="h-4 w-4" /> Filtros
+            </button>
+          </div>
+
           {activeMainTab === 'Colaboradores' ? (
             <div className="flex items-center gap-3 min-w-max">
-              <div className="flex gap-2">
-                {colaboradores.filter(c => c.cadastro_atualizado && c.status === 'active').length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setShowUpdatedOnly(!showUpdatedOnly)}
-                      className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center relative group outline-none overflow-hidden
-                        ${showUpdatedOnly
-                          ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
-                          : 'bg-[#1e3a8a] text-white border-[#1e3a8a] hover:bg-[#112240] shadow-lg'
-                        }
-                      `}
-                      title={showUpdatedOnly ? "Filtro Ativado" : "Ver Cadastros Atualizados"}
-                    >
-                      {!showUpdatedOnly && (
-                        <span className="absolute top-1 right-1 flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                        </span>
-                      )}
-                      <RefreshCcw className={`h-4 w-4 sm:h-5 sm:w-5 ${!showUpdatedOnly ? 'animate-spin-slow' : ''}`} />
-                    </button>
-                    {showUpdatedOnly && (
-                      <button
-                        onClick={() => setShowUpdatedOnly(false)}
-                        className="p-2 sm:p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 flex items-center justify-center"
-                        title="Limpar Filtro"
-                      >
-                        <X className="h-4 w-4 sm:h-5 sm:w-5" />
-                      </button>
-                    )}
-                  </div>
+
+              <div className="flex items-center bg-white rounded-xl shadow-sm border border-gray-100 p-1 shrink-0">
+                <button
+                  onClick={async () => {
+                    setLoading(true)
+                    await fetchColaboradores()
+                    setLoading(false)
+                    setGeneratedLinks([])
+                    setSelectedIds([])
+                  }}
+                  className="p-2 sm:p-2.5 text-[#1e3a8a] hover:bg-blue-50 focus:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100 flex items-center justify-center relative"
+                  title="Atualizar Dados"
+                >
+                  {colaboradores.filter(c => c.cadastro_atualizado && c.status === 'active').length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                  )}
+                  <RefreshCcw className={`h-4 w-4 sm:h-5 sm:w-5 ${!showUpdatedOnly ? 'animate-spin-slow' : ''}`} />
+                </button>
+                {showUpdatedOnly && (
+                  <button
+                    onClick={() => setShowUpdatedOnly(false)}
+                    className="p-2 sm:p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 flex items-center justify-center"
+                    title="Limpar Filtro"
+                  >
+                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
                 )}
               </div>
 
@@ -1272,17 +1286,17 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   setActiveFormTab(1)
                   setShowFormModal(true)
                 }}
-                className="flex bg-[#1e3a8a] text-white px-4 py-2 sm:py-2.5 rounded-xl font-bold uppercase tracking-wider hover:bg-[#112240] transition-all shadow-lg shadow-blue-900/20 items-center justify-center gap-2 text-[10px] sm:text-xs"
+                className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+                title="Novo Colaborador"
               >
-                <Plus className="h-4 w-4" />
-                Novo Colab.
+                <Plus className="h-5 w-5" />
               </button>
 
               {selectedIds.length > 0 && (
                 <button
                   onClick={handleGenerateLinks}
                   disabled={generatingLinks}
-                  className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-4 py-2 sm:py-2.5 rounded-xl font-bold uppercase tracking-wider transition-all shadow-lg text-[10px] sm:text-xs"
+                  className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-4 py-2 sm:py-2.5 rounded-xl font-bold uppercase tracking-wider transition-all shadow-lg text-[10px] sm:text-xs shrink-0"
                 >
                   {generatingLinks ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
                   Gerar Links ({selectedIds.length})
@@ -1302,21 +1316,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         </div>
       </div>
 
-      {/* TABS NAVIGATION */}
-      <div className="flex items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex-wrap">
-        <button
-          onClick={() => setActiveMainTab('Colaboradores')}
-          className={`px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none ${activeMainTab === 'Colaboradores' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-        >
-          <Users className="h-4 w-4" /> Equipe
-        </button>
-        <button
-          onClick={() => setActiveMainTab('Filtros')}
-          className={`px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none ${activeMainTab === 'Filtros' ? 'bg-[#1e3a8a] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-        >
-          <Filter className="h-4 w-4" /> Filtros Avançados
-        </button>
-      </div>
+
 
       {activeMainTab === 'Colaboradores' && (
         <>
@@ -1386,15 +1386,29 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   options={roleOptions}
                   placeholder="Cargo"
                 />
+
+                {/* NOVO COLABORADOR ROUND BUTTON */}
+                <button
+                  onClick={() => {
+                    setFormData({ status: 'active', state: '' })
+                    setPhotoPreview(null)
+                    setActiveFormTab(1)
+                    setShowFormModal(true)
+                  }}
+                  className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0 ml-1"
+                  title="Novo Colaborador"
+                >
+                  <Plus className="h-5 w-5" />
+                </button>
               </div>
             </div>
           </div>
 
           {/* Table/Grid */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 duration-700 flex-1 flex flex-col">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0 overflow-hidden animate-in slide-in-from-bottom-6 duration-700">
             <div
               ref={listContainerRef}
-              className="overflow-auto h-full custom-scrollbar"
+              className="flex-1 overflow-auto custom-scrollbar relative pb-4"
             >
               <table className="w-full min-w-[1000px]">
                 <thead className="sticky top-0 z-10">

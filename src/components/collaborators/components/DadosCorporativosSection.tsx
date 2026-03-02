@@ -462,7 +462,7 @@ export function DadosCorporativosSection({
                               </div>
                             ))}
                             {t.ida_qtd > 0 && (
-                              <div className="text-right text-xs font-bold text-[#1e3a8a]">Subtotal: R$ {totalIda.toFixed(2)}</div>
+                              <div className="text-right text-xs font-bold text-[#1e3a8a]">Subtotal: {formatCurrency(totalIda)}</div>
                             )}
                           </div>
 
@@ -496,7 +496,7 @@ export function DadosCorporativosSection({
                               </div>
                             ))}
                             {t.volta_qtd > 0 && (
-                              <div className="text-right text-xs font-bold text-[#1e3a8a]">Subtotal: R$ {totalVolta.toFixed(2)}</div>
+                              <div className="text-right text-xs font-bold text-[#1e3a8a]">Subtotal: {formatCurrency(totalVolta)}</div>
                             )}
                           </div>
                         </div>
@@ -510,14 +510,14 @@ export function DadosCorporativosSection({
                 <div className="mt-4 p-4 bg-blue-50/70 border border-blue-200 rounded-xl shadow-sm space-y-3">
                   <div className="flex justify-between items-center pb-3 border-b border-blue-200/50">
                     <span className="text-sm font-bold text-[#1e3a8a]">Custo Total Diário de Transporte:</span>
-                    <span className="text-base font-black text-[#1e3a8a]">R$ {totalTransporte.toFixed(2)}</span>
+                    <span className="text-base font-black text-[#1e3a8a]">{formatCurrency(totalTransporte)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex flex-col">
                       <span className="text-sm font-bold text-gray-700">Estimativa Mensal (S/ Feriado):</span>
                       <span className="text-[10px] uppercase text-gray-500 font-bold mt-1">*{workingDays} dias úteis no mês atual</span>
                     </div>
-                    <span className="text-lg font-black text-emerald-600">R$ {monthlyTotalTransporte.toFixed(2)}</span>
+                    <span className="text-lg font-black text-emerald-600">{formatCurrency(monthlyTotalTransporte)}</span>
                   </div>
                 </div>
               )}
