@@ -634,328 +634,328 @@ export function Calendario() {
 
           </div>
 
-          <div className="flex flex-wrap gap-3 w-full xl:w-auto justify-end">
-            {/* Novo Evento moved to header */}
-          </div>
         </div>
+      </div>
 
-        {/* BLOCOS: ANIVERSARIANTES | EVENTOS */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 w-full">
-          {/* BLOCO ANIVERSARIANTES */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[800px] xl:max-h-[85vh] w-full">
-            <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#d4af37]/10 rounded-xl">
-                  <Cake className="h-5 w-5 text-[#d4af37]" />
-                </div>
-                <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Aniversários</h2>
+      {/* BLOCOS: ANIVERSARIANTES | EVENTOS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 w-full">
+        {/* BLOCO ANIVERSARIANTES */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[800px] xl:max-h-[85vh] w-full">
+          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#d4af37]/10 rounded-xl">
+                <Cake className="h-5 w-5 text-[#d4af37]" />
               </div>
-
-              {selectedAniversariantes.length > 0 && (
-                <button
-                  disabled={isSendingWpp}
-                  onClick={handleSendWpp}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all text-xs font-bold uppercase tracking-wider active:scale-95 disabled:opacity-70"
-                >
-                  {isSendingWpp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  Parabenizar ({selectedAniversariantes.length})
-                </button>
-              )}
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Aniversários</h2>
             </div>
 
-            <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
-              {getProximosAniversarios().map((aniv) => {
-                const isSelected = selectedAniversariantes.includes(String(aniv.colaborador.id));
-                return (
-                  <div
-                    key={aniv.colaborador.id}
-                    onClick={() => setVisualizarColaborador(aniv.colaborador as Colaborador)}
-                    className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer relative ${aniv.isHoje
-                      ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
-                      : aniv.isEstaSemana
-                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
-                        : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
-                      } ${isSelected ? 'ring-2 ring-green-500 border-transparent' : ''}`}
-                  >
-                    <div className="flex items-center gap-4 min-w-0 pr-2">
-                      <div
-                        onClick={(e) => handleToggleAniversariante(e, String(aniv.colaborador.id))}
-                        className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${isSelected
-                          ? 'bg-green-500 border-green-500 text-white'
-                          : 'border-gray-300 bg-white hover:border-green-500'
-                          }`}
-                      >
-                        {isSelected && <Check className="w-3.5 h-3.5" />}
-                      </div>
-
-                      {aniv.colaborador.photo_url ? (
-                        <img
-                          src={aniv.colaborador.photo_url}
-                          alt={aniv.colaborador.name}
-                          className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-lg font-black border-2 border-[#d4af37]/30 shadow-md shrink-0">
-                          {aniv.colaborador.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="font-black text-[#0a192f] text-sm truncate">{aniv.isHoje ? '🎉 ' : ''}{formatName(aniv.colaborador.name)}</p>
-                        <p className="text-[10px] font-semibold text-gray-600 truncate max-w-[120px] md:max-w-[200px]">{toTitleCase(aniv.colaborador.role)}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 border-l border-gray-200/50 pl-4 shrink-0">
-                      <div className="text-right hidden sm:block">
-                        <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Data</p>
-                        <p className="font-bold text-[#0a192f] text-xs">
-                          {aniv.dia} {MESES[aniv.mes].substring(0, 3)}
-                        </p>
-                      </div>
-                      <div className="text-right w-12 sm:w-16">
-                        <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{aniv.diasRestantes === 0 ? '' : 'Faltam'}</p>
-                        <p className={`font-black text-sm flex items-center justify-end ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
-                          }`}>
-                          {aniv.diasRestantes === 0 ? <span className="text-[#d4af37] text-base transform scale-110">Hoje</span> : `${aniv.diasRestantes}d`}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {selectedAniversariantes.length > 0 && (
+              <button
+                disabled={isSendingWpp}
+                onClick={handleSendWpp}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all text-xs font-bold uppercase tracking-wider active:scale-95 disabled:opacity-70"
+              >
+                {isSendingWpp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Parabenizar ({selectedAniversariantes.length})
+              </button>
+            )}
           </div>
 
-          {/* BLOCO EVENTOS */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[800px] xl:max-h-[85vh] w-full">
-            <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
-                  <CalendarEventIcon className="h-5 w-5 text-[#1e3a8a]" />
-                </div>
-                <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Eventos</h2>
-              </div>
-            </div>
-
-            <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
-              {getProximosEventos().length === 0 ? (
-                <div className="text-center py-8 text-sm text-gray-400 font-medium italic">
-                  Nenhum evento agendado
-                </div>
-              ) : getProximosEventos().map((evento, idx) => (
+          <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
+            {getProximosAniversarios().map((aniv) => {
+              const isSelected = selectedAniversariantes.includes(String(aniv.colaborador.id));
+              return (
                 <div
-                  key={idx}
-                  onClick={() => evento.tipo === 'Mochila' ? setVisualizarColaborador(evento.colaboradorRef as Colaborador) : setVisualizarEvento(evento as Evento)}
-                  className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer ${evento.isHoje
-                    ? 'bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-500 shadow-md transform scale-[1.01] mx-1'
-                    : evento.isEstaSemana
+                  key={aniv.colaborador.id}
+                  onClick={() => setVisualizarColaborador(aniv.colaborador as Colaborador)}
+                  className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer relative ${aniv.isHoje
+                    ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
+                    : aniv.isEstaSemana
                       ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
                       : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
-                    }`}
+                    } ${isSelected ? 'ring-2 ring-green-500 border-transparent' : ''}`}
                 >
                   <div className="flex items-center gap-4 min-w-0 pr-2">
-                    {evento.tipo === 'Mochila' && (evento as any).colaboradorRef?.photo_url ? (
-                      <img src={(evento as any).colaboradorRef.photo_url} alt={evento.titulo} className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0" />
-                    ) : evento.tipo === 'Mochila' ? (
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white text-lg font-black border-2 border-[#1e3a8a]/30 shadow-md shrink-0">
-                        {(evento as any).colaboradorRef?.name.charAt(0).toUpperCase()}
-                      </div>
+                    <div
+                      onClick={(e) => handleToggleAniversariante(e, String(aniv.colaborador.id))}
+                      className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${isSelected
+                        ? 'bg-green-500 border-green-500 text-white'
+                        : 'border-gray-300 bg-white hover:border-green-500'
+                        }`}
+                    >
+                      {isSelected && <Check className="w-3.5 h-3.5" />}
+                    </div>
+
+                    {aniv.colaborador.photo_url ? (
+                      <img
+                        src={aniv.colaborador.photo_url}
+                        alt={aniv.colaborador.name}
+                        className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0"
+                      />
                     ) : (
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-black border-2 shadow-md shrink-0 ${evento.isHoje ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-500/30' : evento.tipo === 'Aniversário' ? 'bg-gradient-to-br from-[#d4af37] to-amber-600 border-[#d4af37]/30' : 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a]/30'}`}>
-                        {evento.tipo === 'Reunião' ? <Users className="h-5 w-5" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-lg font-black border-2 border-[#d4af37]/30 shadow-md shrink-0">
+                        {aniv.colaborador.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="font-black text-[#0a192f] text-sm truncate">{evento.isHoje ? '🎉 ' : ''}{evento.titulo}</p>
-                      <p className="text-[10px] font-semibold text-gray-600 truncate">{evento.tipo}</p>
+                      <p className="font-black text-[#0a192f] text-sm truncate">{aniv.isHoje ? '🎉 ' : ''}{formatName(aniv.colaborador.name)}</p>
+                      <p className="text-[10px] font-semibold text-gray-600 truncate max-w-[120px] md:max-w-[200px]">{toTitleCase(aniv.colaborador.role)}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 border-l border-gray-200/50 pl-4 shrink-0">
-                    <div className="text-right hidden sm:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleEditClick(evento); }}
-                        className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteEvento(evento.id); }}
-                        className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
                     <div className="text-right hidden sm:block">
                       <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Data</p>
                       <p className="font-bold text-[#0a192f] text-xs">
-                        {evento.dataObjeto.getDate()} {MESES[evento.dataObjeto.getMonth()].substring(0, 3)}
+                        {aniv.dia} {MESES[aniv.mes].substring(0, 3)}
                       </p>
                     </div>
                     <div className="text-right w-12 sm:w-16">
-                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{evento.diasRestantes === 0 ? '' : 'Faltam'}</p>
-                      <p className={`font-black text-sm flex items-center justify-end ${evento.isHoje ? 'text-emerald-600' : evento.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{aniv.diasRestantes === 0 ? '' : 'Faltam'}</p>
+                      <p className={`font-black text-sm flex items-center justify-end ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
                         }`}>
-                        {evento.diasRestantes === 0 ? <span className="text-emerald-600 text-base transform scale-110">Hoje</span> : `${evento.diasRestantes}d`}
+                        {aniv.diasRestantes === 0 ? <span className="text-[#d4af37] text-base transform scale-110">Hoje</span> : `${aniv.diasRestantes}d`}
                       </p>
                     </div>
                   </div>
                 </div>
-              ))}
+                    </div>
+        </div>
+        );
+              })}
+      </div>
+    </div>
+
+      {/* BLOCO EVENTOS */ }
+  <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[800px] xl:max-h-[85vh] w-full">
+    <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
+          <CalendarEventIcon className="h-5 w-5 text-[#1e3a8a]" />
+        </div>
+        <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Eventos</h2>
+      </div>
+    </div>
+
+    <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
+      {getProximosEventos().length === 0 ? (
+        <div className="text-center py-8 text-sm text-gray-400 font-medium italic">
+          Nenhum evento agendado
+        </div>
+      ) : getProximosEventos().map((evento, idx) => (
+        <div
+          key={idx}
+          onClick={() => evento.tipo === 'Mochila' ? setVisualizarColaborador(evento.colaboradorRef as Colaborador) : setVisualizarEvento(evento as Evento)}
+          className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer ${evento.isHoje
+            ? 'bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-500 shadow-md transform scale-[1.01] mx-1'
+            : evento.isEstaSemana
+              ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
+              : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
+            }`}
+        >
+          <div className="flex items-center gap-4 min-w-0 pr-2">
+            {evento.tipo === 'Mochila' && (evento as any).colaboradorRef?.photo_url ? (
+              <img src={(evento as any).colaboradorRef.photo_url} alt={evento.titulo} className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0" />
+            ) : evento.tipo === 'Mochila' ? (
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white text-lg font-black border-2 border-[#1e3a8a]/30 shadow-md shrink-0">
+                {(evento as any).colaboradorRef?.name.charAt(0).toUpperCase()}
+              </div>
+            ) : (
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-black border-2 shadow-md shrink-0 ${evento.isHoje ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-500/30' : evento.tipo === 'Aniversário' ? 'bg-gradient-to-br from-[#d4af37] to-amber-600 border-[#d4af37]/30' : 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a]/30'}`}>
+                {evento.tipo === 'Reunião' ? <Users className="h-5 w-5" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="font-black text-[#0a192f] text-sm truncate">{evento.isHoje ? '🎉 ' : ''}{evento.titulo}</p>
+              <p className="text-[10px] font-semibold text-gray-600 truncate">{evento.tipo}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 border-l border-gray-200/50 pl-4 shrink-0">
+            <div className="text-right hidden sm:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleEditClick(evento); }}
+                className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDeleteEvento(evento.id); }}
+                className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="text-right hidden sm:block">
+              <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Data</p>
+              <p className="font-bold text-[#0a192f] text-xs">
+                {evento.dataObjeto.getDate()} {MESES[evento.dataObjeto.getMonth()].substring(0, 3)}
+              </p>
+            </div>
+            <div className="text-right w-12 sm:w-16">
+              <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{evento.diasRestantes === 0 ? '' : 'Faltam'}</p>
+              <p className={`font-black text-sm flex items-center justify-end ${evento.isHoje ? 'text-emerald-600' : evento.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                }`}>
+                {evento.diasRestantes === 0 ? <span className="text-emerald-600 text-base transform scale-110">Hoje</span> : `${evento.diasRestantes}d`}
+              </p>
             </div>
           </div>
         </div>
+      ))}
+    </div>
+  </div>
 
-        {/* MODAL NOVO/EDITAR EVENTO */}
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh]">
-              <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2 text-white">
-                  <CalendarDays className="h-5 w-5" />
-                  <h3 className="font-black text-base tracking-tight">{editingEvento ? 'Editar Evento' : 'Novo Evento'}</h3>
-                </div>
-                <button
-                  onClick={() => { setIsModalOpen(false); setEditingEvento(null); }}
-                  className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+  {/* MODAL NOVO/EDITAR EVENTO */ }
+  {
+    isModalOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh]">
+          <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2 text-white">
+              <CalendarDays className="h-5 w-5" />
+              <h3 className="font-black text-base tracking-tight">{editingEvento ? 'Editar Evento' : 'Novo Evento'}</h3>
+            </div>
+            <button
+              onClick={() => { setIsModalOpen(false); setEditingEvento(null); }}
+              className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+            <div>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Título</label>
+              <input
+                type="text"
+                value={novoEvento.titulo}
+                onChange={(e) => setNovoEvento({ ...novoEvento, titulo: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Tipo</label>
+                <SearchableSelect
+                  options={[
+                    { value: 'Reunião', label: 'Reunião' },
+                    { value: 'Entrevista', label: 'Entrevista' },
+                    { value: 'Aniversário', label: 'Aniversário' },
+                    { value: 'Outros', label: 'Outros' }
+                  ]}
+                  value={novoEvento.tipo}
+                  onChange={(val) => setNovoEvento({ ...novoEvento, tipo: val })}
+                  placeholder="Selecione o tipo"
+                />
               </div>
-
-              <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Título</label>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Data</label>
                   <input
-                    type="text"
-                    value={novoEvento.titulo}
-                    onChange={(e) => setNovoEvento({ ...novoEvento, titulo: e.target.value })}
+                    type="date"
+                    value={novoEvento.data}
+                    onChange={(e) => setNovoEvento({ ...novoEvento, data: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
                   />
                 </div>
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Hora <span className="font-normal">(Opcional)</span></label>
+                  <input
+                    type="time"
+                    value={novoEvento.hora}
+                    onChange={(e) => setNovoEvento({ ...novoEvento, hora: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                  />
+                </div>
+              </div>
+            </div>
 
+            {(novoEvento.tipo === 'Reunião' || novoEvento.tipo === 'Entrevista') && (
+              <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Tipo</label>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Formato</label>
                     <SearchableSelect
                       options={[
-                        { value: 'Reunião', label: 'Reunião' },
-                        { value: 'Entrevista', label: 'Entrevista' },
-                        { value: 'Aniversário', label: 'Aniversário' },
-                        { value: 'Outros', label: 'Outros' }
+                        { value: 'Online', label: 'Online' },
+                        { value: 'Presencial', label: 'Presencial' }
                       ]}
-                      value={novoEvento.tipo}
-                      onChange={(val) => setNovoEvento({ ...novoEvento, tipo: val })}
-                      placeholder="Selecione o tipo"
+                      value={novoEvento.local_tipo}
+                      onChange={(val) => setNovoEvento({ ...novoEvento, local_tipo: val as 'Online' | 'Presencial' })}
+                      placeholder="Selecione o formato"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Data</label>
-                      <input
-                        type="date"
-                        value={novoEvento.data}
-                        onChange={(e) => setNovoEvento({ ...novoEvento, data: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Hora <span className="font-normal">(Opcional)</span></label>
-                      <input
-                        type="time"
-                        value={novoEvento.hora}
-                        onChange={(e) => setNovoEvento({ ...novoEvento, hora: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+                      {novoEvento.local_tipo === 'Online' ? 'URL da Reunião' : 'Endereço'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={novoEvento.local_tipo === 'Online' ? 'https://meet.google.com/...' : 'Rua, Número, Sala...'}
+                      value={novoEvento.local_endereco_url}
+                      onChange={(e) => setNovoEvento({ ...novoEvento, local_endereco_url: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                    />
                   </div>
                 </div>
 
-                {(novoEvento.tipo === 'Reunião' || novoEvento.tipo === 'Entrevista') && (
-                  <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  {novoEvento.tipo === 'Entrevista' && (
+                    <>
+                      {/* VAGA (Apenas para Entrevista) */}
                       <div>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Formato</label>
-                        <SearchableSelect
-                          options={[
-                            { value: 'Online', label: 'Online' },
-                            { value: 'Presencial', label: 'Presencial' }
-                          ]}
-                          value={novoEvento.local_tipo}
-                          onChange={(val) => setNovoEvento({ ...novoEvento, local_tipo: val as 'Online' | 'Presencial' })}
-                          placeholder="Selecione o formato"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
-                          {novoEvento.local_tipo === 'Online' ? 'URL da Reunião' : 'Endereço'}
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                          <Briefcase className="h-3 w-3" /> Vaga Relacionada
                         </label>
-                        <input
-                          type="text"
-                          placeholder={novoEvento.local_tipo === 'Online' ? 'https://meet.google.com/...' : 'Rua, Número, Sala...'}
-                          value={novoEvento.local_endereco_url}
-                          onChange={(e) => setNovoEvento({ ...novoEvento, local_endereco_url: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                        <SearchableSelect
+                          options={vagas.map(v => ({ value: v.id, label: v.vaga_id_text ? `${v.vaga_id_text} - ${v.title}` : v.title }))}
+                          value={novoEvento.vaga_id || ''}
+                          onChange={(val) => setNovoEvento({ ...novoEvento, vaga_id: val })}
+                          placeholder="Selecione uma vaga..."
                         />
                       </div>
-                    </div>
 
-                    <div className="space-y-4">
-                      {novoEvento.tipo === 'Entrevista' && (
-                        <>
-                          {/* VAGA (Apenas para Entrevista) */}
-                          <div>
-                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                              <Briefcase className="h-3 w-3" /> Vaga Relacionada
-                            </label>
-                            <SearchableSelect
-                              options={vagas.map(v => ({ value: v.id, label: v.vaga_id_text ? `${v.vaga_id_text} - ${v.title}` : v.title }))}
-                              value={novoEvento.vaga_id || ''}
-                              onChange={(val) => setNovoEvento({ ...novoEvento, vaga_id: val })}
-                              placeholder="Selecione uma vaga..."
-                            />
+                      {/* CANDIDATOS (Apenas para Entrevista) */}
+                      <div>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                          <Users className="h-3 w-3" /> Entrevistados (Candidatos)
+                        </label>
+                        <SearchableSelect
+                          options={candidatos.map(c => ({ value: c.id, label: c.nome }))}
+                          value={''} // Clear after select
+                          onChange={(val) => {
+                            if (val && !novoEvento.participantes_candidatos.includes(val)) {
+                              setNovoEvento({ ...novoEvento, participantes_candidatos: [...novoEvento.participantes_candidatos, val] })
+                            }
+                          }}
+                          placeholder="Adicionar candidato..."
+                        />
+                        {novoEvento.participantes_candidatos.length > 0 && (
+                          <div className="flex gap-2 flex-wrap mt-2">
+                            {novoEvento.participantes_candidatos.map((id) => {
+                              const cand = candidatos.find(c => c.id === id);
+                              if (!cand) return null;
+                              return (
+                                <div key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-xs font-semibold">
+                                  {formatName(cand.nome)}
+                                  <button onClick={() => setNovoEvento({ ...novoEvento, participantes_candidatos: novoEvento.participantes_candidatos.filter(i => i !== id) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
+                                </div>
+                              );
+                            })}
                           </div>
+                        )}
+                      </div>
+                    </>
+                  )}
 
-                          {/* CANDIDATOS (Apenas para Entrevista) */}
-                          <div>
-                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                              <Users className="h-3 w-3" /> Entrevistados (Candidatos)
-                            </label>
-                            <SearchableSelect
-                              options={candidatos.map(c => ({ value: c.id, label: c.nome }))}
-                              value={''} // Clear after select
-                              onChange={(val) => {
-                                if (val && !novoEvento.participantes_candidatos.includes(val)) {
-                                  setNovoEvento({ ...novoEvento, participantes_candidatos: [...novoEvento.participantes_candidatos, val] })
-                                }
-                              }}
-                              placeholder="Adicionar candidato..."
-                            />
-                            {novoEvento.participantes_candidatos.length > 0 && (
-                              <div className="flex gap-2 flex-wrap mt-2">
-                                {novoEvento.participantes_candidatos.map((id) => {
-                                  const cand = candidatos.find(c => c.id === id);
-                                  if (!cand) return null;
-                                  return (
-                                    <div key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-xs font-semibold">
-                                      {formatName(cand.nome)}
-                                      <button onClick={() => setNovoEvento({ ...novoEvento, participantes_candidatos: novoEvento.participantes_candidatos.filter(i => i !== id) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-
-                      {novoEvento.tipo !== 'Entrevista' && (
-                        <>
-                          {/* COLABORADORES */}
-                          <div>
-                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                              <Users className="h-3 w-3" /> Convidados (Colaborador)
-                            </label>
+                  {novoEvento.tipo !== 'Entrevista' && (
+                    <>
+                      {/* COLABORADORES */}
+                      <div>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                          <Users className="h-3 w-3" /> Convidados (Colaborador)
+                        </label>
                         <SearchableSelect
                           options={collaborators.map(c => ({ value: c.id, label: formatName(c.name) }))}
                           value={''} // Clear after select
@@ -1077,101 +1077,102 @@ export function Calendario() {
                                   <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
+                            ))}
+                          </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                    <AlignLeft className="h-3 w-3" /> Descrição <span className="font-normal">(Opcional)</span>
-                  </label>
-                  <textarea
-                    value={novoEvento.descricao}
-                    onChange={(e) => setNovoEvento({ ...novoEvento, descricao: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all resize-none font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-                <button
-                  onClick={() => { setIsModalOpen(false); setEditingEvento(null); }}
-                  className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-xl transition-all uppercase tracking-[0.2em]"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSaveEvento}
-                  disabled={savingEvento || !novoEvento.titulo}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl hover:shadow-lg transition-all disabled:opacity-50 shadow-md uppercase tracking-[0.2em] active:scale-95"
-                >
-                  {savingEvento ? (
-                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  Salvar
-                </button>
-              </div>
-            </div>
-            </div>
-        )}
-
-            {/* MODAL RESUMO COLABORADOR */}
-            {visualizarColaborador && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarColaborador(null)}>
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                  <div className="px-6 py-4 bg-gradient-to-r from-[#d4af37] to-amber-600 flex items-center justify-between relative overflow-hidden">
-                    <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
-                      <Cake className="w-24 h-24" />
-                    </div>
-                    <div className="flex items-center gap-3 text-white relative z-10">
-                      {visualizarColaborador.photo_url ? (
-                        <img src={visualizarColaborador.photo_url} className="w-12 h-12 rounded-full border-2 border-white object-cover" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-bold text-amber-600 bg-white shadow-sm text-xl">
-                          {visualizarColaborador.name.charAt(0).toUpperCase()}
                         </div>
-                      )}
-                      <div>
-                        <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{formatName(visualizarColaborador.name)}</h3>
-                        <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarColaborador.role || 'Sem cargo'}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setVisualizarColaborador(null)}
-                      className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
+                      </>
+                    )}
+
+            <div>
+              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                <AlignLeft className="h-3 w-3" /> Descrição <span className="font-normal">(Opcional)</span>
+              </label>
+              <textarea
+                value={novoEvento.descricao}
+                onChange={(e) => setNovoEvento({ ...novoEvento, descricao: e.target.value })}
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all resize-none font-medium"
+              />
+            </div>
+          </div>
+
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+            <button
+              onClick={() => { setIsModalOpen(false); setEditingEvento(null); }}
+              className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-xl transition-all uppercase tracking-[0.2em]"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSaveEvento}
+              disabled={savingEvento || !novoEvento.titulo}
+              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl hover:shadow-lg transition-all disabled:opacity-50 shadow-md uppercase tracking-[0.2em] active:scale-95"
+            >
+              {savingEvento ? (
+                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              Salvar
+            </button>
+          </div>
+        </div>
+      )}
+
+          {/* MODAL RESUMO COLABORADOR */}
+          {visualizarColaborador && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarColaborador(null)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                <div className="px-6 py-4 bg-gradient-to-r from-[#d4af37] to-amber-600 flex items-center justify-between relative overflow-hidden">
+                  <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
+                    <Cake className="w-24 h-24" />
                   </div>
-                  <div className="p-6 space-y-5">
-                    <div className="flex items-start gap-4">
-                      <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
-                      <div>
-                        <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local de Atuação</p>
-                        <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.location || 'Não informado'}</p>
+                  <div className="flex items-center gap-3 text-white relative z-10">
+                    {visualizarColaborador.photo_url ? (
+                      <img src={visualizarColaborador.photo_url} className="w-12 h-12 rounded-full border-2 border-white object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-bold text-amber-600 bg-white shadow-sm text-xl">
+                        {visualizarColaborador.name.charAt(0).toUpperCase()}
                       </div>
+                    )}
+                    <div>
+                      <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{formatName(visualizarColaborador.name)}</h3>
+                      <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarColaborador.role || 'Sem cargo'}</p>
                     </div>
-                    <div className="flex items-start gap-4">
-                      <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
-                      <div>
-                        <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Líder Direto</p>
-                        <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.leader || 'Não informado'}</p>
-                      </div>
+                  </div>
+                  <button
+                    onClick={() => setVisualizarColaborador(null)}
+                    className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="p-6 space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                    <div>
+                      <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local de Atuação</p>
+                      <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.location || 'Não informado'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
+                    <div>
+                      <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Líder Direto</p>
+                      <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.leader || 'Não informado'}</p>
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )
+          }
 
-            {/* MODAL RESUMO EVENTO */}
-            {visualizarEvento && (
+          {/* MODAL RESUMO EVENTO */}
+          {
+            visualizarEvento && (
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarEvento(null)}>
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                   <div className="px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-between relative overflow-hidden">
@@ -1281,5 +1282,8 @@ export function Calendario() {
                   </div>
                 </div>
               </div>
-            )
-            }
+            )}
+        </div>
+      </div >
+    );
+  }
