@@ -48,6 +48,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
     ]
 
     const statusOptions = [
+        { id: 'Aguardando Autorização', name: 'Aguardando Autorização' },
         { id: 'Aberta', name: 'Aberta' },
         { id: 'Congelada', name: 'Congelada' },
         { id: 'Fechada', name: 'Fechada' }
@@ -302,6 +303,13 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                             <section>
                                 <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2 mb-4">Informações Principais</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <ManagedSelect
+                                        label="Cargo"
+                                        value={formData.role_id?.toString() || ''}
+                                        onChange={v => setFormData({ ...formData, role_id: v })}
+                                        tableName="roles"
+                                    />
+
                                     <SearchableSelect
                                         label="Área"
                                         value={formData.area || ''}
@@ -315,13 +323,6 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         value={formData.atuacao_id?.toString() || ''}
                                         onChange={v => setFormData({ ...formData, atuacao_id: v })}
                                         tableName="atuacoes"
-                                    />
-
-                                    <ManagedSelect
-                                        label="Cargo"
-                                        value={formData.role_id?.toString() || ''}
-                                        onChange={v => setFormData({ ...formData, role_id: v })}
-                                        tableName="roles"
                                     />
 
                                     <div>

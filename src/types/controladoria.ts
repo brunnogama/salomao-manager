@@ -477,7 +477,7 @@ export interface Vaga {
   data_abertura?: string;
   data_fechamento?: string;
   data_aprovacao_gestor?: string;
-  status: 'Congelada' | 'Aberta' | 'Fechada';
+  status: 'Congelada' | 'Aberta' | 'Fechada' | 'Aguardando Autorização';
   observacoes?: string;
   candidato_aprovado_id?: string;
   aprovador_id?: string;
