@@ -89,6 +89,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                 .eq('id', id)
                 .single()
             if (error) throw error
+            // Map DB 'nome' to 'name' for DadosPessoaisSection compatibility
+            if (data && data.nome) {
+                data.name = data.nome;
+            }
             setFormData(data)
         } catch (error) {
             console.error('Error fetching candidato:', error)
@@ -160,8 +164,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
 
     const handleSave = async () => {
         // Basic validation
-        if (!formData.nome) {
-            // error
+        if (!formData.name && !formData.nome) {
+            showAlert('Atenção', 'Nome do candidato é obrigatório.', 'warning')
             return
         }
 
@@ -170,6 +174,16 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             const payload = {
                 ...formData
             }
+
+            // Map 'name' back to 'nome' for DB compatibility and clean up non-DB fields
+            if (payload.name) {
+                payload.nome = payload.name;
+                delete payload.name;
+            }
+            // Remove relationship arrays that might be in formData
+            delete payload.candidato_historico;
+            delete payload.candidato_experiencias;
+            delete payload.candidato_ged;
 
             if (candidatoId) {
                 const { error } = await supabase.from('candidatos').update(payload).eq('id', candidatoId)

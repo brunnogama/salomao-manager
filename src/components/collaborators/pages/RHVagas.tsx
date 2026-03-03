@@ -16,7 +16,7 @@ import {
   Building2,
   Trash2
 } from 'lucide-react'
-import { differenceInDays, differenceInMonths, isValid } from 'date-fns'
+import { isValid, addDays, getDay, isSameDay } from 'date-fns'
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
 import { VagaViewModal } from '../components/VagaViewModal'
@@ -196,6 +196,85 @@ export function RHVagas() {
     return matchSearch && matchLocal && matchCargo
   })
 
+  const getFeriados = (year: number): Date[] => {
+    // Feriados fixos (Nacionais + RJ)
+    const fixed = [
+      new Date(year, 0, 1),   // Confraternização Universal
+      new Date(year, 0, 20),  // São Sebastião (RJ)
+      new Date(year, 3, 21),  // Tiradentes
+      new Date(year, 3, 23),  // São Jorge (RJ)
+      new Date(year, 4, 1),   // Dia do Trabalhador
+      new Date(year, 8, 7),   // Independência
+      new Date(year, 9, 12),  // Nossa Sra Aparecida
+      new Date(year, 10, 2),  // Finados
+      new Date(year, 10, 15), // Proclamação da República
+      new Date(year, 10, 20), // Consciência Negra
+      new Date(year, 11, 25), // Natal
+    ];
+
+    // Cálculo da Páscoa (Computus)
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31) - 1; // 0-indexed month
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    const easter = new Date(year, month, day);
+
+    // Feriados Móveis
+    const carnavalTuesday = addDays(easter, -47);
+    const carnavalMonday = addDays(easter, -48);
+    const sextaSanta = addDays(easter, -2);
+    const corpusChristi = addDays(easter, 60);
+
+    return [...fixed, carnavalMonday, carnavalTuesday, sextaSanta, corpusChristi];
+  }
+
+  const isFeriado = (date: Date, feriadosCache: Record<number, Date[]>): boolean => {
+    const year = date.getFullYear();
+    if (!feriadosCache[year]) {
+      feriadosCache[year] = getFeriados(year);
+    }
+    return feriadosCache[year].some(feriado => isSameDay(date, feriado));
+  }
+
+  const countBusinessDays = (start: Date, end: Date): number => {
+    let count = 0;
+    let current = new Date(start);
+    const feriadosCache: Record<number, Date[]> = {};
+
+    // Se as datas forem no mesmo dia ou end for antes, a lógica dependerá se conta o próprio dia
+    // SLA geralmente conta os dias que se passaram, então se abrir e fechar no mesmo dia útil: 1 dia ou 0? 
+    // Faremos com que 1 dia completo passe a ser 1
+
+    // Normalize para meia-noite
+    current.setHours(0, 0, 0, 0);
+    const endDate = new Date(end);
+    endDate.setHours(0, 0, 0, 0);
+
+    if (current > endDate) return 0;
+
+    while (current < endDate) {
+      const dayOfWeek = getDay(current); // 0 = Domingo, 6 = Sábado
+
+      // Se não é fim de semana nem feriado, soma 1
+      if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isFeriado(current, feriadosCache)) {
+        count++;
+      }
+      current = addDays(current, 1);
+    }
+
+    return count;
+  }
+
   const calculateTempoAberto = (data_abertura?: string, data_fechamento?: string) => {
     if (!data_abertura) return '-'
 
@@ -204,6 +283,7 @@ export function RHVagas() {
       const startDate = new Date(year, month - 1, day)
 
       let endDate = new Date()
+      // Caso não tenha fechamento, finalizamos o cálculo no final do dia de hoje (ou no começo, para igualar SLA)
       if (data_fechamento) {
         const [eYear, eMonth, eDay] = data_fechamento.split('-').map(Number)
         endDate = new Date(eYear, eMonth - 1, eDay)
@@ -211,26 +291,13 @@ export function RHVagas() {
 
       if (!isValid(startDate) || !isValid(endDate)) return '-'
 
-      let months = differenceInMonths(endDate, startDate)
+      // O SLA usa apenas de dias passados
+      const days = countBusinessDays(startDate, endDate);
 
-      const tempDate = new Date(startDate)
-      tempDate.setMonth(tempDate.getMonth() + months)
-      let days = differenceInDays(endDate, tempDate)
+      if (days === 0 && isSameDay(startDate, endDate)) return 'Hoje';
+      if (days < 0) return '-';
 
-      if (days < 0) {
-        months -= 1
-        tempDate.setMonth(tempDate.getMonth() - 1)
-        days = differenceInDays(endDate, tempDate)
-      }
-
-      if (months === 0 && days === 0) return 'Hoje'
-      if (months < 0 || days < 0) return '-'
-
-      let result = []
-      if (months > 0) result.push(`${months} ${months === 1 ? 'mês' : 'meses'}`)
-      if (days > 0) result.push(`${days} ${days === 1 ? 'dia' : 'dias'}`)
-
-      return result.join(' e ') || 'Hoje'
+      return `${days} ${days === 1 ? 'dia útil' : 'dias úteis'}`;
     } catch (e) {
       return '-'
     }
