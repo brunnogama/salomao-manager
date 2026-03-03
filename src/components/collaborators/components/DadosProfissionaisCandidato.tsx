@@ -190,38 +190,46 @@ export function DadosProfissionaisCandidato({
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <SearchableSelect
-                        label="Área"
-                        value={formData.area || ''}
-                        onChange={v => setFormData({ ...formData, area: v })}
-                        options={[{ id: 'Administrativa', name: 'Administrativa' }, { id: 'Jurídica', name: 'Jurídica' }]}
-                        disabled={isViewMode}
-                    />
+                    <div className="relative z-[120]">
+                        <SearchableSelect
+                            label="Área"
+                            value={formData.area || ''}
+                            onChange={v => setFormData({ ...formData, area: v })}
+                            options={[{ id: 'Administrativa', name: 'Administrativa' }, { id: 'Jurídica', name: 'Jurídica' }]}
+                            disabled={isViewMode}
+                        />
+                    </div>
 
-                    <ManagedSelect
-                        label="Cargo Pretendido"
-                        value={formData.role || ''}
-                        onChange={v => setFormData({ ...formData, role: v })}
-                        tableName="roles"
-                        disabled={isViewMode}
-                    />
+                    <div className="relative z-[119]">
+                        <ManagedSelect
+                            label="Cargo Pretendido"
+                            value={formData.role || ''}
+                            onChange={v => setFormData({ ...formData, role: v })}
+                            tableName="roles"
+                            disabled={isViewMode}
+                        />
+                    </div>
 
-                    <SearchableSelect
-                        label="Tipo da Contratação"
-                        value={formData.contract_type || ''}
-                        onChange={v => setFormData({ ...formData, contract_type: v })}
-                        options={[{ id: 'ADVOGADO', name: 'ADVOGADO' }, { id: 'CLT', name: 'CLT' }, { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' }, { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' }, { id: 'PJ', name: 'PJ' }]}
-                        uppercase={false}
-                        disabled={isViewMode}
-                    />
+                    <div className="relative z-[118]">
+                        <SearchableSelect
+                            label="Tipo da Contratação"
+                            value={formData.contract_type || ''}
+                            onChange={v => setFormData({ ...formData, contract_type: v })}
+                            options={[{ id: 'ADVOGADO', name: 'ADVOGADO' }, { id: 'CLT', name: 'CLT' }, { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' }, { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' }, { id: 'PJ', name: 'PJ' }]}
+                            uppercase={false}
+                            disabled={isViewMode}
+                        />
+                    </div>
 
-                    <ManagedSelect
-                        label="Local"
-                        value={formData.local || ''}
-                        onChange={v => setFormData({ ...formData, local: v })}
-                        tableName="locations"
-                        disabled={isViewMode}
-                    />
+                    <div className="relative z-[117]">
+                        <ManagedSelect
+                            label="Local"
+                            value={formData.local || ''}
+                            onChange={v => setFormData({ ...formData, local: v })}
+                            tableName="locations"
+                            disabled={isViewMode}
+                        />
+                    </div>
                 </div>
             </div>
 

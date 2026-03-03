@@ -11,8 +11,11 @@ import {
   Edit2,
   AlertCircle,
   X,
-  Filter
+  Filter,
+  User,
+  Building2
 } from 'lucide-react'
+import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
 import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
@@ -24,6 +27,18 @@ export function RHVagas() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'filtros'>('abertas')
+
+  // Filtros
+  const [filterLider, setFilterLider] = useState('')
+  const [filterPartner, setFilterPartner] = useState('')
+  const [filterLocal, setFilterLocal] = useState('')
+  const [filterCargo, setFilterCargo] = useState('')
+
+  // Opções de Filtro
+  const [liderOptions, setLiderOptions] = useState<{ value: string; label: string }[]>([])
+  const [partnerOptions, setPartnerOptions] = useState<{ value: string; label: string }[]>([])
+  const [locationOptions, setLocationOptions] = useState<{ value: string; label: string }[]>([])
+  const [roleOptions, setRoleOptions] = useState<{ value: string; label: string }[]>([])
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -39,13 +54,26 @@ export function RHVagas() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      await Promise.all([fetchVagas(), fetchCandidatos()])
+      await Promise.all([fetchVagas(), fetchCandidatos(), fetchFilterOptions()])
     } catch (err: any) {
       console.error('Error fetching data:', err)
       setError('Não foi possível carregar as informações.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchFilterOptions = async () => {
+    const [rolesRes, locsRes, partnersRes, leadersRes] = await Promise.all([
+      supabase.from('roles').select('id, name').order('name'),
+      supabase.from('locations').select('id, name').order('name'),
+      supabase.from('partners').select('id, name').order('name'),
+      supabase.from('collaborators').select('id, name').order('name')
+    ]);
+    if (rolesRes.data) setRoleOptions(rolesRes.data.map(r => ({ value: String(r.id), label: r.name })));
+    if (locsRes.data) setLocationOptions(locsRes.data.map(l => ({ value: String(l.id), label: l.name })));
+    if (partnersRes.data) setPartnerOptions(partnersRes.data.map(p => ({ value: String(p.id), label: p.name })));
+    if (leadersRes.data) setLiderOptions(leadersRes.data.map(c => ({ value: String(c.id), label: c.name })));
   }
 
   const fetchVagas = async () => {
@@ -108,7 +136,7 @@ export function RHVagas() {
 
   const filteredVagas = vagas.filter(v => {
     const term = searchTerm.toLowerCase()
-    return (
+    const matchSearch = (
       v.vaga_id_text?.toLowerCase().includes(term) ||
       v.role?.name?.toLowerCase().includes(term) ||
       v.area?.toLowerCase().includes(term) ||
@@ -116,11 +144,25 @@ export function RHVagas() {
       v.partner?.name?.toLowerCase().includes(term) ||
       v.leader?.name?.toLowerCase().includes(term)
     )
+
+    const matchLider = filterLider ? String(v.leader_id) === filterLider : true
+    const matchPartner = filterPartner ? String(v.partner_id) === filterPartner : true
+    const matchLocal = filterLocal ? String(v.location_id) === filterLocal : true
+    const matchCargo = filterCargo ? String(v.role_id) === filterCargo : true
+
+    return matchSearch && matchLider && matchPartner && matchLocal && matchCargo
   })
 
   const filteredCandidatos = candidatos.filter(c => {
     const term = searchTerm.toLowerCase()
-    return c.nome?.toLowerCase().includes(term) || c.email?.toLowerCase().includes(term)
+    const matchSearch = c.nome?.toLowerCase().includes(term) || c.email?.toLowerCase().includes(term)
+
+    // Convert text fields or IDs exactly the way they are stored. 
+    // Usually 'role' and 'local' on candidato are string IDs in the form, but let's compare as strings.
+    const matchLocal = filterLocal ? String(c.local) === filterLocal : true
+    const matchCargo = filterCargo ? String(c.role) === filterCargo : true
+
+    return matchSearch && matchLocal && matchCargo
   })
 
   // Stats
@@ -258,6 +300,38 @@ export function RHVagas() {
                 </button>
               )}
             </div>
+
+            {/* Filters Row - Auto-sizing */}
+            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
+              <FilterSelect
+                icon={User}
+                value={filterLider}
+                onChange={setFilterLider}
+                options={liderOptions}
+                placeholder="Líder"
+              />
+              <FilterSelect
+                icon={Users}
+                value={filterPartner}
+                onChange={setFilterPartner}
+                options={partnerOptions}
+                placeholder="Sócio"
+              />
+              <FilterSelect
+                icon={Building2}
+                value={filterLocal}
+                onChange={setFilterLocal}
+                options={locationOptions}
+                placeholder="Local"
+              />
+              <FilterSelect
+                icon={Briefcase}
+                value={filterCargo}
+                onChange={setFilterCargo}
+                options={roleOptions}
+                placeholder="Cargo"
+              />
+            </div>
           </div>
         </div>
       )}
@@ -267,6 +341,13 @@ export function RHVagas() {
           <div className="flex items-center justify-between border-b border-gray-100 pb-4">
             <h2 className="text-lg font-bold text-[#1e3a8a]">Opções de Filtro</h2>
             <button
+              onClick={() => {
+                setFilterLider('')
+                setFilterPartner('')
+                setFilterLocal('')
+                setFilterCargo('')
+                setSearchTerm('')
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors text-xs font-bold uppercase tracking-wider"
             >
               <X className="h-4 w-4" /> Limpar Filtros
