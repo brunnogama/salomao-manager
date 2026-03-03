@@ -34,6 +34,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
     const [isTagging, setIsTagging] = useState(false)
     const [tagSearch, setTagSearch] = useState('')
     const [cursorPosition, setCursorPosition] = useState(0)
+    const [availableTags, setAvailableTags] = useState<string[]>([])
 
     // Recrutadoras options
     const recrutadorasOptions = [
@@ -54,6 +55,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
 
     useEffect(() => {
         if (isOpen) {
+            fetchTags()
             if (vagaId) {
                 fetchVaga(vagaId)
             } else {
@@ -67,6 +69,17 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
             }
         }
     }, [isOpen, vagaId])
+
+    const fetchTags = async () => {
+        try {
+            const { data, error } = await supabase.from('perfil_tags').select('tag').order('tag')
+            if (!error && data) {
+                setAvailableTags(data.map(d => d.tag))
+            }
+        } catch (e) {
+            console.error('Error fetching tags:', e)
+        }
+    }
 
     const fetchVaga = async (id: string) => {
         try {
@@ -160,11 +173,10 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
 
         // Check if we just typed '@'
         const lastAtSymbol = text.lastIndexOf('@', position - 1);
-        const lastSpace = text.lastIndexOf(' ', position - 1);
         const lastNewLine = text.lastIndexOf('\n', position - 1);
 
-        // Determine if we are actively tagging
-        const bound = Math.max(lastSpace, lastNewLine);
+        // Determine if we are actively tagging (bound to current line)
+        const bound = lastNewLine;
         if (lastAtSymbol > bound) {
             setIsTagging(true);
             setTagSearch(text.substring(lastAtSymbol + 1, position));
@@ -178,12 +190,13 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
         if (!formData.perfil) return;
         const currentText = formData.perfil;
         const beforeTag = currentText.substring(0, cursorPosition);
-        // Find where the tag search ends
-        const nextSpace = currentText.indexOf(' ', cursorPosition);
-        const afterTag = nextSpace !== -1 ? currentText.substring(nextSpace) : '';
 
-        // Format tag (make it standout in markdown/display later if needed)
-        const newText = `${beforeTag}@"${tagText}" ${afterTag}`;
+        // Find where the current line ends
+        const nextNewLine = currentText.indexOf('\n', cursorPosition);
+        const afterTag = nextNewLine !== -1 ? currentText.substring(nextNewLine) : '';
+
+        // Format tag (just insert text cleanly without @)
+        const newText = `${beforeTag}${tagText}${afterTag}`;
 
         setFormData({ ...formData, perfil: newText });
         setIsTagging(false);
@@ -218,6 +231,16 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                     .from('vagas')
                     .insert([payload])
                 if (insertError) throw insertError
+            }
+
+            // Extract tags from form data and upsert to perfil_tags
+            if (payload.perfil) {
+                const lines = payload.perfil.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                if (lines.length > 0) {
+                    const tagsToInsert = lines.map(t => ({ tag: t }));
+                    const { error: tagError } = await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
+                    if (tagError) console.error("Error upserting tags", tagError);
+                }
             }
 
             if (onSuccess) onSuccess()
@@ -411,25 +434,36 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                     <div className="relative">
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex justify-between items-center">
                                             Perfil
-                                            <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para criar tags</span>
+                                            <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para pesquisar tags</span>
                                         </label>
                                         <textarea
                                             value={formData.perfil || ''}
                                             onChange={handlePerfilChange}
-                                            placeholder='Descreva o perfil... Ex: @"experiência no contencioso cível" ou @"legalone"'
+                                            placeholder="Descreva o perfil (cada linha salva vira uma tag)&#10;Ex:&#10;Experiência no contencioso cível&#10;Legalone&#10;&#10;Dica: Use @ para buscar na nuvem de talentos"
                                             className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all shadow-sm h-32 resize-none"
                                         />
 
                                         {/* Sub-menu for @ tags */}
                                         {isTagging && (
-                                            <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 overflow-hidden">
-                                                <button
-                                                    onClick={() => insertTag(tagSearch)}
-                                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-[#0a192f] font-medium"
-                                                >
-                                                    <Tag className="h-4 w-4 text-blue-500" />
-                                                    Criar tag: <span className="font-bold">"{tagSearch}"</span>
-                                                </button>
+                                            <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-48 overflow-y-auto">
+                                                {availableTags
+                                                    .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
+                                                    .map(tag => (
+                                                        <button
+                                                            key={tag}
+                                                            onClick={() => insertTag(tag)}
+                                                            className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-[#0a192f] font-medium border-b border-gray-50 last:border-0"
+                                                        >
+                                                            <Tag className="h-4 w-4 text-blue-500" />
+                                                            {tag}
+                                                        </button>
+                                                    ))
+                                                }
+                                                {availableTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
+                                                    <div className="px-4 py-3 text-sm text-gray-500 italic">
+                                                        Nenhuma tag cadastrada com "{tagSearch}"... Quando você salvar, ela será criada!
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
