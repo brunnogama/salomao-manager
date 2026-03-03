@@ -370,7 +370,7 @@ export default function AtualizacaoCadastral() {
                     const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath);
                     const { error: insertErr } = await supabase.from('ged_colaboradores').insert({
                         colaborador_id: formData.id,
-                        nome_arquivo: `${toTitleCase(formData.name || '')}_${categoryLabel}${extension}`,
+                        nome_arquivo: `${categoryLabel}${extension}`,
                         url: publicUrl,
                         categoria: doc.category,
                         tamanho: doc.file.size,
