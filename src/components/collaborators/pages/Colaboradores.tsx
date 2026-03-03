@@ -1407,27 +1407,26 @@ export function Colaboradores({ }: ColaboradoresProps) {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleClearAdvancedFilters}
-                className={`p-2 sm:p-2.5 rounded-lg transition-colors border flex items-center justify-center relative outline-none overflow-hidden ${hasActiveAdvancedFilters
-                  ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner'
-                  : 'bg-white text-gray-400 border-transparent hover:text-red-500 hover:bg-red-50 hover:border-red-100'
-                  }`}
-                title="Limpar Filtros"
-              >
-                {hasActiveAdvancedFilters && (
-                  <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                  </span>
-                )}
-                <FilterX className="h-4 w-4 sm:h-5 sm:w-5" />
-              </button>
+            <div className="flex items-center gap-4 border-l border-gray-100 pl-4 ml-2">
+              <div className="flex items-center gap-1.5 p-1 bg-white border border-gray-100 rounded-xl shadow-sm">
+                <button
+                  onClick={handleClearAdvancedFilters}
+                  className="p-2 sm:p-2.5 text-[#1e3a8a] hover:bg-blue-50 focus:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100 flex items-center justify-center relative"
+                  title="Limpar Filtros"
+                >
+                  {hasActiveAdvancedFilters && (
+                    <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                  )}
+                  <FilterX className="h-4 w-4 sm:h-5 sm:w-5" />
+                </button>
+              </div>
 
               <button
                 onClick={handleExportAdvanced}
-                className="flex items-center justify-center w-10 h-10 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/30 shrink-0"
+                className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
                 title={`Exportar (${currentAdvancedFiltered.length})`}
               >
                 <FileSpreadsheet className="h-5 w-5" />
