@@ -53,26 +53,33 @@ export function GEDSection({
                     </div>
 
                     {selectedGedCategory === 'Atestado Médico' && (
-                        <div className="flex items-center gap-2 w-full md:w-auto">
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    className="pl-3 pr-2 py-2.5 bg-white border border-gray-200 rounded-lg text-xs w-32"
-                                    value={atestadoDatas.inicio}
-                                    onChange={e => setAtestadoDatas(p => ({ ...p, inicio: e.target.value }))}
-                                    placeholder="Início"
-                                />
+                        <div className="flex flex-col gap-2 w-full md:w-auto">
+                            <div className="flex items-center gap-2">
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        className="pl-3 pr-2 py-2.5 bg-white border border-gray-200 rounded-lg text-xs w-32"
+                                        value={atestadoDatas.inicio}
+                                        onChange={e => setAtestadoDatas(p => ({ ...p, inicio: e.target.value }))}
+                                        placeholder="Início"
+                                    />
+                                </div>
+                                <span className="text-gray-400">-</span>
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        className="pl-3 pr-2 py-2.5 bg-white border border-gray-200 rounded-lg text-xs w-32"
+                                        value={atestadoDatas.fim}
+                                        onChange={e => setAtestadoDatas(p => ({ ...p, fim: e.target.value }))}
+                                        placeholder="Fim"
+                                    />
+                                </div>
                             </div>
-                            <span className="text-gray-400">-</span>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    className="pl-3 pr-2 py-2.5 bg-white border border-gray-200 rounded-lg text-xs w-32"
-                                    value={atestadoDatas.fim}
-                                    onChange={e => setAtestadoDatas(p => ({ ...p, fim: e.target.value }))}
-                                    placeholder="Fim"
-                                />
-                            </div>
+                            {atestadoDatas.inicio && atestadoDatas.fim && (
+                                <div className="text-xs font-bold text-[#1e3a8a] bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 text-center animate-in fade-in zoom-in-95 duration-200">
+                                    {Math.max(1, Math.ceil((new Date(atestadoDatas.fim + 'T00:00:00').getTime() - new Date(atestadoDatas.inicio + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)) + 1)} dia(s)
+                                </div>
+                            )}
                         </div>
                     )}
 

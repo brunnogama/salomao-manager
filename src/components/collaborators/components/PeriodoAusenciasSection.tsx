@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Clock, Save, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Clock, Save, Loader2, Calendar as CalendarIcon, FilePlus2, Stethoscope, Trash2 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { Collaborator } from '../../../types/controladoria'
 
@@ -10,11 +10,42 @@ interface PeriodoAusenciasSectionProps {
 }
 
 export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false }: PeriodoAusenciasSectionProps) {
+    const [activeTab, setActiveTab] = useState<'registrar' | 'historico_ferias' | 'historico_atestados'>('registrar')
     const [loading, setLoading] = useState(false)
+    const [fetching, setFetching] = useState(false)
+    const [absences, setAbsences] = useState<any[]>([])
+
     const [absenceStart, setAbsenceStart] = useState('')
     const [absenceEnd, setAbsenceEnd] = useState('')
     const [absenceObs, setAbsenceObs] = useState('')
     const [absenceSubtype, setAbsenceSubtype] = useState('Descanso')
+
+    useEffect(() => {
+        if (formData.id) fetchAbsences()
+    }, [formData.id])
+
+    const fetchAbsences = async () => {
+        if (!formData.id) return
+        setFetching(true)
+        const { data } = await supabase
+            .from('collaborator_absences')
+            .select('*')
+            .eq('collaborator_id', formData.id)
+            .order('start_date', { ascending: false })
+        if (data) setAbsences(data)
+        setFetching(false)
+    }
+
+    const handleDeleteAbsence = async (id: number) => {
+        if (!confirm('Deseja excluir este registro de ausência?')) return
+        try {
+            await supabase.from('collaborator_absences').delete().eq('id', id)
+            fetchAbsences()
+        } catch (e: any) {
+            alert('Erro ao excluir: ' + e.message)
+        }
+    }
+
 
     const calculateDays = (start: string, end: string) => {
         if (start.length !== 10 || end.length !== 10) return 0
@@ -60,6 +91,7 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
             setAbsenceStart('')
             setAbsenceEnd('')
             setAbsenceObs('')
+            fetchAbsences()
         } catch (e: any) {
             alert('Erro ao salvar: ' + e.message)
         } finally {
@@ -74,84 +106,166 @@ export function PeriodoAusenciasSection({ formData, maskDate, isViewMode = false
                 <h4 className="text-lg font-black text-[#0a192f]">Registrar {getAbsenceTitle()}</h4>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 max-w-3xl">
-                {['ADVOGADO', 'PJ'].includes(formData.contract_type || '') && (
-                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Tipo de Ausência</label>
-                        <div className="flex gap-4">
-                            {['Descanso', 'Recesso fim de ano'].map(type => (
-                                <button
-                                    key={type}
-                                    onClick={() => setAbsenceSubtype(type)}
-                                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${absenceSubtype === type ? 'bg-[#1e3a8a] text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}
-                                >
-                                    {type}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Início</label>
-                        <input
-                            type="text"
-                            className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                            placeholder="DD/MM/AAAA"
-                            maxLength={10}
-                            value={absenceStart}
-                            onChange={e => setAbsenceStart(maskDate(e.target.value))}
-                            disabled={isViewMode}
-                            readOnly={isViewMode}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fim</label>
-                        <input
-                            type="text"
-                            className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                            placeholder="DD/MM/AAAA"
-                            maxLength={10}
-                            value={absenceEnd}
-                            onChange={e => setAbsenceEnd(maskDate(e.target.value))}
-                            disabled={isViewMode}
-                            readOnly={isViewMode}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Quantidade de Dias</label>
-                        <div className="w-full bg-gray-100 border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-500">
-                            {calculateDays(absenceStart, absenceEnd)} dias
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Observações (Opcional)</label>
-                    <textarea
-                        className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm min-h-[100px] focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all resize-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        placeholder="Observações adicionais sobre o período..."
-                        value={absenceObs}
-                        onChange={e => setAbsenceObs(e.target.value)}
-                        disabled={isViewMode}
-                        readOnly={isViewMode}
-                    />
-                </div>
-
-                {!isViewMode && (
-                    <div className="flex justify-end pt-4">
-                        <button
-                            onClick={handleSaveAbsence}
-                            disabled={loading || !absenceStart || !absenceEnd}
-                            className="flex items-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-[#112240] hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                            Registrar Ausência
-                        </button>
-                    </div>
-                )}
+            {/* TABS CONTAINER */}
+            <div className="flex bg-gray-100 p-1.5 rounded-xl gap-2 overflow-x-auto w-full mb-6">
+                <button
+                    onClick={() => setActiveTab('registrar')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'registrar' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
+                >
+                    <FilePlus2 className="h-4 w-4" /> Registrar Ausência
+                </button>
+                <button
+                    onClick={() => setActiveTab('historico_ferias')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'historico_ferias' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
+                >
+                    <CalendarIcon className="h-4 w-4" /> Histórico Férias/Recesso
+                </button>
+                <button
+                    onClick={() => setActiveTab('historico_atestados')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === 'historico_atestados' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}`}
+                >
+                    <Stethoscope className="h-4 w-4" /> Atestados Médicos
+                </button>
             </div>
+
+            {activeTab === 'registrar' && (
+                <div className="grid grid-cols-1 gap-6 max-w-3xl animate-in fade-in duration-300">
+                    {['ADVOGADO', 'PJ'].includes(formData.contract_type || '') && (
+                        <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Tipo de Ausência</label>
+                            <div className="flex gap-4">
+                                {['Descanso', 'Recesso fim de ano'].map(type => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setAbsenceSubtype(type)}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${absenceSubtype === type ? 'bg-[#1e3a8a] text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'}`}
+                                    >
+                                        {type}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Início</label>
+                            <input
+                                type="text"
+                                className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                placeholder="DD/MM/AAAA"
+                                maxLength={10}
+                                value={absenceStart}
+                                onChange={e => setAbsenceStart(maskDate(e.target.value))}
+                                disabled={isViewMode}
+                                readOnly={isViewMode}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fim</label>
+                            <input
+                                type="text"
+                                className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                placeholder="DD/MM/AAAA"
+                                maxLength={10}
+                                value={absenceEnd}
+                                onChange={e => setAbsenceEnd(maskDate(e.target.value))}
+                                disabled={isViewMode}
+                                readOnly={isViewMode}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Quantidade de Dias</label>
+                            <div className="w-full bg-gray-100 border border-gray-200 rounded-xl p-3 text-sm font-bold text-gray-500">
+                                {calculateDays(absenceStart, absenceEnd)} dias
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Observações (Opcional)</label>
+                        <textarea
+                            className={`w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm min-h-[100px] focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all resize-none ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            placeholder="Observações adicionais sobre o período..."
+                            value={absenceObs}
+                            onChange={e => setAbsenceObs(e.target.value)}
+                            disabled={isViewMode}
+                            readOnly={isViewMode}
+                        />
+                    </div>
+
+                    {!isViewMode && (
+                        <div className="flex justify-end pt-4">
+                            <button
+                                onClick={handleSaveAbsence}
+                                disabled={loading || !absenceStart || !absenceEnd}
+                                className="flex items-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold uppercase text-xs tracking-wider hover:bg-[#112240] hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                Registrar Ausência
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {(activeTab === 'historico_ferias' || activeTab === 'historico_atestados') && (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                    {fetching ? (
+                        <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 text-[#1e3a8a] animate-spin" /></div>
+                    ) : (
+                        absences.filter(a => activeTab === 'historico_atestados' ? a.type === 'Atestado Médico' : a.type !== 'Atestado Médico').length > 0 ? (
+                            absences.filter(a => activeTab === 'historico_atestados' ? a.type === 'Atestado Médico' : a.type !== 'Atestado Médico').map(a => {
+                                const formatDateBr = (d: string) => {
+                                    if (!d) return '';
+                                    if (d.includes('/')) return d;
+                                    const [y, m, day] = d.split('T')[0].split('-');
+                                    return `${day}/${m}/${y}`;
+                                };
+                                return (
+                                    <div key={a.id} className="flex items-start justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-200 transition-colors shadow-sm">
+                                        <div className="flex gap-4">
+                                            <div className={`p-3 rounded-xl mt-1 shrink-0 ${activeTab === 'historico_atestados' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                {activeTab === 'historico_atestados' ? <Stethoscope className="h-5 w-5" /> : <CalendarIcon className="h-5 w-5" />}
+                                            </div>
+                                            <div>
+                                                <h5 className="font-bold text-[#0a192f] flex items-center gap-2">
+                                                    {a.type}
+                                                    <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider text-gray-600">
+                                                        {a.days_count} dia{a.days_count > 1 ? 's' : ''}
+                                                    </span>
+                                                </h5>
+                                                <p className="text-sm font-medium text-gray-500 mt-1">
+                                                    {formatDateBr(a.start_date)} até {formatDateBr(a.end_date)}
+                                                </p>
+                                                {a.observation && (
+                                                    <p className="text-xs text-gray-400 mt-2 bg-gray-50 p-2 rounded-lg border border-gray-100 italic">
+                                                        "{a.observation}"
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {!isViewMode && (
+                                            <button
+                                                onClick={() => handleDeleteAbsence(a.id)}
+                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Excluir"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                )
+                            })
+                        ) : (
+                            <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                <Clock className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                                <p className="text-sm font-medium text-gray-500">Nenhum registro encontrado.</p>
+                            </div>
+                        )
+                    )}
+                </div>
+            )}
         </div>
     )
 }

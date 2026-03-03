@@ -311,11 +311,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [, setUploadingGed] = useState(false)
   const [selectedGedCategory, setSelectedGedCategory] = useState('')
   const [atestadoDatas, setAtestadoDatas] = useState({ inicio: '', fim: '' })
-  const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string }[]>([])
+  const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string, atestadoDatas?: { inicio: string, fim: string } }[]>([])
   const gedInputRef = useRef<HTMLInputElement>(null)
 
   const gedCategories = [
-    { id: 'Atestado de Saúde Ocupacional (ASO)', label: 'Atestado de Saúde Ocupacional (ASO)', value: 'Atestado de Saúde Ocupacional (ASO)' },
     { id: 'Atestado Médico', label: 'Atestado Médico', value: 'Atestado Médico' },
     { id: 'Carteira de Trabalho (CTPS)', label: 'Carteira de Trabalho (CTPS)', value: 'Carteira de Trabalho (CTPS)' },
     { id: 'Certidão de Nascimento/Casamento', label: 'Certidão de Nascimento/Casamento', value: 'Certidão de Nascimento/Casamento' },
@@ -565,6 +564,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
           tipo_arquivo: file.type
         })
 
+        if (selectedGedCategory === 'Atestado Médico' && atestadoDatas.inicio && atestadoDatas.fim) {
+          const diffDays = Math.max(1, Math.ceil((new Date(atestadoDatas.fim + 'T00:00:00').getTime() - new Date(atestadoDatas.inicio + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)) + 1);
+          await supabase.from('collaborator_absences').insert({
+            collaborator_id: formData.id,
+            type: 'Atestado Médico',
+            start_date: formatDateToDisplay(atestadoDatas.inicio),
+            end_date: formatDateToDisplay(atestadoDatas.fim),
+            days_count: diffDays,
+            observation: 'Inserido automaticamente via anexo de GED.'
+          });
+        }
+
         fetchGedDocs(formData.id);
         setSelectedGedCategory('');
         setAtestadoDatas({ inicio: '', fim: '' })
@@ -581,7 +592,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
         file,
         category: selectedGedCategory,
         label: categoryLabel !== selectedGedCategory ? categoryLabel : undefined,
-        tempId: Math.random().toString(36).substr(2, 9)
+        tempId: Math.random().toString(36).substr(2, 9),
+        atestadoDatas: selectedGedCategory === 'Atestado Médico' ? { ...atestadoDatas } : undefined
       }
       setPendingGedDocs(prev => [...prev, newItem])
       setSelectedGedCategory('')
@@ -760,6 +772,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 tamanho: doc.file.size,
                 tipo_arquivo: doc.file.type
               })
+
+              if (doc.category === 'Atestado Médico' && doc.atestadoDatas?.inicio && doc.atestadoDatas?.fim) {
+                const diffDays = Math.max(1, Math.ceil((new Date(doc.atestadoDatas.fim + 'T00:00:00').getTime() - new Date(doc.atestadoDatas.inicio + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)) + 1);
+                await supabase.from('collaborator_absences').insert({
+                  collaborator_id: data.id,
+                  type: 'Atestado Médico',
+                  start_date: formatDateToDisplay(doc.atestadoDatas.inicio),
+                  end_date: formatDateToDisplay(doc.atestadoDatas.fim),
+                  days_count: diffDays,
+                  observation: 'Inserido automaticamente via anexo de GED.'
+                });
+              }
             }
           }
         }

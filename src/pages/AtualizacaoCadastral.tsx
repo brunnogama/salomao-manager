@@ -78,7 +78,6 @@ export default function AtualizacaoCadastral() {
     const gedInputRef = React.useRef<HTMLInputElement>(null);
     const [atestadoDatas, setAtestadoDatas] = useState({ inicio: '', fim: '' });
     const gedCategories = [
-        { id: 'Atestado de Saúde Ocupacional (ASO)', name: 'Atestado de Saúde Ocupacional (ASO)' },
         { id: 'Atestado Médico', name: 'Atestado Médico' },
         { id: 'Carteira de Trabalho (CTPS)', name: 'Carteira de Trabalho (CTPS)' },
         { id: 'Certidão de Nascimento/Casamento', name: 'Certidão de Nascimento/Casamento' },
@@ -385,6 +384,22 @@ export default function AtualizacaoCadastral() {
                     if (insertErr) {
                         console.error('Erro no insert_ged:', insertErr);
                         throw new Error(`Erro ao vincular arquivo ${doc.file.name}: ${insertErr.message}`);
+                    }
+
+                    if (doc.category === 'Atestado Médico' && doc.atestadoDatas?.inicio && doc.atestadoDatas?.fim) {
+                        const formatDateToDisplay = (isoDate: string) => {
+                            const [y, m, d] = isoDate.split('-');
+                            return `${d}/${m}/${y}`;
+                        };
+                        const diffDays = Math.max(1, Math.ceil((new Date(doc.atestadoDatas.fim + 'T00:00:00').getTime() - new Date(doc.atestadoDatas.inicio + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)) + 1);
+                        await supabase.from('collaborator_absences').insert({
+                            collaborator_id: formData.id,
+                            type: 'Atestado Médico',
+                            start_date: formatDateToDisplay(doc.atestadoDatas.inicio),
+                            end_date: formatDateToDisplay(doc.atestadoDatas.fim),
+                            days_count: diffDays,
+                            observation: 'Inserido via atualização cadastral (GED).'
+                        });
                     }
                 }
                 setPendingGedDocs([]);
