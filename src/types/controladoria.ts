@@ -126,7 +126,7 @@ export interface Collaborator {
     telefone: string;
     parentesco: string;
   }[];
-  centro_custo?: string;
+  atuacao?: string;
   motivo_desligamento?: string;
   matricula_esocial?: string;
   observacoes?: string;

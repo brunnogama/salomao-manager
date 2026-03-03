@@ -180,8 +180,13 @@ export function DadosCorporativosSection({
                 disabled={isViewMode}
               />
 
-
               <ManagedSelect
+                label="Atuação"
+                value={formData.atuacao || ''}
+                onChange={v => setFormData({ ...formData, atuacao: v })}
+                tableName="cost_centers"
+                disabled={isViewMode}
+              />              <ManagedSelect
                 label="Equipe"
                 value={formData.equipe || ''}
                 onChange={v => setFormData({ ...formData, equipe: v })}
@@ -258,14 +263,6 @@ export function DadosCorporativosSection({
                 value={formData.local || ''}
                 onChange={v => setFormData({ ...formData, local: v })}
                 tableName="locations"
-                disabled={isViewMode}
-              />
-
-              <ManagedSelect
-                label="Centro de Custo"
-                value={formData.centro_custo || ''}
-                onChange={v => setFormData({ ...formData, centro_custo: v })}
-                tableName="cost_centers"
                 disabled={isViewMode}
               />
             </div>

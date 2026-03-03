@@ -27,7 +27,7 @@ import { GEDSection } from '../components/GEDSection'
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
 import { HistoricoSection } from '../components/HistoricoSection'
 import { PeriodoAusenciasSection } from '../components/PeriodoAusenciasSection'
-import { CollaboratorModalLayout, CollaboratorPageLayout } from '../components/CollaboratorLayouts'
+import { CollaboratorModalLayout } from '../components/CollaboratorLayouts'
 import { useAuth } from '../../../contexts/AuthContext'
 
 import {
@@ -75,7 +75,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [terminationInitiatives, setTerminationInitiatives] = useState<{ id: string; name: string }[]>([])
   const [terminationTypes, setTerminationTypes] = useState<{ id: string; name: string }[]>([])
   const [terminationReasons, setTerminationReasons] = useState<{ id: string; name: string }[]>([])
-  const [costCenters, setCostCenters] = useState<{ id: string; name: string }[]>([])
+  const [atuacoes, setAtuacoes] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
@@ -315,17 +315,17 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const gedInputRef = useRef<HTMLInputElement>(null)
 
   const gedCategories = [
-    { id: 'Atestado Médico', label: 'Atestado Médico', value: 'Atestado Médico' },
-    { id: 'Carteira de Trabalho (CTPS)', label: 'Carteira de Trabalho (CTPS)', value: 'Carteira de Trabalho (CTPS)' },
-    { id: 'Certidão de Nascimento/Casamento', label: 'Certidão de Nascimento/Casamento', value: 'Certidão de Nascimento/Casamento' },
-    { id: 'Certificado de Escolaridade/Diploma', label: 'Certificado de Escolaridade/Diploma', value: 'Certificado de Escolaridade/Diploma' },
-    { id: 'Certificado de Reservista', label: 'Certificado de Reservista', value: 'Certificado de Reservista' },
-    { id: 'Comprovante de Residência', label: 'Comprovante de Residência', value: 'Comprovante de Residência' },
-    { id: 'CPF', label: 'CPF', value: 'CPF' },
-    { id: 'Documento de Identificação (RG/CNH)', label: 'Documento de Identificação (RG/CNH)', value: 'Documento de Identificação (RG/CNH)' },
-    { id: 'Outros', label: 'Outros', value: 'Outros' },
-    { id: 'PIS/PASEP', label: 'PIS/PASEP', value: 'PIS/PASEP' },
-    { id: 'Título de Eleitor', label: 'Título de Eleitor', value: 'Título de Eleitor' }
+    { id: 'Atestado Médico', name: 'Atestado Médico' },
+    { id: 'Carteira de Trabalho (CTPS)', name: 'Carteira de Trabalho (CTPS)' },
+    { id: 'Certidão de Nascimento/Casamento', name: 'Certidão de Nascimento/Casamento' },
+    { id: 'Certificado de Escolaridade/Diploma', name: 'Certificado de Escolaridade/Diploma' },
+    { id: 'Certificado de Reservista', name: 'Certificado de Reservista' },
+    { id: 'Comprovante de Residência', name: 'Comprovante de Residência' },
+    { id: 'CPF', name: 'CPF' },
+    { id: 'Documento de Identificação (RG/CNH)', name: 'Documento de Identificação (RG/CNH)' },
+    { id: 'Outros', name: 'Outros' },
+    { id: 'PIS/PASEP', name: 'PIS/PASEP' },
+    { id: 'Título de Eleitor', name: 'Título de Eleitor' }
   ]
 
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -458,7 +458,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         termInitiativesRes,
         termTypesRes,
         termReasonsRes,
-        costCentersRes
+        atuacoesRes
       ] = await Promise.all([
         supabase.from('collaborators').select(`*, partner:partner_id(id, name), leader:leader_id(id, name), oab_number(*)`).order('name'),
         supabase.from('roles').select('id, name'),
@@ -469,7 +469,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         supabase.from('termination_initiatives').select('id, name'),
         supabase.from('termination_types').select('id, name'),
         supabase.from('termination_reasons').select('id, name'),
-        supabase.from('cost_centers').select('id, name')
+        supabase.from('atuacoes').select('id, name')
       ])
 
       if (colabRes.error) throw colabRes.error
@@ -484,7 +484,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (termInitiativesRes.data) setTerminationInitiatives(termInitiativesRes.data)
       if (termTypesRes.data) setTerminationTypes(termTypesRes.data)
       if (termReasonsRes.data) setTerminationReasons(termReasonsRes.data)
-      if (costCentersRes.data) setCostCenters(costCentersRes.data)
+      if (atuacoesRes.data) setAtuacoes(atuacoesRes.data)
 
       const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
       const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
@@ -969,7 +969,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       roles,
       locations,
       teams,
-      costCenters
+      atuacoes
     })
   };
 
@@ -1241,7 +1241,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     currentData: Partial<Collaborator> = {}
   ) => {
     return (
-      <CollaboratorPageLayout
+      <CollaboratorModalLayout
         title={title}
         onClose={onClose}
         activeTab={activeTab}

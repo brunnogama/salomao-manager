@@ -6,12 +6,26 @@ import { supabase } from '../../../lib/supabase'
 interface CandidatoHistoricoSectionProps {
     candidatoId: string | null
     isViewMode?: boolean
+    pendingHistorico?: any[]
+    setPendingHistorico?: React.Dispatch<React.SetStateAction<any[]>>
+    pendingExperiencias?: any[]
+    setPendingExperiencias?: React.Dispatch<React.SetStateAction<any[]>>
 }
 
-export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: CandidatoHistoricoSectionProps) {
+export function CandidatoHistoricoSection({
+    candidatoId,
+    isViewMode = false,
+    pendingHistorico = [],
+    setPendingHistorico,
+    pendingExperiencias = [],
+    setPendingExperiencias
+}: CandidatoHistoricoSectionProps) {
     const [historicoList, setHistoricoList] = useState<any[]>([])
     const [tipo, setTipo] = useState('Entrevista')
     const [descricao, setDescricao] = useState('')
+
+    const allHistorico = [...pendingHistorico, ...historicoList]
+    const allExperiencias = [...pendingExperiencias, ...experienciasList]
 
     // --- EXPERIENCES STATE ---
     const [activeSection, setActiveSection] = useState<'none' | 'interviews' | 'experiences'>('none')
@@ -71,8 +85,15 @@ export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: C
     }
 
     // --- DELETE HANDLER ---
-    const handleDeleteHistorico = async (id: string) => {
+    const handleDeleteHistorico = async (id?: string, temp_id?: string) => {
         if (!confirm('Deseja realmente excluir este registro de histórico?')) return;
+
+        if (temp_id && setPendingHistorico) {
+            setPendingHistorico(prev => prev.filter(item => item.temp_id !== temp_id));
+            return;
+        }
+
+        if (!id) return;
         setLoading(true);
         try {
             const { error } = await supabase.from('candidato_historico').delete().eq('id', id);
@@ -85,8 +106,15 @@ export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: C
         }
     }
 
-    const handleDeleteExperiencia = async (id: string) => {
+    const handleDeleteExperiencia = async (id?: string, temp_id?: string) => {
         if (!confirm('Deseja realmente excluir esta experiência?')) return;
+
+        if (temp_id && setPendingExperiencias) {
+            setPendingExperiencias(prev => prev.filter(item => item.temp_id !== temp_id));
+            return;
+        }
+
+        if (!id) return;
         setLoading(true);
         try {
             const { error } = await supabase.from('candidato_experiencias').delete().eq('id', id);
@@ -101,13 +129,26 @@ export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: C
 
     // --- SAVE HANDLERS ---
     const handleSaveHistorico = async () => {
-        if (!candidatoId || !descricao) return
+        if (!descricao) return
+
+        const payload = {
+            tipo: tipo,
+            descricao: descricao,
+            data_registro: new Date().toISOString()
+        }
+
+        if (!candidatoId) {
+            if (setPendingHistorico) setPendingHistorico(prev => [{ ...payload, temp_id: Math.random().toString(36).substr(2, 9) }, ...prev]);
+            alert('Registro adicionado temporariamente. Salve o candidato para concluir.');
+            setDescricao('');
+            return;
+        }
+
         setLoading(true)
         try {
             const { error } = await supabase.from('candidato_historico').insert({
                 candidato_id: candidatoId,
-                tipo: tipo,
-                descricao: descricao
+                ...payload
             })
             if (error) throw error
             alert('Registro salvo com sucesso!')
@@ -121,18 +162,30 @@ export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: C
     }
 
     const handleSaveExperiencia = async () => {
-        if (!candidatoId || !empresa || !cargo || !dataInicio) return
+        if (!empresa || !cargo || !dataInicio) return
+
+        const payload = {
+            empresa,
+            cargo,
+            data_inicio: dataInicio,
+            data_fim: dataFim || null,
+            perfil: perfilExp
+        }
+
+        if (!candidatoId) {
+            if (setPendingExperiencias) setPendingExperiencias(prev => [{ ...payload, temp_id: Math.random().toString(36).substr(2, 9) }, ...prev]);
+            alert('Experiência adicionada temporariamente. Salve o candidato para concluir.');
+            setEmpresa('')
+            setCargo('')
+            setDataInicio('')
+            setDataFim('')
+            setPerfilExp('')
+            return;
+        }
+
         setLoading(true)
         try {
-            const payload = {
-                candidato_id: candidatoId,
-                empresa,
-                cargo,
-                data_inicio: dataInicio,
-                data_fim: dataFim || null,
-                perfil: perfilExp
-            }
-            const { error } = await supabase.from('candidato_experiencias').insert(payload)
+            const { error } = await supabase.from('candidato_experiencias').insert({ ...payload, candidato_id: candidatoId })
             if (error) throw error
 
             // Upsert tags
@@ -202,15 +255,6 @@ export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: C
         if (anos > 0) ext.push(`${anos} ano${anos > 1 ? 's' : ''}`);
         if (meses > 0) ext.push(`${meses} mês${meses > 1 ? 'es' : ''}`);
         return ext.join(' e ');
-    }
-
-    if (!candidatoId) {
-        return (
-            <div className="flex flex-col items-center justify-center text-gray-400 py-12 bg-white rounded-2xl border border-gray-100 shadow-sm min-h-[300px]">
-                <History className="h-12 w-12 mb-4 opacity-30" />
-                <p className="text-sm font-medium">Salve o candidato primeiro para gerenciar o histórico.</p>
-            </div>
-        )
     }
 
     return (
@@ -325,11 +369,11 @@ export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: C
                         <div>
                             <h4 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Linha do Tempo</h4>
 
-                            {historicoList.length > 0 ? (
+                            {allHistorico.length > 0 ? (
                                 <div className="space-y-4">
-                                    {historicoList.map((item, index) => {
+                                    {allHistorico.map((item, index) => {
                                         return (
-                                            <div key={item.id || index} className="flex items-start gap-4 p-5 border border-gray-100 rounded-2xl bg-white hover:border-blue-200 transition-colors shadow-sm relative group overflow-hidden">
+                                            <div key={item.id || item.temp_id || index} className="flex items-start gap-4 p-5 border border-gray-100 rounded-2xl bg-white hover:border-blue-200 transition-colors shadow-sm relative group overflow-hidden">
                                                 <div className={`absolute top-0 left-0 w-1.5 h-full ${item.tipo === 'Entrevista' ? 'bg-blue-500' :
                                                     item.tipo === 'Observação' ? 'bg-amber-500' :
                                                         item.tipo === 'Teste Prático' ? 'bg-purple-500' :
@@ -353,11 +397,14 @@ export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: C
                                                                     }`}>
                                                                     {item.tipo}
                                                                 </span>
+                                                                {item.temp_id && (
+                                                                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border bg-orange-50 text-orange-700 border-orange-200">Não Salvo</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                         {!isViewMode && (
                                                             <button
-                                                                onClick={() => handleDeleteHistorico(item.id)}
+                                                                onClick={() => handleDeleteHistorico(item.id, item.temp_id)}
                                                                 className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
                                                                 title="Excluir histórico"
                                                             >
@@ -509,11 +556,11 @@ export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: C
                         <div>
                             <h4 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Histórico de Trabalhos Anteriores</h4>
 
-                            {experienciasList.length > 0 ? (
+                            {allExperiencias.length > 0 ? (
                                 <div className="space-y-4">
-                                    {experienciasList.map((item, index) => {
+                                    {allExperiencias.map((item, index) => {
                                         return (
-                                            <div key={item.id || index} className="flex items-start gap-4 p-5 border border-gray-100 rounded-2xl bg-white hover:border-purple-200 transition-colors shadow-sm relative group overflow-hidden">
+                                            <div key={item.id || item.temp_id || index} className="flex items-start gap-4 p-5 border border-gray-100 rounded-2xl bg-white hover:border-purple-200 transition-colors shadow-sm relative group overflow-hidden">
                                                 <div className="absolute top-0 left-0 w-1.5 h-full bg-purple-500" />
 
                                                 <div className="p-3 bg-purple-50 text-purple-600 rounded-xl mt-1 shrink-0">
@@ -534,11 +581,14 @@ export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: C
                                                                 <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border bg-purple-50 text-purple-700 border-purple-200">
                                                                     {calcTempo(item.data_inicio, item.data_fim)}
                                                                 </span>
+                                                                {item.temp_id && (
+                                                                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border bg-orange-50 text-orange-700 border-orange-200">Não Salvo</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                         {!isViewMode && (
                                                             <button
-                                                                onClick={() => handleDeleteExperiencia(item.id)}
+                                                                onClick={() => handleDeleteExperiencia(item.id, item.temp_id)}
                                                                 className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
                                                                 title="Excluir experiência"
                                                             >

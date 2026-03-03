@@ -34,7 +34,12 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
     const [availableTags, setAvailableTags] = useState<string[]>([])
 
     // GED State
-    const [gedCategories] = useState(['Currículo', 'Portfólio', 'Certificado', 'Outros'])
+    const [gedCategories] = useState([
+        { id: 'Currículo', name: 'Currículo' },
+        { id: 'Portfólio', name: 'Portfólio' },
+        { id: 'Certificado', name: 'Certificado' },
+        { id: 'Outros', name: 'Outros' }
+    ])
     const [selectedGedCategory, setSelectedGedCategory] = useState('')
     const [atestadoDatas, setAtestadoDatas] = useState<{ inicio: string, fim: string }>({ inicio: '', fim: '' })
     const gedInputRef = React.useRef<HTMLInputElement>(null)
@@ -202,6 +207,34 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                 if (candidatoId) fetchGedDocs(candidatoId)
             }
 
+            if (finalCandidatoId && pendingGedDocs.length > 0) {
+                // ...
+            }
+
+            // Save pending Historico
+            if (finalCandidatoId && pendingHistorico.length > 0) {
+                const historicoPayload = pendingHistorico.map(h => ({ ...h, candidato_id: finalCandidatoId }));
+                const { error: histError } = await supabase.from('candidato_historico').insert(historicoPayload);
+                if (histError) console.error("Error saving pending historico", histError);
+            }
+
+            // Save pending Experiencias
+            if (finalCandidatoId && pendingExperiencias.length > 0) {
+                const expPayload = pendingExperiencias.map(e => ({ ...e, candidato_id: finalCandidatoId }));
+                const { error: expError } = await supabase.from('candidato_experiencias').insert(expPayload);
+                if (expError) console.error("Error saving pending experiencias", expError);
+
+                for (const exp of pendingExperiencias) {
+                    if (exp.perfil) {
+                        const lines = exp.perfil.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+                        if (lines.length > 0) {
+                            const tagsToInsert = lines.map((t: string) => ({ tag: t }));
+                            await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
+                        }
+                    }
+                }
+            }
+
             onSave()
             onClose()
         } catch (error) {
@@ -286,6 +319,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                         maskPhone={maskPhone}
                         maskCNPJ={maskCNPJ}
                         isViewMode={false}
+                        hideBankingAndEmergency={true}
                     />
                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mt-6">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex justify-between items-center">
@@ -327,6 +361,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                 <CandidatoHistoricoSection
                     candidatoId={candidatoId || null}
                     isViewMode={false}
+                    pendingHistorico={pendingHistorico}
+                    setPendingHistorico={setPendingHistorico}
+                    pendingExperiencias={pendingExperiencias}
+                    setPendingExperiencias={setPendingExperiencias}
                 />
             )}
             {activeTab === 3 && (
