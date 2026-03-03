@@ -448,3 +448,47 @@ export interface GEDDocument {
   tipo_arquivo: string;
   created_at: string;
 }
+
+export interface Candidato {
+  id: string;
+  nome: string;
+  email?: string;
+  telefone?: string;
+  linkedin?: string;
+  curriculo_url?: string;
+  created_at?: string;
+}
+
+export interface Vaga {
+  id: string;
+  vaga_id_text: string;
+  role_id?: string | number;
+  location_id?: string | number;
+  quantidade: number;
+  hiring_reason_id?: string | number;
+  replaced_collaborator_id?: string;
+  perfil?: string;
+  area?: string;
+  remuneracao?: number;
+  partner_id?: string;
+  leader_id?: string;
+  recrutadora?: string;
+  data_abertura?: string;
+  data_fechamento?: string;
+  status: 'Congelada' | 'Aberta' | 'Fechada';
+  observacoes?: string;
+  candidato_aprovado_id?: string;
+  aprovador_id?: string;
+  created_at?: string;
+  updated_at?: string;
+
+  // Joined fields for display
+  role?: { id: string; name: string };
+  location?: { id: string; name: string };
+  hiring_reason?: { id: string; name: string };
+  replaced_collaborator?: { id: string; name: string };
+  partner?: { id: string; name: string };
+  leader?: { id: string; name: string };
+  candidato_aprovado?: { id: string; nome: string };
+  aprovador?: { id: string; name: string };
+}
