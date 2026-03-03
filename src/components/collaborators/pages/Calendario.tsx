@@ -1080,9 +1080,11 @@ export function Calendario() {
                               </div>
                             )}
                           </div>
-                        </div>
+                        </>
+                      )}
+
                     </div>
-                  </>
+                  </div>
                 )}
 
                 <div>
@@ -1123,53 +1125,53 @@ export function Calendario() {
         )}
 
       {/* MODAL RESUMO COLABORADOR */}
-      {visualizarColaborador && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarColaborador(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-4 bg-gradient-to-r from-[#d4af37] to-amber-600 flex items-center justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
-                <Cake className="w-24 h-24" />
-              </div>
-              <div className="flex items-center gap-3 text-white relative z-10">
-                {visualizarColaborador.photo_url ? (
-                  <img src={visualizarColaborador.photo_url} className="w-12 h-12 rounded-full border-2 border-white object-cover" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-bold text-amber-600 bg-white shadow-sm text-xl">
-                    {visualizarColaborador.name.charAt(0).toUpperCase()}
+      {
+        visualizarColaborador && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarColaborador(null)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+              <div className="px-6 py-4 bg-gradient-to-r from-[#d4af37] to-amber-600 flex items-center justify-between relative overflow-hidden">
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
+                  <Cake className="w-24 h-24" />
+                </div>
+                <div className="flex items-center gap-3 text-white relative z-10">
+                  {visualizarColaborador.photo_url ? (
+                    <img src={visualizarColaborador.photo_url} className="w-12 h-12 rounded-full border-2 border-white object-cover" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-bold text-amber-600 bg-white shadow-sm text-xl">
+                      {visualizarColaborador.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{formatName(visualizarColaborador.name)}</h3>
+                    <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarColaborador.role || 'Sem cargo'}</p>
                   </div>
-                )}
-                <div>
-                  <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{formatName(visualizarColaborador.name)}</h3>
-                  <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarColaborador.role || 'Sem cargo'}</p>
                 </div>
+                <button
+                  onClick={() => setVisualizarColaborador(null)}
+                  className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <button
-                onClick={() => setVisualizarColaborador(null)}
-                className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-5">
-              <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
-                <div>
-                  <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local de Atuação</p>
-                  <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.location || 'Não informado'}</p>
+              <div className="p-6 space-y-5">
+                <div className="flex items-start gap-4">
+                  <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                  <div>
+                    <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local de Atuação</p>
+                    <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.location || 'Não informado'}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
-                <div>
-                  <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Líder Direto</p>
-                  <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.leader || 'Não informado'}</p>
+                <div className="flex items-start gap-4">
+                  <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
+                  <div>
+                    <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Líder Direto</p>
+                    <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.leader || 'Não informado'}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )
-      }
+        )}
 
       {/* MODAL RESUMO EVENTO */}
       {
