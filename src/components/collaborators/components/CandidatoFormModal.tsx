@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
-import { CollaboratorPageLayout } from './CollaboratorLayouts'
+import { CollaboratorModalLayout } from './CollaboratorLayouts'
 import { DadosPessoaisSection } from './DadosPessoaisSection'
 import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
-import { AlertModal } from '../../ui/AlertModal'
 import { User, BookOpen, FileText } from 'lucide-react'
 import { GEDSection } from './GEDSection'
-import { Candidato } from '../../../types/controladoria' // We will add this type later
 import {
     maskCPF,
     maskDate,
@@ -44,13 +42,17 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
     const [atestadoDatas, setAtestadoDatas] = useState<{ inicio: string, fim: string }>({ inicio: '', fim: '' })
     const gedInputRef = React.useRef<HTMLInputElement>(null)
     const [gedDocs, setGedDocs] = useState<any[]>([])
-    const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, categoria: string, dateInfo?: any }[]>([])
+    const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string, atestadoDatas?: { inicio: string, fim: string } }[]>([])
+    const [pendingHistorico, setPendingHistorico] = useState<any[]>([])
+    const [pendingExperiencias, setPendingExperiencias] = useState<any[]>([])
 
     useEffect(() => {
         if (isOpen) {
             setActiveTab(1)
             fetchTags()
             setPendingGedDocs([])
+            setPendingHistorico([])
+            setPendingExperiencias([])
             setSelectedGedCategory('')
             if (candidatoId) {
                 fetchCandidato(candidatoId)
@@ -110,10 +112,13 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                 return
             }
 
+            const tempId = Math.random().toString(36).substring(7);
             const newDoc = {
                 file,
-                categoria: selectedGedCategory,
-                dateInfo: selectedGedCategory === 'Atestado' ? { ...atestadoDatas } : undefined
+                category: selectedGedCategory,
+                label: file.name,
+                tempId,
+                atestadoDatas: selectedGedCategory === 'Atestado Médico' ? { ...atestadoDatas } : undefined
             }
             setPendingGedDocs(prev => [...prev, newDoc])
             setSelectedGedCategory('')
@@ -124,21 +129,21 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
         }
     }
 
-    const handleDeleteGed = async (id?: string, pendingIndex?: number) => {
+    const handleDeleteGed = async (doc: any) => {
         if (!confirm('Deseja realmente excluir este documento?')) return;
         setLoading(true);
         try {
-            if (id) {
-                const docToDelete = gedDocs.find(d => d.id === id);
+            if (doc.id) {
+                const docToDelete = gedDocs.find(d => d.id === doc.id);
                 if (docToDelete?.url) {
                     const filePath = docToDelete.url.split('public/salomao-docs/')[1];
                     if (filePath) await supabase.storage.from('salomao-docs').remove([filePath]);
                 }
-                const { error } = await supabase.from('candidato_ged').delete().eq('id', id);
+                const { error } = await supabase.from('candidato_ged').delete().eq('id', doc.id);
                 if (error) throw error;
                 fetchGedDocs(candidatoId!);
-            } else if (pendingIndex !== undefined) {
-                setPendingGedDocs(prev => prev.filter((_, i) => i !== pendingIndex));
+            } else if (doc.tempId !== undefined) {
+                setPendingGedDocs(prev => prev.filter(p => p.tempId !== doc.tempId));
             }
         } catch (e: any) {
             alert('Erro ao excluir documento: ' + e.message);
@@ -195,7 +200,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                             candidato_id: finalCandidatoId,
                             nome_arquivo: doc.file.name,
                             tamanho: doc.file.size,
-                            categoria: doc.categoria,
+                            Categoria: doc.category,
                             url: publicUrl,
                             // At present we assume the current user is logged in
                             uploaded_by: (await supabase.auth.getUser()).data.user?.id || null
@@ -291,7 +296,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
     if (!isOpen) return null
 
     return (
-        <CollaboratorPageLayout
+        <CollaboratorModalLayout
             title={formData.nome || 'Novo Candidato'}
             onClose={onClose}
             activeTab={activeTab}
@@ -384,6 +389,6 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                     />
                 </div>
             )}
-        </CollaboratorPageLayout>
+        </CollaboratorModalLayout>
     )
 }
