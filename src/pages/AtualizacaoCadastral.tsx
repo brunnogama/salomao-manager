@@ -362,17 +362,25 @@ export default function AtualizacaoCadastral() {
 
                     const { error: upErr } = await supabase.storage.from('ged-colaboradores').upload(filePath, doc.file);
 
-                    if (!upErr) {
-                        const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath);
-                        await supabase.from('ged_colaboradores').insert({
-                            colaborador_id: formData.id,
-                            nome_arquivo: `${toTitleCase(formData.name || '')}_${categoryLabel}${extension}`,
-                            url: publicUrl,
-                            categoria: doc.category,
-                            tamanho: doc.file.size,
-                            tipo_arquivo: doc.file.type,
-                            dados_atestado: doc.atestadoDatas?.inicio ? doc.atestadoDatas : null
-                        });
+                    if (upErr) {
+                        console.error('Erro no upload do storage:', upErr);
+                        throw new Error(`Erro ao enviar arquivo ${doc.file.name}: ${upErr.message}`);
+                    }
+
+                    const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath);
+                    const { error: insertErr } = await supabase.from('ged_colaboradores').insert({
+                        colaborador_id: formData.id,
+                        nome_arquivo: `${toTitleCase(formData.name || '')}_${categoryLabel}${extension}`,
+                        url: publicUrl,
+                        categoria: doc.category,
+                        tamanho: doc.file.size,
+                        tipo_arquivo: doc.file.type,
+                        dados_atestado: doc.atestadoDatas?.inicio ? doc.atestadoDatas : null
+                    });
+
+                    if (insertErr) {
+                        console.error('Erro no insert_ged:', insertErr);
+                        throw new Error(`Erro ao vincular arquivo ${doc.file.name}: ${insertErr.message}`);
                     }
                 }
                 setPendingGedDocs([]);
@@ -383,7 +391,7 @@ export default function AtualizacaoCadastral() {
             setSuccess(true);
         } catch (err: any) {
             console.error('Erro ao salvar:', err);
-            setError('Ocorreu um erro ao salvar suas informações. Tente novamente mais tarde.');
+            setError(err.message || 'Ocorreu um erro ao salvar suas informações. Tente novamente mais tarde.');
         } finally {
             setSaving(false);
         }
