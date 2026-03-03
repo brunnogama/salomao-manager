@@ -535,7 +535,7 @@ export function RHVagas() {
             <table className="w-full min-w-max text-left border-collapse">
               <thead className="bg-[#1e3a8a]">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-24 whitespace-nowrap text-center">ID</th>
+                  <th className="px-6 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-32 whitespace-nowrap">ID</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap">Nome</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap">Cargo Pretendido</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap">Local</th>
@@ -558,10 +558,10 @@ export function RHVagas() {
 
                   return (
                     <tr key={c.id} onClick={() => { setSelectedCandidatoId(c.id); setIsCandidatoModalOpen(true); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
-                      <td className="px-4 py-3 whitespace-nowrap text-center">
-                        <span className="inline-block px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded text-[10px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-4">
                         <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
                         <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone || '-'}</p>
                       </td>

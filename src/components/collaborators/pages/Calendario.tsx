@@ -853,23 +853,23 @@ export function Calendario() {
                       placeholder="Selecione o tipo"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
+                  <div className="grid grid-cols-5 gap-2">
+                    <div className="col-span-3">
                       <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Data</label>
                       <input
                         type="date"
                         value={novoEvento.data}
                         onChange={(e) => setNovoEvento({ ...novoEvento, data: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                        className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm"
                       />
                     </div>
-                    <div>
-                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Hora <span className="font-normal">(Opcional)</span></label>
+                    <div className="col-span-2">
+                      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 text-truncate truncate">Hora (Opcional)</label>
                       <input
                         type="time"
                         value={novoEvento.hora}
                         onChange={(e) => setNovoEvento({ ...novoEvento, hora: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                        className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm"
                       />
                     </div>
                   </div>
