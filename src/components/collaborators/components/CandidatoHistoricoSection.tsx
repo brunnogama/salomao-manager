@@ -24,9 +24,6 @@ export function CandidatoHistoricoSection({
     const [tipo, setTipo] = useState('Entrevista')
     const [descricao, setDescricao] = useState('')
 
-    const allHistorico = [...pendingHistorico, ...historicoList]
-    const allExperiencias = [...pendingExperiencias, ...experienciasList]
-
     // --- EXPERIENCES STATE ---
     const [activeSection, setActiveSection] = useState<'none' | 'interviews' | 'experiences'>('none')
     const [loading, setLoading] = useState(false)
@@ -40,6 +37,9 @@ export function CandidatoHistoricoSection({
     const [isTaggingExp, setIsTaggingExp] = useState(false)
     const [tagSearchExp, setTagSearchExp] = useState('')
     const [cursorPositionExp, setCursorPositionExp] = useState(0)
+
+    const allHistorico = [...pendingHistorico, ...historicoList]
+    const allExperiencias = [...pendingExperiencias, ...experienciasList]
 
     // --- EFFECT ---
     useEffect(() => {
