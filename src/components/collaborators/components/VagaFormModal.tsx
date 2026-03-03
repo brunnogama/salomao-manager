@@ -555,6 +555,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                             value={formData.candidato_aprovado_id || ''}
                                             onChange={v => setFormData({ ...formData, candidato_aprovado_id: v })}
                                             tableName="candidatos"
+                                            orderBy="nome"
                                             placeholder="Selecione o candidato aprovado"
                                         />
 
