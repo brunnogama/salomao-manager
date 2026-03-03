@@ -315,15 +315,18 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const gedInputRef = useRef<HTMLInputElement>(null)
 
   const gedCategories = [
+    { id: 'Atestado de Saúde Ocupacional (ASO)', label: 'Atestado de Saúde Ocupacional (ASO)', value: 'Atestado de Saúde Ocupacional (ASO)' },
     { id: 'Atestado Médico', label: 'Atestado Médico', value: 'Atestado Médico' },
-    { id: 'Carteira de Trabalho', label: 'Carteira de Trabalho', value: 'Carteira de Trabalho' },
-    { id: 'CNH', label: 'CNH', value: 'CNH' },
-    { id: 'Comprovante de Matrícula', label: 'Comprovante de Matrícula', value: 'Comprovante de Matrícula' },
+    { id: 'Carteira de Trabalho (CTPS)', label: 'Carteira de Trabalho (CTPS)', value: 'Carteira de Trabalho (CTPS)' },
+    { id: 'Certidão de Nascimento/Casamento', label: 'Certidão de Nascimento/Casamento', value: 'Certidão de Nascimento/Casamento' },
+    { id: 'Certificado de Escolaridade/Diploma', label: 'Certificado de Escolaridade/Diploma', value: 'Certificado de Escolaridade/Diploma' },
+    { id: 'Certificado de Reservista', label: 'Certificado de Reservista', value: 'Certificado de Reservista' },
     { id: 'Comprovante de Residência', label: 'Comprovante de Residência', value: 'Comprovante de Residência' },
     { id: 'CPF', label: 'CPF', value: 'CPF' },
-    { id: 'Diploma', label: 'Diploma', value: 'Diploma' },
-    { id: 'Identidade', label: 'Identidade', value: 'Identidade' },
-    { id: 'OAB', label: 'OAB', value: 'OAB' }
+    { id: 'Documento de Identificação (RG/CNH)', label: 'Documento de Identificação (RG/CNH)', value: 'Documento de Identificação (RG/CNH)' },
+    { id: 'Outros', label: 'Outros', value: 'Outros' },
+    { id: 'PIS/PASEP', label: 'PIS/PASEP', value: 'PIS/PASEP' },
+    { id: 'Título de Eleitor', label: 'Título de Eleitor', value: 'Título de Eleitor' }
   ]
 
   const photoInputRef = useRef<HTMLInputElement>(null)

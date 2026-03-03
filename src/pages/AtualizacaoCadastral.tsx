@@ -78,18 +78,18 @@ export default function AtualizacaoCadastral() {
     const gedInputRef = React.useRef<HTMLInputElement>(null);
     const [atestadoDatas, setAtestadoDatas] = useState({ inicio: '', fim: '' });
     const gedCategories = [
-        { id: 'Documento de Identificação (RG/CNH)', name: 'Documento de Identificação (RG/CNH)' },
-        { id: 'CPF', name: 'CPF' },
-        { id: 'Comprovante de Residência', name: 'Comprovante de Residência' },
+        { id: 'Atestado de Saúde Ocupacional (ASO)', name: 'Atestado de Saúde Ocupacional (ASO)' },
+        { id: 'Atestado Médico', name: 'Atestado Médico' },
+        { id: 'Carteira de Trabalho (CTPS)', name: 'Carteira de Trabalho (CTPS)' },
         { id: 'Certidão de Nascimento/Casamento', name: 'Certidão de Nascimento/Casamento' },
         { id: 'Certificado de Escolaridade/Diploma', name: 'Certificado de Escolaridade/Diploma' },
-        { id: 'Carteira de Trabalho (CTPS)', name: 'Carteira de Trabalho (CTPS)' },
-        { id: 'PIS/PASEP', name: 'PIS/PASEP' },
-        { id: 'Título de Eleitor', name: 'Título de Eleitor' },
         { id: 'Certificado de Reservista', name: 'Certificado de Reservista' },
-        { id: 'Atestado Médico', name: 'Atestado Médico' },
-        { id: 'Atestado de Saúde Ocupacional (ASO)', name: 'Atestado de Saúde Ocupacional (ASO)' },
-        { id: 'Outros', name: 'Outros' }
+        { id: 'Comprovante de Residência', name: 'Comprovante de Residência' },
+        { id: 'CPF', name: 'CPF' },
+        { id: 'Documento de Identificação (RG/CNH)', name: 'Documento de Identificação (RG/CNH)' },
+        { id: 'Outros', name: 'Outros' },
+        { id: 'PIS/PASEP', name: 'PIS/PASEP' },
+        { id: 'Título de Eleitor', name: 'Título de Eleitor' }
     ];
 
     const [formData, setFormData] = useState<Partial<Collaborator>>({});
