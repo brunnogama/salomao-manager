@@ -871,418 +871,419 @@ export function Calendario() {
                 </div>
 
                 {(novoEvento.tipo === 'Reunião' || novoEvento.tipo === 'Entrevista') && (
-              <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Formato</label>
-                    <SearchableSelect
-                      options={[
-                        { value: 'Online', label: 'Online' },
-                        { value: 'Presencial', label: 'Presencial' }
-                      ]}
-                      value={novoEvento.local_tipo}
-                      onChange={(val) => setNovoEvento({ ...novoEvento, local_tipo: val as 'Online' | 'Presencial' })}
-                      placeholder="Selecione o formato"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
-                      {novoEvento.local_tipo === 'Online' ? 'URL da Reunião' : 'Endereço'}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={novoEvento.local_tipo === 'Online' ? 'https://meet.google.com/...' : 'Rua, Número, Sala...'}
-                      value={novoEvento.local_endereco_url}
-                      onChange={(e) => setNovoEvento({ ...novoEvento, local_endereco_url: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {novoEvento.tipo === 'Entrevista' && (
-                    <>
-                      {/* VAGA (Apenas para Entrevista) */}
+                  <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                          <Briefcase className="h-3 w-3" /> Vaga Relacionada
-                        </label>
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Formato</label>
                         <SearchableSelect
-                          options={vagas.map(v => ({ value: v.id, label: v.vaga_id_text ? `${v.vaga_id_text} - ${v.title}` : v.title }))}
-                          value={novoEvento.vaga_id || ''}
-                          onChange={(val) => setNovoEvento({ ...novoEvento, vaga_id: val })}
-                          placeholder="Selecione uma vaga..."
+                          options={[
+                            { value: 'Online', label: 'Online' },
+                            { value: 'Presencial', label: 'Presencial' }
+                          ]}
+                          value={novoEvento.local_tipo}
+                          onChange={(val) => setNovoEvento({ ...novoEvento, local_tipo: val as 'Online' | 'Presencial' })}
+                          placeholder="Selecione o formato"
                         />
                       </div>
-
-                      {/* CANDIDATOS (Apenas para Entrevista) */}
                       <div>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                          <Users className="h-3 w-3" /> Entrevistados (Candidatos)
+                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+                          {novoEvento.local_tipo === 'Online' ? 'URL da Reunião' : 'Endereço'}
                         </label>
-                        <SearchableSelect
-                          options={candidatos.map(c => ({ value: c.id, label: c.nome }))}
-                          value={''} // Clear after select
-                          onChange={(val) => {
-                            if (val && !novoEvento.participantes_candidatos.includes(val)) {
-                              setNovoEvento({ ...novoEvento, participantes_candidatos: [...novoEvento.participantes_candidatos, val] })
-                            }
-                          }}
-                          placeholder="Adicionar candidato..."
+                        <input
+                          type="text"
+                          placeholder={novoEvento.local_tipo === 'Online' ? 'https://meet.google.com/...' : 'Rua, Número, Sala...'}
+                          value={novoEvento.local_endereco_url}
+                          onChange={(e) => setNovoEvento({ ...novoEvento, local_endereco_url: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
                         />
-                        {novoEvento.participantes_candidatos.length > 0 && (
-                          <div className="flex gap-2 flex-wrap mt-2">
-                            {novoEvento.participantes_candidatos.map((id) => {
-                              const cand = candidatos.find(c => c.id === id);
-                              if (!cand) return null;
-                              return (
-                                <div key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-xs font-semibold">
-                                  {formatName(cand.nome)}
-                                  <button onClick={() => setNovoEvento({ ...novoEvento, participantes_candidatos: novoEvento.participantes_candidatos.filter(i => i !== id) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
                       </div>
-                    </>
-                  )}
+                    </div>
 
-                  {novoEvento.tipo !== 'Entrevista' && (
-                    <>
-                      {/* COLABORADORES */}
-                      <div>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                          <Users className="h-3 w-3" /> Convidados (Colaborador)
-                        </label>
-                        <SearchableSelect
-                          options={collaborators.map(c => ({ value: c.id, label: formatName(c.name) }))}
-                          value={''} // Clear after select
-                          onChange={(val) => {
-                            if (!novoEvento.participantes_internos.includes(val)) {
-                              setNovoEvento({ ...novoEvento, participantes_internos: [...novoEvento.participantes_internos, val] })
-                            }
-                          }}
-                          placeholder="Adicionar colaborador..."
-                        />
-                        {novoEvento.participantes_internos.length > 0 && (
-                          <div className="flex gap-2 flex-wrap mt-2">
-                            {novoEvento.participantes_internos.map((id) => {
-                              const colab = collaborators.find(c => c.id === id);
-                              if (!colab) return null;
-                              return (
-                                <div key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-[#1e3a8a]/10 text-[#1e3a8a] border border-[#1e3a8a]/20 rounded-md text-xs font-semibold">
-                                  {formatName(colab.name)}
-                                  <button onClick={() => setNovoEvento({ ...novoEvento, participantes_internos: novoEvento.participantes_internos.filter(i => i !== id) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* SÓCIOS */}
-                      <div>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                          <Users className="h-3 w-3" /> Convidados (Sócio)
-                        </label>
-                        <div className="flex gap-2">
-                          <div className="flex-1">
-                            <SocioSelector
-                              value={currentSocio}
-                              onChange={setCurrentSocio}
+                    <div className="space-y-4">
+                      {novoEvento.tipo === 'Entrevista' && (
+                        <>
+                          {/* VAGA (Apenas para Entrevista) */}
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                              <Briefcase className="h-3 w-3" /> Vaga Relacionada
+                            </label>
+                            <SearchableSelect
+                              options={vagas.map(v => ({ value: v.id, label: v.vaga_id_text ? `${v.vaga_id_text} - ${v.title}` : v.title }))}
+                              value={novoEvento.vaga_id || ''}
+                              onChange={(val) => setNovoEvento({ ...novoEvento, vaga_id: val })}
+                              placeholder="Selecione uma vaga..."
                             />
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (currentSocio && !novoEvento.participantes_socios.includes(currentSocio)) {
-                                setNovoEvento({ ...novoEvento, participantes_socios: [...novoEvento.participantes_socios, currentSocio] })
-                                setCurrentSocio('')
-                              }
-                            }}
-                            className="px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors border border-gray-200 flex items-center justify-center"
-                          >
-                            <Plus className="w-5 h-5" />
-                          </button>
-                        </div>
-                        {novoEvento.participantes_socios.length > 0 && (
-                          <div className="flex gap-2 flex-wrap mt-2">
-                            {novoEvento.participantes_socios.map((socioName, idx) => (
-                              <div key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 rounded-md text-xs font-semibold">
-                                {socioName}
-                                <button onClick={() => setNovoEvento({ ...novoEvento, participantes_socios: novoEvento.participantes_socios.filter(i => i !== socioName) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
 
-                      {/* EXTERNOS */}
-                      <div>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                          <Users className="h-3 w-3" /> Convidados Externos
-                        </label>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <input
-                            type="text"
-                            placeholder="Nome (Ex: João Cliente)"
-                            value={currentExtName}
-                            onChange={(e) => setCurrentExtName(e.target.value)}
-                            className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm w-full"
-                          />
-                          <input
-                            type="email"
-                            placeholder="E-mail"
-                            value={currentExtEmail}
-                            onChange={(e) => setCurrentExtEmail(e.target.value)}
-                            className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm w-full"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (currentExtName.trim()) {
-                                setNovoEvento({
-                                  ...novoEvento,
-                                  participantes_externos: [
-                                    ...novoEvento.participantes_externos,
-                                    { nome: currentExtName.trim(), email: currentExtEmail.trim() }
-                                  ]
-                                })
-                                setCurrentExtName('')
-                                setCurrentExtEmail('')
-                              }
-                            }}
-                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shrink-0"
-                          >
-                            <Plus className="w-5 h-5" />
-                          </button>
-                        </div>
-                        {novoEvento.participantes_externos.length > 0 && (
-                          <div className="flex flex-col gap-2 mt-2">
-                            {novoEvento.participantes_externos.map((ext, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-semibold text-gray-700">
-                                <div className="flex flex-col min-w-0">
-                                  <span className="truncate">{ext.nome}</span>
-                                  {ext.email && <span className="text-[10px] text-gray-400 font-medium truncate">{ext.email}</span>}
-                                </div>
-                                <button
-                                  onClick={() => setNovoEvento({
-                                    ...novoEvento,
-                                    participantes_externos: novoEvento.participantes_externos.filter((_, i) => i !== idx)
-                                  })}
-                                  className="hover:bg-red-50 text-gray-400 hover:text-red-500 rounded p-1 transition-colors shrink-0"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                          {/* CANDIDATOS (Apenas para Entrevista) */}
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                              <Users className="h-3 w-3" /> Entrevistados (Candidatos)
+                            </label>
+                            <SearchableSelect
+                              options={candidatos.map(c => ({ value: c.id, label: c.nome }))}
+                              value={''} // Clear after select
+                              onChange={(val) => {
+                                if (val && !novoEvento.participantes_candidatos.includes(val)) {
+                                  setNovoEvento({ ...novoEvento, participantes_candidatos: [...novoEvento.participantes_candidatos, val] })
+                                }
+                              }}
+                              placeholder="Adicionar candidato..."
+                            />
+                            {novoEvento.participantes_candidatos.length > 0 && (
+                              <div className="flex gap-2 flex-wrap mt-2">
+                                {novoEvento.participantes_candidatos.map((id) => {
+                                  const cand = candidatos.find(c => c.id === id);
+                                  if (!cand) return null;
+                                  return (
+                                    <div key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-xs font-semibold">
+                                      {formatName(cand.nome)}
+                                      <button onClick={() => setNovoEvento({ ...novoEvento, participantes_candidatos: novoEvento.participantes_candidatos.filter(i => i !== id) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            ))}
+                            )}
                           </div>
+                        </>
+                      )}
+
+                      {novoEvento.tipo !== 'Entrevista' && (
+                        <>
+                          {/* COLABORADORES */}
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                              <Users className="h-3 w-3" /> Convidados (Colaborador)
+                            </label>
+                            <SearchableSelect
+                              options={collaborators.map(c => ({ value: c.id, label: formatName(c.name) }))}
+                              value={''} // Clear after select
+                              onChange={(val) => {
+                                if (!novoEvento.participantes_internos.includes(val)) {
+                                  setNovoEvento({ ...novoEvento, participantes_internos: [...novoEvento.participantes_internos, val] })
+                                }
+                              }}
+                              placeholder="Adicionar colaborador..."
+                            />
+                            {novoEvento.participantes_internos.length > 0 && (
+                              <div className="flex gap-2 flex-wrap mt-2">
+                                {novoEvento.participantes_internos.map((id) => {
+                                  const colab = collaborators.find(c => c.id === id);
+                                  if (!colab) return null;
+                                  return (
+                                    <div key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-[#1e3a8a]/10 text-[#1e3a8a] border border-[#1e3a8a]/20 rounded-md text-xs font-semibold">
+                                      {formatName(colab.name)}
+                                      <button onClick={() => setNovoEvento({ ...novoEvento, participantes_internos: novoEvento.participantes_internos.filter(i => i !== id) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* SÓCIOS */}
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                              <Users className="h-3 w-3" /> Convidados (Sócio)
+                            </label>
+                            <div className="flex gap-2">
+                              <div className="flex-1">
+                                <SocioSelector
+                                  value={currentSocio}
+                                  onChange={setCurrentSocio}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (currentSocio && !novoEvento.participantes_socios.includes(currentSocio)) {
+                                    setNovoEvento({ ...novoEvento, participantes_socios: [...novoEvento.participantes_socios, currentSocio] })
+                                    setCurrentSocio('')
+                                  }
+                                }}
+                                className="px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors border border-gray-200 flex items-center justify-center"
+                              >
+                                <Plus className="w-5 h-5" />
+                              </button>
+                            </div>
+                            {novoEvento.participantes_socios.length > 0 && (
+                              <div className="flex gap-2 flex-wrap mt-2">
+                                {novoEvento.participantes_socios.map((socioName, idx) => (
+                                  <div key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/20 rounded-md text-xs font-semibold">
+                                    {socioName}
+                                    <button onClick={() => setNovoEvento({ ...novoEvento, participantes_socios: novoEvento.participantes_socios.filter(i => i !== socioName) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* EXTERNOS */}
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                              <Users className="h-3 w-3" /> Convidados Externos
+                            </label>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <input
+                                type="text"
+                                placeholder="Nome (Ex: João Cliente)"
+                                value={currentExtName}
+                                onChange={(e) => setCurrentExtName(e.target.value)}
+                                className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm w-full"
+                              />
+                              <input
+                                type="email"
+                                placeholder="E-mail"
+                                value={currentExtEmail}
+                                onChange={(e) => setCurrentExtEmail(e.target.value)}
+                                className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium text-sm w-full"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (currentExtName.trim()) {
+                                    setNovoEvento({
+                                      ...novoEvento,
+                                      participantes_externos: [
+                                        ...novoEvento.participantes_externos,
+                                        { nome: currentExtName.trim(), email: currentExtEmail.trim() }
+                                      ]
+                                    })
+                                    setCurrentExtName('')
+                                    setCurrentExtEmail('')
+                                  }
+                                }}
+                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors border border-gray-200 flex items-center justify-center shrink-0"
+                              >
+                                <Plus className="w-5 h-5" />
+                              </button>
+                            </div>
+                            {novoEvento.participantes_externos.length > 0 && (
+                              <div className="flex flex-col gap-2 mt-2">
+                                {novoEvento.participantes_externos.map((ext, idx) => (
+                                  <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-semibold text-gray-700">
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="truncate">{ext.nome}</span>
+                                      {ext.email && <span className="text-[10px] text-gray-400 font-medium truncate">{ext.email}</span>}
+                                    </div>
+                                    <button
+                                      onClick={() => setNovoEvento({
+                                        ...novoEvento,
+                                        participantes_externos: novoEvento.participantes_externos.filter((_, i) => i !== idx)
+                                      })}
+                                      className="hover:bg-red-50 text-gray-400 hover:text-red-500 rounded p-1 transition-colors shrink-0"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </div>
                         </div>
-                      </>
-                    )}
+                    </div>
+                  </>
+                )}
 
-            <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                <AlignLeft className="h-3 w-3" /> Descrição <span className="font-normal">(Opcional)</span>
-              </label>
-              <textarea
-                value={novoEvento.descricao}
-                onChange={(e) => setNovoEvento({ ...novoEvento, descricao: e.target.value })}
-                rows={3}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all resize-none font-medium"
-              />
+                <div>
+                  <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                    <AlignLeft className="h-3 w-3" /> Descrição <span className="font-normal">(Opcional)</span>
+                  </label>
+                  <textarea
+                    value={novoEvento.descricao}
+                    onChange={(e) => setNovoEvento({ ...novoEvento, descricao: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all resize-none font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                <button
+                  onClick={() => { setIsModalOpen(false); setEditingEvento(null); }}
+                  className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-xl transition-all uppercase tracking-[0.2em]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveEvento}
+                  disabled={savingEvento || !novoEvento.titulo}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl hover:shadow-lg transition-all disabled:opacity-50 shadow-md uppercase tracking-[0.2em] active:scale-95"
+                >
+                  {savingEvento ? (
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Salvar
+                </button>
+              </div>
             </div>
           </div>
+        )}
 
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-            <button
-              onClick={() => { setIsModalOpen(false); setEditingEvento(null); }}
-              className="px-6 py-2.5 text-[9px] font-black text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-xl transition-all uppercase tracking-[0.2em]"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSaveEvento}
-              disabled={savingEvento || !novoEvento.titulo}
-              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white font-black text-[9px] rounded-xl hover:shadow-lg transition-all disabled:opacity-50 shadow-md uppercase tracking-[0.2em] active:scale-95"
-            >
-              {savingEvento ? (
-                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              Salvar
-            </button>
+      {/* MODAL RESUMO COLABORADOR */}
+      {visualizarColaborador && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarColaborador(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 bg-gradient-to-r from-[#d4af37] to-amber-600 flex items-center justify-between relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
+                <Cake className="w-24 h-24" />
+              </div>
+              <div className="flex items-center gap-3 text-white relative z-10">
+                {visualizarColaborador.photo_url ? (
+                  <img src={visualizarColaborador.photo_url} className="w-12 h-12 rounded-full border-2 border-white object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-bold text-amber-600 bg-white shadow-sm text-xl">
+                    {visualizarColaborador.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{formatName(visualizarColaborador.name)}</h3>
+                  <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarColaborador.role || 'Sem cargo'}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setVisualizarColaborador(null)}
+                className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                <div>
+                  <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local de Atuação</p>
+                  <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.location || 'Não informado'}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
+                <div>
+                  <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Líder Direto</p>
+                  <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.leader || 'Não informado'}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      )}
+      )
+      }
 
-              {/* MODAL RESUMO COLABORADOR */}
-              {visualizarColaborador && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarColaborador(null)}>
-                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                    <div className="px-6 py-4 bg-gradient-to-r from-[#d4af37] to-amber-600 flex items-center justify-between relative overflow-hidden">
-                      <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
-                        <Cake className="w-24 h-24" />
-                      </div>
-                      <div className="flex items-center gap-3 text-white relative z-10">
-                        {visualizarColaborador.photo_url ? (
-                          <img src={visualizarColaborador.photo_url} className="w-12 h-12 rounded-full border-2 border-white object-cover" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-bold text-amber-600 bg-white shadow-sm text-xl">
-                            {visualizarColaborador.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div>
-                          <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{formatName(visualizarColaborador.name)}</h3>
-                          <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarColaborador.role || 'Sem cargo'}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setVisualizarColaborador(null)}
-                        className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
-                    <div className="p-6 space-y-5">
-                      <div className="flex items-start gap-4">
-                        <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
-                        <div>
-                          <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local de Atuação</p>
-                          <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.location || 'Não informado'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-4">
-                        <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
-                        <div>
-                          <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Líder Direto</p>
-                          <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.leader || 'Não informado'}</p>
-                        </div>
-                      </div>
-                    </div>
+      {/* MODAL RESUMO EVENTO */}
+      {
+        visualizarEvento && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarEvento(null)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+              <div className="px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-between relative overflow-hidden">
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
+                  <CalendarEventIcon className="w-24 h-24" />
+                </div>
+                <div className="flex items-center gap-3 text-white relative z-10">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{visualizarEvento.titulo}</h3>
+                    <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarEvento.tipo}</p>
                   </div>
                 </div>
-              )
-              }
-
-              {/* MODAL RESUMO EVENTO */}
-              {
-                visualizarEvento && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarEvento(null)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                      <div className="px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-between relative overflow-hidden">
-                        <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
-                          <CalendarEventIcon className="w-24 h-24" />
-                        </div>
-                        <div className="flex items-center gap-3 text-white relative z-10">
-                          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <Sparkles className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{visualizarEvento.titulo}</h3>
-                            <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarEvento.tipo}</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setVisualizarEvento(null)}
-                          className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
-                        >
-                          <X className="h-5 w-5" />
-                        </button>
-                      </div>
-                      <div className="p-6">
-                        {visualizarEvento.hora && (
-                          <div className="flex items-start gap-4 mb-4">
-                            <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><CalendarDays className="w-4 h-4" /></div>
-                            <div>
-                              <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Data e Hora</p>
-                              <p className="text-[13px] font-bold text-[#0a192f]">{new Date(visualizarEvento.data_evento + 'T12:00:00').toLocaleDateString('pt-BR')} às {visualizarEvento.hora}</p>
-                            </div>
-                          </div>
-                        )}
-                        {(visualizarEvento.local_tipo || visualizarEvento.local_endereco_url) && (
-                          <div className="flex items-start gap-4 mb-4">
-                            <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
-                            <div>
-                              <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local</p>
-                              <p className="text-[13px] font-bold text-[#0a192f]">
-                                {visualizarEvento.local_tipo === 'Online' ? '💻 Online' : '📍 Presencial'}
-                                {visualizarEvento.local_endereco_url && <span className="font-normal text-gray-600 ml-1">- {visualizarEvento.local_endereco_url}</span>}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        {(
-                          (visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) ||
-                          (visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) ||
-                          (visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0)
-                        ) && (
-                            <div className="flex items-start gap-4 mb-4">
-                              <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Participantes</p>
-
-                                {/* INTERNOS */}
-                                {(visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) && (
-                                  <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
-                                    {visualizarEvento.participantes_internos.map((id: string) => {
-                                      const colab = collaborators.find(c => String(c.id) === String(id));
-                                      return colab ? (
-                                        <span key={id} className="inline-flex px-1.5 py-0.5 bg-[#1e3a8a]/5 text-[#1e3a8a] rounded text-[10px] font-bold border border-[#1e3a8a]/10 truncate max-w-full">
-                                          {formatName(colab.name)}
-                                        </span>
-                                      ) : null;
-                                    })}
-                                  </div>
-                                )}
-
-                                {/* SOCIOS */}
-                                {(visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) && (
-                                  <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
-                                    {visualizarEvento.participantes_socios.map((nomeSocio, idx) => (
-                                      <span key={`socio-${idx}`} className="inline-flex px-1.5 py-0.5 bg-[#d4af37]/10 text-[#d4af37] rounded text-[10px] font-bold border border-[#d4af37]/20 truncate max-w-full">
-                                        {nomeSocio} (Sócio)
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* EXTERNOS */}
-                                {(visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0) && (
-                                  <div className="flex flex-col gap-0.5 mt-2">
-                                    {visualizarEvento.participantes_externos.map((ext, idx) => (
-                                      <p key={`ext-${idx}`} className="text-[11px] text-gray-600 font-medium leading-tight">
-                                        Externo: {ext.nome} {ext.email && <span className="opacity-70">({ext.email})</span>}
-                                      </p>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        {visualizarEvento.descricao ? (
-                          <div className="flex items-start gap-4 mt-4 pt-4 border-t border-gray-100">
-                            <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
-                            <div>
-                              <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local / Descrição</p>
-                              <p className="text-[13px] font-semibold text-gray-700 whitespace-pre-line leading-relaxed">{visualizarEvento.descricao}</p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center justify-center py-4">
-                            <div className="p-3 bg-gray-50 rounded-full mb-2"><AlignLeft className="w-5 h-5 text-gray-300" /></div>
-                            <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400 italic">Nenhuma descrição</p>
-                          </div>
-                        )}
-                      </div>
+                <button
+                  onClick={() => setVisualizarEvento(null)}
+                  className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-6">
+                {visualizarEvento.hora && (
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><CalendarDays className="w-4 h-4" /></div>
+                    <div>
+                      <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Data e Hora</p>
+                      <p className="text-[13px] font-bold text-[#0a192f]">{new Date(visualizarEvento.data_evento + 'T12:00:00').toLocaleDateString('pt-BR')} às {visualizarEvento.hora}</p>
                     </div>
                   </div>
                 )}
+                {(visualizarEvento.local_tipo || visualizarEvento.local_endereco_url) && (
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                    <div>
+                      <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local</p>
+                      <p className="text-[13px] font-bold text-[#0a192f]">
+                        {visualizarEvento.local_tipo === 'Online' ? '💻 Online' : '📍 Presencial'}
+                        {visualizarEvento.local_endereco_url && <span className="font-normal text-gray-600 ml-1">- {visualizarEvento.local_endereco_url}</span>}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {(
+                  (visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) ||
+                  (visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) ||
+                  (visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0)
+                ) && (
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Participantes</p>
+
+                        {/* INTERNOS */}
+                        {(visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) && (
+                          <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
+                            {visualizarEvento.participantes_internos.map((id: string) => {
+                              const colab = collaborators.find(c => String(c.id) === String(id));
+                              return colab ? (
+                                <span key={id} className="inline-flex px-1.5 py-0.5 bg-[#1e3a8a]/5 text-[#1e3a8a] rounded text-[10px] font-bold border border-[#1e3a8a]/10 truncate max-w-full">
+                                  {formatName(colab.name)}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+
+                        {/* SOCIOS */}
+                        {(visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) && (
+                          <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
+                            {visualizarEvento.participantes_socios.map((nomeSocio, idx) => (
+                              <span key={`socio-${idx}`} className="inline-flex px-1.5 py-0.5 bg-[#d4af37]/10 text-[#d4af37] rounded text-[10px] font-bold border border-[#d4af37]/20 truncate max-w-full">
+                                {nomeSocio} (Sócio)
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* EXTERNOS */}
+                        {(visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0) && (
+                          <div className="flex flex-col gap-0.5 mt-2">
+                            {visualizarEvento.participantes_externos.map((ext, idx) => (
+                              <p key={`ext-${idx}`} className="text-[11px] text-gray-600 font-medium leading-tight">
+                                Externo: {ext.nome} {ext.email && <span className="opacity-70">({ext.email})</span>}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                {visualizarEvento.descricao ? (
+                  <div className="flex items-start gap-4 mt-4 pt-4 border-t border-gray-100">
+                    <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                    <div>
+                      <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local / Descrição</p>
+                      <p className="text-[13px] font-semibold text-gray-700 whitespace-pre-line leading-relaxed">{visualizarEvento.descricao}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <div className="p-3 bg-gray-50 rounded-full mb-2"><AlignLeft className="w-5 h-5 text-gray-300" /></div>
+                    <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400 italic">Nenhuma descrição</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div >
-        );
-  }
+          </div>
+        )}
+    </div>
+  );
+}
