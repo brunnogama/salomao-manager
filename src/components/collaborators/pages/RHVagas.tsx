@@ -535,7 +535,8 @@ export function RHVagas() {
             <table className="w-full min-w-max text-left border-collapse">
               <thead className="bg-[#1e3a8a]">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl">Nome</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-24">ID</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Nome</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Entrevistado?</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Data da entrevista</th>
                 </tr>
@@ -551,6 +552,9 @@ export function RHVagas() {
 
                   return (
                     <tr key={c.id} onClick={() => { setSelectedCandidatoId(c.id); setIsCandidatoModalOpen(true); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
+                      <td className="px-6 py-4">
+                        <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-black tracking-widest uppercase">{c.candidato_id_text || 'Sem ID'}</span>
+                      </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-sm text-[#0a192f]">{c.nome}</p>
                         <p className="text-xs text-gray-500">{c.email || c.telefone || '-'}</p>
@@ -578,7 +582,8 @@ export function RHVagas() {
             <table className="w-full min-w-max text-left border-collapse">
               <thead className="bg-[#1e3a8a]">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl">Data Abertura</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-24">ID</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Data Abertura</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Tempo Aberto</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Prazo</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Vaga</th>
@@ -593,6 +598,9 @@ export function RHVagas() {
               <tbody className="divide-y divide-gray-100">
                 {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
                   <tr key={vaga.id} onClick={() => handleOpenViewModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
+                    <td className="px-6 py-4">
+                      <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-black tracking-widest uppercase">{vaga.vaga_id_text || 'Sem ID'}</span>
+                    </td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-700">
                       {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
                     </td>
