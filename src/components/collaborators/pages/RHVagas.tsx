@@ -441,6 +441,8 @@ export function RHVagas() {
               <thead className="bg-[#1e3a8a]">
                 <tr>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl">Data Abertura</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Prazo</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">ID</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Vaga</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Tipo (Área)</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Local</th>
@@ -454,14 +456,17 @@ export function RHVagas() {
                 {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
                   <tr key={vaga.id} onClick={() => handleOpenModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
                     <td className="px-6 py-4 text-sm font-semibold text-gray-700">
-                      {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR') : '-'}
+                      {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-semibold text-gray-700">
+                      {vaga.data_prazo ? new Date(vaga.data_prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider border border-blue-100">
-                          {vaga.vaga_id_text}
-                        </span>
-                      </div>
+                      <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md uppercase tracking-wider border border-blue-100 whitespace-nowrap">
+                        {vaga.vaga_id_text}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
                       <p className="font-bold text-sm text-[#0a192f]">{vaga.role?.name || 'Cargo não definido'}</p>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-700">

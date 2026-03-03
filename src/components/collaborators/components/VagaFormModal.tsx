@@ -408,6 +408,16 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         />
                                     </div>
 
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Prazo</label>
+                                        <input
+                                            type="date"
+                                            value={formData.data_prazo || ''}
+                                            onChange={e => setFormData({ ...formData, data_prazo: e.target.value })}
+                                            className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                                        />
+                                    </div>
+
                                     <div className="md:col-span-2">
                                         <div className="w-1/2">
                                             <SearchableSelect

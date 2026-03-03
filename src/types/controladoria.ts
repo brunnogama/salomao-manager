@@ -475,6 +475,7 @@ export interface Vaga {
   leader_id?: string;
   recrutadora?: string;
   data_abertura?: string;
+  data_prazo?: string;
   data_fechamento?: string;
   data_aprovacao_gestor?: string;
   status: 'Congelada' | 'Aberta' | 'Fechada' | 'Aguardando Autorização';
