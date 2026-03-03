@@ -302,6 +302,14 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                             <section>
                                 <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2 mb-4">Informações Principais</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <SearchableSelect
+                                        label="Área"
+                                        value={formData.area || ''}
+                                        onChange={(v) => setFormData({ ...formData, area: v })}
+                                        options={areaOptions}
+                                        uppercase={false}
+                                    />
+
                                     <ManagedSelect
                                         label="Atuação"
                                         value={formData.atuacao_id?.toString() || ''}
@@ -357,14 +365,6 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         value={formData.replaced_collaborator_id || ''}
                                         onChange={v => setFormData({ ...formData, replaced_collaborator_id: v })}
                                         tableName="collaborators"
-                                    />
-
-                                    <SearchableSelect
-                                        label="Área"
-                                        value={formData.area || ''}
-                                        onChange={(v) => setFormData({ ...formData, area: v })}
-                                        options={areaOptions}
-                                        uppercase={false}
                                     />
 
                                 </div>
