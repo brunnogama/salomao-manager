@@ -206,6 +206,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             delete payload.candidato_historico;
             delete payload.candidato_experiencias;
             delete payload.candidato_ged;
+            delete payload.area; // This field does not exist in the candidatos table
 
             if (candidatoId) {
                 const { error } = await supabase.from('candidatos').update(payload).eq('id', candidatoId)
