@@ -1347,9 +1347,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
           </div>
 
           {activeMainTab === 'Colaboradores' ? (
-            <div className="flex items-center gap-3 min-w-max">
+            <div className="flex items-center gap-4 border-l border-gray-100 pl-4 ml-2">
 
-              <div className="flex items-center bg-white rounded-xl shadow-sm border border-gray-100 p-1 shrink-0">
+              <div className="flex items-center gap-1.5 p-1 bg-white border border-gray-100 rounded-xl shadow-sm">
                 <button
                   onClick={async () => {
                     setLoading(true)
