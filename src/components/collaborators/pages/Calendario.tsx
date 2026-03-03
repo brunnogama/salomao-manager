@@ -197,10 +197,12 @@ export function Calendario() {
     }
 
     // Fetch Vagas
-    const { data: vagasData } = await supabase
+    const { data: vagasData, error: vagasError } = await supabase
       .from('vagas')
-      .select('id, title, status, vaga_id_text, role:role_id(name)')
+      .select('id, status, vaga_id_text, role:role_id(name)')
       .in('status', ['Aberta', 'Congelada', 'Aguardando Autorização']);
+
+    if (vagasError) console.error('Erro ao buscar vagas do calendário:', vagasError);
     if (vagasData) setVagas(vagasData);
 
     // Fetch Candidatos
@@ -910,7 +912,7 @@ export function Calendario() {
                               <Briefcase className="h-3 w-3" /> Vaga Relacionada
                             </label>
                             <SearchableSelect
-                              options={vagas.map(v => ({ value: v.id, label: v.vaga_id_text ? `${v.vaga_id_text} - ${v.role?.name || v.title}` : (v.role?.name || v.title) }))}
+                              options={vagas.map(v => ({ value: v.id, label: v.vaga_id_text ? `${v.vaga_id_text} - ${v.role?.name || 'Sem Cargo'}` : (v.role?.name || 'Sem Cargo') }))}
                               value={novoEvento.vaga_id || ''}
                               onChange={(val) => setNovoEvento({ ...novoEvento, vaga_id: val })}
                               placeholder="Selecione uma vaga..."
