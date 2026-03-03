@@ -206,7 +206,27 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             delete payload.candidato_historico;
             delete payload.candidato_experiencias;
             delete payload.candidato_ged;
-            delete payload.area; // This field does not exist in the candidatos table
+
+            // Campos herdados dos componentes de Colaborador (DadosPessoaisSection, EnderecoSection, etc) que não existem na tabela Candidatos
+            const nonCandidateFields = [
+                'area', 'contract_type', 'status', 'partner_id', 'leader_id', 'role_id', 'rateio_id',
+                'matricula_interna', 'email_pessoal', 'linkedin_url', 'cpf', 'birthday', 'gender',
+                'photo_url', 'foto_url', 'oab_numero', 'oab_state', 'oab_expiration', 'hire_date',
+                'termination_date', 'ctps_numero', 'ctps_serie', 'ctps_uf', 'pis_pasep', 'dispensa_militar',
+                'mochila_entregue', 'ultimo_aniversario_parabenizado', 'escolaridade_nivel', 'escolaridade_subnivel',
+                'escolaridade_instituicao', 'escolaridade_matricula', 'escolaridade_semestre', 'escolaridade_previsao_conclusao',
+                'escolaridade_curso', 'rg', 'emergencia_nome', 'emergencia_telefone', 'emergencia_parentesco',
+                'atuacao', 'motivo_desligamento', 'matricula_esocial', 'observacoes', 'oab_emissao',
+                'forma_pagamento', 'banco_nome', 'banco_tipo_conta', 'banco_agencia', 'banco_conta', 'pix_tipo', 'pix_chave',
+                'hiring_reason_id', 'termination_initiative_id', 'termination_type_id', 'termination_reason_id',
+                'civil_status', 'nacionalidade', 'naturalidade_cidade', 'naturalidade_uf', 'mae', 'pai',
+                'ctps', 'cnh', 'tituloseleitor', 'reservista', 'pis', 'has_children', 'children_count',
+                'equipe', 'cadastro_atualizado'
+            ];
+
+            nonCandidateFields.forEach(field => {
+                if (field in payload) delete payload[field];
+            });
 
             if (candidatoId) {
                 const { error } = await supabase.from('candidatos').update(payload).eq('id', candidatoId)
