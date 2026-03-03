@@ -468,9 +468,9 @@ export function RHVagas() {
             <table className="w-full min-w-max text-left border-collapse">
               <thead className="bg-[#1e3a8a]">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-[250px]">Nome</th>
-                  <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider">Entrevistado?</th>
-                  <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Data da entrevista</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl">Nome</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Entrevistado?</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Data da entrevista</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -484,11 +484,11 @@ export function RHVagas() {
 
                   return (
                     <tr key={c.id} onClick={() => { setSelectedCandidatoId(c.id); setIsCandidatoModalOpen(true); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <p className="font-bold text-sm text-[#0a192f]">{c.nome}</p>
                         <p className="text-xs text-gray-500">{c.email || c.telefone || '-'}</p>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         {hasInterview ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-green-50 text-green-700 border-green-200">
                             <CheckCircle2 className="w-3 h-3" /> Sim
@@ -499,7 +499,7 @@ export function RHVagas() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm font-semibold text-gray-700">
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-700">
                         {lastInterviewDate ? lastInterviewDate.toLocaleDateString('pt-BR') : '-'}
                       </td>
                     </tr>
@@ -511,62 +511,62 @@ export function RHVagas() {
             <table className="w-full min-w-max text-left border-collapse">
               <thead className="bg-[#1e3a8a]">
                 <tr>
-                  <th className="px-3 py-3 text-[9px] font-black text-white uppercase tracking-wider rounded-tl-xl whitespace-nowrap">Data Abertura</th>
-                  <th className="px-3 py-3 text-[9px] font-black text-white uppercase tracking-wider whitespace-nowrap">Tempo Aberto</th>
-                  <th className="px-3 py-3 text-[9px] font-black text-white uppercase tracking-wider whitespace-nowrap">Prazo</th>
-                  <th className="px-3 py-3 text-[9px] font-black text-white uppercase tracking-wider w-[200px]">Vaga</th>
-                  <th className="px-3 py-3 text-[9px] font-black text-white uppercase tracking-wider">Atuação</th>
-                  <th className="px-3 py-3 text-[9px] font-black text-white uppercase tracking-wider">Tipo (Área)</th>
-                  <th className="px-3 py-3 text-[9px] font-black text-white uppercase tracking-wider">Local</th>
-                  <th className="px-3 py-3 text-[9px] font-black text-white uppercase tracking-wider">Líder Direto</th>
-                  <th className="px-3 py-3 text-[9px] font-black text-white uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-3 text-[9px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl">Ações</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl">Data Abertura</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Tempo Aberto</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Prazo</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Vaga</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Atuação</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Tipo (Área)</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Local</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Líder Direto</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
                   <tr key={vaga.id} onClick={() => handleOpenViewModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
-                    <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                    <td className="px-6 py-4 text-sm font-semibold text-gray-700">
                       {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
                     </td>
-                    <td className="px-3 py-3 text-xs font-semibold text-[#1e3a8a] whitespace-nowrap">
+                    <td className="px-6 py-4 text-sm font-semibold text-[#1e3a8a] whitespace-nowrap">
                       <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-1 rounded-md border border-blue-100 w-max">
                         <Clock className="w-3.5 h-3.5 text-blue-500" />
                         {calculateTempoAberto(vaga.data_abertura, vaga.data_fechamento)}
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                    <td className="px-6 py-4 text-sm font-semibold text-gray-700">
                       {vaga.data_prazo ? new Date(vaga.data_prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
                     </td>
-                    <td className="px-3 py-3">
-                      <div className="flex flex-col gap-1 items-start">
-                        <p className={`font-bold text-xs ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <p className={`font-bold text-sm ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
                         {vaga.sigilosa && (
-                          <span className="text-[8px] bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest leading-none">Sigilosa</span>
+                          <span className="text-[8px] bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-xs font-medium text-gray-700 truncate max-w-[120px]" title={vaga.atuacao?.name}>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-700">
                       {vaga.atuacao?.name || '-'}
                     </td>
-                    <td className="px-3 py-3 text-xs font-medium text-gray-700">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-700">
                       {vaga.area || '-'}
                     </td>
-                    <td className="px-3 py-3 text-xs font-medium text-gray-700">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-700">
                       {vaga.location?.name || '-'}
                     </td>
-                    <td className="px-3 py-3 text-xs font-medium text-gray-700 truncate max-w-[120px]" title={vaga.leader?.name}>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-700">
                       {vaga.leader?.name || '-'}
                     </td>
-                    <td className="px-3 py-3">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${vaga.status === 'Aberta' ? 'bg-green-50 text-green-700 border-green-200' : vaga.status === 'Congelada' ? 'bg-amber-50 text-amber-700 border-amber-200' : vaga.status === 'Aguardando Autorização' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200'} whitespace-nowrap`}>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${vaga.status === 'Aberta' ? 'bg-green-50 text-green-700 border-green-200' : vaga.status === 'Congelada' ? 'bg-amber-50 text-amber-700 border-amber-200' : vaga.status === 'Aguardando Autorização' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                         {vaga.status}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-right">
-                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); handleOpenModal(vaga.id) }} className="p-1.5 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
-                        <button onClick={(e) => handleDeleteVaga(vaga.id, e)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { e.stopPropagation(); handleOpenModal(vaga.id) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
+                        <button onClick={(e) => handleDeleteVaga(vaga.id, e)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
                       </div>
                     </td>
                   </tr>
