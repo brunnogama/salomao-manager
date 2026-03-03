@@ -4,7 +4,8 @@ import { CollaboratorPageLayout } from './CollaboratorLayouts'
 import { DadosPessoaisSection } from './DadosPessoaisSection'
 import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { AlertModal } from '../../ui/AlertModal'
-import { User, BookOpen } from 'lucide-react'
+import { User, BookOpen, FileText } from 'lucide-react'
+import { GEDSection } from './GEDSection'
 import { Candidato } from '../../../types/controladoria' // We will add this type later
 import {
     maskCPF,
@@ -32,14 +33,26 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
     const [cursorPosition, setCursorPosition] = useState(0)
     const [availableTags, setAvailableTags] = useState<string[]>([])
 
+    // GED State
+    const [gedCategories] = useState(['Currículo', 'Portfólio', 'Certificado', 'Outros'])
+    const [selectedGedCategory, setSelectedGedCategory] = useState('')
+    const [atestadoDatas, setAtestadoDatas] = useState<{ inicio: string, fim: string }>({ inicio: '', fim: '' })
+    const gedInputRef = React.useRef<HTMLInputElement>(null)
+    const [gedDocs, setGedDocs] = useState<any[]>([])
+    const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, categoria: string, dateInfo?: any }[]>([])
+
     useEffect(() => {
         if (isOpen) {
             setActiveTab(1)
             fetchTags()
+            setPendingGedDocs([])
+            setSelectedGedCategory('')
             if (candidatoId) {
                 fetchCandidato(candidatoId)
+                fetchGedDocs(candidatoId)
             } else {
                 setFormData({})
+                setGedDocs([])
             }
         }
     }, [isOpen, candidatoId])
@@ -66,6 +79,66 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             setFormData(data)
         } catch (error) {
             console.error('Error fetching candidato:', error)
+        }
+    }
+
+    const fetchGedDocs = async (id: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('candidato_ged')
+                .select('*')
+                .eq('candidato_id', id)
+            if (error) throw error
+            if (data) setGedDocs(data)
+        } catch (e: any) {
+            console.error('Erro ao buscar documentos:', e.message)
+        }
+    }
+
+    // GED Handlers
+    const handleGedUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0 && selectedGedCategory) {
+            const file = e.target.files[0]
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                alert('Arquivo muito grande! Máximo de 10MB permitidos.')
+                if (gedInputRef.current) gedInputRef.current.value = ''
+                return
+            }
+
+            const newDoc = {
+                file,
+                categoria: selectedGedCategory,
+                dateInfo: selectedGedCategory === 'Atestado' ? { ...atestadoDatas } : undefined
+            }
+            setPendingGedDocs(prev => [...prev, newDoc])
+            setSelectedGedCategory('')
+            setAtestadoDatas({ inicio: '', fim: '' })
+            if (gedInputRef.current) gedInputRef.current.value = ''
+        } else if (!selectedGedCategory) {
+            alert('Por favor, selecione uma categoria antes de enviar o arquivo.')
+        }
+    }
+
+    const handleDeleteGed = async (id?: string, pendingIndex?: number) => {
+        if (!confirm('Deseja realmente excluir este documento?')) return;
+        setLoading(true);
+        try {
+            if (id) {
+                const docToDelete = gedDocs.find(d => d.id === id);
+                if (docToDelete?.url) {
+                    const filePath = docToDelete.url.split('public/salomao-docs/')[1];
+                    if (filePath) await supabase.storage.from('salomao-docs').remove([filePath]);
+                }
+                const { error } = await supabase.from('candidato_ged').delete().eq('id', id);
+                if (error) throw error;
+                fetchGedDocs(candidatoId!);
+            } else if (pendingIndex !== undefined) {
+                setPendingGedDocs(prev => prev.filter((_, i) => i !== pendingIndex));
+            }
+        } catch (e: any) {
+            alert('Erro ao excluir documento: ' + e.message);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -98,6 +171,35 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                     const { error: tagError } = await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
                     if (tagError) console.error("Error upserting tags", tagError);
                 }
+            }
+
+            // Upload pending GED docs
+            const finalCandidatoId = candidatoId || (await supabase.from('candidatos').select('id').eq('nome', payload.nome).order('created_at', { ascending: false }).limit(1).single()).data?.id;
+
+            if (finalCandidatoId && pendingGedDocs.length > 0) {
+                for (const doc of pendingGedDocs) {
+                    const fileExt = doc.file.name.split('.').pop()
+                    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`
+                    const filePath = `candidatos/${finalCandidatoId}/ged/${fileName}`
+
+                    const { error: uploadError } = await supabase.storage.from('salomao-docs').upload(filePath, doc.file)
+                    if (uploadError) console.error('Error uploading file:', uploadError.message)
+                    else {
+                        const { data: { publicUrl } } = supabase.storage.from('salomao-docs').getPublicUrl(filePath)
+                        const { error: dbError } = await supabase.from('candidato_ged').insert({
+                            candidato_id: finalCandidatoId,
+                            nome_arquivo: doc.file.name,
+                            tamanho: doc.file.size,
+                            categoria: doc.categoria,
+                            url: publicUrl,
+                            // At present we assume the current user is logged in
+                            uploaded_by: (await supabase.auth.getUser()).data.user?.id || null
+                        })
+                        if (dbError) console.error('Error registering file in db:', dbError.message)
+                    }
+                }
+                setPendingGedDocs([])
+                if (candidatoId) fetchGedDocs(candidatoId)
             }
 
             onSave()
@@ -150,6 +252,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
     const steps = [
         { id: 1, label: 'Dados Pessoais', icon: User },
         { id: 2, label: 'Histórico', icon: BookOpen },
+        { id: 3, label: 'GED / Arquivos', icon: FileText },
     ]
 
     if (!isOpen) return null
@@ -225,6 +328,23 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                     candidatoId={candidatoId || null}
                     isViewMode={false}
                 />
+            )}
+            {activeTab === 3 && (
+                <div className="animate-in slide-in-from-right-4 duration-300">
+                    <GEDSection
+                        gedCategories={gedCategories}
+                        selectedGedCategory={selectedGedCategory}
+                        setSelectedGedCategory={setSelectedGedCategory}
+                        atestadoDatas={atestadoDatas}
+                        setAtestadoDatas={setAtestadoDatas}
+                        gedInputRef={gedInputRef}
+                        handleGedUpload={handleGedUpload}
+                        gedDocs={gedDocs}
+                        pendingGedDocs={pendingGedDocs}
+                        setPendingGedDocs={setPendingGedDocs}
+                        handleDeleteGed={handleDeleteGed}
+                    />
+                </div>
             )}
         </CollaboratorPageLayout>
     )
