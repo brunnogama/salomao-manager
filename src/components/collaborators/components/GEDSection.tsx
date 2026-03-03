@@ -97,8 +97,10 @@ export function GEDSection({
                         <div className="flex items-center gap-3 overflow-hidden">
                             <div className="p-1.5 bg-blue-50 text-blue-600 rounded"><FileText className="h-4 w-4" /></div>
                             <div className="overflow-hidden">
-                                <p className="text-xs font-bold text-[#0a192f] truncate">{doc.nome_arquivo}</p>
-                                <span className="text-[9px] bg-gray-100 text-gray-500 px-1 py-0.5 rounded uppercase tracking-wider">{doc.categoria}</span>
+                                <p className="text-xs font-bold text-[#0a192f] truncate">{doc.categoria}</p>
+                                <span className="text-[9px] bg-gray-100 text-gray-500 px-1 py-0.5 rounded uppercase tracking-wider">
+                                    {doc.nome_arquivo.includes('.') ? doc.nome_arquivo.split('.').pop()?.toUpperCase() : 'DOC'}
+                                </span>
                             </div>
                         </div>
                         <div className="flex gap-2">
