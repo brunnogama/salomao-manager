@@ -17,6 +17,8 @@ interface ManagedSelectProps {
     clientFilter?: (item: any) => boolean
     // For 'managed' items that need a foreign key (e.g. adding a reason that needs an initiative_id)
     extraInsertFields?: Record<string, any>
+    // Column used to display and insert the item name (defaults to 'name')
+    nameColumn?: string
 }
 
 interface Item {
@@ -37,7 +39,8 @@ export function ManagedSelect({
     orderBy = 'name',
     filter,
     clientFilter,
-    extraInsertFields
+    extraInsertFields,
+    nameColumn = 'name'
 }: ManagedSelectProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [isManaging, setIsManaging] = useState(false)
@@ -124,14 +127,14 @@ export function ManagedSelect({
     const activeItems = clientFilter ? items.filter(clientFilter) : items;
 
     const filteredItems = activeItems.filter(i =>
-        i.name.toLowerCase().includes(searchTerm.toLowerCase())
+        i[nameColumn] && String(i[nameColumn]).toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     const handleAddItem = async () => {
         if (!newItemName.trim()) return
 
         const payload = {
-            name: newItemName.trim(),
+            [nameColumn]: newItemName.trim(),
             ...extraInsertFields
         }
 
@@ -147,11 +150,11 @@ export function ManagedSelect({
     }
 
     const handleUpdateItem = async () => {
-        if (!editingItem || !editingItem.name.trim()) return
+        if (!editingItem || !editingItem[nameColumn] || !String(editingItem[nameColumn]).trim()) return
 
         const { error } = await supabase
             .from(tableName)
-            .update({ name: editingItem.name.trim() })
+            .update({ [nameColumn]: String(editingItem[nameColumn]).trim() })
             .eq('id', editingItem.id)
 
         if (error) {
@@ -202,7 +205,7 @@ export function ManagedSelect({
             `}
                     >
                         <span className={value ? 'text-gray-700' : 'text-gray-400'}>
-                            {selectedItem ? selectedItem.name : placeholder}
+                            {selectedItem ? selectedItem[nameColumn] : placeholder}
                         </span>
                         <div className="flex items-center gap-1">
                             {value && !disabled && (
@@ -256,7 +259,7 @@ export function ManagedSelect({
                           ${value && String(value) === String(item.id) ? 'bg-blue-50 border border-blue-200 text-blue-700 font-semibold' : 'hover:bg-gray-50 border border-transparent text-gray-600'}
                         `}
                                             >
-                                                {item.name}
+                                                {item[nameColumn]}
                                             </button>
                                         ))}
                                     </div>
@@ -341,8 +344,8 @@ export function ManagedSelect({
                                                 <>
                                                     <input
                                                         className="flex-1 border border-blue-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-100 outline-none"
-                                                        value={editingItem.name}
-                                                        onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                                        value={editingItem[nameColumn]}
+                                                        onChange={(e) => setEditingItem({ ...editingItem, [nameColumn]: e.target.value })}
                                                         autoFocus
                                                     />
                                                     <button
@@ -360,7 +363,7 @@ export function ManagedSelect({
                                                 </>
                                             ) : (
                                                 <>
-                                                    <span className="flex-1 text-sm font-medium text-gray-700">{item.name}</span>
+                                                    <span className="flex-1 text-sm font-medium text-gray-700">{item[nameColumn]}</span>
                                                     <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => setEditingItem(item)}
