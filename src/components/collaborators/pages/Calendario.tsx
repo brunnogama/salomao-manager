@@ -197,8 +197,8 @@ export function Calendario() {
     // Fetch Vagas
     const { data: vagasData } = await supabase
       .from('vagas')
-      .select('id, title, status')
-      .in('status', ['Aberta', 'Pausada']);
+      .select('id, title, status, vaga_id_text')
+      .in('status', ['Aberta', 'Congelada', 'Aguardando Autorização']);
     if (vagasData) setVagas(vagasData);
 
     // Fetch Candidatos
@@ -909,7 +909,7 @@ export function Calendario() {
                               <Briefcase className="h-3 w-3" /> Vaga Relacionada
                             </label>
                             <SearchableSelect
-                              options={vagas.map(v => ({ value: v.id, label: v.title }))}
+                              options={vagas.map(v => ({ value: v.id, label: v.vaga_id_text ? `${v.vaga_id_text} - ${v.title}` : v.title }))}
                               value={novoEvento.vaga_id || ''}
                               onChange={(val) => setNovoEvento({ ...novoEvento, vaga_id: val })}
                               placeholder="Selecione uma vaga..."
@@ -949,11 +949,13 @@ export function Calendario() {
                         </>
                       )}
 
-                      {/* COLABORADORES */}
-                      <div>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                          <Users className="h-3 w-3" /> Convidados (Colaborador)
-                        </label>
+                      {novoEvento.tipo !== 'Entrevista' && (
+                        <>
+                          {/* COLABORADORES */}
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                              <Users className="h-3 w-3" /> Convidados (Colaborador)
+                            </label>
                         <SearchableSelect
                           options={collaborators.map(c => ({ value: c.id, label: formatName(c.name) }))}
                           value={''} // Clear after select
@@ -1075,7 +1077,7 @@ export function Calendario() {
                                   <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
-                            ))}
+                            )}
                           </div>
                         )}
                       </div>
@@ -1117,172 +1119,167 @@ export function Calendario() {
                 </button>
               </div>
             </div>
-          </div>
+            </div>
         )}
 
-      </div>
-
-      {/* MODAL RESUMO COLABORADOR */}
-      {visualizarColaborador && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarColaborador(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-4 bg-gradient-to-r from-[#d4af37] to-amber-600 flex items-center justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
-                <Cake className="w-24 h-24" />
-              </div>
-              <div className="flex items-center gap-3 text-white relative z-10">
-                {visualizarColaborador.photo_url ? (
-                  <img src={visualizarColaborador.photo_url} className="w-12 h-12 rounded-full border-2 border-white object-cover" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-bold text-amber-600 bg-white shadow-sm text-xl">
-                    {visualizarColaborador.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{formatName(visualizarColaborador.name)}</h3>
-                  <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarColaborador.role || 'Sem cargo'}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setVisualizarColaborador(null)}
-                className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-5">
-              <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
-                <div>
-                  <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local de Atuação</p>
-                  <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.location || 'Não informado'}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
-                <div>
-                  <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Líder Direto</p>
-                  <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.leader || 'Não informado'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL RESUMO EVENTO */}
-      {visualizarEvento && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarEvento(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
-                <CalendarEventIcon className="w-24 h-24" />
-              </div>
-              <div className="flex items-center gap-3 text-white relative z-10">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{visualizarEvento.titulo}</h3>
-                  <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarEvento.tipo}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setVisualizarEvento(null)}
-                className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-6">
-              {visualizarEvento.hora && (
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><CalendarDays className="w-4 h-4" /></div>
-                  <div>
-                    <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Data e Hora</p>
-                    <p className="text-[13px] font-bold text-[#0a192f]">{new Date(visualizarEvento.data_evento + 'T12:00:00').toLocaleDateString('pt-BR')} às {visualizarEvento.hora}</p>
-                  </div>
-                </div>
-              )}
-              {(visualizarEvento.local_tipo || visualizarEvento.local_endereco_url) && (
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
-                  <div>
-                    <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local</p>
-                    <p className="text-[13px] font-bold text-[#0a192f]">
-                      {visualizarEvento.local_tipo === 'Online' ? '💻 Online' : '📍 Presencial'}
-                      {visualizarEvento.local_endereco_url && <span className="font-normal text-gray-600 ml-1">- {visualizarEvento.local_endereco_url}</span>}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {(
-                (visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) ||
-                (visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) ||
-                (visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0)
-              ) && (
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Participantes</p>
-
-                      {/* INTERNOS */}
-                      {(visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) && (
-                        <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
-                          {visualizarEvento.participantes_internos.map((id: string) => {
-                            const colab = collaborators.find(c => String(c.id) === String(id));
-                            return colab ? (
-                              <span key={id} className="inline-flex px-1.5 py-0.5 bg-[#1e3a8a]/5 text-[#1e3a8a] rounded text-[10px] font-bold border border-[#1e3a8a]/10 truncate max-w-full">
-                                {formatName(colab.name)}
-                              </span>
-                            ) : null;
-                          })}
+            {/* MODAL RESUMO COLABORADOR */}
+            {visualizarColaborador && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarColaborador(null)}>
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                  <div className="px-6 py-4 bg-gradient-to-r from-[#d4af37] to-amber-600 flex items-center justify-between relative overflow-hidden">
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
+                      <Cake className="w-24 h-24" />
+                    </div>
+                    <div className="flex items-center gap-3 text-white relative z-10">
+                      {visualizarColaborador.photo_url ? (
+                        <img src={visualizarColaborador.photo_url} className="w-12 h-12 rounded-full border-2 border-white object-cover" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-bold text-amber-600 bg-white shadow-sm text-xl">
+                          {visualizarColaborador.name.charAt(0).toUpperCase()}
                         </div>
                       )}
-
-                      {/* SOCIOS */}
-                      {(visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) && (
-                        <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
-                          {visualizarEvento.participantes_socios.map((nomeSocio, idx) => (
-                            <span key={`socio-${idx}`} className="inline-flex px-1.5 py-0.5 bg-[#d4af37]/10 text-[#d4af37] rounded text-[10px] font-bold border border-[#d4af37]/20 truncate max-w-full">
-                              {nomeSocio} (Sócio)
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* EXTERNOS */}
-                      {(visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0) && (
-                        <div className="flex flex-col gap-0.5 mt-2">
-                          {visualizarEvento.participantes_externos.map((ext, idx) => (
-                            <p key={`ext-${idx}`} className="text-[11px] text-gray-600 font-medium leading-tight">
-                              Externo: {ext.nome} {ext.email && <span className="opacity-70">({ext.email})</span>}
-                            </p>
-                          ))}
-                        </div>
-                      )}
+                      <div>
+                        <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{formatName(visualizarColaborador.name)}</h3>
+                        <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarColaborador.role || 'Sem cargo'}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setVisualizarColaborador(null)}
+                      className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="p-6 space-y-5">
+                    <div className="flex items-start gap-4">
+                      <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                      <div>
+                        <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local de Atuação</p>
+                        <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.location || 'Não informado'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
+                      <div>
+                        <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Líder Direto</p>
+                        <p className="text-[13px] font-bold text-[#0a192f]">{visualizarColaborador.leader || 'Não informado'}</p>
+                      </div>
                     </div>
                   </div>
-                )}
-              {visualizarEvento.descricao ? (
-                <div className="flex items-start gap-4 mt-4 pt-4 border-t border-gray-100">
-                  <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
-                  <div>
-                    <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local / Descrição</p>
-                    <p className="text-[13px] font-semibold text-gray-700 whitespace-pre-line leading-relaxed">{visualizarEvento.descricao}</p>
+                </div>
+              </div>
+            )}
+
+            {/* MODAL RESUMO EVENTO */}
+            {visualizarEvento && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setVisualizarEvento(null)}>
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                  <div className="px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-between relative overflow-hidden">
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white/20">
+                      <CalendarEventIcon className="w-24 h-24" />
+                    </div>
+                    <div className="flex items-center gap-3 text-white relative z-10">
+                      <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <Sparkles className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-black text-lg max-w-[200px] truncate leading-tight">{visualizarEvento.titulo}</h3>
+                        <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mt-0.5">{visualizarEvento.tipo}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setVisualizarEvento(null)}
+                      className="text-white/70 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-all relative z-10"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="p-6">
+                    {visualizarEvento.hora && (
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><CalendarDays className="w-4 h-4" /></div>
+                        <div>
+                          <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Data e Hora</p>
+                          <p className="text-[13px] font-bold text-[#0a192f]">{new Date(visualizarEvento.data_evento + 'T12:00:00').toLocaleDateString('pt-BR')} às {visualizarEvento.hora}</p>
+                        </div>
+                      </div>
+                    )}
+                    {(visualizarEvento.local_tipo || visualizarEvento.local_endereco_url) && (
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                        <div>
+                          <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local</p>
+                          <p className="text-[13px] font-bold text-[#0a192f]">
+                            {visualizarEvento.local_tipo === 'Online' ? '💻 Online' : '📍 Presencial'}
+                            {visualizarEvento.local_endereco_url && <span className="font-normal text-gray-600 ml-1">- {visualizarEvento.local_endereco_url}</span>}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {(
+                      (visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) ||
+                      (visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) ||
+                      (visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0)
+                    ) && (
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Participantes</p>
+
+                            {/* INTERNOS */}
+                            {(visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) && (
+                              <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
+                                {visualizarEvento.participantes_internos.map((id: string) => {
+                                  const colab = collaborators.find(c => String(c.id) === String(id));
+                                  return colab ? (
+                                    <span key={id} className="inline-flex px-1.5 py-0.5 bg-[#1e3a8a]/5 text-[#1e3a8a] rounded text-[10px] font-bold border border-[#1e3a8a]/10 truncate max-w-full">
+                                      {formatName(colab.name)}
+                                    </span>
+                                  ) : null;
+                                })}
+                              </div>
+                            )}
+
+                            {/* SOCIOS */}
+                            {(visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) && (
+                              <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
+                                {visualizarEvento.participantes_socios.map((nomeSocio, idx) => (
+                                  <span key={`socio-${idx}`} className="inline-flex px-1.5 py-0.5 bg-[#d4af37]/10 text-[#d4af37] rounded text-[10px] font-bold border border-[#d4af37]/20 truncate max-w-full">
+                                    {nomeSocio} (Sócio)
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* EXTERNOS */}
+                            {(visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0) && (
+                              <div className="flex flex-col gap-0.5 mt-2">
+                                {visualizarEvento.participantes_externos.map((ext, idx) => (
+                                  <p key={`ext-${idx}`} className="text-[11px] text-gray-600 font-medium leading-tight">
+                                    Externo: {ext.nome} {ext.email && <span className="opacity-70">({ext.email})</span>}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    {visualizarEvento.descricao ? (
+                      <div className="flex items-start gap-4 mt-4 pt-4 border-t border-gray-100">
+                        <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><AlignLeft className="w-4 h-4" /></div>
+                        <div>
+                          <p className="text-[9px] font-black tracking-widest uppercase text-gray-400 mb-0.5">Local / Descrição</p>
+                          <p className="text-[13px] font-semibold text-gray-700 whitespace-pre-line leading-relaxed">{visualizarEvento.descricao}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <div className="p-3 bg-gray-50 rounded-full mb-2"><AlignLeft className="w-5 h-5 text-gray-300" /></div>
+                        <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400 italic">Nenhuma descrição</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-4">
-                  <div className="p-3 bg-gray-50 rounded-full mb-2"><AlignLeft className="w-5 h-5 text-gray-300" /></div>
-                  <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400 italic">Nenhuma descrição</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-    </div>
-  )
-}
+              </div>
+            )
+            }
