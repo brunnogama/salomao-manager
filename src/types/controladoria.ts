@@ -463,6 +463,7 @@ export interface Vaga {
   id: string;
   vaga_id_text: string;
   role_id?: string | number;
+  atuacao_id?: string | number;
   location_id?: string | number;
   quantidade: number;
   hiring_reason_id?: string | number;
