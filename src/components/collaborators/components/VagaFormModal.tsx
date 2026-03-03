@@ -47,6 +47,11 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
         { id: 'Jurídica', name: 'Jurídica' }
     ]
 
+    const tipoOptions = [
+        { id: 'Temporária', name: 'Temporária' },
+        { id: 'Definitiva', name: 'Definitiva' }
+    ]
+
     const statusOptions = [
         { id: 'Aguardando Autorização', name: 'Aguardando Autorização' },
         { id: 'Aberta', name: 'Aberta' },
@@ -362,6 +367,14 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         tableName="hiring_reasons"
                                     />
 
+                                    <SearchableSelect
+                                        label="Tipo"
+                                        value={formData.tipo || ''}
+                                        onChange={(v) => setFormData({ ...formData, tipo: v as any })}
+                                        options={tipoOptions}
+                                        uppercase={false}
+                                    />
+
                                     <ManagedSelect
                                         label="Colaborador Substituído"
                                         value={formData.replaced_collaborator_id || ''}
@@ -403,7 +416,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         <input
                                             type="date"
                                             value={formData.data_abertura || ''}
-                                            onChange={e => setFormData({ ...formData, data_abertura: e.target.value })}
+                                            onChange={e => setFormData({ ...formData, data_abertura: e.target.value || null as any })}
                                             className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
                                         />
                                     </div>
@@ -413,7 +426,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         <input
                                             type="date"
                                             value={formData.data_prazo || ''}
-                                            onChange={e => setFormData({ ...formData, data_prazo: e.target.value })}
+                                            onChange={e => setFormData({ ...formData, data_prazo: e.target.value || null as any })}
                                             className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
                                         />
                                     </div>
@@ -496,7 +509,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                                 <input
                                                     type="date"
                                                     value={formData.data_fechamento || ''}
-                                                    onChange={e => setFormData({ ...formData, data_fechamento: e.target.value })}
+                                                    onChange={e => setFormData({ ...formData, data_fechamento: e.target.value || null as any })}
                                                     className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
                                                 />
                                             </div>

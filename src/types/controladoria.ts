@@ -470,6 +470,7 @@ export interface Vaga {
   replaced_collaborator_id?: string;
   perfil?: string;
   area?: string;
+  tipo?: 'Temporária' | 'Definitiva';
   remuneracao?: number;
   partner_id?: string;
   leader_id?: string;
