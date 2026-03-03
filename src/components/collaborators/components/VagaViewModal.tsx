@@ -10,7 +10,8 @@ import {
     Clock,
     User,
     Tag,
-    FileText
+    FileText,
+    X
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 
@@ -86,35 +87,42 @@ export function VagaViewModal({ isOpen, onClose, vagaId, onEdit }: VagaViewModal
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm transition-all duration-300">
-            <div
-                className="w-[90%] md:w-[60%] lg:w-[45%] bg-white h-full shadow-2xl flex flex-col border-l border-gray-100"
-                onClick={e => e.stopPropagation()}
-            >
-                {/* HEAD */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-[#f8fafc]">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-100/50 rounded-2xl flex items-center justify-center border border-blue-200/50 shadow-sm">
-                            <Briefcase className="w-6 h-6 text-[#1e3a8a] stroke-[2.5]" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
+
+                {/* HEADER */}
+                <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-blue-50 text-[#1e3a8a]">
+                            <Briefcase className="h-5 w-5" />
                         </div>
                         <div>
-                            <h2 className={`text-xl font-bold tracking-tight flex items-center gap-2 ${vaga?.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>
+                            <h2 className="text-[16px] font-black tracking-tight uppercase flex items-center gap-2 text-[#0a192f]">
                                 Visualizar Vaga
-                                {vaga && (
-                                    <span className={`text-[10px] px-2.5 py-1 rounded-md tracking-widest font-black uppercase border ${vaga.sigilosa ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                                        {vaga.vaga_id_text}
-                                        {vaga.sigilosa ? ' (Sigilosa)' : ''}
+                            </h2>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <p className={`text-[10px] font-bold uppercase tracking-widest ${vaga?.sigilosa ? 'text-red-600' : 'text-gray-400'}`}>
+                                    {vaga?.vaga_id_text || 'ID Automático'}
+                                </p>
+                                {vaga?.sigilosa && (
+                                    <span className="text-[8px] bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest leading-none">
+                                        Sigilosa
                                     </span>
                                 )}
-                            </h2>
-                            <p className="text-sm text-gray-500 font-medium">Detalhes e acompanhamento do cargo</p>
+                            </div>
                         </div>
                     </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
                 </div>
 
                 {/* BODY */}
-                <div className="flex-1 overflow-y-auto bg-gray-50/30">
-                    <div className="p-8 space-y-8">
+                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                    <div className="space-y-8">
                         {error && (
                             <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
                                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -234,11 +242,11 @@ export function VagaViewModal({ isOpen, onClose, vagaId, onEdit }: VagaViewModal
                 </div>
 
                 {/* FOOTER */}
-                <div className="p-6 border-t border-gray-100 flex items-center justify-between bg-white shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
+                <div className="p-6 border-t border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0 rounded-b-2xl">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-all"
+                        className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200"
                     >
                         Fechar
                     </button>
@@ -249,7 +257,7 @@ export function VagaViewModal({ isOpen, onClose, vagaId, onEdit }: VagaViewModal
                                 onClose()
                                 onEdit(vaga.id)
                             }}
-                            className="bg-[#1e3a8a] text-white px-8 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-900 transition-all flex items-center gap-2 shadow-lg shadow-blue-900/20 active:scale-95 hover:-translate-y-0.5"
+                            className="bg-[#1e3a8a] text-white px-8 py-2.5 rounded-xl font-bold text-sm hover:bg-[#1e3a8a]/90 transition-all flex items-center gap-2 shadow-lg shadow-[#1e3a8a]/20 active:scale-95 hover:-translate-y-0.5"
                         >
                             <Edit2 className="w-4 h-4" />
                             Editar Vaga
