@@ -8,7 +8,6 @@ import {
   Users,
   Clock,
   CheckCircle2,
-  Calendar,
   Edit2,
   AlertCircle
 } from 'lucide-react'
@@ -19,8 +18,10 @@ import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelec
 export function RHVagas() {
   const [searchTerm, setSearchTerm] = useState('')
   const [vagas, setVagas] = useState<Vaga[]>([])
+  const [candidatos, setCandidatos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas'>('abertas')
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -30,30 +31,48 @@ export function RHVagas() {
   const [selectedCandidatoId, setSelectedCandidatoId] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchVagas()
+    fetchData()
   }, [])
 
-  const fetchVagas = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true)
-      const { data, error: dbError } = await supabase
-        .from('vagas')
-        .select(`
-          *,
-          role:role_id (id, name),
-          location:location_id (id, name),
-          partner:partner_id (id, name)
-        `)
-        .order('created_at', { ascending: false })
-
-      if (dbError) throw dbError
-      setVagas(data || [])
+      await Promise.all([fetchVagas(), fetchCandidatos()])
     } catch (err: any) {
-      console.error('Error fetching vagas:', err)
-      setError('Não foi possível carregar as vagas.')
+      console.error('Error fetching data:', err)
+      setError('Não foi possível carregar as informações.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchVagas = async () => {
+    const { data, error: dbError } = await supabase
+      .from('vagas')
+      .select(`
+        *,
+        role:role_id (id, name),
+        location:location_id (id, name),
+        partner:partner_id (id, name),
+        leader:leader_id (id, name)
+      `)
+      .order('created_at', { ascending: false })
+
+    if (dbError) throw dbError
+    setVagas(data || [])
+  }
+
+  const fetchCandidatos = async () => {
+    const { data, error: dbError } = await supabase
+      .from('candidatos')
+      .select(`
+        *,
+        candidato_historico ( tipo, data_registro )
+      `)
+      .order('created_at', { ascending: false })
+
+    if (dbError) throw dbError
+    setCandidatos(data || [])
   }
 
   const handleOpenSelectionModal = () => {
@@ -90,13 +109,21 @@ export function RHVagas() {
     return (
       v.vaga_id_text?.toLowerCase().includes(term) ||
       v.role?.name?.toLowerCase().includes(term) ||
-      v.area?.toLowerCase().includes(term)
+      v.area?.toLowerCase().includes(term) ||
+      v.location?.name?.toLowerCase().includes(term) ||
+      v.partner?.name?.toLowerCase().includes(term) ||
+      v.leader?.name?.toLowerCase().includes(term)
     )
+  })
+
+  const filteredCandidatos = candidatos.filter(c => {
+    const term = searchTerm.toLowerCase()
+    return c.nome?.toLowerCase().includes(term) || c.email?.toLowerCase().includes(term)
   })
 
   // Stats
   const vagasAbertas = vagas.filter(v => v.status === 'Aberta').length
-  const totalCandidatos = 0 // Will be updated when Candidate features are added
+  const totalTalentosCount = candidatos.length
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6 pb-24">
@@ -147,117 +174,191 @@ export function RHVagas() {
                 <Users className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.1em]">Total Candidatos</p>
-                <p className="text-sm font-bold text-[#0a192f]">{totalCandidatos}</p>
+                <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.1em]">Total Talentos</p>
+                <p className="text-sm font-bold text-[#0a192f]">{totalTalentosCount}</p>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-3 w-full xl:w-auto">
-            <div className="relative flex-1 md:w-64">
+          <div className="flex gap-3 w-full xl:w-auto mt-4 xl:mt-0 items-center justify-between">
+            <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0 custom-scrollbar overflow-x-auto w-full md:w-auto">
+              <button
+                onClick={() => setActiveTab('abertas')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'abertas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Vagas Abertas
+              </button>
+              <button
+                onClick={() => setActiveTab('talentos')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'talentos' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Banco de Talentos
+              </button>
+              <button
+                onClick={() => setActiveTab('fechadas')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'fechadas' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Vagas Fechadas
+              </button>
+            </div>
+
+            <div className="relative flex-1 md:w-64 shrink-0 hidden md:block">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar vagas..."
+                placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl shadow-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium text-xs"
               />
             </div>
-            {/* Nova Vaga button moved to header */}
           </div>
         </div>
+        <div className="md:hidden relative w-full shrink-0 mt-2">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl shadow-sm focus:ring-2 focus:ring-[#1e3a8a] outline-none transition-all font-medium text-xs"
+          />
+        </div>
 
-        {/* LISTA DE VAGAS */}
+        {/* LISTA DE VAGAS / CANDIDATOS */}
         {loading ? (
-          <div className="flex justify-center items-center py-20">
+          <div className="flex justify-center items-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1e3a8a]"></div>
           </div>
         ) : error ? (
-          <div className="bg-red-50 p-6 rounded-2xl flex flex-col items-center justify-center text-center border border-red-100">
+          <div className="bg-red-50 p-6 rounded-2xl flex flex-col items-center justify-center text-center border border-red-100 shadow-sm">
             <AlertCircle className="h-8 w-8 text-red-500 mb-3" />
             <p className="text-sm font-medium text-red-700">{error}</p>
           </div>
-        ) : filteredVagas.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        ) : (activeTab === 'abertas' || activeTab === 'fechadas') && filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada')).length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-16 flex flex-col items-center justify-center text-center">
               <div className="p-4 rounded-full bg-blue-50 mb-4">
-                <CheckCircle2 className="h-12 w-12 text-[#1e3a8a] opacity-20" />
+                <Briefcase className="h-12 w-12 text-[#1e3a8a] opacity-20" />
               </div>
-              <h2 className="text-xl font-black text-[#0a192f]">Nenhum processo seletivo {searchTerm ? 'encontrado' : 'ativo'}</h2>
+              <h2 className="text-xl font-black text-[#0a192f]">Nenhuma vaga {activeTab === 'fechadas' ? 'fechada' : 'aberta'} encontrada</h2>
               <p className="text-gray-500 max-w-sm mt-2">
-                {searchTerm ? 'Tente ajustar os termos da sua busca.' : 'Clique em "Nova Vaga" para iniciar um recrutamento.'}
+                {searchTerm ? 'Tente ajustar os termos da sua busca.' : activeTab === 'abertas' ? 'Clique no botão acima para abrir nova vaga.' : ''}
+              </p>
+            </div>
+          </div>
+        ) : activeTab === 'talentos' && filteredCandidatos.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-16 flex flex-col items-center justify-center text-center">
+              <div className="p-4 rounded-full bg-blue-50 mb-4">
+                <Users className="h-12 w-12 text-[#1e3a8a] opacity-20" />
+              </div>
+              <h2 className="text-xl font-black text-[#0a192f]">Nenhum candidato encontrado</h2>
+              <p className="text-gray-500 max-w-sm mt-2">
+                {searchTerm ? 'Tente ajustar os termos da sua busca.' : 'Clique no botão acima para adicionar novo candidato.'}
               </p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-6 gap-4">
-            {filteredVagas.map(vaga => (
-              <div key={vaga.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:border-blue-200 transition-colors group relative overflow-hidden">
-                {/* Status Indicator */}
-                <div className={`absolute top-0 left-0 w-1.5 h-full ${vaga.status === 'Aberta' ? 'bg-green-500' :
-                  vaga.status === 'Congelada' ? 'bg-amber-500' : 'bg-gray-400'
-                  }`} />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 duration-700 overflow-x-auto min-h-[400px]">
+            {activeTab === 'talentos' ? (
+              <table className="w-full min-w-max text-left border-collapse">
+                <thead className="bg-[#1e3a8a]">
+                  <tr>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl">Nome</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Entrevistado?</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Data da entrevista</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredCandidatos.map((c: any) => {
+                    const hasInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
+                    const interviewDates = c.candidato_historico
+                      ?.filter((h: any) => h.tipo === 'Entrevista' && h.data_registro)
+                      .map((h: any) => new Date(h.data_registro))
+                      .sort((a: any, b: any) => b.getTime() - a.getTime());
+                    const lastInterviewDate = interviewDates && interviewDates.length > 0 ? interviewDates[0] : null;
 
-                <div className="ml-2 flex flex-col h-full relative">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          {vaga.vaga_id_text}
-                        </span>
-                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${vaga.status === 'Aberta' ? 'bg-green-50 text-green-700 border-green-200' :
-                          vaga.status === 'Congelada' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-600 border-gray-200'
-                          }`}>
+                    return (
+                      <tr key={c.id} onClick={() => { setSelectedCandidatoId(c.id); setIsCandidatoModalOpen(true); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-sm text-[#0a192f]">{c.nome}</p>
+                          <p className="text-xs text-gray-500">{c.email || c.telefone || '-'}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          {hasInterview ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-green-50 text-green-700 border-green-200">
+                              <CheckCircle2 className="w-3 h-3" /> Sim
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-gray-50 text-gray-600 border-gray-200">
+                              Não
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-700">
+                          {lastInterviewDate ? lastInterviewDate.toLocaleDateString('pt-BR') : '-'}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full min-w-max text-left border-collapse">
+                <thead className="bg-[#1e3a8a]">
+                  <tr>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl">Data Abertura</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Vaga</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Tipo (Área)</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Local</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Quantidade</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Líder Direto</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada')).map(vaga => (
+                    <tr key={vaga.id} onClick={() => handleOpenModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-700">
+                        {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR') : '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider border border-blue-100">
+                            {vaga.vaga_id_text}
+                          </span>
+                        </div>
+                        <p className="font-bold text-sm text-[#0a192f]">{vaga.role?.name || 'Cargo não definido'}</p>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-700">
+                        {vaga.area || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-700">
+                        {vaga.location?.name || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold text-[#0a192f]">
+                        {vaga.quantidade}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-700">
+                        {vaga.leader?.name || '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${vaga.status === 'Aberta' ? 'bg-green-50 text-green-700 border-green-200' : vaga.status === 'Congelada' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                           {vaga.status}
                         </span>
-                      </div>
-                      <h3 className="text-lg font-bold text-[#0a192f] leading-tight">
-                        {vaga.role?.name || 'Cargo não definido'}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">{vaga.area || 'Área não definida'}</p>
-                    </div>
-
-                    <button
-                      onClick={() => handleOpenModal(vaga.id)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors shrink-0"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-y-4 mb-4 mt-auto">
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Local</p>
-                      <p className="text-xs font-semibold text-gray-700">{vaga.location?.name || '-'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Qtd</p>
-                      <p className="text-xs font-semibold text-gray-700">{vaga.quantidade} vaga{vaga.quantidade > 1 ? 's' : ''}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Recrutadora</p>
-                      <p className="text-xs font-semibold text-gray-700">{vaga.recrutadora || '-'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span className="text-[10px] font-bold">
-                        {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR') : '-'}
-                        {vaga.data_fechamento ? ` até ${new Date(vaga.data_fechamento).toLocaleDateString('pt-BR')}` : ''}
-                      </span>
-                    </div>
-
-                    <div className="flex -space-x-2">
-                      {/* Placeholder for candidates avatars */}
-                      <div className="w-6 h-6 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-[8px] font-bold text-gray-500">+0</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={(e) => { e.stopPropagation(); handleOpenModal(vaga.id) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
 
