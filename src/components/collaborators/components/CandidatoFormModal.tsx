@@ -3,7 +3,8 @@ import { supabase } from '../../../lib/supabase'
 import { CollaboratorModalLayout } from './CollaboratorLayouts'
 import { DadosPessoaisSection } from './DadosPessoaisSection'
 import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
-import { User, BookOpen, FileText } from 'lucide-react'
+import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
+import { User, BookOpen, FileText, Briefcase } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import {
     maskCPF,
@@ -45,6 +46,11 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
     const [pendingGedDocs, setPendingGedDocs] = useState<{ file: File, category: string, label?: string, tempId: string, atestadoDatas?: { inicio: string, fim: string } }[]>([])
     const [pendingHistorico, setPendingHistorico] = useState<any[]>([])
     const [pendingExperiencias, setPendingExperiencias] = useState<any[]>([])
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, message: string, type: 'success' | 'warning' | 'error' }>({ isOpen: false, title: '', message: '', type: 'success' })
+
+    const showAlert = (title: string, message: string, type: 'success' | 'warning' | 'error') => {
+        setAlertConfig({ isOpen: true, title, message, type });
+    }
 
     useEffect(() => {
         if (isOpen) {
@@ -107,7 +113,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
         if (e.target.files && e.target.files.length > 0 && selectedGedCategory) {
             const file = e.target.files[0]
             if (file.size > 10 * 1024 * 1024) { // 10MB limit
-                alert('Arquivo muito grande! Máximo de 10MB permitidos.')
+                showAlert('Atenção', 'Arquivo muito grande! Máximo de 10MB permitidos.', 'warning')
                 if (gedInputRef.current) gedInputRef.current.value = ''
                 return
             }
@@ -125,7 +131,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             setAtestadoDatas({ inicio: '', fim: '' })
             if (gedInputRef.current) gedInputRef.current.value = ''
         } else if (!selectedGedCategory) {
-            alert('Por favor, selecione uma categoria antes de enviar o arquivo.')
+            showAlert('Atenção', 'Por favor, selecione uma categoria antes de enviar o arquivo.', 'warning')
         }
     }
 
@@ -146,7 +152,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                 setPendingGedDocs(prev => prev.filter(p => p.tempId !== doc.tempId));
             }
         } catch (e: any) {
-            alert('Erro ao excluir documento: ' + e.message);
+            showAlert('Erro', 'Erro ao excluir documento: ' + e.message, 'error');
         } finally {
             setLoading(false);
         }
@@ -289,8 +295,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
 
     const steps = [
         { id: 1, label: 'Dados Pessoais', icon: User },
-        { id: 2, label: 'Histórico', icon: BookOpen },
-        { id: 3, label: 'GED / Arquivos', icon: FileText },
+        { id: 2, label: 'Dados Profissionais', icon: Briefcase },
+        { id: 3, label: 'Histórico', icon: BookOpen },
+        { id: 4, label: 'GED / Arquivos', icon: FileText },
     ]
 
     if (!isOpen) return null
@@ -363,16 +370,27 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                 </div>
             )}
             {activeTab === 2 && (
+                <div className="animate-in slide-in-from-right-4 duration-300">
+                    <DadosProfissionaisCandidato
+                        formData={formData}
+                        setFormData={setFormData}
+                        isViewMode={false}
+                        candidatoId={candidatoId || null}
+                        pendingExperiencias={pendingExperiencias}
+                        setPendingExperiencias={setPendingExperiencias}
+                        showAlert={showAlert}
+                    />
+                </div>
+            )}
+            {activeTab === 3 && (
                 <CandidatoHistoricoSection
                     candidatoId={candidatoId || null}
                     isViewMode={false}
                     pendingHistorico={pendingHistorico}
                     setPendingHistorico={setPendingHistorico}
-                    pendingExperiencias={pendingExperiencias}
-                    setPendingExperiencias={setPendingExperiencias}
                 />
             )}
-            {activeTab === 3 && (
+            {activeTab === 4 && (
                 <div className="animate-in slide-in-from-right-4 duration-300">
                     <GEDSection
                         gedCategories={gedCategories}
@@ -387,6 +405,28 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                         setPendingGedDocs={setPendingGedDocs}
                         handleDeleteGed={handleDeleteGed}
                     />
+                </div>
+            )}
+            {/* Modal Dialog for alerts matching the system design */}
+            {alertConfig.isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-500/20 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200">
+                        <div className={`p-3 rounded-xl w-fit mb-4 ${alertConfig.type === 'success' ? 'bg-green-50' :
+                            alertConfig.type === 'warning' ? 'bg-amber-50' : 'bg-red-50'
+                            }`}>
+                            {alertConfig.type === 'success' && <div className="h-6 w-6 text-green-500 flex items-center justify-center">✓</div>}
+                            {alertConfig.type === 'warning' && <div className="h-6 w-6 text-amber-500 font-bold text-center">!</div>}
+                            {alertConfig.type === 'error' && <div className="h-6 w-6 text-red-500 font-bold text-center">✕</div>}
+                        </div>
+                        <h3 className="text-lg font-black text-[#0a192f] mb-2 uppercase tracking-wide">{alertConfig.title}</h3>
+                        <p className="text-sm text-gray-500 mb-6 font-medium">{alertConfig.message}</p>
+                        <button
+                            onClick={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+                            className="w-full py-2.5 bg-[#0a192f] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-blue-900 transition-colors"
+                        >
+                            Entendi
+                        </button>
+                    </div>
                 </div>
             )}
         </CollaboratorModalLayout>

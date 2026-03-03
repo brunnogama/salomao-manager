@@ -184,12 +184,6 @@ export function DadosCorporativosSection({
                 label="Atuação"
                 value={formData.atuacao || ''}
                 onChange={v => setFormData({ ...formData, atuacao: v })}
-                tableName="cost_centers"
-                disabled={isViewMode}
-              />              <ManagedSelect
-                label="Equipe"
-                value={formData.equipe || ''}
-                onChange={v => setFormData({ ...formData, equipe: v })}
                 tableName="teams"
                 disabled={isViewMode}
               />

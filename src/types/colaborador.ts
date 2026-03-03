@@ -13,7 +13,7 @@ export interface Colaborador {
   cpf: string;
   birthday: string; // Atualizado de data_nascimento
   type: string; // Atualizado de tipo
-  equipe: string;
+  atuacao: string;
   local: string;
   lider_equipe: string;
   role: string; // Atualizado de cargo
