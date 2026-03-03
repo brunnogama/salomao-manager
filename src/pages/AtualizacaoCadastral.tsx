@@ -5,8 +5,9 @@ import { Loader2, CheckCircle2, User, Save, ShieldCheck } from 'lucide-react';
 import { Collaborator } from '../types/controladoria';
 import { DadosPessoaisSection } from '../components/collaborators/components/DadosPessoaisSection';
 import { EnderecoSection } from '../components/collaborators/components/EnderecoSection';
-import { DadosEscolaridadeSection } from '../components/collaborators/components/DadosEscolaridadeSection';
 import { TransporteSection } from '../components/collaborators/components/TransporteSection';
+import { OABSection } from '../components/collaborators/components/OABSection';
+import { DadosEscolaridadeSection } from '../components/collaborators/components/DadosEscolaridadeSection';
 import { GEDSection } from '../components/collaborators/components/GEDSection';
 import { GEDDocument } from '../types/controladoria';
 
@@ -156,6 +157,10 @@ export default function AtualizacaoCadastral() {
                     education_history: data.education_history?.map((edu: any) => ({
                         ...edu,
                         previsao_conclusao: formatDateToDisplay(edu.previsao_conclusao)
+                    })) || [],
+                    oabs: data.oabs?.map((oab: any) => ({
+                        ...oab,
+                        validade: formatDateToDisplay(oab.validade)
                     })) || []
                 };
 
@@ -322,6 +327,13 @@ export default function AtualizacaoCadastral() {
                 neighborhood: formData.neighborhood,
                 city: formData.city,
                 state: formData.state,
+
+                pis_pasep: formData.pis_pasep,
+                oabs: formData.oabs?.map(oab => ({
+                    ...oab,
+                    validade: formatDateToISO(oab.validade) || null
+                })),
+
                 email_pessoal: formData.email_pessoal,
                 forma_pagamento: formData.forma_pagamento,
                 banco_nome: formData.banco_nome,
@@ -523,11 +535,20 @@ export default function AtualizacaoCadastral() {
                                 handleCepBlur={handleCepBlur}
                                 isViewMode={false}
                             />
-                            <TransporteSection
-                                transportes={formData.transportes || []}
-                                setTransportes={(newT) => setFormData(prev => ({ ...prev, transportes: newT }))}
-                                isViewMode={false}
-                            />
+                            {['ADVOGADO', 'SÓCIO', 'CONSULTOR JURÍDICO', 'ADVOGADO SÊNIOR', 'ADVOGADO PLENO', 'ADVOGADO JÚNIOR'].includes(String(formData.role || formData.contract_type).toUpperCase()) ? (
+                                <OABSection
+                                    formData={formData}
+                                    setFormData={setFormData}
+                                    maskDate={maskDate}
+                                    isViewMode={false}
+                                />
+                            ) : (
+                                <TransporteSection
+                                    transportes={formData.transportes || []}
+                                    setTransportes={(newT) => setFormData(prev => ({ ...prev, transportes: newT }))}
+                                    isViewMode={false}
+                                />
+                            )}
                             <DadosEscolaridadeSection
                                 formData={formData}
                                 setFormData={setFormData}
