@@ -344,7 +344,7 @@ export default function AtualizacaoCadastral() {
                 transportes: formData.transportes || []
             };
 
-            const { data: updatedData, error: updateError } = await supabase.rpc('update_collaborator_by_token', {
+            const { error: updateError } = await supabase.rpc('update_collaborator_by_token', {
                 p_token: token,
                 p_data: dataToSave
             });
@@ -352,23 +352,25 @@ export default function AtualizacaoCadastral() {
             if (updateError) throw updateError;
 
             // Upload pending GED docs
-            if (updatedData && updatedData.id && pendingGedDocs.length > 0) {
+            if (formData && formData.id && pendingGedDocs.length > 0) {
                 for (const doc of pendingGedDocs) {
                     const extension = doc.file.name.includes('.') ? `.${doc.file.name.split('.').pop()}` : '';
                     const categoryLabel = doc.label || doc.category;
                     const storageFileName = `${categoryLabel.replace(/[^a-zA-Z0-9]/g, '_')}${extension}`;
 
-                    const filePath = `ged/${updatedData.id}/${Date.now()}_${storageFileName}`;
+                    const filePath = `ged/${formData.id}/${Date.now()}_${storageFileName}`;
 
                     const { error: upErr } = await supabase.storage.from('ged-colaboradores').upload(filePath, doc.file);
 
                     if (!upErr) {
                         const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath);
                         await supabase.from('ged_colaboradores').insert({
-                            colaborador_id: updatedData.id,
-                            nome_arquivo: categoryLabel,
+                            colaborador_id: formData.id,
+                            nome_arquivo: `${toTitleCase(formData.name || '')}_${categoryLabel}${extension}`,
                             url: publicUrl,
                             categoria: doc.category,
+                            tamanho: doc.file.size,
+                            tipo_arquivo: doc.file.type,
                             dados_atestado: doc.atestadoDatas?.inicio ? doc.atestadoDatas : null
                         });
                     }
