@@ -15,6 +15,8 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { VagaFormModal } from '../components/VagaFormModal'
+import { CandidatoFormModal } from '../components/CandidatoFormModal'
+import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
 
 export function RHVagas() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -24,7 +26,10 @@ export function RHVagas() {
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false)
+  const [isCandidatoModalOpen, setIsCandidatoModalOpen] = useState(false)
   const [selectedVagaId, setSelectedVagaId] = useState<string | null>(null)
+  const [selectedCandidatoId, setSelectedCandidatoId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchVagas()
@@ -53,6 +58,20 @@ export function RHVagas() {
     }
   }
 
+  const handleOpenSelectionModal = () => {
+    setIsSelectionModalOpen(true)
+  }
+
+  const handleSelection = (tipo: VagasCreationType) => {
+    setIsSelectionModalOpen(false)
+    if (tipo === 'vaga') {
+      handleOpenModal()
+    } else {
+      setSelectedCandidatoId(null)
+      setIsCandidatoModalOpen(true)
+    }
+  }
+
   const handleOpenModal = (id?: string) => {
     setSelectedVagaId(id || null)
     setIsModalOpen(true)
@@ -61,6 +80,11 @@ export function RHVagas() {
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedVagaId(null)
+  }
+
+  const handleCloseCandidatoModal = () => {
+    setIsCandidatoModalOpen(false)
+    setSelectedCandidatoId(null)
   }
 
   const filteredVagas = vagas.filter(v => {
@@ -97,10 +121,11 @@ export function RHVagas() {
 
         <div className="flex items-center gap-3 shrink-0 w-full md:w-auto mt-2 md:mt-0 justify-end">
           <button
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            onClick={handleOpenSelectionModal}
+            className="p-3 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95"
+            title="Adicionar Novo"
           >
-            <Plus className="h-4 w-4" /> Nova Vaga
+            <Plus className="h-5 w-5" />
           </button>
         </div>
       </div>
@@ -245,6 +270,19 @@ export function RHVagas() {
         onClose={handleCloseModal}
         vagaId={selectedVagaId}
         onSuccess={fetchVagas}
+      />
+
+      <CandidatoFormModal
+        isOpen={isCandidatoModalOpen}
+        onClose={handleCloseCandidatoModal}
+        candidatoId={selectedCandidatoId}
+        onSave={fetchVagas}
+      />
+
+      <VagasSelectionModal
+        isOpen={isSelectionModalOpen}
+        onClose={() => setIsSelectionModalOpen(false)}
+        onSelect={handleSelection}
       />
     </div>
   )
