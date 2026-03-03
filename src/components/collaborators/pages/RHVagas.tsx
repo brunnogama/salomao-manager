@@ -442,7 +442,6 @@ export function RHVagas() {
                 <tr>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl">Data Abertura</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Prazo</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">ID</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Vaga</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Tipo (Área)</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Local</th>
@@ -460,11 +459,6 @@ export function RHVagas() {
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-700">
                       {vaga.data_prazo ? new Date(vaga.data_prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md uppercase tracking-wider border border-blue-100 whitespace-nowrap">
-                        {vaga.vaga_id_text}
-                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-bold text-sm text-[#0a192f]">{vaga.role?.name || 'Cargo não definido'}</p>
