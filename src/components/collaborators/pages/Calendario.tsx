@@ -117,6 +117,7 @@ export function Calendario() {
   const [editingEvento, setEditingEvento] = useState<number | null>(null) // Changed to number for event ID
   // Estados locais para inputs do Modal
   const [currentSocio, setCurrentSocio] = useState('')
+  const [currentCandidato, setCurrentCandidato] = useState('')
   const [currentExtName, setCurrentExtName] = useState('')
   const [currentExtEmail, setCurrentExtEmail] = useState('')
 
@@ -199,7 +200,7 @@ export function Calendario() {
     // Fetch Vagas
     const { data: vagasData, error: vagasError } = await supabase
       .from('vagas')
-      .select('id, status, vaga_id_text, role:role_id(name)')
+      .select('id, status, vaga_id_text, role:role_id(name), leader:leader_id(name)')
       .in('status', ['Aberta', 'Congelada', 'Aguardando Autorização']);
 
     if (vagasError) console.error('Erro ao buscar vagas do calendário:', vagasError);
@@ -912,7 +913,15 @@ export function Calendario() {
                               <Briefcase className="h-3 w-3" /> Vaga Relacionada
                             </label>
                             <SearchableSelect
-                              options={vagas.map(v => ({ value: v.id, label: v.vaga_id_text ? `${v.vaga_id_text} - ${v.role?.name || 'Sem Cargo'}` : (v.role?.name || 'Sem Cargo') }))}
+                              options={vagas.map(v => {
+                                const cargo = v.role?.name || 'Sem Cargo';
+                                const lider = v.leader?.name ? ` - ${v.leader.name}` : '';
+                                const vagaId = v.vaga_id_text ? ` - ${v.vaga_id_text}` : '';
+                                return {
+                                  value: v.id,
+                                  label: `${cargo}${lider}${vagaId}`
+                                };
+                              })}
                               value={novoEvento.vaga_id || ''}
                               onChange={(val) => setNovoEvento({ ...novoEvento, vaga_id: val })}
                               placeholder="Selecione uma vaga..."
@@ -924,16 +933,28 @@ export function Calendario() {
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
                               <Users className="h-3 w-3" /> Entrevistados (Candidatos)
                             </label>
-                            <SearchableSelect
-                              options={candidatos.map(c => ({ value: c.id, label: c.nome }))}
-                              value={''} // Clear after select
-                              onChange={(val) => {
-                                if (val && !novoEvento.participantes_candidatos.includes(val)) {
-                                  setNovoEvento({ ...novoEvento, participantes_candidatos: [...novoEvento.participantes_candidatos, val] })
-                                }
-                              }}
-                              placeholder="Adicionar candidato..."
-                            />
+                            <div className="flex gap-2">
+                              <div className="flex-1">
+                                <SearchableSelect
+                                  options={candidatos.map(c => ({ value: c.id, label: c.nome }))}
+                                  value={currentCandidato}
+                                  onChange={setCurrentCandidato}
+                                  placeholder="Selecione um candidato..."
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (currentCandidato && !novoEvento.participantes_candidatos.includes(currentCandidato)) {
+                                    setNovoEvento({ ...novoEvento, participantes_candidatos: [...novoEvento.participantes_candidatos, currentCandidato] })
+                                    setCurrentCandidato('')
+                                  }
+                                }}
+                                className="px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors border border-gray-200 flex items-center justify-center"
+                              >
+                                <Plus className="w-5 h-5" />
+                              </button>
+                            </div>
                             {novoEvento.participantes_candidatos.length > 0 && (
                               <div className="flex gap-2 flex-wrap mt-2">
                                 {novoEvento.participantes_candidatos.map((id) => {
