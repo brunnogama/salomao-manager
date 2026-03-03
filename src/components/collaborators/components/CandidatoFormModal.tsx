@@ -209,7 +209,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
 
             // Allowed fields based on the Candidato schema
             const allowedFields = [
-                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'role', 'local'
+                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'role', 'local', 'area', 'contract_type'
             ];
 
             const cleanPayload: any = {};
@@ -291,7 +291,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
 
             // Save pending Experiencias
             if (finalCandidatoId && pendingExperiencias.length > 0) {
-                const expPayload = pendingExperiencias.map(e => ({ ...e, candidato_id: finalCandidatoId }));
+                const expPayload = pendingExperiencias.map(e => {
+                    const { temp_id, ...rest } = e;
+                    return { ...rest, candidato_id: finalCandidatoId };
+                });
                 const { error: expError } = await supabase.from('candidato_experiencias').insert(expPayload);
                 if (expError) console.error("Error saving pending experiencias", expError);
 
