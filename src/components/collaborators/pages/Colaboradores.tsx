@@ -63,7 +63,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [partners, setPartners] = useState<Partial<Partner>[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [locations, setLocations] = useState<Location[]>([])
-  const [, setTeams] = useState<{ id: string; name: string }[]>([])
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
 
   // Scroll Position State
   const listContainerRef = useRef<HTMLDivElement>(null)
@@ -75,7 +75,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [terminationInitiatives, setTerminationInitiatives] = useState<{ id: string; name: string }[]>([])
   const [terminationTypes, setTerminationTypes] = useState<{ id: string; name: string }[]>([])
   const [terminationReasons, setTerminationReasons] = useState<{ id: string; name: string }[]>([])
-  const [, setCostCenters] = useState<{ id: string; name: string }[]>([])
+  const [costCenters, setCostCenters] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedColaborador, setSelectedColaborador] = useState<Collaborator | null>(null)
@@ -965,7 +965,11 @@ export function Colaboradores({ }: ColaboradoresProps) {
       colaboradores,
       terminationInitiatives,
       terminationTypes,
-      terminationReasons
+      terminationReasons,
+      roles,
+      locations,
+      teams,
+      costCenters
     })
   };
 
@@ -1529,7 +1533,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Sócio</th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Líder</th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-white uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-right text-[10px] font-black text-white uppercase tracking-wider pr-8 rounded-tr-xl">Ações</th>
+                    <th className="px-6 py-4 text-right text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">

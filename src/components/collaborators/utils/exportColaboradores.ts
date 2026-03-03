@@ -4,16 +4,20 @@ import { formatDateToDisplay } from './colaboradoresUtils'
 
 interface ExportOptions {
     filtered: Collaborator[];
-    rateios: { id: string; name: string }[];
-    hiringReasons: { id: string; name: string }[];
+    rateios: { id: string | number; name: string }[];
+    hiringReasons: { id: string | number; name: string }[];
     partners: Partial<Partner>[];
     colaboradores: Collaborator[];
-    terminationInitiatives: { id: string; name: string }[];
-    terminationTypes: { id: string; name: string }[];
-    terminationReasons: { id: string; name: string }[];
+    terminationInitiatives: { id: string | number; name: string }[];
+    terminationTypes: { id: string | number; name: string }[];
+    terminationReasons: { id: string | number; name: string }[];
+    roles?: { id: string | number; name: string }[];
+    locations?: { id: string | number; name: string }[];
+    teams?: { id: string | number; name: string }[];
+    costCenters?: { id: string | number; name: string }[];
 }
 
-const getLookupName = (list: { id: string; name: string }[], id?: string | number) => {
+const getLookupName = (list: { id: string | number; name: string }[], id?: string | number) => {
     if (!id) return ''
     return list.find(i => String(i.id) === String(id))?.name || ''
 }
@@ -27,7 +31,11 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         colaboradores,
         terminationInitiatives,
         terminationTypes,
-        terminationReasons
+        terminationReasons,
+        roles = [],
+        locations = [],
+        teams = [],
+        costCenters = []
     } = options
 
     const sortedData = [...filtered].sort((a, b) => {
@@ -103,10 +111,10 @@ export const exportColaboradoresXLSX = (options: ExportOptions) => {
         'Área': c.area,
         'Sócio Responsável': (c as any).partner?.name || getLookupName(partners as any[], c.partner_id),
         'Líder Direto': (c as any).leader?.name || getLookupName(colaboradores as any[], c.leader_id),
-        'Equipe': (c as any).teams?.name || c.equipe,
-        'Cargo': (c as any).roles?.name || c.role,
-        'Centro de Custo': c.centro_custo,
-        'Local': (c as any).locations?.name || c.local,
+        'Equipe': (c as any).teams?.name || getLookupName(teams, c.equipe) || c.equipe,
+        'Cargo': (c as any).roles?.name || getLookupName(roles, c.role) || c.role,
+        'Centro de Custo': getLookupName(costCenters, c.centro_custo) || c.centro_custo,
+        'Local': (c as any).locations?.name || getLookupName(locations, c.local) || c.local,
         'Tipo Transporte': c.transportes?.map((t: any) => t.tipo).join(', ') || '',
         'Quantidade Ida': c.transportes?.reduce((sum: number, t: any) => sum + (t.ida_qtd || 0), 0) || 0,
         'Quantidade Volta': c.transportes?.reduce((sum: number, t: any) => sum + (t.volta_qtd || 0), 0) || 0,
