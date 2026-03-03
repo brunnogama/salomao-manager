@@ -15,6 +15,7 @@ import {
   User,
   Building2
 } from 'lucide-react'
+import { differenceInDays, differenceInMonths, isValid } from 'date-fns'
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
@@ -164,6 +165,46 @@ export function RHVagas() {
 
     return matchSearch && matchLocal && matchCargo
   })
+
+  const calculateTempoAberto = (data_abertura?: string, data_fechamento?: string) => {
+    if (!data_abertura) return '-'
+
+    try {
+      const [year, month, day] = data_abertura.split('-').map(Number)
+      const startDate = new Date(year, month - 1, day)
+
+      let endDate = new Date()
+      if (data_fechamento) {
+        const [eYear, eMonth, eDay] = data_fechamento.split('-').map(Number)
+        endDate = new Date(eYear, eMonth - 1, eDay)
+      }
+
+      if (!isValid(startDate) || !isValid(endDate)) return '-'
+
+      let months = differenceInMonths(endDate, startDate)
+
+      const tempDate = new Date(startDate)
+      tempDate.setMonth(tempDate.getMonth() + months)
+      let days = differenceInDays(endDate, tempDate)
+
+      if (days < 0) {
+        months -= 1
+        tempDate.setMonth(tempDate.getMonth() - 1)
+        days = differenceInDays(endDate, tempDate)
+      }
+
+      if (months === 0 && days === 0) return 'Hoje'
+      if (months < 0 || days < 0) return '-'
+
+      let result = []
+      if (months > 0) result.push(`${months} ${months === 1 ? 'mês' : 'meses'}`)
+      if (days > 0) result.push(`${days} ${days === 1 ? 'dia' : 'dias'}`)
+
+      return result.join(' e ') || 'Hoje'
+    } catch (e) {
+      return '-'
+    }
+  }
 
   // Stats
   const vagasAbertas = vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').length
@@ -441,6 +482,7 @@ export function RHVagas() {
               <thead className="bg-[#1e3a8a]">
                 <tr>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl">Data Abertura</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Tempo Aberto</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Prazo</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Vaga</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Tipo (Área)</th>
@@ -456,6 +498,12 @@ export function RHVagas() {
                   <tr key={vaga.id} onClick={() => handleOpenModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
                     <td className="px-6 py-4 text-sm font-semibold text-gray-700">
                       {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-semibold text-[#1e3a8a] whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-1 rounded-md border border-blue-100 w-max">
+                        <Clock className="w-3.5 h-3.5 text-blue-500" />
+                        {calculateTempoAberto(vaga.data_abertura, vaga.data_fechamento)}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-700">
                       {vaga.data_prazo ? new Date(vaga.data_prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
