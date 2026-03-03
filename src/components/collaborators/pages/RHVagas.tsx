@@ -9,9 +9,7 @@ import {
   Clock,
   CheckCircle2,
   Calendar,
-  MoreVertical,
   Edit2,
-  Trash2,
   AlertCircle
 } from 'lucide-react'
 import { VagaFormModal } from '../components/VagaFormModal'
@@ -122,7 +120,7 @@ export function RHVagas() {
         <div className="flex items-center gap-3 shrink-0 w-full md:w-auto mt-2 md:mt-0 justify-end">
           <button
             onClick={handleOpenSelectionModal}
-            className="p-3 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95"
+            className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
             title="Adicionar Novo"
           >
             <Plus className="h-5 w-5" />
