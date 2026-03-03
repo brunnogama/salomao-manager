@@ -471,6 +471,7 @@ export interface Vaga {
   perfil?: string;
   area?: string;
   tipo?: 'Temporária' | 'Definitiva';
+  sigilosa?: boolean;
   remuneracao?: number;
   partner_id?: string;
   leader_id?: string;
@@ -489,6 +490,7 @@ export interface Vaga {
   // Joined fields for display
   role?: { id: string; name: string };
   location?: { id: string; name: string };
+  atuacao?: { id: string; name: string };
   hiring_reason?: { id: string; name: string };
   replaced_collaborator?: { id: string; name: string };
   partner?: { id: string; name: string };

@@ -13,11 +13,13 @@ import {
   X,
   Filter,
   User,
-  Building2
+  Building2,
+  Trash2
 } from 'lucide-react'
 import { differenceInDays, differenceInMonths, isValid } from 'date-fns'
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 import { VagaFormModal } from '../components/VagaFormModal'
+import { VagaViewModal } from '../components/VagaViewModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
 import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
 
@@ -43,6 +45,7 @@ export function RHVagas() {
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false)
   const [isCandidatoModalOpen, setIsCandidatoModalOpen] = useState(false)
   const [selectedVagaId, setSelectedVagaId] = useState<string | null>(null)
@@ -84,6 +87,7 @@ export function RHVagas() {
         *,
         role:role_id (id, name),
         location:location_id (id, name),
+        atuacao:atuacao_id (id, name),
         partner:partner_id (id, name),
         leader:leader_id (id, name)
       `)
@@ -123,11 +127,37 @@ export function RHVagas() {
   const handleOpenModal = (id?: string) => {
     setSelectedVagaId(id || null)
     setIsModalOpen(true)
+    setIsViewModalOpen(false)
+  }
+
+  const handleOpenViewModal = (id: string) => {
+    setSelectedVagaId(id)
+    setIsViewModalOpen(true)
+    setIsModalOpen(false)
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedVagaId(null)
+  }
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false)
+    setSelectedVagaId(null)
+  }
+
+  const handleDeleteVaga = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!window.confirm('Tem certeza que deseja excluir esta vaga? Todos os dados vinculados a ela poderão ser perdidos.')) return
+
+    try {
+      const { error } = await supabase.from('vagas').delete().eq('id', id)
+      if (error) throw error
+      fetchVagas()
+    } catch (err) {
+      console.error('Erro ao excluir vaga:', err)
+      alert('Não foi possível excluir a vaga. Verifique se existem talentos vinculados.')
+    }
   }
 
   const handleCloseCandidatoModal = () => {
@@ -485,9 +515,9 @@ export function RHVagas() {
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Tempo Aberto</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Prazo</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Vaga</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Atuação</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Tipo (Área)</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Local</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Quantidade</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Líder Direto</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl">Ações</th>
@@ -495,7 +525,7 @@ export function RHVagas() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
-                  <tr key={vaga.id} onClick={() => handleOpenModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
+                  <tr key={vaga.id} onClick={() => handleOpenViewModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
                     <td className="px-6 py-4 text-sm font-semibold text-gray-700">
                       {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
                     </td>
@@ -509,16 +539,21 @@ export function RHVagas() {
                       {vaga.data_prazo ? new Date(vaga.data_prazo).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-bold text-sm text-[#0a192f]">{vaga.role?.name || 'Cargo não definido'}</p>
+                      <div className="flex items-center gap-2">
+                        <p className={`font-bold text-sm ${vaga.sigilosa ? 'text-red-600' : 'text-[#0a192f]'}`}>{vaga.role?.name || 'Cargo não definido'}</p>
+                        {vaga.sigilosa && (
+                          <span className="text-[8px] bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">Sigilosa</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-700">
+                      {vaga.atuacao?.name || '-'}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-700">
                       {vaga.area || '-'}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-700">
                       {vaga.location?.name || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-bold text-[#0a192f]">
-                      {vaga.quantidade}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-700">
                       {vaga.leader?.name || '-'}
@@ -531,6 +566,7 @@ export function RHVagas() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={(e) => { e.stopPropagation(); handleOpenModal(vaga.id) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
+                        <button onClick={(e) => handleDeleteVaga(vaga.id, e)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -545,6 +581,13 @@ export function RHVagas() {
         onClose={handleCloseModal}
         vagaId={selectedVagaId}
         onSuccess={fetchVagas}
+      />
+
+      <VagaViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleCloseViewModal}
+        vagaId={selectedVagaId}
+        onEdit={(id) => handleOpenModal(id)}
       />
 
       <CandidatoFormModal

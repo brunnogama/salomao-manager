@@ -276,9 +276,16 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                             <h2 className="text-[16px] font-black text-[#0a192f] uppercase tracking-tight">
                                 {vagaId ? 'Editar Vaga' : 'Nova Vaga'}
                             </h2>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
-                                {formData.vaga_id_text || 'ID Automático'}
-                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <p className={`text-[10px] font-bold uppercase tracking-widest ${formData.sigilosa ? 'text-red-600' : 'text-gray-400'}`}>
+                                    {formData.vaga_id_text || 'ID Automático'}
+                                </p>
+                                {formData.sigilosa && (
+                                    <span className="text-[8px] bg-red-50 text-red-600 border border-red-100 px-1.5 py-0.5 rounded uppercase font-black tracking-widest">
+                                        Sigilosa
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <button
@@ -375,12 +382,25 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         uppercase={false}
                                     />
 
-                                    <ManagedSelect
-                                        label="Colaborador Substituído"
-                                        value={formData.replaced_collaborator_id || ''}
-                                        onChange={v => setFormData({ ...formData, replaced_collaborator_id: v })}
-                                        tableName="collaborators"
-                                    />
+                                    <div className="flex flex-col gap-2">
+                                        <ManagedSelect
+                                            label="Colaborador Substituído"
+                                            value={formData.replaced_collaborator_id || ''}
+                                            onChange={v => setFormData({ ...formData, replaced_collaborator_id: v })}
+                                            tableName="collaborators"
+                                        />
+                                        <label className="flex items-center gap-2 cursor-pointer mt-1 ml-1 w-max">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.sigilosa || false}
+                                                onChange={e => setFormData({ ...formData, sigilosa: e.target.checked })}
+                                                className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-600"
+                                            />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-red-600">
+                                                Vaga Sigilosa
+                                            </span>
+                                        </label>
+                                    </div>
 
                                 </div>
                             </section>
