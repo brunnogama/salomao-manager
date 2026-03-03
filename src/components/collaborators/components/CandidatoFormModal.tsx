@@ -221,7 +221,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                 'hiring_reason_id', 'termination_initiative_id', 'termination_type_id', 'termination_reason_id',
                 'civil_status', 'nacionalidade', 'naturalidade_cidade', 'naturalidade_uf', 'mae', 'pai',
                 'ctps', 'cnh', 'tituloseleitor', 'reservista', 'pis', 'has_children', 'children_count',
-                'equipe', 'cadastro_atualizado'
+                'equipe', 'cadastro_atualizado', 'local', 'role'
             ];
 
             nonCandidateFields.forEach(field => {

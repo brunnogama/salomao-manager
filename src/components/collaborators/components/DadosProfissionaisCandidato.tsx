@@ -181,7 +181,7 @@ export function DadosProfissionaisCandidato({
     return (
         <div className="space-y-6">
             {/* INFORMAÇÕES GERAIS */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative group">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500 rounded-l-2xl"></div>
 
                 <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6 flex items-center gap-2">
