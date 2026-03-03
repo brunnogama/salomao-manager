@@ -186,7 +186,9 @@ export function Calendario() {
           local_endereco_url: e.location_address,
           participantes_internos: e.participants_internal,
           participantes_externos: externos,
-          participantes_socios: socios
+          participantes_socios: socios,
+          vaga_id: e.vaga_id,
+          participantes_candidatos: e.participantes_candidatos || []
         });
       });
       setEventos([...feriados, ...mappedEvs])
@@ -197,7 +199,7 @@ export function Calendario() {
     // Fetch Vagas
     const { data: vagasData } = await supabase
       .from('vagas')
-      .select('id, title, status, vaga_id_text')
+      .select('id, title, status, vaga_id_text, role:role_id(name)')
       .in('status', ['Aberta', 'Congelada', 'Aguardando Autorização']);
     if (vagasData) setVagas(vagasData);
 
@@ -908,7 +910,7 @@ export function Calendario() {
                               <Briefcase className="h-3 w-3" /> Vaga Relacionada
                             </label>
                             <SearchableSelect
-                              options={vagas.map(v => ({ value: v.id, label: v.vaga_id_text ? `${v.vaga_id_text} - ${v.title}` : v.title }))}
+                              options={vagas.map(v => ({ value: v.id, label: v.vaga_id_text ? `${v.vaga_id_text} - ${v.role?.name || v.title}` : (v.role?.name || v.title) }))}
                               value={novoEvento.vaga_id || ''}
                               onChange={(val) => setNovoEvento({ ...novoEvento, vaga_id: val })}
                               placeholder="Selecione uma vaga..."
@@ -1223,7 +1225,8 @@ export function Calendario() {
                 {(
                   (visualizarEvento.participantes_internos && visualizarEvento.participantes_internos.length > 0) ||
                   (visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) ||
-                  (visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0)
+                  (visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0) ||
+                  (visualizarEvento.participantes_candidatos && visualizarEvento.participantes_candidatos.length > 0)
                 ) && (
                     <div className="flex items-start gap-4 mb-4">
                       <div className="p-2.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-xl shadow-sm"><Users className="w-4 h-4" /></div>
@@ -1263,6 +1266,20 @@ export function Calendario() {
                                 Externo: {ext.nome} {ext.email && <span className="opacity-70">({ext.email})</span>}
                               </p>
                             ))}
+                          </div>
+                        )}
+
+                        {/* CANDIDATOS */}
+                        {(visualizarEvento.participantes_candidatos && visualizarEvento.participantes_candidatos.length > 0) && (
+                          <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
+                            {visualizarEvento.participantes_candidatos.map((id: string) => {
+                              const cand = candidatos.find(c => String(c.id) === String(id));
+                              return cand ? (
+                                <span key={id} className="inline-flex px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-[10px] font-bold border border-purple-200 truncate max-w-full">
+                                  {formatName(cand.nome)} (Candidato)
+                                </span>
+                              ) : null;
+                            })}
                           </div>
                         )}
                       </div>
