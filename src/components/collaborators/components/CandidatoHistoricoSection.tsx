@@ -20,6 +20,9 @@ export function CandidatoHistoricoSection({
     const [loading, setLoading] = useState(false)
     const [tipo, setTipo] = useState('Entrevista')
     const [descricao, setDescricao] = useState('')
+    const [entrevistaData, setEntrevistaData] = useState('')
+    const [entrevistaHora, setEntrevistaHora] = useState('')
+    const [compareceu, setCompareceu] = useState<string>('Pendente')
     const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, title: string, message: string, type: 'success' | 'warning' | 'error' }>({ isOpen: false, title: '', message: '', type: 'success' })
 
     const showAlert = (title: string, message: string, type: 'success' | 'warning' | 'error') => {
@@ -69,20 +72,44 @@ export function CandidatoHistoricoSection({
         }
     }
 
+    const handleUpdateCompareceu = async (id: string, value: string) => {
+        setLoading(true);
+        try {
+            const val = value === 'Pendente' ? null : value === 'Sim';
+            const { error } = await supabase.from('candidato_historico').update({ compareceu: val }).eq('id', id);
+            if (error) throw error;
+            setHistoricoList(prev => prev.map(item => item.id === id ? { ...item, compareceu: val } : item));
+            showAlert('Sucesso', 'Presença atualizada!', 'success');
+        } catch (e: any) {
+            showAlert('Erro', 'Erro ao atualizar presença: ' + e.message, 'error');
+        } finally {
+            setLoading(false);
+        }
+    }
+
     // --- SAVE HANDLERS ---
     const handleSaveHistorico = async () => {
         if (!descricao) return
 
-        const payload = {
+        const payload: any = {
             tipo: tipo,
             descricao: descricao,
             data_registro: new Date().toISOString()
+        }
+
+        if (tipo === 'Entrevista') {
+            if (entrevistaData) payload.entrevista_data = entrevistaData;
+            if (entrevistaHora) payload.entrevista_hora = entrevistaHora;
+            payload.compareceu = compareceu === 'Pendente' ? null : compareceu === 'Sim';
         }
 
         if (!candidatoId) {
             if (setPendingHistorico) setPendingHistorico(prev => [{ ...payload, temp_id: Math.random().toString(36).substr(2, 9) }, ...prev]);
             showAlert('Atenção', 'Registro adicionado temporariamente. Salve o candidato para concluir.', 'warning');
             setDescricao('');
+            setEntrevistaData('');
+            setEntrevistaHora('');
+            setCompareceu('Pendente');
             return;
         }
 
@@ -95,6 +122,9 @@ export function CandidatoHistoricoSection({
             if (error) throw error
             showAlert('Sucesso', 'Registro salvo com sucesso!', 'success')
             setDescricao('')
+            setEntrevistaData('');
+            setEntrevistaHora('');
+            setCompareceu('Pendente');
             fetchHistorico()
         } catch (e: any) {
             showAlert('Erro', 'Erro ao salvar: ' + e.message, 'error')
@@ -154,6 +184,32 @@ export function CandidatoHistoricoSection({
                                         { id: 'Outros', name: 'Outros' }
                                     ]}
                                 />
+                                {tipo === 'Entrevista' && (
+                                    <div className="flex gap-2">
+                                        <div className="flex-1">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Data da Entrevista</label>
+                                            <input type="date" value={entrevistaData} onChange={e => setEntrevistaData(e.target.value)} disabled={isViewMode} className="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 disabled:bg-gray-50" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Hora</label>
+                                            <input type="time" value={entrevistaHora} onChange={e => setEntrevistaHora(e.target.value)} disabled={isViewMode} className="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm disabled:opacity-70 disabled:bg-gray-50" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <SearchableSelect
+                                                label="Compareceu?"
+                                                placeholder="Selecione..."
+                                                value={compareceu}
+                                                onChange={setCompareceu}
+                                                disabled={isViewMode}
+                                                options={[
+                                                    { id: 'Pendente', name: 'Pendente' },
+                                                    { id: 'Sim', name: 'Sim' },
+                                                    { id: 'Não', name: 'Não' }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-2">
@@ -227,9 +283,49 @@ export function CandidatoHistoricoSection({
                                                         </button>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-gray-700 font-medium whitespace-pre-wrap leading-relaxed">
+                                                <p className="text-sm text-gray-700 font-medium whitespace-pre-wrap leading-relaxed mt-2">
                                                     {item.descricao}
                                                 </p>
+
+                                                {item.tipo === 'Entrevista' && (item.entrevista_data || item.entrevista_hora || item.compareceu !== undefined) && (
+                                                    <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-4">
+                                                        {(item.entrevista_data || item.entrevista_hora) && (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Agendado:</span>
+                                                                <span className="text-xs font-bold text-[#0a192f] bg-gray-50 px-2 py-1 rounded-md">
+                                                                    {item.entrevista_data ? new Date(item.entrevista_data + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
+                                                                    {item.entrevista_data && item.entrevista_hora ? ' às ' : ''}
+                                                                    {item.entrevista_hora ? item.entrevista_hora : ''}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Compareceu:</span>
+                                                            {!isViewMode ? (
+                                                                <select
+                                                                    value={item.compareceu === true ? 'Sim' : item.compareceu === false ? 'Não' : 'Pendente'}
+                                                                    onChange={(e) => handleUpdateCompareceu(item.id, e.target.value)}
+                                                                    className={`text-xs font-bold px-2 py-1 rounded-md outline-none transition-colors border cursor-pointer ${item.compareceu === true ? 'bg-green-50 text-green-700 border-green-200' :
+                                                                            item.compareceu === false ? 'bg-red-50 text-red-700 border-red-200' :
+                                                                                'bg-gray-50 text-gray-600 border-gray-200 focus:border-blue-500'
+                                                                        }`}
+                                                                    disabled={!item.id} // Disabled se não foi salvo (temp_id)
+                                                                >
+                                                                    <option value="Pendente">Pendente</option>
+                                                                    <option value="Sim">Sim</option>
+                                                                    <option value="Não">Não</option>
+                                                                </select>
+                                                            ) : (
+                                                                <span className={`text-xs font-bold px-2 py-1 rounded-md border ${item.compareceu === true ? 'bg-green-50 text-green-700 border-green-200' :
+                                                                        item.compareceu === false ? 'bg-red-50 text-red-700 border-red-200' :
+                                                                            'bg-gray-50 text-gray-600 border-gray-200'
+                                                                    }`}>
+                                                                    {item.compareceu === true ? 'Sim' : item.compareceu === false ? 'Não' : 'Pendente'}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     )

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
-  Calendar, Building2, Mail, Loader2,
+  Calendar, Building2, Mail, Loader2, UserPlus,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock,
   Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, Filter, FilterX, BellRing
 } from 'lucide-react'
@@ -1552,6 +1552,73 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     </tr>
                   ) : (
                     <>
+                      {/* APROVADOS (PRÉ-CADASTRO) */}
+                      {filtered.some(c => c.status === 'Aprovado') && (
+                        <tr className="bg-emerald-50/80">
+                          <td colSpan={7} className="px-6 py-3 border-y border-emerald-200">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-800 flex items-center gap-2">
+                              <UserPlus className="h-4 w-4" /> Candidatos Aprovados (Pré-Cadastro)
+                            </p>
+                          </td>
+                        </tr>
+                      )}
+                      {filtered.filter(c => c.status === 'Aprovado').map((c) => (
+                        <tr key={c.id} onClick={() => handleRowClick(c)} className="bg-emerald-50/30 hover:bg-emerald-50/60 cursor-pointer transition-colors group">
+                          <td className="px-6 py-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 rounded text-emerald-600 border-emerald-300 focus:ring-emerald-600 cursor-pointer"
+                              checked={selectedIds.includes(c.id)}
+                              onChange={(e) => handleSelect(e, c.id)}
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar src={c.photo_url} name={c.name} onImageClick={(e: any) => { e.stopPropagation(); c.photo_url && setViewingPhoto(c.photo_url) }} />
+                              <div>
+                                <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">{c.matricula_interna}</span>}
+                                  <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).teams?.name || c.equipe || '')}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-emerald-100 text-emerald-800 border-emerald-300">
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                              Aprovado
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
+                              <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+
+                      {/* ATIVOS */}
+                      {filtered.some(c => c.status === 'active') && filtered.some(c => c.status === 'Aprovado') && (
+                        <tr className="bg-blue-50/50">
+                          <td colSpan={7} className="px-6 py-3 border-y border-blue-100">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1e3a8a] flex items-center gap-2">
+                              <Users className="h-4 w-4" /> Equipe Ativa
+                            </p>
+                          </td>
+                        </tr>
+                      )}
                       {filtered.filter(c => c.status === 'active').map((c) => (
                         <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-blue-50/30 cursor-pointer transition-colors group">
                           <td className="px-6 py-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
@@ -1585,9 +1652,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                              <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                              {c.status === 'active' ? 'Ativo' : 'Inativo'}
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-green-50 text-green-700 border-green-200">
+                              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              Ativo
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
@@ -1598,14 +1665,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           </td>
                         </tr>
                       ))}
-                      {filtered.some(c => c.status !== 'active') && (
+
+                      {/* INATIVOS */}
+                      {filtered.some(c => c.status !== 'active' && c.status !== 'Aprovado') && (
                         <tr className="bg-gray-50/50">
                           <td colSpan={7} className="px-6 py-3 border-y border-gray-100">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inativos</p>
                           </td>
                         </tr>
                       )}
-                      {filtered.filter(c => c.status !== 'active').map(c => (
+                      {filtered.filter(c => c.status !== 'active' && c.status !== 'Aprovado').map(c => (
                         <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
                           <td className="px-6 py-4 w-12 text-center">
                             {/* Disabled checkbox for inactive users */}
@@ -1630,9 +1699,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${c.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                              <div className={`w-1.5 h-1.5 rounded-full ${c.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                              {c.status === 'active' ? 'Ativo' : 'Inativo'}
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-red-50 text-red-700 border-red-200">
+                              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                              Inativo
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">

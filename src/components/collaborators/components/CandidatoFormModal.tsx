@@ -6,12 +6,14 @@ import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
 import { User, BookOpen, FileText, Briefcase } from 'lucide-react'
 import { GEDSection } from './GEDSection'
+import { EnderecoSection } from './EnderecoSection'
 import {
     maskCPF,
     maskDate,
     maskRG,
     maskPhone,
-    maskCNPJ
+    maskCNPJ,
+    maskCEP
 } from '../utils/colaboradoresUtils'
 
 interface CandidatoFormModalProps {
@@ -109,6 +111,26 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             if (data) setGedDocs(data)
         } catch (e: any) {
             console.error('Erro ao buscar documentos:', e.message)
+        }
+    }
+
+    const handleCepBlur = async () => {
+        if (formData.zip_code?.length === 9) {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${formData.zip_code.replace('-', '')}/json/`)
+                const data = await response.json()
+                if (!data.erro) {
+                    setFormData(prev => ({
+                        ...prev,
+                        address: data.logradouro,
+                        neighborhood: data.bairro,
+                        city: data.localidade,
+                        state: data.uf
+                    }))
+                }
+            } catch (error) {
+                console.error('Erro ao buscar CEP:', error)
+            }
         }
     }
 
@@ -347,7 +369,18 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                         isViewMode={false}
                         hideBankingAndEmergency={true}
                     />
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mt-6">
+                    <EnderecoSection
+                        formData={formData}
+                        setFormData={setFormData}
+                        maskCEP={maskCEP}
+                        handleCepBlur={handleCepBlur}
+                        isViewMode={false}
+                    />
+                </div>
+            )}
+            {activeTab === 2 && (
+                <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex justify-between items-center">
                             Perfil e Tags
                             <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para pesquisar tags</span>
@@ -381,10 +414,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                             )}
                         </div>
                     </div>
-                </div>
-            )}
-            {activeTab === 2 && (
-                <div className="animate-in slide-in-from-right-4 duration-300">
+
                     <DadosProfissionaisCandidato
                         formData={formData}
                         setFormData={setFormData}

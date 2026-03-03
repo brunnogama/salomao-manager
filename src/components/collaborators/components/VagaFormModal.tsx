@@ -250,6 +250,45 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                 }
             }
 
+            // Auto-register Candidate as Collaborator when Vaga is Fechada
+            if (payload.status === 'Fechada' && payload.candidato_aprovado_id) {
+                try {
+                    const { data: candData } = await supabase
+                        .from('candidatos')
+                        .select('nome, email')
+                        .eq('id', payload.candidato_aprovado_id)
+                        .single();
+
+                    if (candData) {
+                        let query = supabase.from('collaborators').select('id');
+                        if (candData.email) {
+                            query = query.or(`email.eq.${candData.email},name.ilike.${candData.nome}`);
+                        } else {
+                            query = query.ilike('name', candData.nome);
+                        }
+
+                        const { data: existingColab } = await query.maybeSingle();
+
+                        if (!existingColab) {
+                            const newColab = {
+                                name: candData.nome,
+                                email: candData.email || null,
+                                status: 'Aprovado',
+                                role: payload.role_id ? payload.role_id.toString() : null,
+                                atuacao: payload.atuacao_id ? payload.atuacao_id.toString() : null,
+                                local: payload.location_id ? payload.location_id.toString() : null,
+                                lider_equipe: payload.leader_id ? payload.leader_id.toString() : null,
+                                hire_date: payload.data_aprovacao_gestor || new Date().toISOString().split('T')[0]
+                            };
+                            const { error: colabErr } = await supabase.from('collaborators').insert([newColab]);
+                            if (colabErr) console.error("Error inserting auto colab", colabErr);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error auto-registering candidate as collaborator:", e);
+                }
+            }
+
             if (onSuccess) onSuccess()
             onClose()
         } catch (err: any) {

@@ -16,7 +16,8 @@ import {
   Trash2,
   Check,
   Send,
-  Loader2
+  Loader2,
+  Briefcase
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useColaboradores } from '../hooks/useColaboradores'
@@ -47,6 +48,8 @@ interface Evento {
   participantes_internos?: string[]; // IDs or names
   participantes_externos?: { nome: string; email: string }[];
   participantes_socios?: string[];
+  vaga_id?: string;
+  participantes_candidatos?: string[];
 }
 
 interface NovoEventoData {
@@ -60,6 +63,8 @@ interface NovoEventoData {
   participantes_internos: string[];
   participantes_externos: { nome: string; email: string }[];
   participantes_socios: string[];
+  vaga_id?: string;
+  participantes_candidatos: string[];
 }
 
 interface AniversarioData {
@@ -81,6 +86,8 @@ const MESES = [
 export function Calendario() {
   const { colaboradores } = useColaboradores()
   const [eventos, setEventos] = useState<Evento[]>([])
+  const [vagas, setVagas] = useState<any[]>([])
+  const [candidatos, setCandidatos] = useState<any[]>([])
 
   const collaborators = useMemo(() => {
     return colaboradores
@@ -123,7 +130,9 @@ export function Calendario() {
     local_endereco_url: '',
     participantes_internos: [],
     participantes_externos: [],
-    participantes_socios: []
+    participantes_socios: [],
+    participantes_candidatos: [],
+    vaga_id: ''
   })
 
   // Estados para Aniversários WPP
@@ -184,6 +193,20 @@ export function Calendario() {
     } else {
       setEventos([...feriados])
     }
+
+    // Fetch Vagas
+    const { data: vagasData } = await supabase
+      .from('vagas')
+      .select('id, title, status')
+      .in('status', ['Aberta', 'Pausada']);
+    if (vagasData) setVagas(vagasData);
+
+    // Fetch Candidatos
+    const { data: candData } = await supabase
+      .from('candidatos')
+      .select('id, nome, email')
+      .order('nome');
+    if (candData) setCandidatos(candData);
   }
 
   const handleSaveEvento = async () => {
@@ -195,6 +218,8 @@ export function Calendario() {
         externos: novoEvento.participantes_externos,
         socios: novoEvento.participantes_socios
       })
+
+      let savedEventId = editingEvento;
 
       if (editingEvento) {
         // Atualiza evento existente
@@ -209,14 +234,16 @@ export function Calendario() {
             location_type: novoEvento.local_tipo,
             location_address: novoEvento.local_endereco_url,
             participants_internal: novoEvento.participantes_internos,
-            participants_external: externalPayload
+            participants_external: externalPayload,
+            vaga_id: novoEvento.vaga_id || null,
+            participantes_candidatos: novoEvento.participantes_candidatos
           })
           .eq('id', editingEvento)
 
         if (error) throw error
       } else {
         // Cria novo evento
-        const { error } = await supabase
+        const { data: newEventData, error } = await supabase
           .from('events')
           .insert([{
             title: novoEvento.titulo,
@@ -227,16 +254,35 @@ export function Calendario() {
             location_type: novoEvento.local_tipo,
             location_address: novoEvento.local_endereco_url,
             participants_internal: novoEvento.participantes_internos,
-            participants_external: externalPayload
-          }])
+            participants_external: externalPayload,
+            vaga_id: novoEvento.vaga_id || null,
+            participantes_candidatos: novoEvento.participantes_candidatos
+          }]).select('id').single()
 
         if (error) throw error
+        if (newEventData) savedEventId = newEventData.id;
+      }
+
+      // Se for Entrevista e houver candidatos, adicionar histórico se for criação
+      if (novoEvento.tipo === 'Entrevista' && novoEvento.participantes_candidatos.length > 0 && !editingEvento && savedEventId) {
+        const historicos = novoEvento.participantes_candidatos.map(candId => ({
+          candidato_id: candId,
+          tipo: 'Entrevista',
+          descricao: `Entrevista agendada: ${novoEvento.titulo}`,
+          data_registro: new Date().toISOString(),
+          entrevista_data: novoEvento.data,
+          entrevista_hora: novoEvento.hora || null,
+          compareceu: null, // Pendente
+          evento_id: savedEventId
+        }));
+
+        await supabase.from('candidato_historico').insert(historicos);
       }
 
       await fetchData()
       setIsModalOpen(false)
       setEditingEvento(null)
-      setNovoEvento({ titulo: '', data: new Date().toISOString().split('T')[0], tipo: 'Reunião', descricao: '', hora: '', local_tipo: 'Online', local_endereco_url: '', participantes_internos: [], participantes_externos: [], participantes_socios: [] })
+      setNovoEvento({ titulo: '', data: new Date().toISOString().split('T')[0], tipo: 'Reunião', descricao: '', hora: '', local_tipo: 'Online', local_endereco_url: '', participantes_internos: [], participantes_externos: [], participantes_socios: [], participantes_candidatos: [], vaga_id: '' })
       setCurrentExtName('')
       setCurrentExtEmail('')
       setCurrentSocio('')
@@ -272,7 +318,9 @@ export function Calendario() {
       local_endereco_url: evento.local_endereco_url || '',
       participantes_internos: evento.participantes_internos || [],
       participantes_externos: evento.participantes_externos || [],
-      participantes_socios: evento.participantes_socios || []
+      participantes_socios: evento.participantes_socios || [],
+      participantes_candidatos: evento.participantes_candidatos || [],
+      vaga_id: evento.vaga_id || ''
     })
     setCurrentExtName('')
     setCurrentExtEmail('')
@@ -792,6 +840,7 @@ export function Calendario() {
                     <SearchableSelect
                       options={[
                         { value: 'Reunião', label: 'Reunião' },
+                        { value: 'Entrevista', label: 'Entrevista' },
                         { value: 'Aniversário', label: 'Aniversário' },
                         { value: 'Outros', label: 'Outros' }
                       ]}
@@ -822,7 +871,7 @@ export function Calendario() {
                   </div>
                 </div>
 
-                {novoEvento.tipo === 'Reunião' && (
+                {(novoEvento.tipo === 'Reunião' || novoEvento.tipo === 'Entrevista') && (
                   <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -852,6 +901,54 @@ export function Calendario() {
                     </div>
 
                     <div className="space-y-4">
+                      {novoEvento.tipo === 'Entrevista' && (
+                        <>
+                          {/* VAGA (Apenas para Entrevista) */}
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                              <Briefcase className="h-3 w-3" /> Vaga Relacionada
+                            </label>
+                            <SearchableSelect
+                              options={vagas.map(v => ({ value: v.id, label: v.title }))}
+                              value={novoEvento.vaga_id || ''}
+                              onChange={(val) => setNovoEvento({ ...novoEvento, vaga_id: val })}
+                              placeholder="Selecione uma vaga..."
+                            />
+                          </div>
+
+                          {/* CANDIDATOS (Apenas para Entrevista) */}
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                              <Users className="h-3 w-3" /> Entrevistados (Candidatos)
+                            </label>
+                            <SearchableSelect
+                              options={candidatos.map(c => ({ value: c.id, label: c.nome }))}
+                              value={''} // Clear after select
+                              onChange={(val) => {
+                                if (val && !novoEvento.participantes_candidatos.includes(val)) {
+                                  setNovoEvento({ ...novoEvento, participantes_candidatos: [...novoEvento.participantes_candidatos, val] })
+                                }
+                              }}
+                              placeholder="Adicionar candidato..."
+                            />
+                            {novoEvento.participantes_candidatos.length > 0 && (
+                              <div className="flex gap-2 flex-wrap mt-2">
+                                {novoEvento.participantes_candidatos.map((id) => {
+                                  const cand = candidatos.find(c => c.id === id);
+                                  if (!cand) return null;
+                                  return (
+                                    <div key={id} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-xs font-semibold">
+                                      {formatName(cand.nome)}
+                                      <button onClick={() => setNovoEvento({ ...novoEvento, participantes_candidatos: novoEvento.participantes_candidatos.filter(i => i !== id) })} className="hover:text-red-500 rounded ml-1"><X className="w-3 h-3" /></button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+
                       {/* COLABORADORES */}
                       <div>
                         <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
