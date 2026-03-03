@@ -670,7 +670,10 @@ export function RHVagas() {
         isOpen={isCandidatoModalOpen}
         onClose={handleCloseCandidatoModal}
         candidatoId={selectedCandidatoId}
-        onSave={fetchVagas}
+        onSave={() => {
+          fetchVagas();
+          fetchCandidatos();
+        }}
       />
 
       <VagasSelectionModal
