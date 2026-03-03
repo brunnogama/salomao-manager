@@ -166,7 +166,7 @@ export function RHVagas() {
   })
 
   // Stats
-  const vagasAbertas = vagas.filter(v => v.status === 'Aberta').length
+  const vagasAbertas = vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').length
   const totalTalentosCount = candidatos.length
 
   const currentMonth = new Date().getMonth()
@@ -367,7 +367,7 @@ export function RHVagas() {
           <AlertCircle className="h-8 w-8 text-red-500 mb-3" />
           <p className="text-sm font-medium text-red-700">{error}</p>
         </div>
-      ) : (activeTab === 'abertas' || activeTab === 'fechadas') && filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada')).length === 0 ? (
+      ) : (activeTab === 'abertas' || activeTab === 'fechadas') && filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-16 flex flex-col items-center justify-center text-center">
             <div className="p-4 rounded-full bg-blue-50 mb-4">
@@ -451,7 +451,7 @@ export function RHVagas() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada')).map(vaga => (
+                {filteredVagas.filter(v => activeTab === 'fechadas' ? v.status === 'Fechada' : (v.status === 'Aberta' || v.status === 'Congelada' || v.status === 'Aguardando Autorização')).map(vaga => (
                   <tr key={vaga.id} onClick={() => handleOpenModal(vaga.id)} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
                     <td className="px-6 py-4 text-sm font-semibold text-gray-700">
                       {vaga.data_abertura ? new Date(vaga.data_abertura).toLocaleDateString('pt-BR') : '-'}
@@ -477,7 +477,7 @@ export function RHVagas() {
                       {vaga.leader?.name || '-'}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${vaga.status === 'Aberta' ? 'bg-green-50 text-green-700 border-green-200' : vaga.status === 'Congelada' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border ${vaga.status === 'Aberta' ? 'bg-green-50 text-green-700 border-green-200' : vaga.status === 'Congelada' ? 'bg-amber-50 text-amber-700 border-amber-200' : vaga.status === 'Aguardando Autorização' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                         {vaga.status}
                       </span>
                     </td>
