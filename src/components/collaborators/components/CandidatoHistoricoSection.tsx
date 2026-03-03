@@ -568,8 +568,9 @@ export function CandidatoHistoricoSection({ candidatoId, isViewMode = false }: C
                             )}
                         </div>
                     </div>
-                )}
-            </div>
+                )
+                }
+            </div >
         </div >
     )
 }

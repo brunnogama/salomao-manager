@@ -398,23 +398,8 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Data Fechamento</label>
-                                        <input
-                                            type="date"
-                                            value={formData.data_fechamento || ''}
-                                            onChange={e => setFormData({ ...formData, data_fechamento: e.target.value })}
-                                            className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
-                                        />
-                                    </div>
-
-                                    <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100 flex flex-col justify-center">
-                                        <p className="text-[9px] font-black text-blue-800 uppercase tracking-widest mb-1">SLA</p>
-                                        <p className="text-sm font-bold text-[#1e3a8a]">{calculateSLA()}</p>
-                                    </div>
-
-                                    <div className="md:col-span-3">
-                                        <div className="w-1/3">
+                                    <div className="md:col-span-2">
+                                        <div className="w-1/2">
                                             <SearchableSelect
                                                 label="Status"
                                                 value={formData.status || 'Aberta'}
@@ -480,27 +465,55 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                             </section>
 
                             {/* CLOSURE */}
-                            <section className="p-5 bg-green-50/50 rounded-2xl border border-green-100/50">
-                                <h3 className="text-[9px] font-black text-green-700 uppercase tracking-[0.2em] border-b border-green-200/50 pb-2 mb-4">Fechamento da Vaga</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Menu suspenso Candidato, can use ManagedSelect if referencing 'candidatos' 
-                        or 'collaborators' if approved means hired. The DB links to 'candidatos'. */}
-                                    <ManagedSelect
-                                        label="Candidato Aprovado"
-                                        value={formData.candidato_aprovado_id || ''}
-                                        onChange={v => setFormData({ ...formData, candidato_aprovado_id: v })}
-                                        tableName="candidatos"
-                                        placeholder="Selecione o candidato aprovado"
-                                    />
+                            {formData.status === 'Fechada' && (
+                                <section className="p-5 bg-green-50/50 rounded-2xl border border-green-100/50 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <h3 className="text-[9px] font-black text-green-700 uppercase tracking-[0.2em] border-b border-green-200/50 pb-2 mb-4">Fechamento da Vaga</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                                    <ManagedSelect
-                                        label="Aprovado por (Sócio)"
-                                        value={formData.aprovador_id || ''}
-                                        onChange={v => setFormData({ ...formData, aprovador_id: v })}
-                                        tableName="partners"
-                                    />
-                                </div>
-                            </section>
+                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div>
+                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Data Fechamento</label>
+                                                <input
+                                                    type="date"
+                                                    value={formData.data_fechamento || ''}
+                                                    onChange={e => setFormData({ ...formData, data_fechamento: e.target.value })}
+                                                    className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Data Aprovação Pelo Gestor</label>
+                                                <input
+                                                    type="date"
+                                                    value={formData.data_aprovacao_gestor || ''}
+                                                    onChange={e => setFormData({ ...formData, data_aprovacao_gestor: e.target.value })}
+                                                    className="w-full bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium"
+                                                />
+                                            </div>
+
+                                            <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100 flex flex-col justify-center">
+                                                <p className="text-[9px] font-black text-blue-800 uppercase tracking-widest mb-1">SLA</p>
+                                                <p className="text-sm font-bold text-[#1e3a8a]">{calculateSLA()}</p>
+                                            </div>
+                                        </div>
+
+                                        <ManagedSelect
+                                            label="Candidato Aprovado"
+                                            value={formData.candidato_aprovado_id || ''}
+                                            onChange={v => setFormData({ ...formData, candidato_aprovado_id: v })}
+                                            tableName="candidatos"
+                                            placeholder="Selecione o candidato aprovado"
+                                        />
+
+                                        <ManagedSelect
+                                            label="Aprovado por (Sócio)"
+                                            value={formData.aprovador_id || ''}
+                                            onChange={v => setFormData({ ...formData, aprovador_id: v })}
+                                            tableName="partners"
+                                        />
+                                    </div>
+                                </section>
+                            )}
 
                         </div>
                     )}
