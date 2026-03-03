@@ -114,8 +114,10 @@ export function TransporteSection({
         return acc + totalIda + totalVolta;
     }, 0);
 
-    const workingDays = useMemo(() => getWorkingDaysInCurrentMonth(), []);
-    const monthlyTotalTransporte = totalTransporte * workingDays;
+    const defaultWorkingDays = useMemo(() => getWorkingDaysInCurrentMonth(), []);
+    const [customWorkingDays, setCustomWorkingDays] = useState<number>(defaultWorkingDays);
+
+    const monthlyTotalTransporte = totalTransporte * customWorkingDays;
 
     return (
         <div className="mt-8 pt-6 border-t border-blue-100/50">
@@ -263,7 +265,18 @@ export function TransporteSection({
                     <div className="flex justify-between items-center">
                         <div className="flex flex-col">
                             <span className="text-sm font-bold text-gray-700">Estimativa Mensal (S/ Feriado):</span>
-                            <span className="text-[10px] uppercase text-gray-500 font-bold mt-1">*{workingDays} dias úteis no mês atual</span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] uppercase text-gray-500 font-bold">Dias úteis:</span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    className={`w-16 h-6 px-2 py-0 text-xs bg-white border border-gray-200 text-gray-700 rounded-md focus:ring-1 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    value={customWorkingDays}
+                                    onChange={e => setCustomWorkingDays(parseInt(e.target.value) || 0)}
+                                    disabled={isViewMode}
+                                    readOnly={isViewMode}
+                                />
+                            </div>
                         </div>
                         <span className="text-lg font-black text-emerald-600">{formatCurrency(monthlyTotalTransporte)}</span>
                     </div>

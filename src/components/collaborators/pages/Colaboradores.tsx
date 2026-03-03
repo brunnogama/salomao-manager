@@ -543,7 +543,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         const fileExt = file.name.split('.').pop()
         let categoryLabel = selectedGedCategory;
         if (selectedGedCategory === 'Atestado Médico' && atestadoDatas.inicio && atestadoDatas.fim) {
-          categoryLabel = `Atestado Médico (${atestadoDatas.inicio} a ${atestadoDatas.fim})`
+          categoryLabel = `Atestado Médico (${formatDateToDisplay(atestadoDatas.inicio)} a ${formatDateToDisplay(atestadoDatas.fim)})`
         }
 
         const rawFileName = `${formData.name}_${categoryLabel}`
@@ -575,7 +575,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     } else {
       let categoryLabel = selectedGedCategory;
       if (selectedGedCategory === 'Atestado Médico' && atestadoDatas.inicio && atestadoDatas.fim) {
-        categoryLabel = `Atestado Médico (${atestadoDatas.inicio} a ${atestadoDatas.fim})`
+        categoryLabel = `Atestado Médico (${formatDateToDisplay(atestadoDatas.inicio)} a ${formatDateToDisplay(atestadoDatas.fim)})`
       }
       const newItem = {
         file,

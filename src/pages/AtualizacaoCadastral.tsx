@@ -235,9 +235,13 @@ export default function AtualizacaoCadastral() {
         }
 
         try {
+            const formatForDisplay = (isoDate: string) => {
+                const [y, m, d] = isoDate.split('-');
+                return `${d}/${m}/${y}`;
+            };
             let categoryLabel = selectedGedCategory;
             if (selectedGedCategory === 'Atestado Médico' && atestadoDatas.inicio && atestadoDatas.fim) {
-                categoryLabel = `Atestado Médico (${maskDate(atestadoDatas.inicio)} a ${maskDate(atestadoDatas.fim)})`;
+                categoryLabel = `Atestado Médico (${formatForDisplay(atestadoDatas.inicio)} a ${formatForDisplay(atestadoDatas.fim)})`;
             }
 
             const newItem = {
