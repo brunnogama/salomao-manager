@@ -78,18 +78,18 @@ export default function AtualizacaoCadastral() {
     const gedInputRef = React.useRef<HTMLInputElement>(null);
     const [atestadoDatas, setAtestadoDatas] = useState({ inicio: '', fim: '' });
     const gedCategories = [
-        { id: '1', name: 'Documento de Identificação (RG/CNH)' },
-        { id: '2', name: 'CPF' },
-        { id: '3', name: 'Comprovante de Residência' },
-        { id: '4', name: 'Certidão de Nascimento/Casamento' },
-        { id: '5', name: 'Certificado de Escolaridade/Diploma' },
-        { id: '6', name: 'Carteira de Trabalho (CTPS)' },
-        { id: '7', name: 'PIS/PASEP' },
-        { id: '8', name: 'Título de Eleitor' },
-        { id: '9', name: 'Certificado de Reservista' },
-        { id: '10', name: 'Atestado Médico' },
-        { id: '11', name: 'Atestado de Saúde Ocupacional (ASO)' },
-        { id: '12', name: 'Outros' }
+        { id: 'Documento de Identificação (RG/CNH)', name: 'Documento de Identificação (RG/CNH)' },
+        { id: 'CPF', name: 'CPF' },
+        { id: 'Comprovante de Residência', name: 'Comprovante de Residência' },
+        { id: 'Certidão de Nascimento/Casamento', name: 'Certidão de Nascimento/Casamento' },
+        { id: 'Certificado de Escolaridade/Diploma', name: 'Certificado de Escolaridade/Diploma' },
+        { id: 'Carteira de Trabalho (CTPS)', name: 'Carteira de Trabalho (CTPS)' },
+        { id: 'PIS/PASEP', name: 'PIS/PASEP' },
+        { id: 'Título de Eleitor', name: 'Título de Eleitor' },
+        { id: 'Certificado de Reservista', name: 'Certificado de Reservista' },
+        { id: 'Atestado Médico', name: 'Atestado Médico' },
+        { id: 'Atestado de Saúde Ocupacional (ASO)', name: 'Atestado de Saúde Ocupacional (ASO)' },
+        { id: 'Outros', name: 'Outros' }
     ];
 
     const [formData, setFormData] = useState<Partial<Collaborator>>({});
