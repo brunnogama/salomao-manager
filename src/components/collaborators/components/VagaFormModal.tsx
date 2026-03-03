@@ -149,21 +149,22 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
 
     // Currency Mask (R$ X.XXX,XX)
     const maskCurrency = (value: string | number | undefined) => {
-        if (value === undefined || value === null) return '';
-        let numericValue = typeof value === 'string' ? value.replace(/\D/g, '') : value.toString();
-        if (numericValue === '') return '';
+        if (value === undefined || value === null || value === '') return '';
+        const numValue = Number(value);
+        if (isNaN(numValue)) return '';
 
-        const formattedValue = (parseInt(numericValue) / 100).toLocaleString('pt-BR', {
+        return numValue.toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         });
-        return formattedValue;
     }
 
     const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const rawValue = e.target.value.replace(/\D/g, '');
-        const numValue = rawValue ? parseInt(rawValue) / 100 : null;
-        setFormData({ ...formData, remuneracao: numValue || undefined });
+        const numValue = rawValue ? parseInt(rawValue, 10) / 100 : undefined;
+        setFormData({ ...formData, remuneracao: numValue });
     }
 
     // Tagging Logic
