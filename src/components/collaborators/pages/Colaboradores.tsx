@@ -596,10 +596,16 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const confirmDeleteGed = async () => {
     if (!gedToDelete) return
     try {
-      const path = gedToDelete.url.split('/ged-colaboradores/')[1]
-      await supabase.storage.from('ged-colaboradores').remove([path])
+      const pathIndex = gedToDelete.url.indexOf('/ged-colaboradores/')
+      if (pathIndex !== -1) {
+        const path = gedToDelete.url.substring(pathIndex + '/ged-colaboradores/'.length)
+        await supabase.storage.from('ged-colaboradores').remove([path])
+      }
       await supabase.from('ged_colaboradores').delete().eq('id', gedToDelete.id)
-      fetchGedDocs(selectedColaborador!.id)
+      const colabId = selectedColaborador?.id || formData.id;
+      if (colabId) {
+        fetchGedDocs(colabId)
+      }
       showAlert('Sucesso', 'Documento excluído com sucesso.', 'success')
     } catch (error) {
       showAlert('Erro', 'Erro ao excluir documento.', 'error')
