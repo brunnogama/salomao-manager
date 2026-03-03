@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useCloseOnEscape } from '../../../hooks/useCloseOnEscape'
 import { supabase } from '../../../lib/supabase'
 import { CollaboratorModalLayout } from './CollaboratorLayouts'
 import { DadosPessoaisSection } from './DadosPessoaisSection'
@@ -24,6 +25,8 @@ interface CandidatoFormModalProps {
 }
 
 export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: CandidatoFormModalProps) {
+    useCloseOnEscape(isOpen, onClose)
+
     const [activeTab, setActiveTab] = useState(1)
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState<Partial<any>>({})

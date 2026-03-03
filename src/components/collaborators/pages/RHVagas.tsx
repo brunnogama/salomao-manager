@@ -537,6 +537,8 @@ export function RHVagas() {
                 <tr>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-20 whitespace-nowrap">ID</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap">Nome</th>
+                  <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap">Cargo Pretendido</th>
+                  <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap">Local</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">Entrevistado?</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl w-32 whitespace-nowrap">Data da entrevista</th>
                 </tr>
@@ -550,6 +552,10 @@ export function RHVagas() {
                     .sort((a: any, b: any) => b.getTime() - a.getTime());
                   const lastInterviewDate = interviewDates && interviewDates.length > 0 ? interviewDates[0] : null;
 
+                  // Find names for role and local from options if they are just IDs
+                  const roleName = roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-';
+                  const localName = locationOptions.find(l => String(l.value) === String(c.local))?.label || c.local || '-';
+
                   return (
                     <tr key={c.id} onClick={() => { setSelectedCandidatoId(c.id); setIsCandidatoModalOpen(true); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors group">
                       <td className="px-3 py-3 whitespace-nowrap">
@@ -558,6 +564,12 @@ export function RHVagas() {
                       <td className="px-3 py-3">
                         <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
                         <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone || '-'}</p>
+                      </td>
+                      <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                        {roleName}
+                      </td>
+                      <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                        {localName}
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
                         {hasInterview ? (
