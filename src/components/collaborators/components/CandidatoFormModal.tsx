@@ -207,9 +207,11 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             delete payload.candidato_experiencias;
             delete payload.candidato_ged;
 
-            // Allowed fields based on the Candidato schema
+            // Allowed fields based on the actual Candidato schema via OpenAPI
             const allowedFields = [
-                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'role', 'local', 'area', 'contract_type'
+                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'role', 'local', 'area', 'contract_type',
+                'gender', 'rg', 'cpf', 'birthday', 'civil_status', 'email_pessoal', 'linkedin_url',
+                'has_children', 'children_count', 'children_data'
             ];
 
             const cleanPayload: any = {};
