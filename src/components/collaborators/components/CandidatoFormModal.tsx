@@ -207,37 +207,40 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             delete payload.candidato_experiencias;
             delete payload.candidato_ged;
 
-            // Campos herdados dos componentes de Colaborador (DadosPessoaisSection, EnderecoSection, etc) que não existem na tabela Candidatos
-            const nonCandidateFields = [
-                'area', 'contract_type', 'status', 'partner_id', 'leader_id', 'role_id', 'rateio_id',
-                'matricula_interna', 'email_pessoal', 'linkedin_url', 'cpf', 'birthday', 'gender',
-                'photo_url', 'foto_url', 'oab_numero', 'oab_state', 'oab_expiration', 'hire_date',
-                'termination_date', 'ctps_numero', 'ctps_serie', 'ctps_uf', 'pis_pasep', 'dispensa_militar',
-                'mochila_entregue', 'ultimo_aniversario_parabenizado', 'escolaridade_nivel', 'escolaridade_subnivel',
-                'escolaridade_instituicao', 'escolaridade_matricula', 'escolaridade_semestre', 'escolaridade_previsao_conclusao',
-                'escolaridade_curso', 'rg', 'emergencia_nome', 'emergencia_telefone', 'emergencia_parentesco',
-                'atuacao', 'motivo_desligamento', 'matricula_esocial', 'observacoes', 'oab_emissao',
-                'forma_pagamento', 'banco_nome', 'banco_tipo_conta', 'banco_agencia', 'banco_conta', 'pix_tipo', 'pix_chave',
-                'hiring_reason_id', 'termination_initiative_id', 'termination_type_id', 'termination_reason_id',
-                'civil_status', 'nacionalidade', 'naturalidade_cidade', 'naturalidade_uf', 'mae', 'pai',
-                'ctps', 'cnh', 'tituloseleitor', 'reservista', 'pis', 'has_children', 'children_count',
-                'equipe', 'cadastro_atualizado', 'local', 'role'
+            // Allowed fields based on the Candidato schema
+            const allowedFields = [
+                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil'
             ];
 
-            nonCandidateFields.forEach(field => {
-                if (field in payload) delete payload[field];
+            const cleanPayload: any = {};
+            allowedFields.forEach(field => {
+                if (payload[field] !== undefined) {
+                    cleanPayload[field] = payload[field];
+                }
             });
 
+            console.log('--- ENVIANDO CANDIDATO PARA O BANCO ---');
+            console.log('Payload limpo:', cleanPayload);
+            console.log('ID do Candidato:', candidatoId);
+
             if (candidatoId) {
-                const { error } = await supabase.from('candidatos').update(payload).eq('id', candidatoId)
-                if (error) throw error
+                const { error } = await supabase.from('candidatos').update(cleanPayload).eq('id', candidatoId)
+                if (error) {
+                    console.error('Erro no update do candidato:', error);
+                    throw error;
+                }
             } else {
-                const { error: insertError } = await supabase.from('candidatos').insert([payload])
-                if (insertError) throw insertError
+                const { error: insertError } = await supabase.from('candidatos').insert([cleanPayload])
+                if (insertError) {
+                    console.error('Erro no insert do candidato:', insertError);
+                    throw insertError;
+                }
             }
 
+            console.log('Candidato salvo com sucesso!');
+
             // Extract tags from form data and upsert to perfil_tags
-            if (payload.perfil) {
+            if (cleanPayload.perfil) {
                 const lines = payload.perfil.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
                 if (lines.length > 0) {
                     const tagsToInsert = lines.map((t: string) => ({ tag: t }));
