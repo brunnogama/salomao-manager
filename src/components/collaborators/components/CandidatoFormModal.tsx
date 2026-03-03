@@ -209,7 +209,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
 
             // Allowed fields based on the Candidato schema
             const allowedFields = [
-                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil'
+                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'role', 'local'
             ];
 
             const cleanPayload: any = {};
