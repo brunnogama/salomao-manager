@@ -106,15 +106,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const mainItems = [
     { path: '/rh/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/rh/colaboradores', label: 'Colaboradores', icon: Users },
     { path: '/rh/calendario', label: 'Agenda', icon: Calendar },
+    { path: '/rh/colaboradores', label: 'Colaboradores', icon: Users },
+    { path: '/rh/vagas', label: 'Vagas', icon: Briefcase },
+    { path: '/rh/acoes', label: 'Ações', icon: Megaphone },
     { path: '/rh/presencial', label: 'Presencial', icon: MapPin },
     { path: '/rh/evolucao', label: 'Evolução de Pessoal', icon: TrendingUp },
     { path: '/rh/tempo-casa', label: 'Tempo de casa', icon: Clock },
     { path: '/rh/headcount', label: 'Headcount', icon: BarChart3 },
     { path: '/rh/turnover', label: 'Turnover', icon: RefreshCw },
-    { path: '/rh/vagas', label: 'Vagas', icon: Briefcase },
-    { path: '/rh/acoes', label: 'Ações', icon: Megaphone },
   ]
 
   const isActive = (path: string) => activePage === path
