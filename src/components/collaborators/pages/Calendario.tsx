@@ -317,16 +317,13 @@ export function Calendario() {
             .select('id')
             .eq('candidato_id', candId)
             .eq('tipo', 'Entrevista')
-            .eq('entrevista_data', ev.data_evento)
+            // Removido .eq('entrevista_data') porque não existe na tabela
             .then(({ data }) => {
               if (!data || data.length === 0) {
                 supabase.from('candidato_historico').insert({
                   candidato_id: candId,
                   tipo: 'Entrevista',
-                  descricao: `Entrevista agendada: ${ev.titulo}`,
-                  entrevista_data: ev.data_evento,
-                  entrevista_hora: ev.hora || null,
-                  compareceu: null
+                  descricao: `[Via Calendário] Entrevista agendada: ${ev.titulo}`,
                 }).then(({ error }) => {
                   if (!error) console.log('✅ Histórico retroativo sincronizado para candidato:', candId);
                 });
@@ -407,10 +404,7 @@ export function Calendario() {
         const historicos = novoEvento.participantes_candidatos.map(candId => ({
           candidato_id: candId,
           tipo: 'Entrevista',
-          descricao: `Entrevista agendada: ${novoEvento.titulo}`,
-          entrevista_data: novoEvento.data,
-          entrevista_hora: novoEvento.hora || null,
-          compareceu: null // Pendente
+          descricao: `[Via Calendário] Entrevista agendada: ${novoEvento.titulo}`,
         }));
 
         const { error: histError } = await supabase.from('candidato_historico').insert(historicos);

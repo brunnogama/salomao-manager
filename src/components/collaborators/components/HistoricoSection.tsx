@@ -99,7 +99,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                 const candidatoId = candidatoData[0].id
 
                 // Now fetch events (interviews) related to this candidato
-                // Now fetch events (interviews and notes) related to this candidato
+                // Buscar anotações e histórico do tipo 'Observação' ou antigos sem data de evento
                 const { data: historicoData, error: historicoError } = await supabase
                     .from('candidato_historico')
                     .select('*')
@@ -107,7 +107,35 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
                 if (historicoError) throw historicoError
 
-                const sortedHistorico = (historicoData || []).sort((a: any, b: any) => {
+                // Buscar eventos reais do calendário atrelados a este candidato
+                // Usando .contains porque participantes_candidatos é um array JSONB
+                const { data: eventosData, error: eventosError } = await supabase
+                    .from('eventos')
+                    .select('*')
+                    .contains('participantes_candidatos', [candidatoId])
+
+                if (eventosError) console.error('Erro ao buscar eventos do calendário:', eventosError)
+
+                const combined = [
+                    ...(historicoData || []).map(h => ({
+                        ...h,
+                        id: `hist_${h.id}`,
+                        source: 'historico'
+                    })),
+                    ...(eventosData || []).map(e => ({
+                        id: `ev_${e.id}`,
+                        tipo: e.tipo || 'Entrevista',
+                        created_at: e.created_at,
+                        data_registro: e.created_at,
+                        entrevista_data: e.data_evento ? e.data_evento.split('T')[0] : null,
+                        entrevista_hora: e.data_evento && e.data_evento.includes('T') ? e.data_evento.split('T')[1].substring(0, 5) : null,
+                        descricao: e.descricao || `Evento agendado: ${e.titulo}`,
+                        compareceu: e.compareceu !== undefined ? e.compareceu : null,
+                        source: 'calendario'
+                    }))
+                ]
+
+                const sortedHistorico = combined.sort((a: any, b: any) => {
                     const dateA = new Date(a.created_at || a.data_registro || 0).getTime()
                     const dateB = new Date(b.created_at || b.data_registro || 0).getTime()
                     return dateB - dateA

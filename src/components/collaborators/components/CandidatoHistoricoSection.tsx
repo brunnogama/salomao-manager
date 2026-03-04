@@ -41,19 +41,42 @@ export function CandidatoHistoricoSection({
 
     const fetchHistorico = async () => {
         if (!candidatoId) return
-        const { data } = await supabase
+        const { data: historicoData } = await supabase
             .from('candidato_historico')
             .select('*')
             .eq('candidato_id', candidatoId)
 
-        if (data) {
-            const sortedData = [...data].sort((a: any, b: any) => {
-                const dateA = new Date(a.created_at || a.data_registro || 0).getTime();
-                const dateB = new Date(b.created_at || b.data_registro || 0).getTime();
-                return dateB - dateA;
-            });
-            setHistoricoList(sortedData);
-        }
+        const { data: eventosData } = await supabase
+            .from('eventos')
+            .select('*')
+            .contains('participantes_candidatos', [candidatoId])
+
+        const combined = [
+            ...(historicoData || []).map(h => ({
+                ...h,
+                id: `hist_${h.id}`,
+                source: 'historico'
+            })),
+            ...(eventosData || []).map(e => ({
+                id: `ev_${e.id}`,
+                tipo: e.tipo || 'Entrevista',
+                created_at: e.created_at,
+                data_registro: e.created_at,
+                entrevista_data: e.data_evento ? e.data_evento.split('T')[0] : null,
+                entrevista_hora: e.data_evento && e.data_evento.includes('T') ? e.data_evento.split('T')[1].substring(0, 5) : null,
+                descricao: e.descricao || `[Via Calendário] Evento agendado: ${e.titulo}`,
+                compareceu: e.compareceu !== undefined ? e.compareceu : null,
+                source: 'calendario'
+            }))
+        ]
+
+        const sortedData = combined.sort((a: any, b: any) => {
+            const dateA = new Date(a.created_at || a.data_registro || 0).getTime();
+            const dateB = new Date(b.created_at || b.data_registro || 0).getTime();
+            return dateB - dateA;
+        });
+
+        setHistoricoList(sortedData);
     }
 
     // --- DELETE HANDLER ---
@@ -66,9 +89,17 @@ export function CandidatoHistoricoSection({
         }
 
         if (!id) return;
+
+        if (id.startsWith('ev_')) {
+            alert('Este evento foi gerado pela Agenda e deve ser removido por lá.');
+            return;
+        }
+
+        const realId = id.replace('hist_', '');
+
         setLoading(true);
         try {
-            const { error } = await supabase.from('candidato_historico').delete().eq('id', id);
+            const { error } = await supabase.from('candidato_historico').delete().eq('id', realId);
             if (error) throw error;
             setHistoricoList(prev => prev.filter(item => item.id !== id));
         } catch (e: any) {
@@ -79,10 +110,15 @@ export function CandidatoHistoricoSection({
     }
 
     const handleUpdateCompareceu = async (id: string, value: string) => {
+        if (id.startsWith('ev_')) {
+            alert('A presença de eventos nativos do Calendário devem ser alteradas na aba de Reuniões da Agenda.');
+            return;
+        }
+        const realId = id.replace('hist_', '');
         setLoading(true);
         try {
             const val = value === 'Pendente' ? null : value === 'Sim';
-            const { error } = await supabase.from('candidato_historico').update({ compareceu: val }).eq('id', id);
+            const { error } = await supabase.from('candidato_historico').update({ compareceu: val }).eq('id', realId);
             if (error) throw error;
             setHistoricoList(prev => prev.map(item => item.id === id ? { ...item, compareceu: val } : item));
             showAlert('Sucesso', 'Presença atualizada!', 'success');
@@ -103,9 +139,8 @@ export function CandidatoHistoricoSection({
         }
 
         if (tipo === 'Entrevista') {
-            if (entrevistaData) payload.entrevista_data = entrevistaData;
-            if (entrevistaHora) payload.entrevista_hora = entrevistaHora;
-            payload.compareceu = compareceu === 'Pendente' ? null : compareceu === 'Sim';
+            const extraLines = `\nData: ${entrevistaData ? entrevistaData.split('-').reverse().join('/') : 'N/A'}${entrevistaHora ? ' às ' + entrevistaHora : ''}\nComparecimento: ${compareceu}`;
+            payload.descricao = descricao + extraLines;
         }
 
         if (!candidatoId) {

@@ -12,8 +12,15 @@ async function checkDatabase() {
         password: process.env.VITE_REPORT_PASSWORD,
     });
 
-    const { data: eventData } = await supabase.from('eventos').select('*').eq('id', 8);
-    console.log("\nDetalhes do Evento 8:\n", eventData[0]);
+    const { data: histData, error } = await supabase
+        .from('candidato_historico')
+        .select('*')
+        .limit(1);
+
+    if (histData && histData.length > 0) {
+        console.log("Columns:", Object.keys(histData[0]));
+        console.log("Data:", histData[0]);
+    }
 }
 
 checkDatabase();
