@@ -161,6 +161,10 @@ export interface Collaborator {
     volta_valores: number[];
   }[];
 
+  // Horário de Trabalho
+  work_schedule_start?: string;
+  work_schedule_end?: string;
+
   // Campos Adicionais para evitar erros de lint (UI/Form)
   civil_status?: string;
   nacionalidade?: string;

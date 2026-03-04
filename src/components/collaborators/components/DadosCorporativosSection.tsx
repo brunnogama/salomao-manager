@@ -275,6 +275,40 @@ export function DadosCorporativosSection({
               />
             </div>
 
+            {/* HORÁRIO DE TRABALHO */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <Clock className="h-4 w-4" /> Horário de Trabalho
+              </h4>
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Entrada</label>
+                  <input
+                    type="time"
+                    className={`w-full bg-blue-50/50 border border-blue-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    value={formData.work_schedule_start || ''}
+                    onChange={e => setFormData({ ...formData, work_schedule_start: e.target.value })}
+                    disabled={isViewMode}
+                    readOnly={isViewMode}
+                  />
+                </div>
+
+                <span className="text-gray-400 font-bold self-end mb-3px md:mb-3">às</span>
+
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest mb-2">Saída</label>
+                  <input
+                    type="time"
+                    className={`w-full bg-blue-50/50 border border-blue-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-2.5 outline-none transition-all font-medium ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    value={formData.work_schedule_end || ''}
+                    onChange={e => setFormData({ ...formData, work_schedule_end: e.target.value })}
+                    disabled={isViewMode}
+                    readOnly={isViewMode}
+                  />
+                </div>
+              </div>
+            </div>
+
             <TransporteSection
               transportes={formData.transportes || []}
               setTransportes={(t) => setFormData({ ...formData, transportes: t })}
