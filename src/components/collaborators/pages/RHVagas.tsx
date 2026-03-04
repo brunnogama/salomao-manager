@@ -160,6 +160,20 @@ export function RHVagas() {
     }
   }
 
+  const handleDeleteCandidato = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!window.confirm('Tem certeza que deseja excluir este candidato permanentemente?')) return
+
+    try {
+      const { error } = await supabase.from('candidatos').delete().eq('id', id)
+      if (error) throw error
+      fetchCandidatos()
+    } catch (err) {
+      console.error('Erro ao excluir candidato:', err)
+      alert('Não foi possível excluir o candidato. Verifique os vínculos.')
+    }
+  }
+
   const handleCloseCandidatoModal = () => {
     setIsCandidatoModalOpen(false)
     setSelectedCandidatoId(null)
@@ -540,7 +554,8 @@ export function RHVagas() {
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap text-left">Cargo Pretendido</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap text-left">Local</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap text-center">Entrevistado?</th>
-                  <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl w-32 whitespace-nowrap text-center">Data da entrevista</th>
+                  <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">Data da entrevista</th>
+                  <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider text-right rounded-tr-xl w-16 whitespace-nowrap">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -582,8 +597,14 @@ export function RHVagas() {
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
+                      <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap text-center">
                         {lastInterviewDate ? lastInterviewDate.toLocaleDateString('pt-BR') : '-'}
+                      </td>
+                      <td className="px-3 py-3 text-right whitespace-nowrap">
+                        <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedCandidatoId(c.id); setIsCandidatoModalOpen(true); }} className="p-1.5 text-[#1e3a8a] text-xs hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Edit2 className="h-4 w-4" /></button>
+                          <button onClick={(e) => handleDeleteCandidato(c.id, e)} className="p-1.5 text-red-600 text-xs hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                        </div>
                       </td>
                     </tr>
                   )
