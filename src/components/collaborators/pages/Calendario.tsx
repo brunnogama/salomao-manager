@@ -170,7 +170,7 @@ export function Calendario() {
 
   const fetchData = async () => {
     const { data: evs } = await supabase
-      .from('events') // Changed from 'eventos' to 'events'
+      .from('eventos') // Changed from 'eventos' to 'events'
       .select('*')
       .order('event_date') // Changed from 'data_evento' to 'event_date'
 
@@ -253,7 +253,7 @@ export function Calendario() {
       if (editingEvento) {
         // Atualiza evento existente
         const { error } = await supabase
-          .from('events')
+          .from('eventos')
           .update({
             title: novoEvento.titulo,
             event_date: novoEvento.data,
@@ -273,7 +273,7 @@ export function Calendario() {
       } else {
         // Cria novo evento
         const { data: newEventData, error } = await supabase
-          .from('events')
+          .from('eventos')
           .insert([{
             title: novoEvento.titulo,
             event_date: novoEvento.data,
@@ -327,7 +327,7 @@ export function Calendario() {
   const handleDeleteEvento = async (id: number) => {
     if (!confirm('Deseja realmente excluir este evento?')) return
     try {
-      const { error } = await supabase.from('events').delete().eq('id', id) // Changed from 'eventos' to 'events'
+      const { error } = await supabase.from('eventos').delete().eq('id', id) // Changed back to 'eventos'
       if (error) throw error
       await fetchData()
     } catch (error) {
