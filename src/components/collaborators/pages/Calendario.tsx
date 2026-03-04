@@ -17,6 +17,8 @@ import {
   Check,
   Send,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
   Briefcase
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
@@ -105,9 +107,63 @@ export function Calendario() {
         leader: c.leader?.name || ''
       }))
   }, [colaboradores])
-  const [currentDate] = useState(new Date())
-  const selectedMonth = currentDate.getMonth();
-  const selectedYear = currentDate.getFullYear();
+  // Estado para a navegação do calendário da visão mensal (lateral)
+  const [calendarViewDate, setCalendarViewDate] = useState(new Date());
+
+  const selectedMonth = calendarViewDate.getMonth();
+  const selectedYear = calendarViewDate.getFullYear();
+
+  // Selected date para filtrar eventos (opcional)
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+
+  // Navegar meses
+  const prevMonth = () => {
+    setCalendarViewDate(new Date(selectedYear, selectedMonth - 1, 1));
+  };
+  const nextMonth = () => {
+    setCalendarViewDate(new Date(selectedYear, selectedMonth + 1, 1));
+  };
+  const handleDayClick = (dayDate: Date) => {
+    // If same day is clicked, deselect it
+    if (selectedDay && dayDate.toDateString() === selectedDay.toDateString()) {
+      setSelectedDay(null);
+    } else {
+      setSelectedDay(dayDate);
+    }
+  };
+
+  // Gerar grid do calendário
+  const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+  const firstDayOfMonth = new Date(selectedYear, selectedMonth, 1).getDay();
+  // Dias do mês anterior para preencher a primeira semana
+  const prevMonthDays = new Date(selectedYear, selectedMonth, 0).getDate();
+  const getCalendarDays = () => {
+    const dates = [];
+    // Dias do mês anterior
+    for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+      dates.push({ day: prevMonthDays - i, isCurrentMonth: false, date: new Date(selectedYear, selectedMonth - 1, prevMonthDays - i) });
+    }
+    // Dias do mês atual
+    for (let i = 1; i <= daysInMonth; i++) {
+      dates.push({ day: i, isCurrentMonth: true, date: new Date(selectedYear, selectedMonth, i) });
+    }
+    // Dias do próximo mês para completar a grade em múltiplas de 7
+    const remainingCells = 42 - dates.length; // 6 rows de 7 days = 42
+    for (let i = 1; i <= remainingCells; i++) {
+      dates.push({ day: i, isCurrentMonth: false, date: new Date(selectedYear, selectedMonth + 1, i) });
+    }
+    return dates;
+  };
+  const calendarGrid = useMemo(() => getCalendarDays(), [selectedMonth, selectedYear]);
+
+  // Função auxiliar para verificar se a data tem evento
+  const checkDayHasEvents = (dayDate: Date, allEvts: any[]) => {
+    const timestampStr = dayDate.toDateString();
+    return allEvts.some(e => {
+      if (!e.dataObjeto) return false;
+      return e.dataObjeto.toDateString() === timestampStr;
+    });
+  };
 
   // Estados para Modal de Visualização Rápida
   const [visualizarColaborador, setVisualizarColaborador] = useState<Colaborador | null>(null);
@@ -566,8 +622,62 @@ export function Calendario() {
 
   const eventosHoje = getProximosEventos().filter(e => e.isHoje)
 
-  // Agrupamento de eventos para a lista lateral
+  // PREPARAÇÃO DOS DADOS PARA A LISTA
+  let itemsToShow: any[] = [];
+  const todosAniversarios = getProximosAniversarios().map(a => ({
+    ...a,
+    _source: 'aniversario',
+    sortValue: a.diasRestantes,
+    dataSort: new Date(new Date().getFullYear(), a.mes, a.dia).getTime()
+  }));
+  const todosEventos = getProximosEventos().map(e => ({
+    ...e,
+    _source: 'evento',
+    sortValue: e.diasRestantes,
+    dataSort: e.dataObjeto.getTime()
+  }));
 
+  if (activeTab === 'Geral') {
+    itemsToShow = [...todosAniversarios, ...todosEventos].sort((a, b) => a.sortValue - b.sortValue);
+  } else if (activeTab === 'Feriados') {
+    itemsToShow = todosEventos.filter(e => e.tipo === 'Feriado');
+  } else if (activeTab === 'Entrevistas') {
+    itemsToShow = eventos
+      .filter(e => e.tipo === 'Entrevista')
+      .map(e => ({ ...e, _source: 'evento', dataObjeto: new Date(e.data_evento + 'T12:00:00') }))
+      .sort((a, b) => b.dataObjeto.getTime() - a.dataObjeto.getTime());
+  } else {
+    itemsToShow = todosEventos.filter(e => e.tipo === activeTab);
+  }
+
+  // Filtrar pelo dia selecionado do calendário esquerdo, se houver
+  if (selectedDay) {
+    itemsToShow = itemsToShow.filter(item => {
+      const itemDate = item._source === 'aniversario'
+        ? new Date(new Date().getFullYear(), item.mes, item.dia)
+        : item.dataObjeto;
+      return itemDate.toDateString() === selectedDay.toDateString();
+    });
+  }
+
+  // Agrupar os itens a serem exibidos por data (timestamp meia-noite)
+  const groupedEvents = itemsToShow.reduce((acc, item) => {
+    const d = item._source === 'aniversario'
+      ? new Date(new Date().getFullYear(), item.mes, item.dia)
+      : item.dataObjeto;
+
+    // Normalize time to midnight
+    const dateKey = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    if (!acc[dateKey]) acc[dateKey] = [];
+    acc[dateKey].push(item);
+    return acc;
+  }, {} as Record<number, any[]>);
+
+  // Sort dates (keys) em ordem decrescente para entrevistas, caso contrário crescente
+  const sortedDates = Object.keys(groupedEvents).map(Number).sort((a, b) => activeTab === 'Entrevistas' ? b - a : a - b);
+
+  // Helper de eventos totais para passar aos pontinhos do calendário
+  const allMixedEvents = [...todosAniversarios, ...eventos.map(e => ({ ...e, _source: 'evento', dataObjeto: new Date(e.data_evento + 'T12:00:00') }))];
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6">
@@ -687,207 +797,207 @@ export function Calendario() {
         </div>
       </div>
 
-      {/* CONTEÚDO DA ABA SELECIONADA */}
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col w-full overflow-hidden mt-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
-              <CalendarDays className="h-5 w-5 text-[#1e3a8a]" strokeWidth={1.5} />
-            </div>
-            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
-              {activeTab === 'Geral' ? 'Todos os Compromissos' : activeTab}
+      {/* CONTEÚDO PRINCIPAL (Grid de 2 colunas: Calendário e Listagem) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 w-full">
+        {/* COLUNA ESQUERDA: CALENDÁRIO */}
+        <div className="lg:col-span-1 bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col w-full overflow-hidden h-fit">
+          <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+            <h2 className="text-[18px] font-black text-[#0a192f] capitalize">
+              {MESES[selectedMonth]} {selectedYear}
             </h2>
+            <div className="flex gap-2">
+              <button onClick={prevMonth} className="p-2 hover:bg-gray-200 rounded-lg transition-colors"><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
+              <button onClick={nextMonth} className="p-2 hover:bg-gray-200 rounded-lg transition-colors"><ChevronRight className="w-5 h-5 text-gray-600" /></button>
+            </div>
           </div>
-
-          {activeTab === 'Geral' && selectedAniversariantes.length > 0 && (
-            <button
-              disabled={isSendingWpp}
-              onClick={handleSendWpp}
-              className="mt-4 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all text-xs font-bold uppercase tracking-wider active:scale-95 disabled:opacity-70"
-            >
-              {isSendingWpp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              Parabenizar ({selectedAniversariantes.length})
-            </button>
-          )}
+          <div className="p-5">
+            <div className="grid grid-cols-7 gap-1 text-center mb-2">
+              {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((dia, idx) => (
+                <div key={idx} className="text-[10px] font-black text-gray-400 uppercase">{dia}</div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {calendarGrid.map((dt, idx) => {
+                const hasEvents = checkDayHasEvents(dt.date, allMixedEvents);
+                const isSelected = selectedDay && dt.date.toDateString() === selectedDay.toDateString();
+                const isToday = dt.date.toDateString() === new Date().toDateString();
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleDayClick(dt.date)}
+                    className={`relative p-2 flex flex-col items-center justify-center rounded-xl text-sm font-semibold transition-all
+                      ${!dt.isCurrentMonth ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-100'}
+                      ${isSelected ? 'bg-[#1e3a8a] text-white hover:bg-[#112240]' : ''}
+                      ${isToday && !isSelected ? 'border border-[#1e3a8a] text-[#1e3a8a]' : ''}
+                    `}
+                  >
+                    <span>{dt.day}</span>
+                    {hasEvents && (
+                      <div className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? 'bg-white' : 'bg-emerald-500'}`} />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            {selectedDay && (
+              <button
+                onClick={() => setSelectedDay(null)}
+                className="w-full mt-4 py-2 text-xs font-bold text-gray-500 hover:text-[#1e3a8a] transition-colors uppercase tracking-widest text-center"
+              >
+                Limpar Seleção
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/80 border-b border-gray-100">
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap hidden sm:table-cell">Selec.</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Data / Hora</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Tipo</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest w-full min-w-[300px]">Título / Descrição</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {/* Combine aniversários and eventos for Geral tab */}
-              {(() => {
-                let itemsToShow: any[] = [];
-                const todosAniversarios = getProximosAniversarios().map(a => ({
-                  ...a,
-                  _source: 'aniversario',
-                  sortValue: a.diasRestantes,
-                  dataSort: new Date(new Date().getFullYear(), a.mes, parseInt(a.dia)).getTime()
-                }));
-                const todosEventos = getProximosEventos().map(e => ({
-                  ...e,
-                  _source: 'evento',
-                  sortValue: e.diasRestantes,
-                  dataSort: e.dataObjeto.getTime()
-                }));
+        {/* COLUNA DIREITA: LISTA DE COMPROMISSOS */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col w-full overflow-hidden h-fit mb-10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
+                <CalendarDays className="h-5 w-5 text-[#1e3a8a]" strokeWidth={1.5} />
+              </div>
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
+                {activeTab === 'Geral' ? 'Todos os Compromissos' : activeTab}
+              </h2>
+            </div>
 
-                if (activeTab === 'Geral') {
-                  itemsToShow = [...todosAniversarios, ...todosEventos].sort((a, b) => a.sortValue - b.sortValue);
-                } else if (activeTab === 'Feriados') {
-                  itemsToShow = todosEventos.filter(e => e.tipo === 'Feriado');
-                } else if (activeTab === 'Entrevistas') {
-                  // Entrevistas mantem passadas, não filtramos por diasRestantes >= 0
-                  // Vamos pegar direto do `eventos` original para evitar o filtro do getProximosEventos
-                  itemsToShow = eventos
-                    .filter(e => e.tipo === 'Entrevista')
-                    .map(e => ({ ...e, _source: 'evento', dataObjeto: new Date(e.data_evento + 'T12:00:00') }))
-                    .sort((a, b) => b.dataObjeto.getTime() - a.dataObjeto.getTime()); // Decrescente
-                } else {
-                  itemsToShow = todosEventos.filter(e => e.tipo === activeTab);
-                }
+            {activeTab === 'Geral' && selectedAniversariantes.length > 0 && (
+              <button
+                disabled={isSendingWpp}
+                onClick={handleSendWpp}
+                className="mt-4 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all text-xs font-bold uppercase tracking-wider active:scale-95 disabled:opacity-70"
+              >
+                {isSendingWpp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Parabenizar ({selectedAniversariantes.length})
+              </button>
+            )}
+          </div>
 
-                if (itemsToShow.length === 0) {
+          <div className="p-6 overflow-y-auto max-h-[800px] custom-scrollbar">
+            {sortedDates.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-gray-400 py-12">
+                <CalendarDays className="h-10 w-10 mb-3 opacity-20" />
+                <p className="text-sm font-medium italic">Nenhum evento encontrado para esta data/categoria.</p>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {sortedDates.map(dateKey => {
+                  const items = groupedEvents[dateKey];
+                  const dateObj = new Date(dateKey);
                   return (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center justify-center text-gray-400">
-                          <CalendarDays className="h-10 w-10 mb-3 opacity-20" />
-                          <p className="text-sm font-medium italic">Nenhum evento encontrado para esta categoria.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                }
+                    <div key={dateKey} className="space-y-4">
+                      {/* Caleçalho da Data */}
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-2xl font-black text-[#0a192f] capitalize">
+                          {dateObj.getDate()} {MESES[dateObj.getMonth()].substring(0, 3)}
+                        </h3>
+                        <div className="h-px bg-gray-200 flex-1"></div>
+                      </div>
 
-                return itemsToShow.map((item, idx) => {
-                  const isHoje = item.isHoje || (item.diasRestantes === 0);
-                  const isAniver = item._source === 'aniversario' || item.tipo === 'Aniversário';
-
-                  return (
-                    <tr
-                      key={idx}
-                      className={`group transition-all hover:bg-gray-50/50 cursor-pointer ${isHoje ? 'bg-blue-50/30' : ''}`}
-                      onClick={() => {
-                        if (item.tipo === 'Mochila' || item._source === 'aniversario') {
-                          setVisualizarColaborador((item.colaboradorRef || item.colaborador) as Colaborador)
-                        } else {
-                          setVisualizarEvento(item as Evento)
-                        }
-                      }}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell" onClick={(e) => e.stopPropagation()}>
-                        {isAniver && item.colaborador ? (
-                          <div
-                            onClick={(e) => handleToggleAniversariante(e, String(item.colaborador.id))}
-                            className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${selectedAniversariantes.includes(String(item.colaborador.id))
-                              ? 'bg-green-500 border-green-500 text-white'
-                              : 'border-gray-300 bg-white hover:border-green-500'
-                              }`}
-                          >
-                            {selectedAniversariantes.includes(String(item.colaborador.id)) && <Check className="w-3.5 h-3.5" />}
-                          </div>
-                        ) : (
-                          <div className="w-5 h-5" />
-                        )}
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className={`font-black text-sm ${isHoje ? 'text-[#1e3a8a]' : 'text-[#0a192f]'}`}>
-                            {item._source === 'aniversario' ? `${item.dia} ${MESES[Number(item.mes)].substring(0, 3)}` :
-                              item.data_evento ? new Date(item.data_evento + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
-                          </span>
-                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                            {item.hora ? item.hora : item._source === 'aniversario' ? 'Aniversário' : 'Dia Todo'}
-                          </span>
-                          {isHoje && <span className="text-[9px] font-black text-[#1e3a8a] bg-blue-100 px-2 py-0.5 rounded uppercase mt-0.5 inline-block w-max">Hoje</span>}
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${item.tipo === 'Entrevista' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                          item.tipo === 'Reunião' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                            (item.tipo === 'Aniversário' || item._source === 'aniversario') ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                              item.tipo === 'Mochila' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                                item.tipo === 'Feriado' ? 'bg-red-50 text-red-700 border-red-200' :
-                                  'bg-gray-100 text-gray-700 border-gray-200'
-                          }`}>
-                          {item.tipo === 'Reunião' ? <Users className="w-3 h-3" /> :
-                            item.tipo === 'Entrevista' ? <Briefcase className="w-3 h-3" /> :
-                              (item.tipo === 'Aniversário' || item._source === 'aniversario') ? <PartyPopper className="w-3 h-3" /> :
-                                item.tipo === 'Feriado' ? <CalendarDays className="w-3 h-3" /> :
-                                  <CalendarEventIcon className="w-3 h-3" />}
-                          {item._source === 'aniversario' ? 'Aniversário' : item.tipo}
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3 min-w-0">
-                          {/* Avatar or Icon */}
-                          {(item.colaborador?.photo_url || item.colaboradorRef?.photo_url) ? (
-                            <img src={item.colaborador?.photo_url || item.colaboradorRef?.photo_url} className="w-10 h-10 rounded-xl object-cover shadow-sm shrink-0 border border-gray-200" />
-                          ) : isAniver || item.tipo === 'Mochila' ? (
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black shadow-sm shrink-0 ${isAniver ? 'bg-gradient-to-br from-[#d4af37] to-amber-600' : 'bg-gradient-to-br from-indigo-500 to-indigo-700'}`}>
-                              {(item.colaborador?.name || item.colaboradorRef?.name || '?').charAt(0).toUpperCase()}
-                            </div>
-                          ) : (
-                            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 shadow-sm shrink-0">
-                              <CalendarDays className="w-5 h-5" />
-                            </div>
-                          )}
-
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-bold text-[#0a192f] text-sm truncate">
-                              {item._source === 'aniversario' ? formatName(item.colaborador.name) : item.titulo}
-                            </span>
-                            {item.descricao && (
-                              <span className="text-[11px] font-medium text-gray-500 truncate mt-0.5 max-w-[500px]">
-                                {item.descricao}
-                              </span>
-                            )}
-                            {item._source === 'aniversario' && (
-                              <span className="text-[10px] font-semibold text-gray-400 uppercase mt-0.5">
-                                {toTitleCase(item.colaborador.role)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
-                        {item._source === 'evento' && item.tipo !== 'Feriado' && item.tipo !== 'Mochila' && (
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => handleEditClick(item as Evento)}
-                              className="w-8 h-8 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors tooltip"
-                              title="Editar"
+                      {/* Lista de itens deste dia */}
+                      <div className="space-y-3 pl-2 sm:pl-4">
+                        {items.map((item: any, idx: number) => {
+                          const isAniver = item._source === 'aniversario' || item.tipo === 'Aniversário';
+                          return (
+                            <div
+                              key={idx}
+                              onClick={() => {
+                                if (item.tipo === 'Mochila' || item._source === 'aniversario') {
+                                  setVisualizarColaborador((item.colaboradorRef || item.colaborador) as Colaborador);
+                                } else {
+                                  setVisualizarEvento(item as Evento);
+                                }
+                              }}
+                              className="group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-white hover:bg-gray-50/80 hover:border-gray-200 transition-all cursor-pointer shadow-sm hover:shadow-md"
                             >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteEvento(item.id)}
-                              className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors tooltip"
-                              title="Excluir"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })
-              })()}
-            </tbody>
-          </table>
+                              {/* Selection for aniversariantes */}
+                              {isAniver && item.colaborador && activeTab === 'Geral' && (
+                                <div
+                                  onClick={(e) => handleToggleAniversariante(e, String(item.colaborador.id))}
+                                  className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${selectedAniversariantes.includes(String(item.colaborador.id))
+                                    ? 'bg-green-500 border-green-500 text-white'
+                                    : 'border-gray-300 bg-white hover:border-green-500'
+                                    }`}
+                                >
+                                  {selectedAniversariantes.includes(String(item.colaborador.id)) && <Check className="w-3.5 h-3.5" />}
+                                </div>
+                              )}
+
+                              <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                <div className="text-sm font-bold text-gray-500 min-w-[70px]">
+                                  {item.hora ? item.hora : 'Dia Todo'}
+                                </div>
+                                <div className="hidden sm:block w-px h-6 bg-gray-200"></div>
+                                <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border shrink-0 ${item.tipo === 'Entrevista' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                  item.tipo === 'Reunião' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                    (item.tipo === 'Aniversário' || item._source === 'aniversario') ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                      item.tipo === 'Mochila' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                        item.tipo === 'Feriado' ? 'bg-red-50 text-red-700 border-red-200' :
+                                          'bg-gray-100 text-gray-700 border-gray-200'
+                                  }`}>
+                                  {item.tipo === 'Reunião' ? <Users className="w-3 h-3" /> :
+                                    item.tipo === 'Entrevista' ? <Briefcase className="w-3 h-3" /> :
+                                      (item.tipo === 'Aniversário' || item._source === 'aniversario') ? <PartyPopper className="w-3 h-3" /> :
+                                        item.tipo === 'Feriado' ? <CalendarDays className="w-3 h-3" /> :
+                                          <CalendarEventIcon className="w-3 h-3" />}
+                                  {item._source === 'aniversario' ? 'Aniversário' : item.tipo}
+                                </div>
+                                <div className="hidden sm:block w-px h-6 bg-gray-200"></div>
+                                <div className="flex items-center gap-3 w-full">
+                                  {(item.colaborador?.photo_url || item.colaboradorRef?.photo_url) ? (
+                                    <img src={item.colaborador?.photo_url || item.colaboradorRef?.photo_url} className="w-9 h-9 rounded-full object-cover shadow-sm shrink-0 border border-gray-200" />
+                                  ) : isAniver || item.tipo === 'Mochila' ? (
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-black shadow-sm shrink-0 ${isAniver ? 'bg-gradient-to-br from-[#d4af37] to-amber-600' : 'bg-gradient-to-br from-indigo-500 to-indigo-700'}`}>
+                                      {(item.colaborador?.name || item.colaboradorRef?.name || '?').charAt(0).toUpperCase()}
+                                    </div>
+                                  ) : (
+                                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shadow-sm shrink-0">
+                                      <CalendarDays className="w-4 h-4" />
+                                    </div>
+                                  )}
+                                  <div className="flex flex-col flex-1 min-w-0">
+                                    <span className="font-bold text-[#0a192f] text-sm truncate">
+                                      {item._source === 'aniversario' ? formatName(item.colaborador.name) : item.titulo}
+                                    </span>
+                                    {item.descricao && (
+                                      <span className="text-xs font-medium text-gray-500 truncate mt-0.5">
+                                        {item.descricao}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Ações */}
+                              {item._source === 'evento' && item.tipo !== 'Feriado' && item.tipo !== 'Mochila' && (
+                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-auto pl-4">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleEditClick(item as Evento); }}
+                                    className="w-8 h-8 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors tooltip"
+                                    title="Editar"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteEvento(item.id); }}
+                                    className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors tooltip"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
