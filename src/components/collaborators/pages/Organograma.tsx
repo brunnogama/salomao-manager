@@ -186,63 +186,71 @@ export function Organograma() {
                         <div
                             ref={provided.innerRef}
                             {...provided.droppableProps}
-                            className={`p-4 rounded-xl border-2 transition-all duration-300 w-[300px] shadow-sm relative z-10 
-                ${snapshot.isDraggingOver ? 'border-[#1e3a8a] bg-blue-50/50 scale-105 shadow-xl' : 'border-gray-100 bg-white hover:border-[#1e3a8a]/30'}`}
+                            className={`relative flex flex-col items-center transition-all duration-300 w-[240px] z-10 group
+                ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
                         >
+                            {/* Visual drop indicator */}
+                            <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1]
+                                ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`}
+                            />
+
                             <Draggable draggableId={colab.id} index={0}>
                                 {(dragProvided, dragSnapshot) => (
                                     <div
                                         ref={dragProvided.innerRef}
                                         {...dragProvided.draggableProps}
                                         {...dragProvided.dragHandleProps}
-                                        className={`flex flex-col gap-3 ${dragSnapshot.isDragging ? 'opacity-50' : ''}`}
+                                        className={`flex flex-col items-center cursor-pointer w-full ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
+                                        onClick={() => setSelectedColabForModal(colab.fullData)}
+                                        title="Clique para expandir perfil"
                                     >
-                                        <div
-                                            className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-colors"
-                                            onClick={() => setSelectedColabForModal(colab.fullData)}
-                                        >
+                                        {/* Avatar Circular */}
+                                        <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
                                             {colab.photo_url || colab.foto_url ? (
                                                 <img
                                                     src={colab.photo_url || colab.foto_url}
                                                     alt={colab.name}
-                                                    className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md bg-gray-50 flex-shrink-0"
+                                                    className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-12 h-12 rounded-full border-2 border-white shadow-md bg-blue-50 flex items-center justify-center flex-shrink-0 text-[#1e3a8a]">
-                                                    <UserIcon className="w-6 h-6" />
+                                                <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                    <UserIcon className="w-10 h-10" />
                                                 </div>
                                             )}
-
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="text-sm font-bold text-[#0a192f] truncate">{colab.name}</h4>
-                                                <span className="text-[10px] font-black uppercase tracking-wider text-[#1e3a8a] truncate block">
-                                                    {roleStr}
-                                                </span>
-                                            </div>
                                         </div>
 
-                                        <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex justify-between items-center">
-                                                Competências
-                                                {savingCompetenciasId === colab.id && <Loader2 className="w-3 h-3 animate-spin text-[#1e3a8a]" />}
-                                            </label>
-                                            <textarea
-                                                value={colab.competencias}
-                                                onChange={(e) => updateCompetencias(colab.id, e.target.value)}
-                                                onBlur={() => saveCompetencias(colab.id, colab.competencias || '')}
-                                                placeholder="Descreva as competências..."
-                                                className="w-full text-xs p-2 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] outline-none transition-all resize-none min-h-[60px]"
-                                                onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when typing
-                                            />
+                                        {/* Name and Role */}
+                                        <div className="mt-4 text-center px-2">
+                                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight">{colab.name}</h4>
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">
+                                                {roleStr}
+                                            </span>
+                                        </div>
+
+                                        {/* Hover Competências Card */}
+                                        <div
+                                            className="absolute top-full left-1/2 -translate-x-1/2 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[100] w-[320px]"
+                                            onClick={(e) => e.stopPropagation()} // Prevent modal from opening if they click inside the tooltip
+                                        >
+                                            <div className="bg-white p-5 rounded-3xl shadow-2xl border border-gray-100 flex flex-col gap-3 relative before:absolute before:-top-3 before:left-1/2 before:-translate-x-1/2 before:border-[12px] before:border-transparent before:border-b-white filter drop-shadow-xl animate-in slide-in-from-bottom-2">
+                                                <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest flex justify-between items-center">
+                                                    Competências no Organograma
+                                                    {savingCompetenciasId === colab.id && <Loader2 className="w-3 h-3 animate-spin text-[#1e3a8a]" />}
+                                                </label>
+                                                <textarea
+                                                    value={colab.competencias}
+                                                    onChange={(e) => updateCompetencias(colab.id, e.target.value)}
+                                                    onBlur={() => saveCompetencias(colab.id, colab.competencias || '')}
+                                                    placeholder="Descreva as competências deste colaborador..."
+                                                    className="w-full text-xs p-3 rounded-2xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 outline-none transition-all resize-none min-h-[90px] text-[#0a192f] leading-relaxed"
+                                                    onPointerDown={(e) => e.stopPropagation()} // Prevent drag conflict
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 )}
                             </Draggable>
                             {provided.placeholder}
-
-                            {snapshot.isDraggingOver && (
-                                <div className="absolute inset-0 bg-[#1e3a8a]/5 rounded-xl border-dashed border-2 border-[#1e3a8a]/30 pointer-events-none z-[-1]" />
-                            )}
                         </div>
                     )}
                 </Droppable>
@@ -391,21 +399,23 @@ export function Organograma() {
                                                     ref={dragProvided.innerRef}
                                                     {...dragProvided.draggableProps}
                                                     {...dragProvided.dragHandleProps}
-                                                    className={`p-3 rounded-xl border border-gray-200 bg-white shadow-sm w-[250px]
-                                ${dragSnapshot.isDragging ? 'shadow-xl opacity-50' : 'hover:border-[#1e3a8a]/30'}`}
+                                                    className={`group relative flex flex-col items-center cursor-pointer w-[180px] p-2 transition-all
+                                ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
+                                                    onClick={() => setSelectedColabForModal(colab.fullData)}
+                                                    title="Clique para expandir perfil"
                                                 >
-                                                    <div className="flex items-center gap-3">
-                                                        {colab.photo_url ? (
-                                                            <img src={colab.photo_url} alt={colab.name} className="w-10 h-10 rounded-full object-cover border border-gray-100" />
+                                                    <div className="w-20 h-20 rounded-full bg-white shadow-sm border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-lg group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                                                        {colab.photo_url || colab.foto_url ? (
+                                                            <img src={colab.photo_url || colab.foto_url} alt={colab.name} className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]">
-                                                                <UserIcon className="w-5 h-5" />
+                                                            <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                                <UserIcon className="w-8 h-8" />
                                                             </div>
                                                         )}
-                                                        <div className="min-w-0">
-                                                            <h4 className="text-xs font-bold text-[#0a192f] truncate">{colab.name}</h4>
-                                                            <span className="text-[9px] font-black uppercase text-[#1e3a8a] truncate block tracking-wider">{String(colab.role)}</span>
-                                                        </div>
+                                                    </div>
+                                                    <div className="mt-4 text-center w-full px-1">
+                                                        <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight truncate w-full">{colab.name}</h4>
+                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate w-full">{String(colab.role)}</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -424,108 +434,108 @@ export function Organograma() {
                 </DragDropContext>
             </div>
 
-            {/* Collaborator Detail Modal */ }
-    {
-        selectedColabForModal && (
-            <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-                <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                    <div className="relative h-32 bg-gradient-to-r from-[#1e3a8a] to-[#0a192f]">
-                        <button
-                            onClick={() => setSelectedColabForModal(null)}
-                            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all text-white"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
+            {/* Collaborator Detail Modal */}
+            {
+                selectedColabForModal && (
+                    <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                            <div className="relative h-32 bg-gradient-to-r from-[#1e3a8a] to-[#0a192f]">
+                                <button
+                                    onClick={() => setSelectedColabForModal(null)}
+                                    className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all text-white"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
 
-                    <div className="px-8 pb-8 relative -mt-16">
-                        <div className="flex flex-col items-center sm:items-start sm:flex-row gap-6">
-                            <div className="w-32 h-32 rounded-3xl border-4 border-white shadow-xl bg-white flex items-center justify-center overflow-hidden flex-shrink-0">
-                                {selectedColabForModal.photo_url || selectedColabForModal.foto_url ? (
-                                    <img src={selectedColabForModal.photo_url || selectedColabForModal.foto_url} alt={selectedColabForModal.name} className="w-full h-full object-cover" />
-                                ) : (
-                                    <UserIcon className="w-16 h-16 text-gray-300" />
+                            <div className="px-8 pb-8 relative -mt-16">
+                                <div className="flex flex-col items-center sm:items-start sm:flex-row gap-6">
+                                    <div className="w-32 h-32 rounded-3xl border-4 border-white shadow-xl bg-white flex items-center justify-center overflow-hidden flex-shrink-0">
+                                        {selectedColabForModal.photo_url || selectedColabForModal.foto_url ? (
+                                            <img src={selectedColabForModal.photo_url || selectedColabForModal.foto_url} alt={selectedColabForModal.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <UserIcon className="w-16 h-16 text-gray-300" />
+                                        )}
+                                    </div>
+                                    <div className="pt-2 sm:pt-16 text-center sm:text-left flex-1 min-w-0">
+                                        <h2 className="text-2xl font-black text-[#0a192f] tracking-tight truncate">{selectedColabForModal.name}</h2>
+                                        <p className="text-sm font-bold text-[#1e3a8a] uppercase tracking-wider mt-1 truncate">
+                                            {typeof selectedColabForModal.roles === 'object' ? selectedColabForModal.roles?.name : selectedColabForModal.role}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                                    <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                                            <Briefcase className="w-5 h-5" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Equipe / Área</p>
+                                            <p className="text-sm font-bold text-[#0a192f] truncate">
+                                                {typeof selectedColabForModal.teams === 'object' ? selectedColabForModal.teams?.name : selectedColabForModal.equipe || '-'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                                            <Building2 className="w-5 h-5" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Localidade</p>
+                                            <p className="text-sm font-bold text-[#0a192f] truncate">
+                                                {typeof selectedColabForModal.locations === 'object' ? selectedColabForModal.locations?.name : selectedColabForModal.local || '-'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                            <Mail className="w-5 h-5" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</p>
+                                            <p className="text-sm font-bold text-[#0a192f] truncate">
+                                                {selectedColabForModal.email || 'Não informado'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                                            <Phone className="w-5 h-5" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Celular</p>
+                                            <p className="text-sm font-bold text-[#0a192f] truncate">
+                                                {selectedColabForModal.phone || 'Não informado'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {selectedColabForModal.competencias && (
+                                    <div className="mt-6 bg-blue-50/50 border border-blue-100 rounded-2xl p-5">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Tag className="w-4 h-4 text-[#1e3a8a]" />
+                                            <h3 className="text-xs font-black text-[#0a192f] uppercase tracking-widest">Competências no Organograma</h3>
+                                        </div>
+                                        <p className="text-sm text-[#0a192f] whitespace-pre-wrap leading-relaxed">
+                                            {selectedColabForModal.competencias}
+                                        </p>
+                                    </div>
                                 )}
-                            </div>
-                            <div className="pt-2 sm:pt-16 text-center sm:text-left flex-1 min-w-0">
-                                <h2 className="text-2xl font-black text-[#0a192f] tracking-tight truncate">{selectedColabForModal.name}</h2>
-                                <p className="text-sm font-bold text-[#1e3a8a] uppercase tracking-wider mt-1 truncate">
-                                    {typeof selectedColabForModal.roles === 'object' ? selectedColabForModal.roles?.name : selectedColabForModal.role}
-                                </p>
-                            </div>
-                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                            <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
-                                    <Briefcase className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Equipe / Área</p>
-                                    <p className="text-sm font-bold text-[#0a192f] truncate">
-                                        {typeof selectedColabForModal.teams === 'object' ? selectedColabForModal.teams?.name : selectedColabForModal.equipe || '-'}
+                                <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                        Para edição completa, acesse a aba Colaboradores.
                                     </p>
                                 </div>
                             </div>
-
-                            <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
-                                    <Building2 className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Localidade</p>
-                                    <p className="text-sm font-bold text-[#0a192f] truncate">
-                                        {typeof selectedColabForModal.locations === 'object' ? selectedColabForModal.locations?.name : selectedColabForModal.local || '-'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
-                                    <Mail className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</p>
-                                    <p className="text-sm font-bold text-[#0a192f] truncate">
-                                        {selectedColabForModal.email || 'Não informado'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
-                                    <Phone className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Celular</p>
-                                    <p className="text-sm font-bold text-[#0a192f] truncate">
-                                        {selectedColabForModal.phone || 'Não informado'}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {selectedColabForModal.competencias && (
-                            <div className="mt-6 bg-blue-50/50 border border-blue-100 rounded-2xl p-5">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Tag className="w-4 h-4 text-[#1e3a8a]" />
-                                    <h3 className="text-xs font-black text-[#0a192f] uppercase tracking-widest">Competências no Organograma</h3>
-                                </div>
-                                <p className="text-sm text-[#0a192f] whitespace-pre-wrap leading-relaxed">
-                                    {selectedColabForModal.competencias}
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                                Para edição completa, acesse a aba Colaboradores.
-                            </p>
                         </div>
                     </div>
-                </div>
-            </div>
-        )}
+                )}
         </div>
     );
 }
