@@ -104,8 +104,8 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     .select(`
                         id, titulo, data_evento, entrevistador_id, descricao, tipo
                     `)
-                    // Buscando de forma flexível como string para evitar cast errors de arrays/jsonb do PostgREST
-                    .ilike('participantes_candidatos::text', `%${candidatoId}%`)
+                    // Using overlap operator (ov) with array format to match text[] postgres array natively
+                    .overlaps('participantes_candidatos', [candidatoId])
                     .in('tipo', ['Entrevista', 'Processo Seletivo'])
                     .order('data_evento', { ascending: false })
 
