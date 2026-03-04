@@ -427,7 +427,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
 
                             {/* Sub-menu for @ tags */}
                             {isTagging && (
-                                <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 z-10 max-h-48 overflow-y-auto">
+                                <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-48 overflow-y-auto ring-1 ring-black/5">
                                     {availableTags
                                         .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
                                         .map(t => (

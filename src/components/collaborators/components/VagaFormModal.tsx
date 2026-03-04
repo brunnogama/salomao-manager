@@ -269,29 +269,32 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
 
                         const { data: existingColab } = await query.maybeSingle();
 
+                        const commonFields = {
+                            status: 'Pré-Cadastro',
+                            role: payload.role_id ? payload.role_id.toString() : null,
+                            atuacao: payload.atuacao_id ? payload.atuacao_id.toString() : null,
+                            local: payload.location_id ? payload.location_id.toString() : null,
+                            leader_id: payload.leader_id ? payload.leader_id.toString() : null,
+                            lider_equipe: payload.leader_id ? payload.leader_id.toString() : null, // Legacy compatibility
+                            partner_id: payload.partner_id ? payload.partner_id.toString() : null,
+                            hire_date: payload.data_aprovacao_gestor || new Date().toISOString().split('T')[0],
+                            perfil: candData.perfil || null,
+                            candidato_id: payload.candidato_aprovado_id
+                        };
+
                         if (!existingColab) {
                             const newColab = {
+                                ...commonFields,
                                 name: candData.nome,
                                 email: candData.email || null,
-                                status: 'Pré-Cadastro',
-                                role: payload.role_id ? payload.role_id.toString() : null,
-                                atuacao: payload.atuacao_id ? payload.atuacao_id.toString() : null,
-                                local: payload.location_id ? payload.location_id.toString() : null,
-                                lider_equipe: payload.leader_id ? payload.leader_id.toString() : null,
-                                hire_date: payload.data_aprovacao_gestor || new Date().toISOString().split('T')[0],
-                                perfil: candData.perfil || null,
-                                candidato_id: payload.candidato_aprovado_id
                             };
                             const { error: colabErr } = await supabase.from('collaborators').insert([newColab]);
                             if (colabErr) console.error("Error inserting auto colab", colabErr);
                         } else {
-                            // Se já existir, apenas atualizar as tags se o usuário desejar (no MVP vamos apenas vincular se estiver vazio)
+                            // Se já existir, atualizar status e campos profissionais
                             const { error: updateColabErr } = await supabase
                                 .from('collaborators')
-                                .update({
-                                    candidato_id: payload.candidato_aprovado_id,
-                                    perfil: candData.perfil || null
-                                })
+                                .update(commonFields)
                                 .eq('id', existingColab.id);
                             if (updateColabErr) console.error("Error updating existing colab with candidate data", updateColabErr);
                         }

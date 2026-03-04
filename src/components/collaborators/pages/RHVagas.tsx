@@ -722,7 +722,10 @@ export function RHVagas() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         vagaId={selectedVagaId}
-        onSuccess={fetchVagas}
+        onSuccess={() => {
+          fetchVagas();
+          fetchCandidatos();
+        }}
       />
 
       <VagaViewModal
