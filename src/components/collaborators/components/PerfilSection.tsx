@@ -24,11 +24,14 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
     const fetchPerfil = async () => {
         try {
             setLoading(true);
+            console.log('Buscando perfil para:', collaboratorId);
             const { data, error } = await supabase
                 .from('collaborators')
                 .select('perfil')
                 .eq('id', collaboratorId)
                 .single();
+
+            console.log('Dados do perfil recebidos:', data);
 
             if (error) throw error;
             setPerfil(data?.perfil || '');
@@ -77,12 +80,18 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
     const handleSave = async () => {
         try {
             setSaving(true);
-            const { error } = await supabase
+            console.log('Salvando perfil...', { collaboratorId, perfil });
+            const { data: updateData, error } = await supabase
                 .from('collaborators')
                 .update({ perfil })
-                .eq('id', collaboratorId);
+                .eq('id', collaboratorId)
+                .select();
 
+            console.log('Update result:', { updateData, error });
             if (error) throw error;
+            if (!updateData || updateData.length === 0) {
+                console.warn('Aviso: Nenhuma linha foi atualizada. Verifique se o ID existe.');
+            }
 
             // Upsert tags
             const lines = perfil.split('\n').map(l => l.trim()).filter(l => l.length > 0);
