@@ -1083,13 +1083,17 @@ export function Calendario() {
                           {/* ENTREVISTADOR (Apenas para Entrevista) */}
                           <div>
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                              <Users className="h-3 w-3" /> Entrevistador (Recrutadora)
+                              <Users className="h-3 w-3" /> Entrevistador(a)
                             </label>
                             <SearchableSelect
-                              options={collaborators.map(c => ({ value: c.id, label: formatName(c.name) }))}
+                              options={[
+                                { value: 'Karina Reis dos Prazeres', label: 'Karina Reis dos Prazeres' },
+                                { value: 'Tatiana Gonçalves Gomes', label: 'Tatiana Gonçalves Gomes' }
+                              ]}
                               value={novoEvento.entrevistador_id || ''}
                               onChange={(val) => setNovoEvento({ ...novoEvento, entrevistador_id: val })}
                               placeholder="Selecione o entrevistador..."
+                              uppercase={false}
                             />
                           </div>
 
@@ -1105,7 +1109,7 @@ export function Calendario() {
                                 const vagaId = v.vaga_id_text ? ` - ${v.vaga_id_text} ` : '';
                                 return {
                                   value: v.id,
-                                  label: `${cargo}${lider}${vagaId} `
+                                  label: `${cargo}${lider}${vagaId}`
                                 };
                               })}
                               value={novoEvento.vaga_id || ''}
@@ -1117,7 +1121,7 @@ export function Calendario() {
                           {/* CANDIDATOS (Apenas para Entrevista) */}
                           <div>
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
-                              <Users className="h-3 w-3" /> Entrevistados (Candidatos)
+                              <Users className="h-3 w-3" /> Candidato
                             </label>
                             <div className="flex gap-2">
                               <div className="flex-1">
