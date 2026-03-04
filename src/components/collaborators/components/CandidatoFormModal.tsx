@@ -461,6 +461,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                                         <div className="p-1">
                                             {availableTags
                                                 .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
+                                                .filter(t => !(formData.perfil || '').split('\n').filter(Boolean).includes(t))
                                                 .map(t => (
                                                     <button
                                                         key={t}
@@ -472,9 +473,12 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                                                     </button>
                                                 ))}
                                         </div>
-                                        {availableTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
-                                            <div className="px-4 py-3 text-xs text-gray-400 text-center font-medium">Nenhuma tag encontrada para "{tagSearch}"</div>
-                                        )}
+                                        {availableTags
+                                            .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
+                                            .filter(t => !(formData.perfil || '').split('\n').filter(Boolean).includes(t))
+                                            .length === 0 && (
+                                                <div className="px-4 py-3 text-xs text-gray-400 text-center font-medium">Nenhuma tag encontrada para "{tagSearch}"</div>
+                                            )}
                                     </div>
                                 )}
 
