@@ -214,6 +214,7 @@ export function Calendario() {
   const handleOpenNewEvent = (tipo: EventCreationType) => {
     setIsEventSelectionModalOpen(false)
     setEditingEvento(null)
+    setCurrentCandidato('') // Limpar seleção de candidato
     setNovoEvento({
       titulo: '',
       data: new Date().toISOString().split('T')[0],
@@ -889,6 +890,28 @@ export function Calendario() {
                       <div className="space-y-3 pl-2 sm:pl-4">
                         {items.map((item: any, idx: number) => {
                           const isAniver = item._source === 'aniversario' || item.tipo === 'Aniversário';
+
+                          // Discover if event is past
+                          const today = new Date();
+                          const eventDate = new Date(dateKey); // dateKey represents the day
+                          let isPast = false;
+
+                          if (eventDate.toDateString() !== today.toDateString() && eventDate < today) {
+                            isPast = true;
+                          } else if (eventDate.toDateString() === today.toDateString()) {
+                            if (item.hora) {
+                              const [hours, minutes] = item.hora.split(':').map(Number);
+                              const eventDateTime = new Date(eventDate);
+                              eventDateTime.setHours(hours, minutes, 0, 0);
+                              if (eventDateTime < today) {
+                                isPast = true;
+                              }
+                            } else {
+                              // Assuming all-day events are past only when the day is fully over (which is covered by the first check)
+                              isPast = false;
+                            }
+                          }
+
                           return (
                             <div
                               key={idx}
@@ -899,19 +922,23 @@ export function Calendario() {
                                   setVisualizarEvento(item as Evento);
                                 }
                               }}
-                              className="group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-white hover:bg-gray-50/80 hover:border-gray-200 transition-all cursor-pointer shadow-sm hover:shadow-md"
+                              className={`group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer shadow-sm hover:shadow-md
+                                ${isPast ? 'bg-gray-50/50 border-gray-100 opacity-60 grayscale hover:opacity-100 hover:grayscale-0' : 'bg-white border-gray-100 hover:bg-gray-50/80 hover:border-gray-200'}
+                              `}
                             >
                               <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                <div className="text-sm font-bold text-gray-500 min-w-[70px]">
+                                <div className={`text-sm font-bold min-w-[70px] ${isPast ? 'text-gray-400' : 'text-gray-500'}`}>
                                   {item.hora ? item.hora : 'Dia Todo'}
                                 </div>
                                 <div className="hidden sm:block w-px h-6 bg-gray-200"></div>
-                                <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border shrink-0 ${item.tipo === 'Entrevista' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                  item.tipo === 'Reunião' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                    (item.tipo === 'Aniversário' || item._source === 'aniversario') ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                      item.tipo === 'Mochila' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                                        item.tipo === 'Feriado' ? 'bg-red-50 text-red-700 border-red-200' :
-                                          'bg-gray-100 text-gray-700 border-gray-200'
+                                <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border shrink-0 
+                                  ${isPast ? 'bg-gray-100 text-gray-500 border-gray-200' :
+                                    item.tipo === 'Entrevista' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                      item.tipo === 'Reunião' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                        (item.tipo === 'Aniversário' || item._source === 'aniversario') ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                          item.tipo === 'Mochila' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                            item.tipo === 'Feriado' ? 'bg-red-50 text-red-700 border-red-200' :
+                                              'bg-gray-100 text-gray-700 border-gray-200'
                                   }`}>
                                   {item.tipo === 'Reunião' ? <Users className="w-3 h-3" /> :
                                     item.tipo === 'Entrevista' ? <Briefcase className="w-3 h-3" /> :
@@ -923,22 +950,22 @@ export function Calendario() {
                                 <div className="hidden sm:block w-px h-6 bg-gray-200"></div>
                                 <div className="flex items-center gap-3 w-full">
                                   {(item.colaborador?.photo_url || item.colaboradorRef?.photo_url) ? (
-                                    <img src={item.colaborador?.photo_url || item.colaboradorRef?.photo_url} className="w-9 h-9 rounded-full object-cover shadow-sm shrink-0 border border-gray-200" />
+                                    <img src={item.colaborador?.photo_url || item.colaboradorRef?.photo_url} className={`w-9 h-9 rounded-full object-cover shadow-sm shrink-0 border border-gray-200 ${isPast ? 'opacity-70' : ''}`} />
                                   ) : isAniver || item.tipo === 'Mochila' ? (
-                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-black shadow-sm shrink-0 ${isAniver ? 'bg-gradient-to-br from-[#d4af37] to-amber-600' : 'bg-gradient-to-br from-indigo-500 to-indigo-700'}`}>
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-black shadow-sm shrink-0 ${isPast ? 'bg-gray-400' : isAniver ? 'bg-gradient-to-br from-[#d4af37] to-amber-600' : 'bg-gradient-to-br from-indigo-500 to-indigo-700'}`}>
                                       {(item.colaborador?.name || item.colaboradorRef?.name || '?').charAt(0).toUpperCase()}
                                     </div>
                                   ) : (
-                                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shadow-sm shrink-0">
+                                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shadow-sm shrink-0">
                                       <CalendarDays className="w-4 h-4" />
                                     </div>
                                   )}
                                   <div className="flex flex-col flex-1 min-w-0">
-                                    <span className="font-bold text-[#0a192f] text-sm truncate">
+                                    <span className={`font-bold text-sm truncate ${isPast ? 'text-gray-500' : 'text-[#0a192f]'}`}>
                                       {item._source === 'aniversario' ? formatName(item.colaborador.name) : item.titulo}
                                     </span>
                                     {item.descricao && (
-                                      <span className="text-xs font-medium text-gray-500 truncate mt-0.5">
+                                      <span className={`text-xs font-medium truncate mt-0.5 ${isPast ? 'text-gray-400' : 'text-gray-500'}`}>
                                         {item.descricao}
                                       </span>
                                     )}
@@ -951,14 +978,14 @@ export function Calendario() {
                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-auto pl-4">
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleEditClick(item as Evento); }}
-                                    className="w-8 h-8 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors tooltip"
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors tooltip ${isPast ? 'text-gray-500 hover:bg-gray-200' : 'text-blue-600 hover:bg-blue-50'}`}
                                     title="Editar"
                                   >
                                     <Pencil className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleDeleteEvento(item.id); }}
-                                    className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors tooltip"
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors tooltip ${isPast ? 'text-red-400 hover:bg-red-50' : 'text-red-600 hover:bg-red-50'}`}
                                     title="Excluir"
                                   >
                                     <Trash2 className="h-4 w-4" />
