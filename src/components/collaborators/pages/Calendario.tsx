@@ -204,14 +204,14 @@ export function Calendario() {
           id: e.id,
           titulo: e.titulo,
           tipo: e.tipo,
-          data_evento: e.data_evento,
+          data_evento: new Date(e.data_evento).toISOString().split('T')[0], // Extract Date from timestamptz
           descricao: e.descricao,
-          hora: e.hora,
-          local_tipo: e.local_tipo,
-          local_endereco_url: e.local_endereco_url,
-          participantes_internos: e.participantes_internos,
-          participantes_externos: externos,
-          participantes_socios: socios,
+          hora: new Date(e.data_evento).toISOString().split('T')[1].substring(0, 5), // Extract Time from timestamptz
+          local_tipo: undefined, // Mocked as not in DB
+          local_endereco_url: '', // Mocked as not in DB
+          participantes_internos: [], // Mocked as not in DB
+          participantes_externos: [], // Mocked as not in DB
+          participantes_socios: [], // Mocked as not in DB
           vaga_id: e.vaga_id,
           participantes_candidatos: e.participantes_candidatos || []
         });
@@ -243,10 +243,10 @@ export function Calendario() {
 
     setSavingEvento(true)
     try {
-      const externalPayload = JSON.stringify({
-        externos: novoEvento.participantes_externos,
-        socios: novoEvento.participantes_socios
-      })
+      // Combine date and time for the timestamptz column
+      const combinedDateTime = novoEvento.hora
+        ? `${novoEvento.data}T${novoEvento.hora}:00`
+        : `${novoEvento.data}T00:00:00`;
 
       let savedEventId = editingEvento;
 
@@ -256,16 +256,11 @@ export function Calendario() {
           .from('eventos')
           .update({
             titulo: novoEvento.titulo,
-            data_evento: novoEvento.data,
+            data_evento: combinedDateTime,
             tipo: novoEvento.tipo,
             descricao: novoEvento.descricao,
-            hora: novoEvento.hora,
-            local_tipo: novoEvento.local_tipo,
-            local_endereco_url: novoEvento.local_endereco_url,
-            participantes_internos: novoEvento.participantes_internos,
-            participantes_externos: externalPayload,
             vaga_id: novoEvento.vaga_id || null,
-            participantes_candidatos: novoEvento.participantes_candidatos
+            participantes_candidatos: novoEvento.participantes_candidatos || []
           })
           .eq('id', editingEvento)
 
@@ -276,16 +271,11 @@ export function Calendario() {
           .from('eventos')
           .insert([{
             titulo: novoEvento.titulo,
-            data_evento: novoEvento.data,
+            data_evento: combinedDateTime,
             tipo: novoEvento.tipo,
             descricao: novoEvento.descricao,
-            hora: novoEvento.hora,
-            local_tipo: novoEvento.local_tipo,
-            local_endereco_url: novoEvento.local_endereco_url,
-            participantes_internos: novoEvento.participantes_internos,
-            participantes_externos: externalPayload,
             vaga_id: novoEvento.vaga_id || null,
-            participantes_candidatos: novoEvento.participantes_candidatos
+            participantes_candidatos: novoEvento.participantes_candidatos || []
           }]).select('id').single()
 
         if (error) throw error
