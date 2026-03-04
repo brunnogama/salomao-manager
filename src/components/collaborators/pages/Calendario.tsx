@@ -172,7 +172,7 @@ export function Calendario() {
     const { data: evs } = await supabase
       .from('eventos') // Changed from 'eventos' to 'events'
       .select('*')
-      .order('event_date') // Changed from 'data_evento' to 'event_date'
+      .order('data_evento') // Changed from 'data_evento' to 'event_date'
 
     const feriados = getFeriadosDoAno(new Date().getFullYear()).map((f: any, idx: number) => ({
       ...f,
@@ -184,32 +184,32 @@ export function Calendario() {
       const mappedEvs: Evento[] = evs.map((e: any) => {
         let externos: { nome: string; email: string }[] = [];
         let socios: string[] = [];
-        if (e.participants_external) {
+        if (e.participantes_externos) {
           try {
-            const parsed = JSON.parse(e.participants_external)
+            const parsed = typeof e.participantes_externos === 'string' ? JSON.parse(e.participantes_externos) : e.participantes_externos
             if (Array.isArray(parsed)) {
               externos = parsed;
             } else if (parsed && typeof parsed === 'object') {
               if (parsed.externos) externos = parsed.externos;
               if (parsed.socios) socios = parsed.socios;
             } else {
-              externos = [{ nome: e.participants_external, email: '' }]
+              externos = [{ nome: e.participantes_externos, email: '' }]
             }
           } catch {
-            externos = [{ nome: e.participants_external, email: '' }]
+            externos = [{ nome: e.participantes_externos, email: '' }]
           }
         }
 
         return ({
           id: e.id,
-          titulo: e.title,
-          tipo: e.type,
-          data_evento: e.event_date,
-          descricao: e.description,
-          hora: e.time,
-          local_tipo: e.location_type,
-          local_endereco_url: e.location_address,
-          participantes_internos: e.participants_internal,
+          titulo: e.titulo,
+          tipo: e.tipo,
+          data_evento: e.data_evento,
+          descricao: e.descricao,
+          hora: e.hora,
+          local_tipo: e.local_tipo,
+          local_endereco_url: e.local_endereco_url,
+          participantes_internos: e.participantes_internos,
           participantes_externos: externos,
           participantes_socios: socios,
           vaga_id: e.vaga_id,
@@ -255,15 +255,15 @@ export function Calendario() {
         const { error } = await supabase
           .from('eventos')
           .update({
-            title: novoEvento.titulo,
-            event_date: novoEvento.data,
-            type: novoEvento.tipo,
-            description: novoEvento.descricao,
-            time: novoEvento.hora,
-            location_type: novoEvento.local_tipo,
-            location_address: novoEvento.local_endereco_url,
-            participants_internal: novoEvento.participantes_internos,
-            participants_external: externalPayload,
+            titulo: novoEvento.titulo,
+            data_evento: novoEvento.data,
+            tipo: novoEvento.tipo,
+            descricao: novoEvento.descricao,
+            hora: novoEvento.hora,
+            local_tipo: novoEvento.local_tipo,
+            local_endereco_url: novoEvento.local_endereco_url,
+            participantes_internos: novoEvento.participantes_internos,
+            participantes_externos: externalPayload,
             vaga_id: novoEvento.vaga_id || null,
             participantes_candidatos: novoEvento.participantes_candidatos
           })
@@ -275,15 +275,15 @@ export function Calendario() {
         const { data: newEventData, error } = await supabase
           .from('eventos')
           .insert([{
-            title: novoEvento.titulo,
-            event_date: novoEvento.data,
-            type: novoEvento.tipo,
-            description: novoEvento.descricao,
-            time: novoEvento.hora,
-            location_type: novoEvento.local_tipo,
-            location_address: novoEvento.local_endereco_url,
-            participants_internal: novoEvento.participantes_internos,
-            participants_external: externalPayload,
+            titulo: novoEvento.titulo,
+            data_evento: novoEvento.data,
+            tipo: novoEvento.tipo,
+            descricao: novoEvento.descricao,
+            hora: novoEvento.hora,
+            local_tipo: novoEvento.local_tipo,
+            local_endereco_url: novoEvento.local_endereco_url,
+            participantes_internos: novoEvento.participantes_internos,
+            participantes_externos: externalPayload,
             vaga_id: novoEvento.vaga_id || null,
             participantes_candidatos: novoEvento.participantes_candidatos
           }]).select('id').single()
@@ -603,7 +603,7 @@ export function Calendario() {
             <button
               onClick={() => setIsEventSelectionModalOpen(true)}
               className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
-              title="Novo Evento"
+              title="Novo Compromisso"
             >
               <Plus className="h-5 w-5" />
             </button>
@@ -762,7 +762,7 @@ export function Calendario() {
               <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
                 <CalendarEventIcon className="h-5 w-5 text-[#1e3a8a]" />
               </div>
-              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Eventos</h2>
+              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Compromissos</h2>
             </div>
           </div>
 
@@ -843,7 +843,7 @@ export function Calendario() {
               <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2 text-white">
                   <CalendarDays className="h-5 w-5" />
-                  <h3 className="font-black text-base tracking-tight">{editingEvento ? 'Editar Evento' : 'Novo Evento'}</h3>
+                  <h3 className="font-black text-base tracking-tight">{editingEvento ? 'Editar Compromisso' : 'Novo Compromisso'}</h3>
                 </div>
                 <button
                   onClick={() => { setIsModalOpen(false); setEditingEvento(null); }}

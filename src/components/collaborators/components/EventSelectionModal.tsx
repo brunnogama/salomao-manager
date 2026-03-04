@@ -19,7 +19,7 @@ export function EventSelectionModal({ isOpen, onClose, onSelect }: EventSelectio
             <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
 
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-gray-800">Selecione o Tipo de Evento</h3>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-gray-800">Selecione o Tipo de Compromisso</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         <X className="h-5 w-5" />
                     </button>
@@ -68,7 +68,7 @@ export function EventSelectionModal({ isOpen, onClose, onSelect }: EventSelectio
                 </div>
 
                 <div className="p-4 bg-gray-50 text-center border-t border-gray-100">
-                    <p className="text-[10px] text-gray-400 font-medium">Escolha o tipo de evento para abrir o formulário compatível</p>
+                    <p className="text-[10px] text-gray-400 font-medium">Escolha o tipo de compromisso para abrir o formulário compatível</p>
                 </div>
             </div>
         </div>
