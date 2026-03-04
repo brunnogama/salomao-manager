@@ -572,7 +572,7 @@ export function Calendario() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
-            <CalendarIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
+            <CalendarIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" strokeWidth={1.5} />
           </div>
           <div>
             <h1 className="text-2xl sm:text-[30px] font-black text-[#0a192f] tracking-tight leading-none">
@@ -597,7 +597,7 @@ export function Calendario() {
                 } catch (err) { }
               }}
             />
-            <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#1e3a8a] group-hover:scale-110 transition-transform" />
+            <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#1e3a8a] group-hover:scale-110 transition-transform" strokeWidth={1.5} />
           </div>
           <div className="relative">
             <button
@@ -605,7 +605,7 @@ export function Calendario() {
               className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
               title="Novo Compromisso"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-5 w-5" strokeWidth={1.5} />
             </button>
           </div>
         </div>
@@ -621,7 +621,7 @@ export function Calendario() {
             <div className="flex gap-4">
               <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 shadow-lg">
-                  <Sparkles className="h-5 w-5 text-white" />
+                  <Sparkles className="h-5 w-5 text-white" strokeWidth={1.5} />
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Aniver. Hoje</p>
@@ -631,7 +631,7 @@ export function Calendario() {
 
               <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 shadow-lg">
-                  <PartyPopper className="h-5 w-5 text-white" />
+                  <PartyPopper className="h-5 w-5 text-white" strokeWidth={1.5} />
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Aniver. Mês</p>
@@ -644,7 +644,7 @@ export function Calendario() {
             <div className="flex gap-4">
               <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg">
-                  <CalendarEventIcon className="h-5 w-5 text-white" />
+                  <CalendarEventIcon className="h-5 w-5 text-white" strokeWidth={1.5} />
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Eventos Hoje</p>
@@ -654,7 +654,7 @@ export function Calendario() {
 
               <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg">
-                  <CalendarEventIcon className="h-5 w-5 text-white" />
+                  <CalendarEventIcon className="h-5 w-5 text-white" strokeWidth={1.5} />
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Eventos Mês</p>
@@ -675,7 +675,7 @@ export function Calendario() {
           <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-[#d4af37]/10 rounded-xl">
-                <Cake className="h-5 w-5 text-[#d4af37]" />
+                <Cake className="h-5 w-5 text-[#d4af37]" strokeWidth={1.5} />
               </div>
               <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Aniversários</h2>
             </div>
@@ -699,20 +699,20 @@ export function Calendario() {
                 <div
                   key={aniv.colaborador.id}
                   onClick={() => setVisualizarColaborador(aniv.colaborador as Colaborador)}
-                  className={`group flex items - center justify - between p - 4 rounded - xl border transition - all duration - 300 hover: shadow - lg cursor - pointer relative ${aniv.isHoje
+                  className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer relative ${aniv.isHoje
                     ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
                     : aniv.isEstaSemana
                       ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
                       : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
-                    } ${isSelected ? 'ring-2 ring-green-500 border-transparent' : ''} `}
+                    } ${isSelected ? 'ring-2 ring-green-500 border-transparent' : ''}`}
                 >
                   <div className="flex items-center gap-4 min-w-0 pr-2">
                     <div
                       onClick={(e) => handleToggleAniversariante(e, String(aniv.colaborador.id))}
-                      className={`w - 5 h - 5 rounded border flex items - center justify - center shrink - 0 cursor - pointer transition - colors ${isSelected
+                      className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${isSelected
                         ? 'bg-green-500 border-green-500 text-white'
                         : 'border-gray-300 bg-white hover:border-green-500'
-                        } `}
+                        }`}
                     >
                       {isSelected && <Check className="w-3.5 h-3.5" />}
                     </div>
@@ -743,8 +743,8 @@ export function Calendario() {
                     </div>
                     <div className="text-right w-12 sm:w-16">
                       <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{aniv.diasRestantes === 0 ? '' : 'Faltam'}</p>
-                      <p className={`font - black text - sm flex items - center justify - end ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
-                        } `}>
+                      <p className={`font-black text-sm flex items-center justify-end ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                        }`}>
                         {aniv.diasRestantes === 0 ? <span className="text-[#d4af37] text-base transform scale-110">Hoje</span> : `${aniv.diasRestantes} d`}
                       </p>
                     </div>
@@ -760,7 +760,7 @@ export function Calendario() {
           <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
-                <CalendarEventIcon className="h-5 w-5 text-[#1e3a8a]" />
+                <CalendarEventIcon className="h-5 w-5 text-[#1e3a8a]" strokeWidth={1.5} />
               </div>
               <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Compromissos</h2>
             </div>
@@ -775,12 +775,12 @@ export function Calendario() {
               <div
                 key={idx}
                 onClick={() => evento.tipo === 'Mochila' ? setVisualizarColaborador(evento.colaboradorRef as Colaborador) : setVisualizarEvento(evento as Evento)}
-                className={`group flex items - center justify - between p - 4 rounded - xl border transition - all duration - 300 hover: shadow - lg cursor - pointer ${evento.isHoje
+                className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer ${evento.isHoje
                   ? 'bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-500 shadow-md transform scale-[1.01] mx-1'
                   : evento.isEstaSemana
                     ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
                     : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
-                  } `}
+                  }`}
               >
                 <div className="flex items-center gap-4 min-w-0 pr-2">
                   {evento.tipo === 'Mochila' && (evento as any).colaboradorRef?.photo_url ? (
@@ -790,8 +790,8 @@ export function Calendario() {
                       {(evento as any).colaboradorRef?.name.charAt(0).toUpperCase()}
                     </div>
                   ) : (
-                    <div className={`w - 12 h - 12 rounded - xl flex items - center justify - center text - white text - lg font - black border - 2 shadow - md shrink - 0 ${evento.isHoje ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-500/30' : evento.tipo === 'Aniversário' ? 'bg-gradient-to-br from-[#d4af37] to-amber-600 border-[#d4af37]/30' : 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a]/30'} `}>
-                      {evento.tipo === 'Reunião' ? <Users className="h-5 w-5" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-black border-2 shadow-md shrink-0 ${evento.isHoje ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-500/30' : evento.tipo === 'Aniversário' ? 'bg-gradient-to-br from-[#d4af37] to-amber-600 border-[#d4af37]/30' : 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a]/30'}`}>
+                      {evento.tipo === 'Reunião' ? <Users className="h-5 w-5" strokeWidth={1.5} /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5" strokeWidth={1.5} /> : <Sparkles className="h-5 w-5" strokeWidth={1.5} />}
                     </div>
                   )}
                   <div className="min-w-0">
@@ -823,8 +823,8 @@ export function Calendario() {
                   </div>
                   <div className="text-right w-12 sm:w-16">
                     <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{evento.diasRestantes === 0 ? '' : 'Faltam'}</p>
-                    <p className={`font - black text - sm flex items - center justify - end ${evento.isHoje ? 'text-emerald-600' : evento.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
-                      } `}>
+                    <p className={`font-black text-sm flex items-center justify-end ${evento.isHoje ? 'text-emerald-600' : evento.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                      }`}>
                       {evento.diasRestantes === 0 ? <span className="text-emerald-600 text-base transform scale-110">Hoje</span> : `${evento.diasRestantes} d`}
                     </p>
                   </div>
@@ -842,7 +842,7 @@ export function Calendario() {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh]">
               <div className="px-6 py-4 bg-gradient-to-r from-[#112240] to-[#1e3a8a] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2 text-white">
-                  <CalendarDays className="h-5 w-5" />
+                  <CalendarDays className="h-5 w-5" strokeWidth={1.5} />
                   <h3 className="font-black text-base tracking-tight">{editingEvento ? 'Editar Compromisso' : 'Novo Compromisso'}</h3>
                 </div>
                 <button
