@@ -1,5 +1,5 @@
 // src/components/collaborators/pages/Calendario.tsx
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Calendar as CalendarIcon,
   Cake,
@@ -135,6 +135,42 @@ export function Calendario() {
     participantes_candidatos: [],
     vaga_id: ''
   })
+
+  // Estado e Ref para o Menu Dropdown do Botão Novo Evento
+  const [isEventMenuOpen, setIsEventMenuOpen] = useState(false)
+  const eventMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (eventMenuRef.current && !eventMenuRef.current.contains(event.target as Node)) {
+        setIsEventMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [eventMenuRef]);
+
+  const handleOpenNewEvent = (tipo: 'Reunião' | 'Entrevista' | 'Aniversário' | 'Outros') => {
+    setIsEventMenuOpen(false)
+    setEditingEvento(null)
+    setNovoEvento({
+      titulo: '',
+      data: new Date().toISOString().split('T')[0],
+      tipo: tipo,
+      descricao: '',
+      hora: '',
+      local_tipo: 'Online',
+      local_endereco_url: '',
+      participantes_internos: [],
+      participantes_externos: [],
+      participantes_socios: [],
+      participantes_candidatos: [],
+      vaga_id: ''
+    })
+    setIsModalOpen(true)
+  }
 
   // Estados para Aniversários WPP
   const [selectedAniversariantes, setSelectedAniversariantes] = useState<string[]>([])
@@ -273,7 +309,7 @@ export function Calendario() {
         const historicos = novoEvento.participantes_candidatos.map(candId => ({
           candidato_id: candId,
           tipo: 'Entrevista',
-          descricao: `Entrevista agendada: ${novoEvento.titulo}`,
+          descricao: `Entrevista agendada: ${novoEvento.titulo} `,
           data_registro: new Date().toISOString(),
           entrevista_data: novoEvento.data,
           entrevista_hora: novoEvento.hora || null,
@@ -349,7 +385,7 @@ export function Calendario() {
       return toTitleCase(parts[0])
     }
 
-    return toTitleCase(`${parts[0]} ${parts[parts.length - 1]}`)
+    return toTitleCase(`${parts[0]} ${parts[parts.length - 1]} `)
   }
 
   const calcularDiasRestantes = (dia: number, mes: number): number => {
@@ -513,7 +549,7 @@ export function Calendario() {
 
           if (diasRestantes >= 0) {
             mochilaEventos.push({
-              id: `mochila-${c.id}`,
+              id: `mochila - ${c.id} `,
               titulo: `${formatName(c.name)} completa 3 meses de casa`,
               tipo: 'Mochila',
               dataObjeto: dateAdmissao,
@@ -575,13 +611,47 @@ export function Calendario() {
             />
             <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#1e3a8a] group-hover:scale-110 transition-transform" />
           </div>
-          <button
-            onClick={() => { setEditingEvento(null); setIsModalOpen(true); }}
-            className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-[#15803d] to-green-700 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 hover:from-green-700 hover:to-[#15803d]"
-          >
-            <Plus className="h-4 w-4" />
-            Novo Evento
-          </button>
+          <div className="relative" ref={eventMenuRef}>
+            <button
+              onClick={() => setIsEventMenuOpen(!isEventMenuOpen)}
+              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+              title="Novo Evento"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+
+            {isEventMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="px-3 py-2 border-b border-gray-50 mb-1">
+                  <p className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">Qual tipo de evento?</p>
+                </div>
+                <button
+                  onClick={() => handleOpenNewEvent('Reunião')}
+                  className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm font-semibold text-gray-700 hover:text-[#1e3a8a] transition-colors"
+                >
+                  📅 Reunião
+                </button>
+                <button
+                  onClick={() => handleOpenNewEvent('Entrevista')}
+                  className="w-full text-left px-4 py-2 hover:bg-emerald-50 text-sm font-semibold text-gray-700 hover:text-emerald-700 transition-colors"
+                >
+                  🤝 Entrevista
+                </button>
+                <button
+                  onClick={() => handleOpenNewEvent('Aniversário')}
+                  className="w-full text-left px-4 py-2 hover:bg-amber-50 text-sm font-semibold text-gray-700 hover:text-amber-700 transition-colors"
+                >
+                  🎂 Aniversário
+                </button>
+                <button
+                  onClick={() => handleOpenNewEvent('Outros')}
+                  className="w-full text-left px-4 py-2 hover:bg-purple-50 text-sm font-semibold text-gray-700 hover:text-purple-700 transition-colors"
+                >
+                  ⭐ Outros
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -673,20 +743,20 @@ export function Calendario() {
                 <div
                   key={aniv.colaborador.id}
                   onClick={() => setVisualizarColaborador(aniv.colaborador as Colaborador)}
-                  className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer relative ${aniv.isHoje
-                    ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
-                    : aniv.isEstaSemana
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
-                      : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
-                    } ${isSelected ? 'ring-2 ring-green-500 border-transparent' : ''}`}
+                  className={`group flex items - center justify - between p - 4 rounded - xl border transition - all duration - 300 hover: shadow - lg cursor - pointer relative ${aniv.isHoje
+                      ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
+                      : aniv.isEstaSemana
+                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
+                        : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
+                    } ${isSelected ? 'ring-2 ring-green-500 border-transparent' : ''} `}
                 >
                   <div className="flex items-center gap-4 min-w-0 pr-2">
                     <div
                       onClick={(e) => handleToggleAniversariante(e, String(aniv.colaborador.id))}
-                      className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${isSelected
-                        ? 'bg-green-500 border-green-500 text-white'
-                        : 'border-gray-300 bg-white hover:border-green-500'
-                        }`}
+                      className={`w - 5 h - 5 rounded border flex items - center justify - center shrink - 0 cursor - pointer transition - colors ${isSelected
+                          ? 'bg-green-500 border-green-500 text-white'
+                          : 'border-gray-300 bg-white hover:border-green-500'
+                        } `}
                     >
                       {isSelected && <Check className="w-3.5 h-3.5" />}
                     </div>
@@ -717,9 +787,9 @@ export function Calendario() {
                     </div>
                     <div className="text-right w-12 sm:w-16">
                       <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{aniv.diasRestantes === 0 ? '' : 'Faltam'}</p>
-                      <p className={`font-black text-sm flex items-center justify-end ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
-                        }`}>
-                        {aniv.diasRestantes === 0 ? <span className="text-[#d4af37] text-base transform scale-110">Hoje</span> : `${aniv.diasRestantes}d`}
+                      <p className={`font - black text - sm flex items - center justify - end ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                        } `}>
+                        {aniv.diasRestantes === 0 ? <span className="text-[#d4af37] text-base transform scale-110">Hoje</span> : `${aniv.diasRestantes} d`}
                       </p>
                     </div>
                   </div>
@@ -749,12 +819,12 @@ export function Calendario() {
               <div
                 key={idx}
                 onClick={() => evento.tipo === 'Mochila' ? setVisualizarColaborador(evento.colaboradorRef as Colaborador) : setVisualizarEvento(evento as Evento)}
-                className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer ${evento.isHoje
-                  ? 'bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-500 shadow-md transform scale-[1.01] mx-1'
-                  : evento.isEstaSemana
-                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
-                    : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
-                  }`}
+                className={`group flex items - center justify - between p - 4 rounded - xl border transition - all duration - 300 hover: shadow - lg cursor - pointer ${evento.isHoje
+                    ? 'bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-500 shadow-md transform scale-[1.01] mx-1'
+                    : evento.isEstaSemana
+                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
+                      : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
+                  } `}
               >
                 <div className="flex items-center gap-4 min-w-0 pr-2">
                   {evento.tipo === 'Mochila' && (evento as any).colaboradorRef?.photo_url ? (
@@ -764,7 +834,7 @@ export function Calendario() {
                       {(evento as any).colaboradorRef?.name.charAt(0).toUpperCase()}
                     </div>
                   ) : (
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-black border-2 shadow-md shrink-0 ${evento.isHoje ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-500/30' : evento.tipo === 'Aniversário' ? 'bg-gradient-to-br from-[#d4af37] to-amber-600 border-[#d4af37]/30' : 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a]/30'}`}>
+                    <div className={`w - 12 h - 12 rounded - xl flex items - center justify - center text - white text - lg font - black border - 2 shadow - md shrink - 0 ${evento.isHoje ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-500/30' : evento.tipo === 'Aniversário' ? 'bg-gradient-to-br from-[#d4af37] to-amber-600 border-[#d4af37]/30' : 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a]/30'} `}>
                       {evento.tipo === 'Reunião' ? <Users className="h-5 w-5" /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
                     </div>
                   )}
@@ -797,9 +867,9 @@ export function Calendario() {
                   </div>
                   <div className="text-right w-12 sm:w-16">
                     <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{evento.diasRestantes === 0 ? '' : 'Faltam'}</p>
-                    <p className={`font-black text-sm flex items-center justify-end ${evento.isHoje ? 'text-emerald-600' : evento.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
-                      }`}>
-                      {evento.diasRestantes === 0 ? <span className="text-emerald-600 text-base transform scale-110">Hoje</span> : `${evento.diasRestantes}d`}
+                    <p className={`font - black text - sm flex items - center justify - end ${evento.isHoje ? 'text-emerald-600' : evento.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
+                      } `}>
+                      {evento.diasRestantes === 0 ? <span className="text-emerald-600 text-base transform scale-110">Hoje</span> : `${evento.diasRestantes} d`}
                     </p>
                   </div>
                 </div>
@@ -915,11 +985,11 @@ export function Calendario() {
                             <SearchableSelect
                               options={vagas.map(v => {
                                 const cargo = v.role?.name || 'Sem Cargo';
-                                const lider = v.leader?.name ? ` - ${v.leader.name}` : '';
-                                const vagaId = v.vaga_id_text ? ` - ${v.vaga_id_text}` : '';
+                                const lider = v.leader?.name ? ` - ${v.leader.name} ` : '';
+                                const vagaId = v.vaga_id_text ? ` - ${v.vaga_id_text} ` : '';
                                 return {
                                   value: v.id,
-                                  label: `${cargo}${lider}${vagaId}`
+                                  label: `${cargo}${lider}${vagaId} `
                                 };
                               })}
                               value={novoEvento.vaga_id || ''}
@@ -1274,7 +1344,7 @@ export function Calendario() {
                         {(visualizarEvento.participantes_socios && visualizarEvento.participantes_socios.length > 0) && (
                           <div className="flex flex-wrap gap-1 mt-1 mb-1.5">
                             {visualizarEvento.participantes_socios.map((nomeSocio, idx) => (
-                              <span key={`socio-${idx}`} className="inline-flex px-1.5 py-0.5 bg-[#d4af37]/10 text-[#d4af37] rounded text-[10px] font-bold border border-[#d4af37]/20 truncate max-w-full">
+                              <span key={`socio - ${idx} `} className="inline-flex px-1.5 py-0.5 bg-[#d4af37]/10 text-[#d4af37] rounded text-[10px] font-bold border border-[#d4af37]/20 truncate max-w-full">
                                 {nomeSocio} (Sócio)
                               </span>
                             ))}
@@ -1285,7 +1355,7 @@ export function Calendario() {
                         {(visualizarEvento.participantes_externos && visualizarEvento.participantes_externos.length > 0) && (
                           <div className="flex flex-col gap-0.5 mt-2">
                             {visualizarEvento.participantes_externos.map((ext, idx) => (
-                              <p key={`ext-${idx}`} className="text-[11px] text-gray-600 font-medium leading-tight">
+                              <p key={`ext - ${idx} `} className="text-[11px] text-gray-600 font-medium leading-tight">
                                 Externo: {ext.nome} {ext.email && <span className="opacity-70">({ext.email})</span>}
                               </p>
                             ))}
