@@ -45,9 +45,15 @@ export function CandidatoHistoricoSection({
             .from('candidato_historico')
             .select('*')
             .eq('candidato_id', candidatoId)
-            .order('created_at', { ascending: false })
 
-        if (data) setHistoricoList(data)
+        if (data) {
+            const sortedData = [...data].sort((a: any, b: any) => {
+                const dateA = new Date(a.created_at || a.data_registro || 0).getTime();
+                const dateB = new Date(b.created_at || b.data_registro || 0).getTime();
+                return dateB - dateA;
+            });
+            setHistoricoList(sortedData);
+        }
     }
 
     // --- DELETE HANDLER ---

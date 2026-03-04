@@ -104,10 +104,16 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     .from('candidato_historico')
                     .select('*')
                     .eq('candidato_id', candidatoId)
-                    .order('created_at', { ascending: false })
 
                 if (historicoError) throw historicoError
-                setRecruitingHistory(historicoData || [])
+
+                const sortedHistorico = (historicoData || []).sort((a: any, b: any) => {
+                    const dateA = new Date(a.created_at || a.data_registro || 0).getTime()
+                    const dateB = new Date(b.created_at || b.data_registro || 0).getTime()
+                    return dateB - dateA
+                })
+
+                setRecruitingHistory(sortedHistorico)
             } else {
                 setRecruitingHistory([])
             }
