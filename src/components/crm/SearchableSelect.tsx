@@ -184,7 +184,7 @@ export function SearchableSelect({
                   key={getId(opt)}
                   type="button"
                   onClick={() => {
-                    onChange(opt.id?.toString() || getName(opt));
+                    onChange(opt.id?.toString() || opt.value?.toString() || getName(opt));
                     setIsOpen(false);
                     setSearchTerm('');
                   }}
