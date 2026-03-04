@@ -238,11 +238,11 @@ export function Calendario() {
   // Atualizar Titulo e Endereço se for Entrevista
   useEffect(() => {
     if (novoEvento.tipo === 'Entrevista') {
-      const vagaSelecionada = vagas.find(v => v.id === novoEvento.vaga_id);
+      const vagaSelecionada = vagas.find(v => String(v.id) === String(novoEvento.vaga_id));
       const vagaNome = vagaSelecionada && vagaSelecionada.role ? vagaSelecionada.role.name : 'Vaga';
 
       const candidatosNomes = novoEvento.participantes_candidatos.map(id => {
-        const c = candidatos.find(cand => cand.id === id);
+        const c = candidatos.find(cand => String(cand.id) === String(id));
         return c ? formatName(c.nome) : '';
       }).filter(Boolean).join(', ');
 
@@ -1086,7 +1086,7 @@ export function Calendario() {
                         ) : (
                           <input
                             type="text"
-                            placeholder={novoEvento.local_tipo === 'Online' ? 'https://meet.google.com/...' : 'Rua, Número, Sala...'}
+                            placeholder={novoEvento.local_tipo === 'Online' ? 'https://teams.microsoft.com/...' : 'Rua, Número, Sala...'}
                             value={novoEvento.local_endereco_url}
                             onChange={(e) => setNovoEvento({ ...novoEvento, local_endereco_url: e.target.value })}
                             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
