@@ -606,6 +606,18 @@ export function RHVagas() {
                         {(c.email || c.telefone) && (
                           <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
                         )}
+                        {c.perfil && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {c.perfil.split('\n').filter((l: string) => l.trim()).slice(0, 3).map((tag: string, i: number) => (
+                              <span key={i} className="px-1.5 py-0.5 bg-blue-50/50 text-blue-600 border border-blue-100/50 rounded text-[8px] font-bold uppercase tracking-wider">
+                                {tag.trim()}
+                              </span>
+                            ))}
+                            {c.perfil.split('\n').filter((l: string) => l.trim()).length > 3 && (
+                              <span className="text-[8px] font-bold text-blue-400 ml-0.5">...</span>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
                         {roleName}

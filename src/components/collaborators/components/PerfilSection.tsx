@@ -164,6 +164,21 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
                     )}
                 </div>
 
+                {/* Tag Cloud Visualization */}
+                {perfil && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                        {perfil.split('\n').filter(line => line.trim()).map((tag, index) => (
+                            <div
+                                key={index}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f8fafc] text-[#1e3a8a] border border-[#e2e8f0] rounded-lg text-xs font-bold uppercase tracking-wider animate-in zoom-in-95 duration-200 shadow-sm"
+                            >
+                                <Tag className="h-3 w-3 text-[#3b82f6]" />
+                                {tag.trim()}
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100 flex gap-3 text-blue-700">
                     <AlertCircle className="h-5 w-5 shrink-0" />
                     <div className="text-[10px] font-medium leading-relaxed uppercase tracking-wider">
