@@ -491,6 +491,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       const rolesMap = new Map(rolesRes.data?.map(r => [String(r.id), r.name]) || [])
       const locsMap = new Map(locsRes.data?.map(l => [String(l.id), l.name]) || [])
       const teamsMap = new Map(teamsRes.data?.map(t => [String(t.id), t.name]) || [])
+      const atuacoesMap = new Map(atuacoesRes.data?.map(a => [String(a.id), a.name]) || [])
 
       const enrichedData = colabRes.data?.map(c => ({
         ...c,
@@ -504,7 +505,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
         photo_url: c.photo_url || c.foto_url,
         roles: { name: rolesMap.get(String(c.role)) || c.role },
         locations: { name: locsMap.get(String(c.local)) || c.local },
-        teams: { name: teamsMap.get(String(c.equipe)) || c.equipe }
+        teams: { name: teamsMap.get(String(c.equipe)) || c.equipe },
+        atuacoes: { name: atuacoesMap.get(String(c.atuacao)) || c.atuacao }
       })) || []
 
       setColaboradores(enrichedData)
@@ -1599,7 +1601,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
-                            <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).teams?.name || c.equipe || '')}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).atuacoes?.name || c.atuacao || '')}</p>
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>
@@ -1656,7 +1658,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-semibold text-[#0a192f]">{toTitleCase((c as any).roles?.name || c.role || '')}</p>
-                            <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).teams?.name || c.equipe || '')}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{toTitleCase((c as any).atuacoes?.name || c.atuacao || '')}</p>
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-medium text-gray-700">{(c as any).partner?.name || '-'}</p>

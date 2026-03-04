@@ -198,7 +198,7 @@ export function DadosCorporativosSection({
                 label="Atuação"
                 value={formData.atuacao || ''}
                 onChange={v => setFormData({ ...formData, atuacao: v })}
-                tableName="teams"
+                tableName="atuacoes"
                 disabled={isViewMode}
               />
 

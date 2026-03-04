@@ -667,7 +667,7 @@ export function RHVagas() {
                     <td className="px-3 py-3 text-xs font-semibold text-[#1e3a8a] whitespace-nowrap">
                       <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 w-max shrink-0">
                         <Clock className="w-3.5 h-3.5 text-blue-500" />
-                        {calculateTempoAberto(vaga.data_abertura, vaga.data_fechamento)}
+                        {calculateTempoAberto(vaga.data_abertura, vaga.status === 'Fechada' ? vaga.data_fechamento : undefined)}
                       </div>
                     </td>
                     <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
