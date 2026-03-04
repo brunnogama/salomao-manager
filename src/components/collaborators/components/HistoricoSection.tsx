@@ -102,7 +102,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                 // Now fetch events (interviews and notes) related to this candidato
                 const { data: historicoData, error: historicoError } = await supabase
                     .from('candidato_historico')
-                    .select('id, tipo, descricao, data_registro, entrevista_data, entrevista_hora, compareceu')
+                    .select('*')
                     .eq('candidato_id', candidatoId)
                     .order('data_registro', { ascending: false })
 
