@@ -839,64 +839,9 @@ export function Calendario() {
         </div> */}
       </div>
 
-      {/* CONTEÚDO PRINCIPAL (Grid de 2 colunas: Calendário e Listagem) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 w-full">
-        {/* COLUNA ESQUERDA: CALENDÁRIO */}
-        <div className="lg:col-span-1 bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col w-full overflow-hidden h-fit">
-          <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
-            <h2 className="text-[18px] font-black text-[#0a192f] capitalize">
-              {MESES[selectedMonth]} {selectedYear}
-            </h2>
-            <div className="flex gap-2">
-              <button onClick={prevMonth} className="p-2 hover:bg-gray-200 rounded-lg transition-colors"><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
-              <button onClick={nextMonth} className="p-2 hover:bg-gray-200 rounded-lg transition-colors"><ChevronRight className="w-5 h-5 text-gray-600" /></button>
-            </div>
-          </div>
-          <div className="p-5">
-            <div className="grid grid-cols-7 gap-1 text-center mb-2">
-              {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((dia, idx) => (
-                <div key={idx} className="text-[10px] font-black text-gray-400 uppercase">{dia}</div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-1">
-              {calendarGrid.map((dt, idx) => {
-                const dayEventColors = getDayEventColors(dt.date, allMixedEvents);
-                const isSelected = selectedDay && dt.date.toDateString() === selectedDay.toDateString();
-                const isToday = dt.date.toDateString() === new Date().toDateString();
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => handleDayClick(dt.date)}
-                    className={`relative p-2 flex flex-col items-center justify-center rounded-xl text-sm font-semibold transition-all group
-                      ${!dt.isCurrentMonth ? 'text-gray-300 hover:text-gray-500' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}
-                      ${isSelected ? 'bg-[#1e3a8a] text-white hover:bg-[#112240] hover:text-white' : ''}
-                      ${isToday && !isSelected ? 'border border-[#1e3a8a] text-[#1e3a8a]' : ''}
-                    `}
-                  >
-                    <span>{dt.day}</span>
-                    {dayEventColors.length > 0 && (
-                      <div className="flex gap-0.5 mt-1 absolute bottom-1">
-                        {dayEventColors.slice(0, 3).map((color, colorIdx) => (
-                          <div key={colorIdx} className={`w-1.5 h-1.5 rounded-full ${isSelected && color !== 'bg-white' ? color : color}`} />
-                        ))}
-                      </div>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-            {selectedDay && (
-              <button
-                onClick={() => setSelectedDay(null)}
-                className="w-full mt-4 py-2 text-xs font-bold text-gray-500 hover:text-[#1e3a8a] transition-colors uppercase tracking-widest text-center"
-              >
-                Limpar Seleção
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* COLUNA DIREITA: LISTA DE COMPROMISSOS */}
+      {/* CONTEÚDO PRINCIPAL (Grid de 2 colunas: Lista e Calendário) */}
+      <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-6 mt-6 w-full items-start">
+        {/* COLUNA ESQUERDA: LISTA DE COMPROMISSOS */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col w-full overflow-hidden h-fit mb-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
             <div className="flex items-center gap-3">
@@ -920,7 +865,7 @@ export function Calendario() {
             </div>
           </div>
 
-          <div ref={scrollContainerRef} className="p-6 overflow-y-auto max-h-[800px] custom-scrollbar scroll-smooth">
+          <div ref={scrollContainerRef} className="p-6 pb-2 overflow-y-auto max-h-[800px] custom-scrollbar scroll-smooth">
             {sortedDates.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-gray-400 py-12">
                 <CalendarDays className="h-10 w-10 mb-3 opacity-20" />
@@ -1068,6 +1013,61 @@ export function Calendario() {
                   );
                 })}
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* COLUNA DIREITA: CALENDÁRIO */}
+        <div className="lg:col-span-1 bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col w-full overflow-hidden h-fit lg:sticky lg:top-6 z-10">
+          <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-100 bg-white">
+            <h2 className="text-[20px] font-black text-[#0a192f] capitalize">
+              {MESES[selectedMonth]} {selectedYear}
+            </h2>
+            <div className="flex gap-2">
+              <button onClick={prevMonth} className="p-2 hover:bg-gray-200 rounded-lg transition-colors"><ChevronLeft className="w-5 h-5 text-gray-600" /></button>
+              <button onClick={nextMonth} className="p-2 hover:bg-gray-200 rounded-lg transition-colors"><ChevronRight className="w-5 h-5 text-gray-600" /></button>
+            </div>
+          </div>
+          <div className="p-5">
+            <div className="grid grid-cols-7 gap-1 text-center mb-2">
+              {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((dia, idx) => (
+                <div key={idx} className="text-[10px] font-black text-gray-400 uppercase">{dia}</div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-y-2 gap-x-1">
+              {calendarGrid.map((dt, idx) => {
+                const dayEventColors = getDayEventColors(dt.date, allMixedEvents);
+                const isSelected = selectedDay && dt.date.toDateString() === selectedDay.toDateString();
+                const isToday = dt.date.toDateString() === new Date().toDateString();
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleDayClick(dt.date)}
+                    className={`relative p-2 flex flex-col items-center justify-center rounded-full aspect-square text-sm font-bold transition-all group
+                      ${!dt.isCurrentMonth ? 'text-gray-300 hover:text-gray-500' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}
+                      ${isSelected ? 'bg-[#1e3a8a] text-white hover:bg-[#112240] hover:text-white shadow-md' : ''}
+                      ${isToday && !isSelected ? 'border-2 border-[#1e3a8a] text-[#1e3a8a]' : ''}
+                    `}
+                  >
+                    <span>{dt.day}</span>
+                    {dayEventColors.length > 0 && (
+                      <div className="flex gap-0.5 mt-0.5 absolute bottom-1">
+                        {dayEventColors.slice(0, 3).map((color, colorIdx) => (
+                          <div key={colorIdx} className={`w-1.5 h-1.5 rounded-full ${isSelected && color !== 'bg-white' ? color : color}`} />
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            {selectedDay && (
+              <button
+                onClick={() => setSelectedDay(null)}
+                className="w-full mt-4 py-2 text-xs font-bold text-gray-500 hover:text-[#1e3a8a] transition-colors uppercase tracking-widest text-center"
+              >
+                Limpar Seleção
+              </button>
             )}
           </div>
         </div>
