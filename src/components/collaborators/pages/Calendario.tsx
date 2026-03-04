@@ -1054,13 +1054,31 @@ export function Calendario() {
                           placeholder="Selecione o formato"
                         />
                       </div>
-                      <div>
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
-                          {novoEvento.local_tipo === 'Online' ? 'URL da Reunião' : 'Endereço'}
-                        </label>
+                      <div className="flex flex-col">
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                            {novoEvento.local_tipo === 'Online' ? 'URL da Reunião' : 'Local'}
+                          </label>
+                          {novoEvento.tipo === 'Entrevista' && novoEvento.local_tipo === 'Online' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                // Mock link since MS Graph API isn't fully integrated for meeting creation yet
+                                const randomId = Math.random().toString(36).substring(2, 12);
+                                const mockLink = `https://teams.microsoft.com/l/meetup-join/19:meeting_${randomId}@thread.v2/0?context={"Tid":"mock"}`;
+                                setNovoEvento({ ...novoEvento, local_endereco_url: mockLink });
+                                toast.success("Link gerado e preenchido!");
+                                toast.info("Nota: Integração corporativa com Microsoft Graph necessária para links reais.");
+                              }}
+                              className="text-[9px] font-black text-[#1e3a8a] bg-[#1e3a8a]/10 hover:bg-[#1e3a8a]/20 px-2 py-1 rounded transition-colors uppercase tracking-[0.1em]"
+                            >
+                              Gerar Link Teams
+                            </button>
+                          )}
+                        </div>
                         {novoEvento.tipo === 'Entrevista' && novoEvento.local_tipo === 'Presencial' ? (
                           <SearchableSelect
-                            options={['Sala de Reunião 01', 'Sala de Reunião 02', 'Sala de Reunião 03', 'Sala de Reunião 04', 'Sala de Reunião 05'].map(s => ({ value: s, label: s }))}
+                            options={['Sala de Reunião 01', 'Sala de Reunião 02', 'Sala de Reunião 03', 'Sala de Reunião 04', 'Sala de Reunião 05'].map(s => ({ id: s, name: s }))}
                             value={novoEvento.local_endereco_url}
                             onChange={(val) => setNovoEvento({ ...novoEvento, local_endereco_url: val })}
                             placeholder="Selecione a Sala..."
@@ -1087,8 +1105,8 @@ export function Calendario() {
                             </label>
                             <SearchableSelect
                               options={[
-                                { value: 'Karina Reis dos Prazeres', label: 'Karina Reis dos Prazeres' },
-                                { value: 'Tatiana Gonçalves Gomes', label: 'Tatiana Gonçalves Gomes' }
+                                { id: 'Karina Reis dos Prazeres', name: 'Karina Reis dos Prazeres' },
+                                { id: 'Tatiana Gonçalves Gomes', name: 'Tatiana Gonçalves Gomes' }
                               ]}
                               value={novoEvento.entrevistador_id || ''}
                               onChange={(val) => setNovoEvento({ ...novoEvento, entrevistador_id: val })}
@@ -1108,8 +1126,8 @@ export function Calendario() {
                                 const lider = v.leader?.name ? ` - ${v.leader.name} ` : '';
                                 const vagaId = v.vaga_id_text ? ` - ${v.vaga_id_text} ` : '';
                                 return {
-                                  value: v.id,
-                                  label: `${cargo}${lider}${vagaId}`
+                                  id: v.id,
+                                  name: `${cargo}${lider}${vagaId}`
                                 };
                               })}
                               value={novoEvento.vaga_id || ''}
@@ -1126,7 +1144,7 @@ export function Calendario() {
                             <div className="flex gap-2">
                               <div className="flex-1">
                                 <SearchableSelect
-                                  options={candidatos.map(c => ({ value: c.id, label: c.nome }))}
+                                  options={candidatos.map(c => ({ id: c.id, name: c.nome }))}
                                   value={currentCandidato}
                                   onChange={setCurrentCandidato}
                                   placeholder="Selecione um candidato..."
