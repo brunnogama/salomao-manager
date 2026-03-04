@@ -345,8 +345,7 @@ export function Calendario() {
     // Fetch Vagas
     const { data: vagasData, error: vagasError } = await supabase
       .from('vagas')
-      .select('id, status, vaga_id_text, role:role_id(name), leader:leader_id(name)')
-      .in('status', ['Aberta', 'Congelada', 'Aguardando Autorização']);
+      .select('id, status, vaga_id_text, role:role_id(name), leader:leader_id(name)');
 
     if (vagasError) console.error('Erro ao buscar vagas do calendário:', vagasError);
     if (vagasData) setVagas(vagasData);

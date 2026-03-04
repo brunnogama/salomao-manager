@@ -99,18 +99,15 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                 const candidatoId = candidatoData[0].id
 
                 // Now fetch events (interviews) related to this candidato
-                const { data: eventosData, error: eventosError } = await supabase
-                    .from('eventos')
-                    .select(`
-                        id, titulo, data_evento, entrevistador_id, descricao, tipo
-                    `)
-                    // Using overlap operator (ov) with array format to match text[] postgres array natively
-                    .overlaps('participantes_candidatos', [candidatoId])
-                    .in('tipo', ['Entrevista', 'Processo Seletivo'])
-                    .order('data_evento', { ascending: false })
+                // Now fetch events (interviews and notes) related to this candidato
+                const { data: historicoData, error: historicoError } = await supabase
+                    .from('candidato_historico')
+                    .select('id, tipo, descricao, data_registro, entrevista_data, entrevista_hora, compareceu')
+                    .eq('candidato_id', candidatoId)
+                    .order('data_registro', { ascending: false })
 
-                if (eventosError) throw eventosError
-                setRecruitingHistory(eventosData || [])
+                if (historicoError) throw historicoError
+                setRecruitingHistory(historicoData || [])
             } else {
                 setRecruitingHistory([])
             }
@@ -429,9 +426,9 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                             <div className="space-y-4">
                                 {recruitingHistory.map((evento) => {
                                     // Format data string
-                                    let dateText = evento.data_evento;
-                                    if (evento.data_evento && evento.data_evento.includes('T')) {
-                                        const dateObj = new Date(evento.data_evento);
+                                    let dateText = evento.data_registro;
+                                    if (evento.data_registro && evento.data_registro.includes('T')) {
+                                        const dateObj = new Date(evento.data_registro);
                                         const day = String(dateObj.getDate()).padStart(2, '0');
                                         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                                         const year = dateObj.getFullYear();
@@ -440,6 +437,8 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                         dateText = `${day}/${month}/${year} às ${hours}:${minutes}`;
                                     }
 
+                                    const isEntrevista = evento.tipo === 'Entrevista';
+
                                     return (
                                         <div key={evento.id} className="p-5 border border-emerald-100 rounded-xl bg-emerald-50/30 space-y-3 relative overlow-hidden">
                                             <div className="flex justify-between items-start">
@@ -447,22 +446,33 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                                     <span className="inline-block px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase rounded mb-2">
                                                         {evento.tipo}
                                                     </span>
-                                                    <h5 className="text-[#0a192f] font-bold text-sm">{evento.titulo}</h5>
+                                                    <h5 className="text-[#0a192f] font-bold text-sm">Registro de {evento.tipo}</h5>
                                                 </div>
                                                 <p className="text-xs text-gray-500 font-medium">
-                                                    Realizado em <span className="font-bold text-emerald-600">{dateText}</span>
+                                                    Registrado em <span className="font-bold text-emerald-600">{dateText}</span>
                                                 </p>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4 text-xs">
-                                                <div>
-                                                    <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Entrevistador</p>
-                                                    <p className="font-medium text-gray-700">{evento.entrevistador_id || 'Não informado'}</p>
+                                            {isEntrevista && (
+                                                <div className="grid grid-cols-2 gap-4 text-xs mt-3 bg-white p-3 rounded border border-emerald-50">
+                                                    <div>
+                                                        <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Data Agendada</p>
+                                                        <p className="font-medium text-gray-700">
+                                                            {evento.entrevista_data ? evento.entrevista_data.split('-').reverse().join('/') : 'Não informada'}
+                                                            {evento.entrevista_hora ? ` às ${evento.entrevista_hora}` : ''}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Status / Presença</p>
+                                                        <p className={`font-bold ${evento.compareceu === true ? 'text-green-600' : evento.compareceu === false ? 'text-red-600' : 'text-amber-500'}`}>
+                                                            {evento.compareceu === true ? 'Compareceu' : evento.compareceu === false ? 'Faltou' : 'Pendente / Agendada'}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
 
                                             <div className="mt-4 p-4 bg-white rounded-lg border border-emerald-100">
-                                                <h6 className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider mb-2">Observações</h6>
+                                                <h6 className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider mb-2">Detalhes / Observações</h6>
                                                 <p className="text-sm text-gray-600 whitespace-pre-wrap">{evento.descricao || 'Nenhuma observação registrada.'}</p>
                                             </div>
                                         </div>
