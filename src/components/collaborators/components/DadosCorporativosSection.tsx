@@ -170,6 +170,8 @@ export function DadosCorporativosSection({
                 value={formData.candidato_id || ''}
                 onChange={v => setFormData({ ...formData, candidato_id: v })}
                 tableName="candidatos"
+                orderBy="nome"
+                nameColumn="nome"
                 disabled={isViewMode}
               />
 
