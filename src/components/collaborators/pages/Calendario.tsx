@@ -165,6 +165,9 @@ export function Calendario() {
   const [selectedAniversariantes, setSelectedAniversariantes] = useState<string[]>([])
   const [isSendingWpp, setIsSendingWpp] = useState(false)
 
+  // Estado para Tabs
+  const [activeTab, setActiveTab] = useState('Geral')
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -665,174 +668,226 @@ export function Calendario() {
             </div>
 
           </div>
+        </div>
 
+        {/* TABS NAVIGATION */}
+        <div className="flex items-center gap-1 bg-white p-1 rounded-xl shadow-sm border border-gray-100 overflow-x-auto custom-scrollbar">
+          {['Geral', 'Entrevistas', 'Reuniões', 'Eventos', 'Feriados', 'Outros'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap min-w-max ${activeTab === tab
+                ? 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] text-white shadow-md'
+                : 'text-gray-500 hover:text-[#1e3a8a] hover:bg-blue-50/50'
+                }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* BLOCOS: ANIVERSARIANTES | EVENTOS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 w-full">
-        {/* BLOCO ANIVERSARIANTES */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[800px] xl:max-h-[85vh] w-full">
-          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#d4af37]/10 rounded-xl">
-                <Cake className="h-5 w-5 text-[#d4af37]" strokeWidth={1.5} />
-              </div>
-              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Aniversários</h2>
+      {/* CONTEÚDO DA ABA SELECIONADA */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col w-full overflow-hidden mt-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
+              <CalendarDays className="h-5 w-5 text-[#1e3a8a]" strokeWidth={1.5} />
             </div>
-
-            {selectedAniversariantes.length > 0 && (
-              <button
-                disabled={isSendingWpp}
-                onClick={handleSendWpp}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all text-xs font-bold uppercase tracking-wider active:scale-95 disabled:opacity-70"
-              >
-                {isSendingWpp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Parabenizar ({selectedAniversariantes.length})
-              </button>
-            )}
+            <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">
+              {activeTab === 'Geral' ? 'Todos os Compromissos' : activeTab}
+            </h2>
           </div>
 
-          <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
-            {getProximosAniversarios().map((aniv) => {
-              const isSelected = selectedAniversariantes.includes(String(aniv.colaborador.id));
-              return (
-                <div
-                  key={aniv.colaborador.id}
-                  onClick={() => setVisualizarColaborador(aniv.colaborador as Colaborador)}
-                  className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer relative ${aniv.isHoje
-                    ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
-                    : aniv.isEstaSemana
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
-                      : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
-                    } ${isSelected ? 'ring-2 ring-green-500 border-transparent' : ''}`}
-                >
-                  <div className="flex items-center gap-4 min-w-0 pr-2">
-                    <div
-                      onClick={(e) => handleToggleAniversariante(e, String(aniv.colaborador.id))}
-                      className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${isSelected
-                        ? 'bg-green-500 border-green-500 text-white'
-                        : 'border-gray-300 bg-white hover:border-green-500'
-                        }`}
-                    >
-                      {isSelected && <Check className="w-3.5 h-3.5" />}
-                    </div>
-
-                    {aniv.colaborador.photo_url ? (
-                      <img
-                        src={aniv.colaborador.photo_url}
-                        alt={aniv.colaborador.name}
-                        className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 flex items-center justify-center text-white text-lg font-black border-2 border-[#d4af37]/30 shadow-md shrink-0">
-                        {aniv.colaborador.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-black text-[#0a192f] text-sm truncate">{aniv.isHoje ? '🎉 ' : ''}{formatName(aniv.colaborador.name)}</p>
-                      <p className="text-[10px] font-semibold text-gray-600 truncate max-w-[120px] md:max-w-[200px]">{toTitleCase(aniv.colaborador.role)}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 border-l border-gray-200/50 pl-4 shrink-0">
-                    <div className="text-right hidden sm:block">
-                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Data</p>
-                      <p className="font-bold text-[#0a192f] text-xs">
-                        {aniv.dia} {MESES[aniv.mes].substring(0, 3)}
-                      </p>
-                    </div>
-                    <div className="text-right w-12 sm:w-16">
-                      <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{aniv.diasRestantes === 0 ? '' : 'Faltam'}</p>
-                      <p className={`font-black text-sm flex items-center justify-end ${aniv.isHoje ? 'text-[#d4af37]' : aniv.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
-                        }`}>
-                        {aniv.diasRestantes === 0 ? <span className="text-[#d4af37] text-base transform scale-110">Hoje</span> : `${aniv.diasRestantes} d`}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {activeTab === 'Geral' && selectedAniversariantes.length > 0 && (
+            <button
+              disabled={isSendingWpp}
+              onClick={handleSendWpp}
+              className="mt-4 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all text-xs font-bold uppercase tracking-wider active:scale-95 disabled:opacity-70"
+            >
+              {isSendingWpp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Parabenizar ({selectedAniversariantes.length})
+            </button>
+          )}
         </div>
 
-        {/* BLOCO EVENTOS */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col max-h-[800px] xl:max-h-[85vh] w-full">
-          <div className="flex items-center justify-between mb-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#1e3a8a]/10 rounded-xl">
-                <CalendarEventIcon className="h-5 w-5 text-[#1e3a8a]" strokeWidth={1.5} />
-              </div>
-              <h2 className="text-[20px] font-black text-[#0a192f] tracking-tight">Próximos Compromissos</h2>
-            </div>
-          </div>
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/80 border-b border-gray-100">
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap hidden sm:table-cell">Selec.</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Data / Hora</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Tipo</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest w-full min-w-[300px]">Título / Descrição</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {/* Combine aniversários and eventos for Geral tab */}
+              {(() => {
+                let itemsToShow: any[] = [];
+                const todosAniversarios = getProximosAniversarios().map(a => ({
+                  ...a,
+                  _source: 'aniversario',
+                  sortValue: a.diasRestantes,
+                  dataSort: new Date(new Date().getFullYear(), a.mes, parseInt(a.dia)).getTime()
+                }));
+                const todosEventos = getProximosEventos().map(e => ({
+                  ...e,
+                  _source: 'evento',
+                  sortValue: e.diasRestantes,
+                  dataSort: e.dataObjeto.getTime()
+                }));
 
-          <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
-            {getProximosEventos().length === 0 ? (
-              <div className="text-center py-8 text-sm text-gray-400 font-medium italic">
-                Nenhum evento agendado
-              </div>
-            ) : getProximosEventos().map((evento, idx) => (
-              <div
-                key={idx}
-                onClick={() => evento.tipo === 'Mochila' ? setVisualizarColaborador(evento.colaboradorRef as Colaborador) : setVisualizarEvento(evento as Evento)}
-                className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 hover:shadow-lg cursor-pointer ${evento.isHoje
-                  ? 'bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-500 shadow-md transform scale-[1.01] mx-1'
-                  : evento.isEstaSemana
-                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
-                    : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
-                  }`}
-              >
-                <div className="flex items-center gap-4 min-w-0 pr-2">
-                  {evento.tipo === 'Mochila' && (evento as any).colaboradorRef?.photo_url ? (
-                    <img src={(evento as any).colaboradorRef.photo_url} className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0" />
-                  ) : evento.tipo === 'Mochila' ? (
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white text-lg font-black border-2 border-[#1e3a8a]/30 shadow-md shrink-0">
-                      {(evento as any).colaboradorRef?.name.charAt(0).toUpperCase()}
-                    </div>
-                  ) : (
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-black border-2 shadow-md shrink-0 ${evento.isHoje ? 'bg-gradient-to-br from-emerald-500 to-green-600 border-emerald-500/30' : evento.tipo === 'Aniversário' ? 'bg-gradient-to-br from-[#d4af37] to-amber-600 border-[#d4af37]/30' : 'bg-gradient-to-br from-[#1e3a8a] to-[#112240] border-[#1e3a8a]/30'}`}>
-                      {evento.tipo === 'Reunião' ? <Users className="h-5 w-5" strokeWidth={1.5} /> : evento.tipo === 'Aniversário' ? <PartyPopper className="h-5 w-5" strokeWidth={1.5} /> : <Sparkles className="h-5 w-5" strokeWidth={1.5} />}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-black text-[#0a192f] text-sm truncate">{evento.isHoje ? '🎉 ' : ''}{evento.titulo}</p>
-                    <p className="text-[10px] font-semibold text-gray-600 truncate">{evento.tipo}</p>
-                  </div>
-                </div>
+                if (activeTab === 'Geral') {
+                  itemsToShow = [...todosAniversarios, ...todosEventos].sort((a, b) => a.sortValue - b.sortValue);
+                } else if (activeTab === 'Feriados') {
+                  itemsToShow = todosEventos.filter(e => e.tipo === 'Feriado');
+                } else if (activeTab === 'Entrevistas') {
+                  // Entrevistas mantem passadas, não filtramos por diasRestantes >= 0
+                  // Vamos pegar direto do `eventos` original para evitar o filtro do getProximosEventos
+                  itemsToShow = eventos
+                    .filter(e => e.tipo === 'Entrevista')
+                    .map(e => ({ ...e, _source: 'evento', dataObjeto: new Date(e.data_evento + 'T12:00:00') }))
+                    .sort((a, b) => b.dataObjeto.getTime() - a.dataObjeto.getTime()); // Decrescente
+                } else {
+                  itemsToShow = todosEventos.filter(e => e.tipo === activeTab);
+                }
 
-                <div className="flex items-center gap-4 border-l border-gray-200/50 pl-4 shrink-0">
-                  <div className="text-right hidden sm:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleEditClick(evento); }}
-                      className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg"
+                if (itemsToShow.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center justify-center text-gray-400">
+                          <CalendarDays className="h-10 w-10 mb-3 opacity-20" />
+                          <p className="text-sm font-medium italic">Nenhum evento encontrado para esta categoria.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                return itemsToShow.map((item, idx) => {
+                  const isHoje = item.isHoje || (item.diasRestantes === 0);
+                  const isAniver = item._source === 'aniversario' || item.tipo === 'Aniversário';
+
+                  return (
+                    <tr
+                      key={idx}
+                      className={`group transition-all hover:bg-gray-50/50 cursor-pointer ${isHoje ? 'bg-blue-50/30' : ''}`}
+                      onClick={() => {
+                        if (item.tipo === 'Mochila' || item._source === 'aniversario') {
+                          setVisualizarColaborador((item.colaboradorRef || item.colaborador) as Colaborador)
+                        } else {
+                          setVisualizarEvento(item as Evento)
+                        }
+                      }}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteEvento(evento.id); }}
-                      className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  <div className="text-right hidden sm:block">
-                    <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">Data</p>
-                    <p className="font-bold text-[#0a192f] text-xs">
-                      {evento.dataObjeto.getDate()} {MESES[evento.dataObjeto.getMonth()].substring(0, 3)}
-                    </p>
-                  </div>
-                  <div className="text-right w-12 sm:w-16">
-                    <p className="text-[8px] text-gray-400 uppercase font-black tracking-[0.2em] mb-0.5">{evento.diasRestantes === 0 ? '' : 'Faltam'}</p>
-                    <p className={`font-black text-sm flex items-center justify-end ${evento.isHoje ? 'text-emerald-600' : evento.isEstaSemana ? 'text-[#1e3a8a]' : 'text-[#0a192f]'
-                      }`}>
-                      {evento.diasRestantes === 0 ? <span className="text-emerald-600 text-base transform scale-110">Hoje</span> : `${evento.diasRestantes} d`}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                      <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell" onClick={(e) => e.stopPropagation()}>
+                        {isAniver && item.colaborador ? (
+                          <div
+                            onClick={(e) => handleToggleAniversariante(e, String(item.colaborador.id))}
+                            className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${selectedAniversariantes.includes(String(item.colaborador.id))
+                              ? 'bg-green-500 border-green-500 text-white'
+                              : 'border-gray-300 bg-white hover:border-green-500'
+                              }`}
+                          >
+                            {selectedAniversariantes.includes(String(item.colaborador.id)) && <Check className="w-3.5 h-3.5" />}
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5" />
+                        )}
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className={`font-black text-sm ${isHoje ? 'text-[#1e3a8a]' : 'text-[#0a192f]'}`}>
+                            {item._source === 'aniversario' ? `${item.dia} ${MESES[Number(item.mes)].substring(0, 3)}` :
+                              item.data_evento ? new Date(item.data_evento + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            {item.hora ? item.hora : item._source === 'aniversario' ? 'Aniversário' : 'Dia Todo'}
+                          </span>
+                          {isHoje && <span className="text-[9px] font-black text-[#1e3a8a] bg-blue-100 px-2 py-0.5 rounded uppercase mt-0.5 inline-block w-max">Hoje</span>}
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${item.tipo === 'Entrevista' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                          item.tipo === 'Reunião' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                            (item.tipo === 'Aniversário' || item._source === 'aniversario') ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                              item.tipo === 'Mochila' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                item.tipo === 'Feriado' ? 'bg-red-50 text-red-700 border-red-200' :
+                                  'bg-gray-100 text-gray-700 border-gray-200'
+                          }`}>
+                          {item.tipo === 'Reunião' ? <Users className="w-3 h-3" /> :
+                            item.tipo === 'Entrevista' ? <Briefcase className="w-3 h-3" /> :
+                              (item.tipo === 'Aniversário' || item._source === 'aniversario') ? <PartyPopper className="w-3 h-3" /> :
+                                item.tipo === 'Feriado' ? <CalendarDays className="w-3 h-3" /> :
+                                  <CalendarEventIcon className="w-3 h-3" />}
+                          {item._source === 'aniversario' ? 'Aniversário' : item.tipo}
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {/* Avatar or Icon */}
+                          {(item.colaborador?.photo_url || item.colaboradorRef?.photo_url) ? (
+                            <img src={item.colaborador?.photo_url || item.colaboradorRef?.photo_url} className="w-10 h-10 rounded-xl object-cover shadow-sm shrink-0 border border-gray-200" />
+                          ) : isAniver || item.tipo === 'Mochila' ? (
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black shadow-sm shrink-0 ${isAniver ? 'bg-gradient-to-br from-[#d4af37] to-amber-600' : 'bg-gradient-to-br from-indigo-500 to-indigo-700'}`}>
+                              {(item.colaborador?.name || item.colaboradorRef?.name || '?').charAt(0).toUpperCase()}
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 shadow-sm shrink-0">
+                              <CalendarDays className="w-5 h-5" />
+                            </div>
+                          )}
+
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-bold text-[#0a192f] text-sm truncate">
+                              {item._source === 'aniversario' ? formatName(item.colaborador.name) : item.titulo}
+                            </span>
+                            {item.descricao && (
+                              <span className="text-[11px] font-medium text-gray-500 truncate mt-0.5 max-w-[500px]">
+                                {item.descricao}
+                              </span>
+                            )}
+                            {item._source === 'aniversario' && (
+                              <span className="text-[10px] font-semibold text-gray-400 uppercase mt-0.5">
+                                {toTitleCase(item.colaborador.role)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
+                        {item._source === 'evento' && item.tipo !== 'Feriado' && item.tipo !== 'Mochila' && (
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => handleEditClick(item as Evento)}
+                              className="w-8 h-8 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors tooltip"
+                              title="Editar"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEvento(item.id)}
+                              className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors tooltip"
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
+              })()}
+            </tbody>
+          </table>
         </div>
       </div>
 
