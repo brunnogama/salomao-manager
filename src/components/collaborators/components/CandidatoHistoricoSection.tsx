@@ -45,7 +45,7 @@ export function CandidatoHistoricoSection({
             .from('candidato_historico')
             .select('*')
             .eq('candidato_id', candidatoId)
-            .order('data_registro', { ascending: false })
+            .order('created_at', { ascending: false })
 
         if (data) setHistoricoList(data)
     }
@@ -93,8 +93,7 @@ export function CandidatoHistoricoSection({
 
         const payload: any = {
             tipo: tipo,
-            descricao: descricao,
-            data_registro: new Date().toISOString()
+            descricao: descricao
         }
 
         if (tipo === 'Entrevista') {
@@ -306,8 +305,8 @@ export function CandidatoHistoricoSection({
                                                                     value={item.compareceu === true ? 'Sim' : item.compareceu === false ? 'Não' : 'Pendente'}
                                                                     onChange={(e) => handleUpdateCompareceu(item.id, e.target.value)}
                                                                     className={`text-xs font-bold px-2 py-1 rounded-md outline-none transition-colors border cursor-pointer ${item.compareceu === true ? 'bg-green-50 text-green-700 border-green-200' :
-                                                                            item.compareceu === false ? 'bg-red-50 text-red-700 border-red-200' :
-                                                                                'bg-gray-50 text-gray-600 border-gray-200 focus:border-blue-500'
+                                                                        item.compareceu === false ? 'bg-red-50 text-red-700 border-red-200' :
+                                                                            'bg-gray-50 text-gray-600 border-gray-200 focus:border-blue-500'
                                                                         }`}
                                                                     disabled={!item.id} // Disabled se não foi salvo (temp_id)
                                                                 >
@@ -317,8 +316,8 @@ export function CandidatoHistoricoSection({
                                                                 </select>
                                                             ) : (
                                                                 <span className={`text-xs font-bold px-2 py-1 rounded-md border ${item.compareceu === true ? 'bg-green-50 text-green-700 border-green-200' :
-                                                                        item.compareceu === false ? 'bg-red-50 text-red-700 border-red-200' :
-                                                                            'bg-gray-50 text-gray-600 border-gray-200'
+                                                                    item.compareceu === false ? 'bg-red-50 text-red-700 border-red-200' :
+                                                                        'bg-gray-50 text-gray-600 border-gray-200'
                                                                     }`}>
                                                                     {item.compareceu === true ? 'Sim' : item.compareceu === false ? 'Não' : 'Pendente'}
                                                                 </span>

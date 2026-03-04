@@ -104,7 +104,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     .from('candidato_historico')
                     .select('*')
                     .eq('candidato_id', candidatoId)
-                    .order('data_registro', { ascending: false })
+                    .order('created_at', { ascending: false })
 
                 if (historicoError) throw historicoError
                 setRecruitingHistory(historicoData || [])
@@ -426,9 +426,9 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                             <div className="space-y-4">
                                 {recruitingHistory.map((evento) => {
                                     // Format data string
-                                    let dateText = evento.data_registro;
-                                    if (evento.data_registro && evento.data_registro.includes('T')) {
-                                        const dateObj = new Date(evento.data_registro);
+                                    let dateText = evento.created_at;
+                                    if (evento.created_at && evento.created_at.includes('T')) {
+                                        const dateObj = new Date(evento.created_at);
                                         const day = String(dateObj.getDate()).padStart(2, '0');
                                         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                                         const year = dateObj.getFullYear();

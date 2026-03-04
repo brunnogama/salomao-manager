@@ -324,7 +324,6 @@ export function Calendario() {
                   candidato_id: candId,
                   tipo: 'Entrevista',
                   descricao: `Entrevista agendada: ${ev.titulo}`,
-                  data_registro: new Date().toISOString(),
                   entrevista_data: ev.data_evento,
                   entrevista_hora: ev.hora || null,
                   compareceu: null
@@ -409,7 +408,6 @@ export function Calendario() {
           candidato_id: candId,
           tipo: 'Entrevista',
           descricao: `Entrevista agendada: ${novoEvento.titulo}`,
-          data_registro: new Date().toISOString(),
           entrevista_data: novoEvento.data,
           entrevista_hora: novoEvento.hora || null,
           compareceu: null // Pendente
