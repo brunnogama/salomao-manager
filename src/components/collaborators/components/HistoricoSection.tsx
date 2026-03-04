@@ -104,7 +104,8 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     .select(`
                         id, titulo, data_evento, entrevistador_id, descricao, tipo
                     `)
-                    .filter('participantes_candidatos', 'cs', `{${candidatoId}}`)
+                    // Forçando a busca convertendo o uuid de fato
+                    .contains('participantes_candidatos', [candidatoId])
                     .in('tipo', ['Entrevista', 'Processo Seletivo'])
                     .order('data_evento', { ascending: false })
 
