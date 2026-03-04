@@ -241,7 +241,13 @@ export function Calendario() {
       const vagaSelecionada = vagas.find(v => String(v.id) === String(novoEvento.vaga_id));
       const vagaNome = vagaSelecionada && vagaSelecionada.role ? vagaSelecionada.role.name : 'Vaga';
 
-      const candidatosNomes = novoEvento.participantes_candidatos.map(id => {
+      // Consider both already added candidates and the currently selected one in the dropdown
+      const allCandidateIds = [...novoEvento.participantes_candidatos];
+      if (currentCandidato && !allCandidateIds.includes(currentCandidato)) {
+        allCandidateIds.push(currentCandidato);
+      }
+
+      const candidatosNomes = allCandidateIds.map(id => {
         const c = candidatos.find(cand => String(cand.id) === String(id));
         return c ? formatName(c.nome) : '';
       }).filter(Boolean).join(', ');
@@ -261,7 +267,7 @@ export function Calendario() {
         return Object.keys(updates).length > 0 ? { ...prev, ...updates } : prev;
       });
     }
-  }, [novoEvento.tipo, novoEvento.vaga_id, novoEvento.participantes_candidatos, vagas, candidatos]);
+  }, [novoEvento.tipo, novoEvento.vaga_id, novoEvento.participantes_candidatos, currentCandidato, vagas, candidatos]);
 
   useEffect(() => {
     fetchData()
