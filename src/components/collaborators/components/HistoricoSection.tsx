@@ -78,13 +78,15 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     const fetchRecruitingHistory = async () => {
         setLoadingRecruiting(true)
         try {
-            // First, find the candidato by email or exactly by name (for older records without email)
+            // First, find the candidato by email or name
             let query = supabase.from('candidatos').select('id, nome, email')
 
-            if (formData.email) {
+            if (formData.email && formData.name) {
+                query = query.or(`email.eq.${formData.email},nome.ilike.%${formData.name.trim()}%`)
+            } else if (formData.email) {
                 query = query.eq('email', formData.email)
             } else if (formData.name) {
-                query = query.ilike('nome', formData.name.trim())
+                query = query.ilike('nome', `%${formData.name.trim()}%`)
             }
 
             const { data: candidatoData, error: candidatoError } = await query.limit(1)
@@ -98,12 +100,12 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                 const { data: eventosData, error: eventosError } = await supabase
                     .from('eventos')
                     .select(`
-                        id, titulo, data_inicio, entrevistador_id, descricao, avaliacao_candidato, is_online, url_reuniao, type,
+                        id, titulo, data_evento, entrevistador_id, descricao, avaliacao_candidato, is_online, url_reuniao, tipo,
                         entrevistador:entrevistador_id(name)
                     `)
-                    .eq('candidato_id', candidatoId)
-                    .in('type', ['Entrevista', 'Processo Seletivo'])
-                    .order('data_inicio', { ascending: false })
+                    .contains('participantes_candidatos', [candidatoId])
+                    .in('tipo', ['Entrevista', 'Processo Seletivo'])
+                    .order('data_evento', { ascending: false })
 
                 if (eventosError) throw eventosError
                 setRecruitingHistory(eventosData || [])
@@ -425,9 +427,9 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                             <div className="space-y-4">
                                 {recruitingHistory.map((evento) => {
                                     // Format data string
-                                    let dateText = evento.data_inicio;
-                                    if (evento.data_inicio && evento.data_inicio.includes('T')) {
-                                        const dateObj = new Date(evento.data_inicio);
+                                    let dateText = evento.data_evento;
+                                    if (evento.data_evento && evento.data_evento.includes('T')) {
+                                        const dateObj = new Date(evento.data_evento);
                                         const day = String(dateObj.getDate()).padStart(2, '0');
                                         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                                         const year = dateObj.getFullYear();
@@ -441,7 +443,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <span className="inline-block px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase rounded mb-2">
-                                                        {evento.type}
+                                                        {evento.tipo}
                                                     </span>
                                                     <h5 className="text-[#0a192f] font-bold text-sm">{evento.titulo}</h5>
                                                 </div>
