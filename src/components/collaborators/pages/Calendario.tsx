@@ -304,7 +304,7 @@ export function Calendario() {
           participantes_internos: [], // Mocked as not in DB
           participantes_externos: [], // Mocked as not in DB
           participantes_socios: [], // Mocked as not in DB
-          vaga_id: e.vaga_id,
+          vaga_id: typeof e.vaga_id === 'object' ? e.vaga_id?.id : e.vaga_id,
           entrevistador_id: e.entrevistador_id,
           participantes_candidatos: e.participantes_candidatos || []
         });
@@ -461,7 +461,7 @@ export function Calendario() {
       participantes_externos: evento.participantes_externos || [],
       participantes_socios: evento.participantes_socios || [],
       participantes_candidatos: evento.participantes_candidatos || [],
-      vaga_id: evento.vaga_id || '',
+      vaga_id: typeof evento.vaga_id === 'object' ? (evento.vaga_id as any)?.id || '' : evento.vaga_id || '',
       entrevistador_id: evento.entrevistador_id || ''
     })
     setCurrentExtName('')
