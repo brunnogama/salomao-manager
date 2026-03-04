@@ -22,6 +22,7 @@ export interface Colaborador {
   equipe?: string
   role?: string
   local?: string
+  competencias?: string
 
   // Hierarquia (UUIDs)
   partner_id?: string // UUID do sócio

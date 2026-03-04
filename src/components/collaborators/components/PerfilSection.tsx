@@ -9,6 +9,7 @@ interface PerfilSectionProps {
 
 const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
     const [perfil, setPerfil] = useState<string>('');
+    const [competencias, setCompetencias] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isTagging, setIsTagging] = useState(false);
@@ -27,7 +28,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
             console.log('Buscando perfil para:', collaboratorId);
             const { data, error } = await supabase
                 .from('collaborators')
-                .select('perfil')
+                .select('perfil, competencias')
                 .eq('id', collaboratorId)
                 .single();
 
@@ -35,6 +36,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
 
             if (error) throw error;
             setPerfil(data?.perfil || '');
+            setCompetencias(data?.competencias || '');
         } catch (error) {
             console.error('Erro ao buscar perfil:', error);
             toast.error('Erro ao carregar os dados de perfil.');
@@ -83,7 +85,7 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
             console.log('Salvando perfil...', { collaboratorId, perfil });
             const { data: updateData, error } = await supabase
                 .from('collaborators')
-                .update({ perfil })
+                .update({ perfil, competencias })
                 .eq('id', collaboratorId)
                 .select();
 
@@ -194,6 +196,21 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
                         As tags inseridas aqui ajudam no cruzamento de dados para futuras promoções ou realocações de equipe.
                         Elas foram migradas automaticamente da fase de recrutamento se o colaborador foi aprovado pelo sistema.
                     </div>
+                </div>
+
+                <div className="pt-6 border-t border-gray-100">
+                    <label className="block text-[10px] font-black text-[#0a192f] uppercase tracking-widest mb-2 ml-1">
+                        Competências Exercidas (Organograma)
+                    </label>
+                    <textarea
+                        value={competencias}
+                        onChange={(e) => setCompetencias(e.target.value)}
+                        placeholder="Descreva as competências deste colaborador..."
+                        className="w-full bg-white border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none font-medium transition-all shadow-sm h-32 resize-none"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-2 ml-1 font-medium">
+                        Estas informações serão refletidas no Organograma e vice-versa.
+                    </p>
                 </div>
             </div>
         </div>
