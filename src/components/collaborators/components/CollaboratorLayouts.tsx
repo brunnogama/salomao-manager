@@ -127,7 +127,7 @@ export const CollaboratorPageLayout = ({
             </div>
 
             {/* PAGE BODY */}
-            <div className="flex-1 flex overflow-hidden w-full max-w-[1700px] mx-auto bg-white border-x border-gray-100 shadow-sm">
+            <div className="flex-1 flex overflow-hidden w-full max-w-[1700px] mx-auto bg-white shadow-sm">
                 {/* Left Sidebar */}
                 <div className="w-80 bg-gray-50/50 border-r border-gray-100 flex flex-col py-6 px-6 shrink-0 overflow-y-auto no-scrollbar">
                     {/* Photo Area */}

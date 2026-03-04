@@ -92,9 +92,9 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
             }
 
             toast.success('Perfil atualizado com sucesso!');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro ao salvar perfil:', error);
-            toast.error('Erro ao salvar alterações.');
+            toast.error(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
         } finally {
             setSaving(false);
         }
