@@ -61,7 +61,11 @@ export function DadosCorporativosSection({
             setFormData({ ...formData, status: newStatus });
             if (newStatus === 'inactive') setActiveTab('desligamento');
           }}
-          options={[{ name: 'Ativo', id: 'active' }, { name: 'Inativo', id: 'inactive' }]}
+          options={[
+            { name: 'Ativo', id: 'active' },
+            { name: 'Pré-Cadastro (Aprovado em Vaga)', id: 'Pré-Cadastro' },
+            { name: 'Inativo', id: 'inactive' }
+          ]}
           uppercase={false}
           disabled={isViewMode}
         />

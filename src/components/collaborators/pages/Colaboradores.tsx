@@ -1553,21 +1553,21 @@ export function Colaboradores({ }: ColaboradoresProps) {
                   ) : (
                     <>
                       {/* APROVADOS (PRÉ-CADASTRO) */}
-                      {filtered.some(c => c.status === 'Aprovado') && (
-                        <tr className="bg-emerald-50/80">
-                          <td colSpan={7} className="px-6 py-3 border-y border-emerald-200">
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-800 flex items-center gap-2">
-                              <UserPlus className="h-4 w-4" /> Candidatos Aprovados (Pré-Cadastro)
+                      {filtered.some(c => c.status === 'Pré-Cadastro') && (
+                        <tr className="bg-amber-50/80">
+                          <td colSpan={7} className="px-6 py-3 border-y border-amber-200">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-800 flex items-center gap-2">
+                              <UserPlus className="h-4 w-4" /> Pré-Cadastro (Aprovado em Vaga)
                             </p>
                           </td>
                         </tr>
                       )}
-                      {filtered.filter(c => c.status === 'Aprovado').map((c) => (
-                        <tr key={c.id} onClick={() => handleRowClick(c)} className="bg-emerald-50/30 hover:bg-emerald-50/60 cursor-pointer transition-colors group">
+                      {filtered.filter(c => c.status === 'Pré-Cadastro').map((c) => (
+                        <tr key={c.id} onClick={() => handleRowClick(c)} className="bg-amber-50/30 hover:bg-amber-50/60 cursor-pointer transition-colors group">
                           <td className="px-6 py-4 w-12 text-center" onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
-                              className="w-4 h-4 rounded text-emerald-600 border-emerald-300 focus:ring-emerald-600 cursor-pointer"
+                              className="w-4 h-4 rounded text-amber-600 border-amber-300 focus:ring-amber-600 cursor-pointer"
                               checked={selectedIds.includes(c.id)}
                               onChange={(e) => handleSelect(e, c.id)}
                             />
@@ -1578,7 +1578,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                               <div>
                                 <p className="font-bold text-sm text-[#0a192f]">{toTitleCase(c.name)}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                  {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">{c.matricula_interna}</span>}
+                                  {c.matricula_interna && <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200">{c.matricula_interna}</span>}
                                   <p className="text-[10px] text-gray-400 font-medium">{c.email}</p>
                                 </div>
                               </div>
@@ -1595,9 +1595,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             <p className="text-sm font-medium text-gray-700">{(c as any).leader?.name || '-'}</p>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-emerald-100 text-emerald-800 border-emerald-300">
-                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                              Aprovado
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border bg-amber-100 text-amber-800 border-amber-300">
+                              <div className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                              Pré-Cadastro
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
@@ -1610,7 +1610,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       ))}
 
                       {/* ATIVOS */}
-                      {filtered.some(c => c.status === 'active') && filtered.some(c => c.status === 'Aprovado') && (
+                      {filtered.some(c => c.status === 'active') && filtered.some(c => c.status === 'Pré-Cadastro') && (
                         <tr className="bg-blue-50/50">
                           <td colSpan={7} className="px-6 py-3 border-y border-blue-100">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1e3a8a] flex items-center gap-2">
@@ -1667,14 +1667,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
                       ))}
 
                       {/* INATIVOS */}
-                      {filtered.some(c => c.status !== 'active' && c.status !== 'Aprovado') && (
+                      {filtered.some(c => c.status !== 'active' && c.status !== 'Pré-Cadastro') && (
                         <tr className="bg-gray-50/50">
                           <td colSpan={7} className="px-6 py-3 border-y border-gray-100">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inativos</p>
                           </td>
                         </tr>
                       )}
-                      {filtered.filter(c => c.status !== 'active' && c.status !== 'Aprovado').map(c => (
+                      {filtered.filter(c => c.status !== 'active' && c.status !== 'Pré-Cadastro').map(c => (
                         <tr key={c.id} onClick={() => handleRowClick(c)} className="hover:bg-red-50/10 cursor-pointer transition-colors group grayscale hover:grayscale-0 opacity-70 hover:opacity-100">
                           <td className="px-6 py-4 w-12 text-center">
                             {/* Disabled checkbox for inactive users */}

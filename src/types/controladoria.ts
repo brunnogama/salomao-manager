@@ -48,7 +48,7 @@ export interface Collaborator {
   email_pessoal?: string; // E-mail Pessoal
   phone?: string;
   linkedin_url?: string;
-  status: 'active' | 'inactive' | 'Aprovado';
+  status: 'active' | 'inactive' | 'Pré-Cadastro';
   cpf?: string;
   birthday?: string;
   gender?: string;
@@ -496,5 +496,6 @@ export interface Vaga {
   partner?: { id: string; name: string };
   leader?: { id: string; name: string };
   candidato_aprovado?: { id: string; nome: string };
+  candidato?: { id?: string; nome: string };
   aprovador?: { id: string; name: string };
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2, Calendar } from 'lucide-react'
+import { AlertTriangle, FileText, Save, Loader2, History, ChevronRight, Briefcase, Trash2, Calendar, Users } from 'lucide-react'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { Collaborator } from '../../../types/controladoria'
 import { supabase } from '../../../lib/supabase'
@@ -28,7 +28,7 @@ const formatDurationExtensive = (totalDays: number) => {
 }
 
 export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, isViewMode = false }: HistoricoSectionProps) {
-    const [activeSection, setActiveSection] = useState<'none' | 'roles' | 'warnings' | 'absences' | 'observations'>('roles')
+    const [activeSection, setActiveSection] = useState<'none' | 'roles' | 'warnings' | 'absences' | 'observations' | 'recruiting'>('roles')
     const [loading, setLoading] = useState(false)
 
     // --- CARGOS STATE ---
@@ -42,6 +42,10 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     // --- OBSERVAÇÕES STATE ---
     const [obsText, setObsText] = useState(formData.history_observations || '')
 
+    // --- RECRUTAMENTO STATE ---
+    const [recruitingHistory, setRecruitingHistory] = useState<any[]>([])
+    const [loadingRecruiting, setLoadingRecruiting] = useState(false)
+
     // Atualiza obsText se formData mudar
     useEffect(() => {
         if (formData.history_observations) setObsText(formData.history_observations)
@@ -54,6 +58,12 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
         }
     }, [formData.id])
 
+    useEffect(() => {
+        if (formData.email || formData.name) {
+            fetchRecruitingHistory()
+        }
+    }, [formData.email, formData.name])
+
     const fetchRoleHistory = async () => {
         if (!formData.id) return
         const { data } = await supabase
@@ -63,6 +73,48 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             .order('change_date', { ascending: false })
 
         if (data) setRoleHistory(data)
+    }
+
+    const fetchRecruitingHistory = async () => {
+        setLoadingRecruiting(true)
+        try {
+            // First, find the candidato by email or exactly by name (for older records without email)
+            let query = supabase.from('candidatos').select('id, nome, email')
+
+            if (formData.email) {
+                query = query.eq('email', formData.email)
+            } else if (formData.name) {
+                query = query.ilike('nome', formData.name.trim())
+            }
+
+            const { data: candidatoData, error: candidatoError } = await query.limit(1)
+
+            if (candidatoError) throw candidatoError
+
+            if (candidatoData && candidatoData.length > 0) {
+                const candidatoId = candidatoData[0].id
+
+                // Now fetch events (interviews) related to this candidato
+                const { data: eventosData, error: eventosError } = await supabase
+                    .from('eventos')
+                    .select(`
+                        id, titulo, data_inicio, entrevistador_id, descricao, avaliacao_candidato, is_online, url_reuniao, type,
+                        entrevistador:entrevistador_id(name)
+                    `)
+                    .eq('candidato_id', candidatoId)
+                    .in('type', ['Entrevista', 'Processo Seletivo'])
+                    .order('data_inicio', { ascending: false })
+
+                if (eventosError) throw eventosError
+                setRecruitingHistory(eventosData || [])
+            } else {
+                setRecruitingHistory([])
+            }
+        } catch (error) {
+            console.error('Erro ao buscar histórico de recrutamento:', error)
+        } finally {
+            setLoadingRecruiting(false)
+        }
     }
 
     // --- DELETE HANDLER ---
@@ -127,7 +179,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     return (
         <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
             {/* BUTTONS GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Cargos */}
                 <button
                     onClick={() => setActiveSection(activeSection === 'roles' ? 'none' : 'roles')}
@@ -142,8 +194,8 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'roles' ? 'bg-blue-200 text-blue-700' : 'bg-blue-50 text-blue-500 group-hover:bg-blue-100'}`}>
                         <Briefcase className="h-6 w-6" />
                     </div>
-                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Cargos</h3>
-                    <p className="text-[10px] text-gray-500 font-medium">Histórico de mudanças de cargo</p>
+                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Cargos</h3>
+                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Mudanças de cargo</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'roles' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-blue-500" />
                     </div>
@@ -163,13 +215,33 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'warnings' ? 'bg-red-200 text-red-700' : 'bg-red-50 text-red-500 group-hover:bg-red-100'}`}>
                         <AlertTriangle className="h-6 w-6" />
                     </div>
-                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Advertências</h3>
-                    <p className="text-[10px] text-gray-500 font-medium">Registrar ocorrências e infrações</p>
+                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Alertas</h3>
+                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Registrar infrações</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'warnings' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-red-500" />
                     </div>
                 </button>
 
+                {/* Recrutamento */}
+                <button
+                    onClick={() => setActiveSection(activeSection === 'recruiting' ? 'none' : 'recruiting')}
+                    className={`
+                        relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 text-left group
+                        ${activeSection === 'recruiting'
+                            ? 'bg-emerald-50 border-emerald-200 shadow-md transform scale-[1.02]'
+                            : 'bg-white border-gray-100 hover:border-emerald-200 hover:shadow-lg'
+                        }
+                    `}
+                >
+                    <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'recruiting' ? 'bg-emerald-200 text-emerald-700' : 'bg-emerald-50 text-emerald-500 group-hover:bg-emerald-100'}`}>
+                        <Users className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Seleção</h3>
+                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Histórico de entrevistas</p>
+                    <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'recruiting' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
+                        <ChevronRight className="h-5 w-5 text-emerald-500" />
+                    </div>
+                </button>
 
                 {/* Observações */}
                 <button
@@ -185,8 +257,8 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     <div className={`p-3 rounded-xl w-fit mb-3 transition-colors ${activeSection === 'observations' ? 'bg-amber-200 text-amber-700' : 'bg-amber-50 text-amber-500 group-hover:bg-amber-100'}`}>
                         <FileText className="h-6 w-6" />
                     </div>
-                    <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Observações</h3>
-                    <p className="text-[10px] text-gray-500 font-medium">Anotações gerais e histórico</p>
+                    <h3 className="text-xs sm:text-sm font-black text-[#0a192f] uppercase tracking-wider mb-1">Anotações</h3>
+                    <p className="text-[10px] text-gray-500 font-medium hidden sm:block">Observações gerais</p>
                     <div className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${activeSection === 'observations' ? 'rotate-90 opacity-100' : 'opacity-0 -translate-x-2'}`}>
                         <ChevronRight className="h-5 w-5 text-amber-500" />
                     </div>
@@ -336,6 +408,88 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
 
                 {/* OBSERVAÇÕES PANEL */}
+
+                {/* RECRUTAMENTO PANEL */}
+                {activeSection === 'recruiting' && (
+                    <div className="p-8 animate-in fade-in slide-in-from-top-4 duration-300 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-emerald-100 pb-4 mb-6">
+                            <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><Users className="h-5 w-5" /></div>
+                            <h4 className="text-lg font-black text-[#0a192f]">Histórico de Recrutamento</h4>
+                        </div>
+
+                        {loadingRecruiting ? (
+                            <div className="flex justify-center items-center py-12">
+                                <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+                            </div>
+                        ) : recruitingHistory.length > 0 ? (
+                            <div className="space-y-4">
+                                {recruitingHistory.map((evento) => {
+                                    // Format data string
+                                    let dateText = evento.data_inicio;
+                                    if (evento.data_inicio && evento.data_inicio.includes('T')) {
+                                        const dateObj = new Date(evento.data_inicio);
+                                        const day = String(dateObj.getDate()).padStart(2, '0');
+                                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                        const year = dateObj.getFullYear();
+                                        const hours = String(dateObj.getHours()).padStart(2, '0');
+                                        const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                                        dateText = `${day}/${month}/${year} às ${hours}:${minutes}`;
+                                    }
+
+                                    return (
+                                        <div key={evento.id} className="p-5 border border-emerald-100 rounded-xl bg-emerald-50/30 space-y-3 relative overlow-hidden">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <span className="inline-block px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase rounded mb-2">
+                                                        {evento.type}
+                                                    </span>
+                                                    <h5 className="text-[#0a192f] font-bold text-sm">{evento.titulo}</h5>
+                                                </div>
+                                                <p className="text-xs text-gray-500 font-medium">
+                                                    Realizado em <span className="font-bold text-emerald-600">{dateText}</span>
+                                                </p>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 text-xs">
+                                                <div>
+                                                    <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Entrevistador</p>
+                                                    <p className="font-medium text-gray-700">{evento.entrevistador?.name || 'Não informado'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Formato</p>
+                                                    <p className="font-medium text-gray-700">{evento.is_online ? 'Online' : 'Presencial'}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Detailed Evaluation */}
+                                            {evento.avaliacao_candidato && (
+                                                <div className="mt-4 p-4 bg-white rounded-lg border border-emerald-100">
+                                                    <h6 className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider mb-2">Avaliação / Parecer</h6>
+                                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{evento.avaliacao_candidato}</p>
+                                                </div>
+                                            )}
+
+                                            {/* Description if present and no Evaluation is present (older records) */}
+                                            {!evento.avaliacao_candidato && evento.descricao && (
+                                                <div className="mt-4 p-4 bg-white rounded-lg border border-emerald-100">
+                                                    <h6 className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider mb-2">Observações</h6>
+                                                    <p className="text-sm text-gray-600 whitespace-pre-wrap">{evento.descricao}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12">
+                                <Users className="w-12 h-12 text-gray-300 mx-auto mb-3 opacity-50" />
+                                <p className="text-sm font-medium text-gray-500">Nenhum registro de entrevista encontrado para este colaborador.</p>
+                                <p className="text-xs text-gray-400 mt-1">Isso ocorre quando o e-mail não corresponde ao cadastro do candidato.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {activeSection === 'observations' && (
                     <div className="p-8 animate-in fade-in slide-in-from-top-4 duration-300 space-y-6">
                         <div className="flex items-center gap-3 border-b border-amber-100 pb-4 mb-6">

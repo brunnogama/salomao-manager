@@ -273,7 +273,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                             const newColab = {
                                 name: candData.nome,
                                 email: candData.email || null,
-                                status: 'Aprovado',
+                                status: 'Pré-Cadastro',
                                 role: payload.role_id ? payload.role_id.toString() : null,
                                 atuacao: payload.atuacao_id ? payload.atuacao_id.toString() : null,
                                 local: payload.location_id ? payload.location_id.toString() : null,

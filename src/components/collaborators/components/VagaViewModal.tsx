@@ -50,7 +50,8 @@ export function VagaViewModal({ isOpen, onClose, vagaId, onEdit }: VagaViewModal
                     hiring_reason:hiring_reason_id(name),
                     leader:leader_id(name),
                     partner:partner_id(name),
-                    replaced:replaced_collaborator_id(name)
+                    replaced:replaced_collaborator_id(name),
+                    candidato:candidato_aprovado_id(nome)
                 `)
                 .eq('id', id)
                 .single()
@@ -164,14 +165,34 @@ export function VagaViewModal({ isOpen, onClose, vagaId, onEdit }: VagaViewModal
                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Prazo</span>
                                         <span className="text-sm font-semibold text-gray-700">{formatDate(vaga.data_prazo)}</span>
                                     </div>
-                                    <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Users className="w-3.5 h-3.5" /> Quantidade</span>
-                                        <span className="text-sm font-semibold text-gray-700">{vaga.quantidade} vaga(s)</span>
-                                    </div>
-                                    <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Local</span>
-                                        <span className="text-sm font-semibold text-gray-700">{vaga.location?.name || '-'}</span>
-                                    </div>
+
+                                    {vaga.status === 'Fechada' ? (
+                                        <>
+                                            <div className="p-4 bg-green-50 rounded-2xl border border-green-100 shadow-sm flex flex-col gap-1">
+                                                <span className="text-[10px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1.5">
+                                                    <Calendar className="w-3.5 h-3.5" /> Fechamento
+                                                </span>
+                                                <span className="text-sm font-bold text-green-800">{formatDate(vaga.data_fechamento)}</span>
+                                            </div>
+                                            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 shadow-sm flex flex-col gap-1">
+                                                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1.5">
+                                                    <User className="w-3.5 h-3.5" /> Aprovado
+                                                </span>
+                                                <span className="text-sm font-bold text-blue-900 line-clamp-1">{vaga.candidato?.nome || '-'}</span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Users className="w-3.5 h-3.5" /> Quantidade</span>
+                                                <span className="text-sm font-semibold text-gray-700">{vaga.quantidade} vaga(s)</span>
+                                            </div>
+                                            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Local</span>
+                                                <span className="text-sm font-semibold text-gray-700">{vaga.location?.name || '-'}</span>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
 
                                 <section>
