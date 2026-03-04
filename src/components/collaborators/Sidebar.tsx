@@ -11,7 +11,8 @@ import {
   RefreshCw,
   Megaphone,
   Calendar,
-  UserPlus
+  UserPlus,
+  Network
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -86,7 +87,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { path: '/rh/colaboradores', label: 'Colaboradores', icon: Users },
     { path: '/rh/vagas', label: 'Recrutamento', icon: UserPlus },
     { path: '/rh/acoes', label: 'Ações', icon: Megaphone },
-    { path: '/rh/organograma', label: 'Organograma', icon: UserPlus },
+    { path: '/rh/organograma', label: 'Organograma', icon: Network },
     { path: '/rh/presencial', label: 'Presencial', icon: MapPin },
     { path: '/rh/evolucao', label: 'Evolução de Pessoal', icon: TrendingUp },
     { path: '/rh/tempo-casa', label: 'Tempo de casa', icon: Clock },

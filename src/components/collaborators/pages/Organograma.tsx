@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Network, Search, AlertCircle, Save, Loader2, User as UserIcon } from 'lucide-react';
+import { Network, Search, AlertCircle, Save, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, X, Briefcase, Mail, Phone, Tag, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Define the exact hierarchy order for Jurídico
@@ -28,6 +28,8 @@ interface ColaboradorCard {
     leader_id?: string;
     competencias?: string;
     photo_url?: string;
+    foto_url?: string;
+    fullData?: any;
 }
 
 export function Organograma() {
@@ -35,6 +37,8 @@ export function Organograma() {
     const [data, setData] = useState<ColaboradorCard[]>([]);
     const [savingId, setSavingId] = useState<string | null>(null);
     const [savingCompetenciasId, setSavingCompetenciasId] = useState<string | null>(null);
+    const [zoomLevel, setZoomLevel] = useState(1);
+    const [selectedColabForModal, setSelectedColabForModal] = useState<any | null>(null);
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
     // For now, we focus on Jurídico as requested, but all are loaded
@@ -45,11 +49,13 @@ export function Organograma() {
                 name: c.name,
                 role: typeof c.roles === 'object' ? c.roles?.name : c.role,
                 equipe: typeof c.teams === 'object' ? c.teams?.name : c.equipe,
-                leader_id: c.leader_id,
+                leader_id: c.leader_id || undefined,
                 competencias: c.competencias || '',
-                photo_url: c.photo_url
+                photo_url: c.photo_url || c.foto_url,
+                foto_url: c.foto_url,
+                fullData: c
             }));
-            setData(mapped);
+            setData(mapped as ColaboradorCard[]);
         }
     }, [colaboradores]);
 
@@ -117,7 +123,7 @@ export function Organograma() {
             // Update local state
             setData(prev => prev.map(c =>
                 c.id === draggableId
-                    ? { ...c, leader_id: leaderToUpdate }
+                    ? { ...c, leader_id: leaderToUpdate || undefined }
                     : c
             ));
 
@@ -191,10 +197,13 @@ export function Organograma() {
                                         {...dragProvided.dragHandleProps}
                                         className={`flex flex-col gap-3 ${dragSnapshot.isDragging ? 'opacity-50' : ''}`}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            {colab.photo_url ? (
+                                        <div
+                                            className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-colors"
+                                            onClick={() => setSelectedColabForModal(colab.fullData)}
+                                        >
+                                            {colab.photo_url || colab.foto_url ? (
                                                 <img
-                                                    src={colab.photo_url}
+                                                    src={colab.photo_url || colab.foto_url}
                                                     alt={colab.name}
                                                     className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md bg-gray-50 flex-shrink-0"
                                                 />
@@ -250,7 +259,7 @@ export function Organograma() {
                                 <div className="absolute top-0 left-0 right-0 h-px bg-gray-300"></div>
                             )}
 
-                            {subordinates.map((sub, index) => (
+                            {subordinates.map((sub) => (
                                 <div key={sub.id} className="flex flex-col items-center relative">
                                     {/* Vertical line up from sibling (if > 1) */}
                                     {subordinates.length > 1 && (
@@ -308,6 +317,35 @@ export function Organograma() {
                         Estrutura Hierárquica do Salomão
                     </p>
                 </div>
+
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-2 mt-4 md:mt-0 relative z-10 bg-gray-50 p-2 rounded-2xl border border-gray-100 shadow-sm">
+                    <button
+                        onClick={() => setZoomLevel(prev => Math.max(0.4, prev - 0.1))}
+                        className="p-2 hover:bg-white rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a] shadow-sm hover:shadow"
+                        title="Reduzir Zoom"
+                    >
+                        <ZoomOut className="w-5 h-5" />
+                    </button>
+                    <span className="text-xs font-black text-[#0a192f] min-w-[3rem] text-center">
+                        {Math.round(zoomLevel * 100)}%
+                    </span>
+                    <button
+                        onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
+                        className="p-2 hover:bg-white rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a] shadow-sm hover:shadow"
+                        title="Aumentar Zoom"
+                    >
+                        <ZoomIn className="w-5 h-5" />
+                    </button>
+                    <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                    <button
+                        onClick={() => setZoomLevel(1)}
+                        className="p-2 hover:bg-white rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a] shadow-sm hover:shadow"
+                        title="Tamanho Original"
+                    >
+                        <Maximize className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
 
             <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 flex gap-3 text-blue-800 text-sm font-medium">
@@ -318,9 +356,12 @@ export function Organograma() {
             </div>
 
             {/* Main Drag Drop Context Area */}
-            <div className="bg-gray-50/50 rounded-3xl p-8 border border-gray-100 min-w-max">
+            <div className="bg-gray-50/50 rounded-3xl p-8 border border-gray-100 min-w-max relative overflow-hidden flex-1">
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    <div className="flex justify-center gap-16 pb-32">
+                    <div
+                        className="flex justify-center gap-16 pb-32 transition-transform duration-300 origin-top"
+                        style={{ transform: `scale(${zoomLevel})` }}
+                    >
                         {roots.length > 0 ? (
                             roots.map(root => (
                                 <OrganogramNode key={root.id} colab={root} />
@@ -382,6 +423,109 @@ export function Organograma() {
                     </div>
                 </DragDropContext>
             </div>
+
+            {/* Collaborator Detail Modal */ }
+    {
+        selectedColabForModal && (
+            <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                    <div className="relative h-32 bg-gradient-to-r from-[#1e3a8a] to-[#0a192f]">
+                        <button
+                            onClick={() => setSelectedColabForModal(null)}
+                            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all text-white"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="px-8 pb-8 relative -mt-16">
+                        <div className="flex flex-col items-center sm:items-start sm:flex-row gap-6">
+                            <div className="w-32 h-32 rounded-3xl border-4 border-white shadow-xl bg-white flex items-center justify-center overflow-hidden flex-shrink-0">
+                                {selectedColabForModal.photo_url || selectedColabForModal.foto_url ? (
+                                    <img src={selectedColabForModal.photo_url || selectedColabForModal.foto_url} alt={selectedColabForModal.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <UserIcon className="w-16 h-16 text-gray-300" />
+                                )}
+                            </div>
+                            <div className="pt-2 sm:pt-16 text-center sm:text-left flex-1 min-w-0">
+                                <h2 className="text-2xl font-black text-[#0a192f] tracking-tight truncate">{selectedColabForModal.name}</h2>
+                                <p className="text-sm font-bold text-[#1e3a8a] uppercase tracking-wider mt-1 truncate">
+                                    {typeof selectedColabForModal.roles === 'object' ? selectedColabForModal.roles?.name : selectedColabForModal.role}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                            <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <Briefcase className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Equipe / Área</p>
+                                    <p className="text-sm font-bold text-[#0a192f] truncate">
+                                        {typeof selectedColabForModal.teams === 'object' ? selectedColabForModal.teams?.name : selectedColabForModal.equipe || '-'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                                    <Building2 className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Localidade</p>
+                                    <p className="text-sm font-bold text-[#0a192f] truncate">
+                                        {typeof selectedColabForModal.locations === 'object' ? selectedColabForModal.locations?.name : selectedColabForModal.local || '-'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                    <Mail className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</p>
+                                    <p className="text-sm font-bold text-[#0a192f] truncate">
+                                        {selectedColabForModal.email || 'Não informado'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                                    <Phone className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Celular</p>
+                                    <p className="text-sm font-bold text-[#0a192f] truncate">
+                                        {selectedColabForModal.phone || 'Não informado'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {selectedColabForModal.competencias && (
+                            <div className="mt-6 bg-blue-50/50 border border-blue-100 rounded-2xl p-5">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Tag className="w-4 h-4 text-[#1e3a8a]" />
+                                    <h3 className="text-xs font-black text-[#0a192f] uppercase tracking-widest">Competências no Organograma</h3>
+                                </div>
+                                <p className="text-sm text-[#0a192f] whitespace-pre-wrap leading-relaxed">
+                                    {selectedColabForModal.competencias}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                Para edição completa, acesse a aba Colaboradores.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
         </div>
     );
 }
