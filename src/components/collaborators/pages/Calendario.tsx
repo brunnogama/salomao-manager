@@ -25,6 +25,7 @@ import { getFeriadosDoAno } from '../utils/holidays'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { SocioSelector } from '../../crm/SocioSelector'
 import { EventSelectionModal, EventCreationType } from '../components/EventSelectionModal'
+import { toast } from 'sonner'
 
 interface Colaborador {
   id: string | number;
@@ -182,24 +183,6 @@ export function Calendario() {
     if (evs) {
       // Map Supabase data to local Evento interface
       const mappedEvs: Evento[] = evs.map((e: any) => {
-        let externos: { nome: string; email: string }[] = [];
-        let socios: string[] = [];
-        if (e.participantes_externos) {
-          try {
-            const parsed = typeof e.participantes_externos === 'string' ? JSON.parse(e.participantes_externos) : e.participantes_externos
-            if (Array.isArray(parsed)) {
-              externos = parsed;
-            } else if (parsed && typeof parsed === 'object') {
-              if (parsed.externos) externos = parsed.externos;
-              if (parsed.socios) socios = parsed.socios;
-            } else {
-              externos = [{ nome: e.participantes_externos, email: '' }]
-            }
-          } catch {
-            externos = [{ nome: e.participantes_externos, email: '' }]
-          }
-        }
-
         return ({
           id: e.id,
           titulo: e.titulo,
@@ -305,10 +288,10 @@ export function Calendario() {
       setCurrentExtName('')
       setCurrentExtEmail('')
       setCurrentSocio('')
-      alert(editingEvento ? 'Evento atualizado!' : 'Evento criado!')
+      toast.success(editingEvento ? 'Evento atualizado!' : 'Evento criado!')
     } catch (error) {
       console.error('Erro ao salvar evento:', error)
-      alert('Erro ao salvar evento.')
+      toast.error('Erro ao salvar evento.')
     } finally {
       setSavingEvento(false)
     }
@@ -321,7 +304,7 @@ export function Calendario() {
       if (error) throw error
       await fetchData()
     } catch (error) {
-      alert('Erro ao excluir evento')
+      toast.error('Erro ao excluir evento')
     }
   }
 
@@ -461,11 +444,11 @@ export function Calendario() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      alert('Mensagem enviada com sucesso para a automação!');
+      toast.success('Mensagem enviada com sucesso para a automação!');
       setSelectedAniversariantes([]); // limpa a seleção
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
-      alert('Erro ao enviar a mensagem. Verifique a URL do Webhook e o console.');
+      toast.error('Erro ao enviar a mensagem. Verifique a URL do Webhook e o console.');
     } finally {
       setIsSendingWpp(false);
     }
