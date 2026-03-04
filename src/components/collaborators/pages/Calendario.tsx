@@ -364,7 +364,10 @@ export function Calendario() {
         ? `${novoEvento.data}T${novoEvento.hora}:00`
         : `${novoEvento.data}T00:00:00`;
 
+      let novoEventoId = undefined;
+
       if (editingEvento) {
+        novoEventoId = editingEvento;
         // Atualiza evento existente
         const { error } = await supabase
           .from('eventos')
@@ -382,7 +385,7 @@ export function Calendario() {
         if (error) throw error
       } else {
         // Cria novo evento
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('eventos')
           .insert([{
             titulo: novoEvento.titulo,
@@ -393,8 +396,10 @@ export function Calendario() {
             participantes_candidatos: novoEvento.participantes_candidatos || [],
             entrevistador_id: novoEvento.entrevistador_id || null
           }])
+          .select()
 
         if (error) throw error
+        if (data && data.length > 0) novoEventoId = data[0].id;
       }
 
       // Se for Entrevista e houver candidatos, adicionar histórico se for criação
@@ -405,6 +410,10 @@ export function Calendario() {
           candidato_id: candId,
           tipo: 'Entrevista',
           descricao: `[Via Calendário] Entrevista agendada: ${novoEvento.titulo}`,
+          evento_id: novoEventoId,
+          entrevista_data: novoEvento.data,
+          entrevista_hora: novoEvento.hora || null,
+          compareceu: null
         }));
 
         const { error: histError } = await supabase.from('candidato_historico').insert(historicos);

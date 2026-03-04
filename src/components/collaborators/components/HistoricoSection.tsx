@@ -116,13 +116,15 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
 
                 if (eventosError) console.error('Erro ao buscar eventos do calendário:', eventosError)
 
+                const historicoEventoIds = new Set((historicoData || []).map(h => h.evento_id).filter(Boolean));
+
                 const combined = [
                     ...(historicoData || []).map(h => ({
                         ...h,
                         id: `hist_${h.id}`,
                         source: 'historico'
                     })),
-                    ...(eventosData || []).map(e => ({
+                    ...(eventosData || []).filter(e => !historicoEventoIds.has(e.id)).map(e => ({
                         id: `ev_${e.id}`,
                         tipo: e.tipo || 'Entrevista',
                         created_at: e.created_at,

@@ -51,13 +51,15 @@ export function CandidatoHistoricoSection({
             .select('*')
             .contains('participantes_candidatos', [candidatoId])
 
+        const historicoEventoIds = new Set((historicoData || []).map(h => h.evento_id).filter(Boolean));
+
         const combined = [
             ...(historicoData || []).map(h => ({
                 ...h,
                 id: `hist_${h.id}`,
                 source: 'historico'
             })),
-            ...(eventosData || []).map(e => ({
+            ...(eventosData || []).filter(e => !historicoEventoIds.has(e.id)).map(e => ({
                 id: `ev_${e.id}`,
                 tipo: e.tipo || 'Entrevista',
                 created_at: e.created_at,
@@ -139,8 +141,9 @@ export function CandidatoHistoricoSection({
         }
 
         if (tipo === 'Entrevista') {
-            const extraLines = `\nData: ${entrevistaData ? entrevistaData.split('-').reverse().join('/') : 'N/A'}${entrevistaHora ? ' às ' + entrevistaHora : ''}\nComparecimento: ${compareceu}`;
-            payload.descricao = descricao + extraLines;
+            payload.entrevista_data = entrevistaData || null;
+            payload.entrevista_hora = entrevistaHora || null;
+            payload.compareceu = compareceu === 'Pendente' ? null : compareceu === 'Sim';
         }
 
         if (!candidatoId) {
@@ -155,12 +158,39 @@ export function CandidatoHistoricoSection({
 
         setLoading(true)
         try {
+            // CRIAR EVENTO NA AGENDA SE FOR ENTREVISTA
+            if (tipo === 'Entrevista') {
+                // Buscar nome do candidato
+                const { data: cData } = await supabase.from('candidatos').select('nome').eq('id', candidatoId).single();
+                const candName = cData?.nome || 'Candidato';
+
+                let dataEventoStr = null;
+                if (entrevistaData) {
+                    dataEventoStr = `${entrevistaData}T${entrevistaHora || '00:00'}:00`;
+                } else {
+                    dataEventoStr = new Date().toISOString();
+                }
+
+                const { data: newEvent, error: evError } = await supabase.from('eventos').insert({
+                    titulo: `Entrevista (Talentos) - ${candName}`,
+                    tipo: 'Entrevista',
+                    descricao: descricao,
+                    data_evento: dataEventoStr,
+                    participantes_candidatos: [candidatoId]
+                }).select();
+
+                if (evError) console.error("Erro ao sincronizar com Agenda:", evError);
+                if (newEvent && newEvent.length > 0) {
+                    payload.evento_id = newEvent[0].id;
+                }
+            }
+
             const { error } = await supabase.from('candidato_historico').insert({
                 candidato_id: candidatoId,
                 ...payload
             })
             if (error) throw error
-            showAlert('Sucesso', 'Registro salvo com sucesso!', 'success')
+            showAlert('Sucesso', 'Registro salvo e sincronizado!', 'success')
             setDescricao('')
             setEntrevistaData('');
             setEntrevistaHora('');
