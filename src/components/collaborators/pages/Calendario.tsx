@@ -621,7 +621,7 @@ export function Calendario() {
     ...a,
     _source: 'aniversario',
     sortValue: a.diasRestantes,
-    dataSort: new Date(new Date().getFullYear(), a.mes, a.dia).getTime()
+    dataSort: new Date(selectedYear, a.mes, a.dia).getTime()
   }));
   const todosEventos = getAllEventos().map(e => ({
     ...e,
@@ -655,7 +655,7 @@ export function Calendario() {
   if (selectedDay) {
     itemsToShow = itemsToShow.filter(item => {
       const itemDate = item._source === 'aniversario'
-        ? new Date(new Date().getFullYear(), item.mes, item.dia)
+        ? new Date(selectedYear, item.mes, item.dia)
         : item.dataObjeto;
       return itemDate.toDateString() === selectedDay.toDateString();
     });
@@ -664,7 +664,7 @@ export function Calendario() {
   // Agrupar os itens a serem exibidos por data (timestamp meia-noite)
   const groupedEvents = itemsToShow.reduce((acc, item) => {
     const d = item._source === 'aniversario'
-      ? new Date(new Date().getFullYear(), item.mes, item.dia)
+      ? new Date(selectedYear, item.mes, item.dia)
       : item.dataObjeto;
 
     // Normalize time to midnight
@@ -679,6 +679,39 @@ export function Calendario() {
 
   // Helper de eventos totais para passar aos pontinhos do calendário
   const allMixedEvents = [...todosAniversarios, ...eventos.map(e => ({ ...e, _source: 'evento', dataObjeto: new Date(e.data_evento + 'T12:00:00') }))];
+
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!scrollContainerRef.current) return;
+
+    // Auto-scroll operation
+    const container = scrollContainerRef.current;
+
+    // If not current month/year, scroll top map
+    const hoje = new Date();
+    if (selectedMonth === hoje.getMonth() && selectedYear === hoje.getFullYear()) {
+      const todayOrFutureDate = sortedDates.find(d => {
+        const dateObj = new Date(d);
+        dateObj.setHours(23, 59, 59, 999);
+        return dateObj.getTime() >= hoje.getTime();
+      });
+
+      if (todayOrFutureDate) {
+        // Wait for render to finish attaching ID
+        setTimeout(() => {
+          const targetEl = document.getElementById(`date-group-${todayOrFutureDate}`);
+          if (targetEl && container) {
+            container.scrollTo({ top: targetEl.offsetTop - 24, behavior: 'smooth' });
+          }
+        }, 100);
+      } else {
+        container.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } else {
+      container.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [sortedDates, selectedMonth, selectedYear]);
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6">
@@ -884,7 +917,7 @@ export function Calendario() {
             </div>
           </div>
 
-          <div className="p-6 overflow-y-auto max-h-[800px] custom-scrollbar">
+          <div ref={scrollContainerRef} className="p-6 overflow-y-auto max-h-[800px] custom-scrollbar scroll-smooth">
             {sortedDates.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-gray-400 py-12">
                 <CalendarDays className="h-10 w-10 mb-3 opacity-20" />
@@ -900,13 +933,21 @@ export function Calendario() {
                 {sortedDates.map(dateKey => {
                   const items = groupedEvents[dateKey];
                   const dateObj = new Date(dateKey);
+                  const hoje = new Date();
+                  hoje.setHours(0, 0, 0, 0);
+                  const isPast = dateObj.getTime() < hoje.getTime();
+
                   return (
-                    <div key={dateKey} className="space-y-4">
+                    <div key={dateKey} id={`date-group-${dateKey}`} className={`space-y-4 ${isPast ? 'opacity-50 grayscale transition-opacity duration-300 hover:opacity-100 hover:grayscale-0' : ''}`}>
                       {/* Caleçalho da Data */}
                       <div className="flex items-center gap-3">
                         <h3 className="text-2xl font-black text-[#0a192f] capitalize">
                           {dateObj.getDate()} {MESES[dateObj.getMonth()].substring(0, 3)}
                         </h3>
+                        {/* Se for hoje, mostrar uma badge */}
+                        {dateObj.getTime() === hoje.getTime() && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#1e3a8a]/10 text-[#1e3a8a] uppercase tracking-wider">Hoje</span>
+                        )}
                         <div className="h-px bg-gray-200 flex-1"></div>
                       </div>
 
