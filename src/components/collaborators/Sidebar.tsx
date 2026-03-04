@@ -35,9 +35,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       // 1. Checar eventos de hoje
       const { data: eventos } = await supabase
-        .from('events')
+        .from('eventos')
         .select('id')
-        .eq('event_date', hojeStr)
+        .eq('data_evento', hojeStr)
         .limit(1)
 
       if (eventos && eventos.length > 0) {
