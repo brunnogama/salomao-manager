@@ -14,11 +14,7 @@ import {
   Calendar as CalendarEventIcon,
   Pencil,
   Trash2,
-  Check,
-  Send,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
+  ChevronLeft, ChevronRight,
   Briefcase
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
@@ -156,13 +152,28 @@ export function Calendario() {
   };
   const calendarGrid = useMemo(() => getCalendarDays(), [selectedMonth, selectedYear]);
 
-  // Função auxiliar para verificar se a data tem evento
-  const checkDayHasEvents = (dayDate: Date, allEvts: any[]) => {
+  // Função auxiliar para obter as cores dos eventos do dia
+  const getDayEventColors = (dayDate: Date, allEvts: any[]) => {
     const timestampStr = dayDate.toDateString();
-    return allEvts.some(e => {
+    const dayEvents = allEvts.filter(e => {
       if (!e.dataObjeto) return false;
       return e.dataObjeto.toDateString() === timestampStr;
     });
+
+    if (dayEvents.length === 0) return [];
+
+    const colors = new Set<string>();
+    dayEvents.forEach(e => {
+      const evento = e as any;
+      if (evento.tipo === 'Entrevista') colors.add('bg-purple-500');
+      else if (evento.tipo === 'Reunião') colors.add('bg-blue-500');
+      else if (evento.tipo === 'Aniversário' || evento._source === 'aniversario') colors.add('bg-amber-500');
+      else if (evento.tipo === 'Mochila') colors.add('bg-indigo-500');
+      else if (evento.tipo === 'Feriado') colors.add('bg-red-500');
+      else colors.add('bg-gray-500');
+    });
+
+    return Array.from(colors);
   };
 
   // Estados para Modal de Visualização Rápida
@@ -216,10 +227,6 @@ export function Calendario() {
     })
     setIsModalOpen(true)
   }
-
-  // Estados para Aniversários WPP
-  const [selectedAniversariantes, setSelectedAniversariantes] = useState<string[]>([])
-  const [isSendingWpp, setIsSendingWpp] = useState(false)
 
   // Estado para Tabs
   const [activeTab, setActiveTab] = useState('Geral')
@@ -485,62 +492,6 @@ export function Calendario() {
 
   const aniversarios = processarAniversarios()
 
-  const handleToggleAniversariante = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setSelectedAniversariantes(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  }
-
-  const handleSendWpp = async () => {
-    if (selectedAniversariantes.length === 0) return;
-    setIsSendingWpp(true);
-
-    try {
-      const selecionados = aniversarios.filter(a => selectedAniversariantes.includes(String(a.colaborador.id)));
-
-      const locationsSet = new Set(selecionados.map(a => a.colaborador.location).filter(Boolean));
-      const locations = Array.from(locationsSet);
-      if (locations.length === 0) locations.push('Escritório'); // fallback
-
-      const names = selecionados.map(a => formatName(a.colaborador.name));
-
-      // TEXTO PADRÃO SOLICITADO
-      // "Hoje celebramos os aniversários dos nossos integrantes do (nomes das cidades): (nomes de todos os aniversariantes do dia) Parabéns e que os novos ciclos de vocês sejam repletos de realizações, saúde e muitas alegrias."
-
-      const textoPadrao = `Hoje celebramos os aniversários dos nossos integrantes do ${locations.join(' e ')}: ${names.join(', ')}. Parabéns e que os novos ciclos de vocês sejam repletos de realizações, saúde e muitas alegrias.`;
-
-      // Payload para enviar ao Make.com
-      const payload = {
-        tipo: selecionados.length > 1 ? 'mensal_ou_multiplo' : 'diario',
-        cidades: locations.join(' e '),
-        nomes: names.join(', '),
-        quantidade: selecionados.length,
-        mensagem_pronta: textoPadrao,
-        aniversariantes: selecionados.map(s => ({
-          nome: formatName(s.colaborador.name),
-          cidade: s.colaborador.location || 'Escritório',
-          foto: s.colaborador.photo_url || ''
-        }))
-      };
-
-      const webhookUrl = 'https://hook.us2.make.com/8f6ve3x2toikhvh7d8fi7ohegc88s5rh';
-
-      await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      toast.success('Mensagem enviada com sucesso para a automação!');
-      setSelectedAniversariantes([]); // limpa a seleção
-    } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
-      toast.error('Erro ao enviar a mensagem. Verifique a URL do Webhook e o console.');
-    } finally {
-      setIsSendingWpp(false);
-    }
-  }
-
 
 
   const eventosDoMes = (mes: number, ano: number) => {
@@ -682,8 +633,8 @@ export function Calendario() {
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 to-gray-100 space-y-4 sm:space-y-6 relative p-4 sm:p-6">
 
-      {/* PAGE HEADER COMPLETO - Título + User Info */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      {/* ROW DE CABEÇALHO COM ABAS INTEGRADAS (No padrão Colaboradores) */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
         <div className="flex items-center gap-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] shadow-lg shrink-0">
             <CalendarIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" strokeWidth={1.5} />
@@ -693,33 +644,38 @@ export function Calendario() {
               Agenda
             </h1>
             <p className="text-xs sm:text-sm font-semibold text-gray-500 mt-1 sm:mt-0.5">
-              Acompanhe os aniversários dos colaboradores, reuniões e eventos
+              Acompanhe os aniversários, reuniões e eventos
             </p>
           </div>
         </div>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto mt-2 sm:mt-0">
-          <div className="relative flex items-center justify-center p-2 sm:p-2.5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all group overflow-hidden cursor-pointer">
-            <input
-              type="date"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              title="Consultar Data"
-              onClick={(e) => {
-                try {
-                  (e.target as any).showPicker();
-                } catch (err) { }
-              }}
-            />
-            <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#1e3a8a] group-hover:scale-110 transition-transform" strokeWidth={1.5} />
+        {/* Right: Actions and Tabs */}
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto justify-end mt-2 md:mt-0 custom-scrollbar">
+
+          {/* ABAS */}
+          <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0 gap-1 overflow-x-auto">
+            {['Geral', 'Entrevistas', 'Reuniões', 'Eventos', 'Feriados', 'Outros'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap min-w-max ${activeTab === tab
+                  ? 'bg-white text-[#1e3a8a] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
-          <div className="relative">
+
+          {/* DIVISOR E AÇÕES */}
+          <div className="flex items-center gap-4 md:border-l md:border-gray-200 md:pl-4 md:ml-2">
             <button
               onClick={() => setIsEventSelectionModalOpen(true)}
-              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+              className="flex items-center justify-center p-2.5 bg-[#1e3a8a] text-white rounded-lg hover:bg-blue-800 transition-all shadow-md shrink-0 focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2"
               title="Novo Compromisso"
             >
-              <Plus className="h-5 w-5" strokeWidth={1.5} />
+              <Plus className="h-5 w-5" strokeWidth={2} />
             </button>
           </div>
         </div>
@@ -781,7 +737,7 @@ export function Calendario() {
         </div>
 
         {/* TABS NAVIGATION */}
-        <div className="flex items-center gap-1 bg-white p-1 rounded-xl shadow-sm border border-gray-100 overflow-x-auto custom-scrollbar">
+        {/* <div className="flex items-center gap-1 bg-white p-1 rounded-xl shadow-sm border border-gray-100 overflow-x-auto custom-scrollbar">
           {['Geral', 'Entrevistas', 'Reuniões', 'Eventos', 'Feriados', 'Outros'].map((tab) => (
             <button
               key={tab}
@@ -794,7 +750,7 @@ export function Calendario() {
               {tab}
             </button>
           ))}
-        </div>
+        </div> */}
       </div>
 
       {/* CONTEÚDO PRINCIPAL (Grid de 2 colunas: Calendário e Listagem) */}
@@ -818,22 +774,26 @@ export function Calendario() {
             </div>
             <div className="grid grid-cols-7 gap-1">
               {calendarGrid.map((dt, idx) => {
-                const hasEvents = checkDayHasEvents(dt.date, allMixedEvents);
+                const dayEventColors = getDayEventColors(dt.date, allMixedEvents);
                 const isSelected = selectedDay && dt.date.toDateString() === selectedDay.toDateString();
                 const isToday = dt.date.toDateString() === new Date().toDateString();
                 return (
                   <button
                     key={idx}
                     onClick={() => handleDayClick(dt.date)}
-                    className={`relative p-2 flex flex-col items-center justify-center rounded-xl text-sm font-semibold transition-all
-                      ${!dt.isCurrentMonth ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-100'}
-                      ${isSelected ? 'bg-[#1e3a8a] text-white hover:bg-[#112240]' : ''}
+                    className={`relative p-2 flex flex-col items-center justify-center rounded-xl text-sm font-semibold transition-all group
+                      ${!dt.isCurrentMonth ? 'text-gray-300 hover:text-gray-500' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}
+                      ${isSelected ? 'bg-[#1e3a8a] text-white hover:bg-[#112240] hover:text-white' : ''}
                       ${isToday && !isSelected ? 'border border-[#1e3a8a] text-[#1e3a8a]' : ''}
                     `}
                   >
                     <span>{dt.day}</span>
-                    {hasEvents && (
-                      <div className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? 'bg-white' : 'bg-emerald-500'}`} />
+                    {dayEventColors.length > 0 && (
+                      <div className="flex gap-0.5 mt-1 absolute bottom-1">
+                        {dayEventColors.slice(0, 3).map((color, colorIdx) => (
+                          <div key={colorIdx} className={`w-1.5 h-1.5 rounded-full ${isSelected && color !== 'bg-white' ? color : color}`} />
+                        ))}
+                      </div>
                     )}
                   </button>
                 )
@@ -861,17 +821,6 @@ export function Calendario() {
                 {activeTab === 'Geral' ? 'Todos os Compromissos' : activeTab}
               </h2>
             </div>
-
-            {activeTab === 'Geral' && selectedAniversariantes.length > 0 && (
-              <button
-                disabled={isSendingWpp}
-                onClick={handleSendWpp}
-                className="mt-4 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all text-xs font-bold uppercase tracking-wider active:scale-95 disabled:opacity-70"
-              >
-                {isSendingWpp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Parabenizar ({selectedAniversariantes.length})
-              </button>
-            )}
           </div>
 
           <div className="p-6 overflow-y-auto max-h-[800px] custom-scrollbar">
@@ -911,19 +860,6 @@ export function Calendario() {
                               }}
                               className="group flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-gray-100 bg-white hover:bg-gray-50/80 hover:border-gray-200 transition-all cursor-pointer shadow-sm hover:shadow-md"
                             >
-                              {/* Selection for aniversariantes */}
-                              {isAniver && item.colaborador && activeTab === 'Geral' && (
-                                <div
-                                  onClick={(e) => handleToggleAniversariante(e, String(item.colaborador.id))}
-                                  className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 cursor-pointer transition-colors ${selectedAniversariantes.includes(String(item.colaborador.id))
-                                    ? 'bg-green-500 border-green-500 text-white'
-                                    : 'border-gray-300 bg-white hover:border-green-500'
-                                    }`}
-                                >
-                                  {selectedAniversariantes.includes(String(item.colaborador.id)) && <Check className="w-3.5 h-3.5" />}
-                                </div>
-                              )}
-
                               <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center gap-3">
                                 <div className="text-sm font-bold text-gray-500 min-w-[70px]">
                                   {item.hora ? item.hora : 'Dia Todo'}
