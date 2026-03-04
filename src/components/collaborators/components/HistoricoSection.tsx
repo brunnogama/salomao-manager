@@ -104,7 +104,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     .select(`
                         id, titulo, data_evento, entrevistador_id, descricao, avaliacao_candidato, is_online, url_reuniao, tipo
                     `)
-                    .contains('participantes_candidatos', [candidatoId])
+                    .filter('participantes_candidatos', 'cs', `{${candidatoId}}`)
                     .in('tipo', ['Entrevista', 'Processo Seletivo'])
                     .order('data_evento', { ascending: false })
 
