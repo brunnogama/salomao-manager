@@ -544,7 +544,7 @@ export function RHVagas() {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 duration-700 overflow-x-auto min-h-[400px]">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-y-auto animate-in slide-in-from-bottom-6 duration-700 overflow-x-auto min-h-[400px]">
           {activeTab === 'talentos' ? (
             <table className="w-full min-w-max text-left border-collapse">
               <thead className="bg-[#1e3a8a]">
@@ -578,7 +578,9 @@ export function RHVagas() {
                       </td>
                       <td className="px-3 py-4">
                         <p className="font-bold text-sm text-[#0a192f] truncate w-full max-w-[250px]">{c.nome}</p>
-                        <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone || '-'}</p>
+                        {(c.email || c.telefone) && (
+                          <p className="text-[10px] text-gray-500 truncate w-full max-w-[250px]">{c.email || c.telefone}</p>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">
                         {roleName}
