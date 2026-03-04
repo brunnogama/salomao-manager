@@ -50,6 +50,7 @@ interface Evento {
   participantes_socios?: string[];
   vaga_id?: string;
   participantes_candidatos?: string[];
+  entrevistador_id?: string;
 }
 
 interface NovoEventoData {
@@ -65,6 +66,7 @@ interface NovoEventoData {
   participantes_socios: string[];
   vaga_id?: string;
   participantes_candidatos: string[];
+  entrevistador_id?: string;
 }
 
 interface AniversarioData {
@@ -202,7 +204,8 @@ export function Calendario() {
     participantes_externos: [],
     participantes_socios: [],
     participantes_candidatos: [],
-    vaga_id: ''
+    vaga_id: '',
+    entrevistador_id: ''
   })
 
   // Estado para o Modal de Seleção de Tipo de Evento
@@ -223,13 +226,42 @@ export function Calendario() {
       participantes_externos: [],
       participantes_socios: [],
       participantes_candidatos: [],
-      vaga_id: ''
+      vaga_id: '',
+      entrevistador_id: ''
     })
     setIsModalOpen(true)
   }
 
   // Estado para Tabs
   const [activeTab, setActiveTab] = useState('Geral')
+
+  // Atualizar Titulo e Endereço se for Entrevista
+  useEffect(() => {
+    if (novoEvento.tipo === 'Entrevista') {
+      const vagaSelecionada = vagas.find(v => v.id === novoEvento.vaga_id);
+      const vagaNome = vagaSelecionada && vagaSelecionada.role ? vagaSelecionada.role.name : 'Vaga';
+
+      const candidatosNomes = novoEvento.participantes_candidatos.map(id => {
+        const c = candidatos.find(cand => cand.id === id);
+        return c ? formatName(c.nome) : '';
+      }).filter(Boolean).join(', ');
+
+      const candidatoDisplay = candidatosNomes || 'Candidato';
+      const novoTitulo = `Entrevista - ${vagaNome} - ${candidatoDisplay}`;
+
+      setNovoEvento(prev => {
+        const updates: Partial<NovoEventoData> = {};
+        if (prev.titulo !== novoTitulo) updates.titulo = novoTitulo;
+
+        // Define endereço inicial como Sala de Reunião 01 se não estiver preenchido com sala
+        if (prev.local_tipo === 'Presencial' && (!prev.local_endereco_url || !prev.local_endereco_url.startsWith('Sala de Reunião'))) {
+          updates.local_endereco_url = 'Sala de Reunião 01';
+        }
+
+        return Object.keys(updates).length > 0 ? { ...prev, ...updates } : prev;
+      });
+    }
+  }, [novoEvento.tipo, novoEvento.vaga_id, novoEvento.participantes_candidatos, vagas, candidatos]);
 
   useEffect(() => {
     fetchData()
@@ -336,7 +368,8 @@ export function Calendario() {
             tipo: novoEvento.tipo,
             descricao: novoEvento.descricao,
             vaga_id: novoEvento.vaga_id || null,
-            participantes_candidatos: novoEvento.participantes_candidatos || []
+            participantes_candidatos: novoEvento.participantes_candidatos || [],
+            entrevistador_id: novoEvento.entrevistador_id || null
           })
           .eq('id', editingEvento)
 
@@ -351,7 +384,8 @@ export function Calendario() {
             tipo: novoEvento.tipo,
             descricao: novoEvento.descricao,
             vaga_id: novoEvento.vaga_id || null,
-            participantes_candidatos: novoEvento.participantes_candidatos || []
+            participantes_candidatos: novoEvento.participantes_candidatos || [],
+            entrevistador_id: novoEvento.entrevistador_id || null
           }])
 
         if (error) throw error
@@ -378,7 +412,7 @@ export function Calendario() {
       await fetchData()
       setIsModalOpen(false)
       setEditingEvento(null)
-      setNovoEvento({ titulo: '', data: new Date().toISOString().split('T')[0], tipo: 'Reunião', descricao: '', hora: '', local_tipo: 'Online', local_endereco_url: '', participantes_internos: [], participantes_externos: [], participantes_socios: [], participantes_candidatos: [], vaga_id: '' })
+      setNovoEvento({ titulo: '', data: new Date().toISOString().split('T')[0], tipo: 'Reunião', descricao: '', hora: '', local_tipo: 'Online', local_endereco_url: '', participantes_internos: [], participantes_externos: [], participantes_socios: [], participantes_candidatos: [], vaga_id: '', entrevistador_id: '' })
       setCurrentExtName('')
       setCurrentExtEmail('')
       setCurrentSocio('')
@@ -416,7 +450,8 @@ export function Calendario() {
       participantes_externos: evento.participantes_externos || [],
       participantes_socios: evento.participantes_socios || [],
       participantes_candidatos: evento.participantes_candidatos || [],
-      vaga_id: evento.vaga_id || ''
+      vaga_id: evento.vaga_id || '',
+      entrevistador_id: evento.entrevistador_id || ''
     })
     setCurrentExtName('')
     setCurrentExtEmail('')
@@ -962,7 +997,8 @@ export function Calendario() {
                     type="text"
                     value={novoEvento.titulo}
                     onChange={(e) => setNovoEvento({ ...novoEvento, titulo: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                    disabled={novoEvento.tipo === 'Entrevista'}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium disabled:opacity-60 disabled:bg-gray-100"
                   />
                 </div>
 
@@ -1022,19 +1058,41 @@ export function Calendario() {
                         <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
                           {novoEvento.local_tipo === 'Online' ? 'URL da Reunião' : 'Endereço'}
                         </label>
-                        <input
-                          type="text"
-                          placeholder={novoEvento.local_tipo === 'Online' ? 'https://meet.google.com/...' : 'Rua, Número, Sala...'}
-                          value={novoEvento.local_endereco_url}
-                          onChange={(e) => setNovoEvento({ ...novoEvento, local_endereco_url: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
-                        />
+                        {novoEvento.tipo === 'Entrevista' && novoEvento.local_tipo === 'Presencial' ? (
+                          <SearchableSelect
+                            options={['Sala de Reunião 01', 'Sala de Reunião 02', 'Sala de Reunião 03', 'Sala de Reunião 04', 'Sala de Reunião 05'].map(s => ({ value: s, label: s }))}
+                            value={novoEvento.local_endereco_url}
+                            onChange={(val) => setNovoEvento({ ...novoEvento, local_endereco_url: val })}
+                            placeholder="Selecione a Sala..."
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            placeholder={novoEvento.local_tipo === 'Online' ? 'https://meet.google.com/...' : 'Rua, Número, Sala...'}
+                            value={novoEvento.local_endereco_url}
+                            onChange={(e) => setNovoEvento({ ...novoEvento, local_endereco_url: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none transition-all font-medium"
+                          />
+                        )}
                       </div>
                     </div>
 
                     <div className="space-y-4">
                       {novoEvento.tipo === 'Entrevista' && (
                         <>
+                          {/* ENTREVISTADOR (Apenas para Entrevista) */}
+                          <div>
+                            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
+                              <Users className="h-3 w-3" /> Entrevistador (Recrutadora)
+                            </label>
+                            <SearchableSelect
+                              options={collaborators.map(c => ({ value: c.id, label: formatName(c.name) }))}
+                              value={novoEvento.entrevistador_id || ''}
+                              onChange={(val) => setNovoEvento({ ...novoEvento, entrevistador_id: val })}
+                              placeholder="Selecione o entrevistador..."
+                            />
+                          </div>
+
                           {/* VAGA (Apenas para Entrevista) */}
                           <div>
                             <label className="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-1">
