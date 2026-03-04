@@ -89,7 +89,8 @@ export function RHVagas() {
         location:location_id (id, name),
         atuacao:atuacao_id (id, name),
         partner:partner_id (id, name),
-        leader:leader_id (id, name)
+        leader:leader_id (id, name),
+        candidato_aprovado:candidato_aprovado_id (nome)
       `)
       .order('created_at', { ascending: false })
 
@@ -98,16 +99,29 @@ export function RHVagas() {
   }
 
   const fetchCandidatos = async () => {
-    const { data, error: dbError } = await supabase
+    // Buscar candidatos
+    const { data: candData, error: dbError } = await supabase
       .from('candidatos')
       .select(`
         *,
-        candidato_historico ( tipo, data_registro )
+        candidato_historico ( tipo, data_registro, entrevista_data )
       `)
       .order('created_at', { ascending: false })
 
     if (dbError) throw dbError
-    setCandidatos(data || [])
+
+    // Buscar IDs de candidatos que já estão na tabela de colaboradores
+    const { data: colabLinks } = await supabase
+      .from('collaborators')
+      .select('candidato_id')
+      .not('candidato_id', 'is', null)
+
+    const contratadosIds = new Set(colabLinks?.map(cl => cl.candidato_id).filter(Boolean))
+
+    // Filtrar candidatos que já são colaboradores
+    const talentosAbertos = (candData || []).filter(c => !contratadosIds.has(c.id))
+
+    setCandidatos(talentosAbertos)
   }
 
   const handleOpenSelectionModal = () => {
@@ -562,10 +576,21 @@ export function RHVagas() {
                 {filteredCandidatos.map((c: any) => {
                   const hasInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
                   const interviewDates = c.candidato_historico
-                    ?.filter((h: any) => h.tipo === 'Entrevista' && h.data_registro)
-                    .map((h: any) => new Date(h.data_registro))
+                    ?.filter((h: any) => h.tipo === 'Entrevista')
+                    .map((h: any) => {
+                      const rawDate = h.entrevista_data || h.data_registro;
+                      return rawDate ? new Date(rawDate) : null;
+                    })
+                    .filter(Boolean)
                     .sort((a: any, b: any) => b.getTime() - a.getTime());
                   const lastInterviewDate = interviewDates && interviewDates.length > 0 ? interviewDates[0] : null;
+
+                  // Ocultar se já for colaborador (estamos em uma página de recrutamento/vagas ativos)
+                  // Nota: Precisamos carregar a lista de IDs de candidatos que já são colaboradores se quisermos ser precisos,
+                  // ou checar se existe um colaborador vinculado via query mais robusta. 
+                  // Para o MVP solicitado: "Quando o candidato é aprovado, pode retirar da lista de talentos"
+                  // Vou assumir que se ele está marcado como "Aprovado" ou vinculado a uma vaga fechada, ou se já existe na tabela de collaborators.
+                  // Vou precisar atualizar a query inicial de fetchCandidatos para trazer essa info.
 
                   // Find names for role and local from options if they are just IDs
                   const roleName = roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || '-';
@@ -623,6 +648,7 @@ export function RHVagas() {
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-24 whitespace-nowrap">{activeTab === 'fechadas' ? 'Fechamento' : 'Prazo'}</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px] whitespace-nowrap">Vaga (Cargo)</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[120px] whitespace-nowrap">Atuação</th>
+                  {activeTab === 'fechadas' && <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px] whitespace-nowrap">Candidato Aprovado</th>}
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[100px] whitespace-nowrap">Local</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[140px] whitespace-nowrap">Líder Direto</th>
                   <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider w-28 whitespace-nowrap">Status</th>
@@ -661,6 +687,11 @@ export function RHVagas() {
                     <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
                       {vaga.atuacao?.name || '-'}
                     </td>
+                    {activeTab === 'fechadas' && (
+                      <td className="px-3 py-3 text-xs font-bold text-[#1e3a8a] whitespace-nowrap">
+                        {(vaga as any).candidato_aprovado?.nome || '-'}
+                      </td>
+                    )}
                     <td className="px-3 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
                       {vaga.location?.name || '-'}
                     </td>

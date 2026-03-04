@@ -3,7 +3,7 @@ import {
   Search, Plus, X, Trash2, Pencil, Save, Users, UserX,
   Calendar, Building2, Mail, Loader2, UserPlus,
   GraduationCap, Briefcase, Files, User, BookOpen, FileSpreadsheet, Clock,
-  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, Filter, FilterX, BellRing
+  Link as LinkIcon, Copy, CheckCircle2, RefreshCcw, Filter, FilterX, BellRing, Tag as TagIcon
 } from 'lucide-react'
 
 import { exportColaboradoresXLSX } from '../utils/exportColaboradores'
@@ -27,6 +27,7 @@ import { GEDSection } from '../components/GEDSection'
 import { PhotoUploadSection } from '../components/PhotoUploadSection'
 import { HistoricoSection } from '../components/HistoricoSection'
 import { PeriodoAusenciasSection } from '../components/PeriodoAusenciasSection'
+import PerfilSection from '../components/PerfilSection'
 import { CollaboratorModalLayout } from '../components/CollaboratorLayouts'
 import { useAuth } from '../../../contexts/AuthContext'
 
@@ -294,6 +295,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
     steps.push(
       { id: 3, label: 'Dados de Escolaridade', icon: BookOpen },
+      { id: 9, label: 'Perfil', icon: TagIcon },
       { id: 5, label: 'Período de Ausências', icon: Calendar },
       { id: 6, label: 'Histórico', icon: Clock },
       { id: 7, label: 'GED', icon: Files }
@@ -1193,6 +1195,17 @@ export function Colaboradores({ }: ColaboradoresProps) {
             pendingGedDocs={pendingGedDocs}
             setPendingGedDocs={setPendingGedDocs}
             handleDeleteGed={handleDeleteGed}
+          />
+        </div>
+      )
+    }
+
+    // 9. PERFIL (TAGS)
+    if (activeTab === 9) {
+      return (
+        <div className="animate-in slide-in-from-right-4 duration-300">
+          <PerfilSection
+            collaboratorId={currentData.id || ''}
           />
         </div>
       )

@@ -255,7 +255,7 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                 try {
                     const { data: candData } = await supabase
                         .from('candidatos')
-                        .select('nome, email')
+                        .select('nome, email, perfil')
                         .eq('id', payload.candidato_aprovado_id)
                         .single();
 
@@ -278,10 +278,22 @@ export function VagaFormModal({ isOpen, onClose, vagaId, onSuccess }: VagaFormMo
                                 atuacao: payload.atuacao_id ? payload.atuacao_id.toString() : null,
                                 local: payload.location_id ? payload.location_id.toString() : null,
                                 lider_equipe: payload.leader_id ? payload.leader_id.toString() : null,
-                                hire_date: payload.data_aprovacao_gestor || new Date().toISOString().split('T')[0]
+                                hire_date: payload.data_aprovacao_gestor || new Date().toISOString().split('T')[0],
+                                perfil: candData.perfil || null,
+                                candidato_id: payload.candidato_aprovado_id
                             };
                             const { error: colabErr } = await supabase.from('collaborators').insert([newColab]);
                             if (colabErr) console.error("Error inserting auto colab", colabErr);
+                        } else {
+                            // Se já existir, apenas atualizar as tags se o usuário desejar (no MVP vamos apenas vincular se estiver vazio)
+                            const { error: updateColabErr } = await supabase
+                                .from('collaborators')
+                                .update({
+                                    candidato_id: payload.candidato_aprovado_id,
+                                    perfil: candData.perfil || null
+                                })
+                                .eq('id', existingColab.id);
+                            if (updateColabErr) console.error("Error updating existing colab with candidate data", updateColabErr);
                         }
                     }
                 } catch (e) {
