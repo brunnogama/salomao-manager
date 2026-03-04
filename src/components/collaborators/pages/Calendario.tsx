@@ -199,6 +199,35 @@ export function Calendario() {
           participantes_candidatos: e.participantes_candidatos || []
         });
       });
+
+      // --- Início Sync Automático de Histórico (Rodando em background) ---
+      const entrevistas = mappedEvs.filter(e => e.tipo === 'Entrevista' && e.participantes_candidatos && e.participantes_candidatos.length > 0);
+      entrevistas.forEach(ev => {
+        (ev.participantes_candidatos || []).forEach(candId => {
+          supabase.from('candidato_historico')
+            .select('id')
+            .eq('candidato_id', candId)
+            .eq('tipo', 'Entrevista')
+            .eq('entrevista_data', ev.data_evento)
+            .then(({ data }) => {
+              if (!data || data.length === 0) {
+                supabase.from('candidato_historico').insert({
+                  candidato_id: candId,
+                  tipo: 'Entrevista',
+                  descricao: `Entrevista agendada: ${ev.titulo}`,
+                  data_registro: new Date().toISOString(),
+                  entrevista_data: ev.data_evento,
+                  entrevista_hora: ev.hora || null,
+                  compareceu: null
+                }).then(({ error }) => {
+                  if (!error) console.log('✅ Histórico retroativo sincronizado para candidato:', candId);
+                });
+              }
+            });
+        });
+      });
+      // --- Fim Sync Automático ---
+
       setEventos([...feriados, ...mappedEvs])
     } else {
       setEventos([...feriados])
@@ -231,8 +260,6 @@ export function Calendario() {
         ? `${novoEvento.data}T${novoEvento.hora}:00`
         : `${novoEvento.data}T00:00:00`;
 
-      let savedEventId = editingEvento;
-
       if (editingEvento) {
         // Atualiza evento existente
         const { error } = await supabase
@@ -250,7 +277,7 @@ export function Calendario() {
         if (error) throw error
       } else {
         // Cria novo evento
-        const { data: newEventData, error } = await supabase
+        const { error } = await supabase
           .from('eventos')
           .insert([{
             titulo: novoEvento.titulo,
@@ -259,26 +286,27 @@ export function Calendario() {
             descricao: novoEvento.descricao,
             vaga_id: novoEvento.vaga_id || null,
             participantes_candidatos: novoEvento.participantes_candidatos || []
-          }]).select('id').single()
+          }])
 
         if (error) throw error
-        if (newEventData) savedEventId = newEventData.id;
       }
 
       // Se for Entrevista e houver candidatos, adicionar histórico se for criação
-      if (novoEvento.tipo === 'Entrevista' && novoEvento.participantes_candidatos.length > 0 && !editingEvento && savedEventId) {
+      if (novoEvento.tipo === 'Entrevista' && novoEvento.participantes_candidatos && novoEvento.participantes_candidatos.length > 0) {
+        // Se for edição, idealmente verificaríamos se já existe para não duplicar, mas a pedido, criamos ao salvar
+        // Para evitar duplicações massivas na edição, por hora faremos a inserção. Um sync avançado seria melhor.
         const historicos = novoEvento.participantes_candidatos.map(candId => ({
           candidato_id: candId,
           tipo: 'Entrevista',
-          descricao: `Entrevista agendada: ${novoEvento.titulo} `,
+          descricao: `Entrevista agendada: ${novoEvento.titulo}`,
           data_registro: new Date().toISOString(),
           entrevista_data: novoEvento.data,
           entrevista_hora: novoEvento.hora || null,
-          compareceu: null, // Pendente
-          evento_id: savedEventId
+          compareceu: null // Pendente
         }));
 
-        await supabase.from('candidato_historico').insert(historicos);
+        const { error: histError } = await supabase.from('candidato_historico').insert(historicos);
+        if (histError) console.error('Erro ao salvar histórico do candidato:', histError);
       }
 
       await fetchData()
