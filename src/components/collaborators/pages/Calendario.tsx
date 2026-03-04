@@ -702,7 +702,10 @@ export function Calendario() {
         setTimeout(() => {
           const targetEl = document.getElementById(`date-group-${todayOrFutureDate}`);
           if (targetEl && container) {
-            container.scrollTo({ top: targetEl.offsetTop - 24, behavior: 'smooth' });
+            const containerRect = container.getBoundingClientRect();
+            const targetRect = targetEl.getBoundingClientRect();
+            const scrollPos = targetRect.top - containerRect.top + container.scrollTop - 24;
+            container.scrollTo({ top: scrollPos, behavior: 'smooth' });
           }
         }, 100);
       } else {
