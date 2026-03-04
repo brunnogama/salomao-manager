@@ -102,8 +102,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                 const { data: eventosData, error: eventosError } = await supabase
                     .from('eventos')
                     .select(`
-                        id, titulo, data_evento, entrevistador_id, descricao, avaliacao_candidato, is_online, url_reuniao, tipo,
-                        entrevistador:entrevistador_id(name)
+                        id, titulo, data_evento, entrevistador_id, descricao, avaliacao_candidato, is_online, url_reuniao, tipo
                     `)
                     .contains('participantes_candidatos', [candidatoId])
                     .in('tipo', ['Entrevista', 'Processo Seletivo'])
@@ -457,7 +456,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                             <div className="grid grid-cols-2 gap-4 text-xs">
                                                 <div>
                                                     <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Entrevistador</p>
-                                                    <p className="font-medium text-gray-700">{evento.entrevistador?.name || 'Não informado'}</p>
+                                                    <p className="font-medium text-gray-700">{evento.entrevistador_id || 'Não informado'}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Formato</p>
