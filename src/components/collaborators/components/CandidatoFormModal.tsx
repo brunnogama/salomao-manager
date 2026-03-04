@@ -5,7 +5,7 @@ import { CollaboratorModalLayout } from './CollaboratorLayouts'
 import { DadosPessoaisSection } from './DadosPessoaisSection'
 import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
-import { User, BookOpen, FileText, Briefcase } from 'lucide-react'
+import { User, BookOpen, FileText, Briefcase, Hash } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { EnderecoSection } from './EnderecoSection'
 import {
@@ -364,8 +364,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
     const steps = [
         { id: 1, label: 'Dados Pessoais', icon: User },
         { id: 2, label: 'Dados Profissionais', icon: Briefcase },
-        { id: 3, label: 'Histórico', icon: BookOpen },
-        { id: 4, label: 'GED / Arquivos', icon: FileText },
+        { id: 3, label: 'Perfil e Tags', icon: Hash },
+        { id: 4, label: 'Histórico', icon: BookOpen },
+        { id: 5, label: 'GED / Arquivos', icon: FileText },
     ]
 
     if (!isOpen) return null
@@ -412,17 +413,30 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             )}
             {activeTab === 2 && (
                 <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <DadosProfissionaisCandidato
+                        formData={formData}
+                        setFormData={setFormData}
+                        isViewMode={false}
+                        candidatoId={candidatoId || null}
+                        pendingExperiencias={pendingExperiencias}
+                        setPendingExperiencias={setPendingExperiencias}
+                        showAlert={showAlert}
+                    />
+                </div>
+            )}
+            {activeTab === 3 && (
+                <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm h-full flex flex-col">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex justify-between items-center">
                             Perfil e Tags
                             <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para pesquisar tags</span>
                         </label>
-                        <div className="relative">
+                        <div className="relative flex-1 flex flex-col">
                             <textarea
                                 value={formData.perfil || ''}
                                 onChange={handlePerfilChange}
                                 placeholder="Descreva o perfil (cada linha salva vira uma tag)&#10;Ex:&#10;Experiência no contencioso cível&#10;Legalone&#10;&#10;Dica: Use @ para buscar na nuvem de talentos"
-                                className="w-full bg-gray-50 border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-3 outline-none font-medium transition-all min-h-[120px] resize-y"
+                                className="w-full bg-gray-50 border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none font-medium transition-all min-h-[300px] resize-y flex-1"
                             />
 
                             {/* Sub-menu for @ tags */}
@@ -446,19 +460,9 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                             )}
                         </div>
                     </div>
-
-                    <DadosProfissionaisCandidato
-                        formData={formData}
-                        setFormData={setFormData}
-                        isViewMode={false}
-                        candidatoId={candidatoId || null}
-                        pendingExperiencias={pendingExperiencias}
-                        setPendingExperiencias={setPendingExperiencias}
-                        showAlert={showAlert}
-                    />
                 </div>
             )}
-            {activeTab === 3 && (
+            {activeTab === 4 && (
                 <CandidatoHistoricoSection
                     candidatoId={candidatoId || null}
                     isViewMode={false}
@@ -466,7 +470,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                     setPendingHistorico={setPendingHistorico}
                 />
             )}
-            {activeTab === 4 && (
+            {activeTab === 5 && (
                 <div className="animate-in slide-in-from-right-4 duration-300">
                     <GEDSection
                         gedCategories={gedCategories}
