@@ -5,7 +5,7 @@ import { CollaboratorModalLayout } from './CollaboratorLayouts'
 import { DadosPessoaisSection } from './DadosPessoaisSection'
 import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
-import { User, BookOpen, FileText, Briefcase, Hash } from 'lucide-react'
+import { User, BookOpen, FileText, Briefcase, Hash, X } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { EnderecoSection } from './EnderecoSection'
 import {
@@ -34,7 +34,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
     // Tagging system state
     const [isTagging, setIsTagging] = useState(false)
     const [tagSearch, setTagSearch] = useState('')
-    const [cursorPosition, setCursorPosition] = useState(0)
+    const [tagInputValue, setTagInputValue] = useState('')
     const [availableTags, setAvailableTags] = useState<string[]>([])
 
     // GED State
@@ -324,42 +324,61 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
     }
 
     // Tagging Logic
-    const handlePerfilChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const text = e.target.value;
-        const position = e.target.selectionStart;
-        setFormData({ ...formData, perfil: text });
+        setTagInputValue(text);
 
-        // Check if we just typed '@'
-        const lastAtSymbol = text.lastIndexOf('@', position - 1);
-        const lastNewLine = text.lastIndexOf('\n', position - 1);
-
-        // Determine if we are actively tagging (bound to current line)
-        const bound = lastNewLine;
-        if (lastAtSymbol > bound) {
+        const lastAtSymbol = text.lastIndexOf('@');
+        if (lastAtSymbol !== -1) {
             setIsTagging(true);
-            setTagSearch(text.substring(lastAtSymbol + 1, position));
-            setCursorPosition(lastAtSymbol);
+            setTagSearch(text.substring(lastAtSymbol + 1));
         } else {
             setIsTagging(false);
+            setTagSearch('');
         }
-    }
+    };
+
+    const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            if (isTagging) return; // deixa o usuario escolher do menu
+
+            const text = tagInputValue.trim().replace(/^@/, '');
+            if (text) {
+                addTagToFormData(text);
+                setTagInputValue('');
+                setIsTagging(false);
+            }
+        } else if (e.key === 'Backspace' && tagInputValue === '') {
+            e.preventDefault();
+            const currentTags = (formData.perfil || '').split('\n').filter(Boolean);
+            if (currentTags.length > 0) {
+                currentTags.pop();
+                setFormData({ ...formData, perfil: currentTags.join('\n') });
+            }
+        }
+    };
+
+    const addTagToFormData = (tagText: string) => {
+        const currentTags = (formData.perfil || '').split('\n').filter(Boolean);
+        if (!currentTags.includes(tagText)) {
+            currentTags.push(tagText);
+            setFormData({ ...formData, perfil: currentTags.join('\n') });
+        }
+    };
+
+    const removeTagFromFormData = (indexToRemove: number) => {
+        const currentTags = (formData.perfil || '').split('\n').filter(Boolean);
+        currentTags.splice(indexToRemove, 1);
+        setFormData({ ...formData, perfil: currentTags.join('\n') });
+    };
 
     const insertTag = (tagText: string) => {
-        if (!formData.perfil) return;
-        const currentText = formData.perfil;
-        const beforeTag = currentText.substring(0, cursorPosition);
-
-        // Find where the current line ends
-        const nextNewLine = currentText.indexOf('\n', cursorPosition);
-        const afterTag = nextNewLine !== -1 ? currentText.substring(nextNewLine) : '';
-
-        // Format tag (just insert text cleanly without @)
-        const newText = `${beforeTag}${tagText}${afterTag}`;
-
-        setFormData({ ...formData, perfil: newText });
+        addTagToFormData(tagText);
+        setTagInputValue('');
         setIsTagging(false);
         setTagSearch('');
-    }
+    };
 
     const steps = [
         { id: 1, label: 'Dados Pessoais', icon: User },
@@ -432,32 +451,57 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                             <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para pesquisar tags</span>
                         </label>
                         <div className="relative flex-1 flex flex-col">
-                            <textarea
-                                value={formData.perfil || ''}
-                                onChange={handlePerfilChange}
-                                placeholder="Descreva o perfil (cada linha salva vira uma tag)&#10;Ex:&#10;Experiência no contencioso cível&#10;Legalone&#10;&#10;Dica: Use @ para buscar na nuvem de talentos"
-                                className="w-full bg-gray-50 border border-gray-200 text-[#0a192f] text-sm rounded-xl focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] block p-4 outline-none font-medium transition-all min-h-[300px] resize-y flex-1"
-                            />
+                            <div className="w-full bg-gray-50 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] p-3 transition-all min-h-[300px] flex-1 flex flex-col items-start relative cursor-text group">
 
-                            {/* Sub-menu for @ tags */}
-                            {isTagging && (
-                                <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-48 overflow-y-auto ring-1 ring-black/5">
-                                    {availableTags
-                                        .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
-                                        .map(t => (
+                                {isTagging && availableTags.length > 0 && (
+                                    <div className="absolute top-12 left-3 w-[80%] max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] max-h-48 overflow-y-auto ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="px-3 py-2 text-[10px] font-black text-blue-800 bg-blue-50/50 border-b border-blue-100 uppercase tracking-widest sticky top-0 backdrop-blur-sm">
+                                            Sugestões da Nuvem
+                                        </div>
+                                        <div className="p-1">
+                                            {availableTags
+                                                .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
+                                                .map(t => (
+                                                    <button
+                                                        key={t}
+                                                        onClick={() => insertTag(t)}
+                                                        className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-[#1e3a8a] transition-all rounded-lg flex items-center gap-2 group/btn"
+                                                    >
+                                                        <Hash className="h-3 w-3 text-gray-400 group-hover/btn:text-[#1e3a8a] transition-colors" />
+                                                        {t}
+                                                    </button>
+                                                ))}
+                                        </div>
+                                        {availableTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
+                                            <div className="px-4 py-3 text-xs text-gray-400 text-center font-medium">Nenhuma tag encontrada para "{tagSearch}"</div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex flex-wrap gap-2 w-full">
+                                    {(formData.perfil || '').split('\n').filter(Boolean).map((tag: string, index: number) => (
+                                        <div key={index} className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-[#1e3a8a] px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm animate-in zoom-in-50 duration-200 group/tag">
+                                            <Hash className="h-3.5 w-3.5 text-blue-400" />
+                                            {tag}
                                             <button
-                                                key={t}
-                                                onClick={() => insertTag(t)}
-                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-50 last:border-0"
+                                                onClick={() => removeTagFromFormData(index)}
+                                                className="ml-1 hover:bg-white rounded-full p-0.5 text-blue-400 hover:text-red-500 transition-colors opacity-60 group-hover/tag:opacity-100"
                                             >
-                                                {t}
+                                                <X className="h-3.5 w-3.5" />
                                             </button>
-                                        ))}
-                                    {availableTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
-                                        <div className="px-4 py-3 text-sm text-gray-400 text-center">Nenhuma tag encontrada para "{tagSearch}"</div>
-                                    )}
+                                        </div>
+                                    ))}
+
+                                    <input
+                                        type="text"
+                                        value={tagInputValue}
+                                        onChange={handleTagInputChange}
+                                        onKeyDown={handleTagInputKeyDown}
+                                        placeholder={(formData.perfil || '').split('\n').filter(Boolean).length === 0 ? "Digite a tag e aperte Enter ou vírgula. Ou digite @ para buscar." : "Nova tag..."}
+                                        className="bg-transparent text-[#0a192f] text-sm outline-none font-medium flex-1 min-w-[200px] py-1.5 placeholder:text-gray-400"
+                                    />
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
                 </div>
