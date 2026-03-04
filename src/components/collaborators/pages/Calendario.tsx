@@ -303,10 +303,10 @@ export function Calendario() {
           local_endereco_url: e.local_endereco_url || '',
           participantes_internos: [], // Mocked as not in DB
           participantes_externos: [], // Mocked as not in DB
-          participantes_socios: [], // Mocked as not in DB
+          participantes_socios: Array.isArray(e.participantes_socios) ? e.participantes_socios.map((s: any) => typeof s === 'object' ? s.id || s.name || s.value || s : s) : [],
           vaga_id: typeof e.vaga_id === 'object' ? e.vaga_id?.id : e.vaga_id,
-          entrevistador_id: e.entrevistador_id,
-          participantes_candidatos: e.participantes_candidatos || []
+          entrevistador_id: typeof e.entrevistador_id === 'object' ? e.entrevistador_id?.id || e.entrevistador_id?.name || e.entrevistador_id : e.entrevistador_id,
+          participantes_candidatos: Array.isArray(e.participantes_candidatos) ? e.participantes_candidatos.map((c: any) => typeof c === 'object' ? c.id || c.value || c : c) : []
         });
       }) as Evento[];
 
