@@ -102,7 +102,7 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                 const { data: eventosData, error: eventosError } = await supabase
                     .from('eventos')
                     .select(`
-                        id, titulo, data_evento, entrevistador_id, descricao, avaliacao_candidato, is_online, url_reuniao, tipo
+                        id, titulo, data_evento, entrevistador_id, descricao, tipo
                     `)
                     .filter('participantes_candidatos', 'cs', `{${candidatoId}}`)
                     .in('tipo', ['Entrevista', 'Processo Seletivo'])
@@ -458,27 +458,12 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                                                     <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Entrevistador</p>
                                                     <p className="font-medium text-gray-700">{evento.entrevistador_id || 'Não informado'}</p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-gray-400 font-bold uppercase tracking-wider mb-1" style={{ fontSize: '9px' }}>Formato</p>
-                                                    <p className="font-medium text-gray-700">{evento.is_online ? 'Online' : 'Presencial'}</p>
-                                                </div>
                                             </div>
 
-                                            {/* Detailed Evaluation */}
-                                            {evento.avaliacao_candidato && (
-                                                <div className="mt-4 p-4 bg-white rounded-lg border border-emerald-100">
-                                                    <h6 className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider mb-2">Avaliação / Parecer</h6>
-                                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{evento.avaliacao_candidato}</p>
-                                                </div>
-                                            )}
-
-                                            {/* Description if present and no Evaluation is present (older records) */}
-                                            {!evento.avaliacao_candidato && evento.descricao && (
-                                                <div className="mt-4 p-4 bg-white rounded-lg border border-emerald-100">
-                                                    <h6 className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider mb-2">Observações</h6>
-                                                    <p className="text-sm text-gray-600 whitespace-pre-wrap">{evento.descricao}</p>
-                                                </div>
-                                            )}
+                                            <div className="mt-4 p-4 bg-white rounded-lg border border-emerald-100">
+                                                <h6 className="text-[10px] font-black text-[#0a192f] uppercase tracking-wider mb-2">Observações</h6>
+                                                <p className="text-sm text-gray-600 whitespace-pre-wrap">{evento.descricao || 'Nenhuma observação registrada.'}</p>
+                                            </div>
                                         </div>
                                     )
                                 })}
