@@ -104,8 +104,8 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
                     .select(`
                         id, titulo, data_evento, entrevistador_id, descricao, tipo
                     `)
-                    // Forçando a busca convertendo o uuid de fato
-                    .contains('participantes_candidatos', [candidatoId])
+                    // Buscando de forma flexível como string para evitar cast errors de arrays/jsonb do PostgREST
+                    .ilike('participantes_candidatos::text', `%${candidatoId}%`)
                     .in('tipo', ['Entrevista', 'Processo Seletivo'])
                     .order('data_evento', { ascending: false })
 
