@@ -538,8 +538,6 @@ export function Calendario() {
 
   const aniversarios = processarAniversarios()
 
-
-
   const eventosDoMes = (mes: number, ano: number) => {
     return eventos.filter(e => {
       const d = new Date(e.data_evento + 'T12:00:00')
@@ -550,11 +548,13 @@ export function Calendario() {
   const getAniversariosHoje = () => aniversarios.filter(a => a.isHoje)
 
   const getAniversariosEsteMes = () => aniversarios.filter(a => a.isEsteMes)
-  const getProximosAniversarios = () => {
-    return aniversarios.slice(0, 20)
+
+  // Return all records so we can filter by selectedMonth/Year later
+  const getAllAniversarios = () => {
+    return aniversarios;
   }
 
-  const getProximosEventos = () => {
+  const getAllEventos = () => {
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
 
@@ -592,42 +592,38 @@ export function Calendario() {
           const diffTime = dateAdmissao.getTime() - hoje.getTime();
           const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-          if (diasRestantes >= 0) {
-            mochilaEventos.push({
-              id: `mochila - ${c.id} `,
-              titulo: `${formatName(c.name)} completa 3 meses de casa`,
-              tipo: 'Mochila',
-              dataObjeto: dateAdmissao,
-              diasRestantes,
-              isHoje: diasRestantes === 0,
-              isEstaSemana: diasRestantes <= 7 && diasRestantes >= 0,
-              colaboradorRef: c
-            });
-          }
+          mochilaEventos.push({
+            id: `mochila - ${c.id} `,
+            titulo: `${formatName(c.name)} completa 3 meses de casa`,
+            tipo: 'Mochila',
+            dataObjeto: dateAdmissao,
+            diasRestantes,
+            isHoje: diasRestantes === 0,
+            isEstaSemana: diasRestantes <= 7 && diasRestantes >= 0,
+            colaboradorRef: c
+          });
         }
       }
     });
 
     return [...baseEventos, ...mochilaEventos]
-      .filter(e => e.diasRestantes >= 0)
       .sort((a, b) => a.diasRestantes - b.diasRestantes)
-      .slice(0, 20)
   }
 
   const aniversariosHoje = getAniversariosHoje()
   const aniversariosEsteMes = getAniversariosEsteMes()
 
-  const eventosHoje = getProximosEventos().filter(e => e.isHoje)
+  const eventosHoje = getAllEventos().filter(e => e.isHoje)
 
   // PREPARAÇÃO DOS DADOS PARA A LISTA
   let itemsToShow: any[] = [];
-  const todosAniversarios = getProximosAniversarios().map(a => ({
+  const todosAniversarios = getAllAniversarios().map(a => ({
     ...a,
     _source: 'aniversario',
     sortValue: a.diasRestantes,
     dataSort: new Date(new Date().getFullYear(), a.mes, a.dia).getTime()
   }));
-  const todosEventos = getProximosEventos().map(e => ({
+  const todosEventos = getAllEventos().map(e => ({
     ...e,
     _source: 'evento',
     sortValue: e.diasRestantes,
@@ -646,6 +642,14 @@ export function Calendario() {
   } else {
     itemsToShow = todosEventos.filter(e => e.tipo === activeTab);
   }
+
+  // Ensure items are filtered by the selected month/year regardless of the "aba"
+  itemsToShow = itemsToShow.filter(item => {
+    const itemDate = item._source === 'aniversario'
+      ? new Date(selectedYear, item.mes, item.dia)
+      : item.dataObjeto;
+    return itemDate.getMonth() === selectedMonth && itemDate.getFullYear() === selectedYear;
+  });
 
   // Filtrar pelo dia selecionado do calendário esquerdo, se houver
   if (selectedDay) {
@@ -884,7 +888,12 @@ export function Calendario() {
             {sortedDates.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-gray-400 py-12">
                 <CalendarDays className="h-10 w-10 mb-3 opacity-20" />
-                <p className="text-sm font-medium italic">Nenhum evento encontrado para esta data/categoria.</p>
+                <p className="font-semibold text-gray-500">
+                  Nenhum compromisso em {MESES[selectedMonth]} {selectedYear}
+                </p>
+                <p className="text-sm mt-1 opacity-70">
+                  Os eventos aparecerão aqui organizados por data.
+                </p>
               </div>
             ) : (
               <div className="space-y-8">
