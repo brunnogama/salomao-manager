@@ -165,6 +165,14 @@ export function DadosCorporativosSection({
                 disabled={isViewMode}
               />
 
+              <ManagedSelect
+                label="Candidato Vinculado (ID / Histórico)"
+                value={formData.candidato_id || ''}
+                onChange={v => setFormData({ ...formData, candidato_id: v })}
+                tableName="candidatos"
+                disabled={isViewMode}
+              />
+
               {/* Row 3 */}
               <SearchableSelect
                 label="Área"

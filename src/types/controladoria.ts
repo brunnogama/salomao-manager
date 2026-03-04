@@ -144,6 +144,7 @@ export interface Collaborator {
   // Novos Campos (Rateio e Desligamento)
   rateio_id?: string;
   hiring_reason_id?: string;
+  candidato_id?: string;
   termination_initiative_id?: string;
   termination_type_id?: string;
   termination_reason_id?: string;

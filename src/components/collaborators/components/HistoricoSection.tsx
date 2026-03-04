@@ -59,10 +59,10 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
     }, [formData.id])
 
     useEffect(() => {
-        if (formData.email || formData.name) {
+        if (formData.candidato_id || formData.email || formData.name) {
             fetchRecruitingHistory()
         }
-    }, [formData.email, formData.name])
+    }, [formData.candidato_id, formData.email, formData.name])
 
     const fetchRoleHistory = async () => {
         if (!formData.id) return
@@ -81,7 +81,9 @@ export function HistoricoSection({ formData, setFormData, maskDate: _maskDate, i
             // First, find the candidato by email or name
             let query = supabase.from('candidatos').select('id, nome, email')
 
-            if (formData.email && formData.name) {
+            if (formData.candidato_id) {
+                query = query.eq('id', formData.candidato_id)
+            } else if (formData.email && formData.name) {
                 query = query.or(`email.eq.${formData.email},nome.ilike.%${formData.name.trim()}%`)
             } else if (formData.email) {
                 query = query.eq('email', formData.email)
