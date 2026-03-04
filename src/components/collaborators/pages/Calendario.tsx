@@ -1,5 +1,5 @@
 // src/components/collaborators/pages/Calendario.tsx
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   Calendar as CalendarIcon,
   Cake,
@@ -24,6 +24,7 @@ import { useColaboradores } from '../hooks/useColaboradores'
 import { getFeriadosDoAno } from '../utils/holidays'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { SocioSelector } from '../../crm/SocioSelector'
+import { EventSelectionModal, EventCreationType } from '../components/EventSelectionModal'
 
 interface Colaborador {
   id: string | number;
@@ -136,24 +137,11 @@ export function Calendario() {
     vaga_id: ''
   })
 
-  // Estado e Ref para o Menu Dropdown do Botão Novo Evento
-  const [isEventMenuOpen, setIsEventMenuOpen] = useState(false)
-  const eventMenuRef = useRef<HTMLDivElement>(null)
+  // Estado para o Modal de Seleção de Tipo de Evento
+  const [isEventSelectionModalOpen, setIsEventSelectionModalOpen] = useState(false)
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (eventMenuRef.current && !eventMenuRef.current.contains(event.target as Node)) {
-        setIsEventMenuOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [eventMenuRef]);
-
-  const handleOpenNewEvent = (tipo: 'Reunião' | 'Entrevista' | 'Aniversário' | 'Outros') => {
-    setIsEventMenuOpen(false)
+  const handleOpenNewEvent = (tipo: EventCreationType) => {
+    setIsEventSelectionModalOpen(false)
     setEditingEvento(null)
     setNovoEvento({
       titulo: '',
@@ -611,46 +599,14 @@ export function Calendario() {
             />
             <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-[#1e3a8a] group-hover:scale-110 transition-transform" />
           </div>
-          <div className="relative" ref={eventMenuRef}>
+          <div className="relative">
             <button
-              onClick={() => setIsEventMenuOpen(!isEventMenuOpen)}
+              onClick={() => setIsEventSelectionModalOpen(true)}
               className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
               title="Novo Evento"
             >
               <Plus className="h-5 w-5" />
             </button>
-
-            {isEventMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="px-3 py-2 border-b border-gray-50 mb-1">
-                  <p className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">Qual tipo de evento?</p>
-                </div>
-                <button
-                  onClick={() => handleOpenNewEvent('Reunião')}
-                  className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm font-semibold text-gray-700 hover:text-[#1e3a8a] transition-colors"
-                >
-                  📅 Reunião
-                </button>
-                <button
-                  onClick={() => handleOpenNewEvent('Entrevista')}
-                  className="w-full text-left px-4 py-2 hover:bg-emerald-50 text-sm font-semibold text-gray-700 hover:text-emerald-700 transition-colors"
-                >
-                  🤝 Entrevista
-                </button>
-                <button
-                  onClick={() => handleOpenNewEvent('Aniversário')}
-                  className="w-full text-left px-4 py-2 hover:bg-amber-50 text-sm font-semibold text-gray-700 hover:text-amber-700 transition-colors"
-                >
-                  🎂 Aniversário
-                </button>
-                <button
-                  onClick={() => handleOpenNewEvent('Outros')}
-                  className="w-full text-left px-4 py-2 hover:bg-purple-50 text-sm font-semibold text-gray-700 hover:text-purple-700 transition-colors"
-                >
-                  ⭐ Outros
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -744,18 +700,18 @@ export function Calendario() {
                   key={aniv.colaborador.id}
                   onClick={() => setVisualizarColaborador(aniv.colaborador as Colaborador)}
                   className={`group flex items - center justify - between p - 4 rounded - xl border transition - all duration - 300 hover: shadow - lg cursor - pointer relative ${aniv.isHoje
-                      ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
-                      : aniv.isEstaSemana
-                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
-                        : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
+                    ? 'bg-gradient-to-r from-amber-100 to-yellow-100 border-2 border-[#d4af37] shadow-md transform scale-[1.01] mx-1'
+                    : aniv.isEstaSemana
+                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
+                      : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
                     } ${isSelected ? 'ring-2 ring-green-500 border-transparent' : ''} `}
                 >
                   <div className="flex items-center gap-4 min-w-0 pr-2">
                     <div
                       onClick={(e) => handleToggleAniversariante(e, String(aniv.colaborador.id))}
                       className={`w - 5 h - 5 rounded border flex items - center justify - center shrink - 0 cursor - pointer transition - colors ${isSelected
-                          ? 'bg-green-500 border-green-500 text-white'
-                          : 'border-gray-300 bg-white hover:border-green-500'
+                        ? 'bg-green-500 border-green-500 text-white'
+                        : 'border-gray-300 bg-white hover:border-green-500'
                         } `}
                     >
                       {isSelected && <Check className="w-3.5 h-3.5" />}
@@ -820,15 +776,15 @@ export function Calendario() {
                 key={idx}
                 onClick={() => evento.tipo === 'Mochila' ? setVisualizarColaborador(evento.colaboradorRef as Colaborador) : setVisualizarEvento(evento as Evento)}
                 className={`group flex items - center justify - between p - 4 rounded - xl border transition - all duration - 300 hover: shadow - lg cursor - pointer ${evento.isHoje
-                    ? 'bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-500 shadow-md transform scale-[1.01] mx-1'
-                    : evento.isEstaSemana
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
-                      : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
+                  ? 'bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-500 shadow-md transform scale-[1.01] mx-1'
+                  : evento.isEstaSemana
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-[#1e3a8a]/30'
+                    : 'bg-gray-50 border-gray-200 hover:border-[#1e3a8a]/30'
                   } `}
               >
                 <div className="flex items-center gap-4 min-w-0 pr-2">
                   {evento.tipo === 'Mochila' && (evento as any).colaboradorRef?.photo_url ? (
-                    <img src={(evento as any).colaboradorRef.photo_url} alt={evento.titulo} className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0" />
+                    <img src={(evento as any).colaboradorRef.photo_url} className="w-12 h-12 rounded-xl object-cover border-2 border-[#1e3a8a]/30 shadow-md shrink-0" />
                   ) : evento.tipo === 'Mochila' ? (
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#112240] flex items-center justify-center text-white text-lg font-black border-2 border-[#1e3a8a]/30 shadow-md shrink-0">
                       {(evento as any).colaboradorRef?.name.charAt(0).toUpperCase()}
@@ -1396,6 +1352,13 @@ export function Calendario() {
             </div>
           </div>
         )}
+
+      {/* NOVO: Modal Seletor de Tipo de Evento */}
+      <EventSelectionModal
+        isOpen={isEventSelectionModalOpen}
+        onClose={() => setIsEventSelectionModalOpen(false)}
+        onSelect={handleOpenNewEvent}
+      />
     </div>
-  );
+  )
 }
