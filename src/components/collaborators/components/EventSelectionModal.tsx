@@ -25,17 +25,7 @@ export function EventSelectionModal({ isOpen, onClose, onSelect }: EventSelectio
                     </button>
                 </div>
 
-                <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button
-                        onClick={() => onSelect('Reunião')}
-                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-blue-100 bg-blue-50/50 hover:bg-blue-100 hover:border-blue-300 hover:scale-105 transition-all group"
-                    >
-                        <div className="h-12 w-12 rounded-full bg-[#1e3a8a] flex items-center justify-center text-white shadow-lg group-hover:shadow-blue-300/50 transition-all">
-                            <CalendarIcon className="h-6 w-6" />
-                        </div>
-                        <span className="text-xs font-black uppercase tracking-widest text-[#1e3a8a]">Reunião</span>
-                    </button>
-
+                <div className="p-6 grid grid-cols-2 gap-4">
                     <button
                         onClick={() => onSelect('Entrevista')}
                         className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-emerald-100 bg-emerald-50/50 hover:bg-emerald-100 hover:border-emerald-300 hover:scale-105 transition-all group"
@@ -44,6 +34,16 @@ export function EventSelectionModal({ isOpen, onClose, onSelect }: EventSelectio
                             <Users className="h-6 w-6" />
                         </div>
                         <span className="text-xs font-black uppercase tracking-widest text-emerald-800">Entrevista</span>
+                    </button>
+
+                    <button
+                        onClick={() => onSelect('Reunião')}
+                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-blue-100 bg-blue-50/50 hover:bg-blue-100 hover:border-blue-300 hover:scale-105 transition-all group"
+                    >
+                        <div className="h-12 w-12 rounded-full bg-[#1e3a8a] flex items-center justify-center text-white shadow-lg group-hover:shadow-blue-300/50 transition-all">
+                            <CalendarIcon className="h-6 w-6" />
+                        </div>
+                        <span className="text-xs font-black uppercase tracking-widest text-[#1e3a8a]">Reunião</span>
                     </button>
 
                     <button
