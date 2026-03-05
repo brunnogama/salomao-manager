@@ -56,7 +56,7 @@ export function FilterSelect({ icon: Icon, value, onChange, options, placeholder
             </div>
 
             {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-[250px] bg-white border border-gray-100 rounded-xl shadow-xl z-50 flex flex-col animate-in fade-in zoom-in-95 overflow-hidden">
+                <div className="absolute top-full left-0 mt-1 min-w-full w-max max-w-[400px] bg-white border border-gray-100 rounded-xl shadow-xl z-50 flex flex-col animate-in fade-in zoom-in-95 overflow-hidden">
                     <div className="p-2 border-b border-gray-100 bg-gray-50/50">
                         <input
                             type="text"
@@ -77,7 +77,7 @@ export function FilterSelect({ icon: Icon, value, onChange, options, placeholder
                             filteredOptions.map((opt) => (
                                 <div
                                     key={opt.value}
-                                    className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-blue-50 cursor-pointer ${value === opt.value ? 'bg-blue-50 text-[#1e3a8a]' : ''}`}
+                                    className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-blue-50 cursor-pointer truncate ${value === opt.value ? 'bg-blue-50 text-[#1e3a8a]' : ''}`}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onChange(opt.value);

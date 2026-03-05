@@ -639,10 +639,13 @@ export function RHVagas() {
                       onChange={setSelectedMatchVagaId}
                       options={[
                         { value: '', label: 'Selecione uma vaga em aberto...' },
-                        ...vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').map(v => ({
-                          value: String(v.id),
-                          label: `${v.vaga_id_text} - ${v.role?.name || 'Sem cargo'} (${v.location?.name || 'Sem local'})`
-                        }))
+                        ...vagas
+                          .filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização')
+                          .sort((a, b) => (a.vaga_id_text || '').localeCompare(b.vaga_id_text || ''))
+                          .map(v => ({
+                            value: String(v.id),
+                            label: `${v.vaga_id_text} - ${v.role?.name || 'Sem cargo'} (${v.location?.name || 'Sem local'})`
+                          }))
                       ]}
                       icon={Briefcase}
                     />
@@ -747,10 +750,12 @@ export function RHVagas() {
                       onChange={setSelectedMatchCandidatoId}
                       options={[
                         { value: '', label: 'Selecione um talento da base...' },
-                        ...candidatos.map(c => ({
-                          value: String(c.id),
-                          label: `${c.nome} - ${roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || 'Sem cargo'}`
-                        }))
+                        ...candidatos
+                          .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
+                          .map(c => ({
+                            value: String(c.id),
+                            label: `${c.nome} - ${roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || 'Sem cargo'}`
+                          }))
                       ]}
                       icon={User}
                     />
