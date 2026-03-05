@@ -93,8 +93,25 @@ const OrganogramNode = React.memo(({
         })
         .sort((a, b) => getRank(a.role) - getRank(b.role));
 
+    // Conditional Layout Logic
+    const isJuridicoTab = activeTab === 'JURIDICO';
+    const roleGroups: ColaboradorCard[][] = [];
 
+    if (isJuridicoTab) {
+        let currentRole: string | null = null;
+        let currentGroup: ColaboradorCard[] = [];
 
+        for (const sub of sortedSubordinates) {
+            if (sub.role !== currentRole) {
+                if (currentGroup.length > 0) roleGroups.push(currentGroup);
+                currentRole = sub.role;
+                currentGroup = [sub];
+            } else {
+                currentGroup.push(sub);
+            }
+        }
+        if (currentGroup.length > 0) roleGroups.push(currentGroup);
+    }
     return (
         <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
             <Droppable droppableId={colab.id} type="COLAB">
@@ -102,7 +119,7 @@ const OrganogramNode = React.memo(({
                     <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[160px]' : isDense ? 'w-[190px]' : 'w-[240px]'} z-10 group hover:z-50 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
+                        className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[190px]' : isDense ? 'w-[220px]' : 'w-[240px]'} z-10 group hover:z-50 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
                     >
                         <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
 
@@ -125,10 +142,10 @@ const OrganogramNode = React.memo(({
                                         )}
                                     </div>
 
-                                    <div className={`${isSuperDense ? 'mt-1' : isDense ? 'mt-2' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
+                                    <div className={`${isSuperDense ? 'mt-2' : isDense ? 'mt-3' : 'mt-4'} text-center px-1 flex flex-col items-center gap-1`}>
                                         <div>
-                                            <h4 className={`${isSuperDense ? 'text-[10px]' : isDense ? 'text-[11px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight truncate ${isSuperDense ? 'max-w-[130px]' : isDense ? 'max-w-[160px]' : 'max-w-[200px]'}`}>{colab.name}</h4>
-                                            <span className={`${isSuperDense ? 'text-[7px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate ${isSuperDense ? 'max-w-[130px]' : isDense ? 'max-w-[160px]' : 'max-w-[200px]'}`}>{roleStr}</span>
+                                            <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{colab.name}</h4>
+                                            <span className={`${isSuperDense ? 'text-[8px]' : 'text-[9px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate ${isSuperDense ? 'max-w-[170px]' : isDense ? 'max-w-[200px]' : 'max-w-[200px]'}`}>{roleStr}</span>
                                         </div>
                                         {colab.equipe && colab.equipe !== 'Sem Equipe' && colab.equipe !== 'Geral' && !isSuperDense && (
                                             <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-[180px]">
@@ -161,32 +178,64 @@ const OrganogramNode = React.memo(({
                 <div className="flex flex-col items-center mt-2 w-full">
                     <div className="w-[2px] h-8 bg-gray-300"></div>
                     <div className="flex flex-col items-center w-full relative z-10">
-                        <div className="flex justify-center relative pt-4 w-full">
-                            {sortedSubordinates.length > 1 && (
-                                <div className="absolute top-0 h-[2px] bg-gray-300" style={{
-                                    left: `${100 / (sortedSubordinates.length * 2)}%`,
-                                    right: `${100 / (sortedSubordinates.length * 2)}%`
-                                }}></div>
-                            )}
-                            {sortedSubordinates.map((sub) => (
-                                <div key={sub.id} className={`relative flex flex-col items-center ${sortedSubordinates.length > 8 ? 'px-0' : sortedSubordinates.length > 5 ? 'px-0.5' : 'px-4'}`}>
-                                    <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
-                                    <div style={{
-                                        transform: sortedSubordinates.length > 12 ? 'scale(0.75)' : sortedSubordinates.length > 8 ? 'scale(0.8)' : sortedSubordinates.length > 5 ? 'scale(0.9)' : 'scale(1)',
-                                        transformOrigin: 'top center'
-                                    }}>
-                                        <OrganogramNode
-                                            colab={sub}
-                                            context={context}
-                                            visitedIds={nextVisited}
-                                            level={level + 1}
-                                            isDense={sortedSubordinates.length > 5 && sortedSubordinates.length <= 8}
-                                            isSuperDense={sortedSubordinates.length > 8}
-                                        />
+                        {isJuridicoTab ? (
+                            // JURIDICO: Vertical role blocks (as before)
+                            roleGroups.map((group, groupIndex) => (
+                                <div key={groupIndex} className="flex justify-center w-full relative pb-16">
+                                    {groupIndex < roleGroups.length - 1 && (
+                                        <div className="absolute top-0 left-1/2 w-[2px] h-full bg-gray-300 -translate-x-1/2 -z-10"></div>
+                                    )}
+                                    <div className="flex justify-center relative pt-4 w-full">
+                                        {group.map((sub) => (
+                                            <div key={sub.id} className={`relative flex flex-col items-center ${group.length > 8 ? 'px-0' : group.length > 5 ? 'px-0.5' : 'px-4'}`}>
+                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                                <div style={{
+                                                    transform: group.length > 12 ? 'scale(0.8)' : group.length > 8 ? 'scale(0.85)' : group.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                                    transformOrigin: 'top center'
+                                                }}>
+                                                    <OrganogramNode
+                                                        colab={sub}
+                                                        context={context}
+                                                        visitedIds={nextVisited}
+                                                        level={level + 1}
+                                                        isDense={group.length > 5 && group.length <= 8}
+                                                        isSuperDense={group.length > 8}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                            ))
+                        ) : (
+                            // ADMINISTRATIVO: Unified horizontal row (peers side-by-side)
+                            <div className="flex justify-center relative pt-4 w-full">
+                                {sortedSubordinates.length > 1 && (
+                                    <div className="absolute top-0 h-[2px] bg-gray-300" style={{
+                                        left: `${100 / (sortedSubordinates.length * 2)}%`,
+                                        right: `${100 / (sortedSubordinates.length * 2)}%`
+                                    }}></div>
+                                )}
+                                {sortedSubordinates.map((sub) => (
+                                    <div key={sub.id} className={`relative flex flex-col items-center ${sortedSubordinates.length > 8 ? 'px-0' : sortedSubordinates.length > 5 ? 'px-0.5' : 'px-4'}`}>
+                                        <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                        <div style={{
+                                            transform: sortedSubordinates.length > 12 ? 'scale(0.8)' : sortedSubordinates.length > 8 ? 'scale(0.85)' : sortedSubordinates.length > 5 ? 'scale(0.95)' : 'scale(1)',
+                                            transformOrigin: 'top center'
+                                        }}>
+                                            <OrganogramNode
+                                                colab={sub}
+                                                context={context}
+                                                visitedIds={nextVisited}
+                                                level={level + 1}
+                                                isDense={sortedSubordinates.length > 5 && sortedSubordinates.length <= 8}
+                                                isSuperDense={sortedSubordinates.length > 8}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
