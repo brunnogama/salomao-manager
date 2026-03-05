@@ -239,26 +239,45 @@ const AdminOrganogramTree = React.memo(({
 
     const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
-    // Reusable Diretor Financeiro mini-node
-    const DiretorNode = () => (
-        <div
-            className="flex flex-col items-center cursor-pointer group"
-            onClick={() => setSelectedColabForModal(diretorFinanceiro.fullData)}
-        >
-            <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/20 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
-                {diretorFinanceiro.photo_url ? (
-                    <img src={diretorFinanceiro.photo_url} alt={diretorFinanceiro.name} className="w-full h-full object-cover" />
-                ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-[#1e3a8a]/50">
-                        <UserIcon className="w-10 h-10" />
+    // Reusable Diretor Financeiro mini-node (Droppable)
+    const DiretorSection = ({ atuacaoName }: { atuacaoName: string }) => (
+        <Droppable droppableId={`root-${diretorFinanceiro.id}-${atuacaoName}`} type="COLAB">
+            {(provided, snapshot) => (
+                <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`flex flex-col items-center p-6 rounded-[2.5rem] transition-all duration-300 ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 scale-105 border-2 border-dashed border-[#1e3a8a]/20' : 'bg-transparent'}`}
+                >
+                    <div
+                        className="flex flex-col items-center cursor-pointer group"
+                        onClick={() => setSelectedColabForModal(diretorFinanceiro.fullData)}
+                    >
+                        <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/20 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                            {diretorFinanceiro.photo_url ? (
+                                <img src={diretorFinanceiro.photo_url} alt={diretorFinanceiro.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-[#1e3a8a]/50">
+                                    <UserIcon className="w-10 h-10" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="mt-3 text-center">
+                            <h4 className="text-[13px] font-black text-[#0a192f] tracking-tight">{diretorFinanceiro.name}</h4>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">{diretorFinanceiro.role}</span>
+                        </div>
                     </div>
-                )}
-            </div>
-            <div className="mt-3 text-center">
-                <h4 className="text-[13px] font-black text-[#0a192f] tracking-tight">{diretorFinanceiro.name}</h4>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">{diretorFinanceiro.role}</span>
-            </div>
-        </div>
+
+                    {/* Vertical line from Director to Atuação label */}
+                    <div className="w-[2px] h-8 bg-gray-300 mt-4"></div>
+
+                    {/* Atuação Label */}
+                    <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-8 py-3 rounded-2xl shadow-lg">
+                        <span className="text-[12px] font-black uppercase tracking-[0.2em]">{atuacaoName}</span>
+                    </div>
+                    {provided.placeholder}
+                </div>
+            )}
+        </Droppable>
     );
 
     return (
@@ -281,18 +300,10 @@ const AdminOrganogramTree = React.memo(({
                             <div className="w-full max-w-4xl h-[2px] bg-gray-200 mb-16"></div>
                         )}
 
-                        {/* Diretor Financeiro (repeated per section) */}
-                        <DiretorNode />
+                        {/* Diretor Financeiro & Atuação (repeated per section) */}
+                        <DiretorSection atuacaoName={atuacaoName} />
 
-                        {/* Vertical line from Director to Atuação label */}
-                        <div className="w-[2px] h-8 bg-gray-300"></div>
-
-                        {/* Atuação Label */}
-                        <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-8 py-3 rounded-2xl shadow-lg">
-                            <span className="text-[12px] font-black uppercase tracking-[0.2em]">{atuacaoName}</span>
-                        </div>
-
-                        {/* Vertical line from Atuação to collaborators */}
+                        {/* Vertical line from Atuação label down to collaborators */}
                         {topLevel.length > 0 && (
                             <div className="w-[2px] h-8 bg-gray-300"></div>
                         )}
@@ -455,7 +466,12 @@ export function Organograma() {
         const draggedColab = data.find(c => c.id === draggableId);
         if (!draggedColab) return;
 
-        const newLeaderId = destination.droppableId;
+        const newLeaderIdRaw = destination.droppableId;
+        // Resolve root droppable IDs back to actual director ID
+        let newLeaderId = newLeaderIdRaw.startsWith('root-')
+            ? newLeaderIdRaw.split('-')[1]
+            : newLeaderIdRaw;
+
         const leaderToUpdate = newLeaderId === 'unassigned' ? null : newLeaderId;
 
         try {
@@ -496,7 +512,11 @@ export function Organograma() {
 
         if (!destination) return;
         if (source.droppableId === destination.droppableId && source.index === destination.index) return;
-        if (draggableId === destination.droppableId) {
+
+        const destId = destination.droppableId;
+        const resolvedDestId = destId.startsWith('root-') ? destId.split('-')[1] : destId;
+
+        if (draggableId === resolvedDestId) {
             toast.error('Um colaborador não pode ser líder dele mesmo.');
             return;
         }
