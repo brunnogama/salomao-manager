@@ -39,6 +39,7 @@ export function Organograma() {
     const [savingCompetenciasId, setSavingCompetenciasId] = useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
     const [selectedColabForModal, setSelectedColabForModal] = useState<any | null>(null);
+    const [activeTab, setActiveTab] = useState<'JURIDICO' | 'ADMINISTRATIVO'>('JURIDICO');
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
     // For now, we focus on Jurídico as requested, but all are loaded
@@ -173,10 +174,12 @@ export function Organograma() {
         const subordinates = getSubordinates(colab.id);
         const roleStr = String(colab.role || 'Sem Cargo');
 
-        const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || roleStr.toLowerCase().includes('sócio') || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
+        const isSocio = roleStr.toLowerCase().includes('sócio');
+        const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
+        const isAdministrativo = !isJuridico || isSocio; // Socios appear on both, everyone else not juridico is admin
 
-        // Filter to only show Juridico for now as requested, or adjust if Administrativo is needed
-        if (!isJuridico) return null;
+        if (activeTab === 'JURIDICO' && !isJuridico) return null;
+        if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return null;
 
         return (
             <div className="flex flex-col items-center">
@@ -300,11 +303,16 @@ export function Organograma() {
         );
     }
 
-    // Find pure top level nodes for Jurídico
-    // To avoid unlinked loops or missing nodes, we might need to render those who are Juridico but have no valid leader in data
+    // Find pure top level nodes based on active tab
     const roots = topLevelNodes.filter(c => {
         const roleStr = String(c.role || '');
-        return JURIDICO_HIERARCHY.includes(roleStr) || roleStr.toLowerCase().includes('sócio') || roleStr.toLowerCase().includes('advogado');
+        const isSocio = roleStr.toLowerCase().includes('sócio');
+        const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
+        const isAdministrativo = !isJuridico || isSocio;
+
+        if (activeTab === 'JURIDICO') return isJuridico;
+        if (activeTab === 'ADMINISTRATIVO') return isAdministrativo;
+        return false;
     });
 
     return (
@@ -324,6 +332,22 @@ export function Organograma() {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-13 flex items-center gap-2">
                         Estrutura Hierárquica do Salomão
                     </p>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex bg-gray-100 p-1.5 rounded-2xl md:mt-0 relative z-10 self-center md:self-end mb-2 md:mb-0 border border-gray-200 shadow-inner">
+                    <button
+                        onClick={() => setActiveTab('JURIDICO')}
+                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'JURIDICO' ? 'bg-white text-[#1e3a8a] shadow-sm scale-100' : 'text-gray-500 hover:text-gray-700 hover:bg-white/50 scale-95'}`}
+                    >
+                        Jurídico
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('ADMINISTRATIVO')}
+                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'ADMINISTRATIVO' ? 'bg-white text-[#1e3a8a] shadow-sm scale-100' : 'text-gray-500 hover:text-gray-700 hover:bg-white/50 scale-95'}`}
+                    >
+                        Administrativo
+                    </button>
                 </div>
 
                 {/* Zoom Controls */}
@@ -392,7 +416,17 @@ export function Organograma() {
                                     className={`flex flex-wrap gap-4 p-6 rounded-2xl border-2 border-dashed transition-all
                       ${snapshot.isDraggingOver ? 'border-[#1e3a8a] bg-blue-50/50' : 'border-gray-200 bg-white'}`}
                                 >
-                                    {data.filter(c => !c.leader_id && !roots.some(r => r.id === c.id)).map((colab, index) => (
+                                    {data.filter(c => {
+                                        if (c.leader_id || roots.some(r => r.id === c.id)) return false;
+                                        const roleStr = String(c.role || '');
+                                        const isSocio = roleStr.toLowerCase().includes('sócio');
+                                        const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
+                                        const isAdministrativo = !isJuridico || isSocio;
+
+                                        if (activeTab === 'JURIDICO' && !isJuridico) return false;
+                                        if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return false;
+                                        return true;
+                                    }).map((colab, index) => (
                                         <Draggable key={colab.id} draggableId={colab.id} index={index}>
                                             {(dragProvided, dragSnapshot) => (
                                                 <div
@@ -422,7 +456,17 @@ export function Organograma() {
                                         </Draggable>
                                     ))}
                                     {provided.placeholder}
-                                    {data.filter(c => !c.leader_id && !roots.some(r => r.id === c.id)).length === 0 && (
+                                    {data.filter(c => {
+                                        if (c.leader_id || roots.some(r => r.id === c.id)) return false;
+                                        const roleStr = String(c.role || '');
+                                        const isSocio = roleStr.toLowerCase().includes('sócio');
+                                        const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
+                                        const isAdministrativo = !isJuridico || isSocio;
+
+                                        if (activeTab === 'JURIDICO' && !isJuridico) return false;
+                                        if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return false;
+                                        return true;
+                                    }).length === 0 && (
                                         <div className="w-full text-center text-xs font-bold text-gray-400 uppercase tracking-widest py-8">
                                             Todos estão alocados.
                                         </div>
