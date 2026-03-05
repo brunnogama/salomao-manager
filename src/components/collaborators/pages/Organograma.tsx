@@ -364,11 +364,11 @@ export function Organograma() {
             </div>
 
             {/* Main Drag Drop Context Area */}
-            <div className="bg-gray-50/50 rounded-3xl p-8 border border-gray-100 min-w-max relative overflow-hidden flex-1">
+            <div className="bg-gray-50/50 rounded-3xl p-8 border border-gray-100 overflow-visible flex-1 min-h-[500px]">
                 <DragDropContext onDragEnd={handleDragEnd}>
                     <div
-                        className="flex justify-center gap-16 pb-32 transition-transform duration-300 origin-top"
-                        style={{ transform: `scale(${zoomLevel})` }}
+                        className="flex justify-center gap-16 pb-32 transition-transform duration-300"
+                        style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
                     >
                         {roots.length > 0 ? (
                             roots.map(root => (
@@ -392,7 +392,7 @@ export function Organograma() {
                                     className={`flex flex-wrap gap-4 p-6 rounded-2xl border-2 border-dashed transition-all
                       ${snapshot.isDraggingOver ? 'border-[#1e3a8a] bg-blue-50/50' : 'border-gray-200 bg-white'}`}
                                 >
-                                    {data.filter(c => !c.leader_id && !roots.includes(c) && (JURIDICO_HIERARCHY.includes(String(c.role)) || String(c.role).toLowerCase().includes('advogado') || String(c.role).toLowerCase().includes('estagiário'))).map((colab, index) => (
+                                    {data.filter(c => !c.leader_id && !roots.some(r => r.id === c.id)).map((colab, index) => (
                                         <Draggable key={colab.id} draggableId={colab.id} index={index}>
                                             {(dragProvided, dragSnapshot) => (
                                                 <div
@@ -422,7 +422,7 @@ export function Organograma() {
                                         </Draggable>
                                     ))}
                                     {provided.placeholder}
-                                    {data.filter(c => !c.leader_id && !roots.includes(c) && (JURIDICO_HIERARCHY.includes(String(c.role)) || String(c.role).toLowerCase().includes('advogado') || String(c.role).toLowerCase().includes('estagiário'))).length === 0 && (
+                                    {data.filter(c => !c.leader_id && !roots.some(r => r.id === c.id)).length === 0 && (
                                         <div className="w-full text-center text-xs font-bold text-gray-400 uppercase tracking-widest py-8">
                                             Todos estão alocados.
                                         </div>
