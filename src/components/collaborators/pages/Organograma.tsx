@@ -185,15 +185,20 @@ export function Organograma() {
         if (activeTab === 'JURIDICO' && !isJuridico) return null;
         if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return null;
 
+        const isMatch = !searchQuery || 
+            colab.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            roleStr.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            String(colab.equipe || '').toLowerCase().includes(searchQuery.toLowerCase());
+
         return (
-            <div className="flex flex-col items-center">
+            <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
                 {/* The Droppable Area for this Leader */}
                 <Droppable droppableId={colab.id} type="COLAB">
                     {(provided, snapshot) => (
                         <div
                             ref={provided.innerRef}
                             {...provided.droppableProps}
-                            className={`relative flex flex-col items-center transition-all duration-300 w-[240px] z-10 group
+                            className={`relative flex flex-col items-center transition-all duration-300 w-[240px] z-10 group hover:z-50
                 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
                         >
                             {/* Visual drop indicator */}
@@ -243,10 +248,10 @@ export function Organograma() {
 
                                         {/* Hover Competências Card */}
                                         <div
-                                            className="absolute top-full left-1/2 -translate-x-1/2 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[100] w-[320px]"
+                                            className="absolute left-[calc(100%+16px)] top-1/2 -translate-y-1/2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[100] w-[320px]"
                                             onClick={(e) => e.stopPropagation()} // Prevent modal from opening if they click inside the tooltip
                                         >
-                                            <div className="bg-white p-5 rounded-3xl shadow-2xl border border-gray-100 flex flex-col gap-3 relative before:absolute before:-top-3 before:left-1/2 before:-translate-x-1/2 before:border-[12px] before:border-transparent before:border-b-white filter drop-shadow-xl animate-in slide-in-from-bottom-2">
+                                            <div className="bg-white p-5 rounded-3xl shadow-2xl border border-gray-100 flex flex-col gap-3 relative before:absolute before:top-1/2 before:-left-3 before:-translate-y-1/2 before:border-[12px] before:border-transparent before:border-r-white filter drop-shadow-xl animate-in slide-in-from-left-2">
                                                 <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest flex justify-between items-center">
                                                     Competências no Organograma
                                                     {savingCompetenciasId === colab.id && <Loader2 className="w-3 h-3 animate-spin text-[#1e3a8a]" />}
@@ -269,31 +274,28 @@ export function Organograma() {
                     )}
                 </Droppable>
 
-                {/* Render Lines and Subordinates (Vertical Tree) */}
+                {/* Render Lines and Subordinates (Horizontal Tree) */}
                 {subordinates.length > 0 && (
-                    <div className="relative flex flex-col items-start w-full mt-2">
-                        {/* Main vertical stem dropping from the center of this Node (w-240px, center is 120px) */}
-                        {/* It stops short of the bottom to prevent tailing past the last connector */}
-                        <div className="absolute left-[120px] top-0 bottom-[calc(100%-48px)] w-[2px] bg-gray-300 z-0"></div>
+                    <div className="flex flex-col items-center mt-2 w-full">
+                        {/* Vertical line down from parent */}
+                        <div className="w-[2px] h-8 bg-gray-300"></div>
 
-                        <div className="flex flex-col pt-4 w-full relative z-10 transition-all">
-                            {subordinates.map((sub, index) => {
-                                const isLast = index === subordinates.length - 1;
-                                return (
-                                    <div key={sub.id} className="relative flex items-start w-full group-line">
-                                        {/* Segment of vertical line that connects to this child */}
-                                        <div className={`absolute left-[120px] top-0 ${isLast ? 'h-[48px]' : 'h-full'} w-[2px] bg-gray-300 z-0`}></div>
+                        <div className="flex justify-center relative pt-4 w-full">
+                            {subordinates.map((sub, index) => (
+                                <div key={sub.id} className="relative flex flex-col items-center px-4">
+                                    {/* Horizontal connector lines */}
+                                    {subordinates.length > 1 && (
+                                        <>
+                                            {index > 0 && <div className="absolute top-0 left-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
+                                            {index < subordinates.length - 1 && <div className="absolute top-0 right-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
+                                        </>
+                                    )}
+                                    {/* Vertical stem down to this node */}
+                                    <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
 
-                                        {/* Horizontal branch dropping right exactly at 48px to hit the child avatar center */}
-                                        <div className="absolute left-[120px] top-[48px] w-12 h-[2px] bg-gray-300 z-0"></div>
-
-                                        {/* Child Node Indented */}
-                                        <div className="pl-[168px] pb-6">
-                                            <OrganogramNode colab={sub} level={level + 1} />
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                    <OrganogramNode colab={sub} level={level + 1} />
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
@@ -438,16 +440,19 @@ export function Organograma() {
             <div className="bg-gray-50/50 rounded-3xl p-8 border border-gray-100 overflow-visible flex-1 min-h-[500px]">
                 <DragDropContext onDragEnd={handleDragEnd}>
                     <div
-                        className="flex justify-center gap-16 pb-32 transition-transform duration-300"
+                        className="flex flex-col items-center gap-16 pb-32 transition-transform duration-300"
                         style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
                     >
                         {roots.length > 0 ? (
-                            roots.map(root => (
-                                <OrganogramNode key={root.id} colab={root} />
+                            roots.map((root, index) => (
+                                <div key={root.id} className="relative flex flex-col items-center w-full">
+                                    <OrganogramNode colab={root} />
+                                    {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
+                                </div>
                             ))
                         ) : (
                             <div className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest">
-                                Nenhuma estrutura Jurídica principal encontrada.
+                                Nenhuma estrutura principal encontrada.
                             </div>
                         )}
                     </div>
