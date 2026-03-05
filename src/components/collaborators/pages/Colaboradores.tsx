@@ -882,7 +882,9 @@ export function Colaboradores({ }: ColaboradoresProps) {
   }
 
   const filtered = colaboradores.filter(c => {
-    const matchSearch = c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || c.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    const normalizer = (str: string) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
+    const term = normalizer(searchTerm);
+    const matchSearch = normalizer(c.name).includes(term) || normalizer(c.email).includes(term);
     const matchLider = filterLider ? String(c.leader_id) === filterLider : true
     const matchPartner = filterPartner ? String(c.partner_id) === filterPartner : true
     const matchLocal = filterLocal ? String(c.local) === filterLocal : true
