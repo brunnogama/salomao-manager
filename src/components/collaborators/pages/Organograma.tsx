@@ -293,14 +293,6 @@ const AdminOrganogramTree = React.memo(({
         <div className="flex flex-col items-center gap-16 w-full">
             {atuacaoEntries.map(([atuacaoName, colabs], sectionIdx) => {
                 const topLevel = getTopLevelInGroup(colabs);
-                // Group top-level by role for same-line rendering
-                const roleGroupsMap = new Map<string, ColaboradorCard[]>();
-                topLevel.forEach(c => {
-                    const r = c.role || 'Sem Cargo';
-                    if (!roleGroupsMap.has(r)) roleGroupsMap.set(r, []);
-                    roleGroupsMap.get(r)!.push(c);
-                });
-                const roleGroups = Array.from(roleGroupsMap.entries());
 
                 return (
                     <div key={atuacaoName} className="relative flex flex-col items-center w-full">
@@ -317,53 +309,43 @@ const AdminOrganogramTree = React.memo(({
                             <div className="w-[2px] h-8 bg-gray-300"></div>
                         )}
 
-                        {/* Collaborators grouped by role */}
-                        {roleGroups.map(([roleName, roleColabs], roleIdx) => (
-                            <div key={roleName} className="flex flex-col items-center">
-                                {/* Horizontal bar connecting same-role collaborators */}
-                                {roleColabs.length > 1 && (
-                                    <div className="relative flex items-start">
-                                        {/* Horizontal connector line */}
-                                        <div className="absolute top-0 h-[2px] bg-gray-300" style={{
-                                            left: `${100 / (roleColabs.length * 2)}%`,
-                                            right: `${100 / (roleColabs.length * 2)}%`
-                                        }}></div>
+                        {/* Horizontal layout for all top-level peers in this sector */}
+                        {topLevel.length > 1 && (
+                            <div className="relative flex items-start">
+                                {/* Horizontal connector line */}
+                                <div className="absolute top-0 h-[2px] bg-gray-300" style={{
+                                    left: `${100 / (topLevel.length * 2)}%`,
+                                    right: `${100 / (topLevel.length * 2)}%`
+                                }}></div>
 
-                                        <div className="flex" style={{ gap: roleColabs.length > 12 ? '0' : roleColabs.length > 7 ? '0.125rem' : '1rem' }}>
-                                            {roleColabs.map((colab) => (
-                                                <div key={colab.id} className="flex flex-col items-center">
-                                                    <div className="w-[2px] h-4 bg-gray-300"></div>
-                                                    <div style={{
-                                                        transform: roleColabs.length > 12 ? 'scale(0.8)' : roleColabs.length > 7 ? 'scale(0.9)' : 'scale(1)',
-                                                        transformOrigin: 'top center'
-                                                    }}>
-                                                        <OrganogramNode
-                                                            colab={colab}
-                                                            context={context}
-                                                            visitedIds={new Set<string>([diretorFinanceiro.id])}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))}
+                                <div className="flex" style={{ gap: topLevel.length > 12 ? '0' : topLevel.length > 7 ? '0.125rem' : '1rem' }}>
+                                    {topLevel.map((colab) => (
+                                        <div key={colab.id} className="flex flex-col items-center">
+                                            <div className="w-[2px] h-4 bg-gray-300"></div>
+                                            <div style={{
+                                                transform: topLevel.length > 12 ? 'scale(0.8)' : topLevel.length > 7 ? 'scale(0.9)' : 'scale(1)',
+                                                transformOrigin: 'top center'
+                                            }}>
+                                                <OrganogramNode
+                                                    colab={colab}
+                                                    context={context}
+                                                    visitedIds={new Set<string>([diretorFinanceiro.id])}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-
-                                {/* Single collaborator — no horizontal bar needed */}
-                                {roleColabs.length === 1 && (
-                                    <OrganogramNode
-                                        colab={roleColabs[0]}
-                                        context={context}
-                                        visitedIds={new Set<string>([diretorFinanceiro.id])}
-                                    />
-                                )}
-
-                                {/* Separator between role groups */}
-                                {roleIdx < roleGroups.length - 1 && (
-                                    <div className="w-[2px] h-6 bg-gray-200 my-2"></div>
-                                )}
+                                    ))}
+                                </div>
                             </div>
-                        ))}
+                        )}
+
+                        {/* Single collaborator — no horizontal bar needed */}
+                        {topLevel.length === 1 && (
+                            <OrganogramNode
+                                colab={topLevel[0]}
+                                context={context}
+                                visitedIds={new Set<string>([diretorFinanceiro.id])}
+                            />
+                        )}
                     </div>
                 );
             })}
@@ -495,15 +477,16 @@ export function Organograma() {
             : newLeaderIdRaw;
 
         const leaderToUpdate = newLeaderId === 'unassigned' ? null : newLeaderId;
-        const targetIsSocio = data.find(c => c.id === leaderToUpdate)?.isSocio;
+        const leaderData = data.find(c => c.id === leaderToUpdate);
+        const targetIsSocio = leaderData?.isSocio;
 
-        // Resolve Atuação ID if it's a root drop in Admin
+        // Resolve Atuação ID and Name
         let targetAtuacaoId: string | null = null;
         let targetAtuacaoName: string | null = null;
+
         if (isRootDrop) {
             targetAtuacaoName = newLeaderIdRaw.split(':')[2];
             if (targetAtuacaoName) {
-                // Find ID from Name in atuacoesMap
                 for (const [id, name] of Array.from(atuacoesMap.entries())) {
                     if (name.toLowerCase() === targetAtuacaoName.toLowerCase()) {
                         targetAtuacaoId = id;
@@ -511,13 +494,28 @@ export function Organograma() {
                     }
                 }
             }
+        } else if (leaderData) {
+            // If dropped on a person, inherit their Atuação and Partner
+            targetAtuacaoName = leaderData.atuacao;
+            // Need the ID for DB update
+            for (const [id, name] of Array.from(atuacoesMap.entries())) {
+                if (name.toLowerCase() === (targetAtuacaoName || '').toLowerCase()) {
+                    targetAtuacaoId = id;
+                    break;
+                }
+            }
         }
 
         try {
             const updates: any = { leader_id: leaderToUpdate };
-            // Sync partner_id if the target is a socio
-            if (targetIsSocio) updates.partner_id = leaderToUpdate;
-            // Sync atuacao if dropped on a specific sector root
+            // Sync partner_id
+            if (targetIsSocio) {
+                updates.partner_id = leaderToUpdate;
+            } else if (leaderData?.fullData?.partner_id) {
+                // Inherit from leader if leader is not a socio but has a partner
+                updates.partner_id = leaderData.fullData.partner_id;
+            }
+            // Sync atuacao
             if (targetAtuacaoId) updates.atuacao = targetAtuacaoId;
 
             const { error } = await supabase
@@ -534,9 +532,9 @@ export function Organograma() {
                     ? {
                         ...c,
                         leader_id: leaderToUpdate || undefined,
-                        // Update local partner_id if it was a socio move
-                        ...(targetIsSocio ? { partner_id: leaderToUpdate } : {}),
-                        // Update local atuacao name if sector changed
+                        // Update local partner_id
+                        ...((targetIsSocio || leaderData?.fullData?.partner_id) ? { partner_id: targetIsSocio ? leaderToUpdate : leaderData?.fullData?.partner_id } : {}),
+                        // Update local atuacao name
                         ...(targetAtuacaoName ? { atuacao: targetAtuacaoName } : {})
                     }
                     : c
