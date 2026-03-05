@@ -690,10 +690,15 @@ export function Organograma() {
             {/* Main Drag Drop Context Area */}
             <div className="bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container">
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    <div className="p-16 min-w-full w-max flex justify-center print:w-full">
+                    <div className="p-8 md:p-16 text-center min-w-full inline-block align-top print:w-full">
                         <div
-                            className="flex flex-col items-center gap-16 pb-32 transition-transform duration-300 min-w-max w-full"
-                            style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
+                            className="inline-flex flex-col items-center gap-16 pb-32 transition-transform duration-300"
+                            style={{
+                                transform: `scale(${zoomLevel})`,
+                                transformOrigin: 'top center',
+                                width: 'max-content',
+                                minWidth: '100%'
+                            }}
                         >
                             {activeTab === 'ADMINISTRATIVO' && roots.length > 0 ? (
                                 <AdminOrganogramTree
