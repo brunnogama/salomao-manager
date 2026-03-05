@@ -635,7 +635,6 @@ export function RHVagas() {
                   <div className="w-full sm:max-w-md">
                     <FilterSelect
                       placeholder="Buscar vaga"
-                      label=""
                       value={selectedMatchVagaId || ''}
                       onChange={setSelectedMatchVagaId}
                       options={[
@@ -744,7 +743,6 @@ export function RHVagas() {
                   <div className="w-full sm:max-w-md">
                     <FilterSelect
                       placeholder="Buscar talento"
-                      label=""
                       value={selectedMatchCandidatoId || ''}
                       onChange={setSelectedMatchCandidatoId}
                       options={[
@@ -888,7 +886,7 @@ export function RHVagas() {
             </p>
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'ats' || activeTab === 'filtros' ? null : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-y-auto overflow-x-auto min-h-[400px]">
           {activeTab === 'talentos' ? (
             <table className="w-full min-w-max text-left border-collapse">
@@ -1058,7 +1056,8 @@ export function RHVagas() {
             </table>
           )}
         </div>
-      )}
+      )
+      }
       <VagaFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
