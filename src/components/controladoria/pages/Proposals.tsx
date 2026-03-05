@@ -210,12 +210,26 @@ export function Proposals() {
 
     // Attempt 1: Search by name (Assuming exact match or close enough)
     // We should probably rely on a linked ID if it existed, but name is what we have typically
-    const { data: collabData } = await supabase
+    const { data: collabDataRaw } = await supabase
       .from('collaborators')
-      .select('*, oabs(*)')
+      .select('*, oab_number(*)')
       .ilike('name', partner.name)
       .eq('status', 'active') // Only active ones?
       .maybeSingle();
+
+    let collabData = collabDataRaw;
+    if (collabDataRaw) {
+      collabData = {
+        ...collabDataRaw,
+        oabs: collabDataRaw.oab_number?.map((o: any) => ({
+          id: o.id,
+          numero: o.numero,
+          uf: o.uf,
+          tipo: o.tipo,
+          validade: o.validade
+        })) || []
+      };
+    }
 
     if (collabData) {
       collaboratorData = collabData as Collaborator;
@@ -404,8 +418,8 @@ export function Proposals() {
       proposal_code: proposalCode,
 
       partners_data: proposalData.selectedPartners.map(p => {
-        let oabNumero = p.collaboratorData?.oab_numero || p.oab_number || 'XXXXXX';
-        let oabUf = p.collaboratorData?.oab_uf || p.oab_state || 'RJ';
+        let oabNumero = (p.collaboratorData as any)?.oab_numero || p.oab_number || 'XXXXXX';
+        let oabUf = (p.collaboratorData as any)?.oab_uf || p.oab_state || 'RJ';
 
         if (proposalData.contractLocation && p.collaboratorData?.oabs && p.collaboratorData.oabs.length > 0) {
           const cityToUf: Record<string, string> = {
@@ -733,8 +747,30 @@ export function Proposals() {
                 const gender = data?.gender || p.gender || 'M';
                 const isFem = ['F', 'Feminino', 'Female'].includes(gender);
 
-                const oab = data?.oab_numero || p.oab_number || 'XXXXXX';
-                const oabUf = data?.oab_uf || p.oab_state || 'RJ';
+                let oab = (data as any)?.oab_numero || p.oab_number || 'XXXXXX';
+                let oabUf = (data as any)?.oab_uf || p.oab_state || 'RJ';
+
+                if (proposalData.contractLocation && data?.oabs && data.oabs.length > 0) {
+                  const cityToUf: Record<string, string> = {
+                    "Rio de Janeiro": "RJ", "São Paulo": "SP", "Brasília": "DF",
+                    "Vitória": "ES", "Salvador": "BA", "Florianópolis": "SC",
+                    "Belém": "PA", "Curitiba": "PR", "Belo Horizonte": "MG", "Porto Alegre": "RS"
+                  };
+                  const targetUf = cityToUf[proposalData.contractLocation] || proposalData.contractLocation;
+
+                  const matchingOab = data.oabs.find((o: any) => o.uf === targetUf && o.tipo !== 'Inativa');
+                  if (matchingOab) {
+                    oab = matchingOab.numero;
+                    oabUf = matchingOab.uf;
+                  } else {
+                    const principalOab = data.oabs.find((o: any) => o.tipo === 'Principal') || data.oabs[0];
+                    if (principalOab) {
+                      oab = principalOab.numero;
+                      oabUf = principalOab.uf;
+                    }
+                  }
+                }
+
                 const cpf = data?.cpf || p.cpf || 'XXX.XXX.XXX-XX';
 
                 const civil = data?.civil_status ? data.civil_status.toLowerCase() : 'casado';
@@ -1046,7 +1082,7 @@ export function Proposals() {
                       <span className="text-sm font-bold text-blue-900">{p.name}</span>
                       {!p.collaboratorData && (
                         <span className="text-[10px] text-orange-500 font-medium">
-                          Sem dados em Colaboradores (usando básico)
+                          Não há OAB desse local cadastrado para o Sócio escolhido
                         </span>
                       )}
                     </div>
