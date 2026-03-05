@@ -232,6 +232,7 @@ export function Organograma() {
                     const roleLower = String(roleStr || '').toLowerCase();
                     const isSocio = roleLower.includes('sócio');
                     const isJuridico = JURIDICO_HIERARCHY.some(h => h.toLowerCase() === roleLower) ||
+                        isSocio ||
                         roleLower.includes('advogado') ||
                         roleLower.includes('estagiário');
 
