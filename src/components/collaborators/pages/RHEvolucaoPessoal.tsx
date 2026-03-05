@@ -672,38 +672,40 @@ export function RHEvolucaoPessoal() {
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
             </div>
           </div>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hiringAdminRanking} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="role"
-                  type="category"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                  width={280}
-                />
-                <Tooltip
-                  cursor={{ fill: '#f3f4f6' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-white p-2 border border-blue-100 shadow-lg rounded-lg">
-                          <p className="text-xs font-bold text-gray-700">{payload[0].payload.role}</p>
-                          <p className="text-sm font-black text-[#ea580c]">{payload[0].value} contratações</p>
-                        </div>
-                      )
-                    }
-                    return null
-                  }}
-                />
-                <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20}>
-                  <LabelList dataKey="count" position="right" fill={COLORS.primary} fontSize={10} fontWeight={700} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
+            <div className="w-full" style={{ height: Math.max(300, hiringAdminRanking.length * 35) }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hiringAdminRanking} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="role"
+                    type="category"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                    width={280}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f3f4f6' }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white p-2 border border-blue-100 shadow-lg rounded-lg">
+                            <p className="text-xs font-bold text-gray-700">{payload[0].payload.role}</p>
+                            <p className="text-sm font-black text-[#ea580c]">{payload[0].value} contratações</p>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20}>
+                    <LabelList dataKey="count" position="right" fill={COLORS.primary} fontSize={10} fontWeight={700} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
@@ -718,38 +720,40 @@ export function RHEvolucaoPessoal() {
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ranking do Período</p>
             </div>
           </div>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hiringLegalRanking} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="role"
-                  type="category"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                  width={280}
-                />
-                <Tooltip
-                  cursor={{ fill: '#f3f4f6' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-white p-2 border border-blue-100 shadow-lg rounded-lg">
-                          <p className="text-xs font-bold text-gray-700">{payload[0].payload.role}</p>
-                          <p className="text-sm font-black text-[#1e3a8a]">{payload[0].value} contratações</p>
-                        </div>
-                      )
-                    }
-                    return null
-                  }}
-                />
-                <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 4, 4, 0]} barSize={20}>
-                  <LabelList dataKey="count" position="right" fill={COLORS.secondary} fontSize={10} fontWeight={700} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-[400px] w-full bg-scroll flex-1 overflow-y-auto pr-2">
+            <div className="w-full" style={{ height: Math.max(300, hiringLegalRanking.length * 35) }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hiringLegalRanking} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="role"
+                    type="category"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                    width={280}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f3f4f6' }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white p-2 border border-blue-100 shadow-lg rounded-lg">
+                            <p className="text-xs font-bold text-gray-700">{payload[0].payload.role}</p>
+                            <p className="text-sm font-black text-[#1e3a8a]">{payload[0].value} contratações</p>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 4, 4, 0]} barSize={20}>
+                    <LabelList dataKey="count" position="right" fill={COLORS.secondary} fontSize={10} fontWeight={700} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </div>
