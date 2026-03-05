@@ -225,7 +225,7 @@ export function Organograma() {
     // Fetch atuação lookup table
     const [atuacoesMap, setAtuacoesMap] = useState<Map<string, string>>(new Map());
     useEffect(() => {
-        supabase.from('atuacao_id').select('id, name').then(({ data: atuData }) => {
+        supabase.from('atuacoes').select('id, name').then(({ data: atuData }) => {
             if (atuData) setAtuacoesMap(new Map(atuData.map(a => [String(a.id), a.name])));
         });
     }, []);
@@ -531,7 +531,7 @@ export function Organograma() {
                 <DragDropContext onDragEnd={handleDragEnd}>
                     <div className="p-8 min-w-full w-max mx-auto print:w-full">
                         <div
-                            className="flex flex-col items-center gap-16 pb-32 transition-transform duration-300 min-w-max w-full"
+                            className={`flex flex-col items-center gap-16 pb-32 transition-transform duration-300 ${activeTab === 'ADMINISTRATIVO' ? 'w-full' : 'min-w-max w-full'}`}
                             style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
                         >
                             {activeTab === 'ADMINISTRATIVO' ? (
@@ -578,50 +578,56 @@ export function Organograma() {
                                                 </div>
                                             )}
 
-                                            {/* Horizontal line connecting all sectors */}
-                                            {sectors.length > 1 && (
-                                                <div className="relative w-full flex justify-center mb-0">
-                                                    <div style={{ width: `${Math.min(90, sectors.length * 20)}%` }} className="h-[2px] bg-gray-300"></div>
-                                                </div>
-                                            )}
-
                                             {/* Sectors side by side */}
-                                            <div className="flex flex-wrap justify-center gap-0 w-full">
-                                                {sectors.map(([sectorName, members]) => (
-                                                    <div key={sectorName} className="flex flex-col items-center px-6 min-w-[200px]">
-                                                        {/* Vertical line from horizontal to sector header */}
-                                                        <div className="w-[2px] h-6 bg-gray-300"></div>
-                                                        {/* Sector header */}
-                                                        <div className="bg-gradient-to-r from-[#1e3a8a] to-[#0a192f] text-white px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-md mb-4 whitespace-nowrap">
-                                                            {sectorName}
-                                                        </div>
-                                                        {/* Members in this sector */}
-                                                        <div className="flex flex-wrap justify-center gap-6">
-                                                            {members.map(member => (
-                                                                <div
-                                                                    key={member.id}
-                                                                    className="flex flex-col items-center cursor-pointer group w-[160px]"
-                                                                    onClick={() => setSelectedColabForModal(member.fullData)}
-                                                                    title="Clique para expandir perfil"
-                                                                >
-                                                                    <div className="w-20 h-20 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
-                                                                        {member.photo_url || member.foto_url ? (
-                                                                            <img src={member.photo_url || member.foto_url} alt={member.name} className="w-full h-full object-cover" />
-                                                                        ) : (
-                                                                            <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
-                                                                                <UserIcon className="w-8 h-8" />
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="mt-3 text-center px-1">
-                                                                        <h4 className="text-[12px] leading-tight font-black text-[#0a192f] tracking-tight">{member.name}</h4>
-                                                                        <span className="text-[9px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-0.5">{member.role}</span>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
+                                            <div className="relative flex justify-center w-full">
+                                                {/* Horizontal line spanning across all sectors */}
+                                                {sectors.length > 1 && (
+                                                    <div className="absolute top-0 left-0 right-0 flex justify-center" style={{ height: '2px' }}>
+                                                        <div className="bg-gray-300" style={{
+                                                            position: 'absolute',
+                                                            height: '2px',
+                                                            left: `${50 / sectors.length}%`,
+                                                            right: `${50 / sectors.length}%`
+                                                        }}></div>
                                                     </div>
-                                                ))}
+                                                )}
+                                                <div className="flex flex-wrap justify-center gap-0 w-full">
+                                                    {sectors.map(([sectorName, members], sIdx) => (
+                                                        <div key={sectorName} className="flex flex-col items-center px-4 min-w-[180px]">
+                                                            {/* Vertical line from horizontal to sector header */}
+                                                            <div className="w-[2px] h-6 bg-gray-300"></div>
+                                                            {/* Sector header */}
+                                                            <div className="bg-gradient-to-r from-[#1e3a8a] to-[#0a192f] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md mb-4 whitespace-nowrap text-center">
+                                                                {sectorName}
+                                                            </div>
+                                                            {/* Members in this sector */}
+                                                            <div className="flex flex-wrap justify-center gap-4">
+                                                                {members.map(member => (
+                                                                    <div
+                                                                        key={member.id}
+                                                                        className="flex flex-col items-center cursor-pointer group w-[140px]"
+                                                                        onClick={() => setSelectedColabForModal(member.fullData)}
+                                                                        title="Clique para expandir perfil"
+                                                                    >
+                                                                        <div className="w-16 h-16 rounded-full bg-white shadow-md border-[2px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                                                                            {member.photo_url || member.foto_url ? (
+                                                                                <img src={member.photo_url || member.foto_url} alt={member.name} className="w-full h-full object-cover" />
+                                                                            ) : (
+                                                                                <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                                                    <UserIcon className="w-7 h-7" />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="mt-2 text-center px-1">
+                                                                            <h4 className="text-[11px] leading-tight font-black text-[#0a192f] tracking-tight">{member.name}</h4>
+                                                                            <span className="text-[8px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-0.5">{member.role}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                     );
