@@ -419,15 +419,25 @@ export function Organograma() {
 
     // Watch scroll for Back to Top button
     useEffect(() => {
-        const handleScroll = (e: any) => {
-            const target = e.target === document ? window : e.target;
-            const scrollTop = target === window ? window.scrollY : target.scrollTop;
-            setShowBackToTop(scrollTop > 400);
+        const handleScroll = () => {
+            const containerScroll = containerRef.current?.scrollTop || 0;
+            const windowScroll = window.scrollY;
+            setShowBackToTop(containerScroll > 300 || windowScroll > 400);
         };
 
-        window.addEventListener('scroll', handleScroll, true); // true to catch bubbling scroll
-        return () => window.removeEventListener('scroll', handleScroll, true);
-    }, []);
+        const container = containerRef.current;
+        if (container) {
+            container.addEventListener('scroll', handleScroll);
+        }
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            if (container) {
+                container.removeEventListener('scroll', handleScroll);
+            }
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [isMaximized]);
 
     // Fetch atuação lookup table
     const [atuacoesMap, setAtuacoesMap] = useState<Map<string, string>>(new Map());
@@ -1076,7 +1086,7 @@ export function Organograma() {
             )}
 
             {/* Hovering Zoom Controls & Navigation Panel */}
-            <div className="fixed bottom-8 right-8 z-[110] flex items-center gap-3">
+            <div className="fixed bottom-8 right-8 z-[200] flex items-center gap-3">
                 {showBackToTop && (
                     <button
                         onClick={() => {
