@@ -136,11 +136,11 @@ const OrganogramNode = React.memo(({
 
                                     <div className="mt-4 text-center px-2 flex flex-col items-center gap-1.5">
                                         <div>
-                                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight">{colab.name}</h4>
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">{roleStr}</span>
+                                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight truncate max-w-[200px]">{colab.name}</h4>
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate max-w-[200px]">{roleStr}</span>
                                         </div>
                                         {colab.equipe && colab.equipe !== 'Sem Equipe' && colab.equipe !== 'Geral' && (
-                                            <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-full">
+                                            <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-[180px]">
                                                 {colab.equipe}
                                             </span>
                                         )}
@@ -177,7 +177,7 @@ const OrganogramNode = React.memo(({
                                 )}
                                 <div className="flex justify-center relative pt-4 w-full">
                                     {group.map((sub, index) => (
-                                        <div key={sub.id} className={`relative flex flex-col items-center ${group.length > 7 ? 'px-2' : 'px-4'}`}>
+                                        <div key={sub.id} className={`relative flex flex-col items-center ${group.length > 7 ? 'px-0.5' : 'px-4'}`}>
                                             {group.length > 1 && (
                                                 <>
                                                     {index > 0 && <div className="absolute top-0 left-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
@@ -185,7 +185,10 @@ const OrganogramNode = React.memo(({
                                                 </>
                                             )}
                                             <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
-                                            <div style={{ transform: group.length > 7 ? 'scale(0.95)' : 'scale(1)', transformOrigin: 'top center' }}>
+                                            <div style={{
+                                                transform: group.length > 9 ? 'scale(0.85)' : group.length > 7 ? 'scale(0.9)' : 'scale(1)',
+                                                transformOrigin: 'top center'
+                                            }}>
                                                 <OrganogramNode colab={sub} context={context} visitedIds={nextVisited} level={level + 1} />
                                             </div>
                                         </div>
@@ -326,11 +329,14 @@ const AdminOrganogramTree = React.memo(({
                                             right: `${100 / (roleColabs.length * 2)}%`
                                         }}></div>
 
-                                        <div className="flex" style={{ gap: roleColabs.length > 7 ? '0.25rem' : '1rem' }}>
+                                        <div className="flex" style={{ gap: roleColabs.length > 12 ? '0' : roleColabs.length > 7 ? '0.125rem' : '1rem' }}>
                                             {roleColabs.map((colab) => (
                                                 <div key={colab.id} className="flex flex-col items-center">
                                                     <div className="w-[2px] h-4 bg-gray-300"></div>
-                                                    <div style={{ transform: roleColabs.length > 7 ? 'scale(0.95)' : 'scale(1)', transformOrigin: 'top center' }}>
+                                                    <div style={{
+                                                        transform: roleColabs.length > 12 ? 'scale(0.8)' : roleColabs.length > 7 ? 'scale(0.9)' : 'scale(1)',
+                                                        transformOrigin: 'top center'
+                                                    }}>
                                                         <OrganogramNode
                                                             colab={colab}
                                                             context={context}
@@ -482,20 +488,37 @@ export function Organograma() {
         if (!draggedColab) return;
 
         const newLeaderIdRaw = destination.droppableId;
-        // Resolve root droppable IDs back to actual director ID
-        let newLeaderId = newLeaderIdRaw.startsWith('root:')
+        // Resolve root droppable IDs back to actual director ID. Format: root:DIRECTOR_ID:ATUACAO_NAME
+        const isRootDrop = newLeaderIdRaw.startsWith('root:');
+        let newLeaderId = isRootDrop
             ? newLeaderIdRaw.split(':')[1]
             : newLeaderIdRaw;
 
         const leaderToUpdate = newLeaderId === 'unassigned' ? null : newLeaderId;
         const targetIsSocio = data.find(c => c.id === leaderToUpdate)?.isSocio;
 
+        // Resolve Atuação ID if it's a root drop in Admin
+        let targetAtuacaoId: string | null = null;
+        let targetAtuacaoName: string | null = null;
+        if (isRootDrop) {
+            targetAtuacaoName = newLeaderIdRaw.split(':')[2];
+            if (targetAtuacaoName) {
+                // Find ID from Name in atuacoesMap
+                for (const [id, name] of Array.from(atuacoesMap.entries())) {
+                    if (name.toLowerCase() === targetAtuacaoName.toLowerCase()) {
+                        targetAtuacaoId = id;
+                        break;
+                    }
+                }
+            }
+        }
+
         try {
             const updates: any = { leader_id: leaderToUpdate };
-            // Sync partner_id if the target is a socio, to match Collaborator Profile logic
-            if (targetIsSocio) {
-                updates.partner_id = leaderToUpdate;
-            }
+            // Sync partner_id if the target is a socio
+            if (targetIsSocio) updates.partner_id = leaderToUpdate;
+            // Sync atuacao if dropped on a specific sector root
+            if (targetAtuacaoId) updates.atuacao = targetAtuacaoId;
 
             const { error } = await supabase
                 .from('collaborators')
@@ -512,14 +535,18 @@ export function Organograma() {
                         ...c,
                         leader_id: leaderToUpdate || undefined,
                         // Update local partner_id if it was a socio move
-                        ...(targetIsSocio ? { partner_id: leaderToUpdate } : {})
+                        ...(targetIsSocio ? { partner_id: leaderToUpdate } : {}),
+                        // Update local atuacao name if sector changed
+                        ...(targetAtuacaoName ? { atuacao: targetAtuacaoName } : {})
                     }
                     : c
             ));
 
             // Background Refetch: Ensure hook state is fully in sync with DB
-            // Silent because data.length > 0
-            fetchColaboradores();
+            // We add a 500ms delay to allow the DB update to be ready for the select(*) in fetchColaboradores
+            setTimeout(() => {
+                fetchColaboradores();
+            }, 500);
 
             const leaderToUpdateName = leaderToUpdate
                 ? data.find(c => c.id === leaderToUpdate)?.name || 'novo líder'
