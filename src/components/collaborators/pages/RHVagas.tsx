@@ -14,7 +14,8 @@ import {
   Filter,
   User,
   Building2,
-  Trash2
+  Trash2,
+  Sparkles
 } from 'lucide-react'
 import { isValid, addDays, getDay, isSameDay } from 'date-fns'
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
@@ -30,7 +31,7 @@ export function RHVagas() {
   const [candidatos, setCandidatos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'filtros'>('abertas')
+  const [activeTab, setActiveTab] = useState<'abertas' | 'talentos' | 'fechadas' | 'filtros' | 'ats'>('abertas')
 
   // Filtros
   const [filterLider, setFilterLider] = useState('')
@@ -470,6 +471,12 @@ export function RHVagas() {
             >
               <Filter className="h-4 w-4" /> Filtros
             </button>
+            <button
+              onClick={() => setActiveTab('ats')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'ats' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Sparkles className="h-4 w-4" /> Match Inteligente (ATS)
+            </button>
           </div>
 
           <div className="flex items-center gap-4 border-l border-gray-100 pl-4 ml-2">
@@ -484,7 +491,7 @@ export function RHVagas() {
         </div>
       </div>
 
-      {activeTab !== 'filtros' && (
+      {activeTab !== 'filtros' && activeTab !== 'ats' && (
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-none">
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
 
@@ -583,6 +590,22 @@ export function RHVagas() {
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-gray-100 pb-4 mb-6 gap-4 shrink-0">
             <div>
+              <h2 className="text-xl font-black text-[#1e3a8a] tracking-tight">Filtros Avançados</h2>
+              <p className="text-xs font-semibold text-gray-500 mt-1">Ajuste os filtros para refinar sua busca</p>
+            </div>
+          </div>
+          {/* Conteúdo dos filtros avançados aqui, se houver */}
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            <p className="text-gray-500 italic">Em desenvolvimento...</p>
+          </div>
+        </div>
+      )}
+
+      {/* ATS MATCH TAB */}
+      {activeTab === 'ats' && (
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-gray-100 pb-4 mb-6 gap-4 shrink-0">
+            <div>
               <h2 className="text-xl font-black text-[#1e3a8a] tracking-tight">Match Inteligente (ATS)</h2>
               <p className="text-xs font-semibold text-gray-500 mt-1">Encontre a aderência perfeita cruzando perfis e vagas</p>
             </div>
@@ -609,22 +632,21 @@ export function RHVagas() {
               <div className="space-y-6">
                 <div className="bg-blue-50/50 p-4 sm:p-6 rounded-2xl border border-blue-100">
                   <h3 className="text-sm font-bold text-[#0a192f] mb-3">1. Selecione a Vaga Alvo</h3>
-                  <div className="relative">
-                    <select
+                  <div className="w-full sm:max-w-md">
+                    <FilterSelect
+                      placeholder="Buscar vaga"
+                      label=""
                       value={selectedMatchVagaId || ''}
-                      onChange={(e) => setSelectedMatchVagaId(e.target.value)}
-                      className="w-full sm:max-w-md appearance-none bg-white border border-blue-200 text-[#0a192f] text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all cursor-pointer"
-                    >
-                      <option value="">Selecione uma vaga em aberto...</option>
-                      {vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').map(v => (
-                        <option key={v.id} value={v.id}>
-                          {v.vaga_id_text} - {v.role?.name || 'Sem cargo'} ({v.location?.name || 'Sem local'})
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 left-0 sm:left-auto sm:right-0 ml-auto sm:ml-0 w-10 flex items-center justify-center text-blue-500 max-w-[calc(100%-1rem)] sm:max-w-md pr-2 sm:pr-0">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                    </div>
+                      onChange={setSelectedMatchVagaId}
+                      options={[
+                        { value: '', label: 'Selecione uma vaga em aberto...' },
+                        ...vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').map(v => ({
+                          value: String(v.id),
+                          label: `${v.vaga_id_text} - ${v.role?.name || 'Sem cargo'} (${v.location?.name || 'Sem local'})`
+                        }))
+                      ]}
+                      icon={Briefcase}
+                    />
                   </div>
 
                   {selectedMatchVagaId && (
@@ -661,7 +683,7 @@ export function RHVagas() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                          {matchedCandidatos.map((m, idx) => (
+                          {matchedCandidatos.map((m) => (
                             <tr key={m.candidato.id} onClick={() => { setSelectedCandidatoId(m.candidato.id); setIsCandidatoModalOpen(true); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors">
                               <td className="px-4 py-4 whitespace-nowrap">
                                 <div className="flex flex-col gap-1.5">
@@ -719,22 +741,21 @@ export function RHVagas() {
               <div className="space-y-6">
                 <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100">
                   <h3 className="text-sm font-bold text-[#0a192f] mb-3">1. Selecione o Candidato Alvo</h3>
-                  <div className="relative">
-                    <select
+                  <div className="w-full sm:max-w-md">
+                    <FilterSelect
+                      placeholder="Buscar talento"
+                      label=""
                       value={selectedMatchCandidatoId || ''}
-                      onChange={(e) => setSelectedMatchCandidatoId(e.target.value)}
-                      className="w-full sm:max-w-md appearance-none bg-white border border-emerald-200 text-[#0a192f] text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#059669] transition-all cursor-pointer"
-                    >
-                      <option value="">Selecione um talento da base...</option>
-                      {candidatos.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.nome} - {roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || 'Sem cargo'}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 left-0 sm:left-auto sm:right-0 ml-auto sm:ml-0 w-10 flex items-center justify-center text-emerald-600 max-w-[calc(100%-1rem)] sm:max-w-md pr-2 sm:pr-0">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                    </div>
+                      onChange={setSelectedMatchCandidatoId}
+                      options={[
+                        { value: '', label: 'Selecione um talento da base...' },
+                        ...candidatos.map(c => ({
+                          value: String(c.id),
+                          label: `${c.nome} - ${roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || 'Sem cargo'}`
+                        }))
+                      ]}
+                      icon={User}
+                    />
                   </div>
 
                   {selectedMatchCandidatoId && (
@@ -771,7 +792,7 @@ export function RHVagas() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                          {matchedVagas.map((m, idx) => (
+                          {matchedVagas.map((m) => (
                             <tr key={m.vaga.id} onClick={() => handleOpenViewModal(m.vaga.id)} className="hover:bg-emerald-50/40 cursor-pointer transition-colors">
                               <td className="px-4 py-4 whitespace-nowrap">
                                 <div className="flex flex-col gap-1.5">
