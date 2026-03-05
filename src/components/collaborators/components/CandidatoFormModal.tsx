@@ -5,7 +5,7 @@ import { CollaboratorModalLayout } from './CollaboratorLayouts'
 import { DadosPessoaisSection } from './DadosPessoaisSection'
 import { CandidatoHistoricoSection } from './CandidatoHistoricoSection'
 import { DadosProfissionaisCandidato } from './DadosProfissionaisCandidato'
-import { User, BookOpen, FileText, Briefcase, Hash, X } from 'lucide-react'
+import { User, BookOpen, FileText, Briefcase, Hash, X, Sparkles, Bot, Loader2 } from 'lucide-react'
 import { GEDSection } from './GEDSection'
 import { EnderecoSection } from './EnderecoSection'
 import {
@@ -29,6 +29,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
 
     const [activeTab, setActiveTab] = useState(1)
     const [loading, setLoading] = useState(false)
+    const [aiLoading, setAiLoading] = useState(false)
     const [formData, setFormData] = useState<Partial<any>>({})
 
     // Tagging system state
@@ -137,6 +138,65 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
         }
     }
 
+    const handleExtractResumeAI = async () => {
+        if (!candidatoId) {
+            showAlert('Atenção', 'Você precisa salvar o candidato pela primeira vez (para gerar um ID) antes de usar a IA.', 'warning');
+            return;
+        }
+
+        // Verifica se há CV no pending docs ou GED pra avisar o user
+        const hasStoredCV = gedDocs.some(d => d.Categoria === 'Currículo');
+        const hasPendingCV = pendingGedDocs.some(d => d.category === 'Currículo');
+
+        if (!hasStoredCV && !hasPendingCV) {
+            showAlert('Atenção', 'Faça o upload de um PDF classificado como "Currículo" na aba Arquivos primeiro.', 'warning');
+            return;
+        }
+        if (!hasStoredCV && hasPendingCV) {
+            showAlert('Atenção', 'Salve o cadastro para enviar o PDF pendente antes de rodar a IA.', 'warning');
+            return;
+        }
+
+        try {
+            setAiLoading(true);
+            const { data, error } = await supabase.functions.invoke('analisar-curriculo-cv', {
+                body: { candidatoId }
+            });
+
+            if (error) {
+                throw new Error(error.message || "Erro desconhecido na Edge Function");
+            }
+            if (data?.error) {
+                throw new Error(data.error);
+            }
+
+            if (data?.data) {
+                const { resumoProfissional, perfilTags, sugestaoCargo } = data.data;
+
+                // Merge no formData
+                setFormData(prev => {
+                    const currentTags = (prev.perfil || '').split('\n').filter(Boolean);
+                    const newTagsArray = [...new Set([...currentTags, ...(perfilTags || [])])];
+
+                    return {
+                        ...prev,
+                        resumo_cv: resumoProfissional || prev.resumo_cv,
+                        perfil: newTagsArray.join('\n'),
+                        role: prev.role || sugestaoCargo // Só sugere cargo se estiver sem
+                    };
+                });
+
+                showAlert('Sucesso', 'Currículo analisado! O resumo e as tags foram preenchidos (veja a aba "Dados Profissionais" para sugestão de cargo se ele estava vazio).', 'success');
+            } else {
+                throw new Error("Resposta inválida da Inteligência Artificial.");
+            }
+        } catch (e: any) {
+            showAlert('Erro Processamento IA', e.message, 'error');
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
     // GED Handlers
     const handleGedUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && selectedGedCategory) {
@@ -212,7 +272,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
 
             // Allowed fields based on the actual Candidato schema via OpenAPI
             const allowedFields = [
-                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'role', 'local', 'area', 'contract_type',
+                'nome', 'email', 'telefone', 'linkedin', 'curriculo_url', 'perfil', 'resumo_cv', 'role', 'local', 'area', 'contract_type',
                 'gender', 'rg', 'cpf', 'birthday', 'civil_status', 'email_pessoal', 'linkedin_url',
                 'has_children', 'children_count', 'children_data'
             ];
@@ -445,7 +505,45 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             )}
             {activeTab === 3 && (
                 <div className="animate-in slide-in-from-right-4 duration-300 space-y-6">
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm h-full flex flex-col">
+                    {/* IA Resume Generation Header Box */}
+                    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 p-5 rounded-xl shadow-sm relative overflow-hidden group/ai">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 blur-sm scale-150 group-hover/ai:rotate-12 transition-transform duration-700 pointer-events-none">
+                            <Sparkles className="w-24 h-24 text-indigo-500" />
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+                            <div>
+                                <h4 className="text-sm font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2 mb-1">
+                                    <Bot className="w-5 h-5 text-indigo-600" />
+                                    Analisador IA de Currículos
+                                </h4>
+                                <p className="text-xs text-indigo-700/80 font-medium">Extraia resumo e habilidades automaticamente lendo o PDF anexado do currículo do talento.</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleExtractResumeAI}
+                                disabled={aiLoading}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-bold text-[11px] uppercase tracking-wider rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            >
+                                {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-indigo-200" />}
+                                {aiLoading ? 'Lendo PDF...' : 'Extrair com IA'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Resumo Textarea */}
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                            Resumo Profissional / CV
+                        </label>
+                        <textarea
+                            className="w-full bg-gray-50 border border-gray-200 text-[#0a192f] text-sm rounded-xl p-4 min-h-[140px] focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all resize-y shadow-sm font-medium"
+                            placeholder="Descreva brevemente o profissional, principais qualificações, anos de experiência ou use o botão da IA 🪄 acima para preencher via currículo."
+                            value={formData.resumo_cv || ''}
+                            onChange={(e) => setFormData({ ...formData, resumo_cv: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex justify-between items-center">
                             Perfil e Tags
                             <span className="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Use @ para pesquisar tags</span>
