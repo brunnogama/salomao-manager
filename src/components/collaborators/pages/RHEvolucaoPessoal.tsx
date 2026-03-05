@@ -27,6 +27,7 @@ import {
 } from 'recharts'
 import { Scale } from 'lucide-react'
 import { useColaboradores } from '../hooks/useColaboradores'
+import { useNavigate } from 'react-router-dom'
 
 import { FilterSelect } from '../../controladoria/ui/FilterSelect'
 
@@ -56,6 +57,7 @@ export function RHEvolucaoPessoal() {
     locations: masterLocations,
     partners: masterPartners
   } = useColaboradores()
+  const navigate = useNavigate()
 
   // --- State for Filters ---
   const [filterYear, setFilterYear] = useState<string>('todos')
@@ -700,7 +702,11 @@ export function RHEvolucaoPessoal() {
                       return null
                     }}
                   />
-                  <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20}>
+                  <Bar dataKey="count" fill={COLORS.primary} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
+                    if (data && data.role) {
+                      navigate('/colaboradores', { state: { roleFilter: data.role } })
+                    }
+                  }}>
                     <LabelList dataKey="count" position="right" fill={COLORS.primary} fontSize={10} fontWeight={700} />
                   </Bar>
                 </BarChart>
@@ -748,7 +754,11 @@ export function RHEvolucaoPessoal() {
                       return null
                     }}
                   />
-                  <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 4, 4, 0]} barSize={20}>
+                  <Bar dataKey="count" fill={COLORS.secondary} radius={[0, 4, 4, 0]} barSize={20} className="cursor-pointer" onClick={(data) => {
+                    if (data && data.role) {
+                      navigate('/colaboradores', { state: { roleFilter: data.role } })
+                    }
+                  }}>
                     <LabelList dataKey="count" position="right" fill={COLORS.secondary} fontSize={10} fontWeight={700} />
                   </Bar>
                 </BarChart>

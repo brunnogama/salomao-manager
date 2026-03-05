@@ -30,6 +30,7 @@ import { PeriodoAusenciasSection } from '../components/PeriodoAusenciasSection'
 import PerfilSection from '../components/PerfilSection'
 import { CollaboratorModalLayout } from '../components/CollaboratorLayouts'
 import { useAuth } from '../../../contexts/AuthContext'
+import { useLocation } from 'react-router-dom'
 
 import {
   ESTADOS_BRASIL,
@@ -130,6 +131,15 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterPostGraduationComplete, setAdvFilterPostGraduationComplete] = useState<'sim' | 'nao' | ''>('');
   const [advFilterExpectedCompletion, setAdvFilterExpectedCompletion] = useState('');
   const [advFilterCompletionYear, setAdvFilterCompletionYear] = useState('');
+
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.state?.roleFilter) {
+      setAdvFilterRole(location.state.roleFilter)
+      setActiveMainTab('Colaboradores')
+    }
+  }, [location.state])
 
   const handleClearAdvancedFilters = () => {
     setAdvFilterGender('');
