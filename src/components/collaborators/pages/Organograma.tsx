@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Network, Search, AlertCircle, Save, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, X, Briefcase, Mail, Phone, Tag, Building2 } from 'lucide-react';
+import { Network, Search, AlertCircle, Save, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Define the exact hierarchy order for Jurídico
@@ -40,6 +40,8 @@ export function Organograma() {
     const [zoomLevel, setZoomLevel] = useState(1);
     const [selectedColabForModal, setSelectedColabForModal] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'JURIDICO' | 'ADMINISTRATIVO'>('JURIDICO');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isMaximized, setIsMaximized] = useState(false);
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
     // For now, we focus on Jurídico as requested, but all are loaded
@@ -224,12 +226,19 @@ export function Organograma() {
                                             )}
                                         </div>
 
-                                        {/* Name and Role */}
-                                        <div className="mt-4 text-center px-2">
-                                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight">{colab.name}</h4>
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">
-                                                {roleStr}
-                                            </span>
+                                        {/* Name, Role and Practice Area */}
+                                        <div className="mt-4 text-center px-2 flex flex-col items-center gap-1.5">
+                                            <div>
+                                                <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight">{colab.name}</h4>
+                                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">
+                                                    {roleStr}
+                                                </span>
+                                            </div>
+                                            {colab.equipe && colab.equipe !== 'Sem Equipe' && (
+                                                <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-full">
+                                                    {String(colab.equipe)}
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Hover Competências Card */}
@@ -260,32 +269,31 @@ export function Organograma() {
                     )}
                 </Droppable>
 
-                {/* Render Lines and Subordinates */}
+                {/* Render Lines and Subordinates (Vertical Tree) */}
                 {subordinates.length > 0 && (
-                    <div className="flex flex-col items-center mt-4">
-                        {/* Vertical line down */}
-                        <div className="w-px h-6 bg-gray-300"></div>
+                    <div className="relative flex flex-col items-start w-full mt-2">
+                        {/* Main vertical stem dropping from the center of this Node (w-240px, center is 120px) */}
+                        {/* It stops short of the bottom to prevent tailing past the last connector */}
+                        <div className="absolute left-[120px] top-0 bottom-[calc(100%-48px)] w-[2px] bg-gray-300 z-0"></div>
 
-                        <div className="flex gap-8 relative pt-4">
-                            {/* Horizontal line connecting siblings (only if > 1) */}
-                            {subordinates.length > 1 && (
-                                <div className="absolute top-0 left-0 right-0 h-px bg-gray-300"></div>
-                            )}
+                        <div className="flex flex-col pt-4 w-full relative z-10 transition-all">
+                            {subordinates.map((sub, index) => {
+                                const isLast = index === subordinates.length - 1;
+                                return (
+                                    <div key={sub.id} className="relative flex items-start w-full group-line">
+                                        {/* Segment of vertical line that connects to this child */}
+                                        <div className={`absolute left-[120px] top-0 ${isLast ? 'h-[48px]' : 'h-full'} w-[2px] bg-gray-300 z-0`}></div>
 
-                            {subordinates.map((sub) => (
-                                <div key={sub.id} className="flex flex-col items-center relative">
-                                    {/* Vertical line up from sibling (if > 1) */}
-                                    {subordinates.length > 1 && (
-                                        <div className="absolute top-0 left-1/2 w-px h-4 bg-gray-300 -mt-4"></div>
-                                    )}
-                                    {/* Vertical line up from single child */}
-                                    {subordinates.length === 1 && (
-                                        <div className="absolute top-0 left-1/2 w-px h-4 bg-gray-300 -mt-4"></div>
-                                    )}
+                                        {/* Horizontal branch dropping right exactly at 48px to hit the child avatar center */}
+                                        <div className="absolute left-[120px] top-[48px] w-12 h-[2px] bg-gray-300 z-0"></div>
 
-                                    <OrganogramNode colab={sub} level={level + 1} />
-                                </div>
-                            ))}
+                                        {/* Child Node Indented */}
+                                        <div className="pl-[168px] pb-6">
+                                            <OrganogramNode colab={sub} level={level + 1} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -318,7 +326,7 @@ export function Organograma() {
     });
 
     return (
-        <div className="p-8 max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-auto min-h-screen">
+        <div className={`${isMaximized ? 'fixed inset-0 z-[100] bg-white w-full h-full p-6 space-y-6 overflow-auto' : 'p-8 max-w-[1600px] mx-auto space-y-8'} animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen print:p-0 print:bg-white`}>
 
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
@@ -336,20 +344,57 @@ export function Organograma() {
                     </p>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex bg-gray-100 p-1.5 rounded-2xl md:mt-0 relative z-10 self-center md:self-end mb-2 md:mb-0 border border-gray-200 shadow-inner">
+                {/* Top Controls: Search, Print, Tabs */}
+                <div className="flex flex-col md:flex-row items-center justify-end gap-4 relative z-10 w-full md:w-auto mt-4 md:mt-0 print:hidden">
+                    {/* Search */}
+                    <div className="relative w-full md:w-64">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Buscar nome ou área..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] sm:text-sm transition-all shadow-sm"
+                        />
+                    </div>
+
+                    {/* Print Button */}
                     <button
-                        onClick={() => setActiveTab('JURIDICO')}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'JURIDICO' ? 'bg-white text-[#1e3a8a] shadow-sm scale-100' : 'text-gray-500 hover:text-gray-700 hover:bg-white/50 scale-95'}`}
+                        onClick={() => window.print()}
+                        className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-[#1e3a8a] hover:bg-blue-50 hover:border-blue-200 flex items-center justify-center transition-all shadow-sm"
+                        title="Imprimir / PDF"
                     >
-                        Jurídico
+                        <Printer className="w-5 h-5" />
                     </button>
+
+                    {/* Maximize Button */}
                     <button
-                        onClick={() => setActiveTab('ADMINISTRATIVO')}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'ADMINISTRATIVO' ? 'bg-white text-[#1e3a8a] shadow-sm scale-100' : 'text-gray-500 hover:text-gray-700 hover:bg-white/50 scale-95'}`}
+                        onClick={() => setIsMaximized(!isMaximized)}
+                        className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-[#1e3a8a] hover:bg-blue-50 hover:border-blue-200 flex items-center justify-center transition-all shadow-sm hidden md:flex"
+                        title={isMaximized ? "Minimizar" : "Maximizar"}
                     >
-                        Administrativo
+                        {isMaximized ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
                     </button>
+
+                    <div className="w-px h-8 bg-gray-200 hidden md:block mx-1"></div>
+
+                    {/* Tabs */}
+                    <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner w-full md:w-auto">
+                        <button
+                            onClick={() => setActiveTab('JURIDICO')}
+                            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'JURIDICO' ? 'bg-white text-[#1e3a8a] shadow-sm scale-100' : 'text-gray-500 hover:text-gray-700 hover:bg-white/50 scale-95'}`}
+                        >
+                            Jurídico
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('ADMINISTRATIVO')}
+                            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'ADMINISTRATIVO' ? 'bg-white text-[#1e3a8a] shadow-sm scale-100' : 'text-gray-500 hover:text-gray-700 hover:bg-white/50 scale-95'}`}
+                        >
+                            Administrativo
+                        </button>
+                    </div>
                 </div>
 
                 {/* Zoom Controls */}
@@ -377,7 +422,7 @@ export function Organograma() {
                         className="p-2 hover:bg-white rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a] shadow-sm hover:shadow"
                         title="Tamanho Original"
                     >
-                        <Maximize className="w-5 h-5" />
+                        <span className="text-[10px] font-bold px-1 uppercase tracking-wider">100%</span>
                     </button>
                 </div>
             </div>
@@ -436,7 +481,8 @@ export function Organograma() {
                                                     {...dragProvided.draggableProps}
                                                     {...dragProvided.dragHandleProps}
                                                     className={`group relative flex flex-col items-center cursor-pointer w-[180px] p-2 transition-all
-                                ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
+                                ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}
+                                ${!(!searchQuery || colab.name.toLowerCase().includes(searchQuery.toLowerCase()) || String(colab.role).toLowerCase().includes(searchQuery.toLowerCase()) || String(colab.equipe).toLowerCase().includes(searchQuery.toLowerCase())) ? 'opacity-30 grayscale' : ''}`}
                                                     onClick={() => setSelectedColabForModal(colab.fullData)}
                                                     title="Clique para expandir perfil"
                                                 >
@@ -449,9 +495,16 @@ export function Organograma() {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="mt-4 text-center w-full px-1">
-                                                        <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight truncate w-full">{colab.name}</h4>
-                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate w-full">{String(colab.role)}</span>
+                                                    <div className="mt-4 text-center w-full px-1 flex flex-col items-center gap-1.5">
+                                                        <div className="w-full">
+                                                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight truncate w-full">{colab.name}</h4>
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate w-full">{String(colab.role)}</span>
+                                                        </div>
+                                                        {colab.equipe && colab.equipe !== 'Sem Equipe' && (
+                                                            <span className="inline-block px-2 py-0.5 bg-gray-100 border border-gray-200 rounded-full text-[8px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate w-full">
+                                                                {String(colab.equipe)}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
