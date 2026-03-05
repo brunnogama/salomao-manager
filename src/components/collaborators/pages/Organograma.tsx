@@ -45,17 +45,19 @@ export function Organograma() {
     // For now, we focus on Jurídico as requested, but all are loaded
     useEffect(() => {
         if (colaboradores.length > 0) {
-            const mapped = colaboradores.map(c => ({
-                id: c.id,
-                name: c.name,
-                role: typeof c.roles === 'object' ? c.roles?.name : c.role,
-                equipe: typeof c.teams === 'object' ? c.teams?.name : c.equipe,
-                leader_id: c.leader_id || undefined,
-                competencias: c.competencias || '',
-                photo_url: c.photo_url || c.foto_url,
-                foto_url: c.foto_url,
-                fullData: c
-            }));
+            const mapped = colaboradores
+                .filter(c => c.status === 'active')
+                .map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    role: typeof c.roles === 'object' ? c.roles?.name : c.role,
+                    equipe: typeof c.teams === 'object' ? c.teams?.name : c.equipe,
+                    leader_id: c.leader_id || undefined,
+                    competencias: c.competencias || '',
+                    photo_url: c.photo_url || c.foto_url,
+                    foto_url: c.foto_url,
+                    fullData: c
+                }));
             setData(mapped as ColaboradorCard[]);
         }
     }, [colaboradores]);
@@ -467,10 +469,10 @@ export function Organograma() {
                                         if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return false;
                                         return true;
                                     }).length === 0 && (
-                                        <div className="w-full text-center text-xs font-bold text-gray-400 uppercase tracking-widest py-8">
-                                            Todos estão alocados.
-                                        </div>
-                                    )}
+                                            <div className="w-full text-center text-xs font-bold text-gray-400 uppercase tracking-widest py-8">
+                                                Todos estão alocados.
+                                            </div>
+                                        )}
                                 </div>
                             )}
                         </Droppable>
