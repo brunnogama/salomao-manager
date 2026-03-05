@@ -185,10 +185,46 @@ export function Organograma() {
         if (activeTab === 'JURIDICO' && !isJuridico) return null;
         if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return null;
 
-        const isMatch = !searchQuery || 
-            colab.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-            roleStr.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        const isMatch = !searchQuery ||
+            colab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            roleStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
             String(colab.equipe || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+        const getRank = (rStr: string) => {
+            const r = rStr.trim();
+            const index = JURIDICO_HIERARCHY.findIndex(h => h.toLowerCase() === r.toLowerCase());
+            return index === -1 ? 999 : index;
+        };
+
+        const filteredSubordinates = subordinates.filter(c => {
+            const r = String(c.role || '');
+            const isS = r.toLowerCase().includes('sócio');
+            const isJ = JURIDICO_HIERARCHY.includes(r) || isS || r.toLowerCase().includes('advogado') || r.toLowerCase().includes('estagiário');
+            const isA = !isJ || isS;
+            if (activeTab === 'JURIDICO' && !isJ) return false;
+            if (activeTab === 'ADMINISTRATIVO' && !isA) return false;
+            return true;
+        });
+
+        const sortedSubordinates = [...filteredSubordinates].sort((a, b) => {
+            return getRank(String(a.role || '')) - getRank(String(b.role || ''));
+        });
+
+        const roleGroups: ColaboradorCard[][] = [];
+        let currentRole: string | null = null;
+        let currentGroup: ColaboradorCard[] = [];
+
+        for (const sub of sortedSubordinates) {
+            const rStr = String(sub.role || '');
+            if (rStr !== currentRole) {
+                if (currentGroup.length > 0) roleGroups.push(currentGroup);
+                currentRole = rStr;
+                currentGroup = [sub];
+            } else {
+                currentGroup.push(sub);
+            }
+        }
+        if (currentGroup.length > 0) roleGroups.push(currentGroup);
 
         return (
             <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
@@ -275,25 +311,36 @@ export function Organograma() {
                 </Droppable>
 
                 {/* Render Lines and Subordinates (Horizontal Tree) */}
-                {subordinates.length > 0 && (
+                {roleGroups.length > 0 && (
                     <div className="flex flex-col items-center mt-2 w-full">
                         {/* Vertical line down from parent */}
                         <div className="w-[2px] h-8 bg-gray-300"></div>
 
-                        <div className="flex justify-center relative pt-4 w-full">
-                            {subordinates.map((sub, index) => (
-                                <div key={sub.id} className="relative flex flex-col items-center px-4">
-                                    {/* Horizontal connector lines */}
-                                    {subordinates.length > 1 && (
-                                        <>
-                                            {index > 0 && <div className="absolute top-0 left-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
-                                            {index < subordinates.length - 1 && <div className="absolute top-0 right-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
-                                        </>
+                        <div className="flex flex-col items-center w-full relative z-10">
+                            {roleGroups.map((group, groupIndex) => (
+                                <div key={groupIndex} className="flex justify-center w-full relative pb-16">
+                                    {/* Line down to the NEXT group */}
+                                    {groupIndex < roleGroups.length - 1 && (
+                                        <div className="absolute top-0 left-1/2 w-[2px] h-full bg-gray-300 -translate-x-1/2 -z-10"></div>
                                     )}
-                                    {/* Vertical stem down to this node */}
-                                    <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
 
-                                    <OrganogramNode colab={sub} level={level + 1} />
+                                    <div className="flex justify-center relative pt-4 w-full">
+                                        {group.map((sub, index) => (
+                                            <div key={sub.id} className="relative flex flex-col items-center px-4">
+                                                {/* Horizontal connector lines */}
+                                                {group.length > 1 && (
+                                                    <>
+                                                        {index > 0 && <div className="absolute top-0 left-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
+                                                        {index < group.length - 1 && <div className="absolute top-0 right-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
+                                                    </>
+                                                )}
+                                                {/* Vertical stem down to this node */}
+                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+
+                                                <OrganogramNode colab={sub} level={level + 1} />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -437,103 +484,105 @@ export function Organograma() {
             </div>
 
             {/* Main Drag Drop Context Area */}
-            <div className="bg-gray-50/50 rounded-3xl p-8 border border-gray-100 overflow-visible flex-1 min-h-[500px]">
+            <div className="bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[500px] overflow-x-auto overflow-y-visible w-full min-w-full print:overflow-visible">
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    <div
-                        className="flex flex-col items-center gap-16 pb-32 transition-transform duration-300"
-                        style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
-                    >
-                        {roots.length > 0 ? (
-                            roots.map((root, index) => (
-                                <div key={root.id} className="relative flex flex-col items-center w-full">
-                                    <OrganogramNode colab={root} />
-                                    {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
-                                </div>
-                            ))
-                        ) : (
-                            <div className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest">
-                                Nenhuma estrutura principal encontrada.
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Unassigned or Orphan Nodes Pool */}
-                    <div className="mt-16 pt-8 border-t border-gray-200">
-                        <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Colaboradores sem subordinação (ou raiz não-sócio)</h3>
-                        <Droppable droppableId="unassigned" direction="horizontal" type="COLAB">
-                            {(provided, snapshot) => (
-                                <div
-                                    ref={provided.innerRef}
-                                    {...provided.droppableProps}
-                                    className={`flex flex-wrap gap-4 p-6 rounded-2xl border-2 border-dashed transition-all
-                      ${snapshot.isDraggingOver ? 'border-[#1e3a8a] bg-blue-50/50' : 'border-gray-200 bg-white'}`}
-                                >
-                                    {data.filter(c => {
-                                        if (c.leader_id || roots.some(r => r.id === c.id)) return false;
-                                        const roleStr = String(c.role || '');
-                                        const isSocio = roleStr.toLowerCase().includes('sócio');
-                                        const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
-                                        const isAdministrativo = !isJuridico || isSocio;
-
-                                        if (activeTab === 'JURIDICO' && !isJuridico) return false;
-                                        if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return false;
-                                        return true;
-                                    }).map((colab, index) => (
-                                        <Draggable key={colab.id} draggableId={colab.id} index={index}>
-                                            {(dragProvided, dragSnapshot) => (
-                                                <div
-                                                    ref={dragProvided.innerRef}
-                                                    {...dragProvided.draggableProps}
-                                                    {...dragProvided.dragHandleProps}
-                                                    className={`group relative flex flex-col items-center cursor-pointer w-[180px] p-2 transition-all
-                                ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}
-                                ${!(!searchQuery || colab.name.toLowerCase().includes(searchQuery.toLowerCase()) || String(colab.role).toLowerCase().includes(searchQuery.toLowerCase()) || String(colab.equipe).toLowerCase().includes(searchQuery.toLowerCase())) ? 'opacity-30 grayscale' : ''}`}
-                                                    onClick={() => setSelectedColabForModal(colab.fullData)}
-                                                    title="Clique para expandir perfil"
-                                                >
-                                                    <div className="w-20 h-20 rounded-full bg-white shadow-sm border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-lg group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
-                                                        {colab.photo_url || colab.foto_url ? (
-                                                            <img src={colab.photo_url || colab.foto_url} alt={colab.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
-                                                                <UserIcon className="w-8 h-8" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="mt-4 text-center w-full px-1 flex flex-col items-center gap-1.5">
-                                                        <div className="w-full">
-                                                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight truncate w-full">{colab.name}</h4>
-                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate w-full">{String(colab.role)}</span>
-                                                        </div>
-                                                        {colab.equipe && colab.equipe !== 'Sem Equipe' && (
-                                                            <span className="inline-block px-2 py-0.5 bg-gray-100 border border-gray-200 rounded-full text-[8px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate w-full">
-                                                                {String(colab.equipe)}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </Draggable>
-                                    ))}
-                                    {provided.placeholder}
-                                    {data.filter(c => {
-                                        if (c.leader_id || roots.some(r => r.id === c.id)) return false;
-                                        const roleStr = String(c.role || '');
-                                        const isSocio = roleStr.toLowerCase().includes('sócio');
-                                        const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
-                                        const isAdministrativo = !isJuridico || isSocio;
-
-                                        if (activeTab === 'JURIDICO' && !isJuridico) return false;
-                                        if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return false;
-                                        return true;
-                                    }).length === 0 && (
-                                            <div className="w-full text-center text-xs font-bold text-gray-400 uppercase tracking-widest py-8">
-                                                Todos estão alocados.
-                                            </div>
-                                        )}
+                    <div className="p-8 min-w-full w-max mx-auto print:w-full">
+                        <div
+                            className="flex flex-col items-center gap-16 pb-32 transition-transform duration-300 min-w-max w-full"
+                            style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
+                        >
+                            {roots.length > 0 ? (
+                                roots.map((root, index) => (
+                                    <div key={root.id} className="relative flex flex-col items-center w-full">
+                                        <OrganogramNode colab={root} />
+                                        {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest">
+                                    Nenhuma estrutura principal encontrada.
                                 </div>
                             )}
-                        </Droppable>
+                        </div>
+
+                        {/* Unassigned or Orphan Nodes Pool */}
+                        <div className="mt-16 pt-8 border-t border-gray-200">
+                            <h3 className="text-sm font-black text-[#0a192f] uppercase tracking-wider mb-6">Colaboradores sem subordinação (ou raiz não-sócio)</h3>
+                            <Droppable droppableId="unassigned" direction="horizontal" type="COLAB">
+                                {(provided, snapshot) => (
+                                    <div
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                        className={`flex flex-wrap gap-4 p-6 rounded-2xl border-2 border-dashed transition-all
+                      ${snapshot.isDraggingOver ? 'border-[#1e3a8a] bg-blue-50/50' : 'border-gray-200 bg-white'}`}
+                                    >
+                                        {data.filter(c => {
+                                            if (c.leader_id || roots.some(r => r.id === c.id)) return false;
+                                            const roleStr = String(c.role || '');
+                                            const isSocio = roleStr.toLowerCase().includes('sócio');
+                                            const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
+                                            const isAdministrativo = !isJuridico || isSocio;
+
+                                            if (activeTab === 'JURIDICO' && !isJuridico) return false;
+                                            if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return false;
+                                            return true;
+                                        }).map((colab, index) => (
+                                            <Draggable key={colab.id} draggableId={colab.id} index={index}>
+                                                {(dragProvided, dragSnapshot) => (
+                                                    <div
+                                                        ref={dragProvided.innerRef}
+                                                        {...dragProvided.draggableProps}
+                                                        {...dragProvided.dragHandleProps}
+                                                        className={`group relative flex flex-col items-center cursor-pointer w-[180px] p-2 transition-all
+                                ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}
+                                ${!(!searchQuery || colab.name.toLowerCase().includes(searchQuery.toLowerCase()) || String(colab.role).toLowerCase().includes(searchQuery.toLowerCase()) || String(colab.equipe).toLowerCase().includes(searchQuery.toLowerCase())) ? 'opacity-30 grayscale' : ''}`}
+                                                        onClick={() => setSelectedColabForModal(colab.fullData)}
+                                                        title="Clique para expandir perfil"
+                                                    >
+                                                        <div className="w-20 h-20 rounded-full bg-white shadow-sm border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-lg group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                                                            {colab.photo_url || colab.foto_url ? (
+                                                                <img src={colab.photo_url || colab.foto_url} alt={colab.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                                    <UserIcon className="w-8 h-8" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="mt-4 text-center w-full px-1 flex flex-col items-center gap-1.5">
+                                                            <div className="w-full">
+                                                                <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight truncate w-full">{colab.name}</h4>
+                                                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate w-full">{String(colab.role)}</span>
+                                                            </div>
+                                                            {colab.equipe && colab.equipe !== 'Sem Equipe' && (
+                                                                <span className="inline-block px-2 py-0.5 bg-gray-100 border border-gray-200 rounded-full text-[8px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate w-full">
+                                                                    {String(colab.equipe)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
+                                        {data.filter(c => {
+                                            if (c.leader_id || roots.some(r => r.id === c.id)) return false;
+                                            const roleStr = String(c.role || '');
+                                            const isSocio = roleStr.toLowerCase().includes('sócio');
+                                            const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
+                                            const isAdministrativo = !isJuridico || isSocio;
+
+                                            if (activeTab === 'JURIDICO' && !isJuridico) return false;
+                                            if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return false;
+                                            return true;
+                                        }).length === 0 && (
+                                                <div className="w-full text-center text-xs font-bold text-gray-400 uppercase tracking-widest py-8">
+                                                    Todos estão alocados.
+                                                </div>
+                                            )}
+                                    </div>
+                                )}
+                            </Droppable>
+                        </div>
                     </div>
                 </DragDropContext>
             </div>
