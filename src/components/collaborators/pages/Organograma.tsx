@@ -420,8 +420,7 @@ export function Organograma() {
             className={`${isMaximized ? 'fixed inset-0 z-[100] bg-white w-full h-full p-6 space-y-6 overflow-auto' : 'p-8 w-full space-y-8'} animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen print:p-0 print:bg-white`}>
 
             {/* Header Section (Padrão Recrutamento) */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-bl-full pointer-events-none" />
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
 
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-2">
@@ -749,7 +748,13 @@ export function Organograma() {
             <div className="fixed bottom-8 right-8 z-[110] flex items-center gap-3">
                 {showBackToTop && (
                     <button
-                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        onClick={() => {
+                            if (isMaximized && containerRef.current) {
+                                containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                            } else {
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                        }}
                         className="p-3 bg-white border border-blue-100 rounded-2xl shadow-xl text-[#1e3a8a] hover:bg-blue-50 transition-all animate-in slide-in-from-bottom-4"
                         title="Voltar ao Topo"
                     >
