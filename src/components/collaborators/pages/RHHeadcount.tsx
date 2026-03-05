@@ -152,6 +152,30 @@ export function RHHeadcount() {
 
   // --- Charts Data ---
 
+  // Advogados x Estagiarios por Local
+  const advogadosVsEstagiariosData = useMemo(() => {
+    const map = new Map<string, { advogados: number, estagiarios: number }>()
+
+    activeData.filter(c => getSegment(c) === 'Jurídico').forEach(c => {
+      const locName = c.locations?.name || 'Não Definido'
+      if (!map.has(locName)) map.set(locName, { advogados: 0, estagiarios: 0 })
+
+      const role = normalizeString(c.roles?.name || String(c.role || ''))
+      if (role.includes('estagiari')) {
+        map.get(locName)!.estagiarios++
+      } else {
+        map.get(locName)!.advogados++
+      }
+    })
+
+    return Array.from(map.entries()).map(([name, data]) => ({
+      name,
+      Advogados: data.advogados,
+      Estagiários: data.estagiarios,
+      Total: data.advogados + data.estagiarios
+    })).sort((a, b) => b.Total - a.Total)
+  }, [activeData])
+
   // 1. Headcount by Local & Area
   const localAreaData = useMemo(() => {
     const map = new Map<string, { admin: number, legal: number }>()
@@ -201,7 +225,7 @@ export function RHHeadcount() {
   }, [activeData])
 
   // 3. Collaborators per Team Leader
-  const { leaderJuridicoSocios, leaderJuridicoLideres, leaderAdmin } = useMemo(() => {
+  const { leaderJuridicoSocios, leaderJuridicoLideres } = useMemo(() => {
     const leaderMap = new Map<string, { count: number, members: Collaborator[] }>()
     activeData.forEach(c => {
       const leaderName = c.leader?.name || 'Não Definido'
@@ -254,8 +278,7 @@ export function RHHeadcount() {
 
     return {
       leaderJuridicoSocios: allLeaders.filter(l => l.category === 'Jurídico - Sócios'),
-      leaderJuridicoLideres: allLeaders.filter(l => l.category === 'Jurídico - Líderes'),
-      leaderAdmin: allLeaders.filter(l => l.category === 'Administrativo'),
+      leaderJuridicoLideres: allLeaders.filter(l => l.category === 'Jurídico - Líderes')
     }
   }, [activeData, colaboradores])
 
@@ -514,11 +537,11 @@ export function RHHeadcount() {
         </div>
       </div>
 
-      {/* 3. Charts Row 1: Local & Leaders */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 3. Charts Row 1: Local */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* Local & Area (Stacked Bar) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:col-span-1">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
             <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
               <MapIcon className="w-5 h-5" />
@@ -546,98 +569,101 @@ export function RHHeadcount() {
           </div>
         </div>
 
-        {/* Collaborators per Team Leader */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:col-span-2">
+        {/* Advogados x Estagiários por Local */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
           <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
-              <Users className="w-5 h-5" />
+            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+              <Scale className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-gray-800 tracking-tight">Colaboradores por Líder</h3>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lideranças</p>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Advogados x Estagiários por Local</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Composição Jurídica</p>
             </div>
           </div>
-          <div className="flex flex-col gap-8 w-full">
-            {leaderJuridicoSocios.length > 0 && (
-              <div className="flex flex-col">
-                <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Jurídico: Sócios</h4>
-                <div className="w-full" style={{ height: Math.max(80, leaderJuridicoSocios.length * 35) }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={leaderJuridicoSocios} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                      <XAxis type="number" hide />
-                      <YAxis
-                        dataKey="name"
-                        type="category"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                        width={250}
-                      />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                      <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
-                        <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-
-            {leaderJuridicoLideres.length > 0 && (
-              <div className="flex flex-col">
-                <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Jurídico: Líderes</h4>
-                <div className="w-full" style={{ height: Math.max(80, leaderJuridicoLideres.length * 35) }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={leaderJuridicoLideres} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                      <XAxis type="number" hide />
-                      <YAxis
-                        dataKey="name"
-                        type="category"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                        width={250}
-                      />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                      <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
-                        <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-
-            {leaderAdmin.length > 0 && (
-              <div className="flex flex-col">
-                <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Administrativo</h4>
-                <div className="w-full" style={{ height: Math.max(80, leaderAdmin.length * 35) }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={leaderAdmin} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
-                      <XAxis type="number" hide />
-                      <YAxis
-                        dataKey="name"
-                        type="category"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
-                        width={250}
-                      />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
-                      <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
-                        <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={advogadosVsEstagiariosData} margin={{ top: 30, right: 30, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={COLORS.grid} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: COLORS.text, fontSize: 11, fontWeight: 700 }} />
+                <Tooltip content={RHChartTooltip} />
+                <Legend />
+                <Bar dataKey="Advogados" stackId="a" fill={COLORS.secondary} radius={[0, 0, 4, 4]} />
+                <Bar dataKey="Estagiários" stackId="a" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                  <LabelList dataKey="Total" position="top" fill={COLORS.text} fontSize={10} fontWeight={700} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
+      </div>
+
+      {/* Collaborators per Team Leader */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-gray-800 tracking-tight">Colaboradores por Líder</h3>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lideranças</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+          {leaderJuridicoSocios.length > 0 && (
+            <div className="flex flex-col">
+              <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Jurídico: Sócios</h4>
+              <div className="w-full" style={{ height: Math.max(80, leaderJuridicoSocios.length * 35) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={leaderJuridicoSocios} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                    <XAxis type="number" hide />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                      width={250}
+                    />
+                    <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
+                    <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
+                      <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {leaderJuridicoLideres.length > 0 && (
+            <div className="flex flex-col">
+              <h4 className="text-sm font-black text-gray-700 tracking-tight mb-2">Jurídico: Líderes</h4>
+              <div className="w-full" style={{ height: Math.max(80, leaderJuridicoLideres.length * 35) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={leaderJuridicoLideres} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={COLORS.grid} />
+                    <XAxis type="number" hide />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: COLORS.text, fontSize: 10, fontWeight: 600 }}
+                      width={250}
+                    />
+                    <Tooltip cursor={{ fill: '#f3f4f6' }} content={RHChartTooltip} />
+                    <Bar dataKey="value" name="Time" radius={[0, 4, 4, 0]} barSize={20} fill="#8b5cf6">
+                      <LabelList dataKey="value" position="right" fill="#8b5cf6" fontSize={10} fontWeight={700} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+        </div>
       </div>
 
       {/* 4. Chart Row 2: Gender & Age Distributions */}
