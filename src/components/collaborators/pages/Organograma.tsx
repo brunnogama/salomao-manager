@@ -39,6 +39,7 @@ interface ColaboradorCard {
 const OrganogramNode = React.memo(({
     colab,
     context,
+    visitedIds,
     level = 0
 }: {
     colab: ColaboradorCard,
@@ -49,13 +50,17 @@ const OrganogramNode = React.memo(({
         setEditingPosition: (pos: { top: number, left: number } | null) => void,
         setEditingCompetenciasId: (id: string | null) => void,
         setEditingCompetenciasText: (text: string) => void,
-        subordinatesMap: Map<string | null, ColaboradorCard[]>
+        subordinatesMap: Map<string | null, ColaboradorCard[]>,
     },
+    visitedIds: Set<string>,
     level?: number
 }) => {
     const { activeTab, searchQuery, setSelectedColabForModal, setEditingPosition, setEditingCompetenciasId, setEditingCompetenciasText, subordinatesMap } = context;
     const subordinates = subordinatesMap.get(colab.id) || [];
     const roleStr = colab.role;
+
+    if (visitedIds.has(colab.id)) return null;
+    const nextVisited = new Set<string>(visitedIds).add(colab.id);
 
     if (activeTab === 'JURIDICO' && !colab.isJuridico) return null;
     if (activeTab === 'ADMINISTRATIVO' && !colab.isAdministrativo) return null;
@@ -175,7 +180,7 @@ const OrganogramNode = React.memo(({
                                                 </>
                                             )}
                                             <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
-                                            <OrganogramNode colab={sub} context={context} level={level + 1} />
+                                            <OrganogramNode colab={sub} context={context} visitedIds={nextVisited} level={level + 1} />
                                         </div>
                                     ))}
                                 </div>
@@ -523,7 +528,7 @@ export function Organograma() {
                             {roots.length > 0 ? (
                                 roots.map((root, index) => (
                                     <div key={root.id} className="relative flex flex-col items-center w-full">
-                                        <OrganogramNode colab={root} context={nodeContext} />
+                                        <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
                                         {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
                                     </div>
                                 ))
