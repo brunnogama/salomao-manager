@@ -382,22 +382,8 @@ export function Organograma() {
             return !c.leader_id;
         });
     }, [data, activeTab]);
-
-
-
-
-    if (colsLoading) {
-        return (
-            <div className="flex items-center justify-center h-full min-h-[400px]">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-10 w-10 animate-spin text-[#1e3a8a]" />
-                    <p className="text-sm font-bold text-[#0a192f] uppercase tracking-widest animate-pulse">Carregando Estrutura...</p>
-                </div>
-            </div>
-        );
-    }
-
     // Find pure top level nodes based on active tab
+    // NOTE: These hooks MUST be before any early returns to comply with React Rules of Hooks
     const roots = useMemo(() => {
         return topLevelNodes.filter(c => {
             if (activeTab === 'JURIDICO') return c.isJuridico;
@@ -415,6 +401,17 @@ export function Organograma() {
         setEditingCompetenciasText,
         subordinatesMap
     }), [activeTab, searchQuery, subordinatesMap]);
+
+    if (colsLoading) {
+        return (
+            <div className="flex items-center justify-center h-full min-h-[400px]">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-[#1e3a8a]" />
+                    <p className="text-sm font-bold text-[#0a192f] uppercase tracking-widest animate-pulse">Carregando Estrutura...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div
