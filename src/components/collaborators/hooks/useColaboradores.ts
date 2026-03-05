@@ -1,5 +1,5 @@
 // src/hooks/useColaboradores.ts
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../../lib/supabase' // Caminho de importação ajustado para o padrão do projeto
 import { Collaborator, GEDDocument } from '../../../types/controladoria' // Caminho de importação ajustado
 
@@ -15,7 +15,7 @@ export function useColaboradores() {
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([])
   const [partners, setPartners] = useState<{ id: string; name: string }[]>([])
 
-  const fetchColaboradores = async () => {
+  const fetchColaboradores = useCallback(async () => {
     setLoading(true)
     try {
       // Fetches collaborators and related tables in parallel to avoid join errors
@@ -81,7 +81,7 @@ export function useColaboradores() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const fetchGedDocs = async (colabId: string) => {
     const { data } = await supabase
