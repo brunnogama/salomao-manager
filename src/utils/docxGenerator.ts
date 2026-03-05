@@ -256,9 +256,15 @@ export const generateProposalDocx = async (data: ProposalData, proposalCode: str
             children: [new TextRun({ text: "Cordialmente,", font: standardFont, size: 20 })]
         }),
 
-        ...partners.map(p => ([
+        ...partners.map((p, idx) => ([
             new Paragraph({
                 alignment: AlignmentType.CENTER,
+                spacing: { line: 288, before: idx === 0 ? 0 : 400 }, // Spacing between partners
+                children: [new TextRun({ text: "____________________________________", font: standardFont, size: 20 })]
+            }),
+            new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { line: 288, before: 100 },
                 children: [new TextRun({ text: p.name.toUpperCase(), font: boldFont, size: 20, bold: true })]
             }),
             new Paragraph({

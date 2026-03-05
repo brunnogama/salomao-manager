@@ -212,7 +212,7 @@ export function Proposals() {
     // We should probably rely on a linked ID if it existed, but name is what we have typically
     const { data: collabData } = await supabase
       .from('collaborators')
-      .select('*')
+      .select('*, oabs(*)')
       .ilike('name', partner.name)
       .eq('status', 'active') // Only active ones?
       .maybeSingle();
@@ -403,15 +403,41 @@ export function Proposals() {
       partner_name: primaryPartner.name,
       proposal_code: proposalCode,
 
-      partners_data: proposalData.selectedPartners.map(p => ({
-        name: p.name,
-        civil_status: p.collaboratorData?.civil_status || 'casado(a)',
-        nacionalidade: p.collaboratorData?.nacionalidade || 'brasileiro(a)',
-        oab_numero: p.collaboratorData?.oab_numero || p.oab_number || 'XXXXXX',
-        oab_uf: p.collaboratorData?.oab_uf || p.oab_state || 'RJ',
-        cpf: p.collaboratorData?.cpf || p.cpf || 'XXX.XXX.XXX-XX',
-        gender: p.collaboratorData?.gender || p.gender || 'M',
-      })),
+      partners_data: proposalData.selectedPartners.map(p => {
+        let oabNumero = p.collaboratorData?.oab_numero || p.oab_number || 'XXXXXX';
+        let oabUf = p.collaboratorData?.oab_uf || p.oab_state || 'RJ';
+
+        if (proposalData.contractLocation && p.collaboratorData?.oabs && p.collaboratorData.oabs.length > 0) {
+          const cityToUf: Record<string, string> = {
+            "Rio de Janeiro": "RJ", "São Paulo": "SP", "Brasília": "DF",
+            "Vitória": "ES", "Salvador": "BA", "Florianópolis": "SC",
+            "Belém": "PA", "Curitiba": "PR", "Belo Horizonte": "MG", "Porto Alegre": "RS"
+          };
+          const targetUf = cityToUf[proposalData.contractLocation] || proposalData.contractLocation;
+
+          const matchingOab = p.collaboratorData.oabs.find((o: any) => o.uf === targetUf && o.tipo !== 'Inativa');
+          if (matchingOab) {
+            oabNumero = matchingOab.numero;
+            oabUf = matchingOab.uf;
+          } else {
+            const principalOab = p.collaboratorData.oabs.find((o: any) => o.tipo === 'Principal') || p.collaboratorData.oabs[0];
+            if (principalOab) {
+              oabNumero = principalOab.numero;
+              oabUf = principalOab.uf;
+            }
+          }
+        }
+
+        return {
+          name: p.name,
+          civil_status: p.collaboratorData?.civil_status || 'casado(a)',
+          nacionalidade: p.collaboratorData?.nacionalidade || 'brasileiro(a)',
+          oab_numero: oabNumero,
+          oab_uf: oabUf,
+          cpf: p.collaboratorData?.cpf || p.cpf || 'XXX.XXX.XXX-XX',
+          gender: p.collaboratorData?.gender || p.gender || 'M',
+        };
+      }),
 
       location: proposalData.contractLocation,
       reference: proposalData.reference,
@@ -756,19 +782,29 @@ export function Proposals() {
       </div>
 
       {/* Signatures */}
-      <div className="text-center mt-10 space-y-10 pb-10">
-        <div className="leading-5">
-          <p className="mb-5">Cordialmente,</p>
+      <div className="text-center mt-10 pb-10">
+        <div className="leading-5 mb-16">
+          <p className="mb-4">Cordialmente,</p>
+        </div>
+        <div className="space-y-16">
           {proposalData.selectedPartners.length > 0 ? proposalData.selectedPartners.map(p => (
-            <p key={p.id} className="bg-yellow-200/50 px-1 font-bold block">{p.name}</p>
+            <div key={p.id} className="leading-5">
+              <p>____________________________________</p>
+              <p className="px-1 font-bold mt-2 block">{p.name}</p>
+              <p className="font-bold">SALOMÃO ADVOGADOS</p>
+            </div>
           )) : (
-            <p className="bg-yellow-200/50 px-1 font-bold inline-block">[Incluir nome do sócio]</p>
+            <div className="leading-5">
+              <p>____________________________________</p>
+              <p className="bg-yellow-200/50 px-1 font-bold mt-2 inline-block">[Incluir nome do sócio]</p>
+              <p className="font-bold">SALOMÃO ADVOGADOS</p>
+            </div>
           )}
-          <p className="font-bold">SALOMÃO ADVOGADOS</p>
         </div>
 
-        <div className="leading-5">
-          <p className="bg-yellow-200/50 px-1 font-bold inline-block uppercase">{proposalData.clientName || '[CLIENTE]'}</p>
+        <div className="leading-5 mt-16">
+          <p>____________________________________</p>
+          <p className="px-1 font-bold mt-2 inline-block uppercase">{proposalData.clientName || '[CLIENTE]'}</p>
         </div>
 
         <div className="text-left mt-10 leading-5">
@@ -987,345 +1023,373 @@ export function Proposals() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócios Responsáveis</label>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local do Contrato</label>
+            <CustomSelect
+              label="" // Empty label as we have the header above
+              value={proposalData.contractLocation}
+              onChange={(val) => setProposalData(prev => ({ ...prev, contractLocation: val }))}
+              options={locationOptions}
+              allowCustomValue={true}
+              onFocus={() => jumpToFieldPage('contractLocation')}
+              placeholder="Selecione ou digite a cidade"
+            />
+          </div>
 
-              <div className="space-y-2 mb-3">
-                {proposalData.selectedPartners.map((p, idx) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl border border-blue-100">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-blue-900">{p.name}</span>
-                      <span className="text-[10px] text-gray-500">
-                        {p.collaboratorData ? 'Dados em Colaboradores: OK' : 'Sem dados em Colaboradores (usando básico)'}
+          <div>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sócios Responsáveis</label>
+
+            <div className="space-y-2 mb-3">
+              {proposalData.selectedPartners.map((p, idx) => (
+                <div key={p.id} className="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-blue-900">{p.name}</span>
+                    {!p.collaboratorData && (
+                      <span className="text-[10px] text-orange-500 font-medium">
+                        Sem dados em Colaboradores (usando básico)
                       </span>
-                    </div>
-                    <button
-                      onClick={() => handlePartnerRemove(idx)}
-                      className="p-1 hover:bg-red-100 rounded-full text-red-500 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    )}
                   </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <CustomSelect
-                  value=""
-                  onChange={(val) => handlePartnerAdd(val)}
-                  options={partners.filter(p => !proposalData.selectedPartners.some(sp => sp.id === p.id)).map(p => ({ label: p.name, value: p.id }))}
-                  onFocus={() => jumpToFieldPage('partners')}
-                  placeholder="+ Adicionar um sócio..."
-                  className="w-full"
-                />
-              </div>
-
-              {/* Warnings for Validation */}
-              {(() => {
-                const warnings = proposalData.selectedPartners.map(p => {
-                  if (!proposalData.contractLocation) return null;
-                  const allowedLocations = PARTNER_LOCATIONS[p.name];
-                  if (allowedLocations && !allowedLocations.includes(proposalData.contractLocation)) {
-                    return `O sócio ${p.name} não compõe o contrato social de ${proposalData.contractLocation}. Ele pertence a: ${allowedLocations.join(', ')}.`;
-                  }
-                  return null;
-                }).filter(Boolean);
-
-                if (warnings.length > 0) {
-                  return (
-                    <div className="mt-3 space-y-2">
-                      {warnings.map((msg, i) => (
-                        <div key={i} className="flex items-start gap-2 p-3 bg-red-50 text-red-700 rounded-xl border border-red-200">
-                          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
-                          <p className="text-xs font-medium leading-relaxed">{msg}</p>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }
-                return null;
-              })()}
+                  <button
+                    onClick={() => handlePartnerRemove(idx)}
+                    className="p-1 hover:bg-red-100 rounded-full text-red-500 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>
 
-            <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Local do Contrato</label>
+            <div className="flex gap-2">
               <CustomSelect
-                label="" // Empty label as we have the header above
-                value={proposalData.contractLocation}
-                onChange={(val) => setProposalData(prev => ({ ...prev, contractLocation: val }))}
-                options={locationOptions}
-                allowCustomValue={true}
-                onFocus={() => jumpToFieldPage('contractLocation')}
-                placeholder="Selecione ou digite a cidade"
+                value=""
+                onChange={(val) => handlePartnerAdd(val)}
+                options={partners.filter(p => !proposalData.selectedPartners.some(sp => sp.id === p.id)).map(p => ({ label: p.name, value: p.id }))}
+                onFocus={() => jumpToFieldPage('partners')}
+                placeholder="+ Adicionar um sócio..."
+                className="w-full"
               />
             </div>
 
-            <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Referência da Proposta</label>
-              <input
-                type="text"
-                name="reference"
-                value={proposalData.reference}
-                onChange={handleChange}
-                placeholder="Ex: Contrato de Honorários..."
-                onFocus={() => jumpToFieldPage('reference')}
-                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
-              />
-            </div>
+            {/* Warnings for Validation */}
+            {(() => {
+              const warnings = proposalData.selectedPartners.flatMap(p => {
+                const msgs: string[] = [];
+                if (!proposalData.contractLocation) return msgs;
 
-            <div>
-              <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Objeto da Proposta</label>
-              <textarea
-                name="object"
-                value={proposalData.object}
-                onChange={handleChange}
-                rows={3}
-                placeholder="Ex: Assessoria Jurídica na ação..."
-                onFocus={() => jumpToPage(0)}
-                className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none resize-none bg-gray-50/50 transition-all"
-              />
-            </div>
+                const allowedLocations = PARTNER_LOCATIONS[p.name];
+                if (allowedLocations && !allowedLocations.includes(proposalData.contractLocation)) {
+                  msgs.push(`O sócio ${p.name} não compõe o contrato social de ${proposalData.contractLocation}. Ele pertence a: ${allowedLocations.join(', ')}.`);
+                }
 
-            {/* Fields Refactored */}
-            {/* Fields Refactored */}
-            {renderClauseInputs("Pró-Labore & Condições", "pro_labore_clauses", "R$ 0,00", "Descrição do pró-labore...", true)}
-            {renderClauseInputs("Êxito Intermediário", "intermediate_fee_clauses", "R$ 0,00", "Descrição do êxito...", true)}
+                if (p.collaboratorData?.oabs && p.collaboratorData.oabs.length > 0) {
+                  const cityToUf: Record<string, string> = {
+                    "Rio de Janeiro": "RJ", "São Paulo": "SP", "Brasília": "DF",
+                    "Vitória": "ES", "Salvador": "BA", "Florianópolis": "SC",
+                    "Belém": "PA", "Curitiba": "PR", "Belo Horizonte": "MG", "Porto Alegre": "RS"
+                  };
+                  const targetUf = cityToUf[proposalData.contractLocation] || proposalData.contractLocation;
+                  const hasLocalOab = p.collaboratorData.oabs.some((o: any) => o.uf === targetUf && o.tipo !== 'Inativa');
 
-            {/* Unified Success Fees */}
-            {renderClauseInputs("Êxito Final (R$ ou %)", "final_success_fee_clauses", "Valor", "Descrição do êxito...", true)}
+                  if (!hasLocalOab) {
+                    msgs.push(`O sócio ${p.name} não possui OAB ativa para ${proposalData.contractLocation} (${targetUf}). A OAB principal será utilizada na proposta.`);
+                  }
+                } else if (p.collaboratorData) {
+                  // Sem registros de OAB no perfil do colaborador mas tem dados de colaborador
+                  // Não é um erro gravíssimo, mas ele vai pegar a principal
+                  // Silenciando se quiser apenas "não tem a OAB desse local"
+                }
 
+                return msgs;
+              }).filter(Boolean);
+
+              if (warnings.length > 0) {
+                return (
+                  <div className="mt-3 space-y-2">
+                    {warnings.map((msg, i) => (
+                      <div key={i} className="flex items-start gap-2 p-3 bg-red-50 text-red-700 rounded-xl border border-red-200">
+                        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+                        <p className="text-xs font-medium leading-relaxed">{msg}</p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-3 sm:gap-0">
-            <button
-              onClick={handleGenerateProposalOnly}
-              disabled={loading}
-              className="w-full sm:w-auto sm:mr-3 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest px-6 py-4 rounded-xl hover:bg-blue-50 transition-all flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Gerar Apenas Arquivo
-            </button>
-            <button
-              onClick={handleGenerateProposal}
-              disabled={loading}
-              className="w-full sm:w-auto bg-[#1e3a8a] hover:bg-[#112240] text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-              Gerar Proposta & Criar Caso
-            </button>
+          <div>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Referência da Proposta</label>
+            <input
+              type="text"
+              name="reference"
+              value={proposalData.reference}
+              onChange={handleChange}
+              placeholder="Ex: Contrato de Honorários..."
+              onFocus={() => jumpToFieldPage('reference')}
+              className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none bg-gray-50/50 transition-all"
+            />
           </div>
+
+          <div>
+            <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Objeto da Proposta</label>
+            <textarea
+              name="object"
+              value={proposalData.object}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Ex: Assessoria Jurídica na ação..."
+              onFocus={() => jumpToPage(0)}
+              className="w-full border border-gray-200 rounded-xl p-3.5 text-sm font-semibold text-gray-700 focus:border-[#1e3a8a] outline-none resize-none bg-gray-50/50 transition-all"
+            />
+          </div>
+
+          {/* Fields Refactored */}
+          {/* Fields Refactored */}
+          {renderClauseInputs("Pró-Labore & Condições", "pro_labore_clauses", "R$ 0,00", "Descrição do pró-labore...", true)}
+          {renderClauseInputs("Êxito Intermediário", "intermediate_fee_clauses", "R$ 0,00", "Descrição do êxito...", true)}
+
+          {/* Unified Success Fees */}
+          {renderClauseInputs("Êxito Final (R$ ou %)", "final_success_fee_clauses", "Valor", "Descrição do êxito...", true)}
+
         </div>
 
-        {/* DIREITA: Preview Visual */}
-        <div className="bg-white p-4 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center relative min-h-[500px] sm:min-h-[900px] w-full">
-          <p className="absolute top-4 right-6 text-[9px] font-black text-gray-300 uppercase tracking-widest hidden sm:flex items-center gap-1 z-20">
-            <Eye className="w-3 h-3" /> Visualização em Tempo Real
-          </p>
+        <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-3 sm:gap-0">
+          <button
+            onClick={handleGenerateProposalOnly}
+            disabled={loading}
+            className="w-full sm:w-auto sm:mr-3 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] text-[10px] uppercase font-black tracking-widest px-6 py-4 rounded-xl hover:bg-blue-50 transition-all flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Gerar Apenas Arquivo
+          </button>
+          <button
+            onClick={handleGenerateProposal}
+            disabled={loading}
+            className="w-full sm:w-auto bg-[#1e3a8a] hover:bg-[#112240] text-white px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+            Gerar Proposta & Criar Caso
+          </button>
+        </div>
+      </div>
 
-          <div className="flex flex-col items-center w-full mt-4 flex-1">
-            <div className="flex items-center justify-between w-full gap-4 flex-1">
+      {/* DIREITA: Preview Visual */}
+      <div className="bg-white p-4 sm:p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center relative min-h-[500px] sm:min-h-[900px] w-full">
+        <p className="absolute top-4 right-6 text-[9px] font-black text-gray-300 uppercase tracking-widest hidden sm:flex items-center gap-1 z-20">
+          <Eye className="w-3 h-3" /> Visualização em Tempo Real
+        </p>
 
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                disabled={currentPage === 0}
-                className="p-3 bg-gray-50 text-[#1e3a8a] rounded-full shadow-md hover:bg-gray-200 disabled:opacity-30 transition-all border border-gray-100 shrink-0"
+        <div className="flex flex-col items-center w-full mt-4 flex-1">
+          <div className="flex items-center justify-between w-full gap-4 flex-1">
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+              disabled={currentPage === 0}
+              className="p-3 bg-gray-50 text-[#1e3a8a] rounded-full shadow-md hover:bg-gray-200 disabled:opacity-30 transition-all border border-gray-100 shrink-0"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            {/* Page Slider Container */}
+            <div className="w-full max-w-[850px] overflow-hidden flex justify-center flex-1">
+              <div
+                className="flex transition-transform duration-500 ease-in-out w-full"
+                style={{ transform: `translateX(-${currentPage * 100}%)` }}
               >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-
-              {/* Page Slider Container */}
-              <div className="w-full max-w-[850px] overflow-hidden flex justify-center flex-1">
-                <div
-                  className="flex transition-transform duration-500 ease-in-out w-full"
-                  style={{ transform: `translateX(-${currentPage * 100}%)` }}
-                >
-                  {Array.from({ length: totalPages }).map((_, pageIdx) => (
+                {Array.from({ length: totalPages }).map((_, pageIdx) => (
+                  <div
+                    key={pageIdx}
+                    className="w-full shrink-0 flex justify-center"
+                  >
+                    {/* A4 Page Simulation */}
                     <div
-                      key={pageIdx}
-                      className="w-full shrink-0 flex justify-center"
+                      className="w-full max-w-[850px] aspect-[21/29.7] bg-white shadow-2xl border border-gray-100 overflow-hidden relative"
                     >
-                      {/* A4 Page Simulation */}
-                      <div
-                        className="w-full max-w-[850px] aspect-[21/29.7] bg-white shadow-2xl border border-gray-100 overflow-hidden relative"
-                      >
-                        {/* Header */}
-                        <div className="absolute top-0 left-0 w-full pt-8 flex justify-center">
-                          <img src="/logo-salomao.png" className="h-10 object-contain" alt="Logo" />
-                        </div>
+                      {/* Header */}
+                      <div className="absolute top-0 left-0 w-full pt-8 flex justify-center">
+                        <img src="/logo-salomao.png" className="h-10 object-contain" alt="Logo" />
+                      </div>
 
-                        {/* Footer */}
-                        <div className="absolute bottom-0 left-0 w-full pb-8 px-12 flex justify-between items-end">
-                          <img src="/rodape1.png" className="h-6 object-contain" alt="Rodapé 1" />
-                          <img src="/rodape2.png" className="h-6 object-contain" alt="Rodapé 2" />
-                        </div>
+                      {/* Footer */}
+                      <div className="absolute bottom-0 left-0 w-full pb-8 px-12 flex justify-between items-end">
+                        <img src="/rodape1.png" className="h-6 object-contain" alt="Rodapé 1" />
+                        <img src="/rodape2.png" className="h-6 object-contain" alt="Rodapé 2" />
+                      </div>
 
-                        {/* Safe Area Container - Header/Footer Protection */}
-                        <div className="absolute inset-0 flex flex-col pt-[13%] pb-[11%]">
-                          {/* Content Clipper */}
+                      {/* Safe Area Container - Header/Footer Protection */}
+                      <div className="absolute inset-0 flex flex-col pt-[13%] pb-[11%]">
+                        {/* Content Clipper */}
+                        <div
+                          className="overflow-hidden px-[12.1%] pt-4"
+                          style={{ height: safeAreaHeight ? `${safeAreaHeight + 16}px` : 'auto' }}
+                        >
                           <div
-                            className="overflow-hidden px-[12.1%] pt-4"
-                            style={{ height: safeAreaHeight ? `${safeAreaHeight + 16}px` : 'auto' }}
+                            style={{
+                              transform: `translateY(-${pageIdx * safeAreaHeight}px)`,
+                              height: 'fit-content'
+                            }}
                           >
-                            <div
-                              style={{
-                                transform: `translateY(-${pageIdx * safeAreaHeight}px)`,
-                                height: 'fit-content'
-                              }}
-                            >
-                              {/* The Content itself */}
-                              <div className="text-left text-[#0a192f] text-[10px] leading-5 select-none h-fit">
-                                {renderPreviewContent()}
-                              </div>
+                            {/* The Content itself */}
+                            <div className="text-left text-[#0a192f] text-[10px] leading-5 select-none h-fit">
+                              {renderPreviewContent()}
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
+            </div>
 
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+              disabled={currentPage === totalPages - 1}
+              className="p-3 bg-gray-50 text-[#1e3a8a] rounded-full shadow-md hover:bg-gray-200 disabled:opacity-30 transition-all border border-gray-100 shrink-0"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="mt-8 mb-4 text-[11px] font-black text-gray-500 uppercase tracking-widest bg-gray-50 px-5 py-2.5 rounded-xl border border-gray-100 shadow-sm text-center w-full max-w-[200px]">
+            Página {currentPage + 1} de {totalPages}
+          </div>
+        </div>
+
+        <div
+          className="absolute opacity-0 pointer-events-none bg-white overflow-hidden"
+          style={{
+            width: previewContainerRef.current?.offsetWidth ? `${previewContainerRef.current.offsetWidth}px` : '850px',
+            padding: 'calc(13% + 1rem) 12.1% 11% 12.1%'
+          }}
+        >
+          <div ref={previewContentRef}>
+            <div className="text-left text-[#0a192f] text-[10px] leading-5">
+              {renderPreviewContent()}
+            </div>
+          </div>
+        </div>
+        <div ref={previewContainerRef} className="w-full max-w-[850px] aspect-[21/29.7] absolute opacity-0 pointer-events-none"></div>
+      </div>
+    </div>
+
+      {/* Hidden Modal to open after generation */ }
+  {
+    isModalOpen && (
+      <ContractFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModalAttempt}
+        formData={contractFormData}
+        setFormData={setContractFormData}
+        onSave={() => { }}
+        loading={false}
+        isEditing={true} // So it allows editing immediately
+        partners={partners}
+        onOpenPartnerManager={() => { }}
+        analysts={analysts}
+        onOpenAnalystManager={() => { }}
+        onCNPJSearch={() => { }}
+        processes={processes}
+        currentProcess={currentProcess}
+        setCurrentProcess={setCurrentProcess}
+        editingProcessIndex={editingProcessIndex}
+        handleProcessAction={() => { }}
+        editProcess={() => { }}
+        removeProcess={() => { }}
+        newIntermediateFee={newIntermediateFee}
+        setNewIntermediateFee={setNewIntermediateFee}
+        addIntermediateFee={() => { }}
+        removeIntermediateFee={() => { }}
+        timelineData={timelineData}
+        getStatusColor={() => ''}
+        getStatusLabel={() => ''}
+      />
+    )
+  }
+
+  {/* Confirmation Modal */ }
+  {
+    showCancelConfirm && (
+      <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full animate-in zoom-in-95 duration-200 border border-gray-100">
+          <div className="flex flex-col items-center text-center">
+            <div className="bg-red-50 p-3 rounded-full mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-lg font-black text-gray-800 mb-2">Cancelar criação do caso?</h3>
+            <p className="text-sm text-gray-500 mb-6 font-medium leading-relaxed">
+              Se você sair agora, o caso recém criado será excluído e todos os dados gerados (incluindo a proposta) serão perdidos permanentemente.
+            </p>
+            <div className="flex gap-3 w-full">
               <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                disabled={currentPage === totalPages - 1}
-                className="p-3 bg-gray-50 text-[#1e3a8a] rounded-full shadow-md hover:bg-gray-200 disabled:opacity-30 transition-all border border-gray-100 shrink-0"
+                onClick={handleAbortCancel}
+                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs uppercase tracking-wider hover:bg-gray-50 transition-colors"
               >
-                <ChevronRight className="w-6 h-6" />
+                Não, continuar editando
+              </button>
+              <button
+                onClick={handleConfirmCancel}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold text-xs uppercase tracking-wider hover:bg-red-600 shadow-lg shadow-red-200 transition-all hover:scale-[1.02]"
+              >
+                Sim, cancelar e excluir
               </button>
             </div>
-
-            <div className="mt-8 mb-4 text-[11px] font-black text-gray-500 uppercase tracking-widest bg-gray-50 px-5 py-2.5 rounded-xl border border-gray-100 shadow-sm text-center w-full max-w-[200px]">
-              Página {currentPage + 1} de {totalPages}
-            </div>
           </div>
-
-          <div
-            className="absolute opacity-0 pointer-events-none bg-white overflow-hidden"
-            style={{
-              width: previewContainerRef.current?.offsetWidth ? `${previewContainerRef.current.offsetWidth}px` : '850px',
-              padding: 'calc(13% + 1rem) 12.1% 11% 12.1%'
-            }}
-          >
-            <div ref={previewContentRef}>
-              <div className="text-left text-[#0a192f] text-[10px] leading-5">
-                {renderPreviewContent()}
-              </div>
-            </div>
-          </div>
-          <div ref={previewContainerRef} className="w-full max-w-[850px] aspect-[21/29.7] absolute opacity-0 pointer-events-none"></div>
         </div>
       </div>
-
-      {/* Hidden Modal to open after generation */}
-      {isModalOpen && (
-        <ContractFormModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModalAttempt}
-          formData={contractFormData}
-          setFormData={setContractFormData}
-          onSave={() => { }}
-          loading={false}
-          isEditing={true} // So it allows editing immediately
-          partners={partners}
-          onOpenPartnerManager={() => { }}
-          analysts={analysts}
-          onOpenAnalystManager={() => { }}
-          onCNPJSearch={() => { }}
-          processes={processes}
-          currentProcess={currentProcess}
-          setCurrentProcess={setCurrentProcess}
-          editingProcessIndex={editingProcessIndex}
-          handleProcessAction={() => { }}
-          editProcess={() => { }}
-          removeProcess={() => { }}
-          newIntermediateFee={newIntermediateFee}
-          setNewIntermediateFee={setNewIntermediateFee}
-          addIntermediateFee={() => { }}
-          removeIntermediateFee={() => { }}
-          timelineData={timelineData}
-          getStatusColor={() => ''}
-          getStatusLabel={() => ''}
-        />
-      )}
-
-      {/* Confirmation Modal */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full animate-in zoom-in-95 duration-200 border border-gray-100">
-            <div className="flex flex-col items-center text-center">
-              <div className="bg-red-50 p-3 rounded-full mb-4">
-                <AlertTriangle className="w-8 h-8 text-red-500" />
-              </div>
-              <h3 className="text-lg font-black text-gray-800 mb-2">Cancelar criação do caso?</h3>
-              <p className="text-sm text-gray-500 mb-6 font-medium leading-relaxed">
-                Se você sair agora, o caso recém criado será excluído e todos os dados gerados (incluindo a proposta) serão perdidos permanentemente.
-              </p>
-              <div className="flex gap-3 w-full">
-                <button
-                  onClick={handleAbortCancel}
-                  className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs uppercase tracking-wider hover:bg-gray-50 transition-colors"
-                >
-                  Não, continuar editando
-                </button>
-                <button
-                  onClick={handleConfirmCancel}
-                  className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold text-xs uppercase tracking-wider hover:bg-red-600 shadow-lg shadow-red-200 transition-all hover:scale-[1.02]"
-                >
-                  Sim, cancelar e excluir
-                </button>
-              </div>
+    )
+  }
+  {/* Editor Modal */ }
+  {
+    isEditingBody && (
+      <div className="fixed inset-0 bg-[#0a192f]/80 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+            <div>
+              <h3 className="text-xl font-black text-[#0a192f] flex items-center gap-2">
+                <FileSignature className="w-6 h-6 text-[#1e3a8a]" />
+                Editor Avançado da Proposta
+              </h3>
+              <p className="text-xs font-semibold text-gray-500 mt-1">Edite livremente o conteúdo da proposta. Deixe linhas em branco para separar os parágrafos.</p>
             </div>
+            <button
+              onClick={() => setIsEditingBody(false)}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          </div>
+
+          <div className="flex-1 p-6 bg-gray-100 overflow-hidden flex flex-col">
+            <textarea
+              value={customBodyText}
+              onChange={(e) => setCustomBodyText(e.target.value)}
+              className="w-full flex-1 p-8 text-sm text-gray-800 bg-white border border-gray-200 shadow-inner rounded-xl outline-none focus:border-[#1e3a8a] focus:ring-4 focus:ring-blue-500/10 transition-all resize-none font-mono leading-relaxed"
+              placeholder="Edite o corpo da proposta aqui..."
+            />
+          </div>
+
+          <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-3">
+            <button
+              onClick={() => setIsEditingBody(false)}
+              className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs uppercase tracking-wider hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => setIsEditingBody(false)}
+              className="px-8 py-3 rounded-xl bg-[#1e3a8a] text-white font-black text-xs uppercase tracking-wider hover:bg-[#112240] shadow-lg flex items-center gap-2 transition-all active:scale-95"
+            >
+              <CheckCircle className="w-4 h-4" />
+              Salvar Alterações
+            </button>
           </div>
         </div>
-      )}
-      {/* Editor Modal */}
-      {isEditingBody && (
-        <div className="fixed inset-0 bg-[#0a192f]/80 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
-              <div>
-                <h3 className="text-xl font-black text-[#0a192f] flex items-center gap-2">
-                  <FileSignature className="w-6 h-6 text-[#1e3a8a]" />
-                  Editor Avançado da Proposta
-                </h3>
-                <p className="text-xs font-semibold text-gray-500 mt-1">Edite livremente o conteúdo da proposta. Deixe linhas em branco para separar os parágrafos.</p>
-              </div>
-              <button
-                onClick={() => setIsEditingBody(false)}
-                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
+      </div>
+    )
+  }
 
-            <div className="flex-1 p-6 bg-gray-100 overflow-hidden flex flex-col">
-              <textarea
-                value={customBodyText}
-                onChange={(e) => setCustomBodyText(e.target.value)}
-                className="w-full flex-1 p-8 text-sm text-gray-800 bg-white border border-gray-200 shadow-inner rounded-xl outline-none focus:border-[#1e3a8a] focus:ring-4 focus:ring-blue-500/10 transition-all resize-none font-mono leading-relaxed"
-                placeholder="Edite o corpo da proposta aqui..."
-              />
-            </div>
-
-            <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-3">
-              <button
-                onClick={() => setIsEditingBody(false)}
-                className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs uppercase tracking-wider hover:bg-gray-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => setIsEditingBody(false)}
-                className="px-8 py-3 rounded-xl bg-[#1e3a8a] text-white font-black text-xs uppercase tracking-wider hover:bg-[#112240] shadow-lg flex items-center gap-2 transition-all active:scale-95"
-              >
-                <CheckCircle className="w-4 h-4" />
-                Salvar Alterações
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-    </div>
+    </div >
   );
 }
