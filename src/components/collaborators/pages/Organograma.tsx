@@ -42,6 +42,9 @@ export function Organograma() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
+    const [editingCompetenciasId, setEditingCompetenciasId] = useState<string | null>(null);
+    const [editingCompetenciasText, setEditingCompetenciasText] = useState('');
+    const [editingPosition, setEditingPosition] = useState<{ top: number, left: number } | null>(null);
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
     // For now, we focus on Jurídico as requested, but all are loaded
@@ -160,16 +163,41 @@ export function Organograma() {
         return data.filter(c => (c.leader_id || null) === leaderId);
     };
 
+    // Helper to check if a node or any of its descendants have administrative subordinates
+    const hasAdministrativeSubordinates = (leaderId: string): boolean => {
+        const subs = data.filter(c => c.leader_id === leaderId);
+        for (const sub of subs) {
+            const roleStr = String(sub.role || '').toLowerCase();
+            const isSocio = roleStr.includes('sócio');
+            const isJur = JURIDICO_HIERARCHY.some(h => h.toLowerCase() === roleStr) || roleStr.includes('advogado') || roleStr.includes('estagiário');
+            const isAdm = !isJur || isSocio;
+
+            // If a direct subordinate is admin and not a socio (or is a socio but then we check deeper), consider it
+            if (isAdm && !isSocio) return true;
+            // Recursively check
+            if (hasAdministrativeSubordinates(sub.id)) return true;
+        }
+        return false;
+    };
+
     // Get Top Level Nodes (Partners or those explicitly set as top)
     const topLevelNodes = useMemo(() => {
         return data.filter(c => {
             const roleStr = String(c.role || '');
-            // Partners are always top level
-            if (roleStr.toLowerCase().includes('sócio')) return true;
-            // Or anyone without a leader in the Juridico set
+            const isSocio = roleStr.toLowerCase().includes('sócio');
+            const isDiretorFinanceiro = roleStr.toLowerCase().includes('diretor financeiro');
+
+            if (activeTab === 'ADMINISTRATIVO') {
+                if (isDiretorFinanceiro) return true;
+                if (isSocio) return hasAdministrativeSubordinates(c.id);
+                return !c.leader_id;
+            }
+
+            // Juridico tab
+            if (isSocio) return true;
             return !c.leader_id;
         });
-    }, [data]);
+    }, [data, activeTab]);
 
     // A recursive component to render the tree node
     const OrganogramNode = ({ colab, level = 0 }: { colab: ColaboradorCard, level?: number }) => {
@@ -197,7 +225,7 @@ export function Organograma() {
         const filteredSubordinates = subordinates.filter(c => {
             const r = String(c.role || '');
             const isS = r.toLowerCase().includes('sócio');
-            const isJ = JURIDICO_HIERARCHY.includes(r) || isS || r.toLowerCase().includes('advogado') || r.toLowerCase().includes('estagiário');
+            const isJ = JURIDICO_HIERARCHY.some(h => h.toLowerCase() === r.trim().toLowerCase()) || r.toLowerCase().includes('advogado') || r.toLowerCase().includes('estagiário');
             const isA = !isJ || isS;
             if (activeTab === 'JURIDICO' && !isJ) return false;
             if (activeTab === 'ADMINISTRATIVO' && !isA) return false;
@@ -280,26 +308,20 @@ export function Organograma() {
                                             )}
                                         </div>
 
-                                        {/* Hover Competências Card */}
-                                        <div
-                                            className="absolute left-[calc(100%+16px)] top-1/2 -translate-y-1/2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[100] w-[320px]"
-                                            onClick={(e) => e.stopPropagation()} // Prevent modal from opening if they click inside the tooltip
+                                        {/* Competências Trigger */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                setEditingPosition({ top: rect.top, left: rect.right + 16 });
+                                                setEditingCompetenciasId(colab.id);
+                                                setEditingCompetenciasText(colab.competencias || '');
+                                            }}
+                                            className="absolute -right-2 top-0 p-1.5 bg-white border border-gray-100 rounded-full shadow-sm text-gray-400 hover:text-[#1e3a8a] opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                            title="Editar Competências"
                                         >
-                                            <div className="bg-white p-5 rounded-3xl shadow-2xl border border-gray-100 flex flex-col gap-3 relative before:absolute before:top-1/2 before:-left-3 before:-translate-y-1/2 before:border-[12px] before:border-transparent before:border-r-white filter drop-shadow-xl animate-in slide-in-from-left-2">
-                                                <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest flex justify-between items-center">
-                                                    Competências no Organograma
-                                                    {savingCompetenciasId === colab.id && <Loader2 className="w-3 h-3 animate-spin text-[#1e3a8a]" />}
-                                                </label>
-                                                <textarea
-                                                    value={colab.competencias}
-                                                    onChange={(e) => updateCompetencias(colab.id, e.target.value)}
-                                                    onBlur={() => saveCompetencias(colab.id, colab.competencias || '')}
-                                                    placeholder="Descreva as competências deste colaborador..."
-                                                    className="w-full text-xs p-3 rounded-2xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 outline-none transition-all resize-none min-h-[90px] text-[#0a192f] leading-relaxed"
-                                                    onPointerDown={(e) => e.stopPropagation()} // Prevent drag conflict
-                                                />
-                                            </div>
-                                        </div>
+                                            <Tag className="w-3 h-3" />
+                                        </button>
                                     </div>
                                 )}
                             </Draggable>
@@ -373,11 +395,11 @@ export function Organograma() {
     });
 
     return (
-        <div className={`${isMaximized ? 'fixed inset-0 z-[100] bg-white w-full h-full p-6 space-y-6 overflow-auto' : 'p-8 max-w-[1600px] mx-auto space-y-8'} animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen print:p-0 print:bg-white`}>
+        <div className={`${isMaximized ? 'fixed inset-0 z-[100] bg-white w-full h-full p-6 space-y-6 overflow-auto' : 'p-8 w-full space-y-8'} animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen print:p-0 print:bg-white`}>
 
             {/* Header Section (Padrão Recrutamento) */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-transparent rounded-bl-full opacity-50 pointer-events-none" />
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-bl-full pointer-events-none" />
 
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-2">
@@ -680,8 +702,41 @@ export function Organograma() {
                     </div>
                 )}
 
+            {/* Floating Competências Editor Overlay */}
+            {editingCompetenciasId && editingPosition && (
+                <div
+                    className="fixed z-[200] w-[320px] animate-in zoom-in-95 duration-200"
+                    style={{
+                        top: Math.min(window.innerHeight - 200, editingPosition.top - 50),
+                        left: Math.min(window.innerWidth - 340, editingPosition.left)
+                    }}
+                >
+                    <div className="bg-white p-5 rounded-3xl shadow-2xl border border-gray-100 flex flex-col gap-3 relative filter drop-shadow-xl">
+                        <label className="text-[10px] font-black text-[#0a192f] uppercase tracking-widest flex justify-between items-center">
+                            Competências no Organograma
+                            {savingCompetenciasId === editingCompetenciasId && <Loader2 className="w-3 h-3 animate-spin text-[#1e3a8a]" />}
+                        </label>
+                        <textarea
+                            value={editingCompetenciasText}
+                            onChange={(e) => {
+                                setEditingCompetenciasText(e.target.value);
+                                updateCompetencias(editingCompetenciasId, e.target.value);
+                            }}
+                            onBlur={() => {
+                                saveCompetencias(editingCompetenciasId, editingCompetenciasText);
+                                setEditingCompetenciasId(null);
+                            }}
+                            placeholder="Descreva as competências deste colaborador..."
+                            className="w-full text-xs p-3 rounded-2xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#1e3a8a] focus:ring-2 focus:ring-[#1e3a8a]/20 outline-none transition-all resize-none min-h-[120px] text-[#0a192f] leading-relaxed"
+                            autoFocus
+                        />
+                        <p className="text-[9px] text-gray-400 font-bold uppercase text-center">Clique fora para salvar</p>
+                    </div>
+                </div>
+            )}
+
             {/* Hovering Zoom Controls Panel */}
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-white p-2 rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-100 flex items-center gap-2 animate-in slide-in-from-bottom-5">
+            <div className="fixed bottom-8 right-8 z-[110] bg-white p-2 rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-100 flex items-center gap-2 animate-in slide-in-from-right-4">
                 <button
                     onClick={() => setZoomLevel(prev => Math.max(0.4, prev - 0.1))}
                     className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
