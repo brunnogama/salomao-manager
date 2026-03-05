@@ -194,7 +194,7 @@ const OrganogramNode = React.memo(({
     );
 });
 
-// Admin Organogram Tree: groups collaborators by Atuação under Diretor Financeiro
+// Admin Organogram Tree: Each Atuação is its own vertical tree (divisional org chart)
 const AdminOrganogramTree = React.memo(({
     diretorFinanceiro,
     allAdminColabs,
@@ -218,7 +218,7 @@ const AdminOrganogramTree = React.memo(({
     const atuacaoGroups = useMemo(() => {
         const groups = new Map<string, ColaboradorCard[]>();
         allAdminColabs.forEach(c => {
-            if (c.id === diretorFinanceiro.id) return; // skip the director itself
+            if (c.id === diretorFinanceiro.id) return;
             const key = c.atuacao || 'Sem Atuação';
             if (!groups.has(key)) groups.set(key, []);
             groups.get(key)!.push(c);
@@ -227,14 +227,11 @@ const AdminOrganogramTree = React.memo(({
     }, [allAdminColabs, diretorFinanceiro.id]);
 
     // For each Atuação group, find the top-level collaborators
-    // (those whose leader is the Diretor Financeiro or who have no leader)
     const getTopLevelInGroup = useCallback((colabs: ColaboradorCard[]) => {
         const groupIds = new Set(colabs.map(c => c.id));
         return colabs.filter(c => {
-            // Top-level if leader is the director or leader is outside the group
             if (c.leader_id === diretorFinanceiro.id) return true;
             if (!c.leader_id) return true;
-            // If leader is not in this group, it's a top-level within this group
             if (!groupIds.has(c.leader_id)) return true;
             return false;
         });
@@ -242,115 +239,109 @@ const AdminOrganogramTree = React.memo(({
 
     const atuacaoEntries = Array.from(atuacaoGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
-    return (
-        <div className="flex flex-col items-center">
-            {/* Diretor Financeiro Node */}
-            <div
-                className="flex flex-col items-center cursor-pointer group"
-                onClick={() => setSelectedColabForModal(diretorFinanceiro.fullData)}
-            >
-                <div className="w-28 h-28 rounded-full bg-white shadow-lg border-4 border-[#1e3a8a]/20 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-2xl group-hover:scale-110 group-hover:border-[#1e3a8a]/40">
-                    {diretorFinanceiro.photo_url ? (
-                        <img src={diretorFinanceiro.photo_url} alt={diretorFinanceiro.name} className="w-full h-full object-cover" />
-                    ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-[#1e3a8a]/50">
-                            <UserIcon className="w-12 h-12" />
-                        </div>
-                    )}
-                </div>
-                <div className="mt-4 text-center">
-                    <h4 className="text-[15px] font-black text-[#0a192f] tracking-tight">{diretorFinanceiro.name}</h4>
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">{diretorFinanceiro.role}</span>
-                </div>
+    // Reusable Diretor Financeiro mini-node
+    const DiretorNode = () => (
+        <div
+            className="flex flex-col items-center cursor-pointer group"
+            onClick={() => setSelectedColabForModal(diretorFinanceiro.fullData)}
+        >
+            <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/20 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                {diretorFinanceiro.photo_url ? (
+                    <img src={diretorFinanceiro.photo_url} alt={diretorFinanceiro.name} className="w-full h-full object-cover" />
+                ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-[#1e3a8a]/50">
+                        <UserIcon className="w-10 h-10" />
+                    </div>
+                )}
             </div>
+            <div className="mt-3 text-center">
+                <h4 className="text-[13px] font-black text-[#0a192f] tracking-tight">{diretorFinanceiro.name}</h4>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">{diretorFinanceiro.role}</span>
+            </div>
+        </div>
+    );
 
-            {/* Vertical line from Director down */}
-            {atuacaoEntries.length > 0 && (
-                <>
-                    <div className="w-[3px] h-12 bg-gray-300 mt-2"></div>
+    return (
+        <div className="flex flex-col items-center gap-16 w-full">
+            {atuacaoEntries.map(([atuacaoName, colabs], sectionIdx) => {
+                const topLevel = getTopLevelInGroup(colabs);
+                // Group top-level by role for same-line rendering
+                const roleGroupsMap = new Map<string, ColaboradorCard[]>();
+                topLevel.forEach(c => {
+                    const r = c.role || 'Sem Cargo';
+                    if (!roleGroupsMap.has(r)) roleGroupsMap.set(r, []);
+                    roleGroupsMap.get(r)!.push(c);
+                });
+                const roleGroups = Array.from(roleGroupsMap.entries());
 
-                    {/* Horizontal bar connecting all Atuações */}
-                    <div className="relative flex items-start">
-                        {/* Horizontal line */}
-                        {atuacaoEntries.length > 1 && (
-                            <div className="absolute top-0 left-0 right-0 flex items-center" style={{ height: '3px' }}>
-                                <div className="absolute left-1/2 right-1/2 h-[3px] bg-gray-300" style={{
-                                    left: `calc(${(100 / atuacaoEntries.length) / 2}% )`,
-                                    right: `calc(${(100 / atuacaoEntries.length) / 2}% )`,
-                                    width: `calc(100% - ${100 / atuacaoEntries.length}%)`
-                                }}></div>
-                            </div>
+                return (
+                    <div key={atuacaoName} className="relative flex flex-col items-center w-full">
+                        {/* Section divider between Atuações */}
+                        {sectionIdx > 0 && (
+                            <div className="w-full max-w-4xl h-[2px] bg-gray-200 mb-16"></div>
                         )}
 
-                        {/* Atuação Columns */}
-                        <div className="flex gap-0 items-start">
-                            {atuacaoEntries.map(([atuacaoName, colabs]) => {
-                                const topLevel = getTopLevelInGroup(colabs);
-                                // Group top-level by role
-                                const roleGroupsMap = new Map<string, ColaboradorCard[]>();
-                                topLevel.forEach(c => {
-                                    const r = c.role || 'Sem Cargo';
-                                    if (!roleGroupsMap.has(r)) roleGroupsMap.set(r, []);
-                                    roleGroupsMap.get(r)!.push(c);
-                                });
-                                const roleGroups = Array.from(roleGroupsMap.entries());
+                        {/* Diretor Financeiro (repeated per section) */}
+                        <DiretorNode />
 
-                                return (
-                                    <div key={atuacaoName} className="flex flex-col items-center min-w-[280px] px-6">
-                                        {/* Vertical line from horizontal bar to Atuação label */}
-                                        <div className="w-[3px] h-8 bg-gray-300"></div>
+                        {/* Vertical line from Director to Atuação label */}
+                        <div className="w-[2px] h-8 bg-gray-300"></div>
 
-                                        {/* Atuação Label */}
-                                        <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-6 py-3 rounded-2xl shadow-lg mb-0">
-                                            <span className="text-[12px] font-black uppercase tracking-[0.2em]">{atuacaoName}</span>
-                                        </div>
-
-                                        {/* Vertical line from Atuação down to collaborators */}
-                                        {topLevel.length > 0 && (
-                                            <div className="w-[3px] h-8 bg-gray-300 mt-0"></div>
-                                        )}
-
-                                        {/* Collaborators in this Atuação */}
-                                        {roleGroups.map(([roleName, roleColabs], roleIdx) => (
-                                            <div key={roleName} className="flex flex-col items-center w-full">
-                                                {/* Horizontal bar for same-role group */}
-                                                {roleColabs.length > 1 && (
-                                                    <div className="relative w-full flex justify-center mb-0" style={{ height: '3px' }}>
-                                                        <div className="h-[3px] bg-gray-300" style={{
-                                                            width: `${Math.min(100, roleColabs.length * 240)}px`
-                                                        }}></div>
-                                                    </div>
-                                                )}
-
-                                                <div className="flex justify-center gap-2 flex-wrap">
-                                                    {roleColabs.map((colab) => (
-                                                        <div key={colab.id} className="flex flex-col items-center">
-                                                            {/* Vertical tick from horizontal bar */}
-                                                            {roleColabs.length > 1 && (
-                                                                <div className="w-[2px] h-4 bg-gray-300"></div>
-                                                            )}
-                                                            <OrganogramNode
-                                                                colab={colab}
-                                                                context={context}
-                                                                visitedIds={new Set<string>([diretorFinanceiro.id])}
-                                                            />
-                                                        </div>
-                                                    ))}
-                                                </div>
-
-                                                {/* Separator between role groups */}
-                                                {roleIdx < roleGroups.length - 1 && (
-                                                    <div className="w-[2px] h-6 bg-gray-200 my-2"></div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                );
-                            })}
+                        {/* Atuação Label */}
+                        <div className="bg-gradient-to-r from-[#0a192f] to-[#1e3a8a] text-white px-8 py-3 rounded-2xl shadow-lg">
+                            <span className="text-[12px] font-black uppercase tracking-[0.2em]">{atuacaoName}</span>
                         </div>
+
+                        {/* Vertical line from Atuação to collaborators */}
+                        {topLevel.length > 0 && (
+                            <div className="w-[2px] h-8 bg-gray-300"></div>
+                        )}
+
+                        {/* Collaborators grouped by role */}
+                        {roleGroups.map(([roleName, roleColabs], roleIdx) => (
+                            <div key={roleName} className="flex flex-col items-center">
+                                {/* Horizontal bar connecting same-role collaborators */}
+                                {roleColabs.length > 1 && (
+                                    <div className="relative flex items-start">
+                                        {/* Horizontal connector line */}
+                                        <div className="absolute top-0 h-[2px] bg-gray-300" style={{
+                                            left: `${100 / (roleColabs.length * 2)}%`,
+                                            right: `${100 / (roleColabs.length * 2)}%`
+                                        }}></div>
+
+                                        <div className="flex gap-4">
+                                            {roleColabs.map((colab) => (
+                                                <div key={colab.id} className="flex flex-col items-center">
+                                                    <div className="w-[2px] h-4 bg-gray-300"></div>
+                                                    <OrganogramNode
+                                                        colab={colab}
+                                                        context={context}
+                                                        visitedIds={new Set<string>([diretorFinanceiro.id])}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Single collaborator — no horizontal bar needed */}
+                                {roleColabs.length === 1 && (
+                                    <OrganogramNode
+                                        colab={roleColabs[0]}
+                                        context={context}
+                                        visitedIds={new Set<string>([diretorFinanceiro.id])}
+                                    />
+                                )}
+
+                                {/* Separator between role groups */}
+                                {roleIdx < roleGroups.length - 1 && (
+                                    <div className="w-[2px] h-6 bg-gray-200 my-2"></div>
+                                )}
+                            </div>
+                        ))}
                     </div>
-                </>
-            )}
+                );
+            })}
         </div>
     );
 });
