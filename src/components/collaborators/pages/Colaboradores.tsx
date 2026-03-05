@@ -98,7 +98,8 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [filterCargo, setFilterCargo] = useState('')
 
   // New Tabs State
-  const [activeMainTab, setActiveMainTab] = useState<'Colaboradores' | 'Filtros'>('Colaboradores');
+  const [activeMainTab, setActiveMainTab] = useState<'Colaboradores' | 'Relatórios'>('Colaboradores');
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Advanced Filters State
   // Pessoais
@@ -1354,10 +1355,10 @@ export function Colaboradores({ }: ColaboradoresProps) {
               <Users className="h-4 w-4" /> Equipe
             </button>
             <button
-              onClick={() => setActiveMainTab('Filtros')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Filtros' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveMainTab('Relatórios')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Relatórios' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <Filter className="h-4 w-4" /> Filtros
+              <FileSpreadsheet className="h-4 w-4" /> Relatórios
             </button>
           </div>
 
@@ -1439,13 +1440,160 @@ export function Colaboradores({ }: ColaboradoresProps) {
                 </button>
               </div>
 
-              <button
-                onClick={handleExportAdvanced}
-                className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
-                title={`Exportar (${currentAdvancedFiltered.length})`}
-              >
-                <FileSpreadsheet className="h-5 w-5" />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+                  title={`Exportar`}
+                >
+                  <FileSpreadsheet className="h-5 w-5" />
+                </button>
+
+                {showExportMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)}></div>
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                      <button
+                        onClick={() => {
+                          setShowExportMenu(false);
+                          // Atualiza temporariamente o filtro avançado para 'active', pega o novo array e exporta
+                          const tempFiltered = colaboradores.filter(c => {
+                            if (c.status !== 'active') return false;
+
+                            // Aplica todos os outros filtros avançados
+                            const birthStartMatch = advFilterBirthStart ? new Date(c.birthday || '') >= new Date(advFilterBirthStart) : true;
+                            const birthEndMatch = advFilterBirthEnd ? new Date(c.birthday || '') <= new Date(`${advFilterBirthEnd}T23:59:59`) : true;
+                            const genderMatch = advFilterGender ? c.gender === advFilterGender : true;
+                            const childrenMatch = advFilterChildren ? (advFilterChildren === 'sim' ? (c.children_data && c.children_data.length > 0) : (!c.children_data || c.children_data.length === 0)) : true;
+                            const stateHomeMatch = advFilterStateHome ? c.state === advFilterStateHome : true;
+
+                            const rateioMatch = advFilterRateio ? String(c.rateios?.id || c.rateio) === advFilterRateio : true;
+                            const admStartMatch = advFilterAdmissionStart ? new Date(c.hire_date || '') >= new Date(advFilterAdmissionStart) : true;
+                            const admEndMatch = advFilterAdmissionEnd ? new Date(c.hire_date || '') <= new Date(`${advFilterAdmissionEnd}T23:59:59`) : true;
+                            const partnerMatch = advFilterPartner ? String(c.partner?.id || c.partner_id) === advFilterPartner : true;
+                            const leaderMatch = advFilterLeader ? String(c.leader?.id || c.leader_id) === advFilterLeader : true;
+                            const areaMatch = advFilterArea ? c.area === advFilterArea : true;
+                            const teamMatch = advFilterTeam ? String(c.teams?.id || c.equipe) === advFilterTeam : true;
+                            const roleMatch = advFilterRole ? String(c.roles?.id || c.role) === advFilterRole : true;
+                            const contractTypeMatch = advFilterContractType ? c.contract_type === advFilterContractType : true;
+                            const localMatch = advFilterLocal ? String(c.locations?.id || c.local) === advFilterLocal : true;
+
+                            const transporteTipoMatch = advFilterTransporteTipo ? c.transporte_tipo === advFilterTransporteTipo : true;
+
+                            const gradCompMatch = advFilterGraduationComplete ? (advFilterGraduationComplete === 'sim' ? c.escolaridade_graduacao_concluida === true : c.escolaridade_graduacao_concluida === false) : true;
+                            const postGradCompMatch = advFilterPostGraduationComplete ? (advFilterPostGraduationComplete === 'sim' ? c.escolaridade_pos_graduacao_concluida === true : c.escolaridade_pos_graduacao_concluida === false) : true;
+                            const expCompMatch = advFilterExpectedCompletion ? c.escolaridade_previsao_conclusao === advFilterExpectedCompletion : true;
+                            const compYearMatch = advFilterCompletionYear ? c.escolaridade_ano_conclusao === advFilterCompletionYear : true;
+
+                            return birthStartMatch && birthEndMatch && genderMatch && childrenMatch && stateHomeMatch &&
+                              rateioMatch && admStartMatch && admEndMatch && partnerMatch && leaderMatch && areaMatch &&
+                              teamMatch && roleMatch && contractTypeMatch && localMatch &&
+                              transporteTipoMatch &&
+                              gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
+                          });
+                          if (tempFiltered.length > 0) exportColaboradoresXLSX(tempFiltered);
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
+                      >
+                        <User className="h-4 w-4 text-emerald-600" />
+                        Ativos ({colaboradores.filter(c => c.status === 'active').length})
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowExportMenu(false);
+                          const tempFiltered = colaboradores.filter(c => {
+                            if (c.status !== 'inactive') return false;
+
+                            // Aplica todos os outros filtros avançados
+                            const birthStartMatch = advFilterBirthStart ? new Date(c.birthday || '') >= new Date(advFilterBirthStart) : true;
+                            const birthEndMatch = advFilterBirthEnd ? new Date(c.birthday || '') <= new Date(`${advFilterBirthEnd}T23:59:59`) : true;
+                            const genderMatch = advFilterGender ? c.gender === advFilterGender : true;
+                            const childrenMatch = advFilterChildren ? (advFilterChildren === 'sim' ? (c.children_data && c.children_data.length > 0) : (!c.children_data || c.children_data.length === 0)) : true;
+                            const stateHomeMatch = advFilterStateHome ? c.state === advFilterStateHome : true;
+
+                            const rateioMatch = advFilterRateio ? String(c.rateios?.id || c.rateio) === advFilterRateio : true;
+                            const admStartMatch = advFilterAdmissionStart ? new Date(c.hire_date || '') >= new Date(advFilterAdmissionStart) : true;
+                            const admEndMatch = advFilterAdmissionEnd ? new Date(c.hire_date || '') <= new Date(`${advFilterAdmissionEnd}T23:59:59`) : true;
+                            const partnerMatch = advFilterPartner ? String(c.partner?.id || c.partner_id) === advFilterPartner : true;
+                            const leaderMatch = advFilterLeader ? String(c.leader?.id || c.leader_id) === advFilterLeader : true;
+                            const areaMatch = advFilterArea ? c.area === advFilterArea : true;
+                            const teamMatch = advFilterTeam ? String(c.teams?.id || c.equipe) === advFilterTeam : true;
+                            const roleMatch = advFilterRole ? String(c.roles?.id || c.role) === advFilterRole : true;
+                            const contractTypeMatch = advFilterContractType ? c.contract_type === advFilterContractType : true;
+                            const localMatch = advFilterLocal ? String(c.locations?.id || c.local) === advFilterLocal : true;
+
+                            const transporteTipoMatch = advFilterTransporteTipo ? c.transporte_tipo === advFilterTransporteTipo : true;
+
+                            const gradCompMatch = advFilterGraduationComplete ? (advFilterGraduationComplete === 'sim' ? c.escolaridade_graduacao_concluida === true : c.escolaridade_graduacao_concluida === false) : true;
+                            const postGradCompMatch = advFilterPostGraduationComplete ? (advFilterPostGraduationComplete === 'sim' ? c.escolaridade_pos_graduacao_concluida === true : c.escolaridade_pos_graduacao_concluida === false) : true;
+                            const expCompMatch = advFilterExpectedCompletion ? c.escolaridade_previsao_conclusao === advFilterExpectedCompletion : true;
+                            const compYearMatch = advFilterCompletionYear ? c.escolaridade_ano_conclusao === advFilterCompletionYear : true;
+
+                            return birthStartMatch && birthEndMatch && genderMatch && childrenMatch && stateHomeMatch &&
+                              rateioMatch && admStartMatch && admEndMatch && partnerMatch && leaderMatch && areaMatch &&
+                              teamMatch && roleMatch && contractTypeMatch && localMatch &&
+                              transporteTipoMatch &&
+                              gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
+                          });
+                          if (tempFiltered.length > 0) exportColaboradoresXLSX(tempFiltered);
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-medium"
+                      >
+                        <UserX className="h-4 w-4 text-red-500" />
+                        Inativos ({colaboradores.filter(c => c.status === 'inactive').length})
+                      </button>
+
+                      <div className="border-t border-gray-100 my-1"></div>
+
+                      <button
+                        onClick={() => {
+                          setShowExportMenu(false);
+                          const tempFiltered = colaboradores.filter(c => {
+                            // Status ignore (Todos)
+
+                            // Aplica todos os outros filtros avançados
+                            const birthStartMatch = advFilterBirthStart ? new Date(c.birthday || '') >= new Date(advFilterBirthStart) : true;
+                            const birthEndMatch = advFilterBirthEnd ? new Date(c.birthday || '') <= new Date(`${advFilterBirthEnd}T23:59:59`) : true;
+                            const genderMatch = advFilterGender ? c.gender === advFilterGender : true;
+                            const childrenMatch = advFilterChildren ? (advFilterChildren === 'sim' ? (c.children_data && c.children_data.length > 0) : (!c.children_data || c.children_data.length === 0)) : true;
+                            const stateHomeMatch = advFilterStateHome ? c.state === advFilterStateHome : true;
+
+                            const rateioMatch = advFilterRateio ? String(c.rateios?.id || c.rateio) === advFilterRateio : true;
+                            const admStartMatch = advFilterAdmissionStart ? new Date(c.hire_date || '') >= new Date(advFilterAdmissionStart) : true;
+                            const admEndMatch = advFilterAdmissionEnd ? new Date(c.hire_date || '') <= new Date(`${advFilterAdmissionEnd}T23:59:59`) : true;
+                            const partnerMatch = advFilterPartner ? String(c.partner?.id || c.partner_id) === advFilterPartner : true;
+                            const leaderMatch = advFilterLeader ? String(c.leader?.id || c.leader_id) === advFilterLeader : true;
+                            const areaMatch = advFilterArea ? c.area === advFilterArea : true;
+                            const teamMatch = advFilterTeam ? String(c.teams?.id || c.equipe) === advFilterTeam : true;
+                            const roleMatch = advFilterRole ? String(c.roles?.id || c.role) === advFilterRole : true;
+                            const contractTypeMatch = advFilterContractType ? c.contract_type === advFilterContractType : true;
+                            const localMatch = advFilterLocal ? String(c.locations?.id || c.local) === advFilterLocal : true;
+
+                            const transporteTipoMatch = advFilterTransporteTipo ? c.transporte_tipo === advFilterTransporteTipo : true;
+
+                            const gradCompMatch = advFilterGraduationComplete ? (advFilterGraduationComplete === 'sim' ? c.escolaridade_graduacao_concluida === true : c.escolaridade_graduacao_concluida === false) : true;
+                            const postGradCompMatch = advFilterPostGraduationComplete ? (advFilterPostGraduationComplete === 'sim' ? c.escolaridade_pos_graduacao_concluida === true : c.escolaridade_pos_graduacao_concluida === false) : true;
+                            const expCompMatch = advFilterExpectedCompletion ? c.escolaridade_previsao_conclusao === advFilterExpectedCompletion : true;
+                            const compYearMatch = advFilterCompletionYear ? c.escolaridade_ano_conclusao === advFilterCompletionYear : true;
+
+                            return birthStartMatch && birthEndMatch && genderMatch && childrenMatch && stateHomeMatch &&
+                              rateioMatch && admStartMatch && admEndMatch && partnerMatch && leaderMatch && areaMatch &&
+                              teamMatch && roleMatch && contractTypeMatch && localMatch &&
+                              transporteTipoMatch &&
+                              gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
+                          });
+                          if (tempFiltered.length > 0) exportColaboradoresXLSX(tempFiltered);
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-[#0a192f] hover:bg-gray-50 flex items-center gap-2 font-bold"
+                      >
+                        <Users className="h-4 w-4 text-[#1e3a8a]" />
+                        Todos os Status ({colaboradores.length})
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -1760,7 +1908,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
         </>
       )}
 
-      {activeMainTab === 'Filtros' && (
+      {activeMainTab === 'Relatórios' && (
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600 space-y-8 flex-1 overflow-auto custom-scrollbar">
 
           <div className="flex items-center justify-between border-b border-gray-100 pb-4">

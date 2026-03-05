@@ -758,10 +758,10 @@ export function Calendario() {
           <div className="flex items-center gap-4 md:border-l md:border-gray-200 md:pl-4 md:ml-2">
             <button
               onClick={() => setIsEventSelectionModalOpen(true)}
-              className="flex items-center justify-center p-2.5 bg-[#1e3a8a] text-white rounded-lg hover:bg-blue-800 transition-all shadow-md shrink-0 focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2"
+              className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
               title="Novo Compromisso"
             >
-              <Plus className="h-5 w-5" strokeWidth={2} />
+              <Plus className="h-5 w-5" />
             </button>
           </div>
         </div>
