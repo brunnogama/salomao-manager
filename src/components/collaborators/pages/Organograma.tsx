@@ -791,14 +791,7 @@ export function Organograma() {
                             <Printer className="w-5 h-5" />
                         </button>
 
-                        {/* Maximize Button */}
-                        <button
-                            onClick={() => setIsMaximized(!isMaximized)}
-                            className="hidden md:flex items-center justify-center w-10 h-10 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-[#1e3a8a] hover:bg-blue-50 transition-all shadow-sm shrink-0"
-                            title={isMaximized ? "Minimizar" : "Maximizar"}
-                        >
-                            {isMaximized ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                        </button>
+
                     </div>
                 </div>
             </div>
@@ -811,7 +804,7 @@ export function Organograma() {
             </div>
 
             {/* Main Drag Drop Context Area */}
-            <div className="bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container">
+            <div ref={containerRef} className={`bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-[150] bg-white shadow-2xl' : ''}`}>
                 <DragDropContext onDragEnd={handleDragEnd}>
                     <div className="p-8 md:p-16 text-center min-w-full inline-block align-top print:w-full">
                         <div
@@ -1087,11 +1080,10 @@ export function Organograma() {
                 {showBackToTop && (
                     <button
                         onClick={() => {
-                            if (isMaximized && containerRef.current) {
+                            if (containerRef.current) {
                                 containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-                            } else {
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
                             }
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                         className="p-3 bg-white border border-blue-100 rounded-2xl shadow-xl text-[#1e3a8a] hover:bg-blue-50 transition-all animate-in slide-in-from-bottom-4"
                         title="Voltar ao Topo"
@@ -1124,7 +1116,17 @@ export function Organograma() {
                         className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
                         title="Restaurar tamanho (100%)"
                     >
-                        <Network className="w-4 h-4 mx-auto mb-0.5" />
+                        <Network className="w-4 h-4" />
+                    </button>
+
+                    <div className="w-px h-6 bg-gray-200 mx-1"></div>
+
+                    <button
+                        onClick={() => setIsMaximized(!isMaximized)}
+                        className={`p-2 rounded-xl transition-all ${isMaximized ? 'bg-blue-50 text-[#1e3a8a]' : 'hover:bg-blue-50 text-gray-500 hover:text-[#1e3a8a]'}`}
+                        title={isMaximized ? "Minimizar" : "Maximizar"}
+                    >
+                        {isMaximized ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
                     </button>
                 </div>
             </div>
