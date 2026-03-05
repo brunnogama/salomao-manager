@@ -51,6 +51,7 @@ interface Evento {
   vaga_id?: string;
   participantes_candidatos?: string[];
   entrevistador_id?: string;
+  _source?: string;
 }
 
 interface NovoEventoData {
@@ -780,23 +781,50 @@ export function Calendario() {
                   <Sparkles className="h-5 w-5 text-white" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Aniver. Hoje</p>
+                  <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Aniversários Hoje</p>
                   <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{aniversariosHoje.length}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 shadow-lg">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[#d4af37] to-amber-600 shadow-lg">
                   <PartyPopper className="h-5 w-5 text-white" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Aniver. Mês</p>
+                  <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Aniversários Mês</p>
                   <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{aniversariosEsteMes.length}</p>
                 </div>
               </div>
             </div>
 
-            {/* DIREITA: EVENTOS */}
+            {/* CENTRO: ENTREVISTAS */}
+            <div className="flex gap-4">
+              <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
+                  <Users className="h-5 w-5 text-white" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Entrevistas Hoje</p>
+                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">
+                    {eventosHoje.filter(e => e.tipo === 'Entrevista').length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
+                  <Users className="h-5 w-5 text-white" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Entrevistas Mês</p>
+                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">
+                    {eventosDoMes(selectedMonth, selectedYear).filter(e => e.tipo === 'Entrevista').length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* DIREITA: EVENTOS (sem aniversários e reuniões) */}
             <div className="flex gap-4">
               <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg">
@@ -804,17 +832,21 @@ export function Calendario() {
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Eventos Hoje</p>
-                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{eventosHoje.length}</p>
+                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">
+                    {eventosHoje.filter(e => e._source !== 'aniversario' && e.tipo !== 'Reunião' && e.tipo !== 'Aniversário' && e.tipo !== 'Entrevista').length}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-sm border border-gray-100 min-w-max hover:shadow-md transition-all">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg">
                   <CalendarEventIcon className="h-5 w-5 text-white" strokeWidth={1.5} />
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em]">Eventos Mês</p>
-                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">{eventosDoMes(selectedMonth, selectedYear).length}</p>
+                  <p className="text-[20px] font-black text-[#0a192f] tracking-tight leading-none">
+                    {eventosDoMes(selectedMonth, selectedYear).filter(e => e._source !== 'aniversario' && e.tipo !== 'Reunião' && e.tipo !== 'Aniversário' && e.tipo !== 'Entrevista').length}
+                  </p>
                 </div>
               </div>
             </div>

@@ -408,12 +408,12 @@ export function RHVagas() {
       </div>
 
       {activeTab !== 'filtros' && (
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600 flex-none">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-none">
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
 
             {/* Active Count Card */}
             {activeTab === 'abertas' && (
-              <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
+              <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0">
                 <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
                   <Clock className="h-4 w-4" />
                 </div>
@@ -424,7 +424,7 @@ export function RHVagas() {
               </div>
             )}
             {activeTab === 'talentos' && (
-              <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
+              <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0">
                 <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
                   <Users className="h-4 w-4" />
                 </div>
@@ -435,7 +435,7 @@ export function RHVagas() {
               </div>
             )}
             {activeTab === 'fechadas' && (
-              <div className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100 rounded-xl px-4 py-2.5 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
+              <div className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100 rounded-xl px-4 py-2.5 shrink-0">
                 <div className="p-1.5 bg-emerald-100 rounded-lg text-emerald-700">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
@@ -503,7 +503,7 @@ export function RHVagas() {
       )}
 
       {activeTab === 'filtros' && (
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600 space-y-8 flex-1 overflow-auto custom-scrollbar">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 space-y-8 flex-1 overflow-auto custom-scrollbar">
           <div className="flex items-center justify-between border-b border-gray-100 pb-4">
             <h2 className="text-lg font-bold text-[#1e3a8a]">Opções de Filtro</h2>
             <button
@@ -558,7 +558,7 @@ export function RHVagas() {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-y-auto animate-in slide-in-from-bottom-6 duration-700 overflow-x-auto min-h-[400px]">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-y-auto overflow-x-auto min-h-[400px]">
           {activeTab === 'talentos' ? (
             <table className="w-full min-w-max text-left border-collapse">
               <thead className="bg-[#1e3a8a]">
