@@ -465,13 +465,13 @@ export function RHTurnover() {
           <div className="flex-grow min-h-[250px] relative flex flex-col justify-center">
             {filteredTerminations.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <Pie
                     data={volInvolData}
                     cx="50%"
                     cy="45%"
-                    innerRadius={60}
-                    outerRadius={90}
+                    innerRadius={45}
+                    outerRadius={70}
                     paddingAngle={5}
                     dataKey="value"
                     label={RHChartPieLabel}

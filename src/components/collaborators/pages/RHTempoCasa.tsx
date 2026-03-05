@@ -594,13 +594,13 @@ export function RHTempoCasa() {
           </div>
           <div className="flex flex-col md:flex-row items-center justify-around h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <Pie
                   data={legalExperienceData}
                   cx="50%"
-                  cy="50%"
-                  innerRadius={65}
-                  outerRadius={95}
+                  cy="45%"
+                  innerRadius={50}
+                  outerRadius={75}
                   paddingAngle={5}
                   dataKey="value"
                   label={RHChartPieLabel}
