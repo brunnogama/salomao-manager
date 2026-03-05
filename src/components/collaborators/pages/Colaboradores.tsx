@@ -120,6 +120,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const [advFilterTeam, setAdvFilterTeam] = useState('');
   const [advFilterRole, setAdvFilterRole] = useState('');
   const [advFilterContractType, setAdvFilterContractType] = useState('');
+  const [advFilterPartnerType, setAdvFilterPartnerType] = useState('');
   const [advFilterLocal, setAdvFilterLocal] = useState('');
   const [advFilterTransporteTipo, setAdvFilterTransporteTipo] = useState('');
 
@@ -145,6 +146,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
     setAdvFilterTeam('');
     setAdvFilterRole('');
     setAdvFilterContractType('');
+    setAdvFilterPartnerType('');
     setAdvFilterLocal('');
     setAdvFilterTransporteTipo('');
     setAdvFilterGraduationComplete('');
@@ -246,7 +248,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
   const hasActiveAdvancedFilters = Object.values({
     advFilterGender, advFilterBirthStart, advFilterBirthEnd, advFilterChildren, advFilterStateHome,
     advFilterStatus, advFilterRateio, advFilterAdmissionStart, advFilterAdmissionEnd, advFilterPartner,
-    advFilterLeader, advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterLocal,
+    advFilterLeader, advFilterArea, advFilterTeam, advFilterRole, advFilterContractType, advFilterPartnerType, advFilterLocal,
     advFilterTransporteTipo, advFilterGraduationComplete, advFilterPostGraduationComplete, advFilterExpectedCompletion, advFilterCompletionYear
   }).some(val => val !== '');
 
@@ -926,6 +928,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
       if (!safeCompare(advFilterTeam, c.equipe, (c as any).teams?.name)) return false;
       if (!safeCompare(advFilterRole, c.role, (c as any).roles?.name)) return false;
       if (!safeCompare(advFilterContractType, c.contract_type)) return false;
+      if (!safeCompare(advFilterPartnerType, c.contract_type)) return false; // Reusing contract_type for partner type
       if (!safeCompare(advFilterLocal, c.local, (c as any).locations?.name)) return false;
       if (!safeIncludes(advFilterTransporteTipo, c.transportes?.map(t => t.tipo).join(', '))) return false;
 
@@ -1476,6 +1479,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             const teamMatch = advFilterTeam ? String(c.teams?.id || c.equipe) === advFilterTeam : true;
                             const roleMatch = advFilterRole ? String(c.roles?.id || c.role) === advFilterRole : true;
                             const contractTypeMatch = advFilterContractType ? c.contract_type === advFilterContractType : true;
+                            const partnerTypeMatch = advFilterPartnerType ? c.contract_type === advFilterPartnerType : true;
                             const localMatch = advFilterLocal ? String(c.locations?.id || c.local) === advFilterLocal : true;
 
                             const transporteTipoMatch = advFilterTransporteTipo ? c.transporte_tipo === advFilterTransporteTipo : true;
@@ -1487,7 +1491,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                             return birthStartMatch && birthEndMatch && genderMatch && childrenMatch && stateHomeMatch &&
                               rateioMatch && admStartMatch && admEndMatch && partnerMatch && leaderMatch && areaMatch &&
-                              teamMatch && roleMatch && contractTypeMatch && localMatch &&
+                              teamMatch && roleMatch && contractTypeMatch && partnerTypeMatch && localMatch &&
                               transporteTipoMatch &&
                               gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
                           });
@@ -1521,6 +1525,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             const teamMatch = advFilterTeam ? String(c.teams?.id || c.equipe) === advFilterTeam : true;
                             const roleMatch = advFilterRole ? String(c.roles?.id || c.role) === advFilterRole : true;
                             const contractTypeMatch = advFilterContractType ? c.contract_type === advFilterContractType : true;
+                            const partnerTypeMatch = advFilterPartnerType ? c.contract_type === advFilterPartnerType : true;
                             const localMatch = advFilterLocal ? String(c.locations?.id || c.local) === advFilterLocal : true;
 
                             const transporteTipoMatch = advFilterTransporteTipo ? c.transporte_tipo === advFilterTransporteTipo : true;
@@ -1532,7 +1537,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                             return birthStartMatch && birthEndMatch && genderMatch && childrenMatch && stateHomeMatch &&
                               rateioMatch && admStartMatch && admEndMatch && partnerMatch && leaderMatch && areaMatch &&
-                              teamMatch && roleMatch && contractTypeMatch && localMatch &&
+                              teamMatch && roleMatch && contractTypeMatch && partnerTypeMatch && localMatch &&
                               transporteTipoMatch &&
                               gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
                           });
@@ -1568,6 +1573,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             const teamMatch = advFilterTeam ? String(c.teams?.id || c.equipe) === advFilterTeam : true;
                             const roleMatch = advFilterRole ? String(c.roles?.id || c.role) === advFilterRole : true;
                             const contractTypeMatch = advFilterContractType ? c.contract_type === advFilterContractType : true;
+                            const partnerTypeMatch = advFilterPartnerType ? c.contract_type === advFilterPartnerType : true;
                             const localMatch = advFilterLocal ? String(c.locations?.id || c.local) === advFilterLocal : true;
 
                             const transporteTipoMatch = advFilterTransporteTipo ? c.transporte_tipo === advFilterTransporteTipo : true;
@@ -1579,7 +1585,7 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
                             return birthStartMatch && birthEndMatch && genderMatch && childrenMatch && stateHomeMatch &&
                               rateioMatch && admStartMatch && admEndMatch && partnerMatch && leaderMatch && areaMatch &&
-                              teamMatch && roleMatch && contractTypeMatch && localMatch &&
+                              teamMatch && roleMatch && contractTypeMatch && partnerTypeMatch && localMatch &&
                               transporteTipoMatch &&
                               gradCompMatch && postGradCompMatch && expCompMatch && compYearMatch;
                           });
@@ -2035,6 +2041,20 @@ export function Colaboradores({ }: ColaboradoresProps) {
                     { id: 'Jovem Aprendiz', label: 'Jovem Aprendiz', value: 'Jovem Aprendiz' },
                     { id: 'Terceirizado', label: 'Terceirizado', value: 'Terceirizado' },
                     { id: 'Outros', label: 'Outros', value: 'Outros' }
+                  ]}
+                  placeholder="Todos..."
+                />
+              </div>
+
+              <div className="relative z-[115]">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo de Sócio</label>
+                <SearchableSelect
+                  value={advFilterPartnerType}
+                  onChange={setAdvFilterPartnerType}
+                  options={[
+                    { id: 'Sócio de Serviço', label: 'Sócio de Serviço', value: 'Sócio de Serviço' },
+                    { id: 'Sócio de Capital', label: 'Sócio de Capital', value: 'Sócio de Capital' },
+                    { id: 'Sócio Administrador', label: 'Sócio Administrador', value: 'Sócio Administrador' }
                   ]}
                   placeholder="Todos..."
                 />
