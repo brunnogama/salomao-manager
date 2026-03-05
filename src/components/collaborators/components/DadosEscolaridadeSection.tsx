@@ -63,7 +63,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
         fetchData()
     }, [])
 
-    const handleAddEducation = (nivel: 'Graduação' | 'Pós-Graduação') => {
+    const handleAddEducation = (nivel: 'Ensino Fundamental' | 'Ensino Médio' | 'Graduação' | 'Pós-Graduação') => {
         const newEntry = {
             id: crypto.randomUUID(),
             nivel,
@@ -106,19 +106,29 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
         setFormData({ ...formData, education_history: updated })
     }
 
-    const renderEducations = (nivel: 'Graduação' | 'Pós-Graduação') => {
+    const renderEducations = (nivel: 'Ensino Fundamental' | 'Ensino Médio' | 'Graduação' | 'Pós-Graduação') => {
         const history = formData.education_history || []
         const filtered = history.filter(h => h.nivel === nivel)
 
-        const activeCoursesList = nivel === 'Graduação' ? courses : postCourses;
+        const activeCoursesList = nivel === 'Graduação' ? courses : (nivel === 'Pós-Graduação' ? postCourses : []);
         const courseOptions = [...activeCoursesList.map(c => ({ name: c.name })), { name: 'Outro' }]
+
+        const getPeriodOptions = (eduNivel: string) => {
+            if (eduNivel === 'Ensino Fundamental') {
+                return ['1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano'];
+            }
+            if (eduNivel === 'Ensino Médio') {
+                return ['1º Ano', '2º Ano', '3º Ano'];
+            }
+            return semestres;
+        };
 
         return (
             <div className="space-y-4 w-full">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                     <h3 className="text-sm font-bold text-[#1e3a8a] flex items-center gap-2">
                         <GraduationCap className="h-5 w-5" />
-                        {nivel === 'Graduação' ? 'Graduação' : 'Pós-Graduação'}
+                        {nivel}
                     </h3>
                     {!isViewMode && (
                         <button
@@ -300,7 +310,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                 {/* Curso */}
                                 <div className="space-y-1.5 col-span-1 md:col-span-2">
                                     <SearchableSelect
-                                        label="Curso"
+                                        label={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Formação / Habilitação (Opcional)" : "Curso"}
                                         value={displayCourseValue}
                                         onChange={(v) => updateEducation(item.id, 'curso', v)}
                                         options={courseOptions}
@@ -316,7 +326,7 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                                 value={item.curso === ' ' ? '' : item.curso}
                                                 onChange={(e) => updateEducation(item.id, 'curso', e.target.value)}
                                                 className={`w-full px-3 py-2.5 bg-blue-50/50 border border-blue-200 rounded-lg text-xs font-medium text-[#0a192f] placeholder-blue-300 focus:bg-white focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-all ${isViewMode ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                placeholder="Digite o nome do curso..."
+                                                placeholder={['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? "Ex: Formação Geral, Técnico em Informática..." : "Digite o nome do curso..."}
                                                 disabled={isViewMode}
                                                 autoFocus
                                             />
@@ -339,11 +349,11 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                                             />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Semestre Atual</label>
+                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{['Ensino Fundamental', 'Ensino Médio'].includes(nivel) ? 'Série / Ano Atual' : 'Semestre Atual'}</label>
                                             <SearchableSelect
                                                 value={item.semestre || ''}
                                                 onChange={(v) => updateEducation(item.id, 'semestre', v)}
-                                                options={semestres.map(sem => ({ name: sem }))}
+                                                options={getPeriodOptions(nivel).map(sem => ({ name: sem }))}
                                                 disabled={isViewMode}
                                             />
                                         </div>
@@ -388,6 +398,8 @@ export function DadosEscolaridadeSection({ formData, setFormData, maskDate, isVi
                 <BookOpen className="h-4 w-4" /> Escolaridade
             </h3>
             <div className="flex flex-col gap-8">
+                {renderEducations('Ensino Fundamental')}
+                {renderEducations('Ensino Médio')}
                 {renderEducations('Graduação')}
                 {renderEducations('Pós-Graduação')}
             </div>

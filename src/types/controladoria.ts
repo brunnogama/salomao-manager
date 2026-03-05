@@ -103,7 +103,7 @@ export interface Collaborator {
   escolaridade_curso?: string;
   education_history?: {
     id: string;
-    nivel: 'Graduação' | 'Pós-Graduação' | string;
+    nivel: 'Ensino Fundamental' | 'Ensino Médio' | 'Graduação' | 'Pós-Graduação' | string;
     subnivel?: string;
     instituicao: string;
     instituicao_uf?: string; // Novo campo
