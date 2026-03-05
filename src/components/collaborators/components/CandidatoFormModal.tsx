@@ -231,8 +231,8 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
             if (doc.id) {
                 const docToDelete = gedDocs.find(d => d.id === doc.id);
                 if (docToDelete?.url) {
-                    const filePath = docToDelete.url.split('public/salomao-docs/')[1];
-                    if (filePath) await supabase.storage.from('salomao-docs').remove([filePath]);
+                    const filePath = docToDelete.url.split('public/ged-colaboradores/')[1];
+                    if (filePath) await supabase.storage.from('ged-colaboradores').remove([filePath]);
                 }
                 const { error } = await supabase.from('candidato_ged').delete().eq('id', doc.id);
                 if (error) throw error;
@@ -323,10 +323,10 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                     const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`
                     const filePath = `candidatos/${finalCandidatoId}/ged/${fileName}`
 
-                    const { error: uploadError } = await supabase.storage.from('salomao-docs').upload(filePath, doc.file)
+                    const { error: uploadError } = await supabase.storage.from('ged-colaboradores').upload(filePath, doc.file)
                     if (uploadError) console.error('Error uploading file:', uploadError.message)
                     else {
-                        const { data: { publicUrl } } = supabase.storage.from('salomao-docs').getPublicUrl(filePath)
+                        const { data: { publicUrl } } = supabase.storage.from('ged-colaboradores').getPublicUrl(filePath)
                         const { error: dbError } = await supabase.from('candidato_ged').insert({
                             candidato_id: finalCandidatoId,
                             nome_arquivo: doc.file.name,
