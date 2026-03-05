@@ -347,8 +347,9 @@ const AdminOrganogramTree = React.memo(({
 });
 
 export function Organograma() {
-    const { colaboradores, loading: colsLoading } = useColaboradores();
+    const { colaboradores, loading: colsLoading, fetchColaboradores } = useColaboradores();
     const [data, setData] = useState<ColaboradorCard[]>([]);
+    const [pendingDragResult, setPendingDragResult] = useState<DropResult | null>(null);
     const [savingCompetenciasId, setSavingCompetenciasId] = useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
     const [selectedColabForModal, setSelectedColabForModal] = useState<any | null>(null);
@@ -361,6 +362,11 @@ export function Organograma() {
     const [editingPosition, setEditingPosition] = useState<{ top: number, left: number } | null>(null);
     const [showBackToTop, setShowBackToTop] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Sync data on mount and tab change
+    useEffect(() => {
+        fetchColaboradores();
+    }, [fetchColaboradores, activeTab]);
 
     // Watch scroll for Back to Top button
     useEffect(() => {
@@ -441,31 +447,18 @@ export function Organograma() {
         }
     }, []);
 
-    const handleDragEnd = useCallback(async (result: DropResult) => {
-        const { source, destination, draggableId } = result;
-
+    const handleDragConfirm = useCallback(async () => {
+        if (!pendingDragResult) return;
+        const { destination, draggableId } = pendingDragResult;
         if (!destination) return;
-
-        if (
-            source.droppableId === destination.droppableId &&
-            source.index === destination.index
-        ) {
-            return;
-        }
 
         const draggedColab = data.find(c => c.id === draggableId);
         if (!draggedColab) return;
 
         const newLeaderId = destination.droppableId;
-
-        if (draggableId === newLeaderId) {
-            toast.error('Um colaborador não pode ser líder dele mesmo.');
-            return;
-        }
+        const leaderToUpdate = newLeaderId === 'unassigned' ? null : newLeaderId;
 
         try {
-            const leaderToUpdate = newLeaderId === 'unassigned' ? null : newLeaderId;
-
             const { error } = await supabase
                 .from('collaborators')
                 .update({ leader_id: leaderToUpdate })
@@ -473,11 +466,8 @@ export function Organograma() {
 
             if (error) throw error;
 
-            setData(prev => prev.map(c =>
-                c.id === draggableId
-                    ? { ...c, leader_id: leaderToUpdate || undefined }
-                    : c
-            ));
+            // Sync main state after DB change
+            await fetchColaboradores();
 
             const leaderName = leaderToUpdate
                 ? data.find(c => c.id === leaderToUpdate)?.name || 'novo líder'
@@ -488,7 +478,6 @@ export function Organograma() {
                     <span className="font-bold text-[#0a192f]">Hierarquia Atualizada!</span>
                     <span className="text-sm text-gray-600">
                         {draggedColab.name} agora responde para <strong className="text-[#1e3a8a]">{leaderName}</strong>.
-                        Essa mudança já foi refletida no cadastro oficial.
                     </span>
                 </div>,
                 { duration: 4000 }
@@ -497,8 +486,23 @@ export function Organograma() {
         } catch (error) {
             console.error('Erro ao atualizar leader_id:', error);
             toast.error('Erro ao alterar hierarquia.');
+        } finally {
+            setPendingDragResult(null);
         }
-    }, [data]);
+    }, [pendingDragResult, data]);
+
+    const handleDragEnd = useCallback((result: DropResult) => {
+        const { source, destination, draggableId } = result;
+
+        if (!destination) return;
+        if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+        if (draggableId === destination.droppableId) {
+            toast.error('Um colaborador não pode ser líder dele mesmo.');
+            return;
+        }
+
+        setPendingDragResult(result);
+    }, []);
 
     // Optimized lookups: Map of LeaderId -> List of Subordinates
     const subordinatesMap = useMemo(() => {
@@ -684,9 +688,9 @@ export function Organograma() {
             </div>
 
             {/* Main Drag Drop Context Area */}
-            <div className="bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[500px] overflow-x-auto overflow-y-visible w-full min-w-full print:overflow-visible">
+            <div className="bg-gray-50/50 rounded-3xl border border-gray-100 flex-1 min-h-[600px] overflow-auto w-full relative group/container">
                 <DragDropContext onDragEnd={handleDragEnd}>
-                    <div className="p-8 min-w-full w-max mx-auto print:w-full">
+                    <div className="p-16 min-w-full w-max flex justify-center print:w-full">
                         <div
                             className="flex flex-col items-center gap-16 pb-32 transition-transform duration-300 min-w-max w-full"
                             style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
@@ -915,6 +919,37 @@ export function Organograma() {
                             autoFocus
                         />
                         <p className="text-[9px] text-gray-400 font-bold uppercase text-center">Clique fora para salvar</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirmation Modal for Drag & Drop */}
+            {pendingDragResult && (
+                <div className="fixed inset-0 bg-[#0a192f]/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-8 text-center">
+                            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#1e3a8a] mx-auto mb-6">
+                                <ArrowUp className="w-8 h-8 rotate-90" />
+                            </div>
+                            <h3 className="text-xl font-black text-[#0a192f] tracking-tight mb-2">Alterar Hierarquia?</h3>
+                            <p className="text-gray-500 text-sm leading-relaxed mb-8">
+                                Você está prestes a alterar o líder direto de <strong className="text-[#1e3a8a]">{data.find(c => c.id === pendingDragResult.draggableId)?.name}</strong>. Esta mudança será refletida automaticamente no cadastro oficial do colaborador.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setPendingDragResult(null)}
+                                    className="flex-1 px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleDragConfirm}
+                                    className="flex-1 px-6 py-3 rounded-xl bg-[#1e3a8a] text-white font-bold uppercase tracking-widest text-[10px] hover:bg-[#0a192f] transition-all shadow-lg shadow-blue-900/20"
+                                >
+                                    Prosseguir
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
