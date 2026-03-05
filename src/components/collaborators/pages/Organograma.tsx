@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
@@ -23,14 +23,170 @@ const JURIDICO_HIERARCHY = [
 interface ColaboradorCard {
     id: string;
     name: string;
-    role: string | { name: string };
-    equipe: string | { name: string };
+    role: string;
+    equipe: string;
     leader_id?: string;
     competencias?: string;
     photo_url?: string;
     foto_url?: string;
+    isJuridico: boolean;
+    isAdministrativo: boolean;
+    isSocio: boolean;
     fullData?: any;
 }
+
+// Separate recursive component outside the main render loop for performance
+const OrganogramNode = React.memo(({
+    colab,
+    context,
+    level = 0
+}: {
+    colab: ColaboradorCard,
+    context: {
+        activeTab: 'JURIDICO' | 'ADMINISTRATIVO',
+        searchQuery: string,
+        setSelectedColabForModal: (data: any) => void,
+        setEditingPosition: (pos: { top: number, left: number } | null) => void,
+        setEditingCompetenciasId: (id: string | null) => void,
+        setEditingCompetenciasText: (text: string) => void,
+        subordinatesMap: Map<string | null, ColaboradorCard[]>
+    },
+    level?: number
+}) => {
+    const { activeTab, searchQuery, setSelectedColabForModal, setEditingPosition, setEditingCompetenciasId, setEditingCompetenciasText, subordinatesMap } = context;
+    const subordinates = subordinatesMap.get(colab.id) || [];
+    const roleStr = colab.role;
+
+    if (activeTab === 'JURIDICO' && !colab.isJuridico) return null;
+    if (activeTab === 'ADMINISTRATIVO' && !colab.isAdministrativo) return null;
+
+    const isMatch = !searchQuery ||
+        colab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        roleStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        colab.equipe.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const getRank = (rStr: string) => {
+        const r = rStr.trim();
+        const index = JURIDICO_HIERARCHY.findIndex(h => h.toLowerCase() === r.toLowerCase());
+        return index === -1 ? 999 : index;
+    };
+
+    const sortedSubordinates = [...subordinates]
+        .filter(c => {
+            if (activeTab === 'JURIDICO') return c.isJuridico;
+            if (activeTab === 'ADMINISTRATIVO') return c.isAdministrativo;
+            return true;
+        })
+        .sort((a, b) => getRank(a.role) - getRank(b.role));
+
+    const roleGroups: ColaboradorCard[][] = [];
+    let currentRole: string | null = null;
+    let currentGroup: ColaboradorCard[] = [];
+
+    for (const sub of sortedSubordinates) {
+        if (sub.role !== currentRole) {
+            if (currentGroup.length > 0) roleGroups.push(currentGroup);
+            currentRole = sub.role;
+            currentGroup = [sub];
+        } else {
+            currentGroup.push(sub);
+        }
+    }
+    if (currentGroup.length > 0) roleGroups.push(currentGroup);
+
+    return (
+        <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
+            <Droppable droppableId={colab.id} type="COLAB">
+                {(provided, snapshot) => (
+                    <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`relative flex flex-col items-center transition-all duration-300 w-[240px] z-10 group hover:z-50 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
+                    >
+                        <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
+
+                        <Draggable draggableId={colab.id} index={0}>
+                            {(dragProvided, dragSnapshot) => (
+                                <div
+                                    ref={dragProvided.innerRef}
+                                    {...dragProvided.draggableProps}
+                                    {...dragProvided.dragHandleProps}
+                                    className={`flex flex-col items-center cursor-pointer w-full ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
+                                    onClick={() => setSelectedColabForModal(colab.fullData)}
+                                >
+                                    <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                                        {colab.photo_url ? (
+                                            <img src={colab.photo_url} alt={colab.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                <UserIcon className="w-10 h-10" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-4 text-center px-2 flex flex-col items-center gap-1.5">
+                                        <div>
+                                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight">{colab.name}</h4>
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">{roleStr}</span>
+                                        </div>
+                                        {colab.equipe && colab.equipe !== 'Sem Equipe' && colab.equipe !== 'Geral' && (
+                                            <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-full">
+                                                {colab.equipe}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setEditingPosition({ top: rect.top, left: rect.right + 16 });
+                                            setEditingCompetenciasId(colab.id);
+                                            setEditingCompetenciasText(colab.competencias || '');
+                                        }}
+                                        className="absolute -right-2 top-0 p-1.5 bg-white border border-gray-100 rounded-full shadow-sm text-gray-400 hover:text-[#1e3a8a] opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                    >
+                                        <Tag className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            )}
+                        </Draggable>
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+
+            {roleGroups.length > 0 && (
+                <div className="flex flex-col items-center mt-2 w-full">
+                    <div className="w-[2px] h-8 bg-gray-300"></div>
+                    <div className="flex flex-col items-center w-full relative z-10">
+                        {roleGroups.map((group, groupIndex) => (
+                            <div key={groupIndex} className="flex justify-center w-full relative pb-16">
+                                {groupIndex < roleGroups.length - 1 && (
+                                    <div className="absolute top-0 left-1/2 w-[2px] h-full bg-gray-300 -translate-x-1/2 -z-10"></div>
+                                )}
+                                <div className="flex justify-center relative pt-4 w-full">
+                                    {group.map((sub, index) => (
+                                        <div key={sub.id} className="relative flex flex-col items-center px-4">
+                                            {group.length > 1 && (
+                                                <>
+                                                    {index > 0 && <div className="absolute top-0 left-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
+                                                    {index < group.length - 1 && <div className="absolute top-0 right-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
+                                                </>
+                                            )}
+                                            <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
+                                            <OrganogramNode colab={sub} context={context} level={level + 1} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+});
 
 export function Organograma() {
     const { colaboradores, loading: colsLoading } = useColaboradores();
@@ -46,14 +202,18 @@ export function Organograma() {
     const [editingCompetenciasText, setEditingCompetenciasText] = useState('');
     const [editingPosition, setEditingPosition] = useState<{ top: number, left: number } | null>(null);
     const [showBackToTop, setShowBackToTop] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     // Watch scroll for Back to Top button
     useEffect(() => {
-        const handleScroll = () => {
-            setShowBackToTop(window.scrollY > 400);
+        const handleScroll = (e: any) => {
+            const target = e.target === document ? window : e.target;
+            const scrollTop = target === window ? window.scrollY : target.scrollTop;
+            setShowBackToTop(scrollTop > 400);
         };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+
+        window.addEventListener('scroll', handleScroll, true); // true to catch bubbling scroll
+        return () => window.removeEventListener('scroll', handleScroll, true);
     }, []);
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
@@ -62,27 +222,38 @@ export function Organograma() {
         if (colaboradores.length > 0) {
             const mapped = colaboradores
                 .filter(c => c.status === 'active')
-                .map(c => ({
-                    id: c.id,
-                    name: c.name,
-                    role: typeof c.roles === 'object' ? c.roles?.name : c.role,
-                    equipe: typeof c.teams === 'object' ? c.teams?.name : c.equipe,
-                    leader_id: c.leader_id || undefined,
-                    competencias: c.competencias || '',
-                    photo_url: c.photo_url || c.foto_url,
-                    foto_url: c.foto_url,
-                    fullData: c
-                }));
+                .map(c => {
+                    const roleStr = typeof c.roles === 'object' ? (c.roles as any)?.name : (c.role as string);
+                    const roleLower = String(roleStr || '').toLowerCase();
+                    const isSocio = roleLower.includes('sócio');
+                    const isJuridico = JURIDICO_HIERARCHY.some(h => h.toLowerCase() === roleLower) ||
+                        roleLower.includes('advogado') ||
+                        roleLower.includes('estagiário');
+
+                    return {
+                        id: c.id,
+                        name: c.name,
+                        role: roleStr || 'Sem Cargo',
+                        equipe: (typeof c.teams === 'object' ? (c.teams as any)?.name : c.equipe) || 'Geral',
+                        leader_id: c.leader_id || undefined,
+                        competencias: c.competencias || '',
+                        photo_url: c.photo_url || c.foto_url,
+                        foto_url: c.foto_url,
+                        isJuridico,
+                        isAdministrativo: !isJuridico || isSocio,
+                        isSocio,
+                        fullData: c
+                    };
+                });
             setData(mapped as ColaboradorCard[]);
         }
     }, [colaboradores]);
 
-    const updateCompetencias = async (id: string, text: string) => {
-        const newData = data.map(c => c.id === id ? { ...c, competencias: text } : c);
-        setData(newData);
-    };
+    const updateCompetencias = useCallback(async (id: string, text: string) => {
+        setData(prev => prev.map(c => c.id === id ? { ...c, competencias: text } : c));
+    }, []);
 
-    const saveCompetencias = async (id: string, text: string) => {
+    const saveCompetencias = useCallback(async (id: string, text: string) => {
         try {
             setSavingCompetenciasId(id);
             const { error } = await supabase
@@ -98,9 +269,9 @@ export function Organograma() {
         } finally {
             setSavingCompetenciasId(null);
         }
-    };
+    }, []);
 
-    const handleDragEnd = async (result: DropResult) => {
+    const handleDragEnd = useCallback(async (result: DropResult) => {
         const { source, destination, draggableId } = result;
 
         if (!destination) return;
@@ -112,22 +283,17 @@ export function Organograma() {
             return;
         }
 
-        // Draggable is the collaborator being dragged
         const draggedColab = data.find(c => c.id === draggableId);
         if (!draggedColab) return;
 
-        // The destination.droppableId is the ID of the new Leader
         const newLeaderId = destination.droppableId;
 
-        // Prevent dragging to self or same role level if needed, but for now we just allow dropping onto any leader area
         if (draggableId === newLeaderId) {
             toast.error('Um colaborador não pode ser líder dele mesmo.');
             return;
         }
 
-        // Attempt to save to Supabase
         try {
-
             const leaderToUpdate = newLeaderId === 'unassigned' ? null : newLeaderId;
 
             const { error } = await supabase
@@ -137,14 +303,12 @@ export function Organograma() {
 
             if (error) throw error;
 
-            // Update local state
             setData(prev => prev.map(c =>
                 c.id === draggableId
                     ? { ...c, leader_id: leaderToUpdate || undefined }
                     : c
             ));
 
-            // Show beautiful notification
             const leaderName = leaderToUpdate
                 ? data.find(c => c.id === leaderToUpdate)?.name || 'novo líder'
                 : 'nenhum';
@@ -163,10 +327,8 @@ export function Organograma() {
         } catch (error) {
             console.error('Erro ao atualizar leader_id:', error);
             toast.error('Erro ao alterar hierarquia.');
-            // Revert is automatic since we didn't update state if failed
-        } finally {
         }
-    };
+    }, [data]);
 
     // Optimized lookups: Map of LeaderId -> List of Subordinates
     const subordinatesMap = useMemo(() => {
@@ -179,31 +341,23 @@ export function Organograma() {
         return map;
     }, [data]);
 
-    // Grouping logic for rendering
-    const getSubordinates = (leaderId: string | null) => {
-        return subordinatesMap.get(leaderId) || [];
-    };
+
 
     // Helper to check if a node or any of its descendants have administrative subordinates
-    const hasAdministrativeSubordinates = (leaderId: string, visited = new Set<string>()): boolean => {
+    const hasAdministrativeSubordinates = useCallback((leaderId: string, visited = new Set<string>()): boolean => {
         if (visited.has(leaderId)) return false; // Cycle protection
         visited.add(leaderId);
 
         const subs = subordinatesMap.get(leaderId) || [];
         for (const sub of subs) {
-            const roleStr = String(sub.role || '').toLowerCase();
-            const isSocio = roleStr.includes('sócio');
-            const isJur = JURIDICO_HIERARCHY.some(h => h.toLowerCase() === roleStr) || roleStr.includes('advogado') || roleStr.includes('estagiário');
-            const isAdm = !isJur || isSocio;
-
             // If a direct subordinate is admin and not a socio, consider it
-            if (isAdm && !isSocio) return true;
+            if (sub.isAdministrativo && !sub.isSocio) return true;
 
             // Recursively check
             if (hasAdministrativeSubordinates(sub.id, visited)) return true;
         }
         return false;
-    };
+    }, [subordinatesMap]);
 
     // Get Top Level Nodes (Partners or those explicitly set as top)
     const topLevelNodes = useMemo(() => {
@@ -224,176 +378,7 @@ export function Organograma() {
         });
     }, [data, activeTab]);
 
-    // A recursive component to render the tree node
-    const OrganogramNode = ({ colab, level = 0 }: { colab: ColaboradorCard, level?: number }) => {
-        const subordinates = getSubordinates(colab.id);
-        const roleStr = String(colab.role || 'Sem Cargo');
 
-        const isSocio = roleStr.toLowerCase().includes('sócio');
-        const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
-        const isAdministrativo = !isJuridico || isSocio; // Socios appear on both, everyone else not juridico is admin
-
-        if (activeTab === 'JURIDICO' && !isJuridico) return null;
-        if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return null;
-
-        const isMatch = !searchQuery ||
-            colab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            roleStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            String(colab.equipe || '').toLowerCase().includes(searchQuery.toLowerCase());
-
-        const getRank = (rStr: string) => {
-            const r = rStr.trim();
-            const index = JURIDICO_HIERARCHY.findIndex(h => h.toLowerCase() === r.toLowerCase());
-            return index === -1 ? 999 : index;
-        };
-
-        const filteredSubordinates = subordinates.filter(c => {
-            const r = String(c.role || '');
-            const isS = r.toLowerCase().includes('sócio');
-            const isJ = JURIDICO_HIERARCHY.some(h => h.toLowerCase() === r.trim().toLowerCase()) || r.toLowerCase().includes('advogado') || r.toLowerCase().includes('estagiário');
-            const isA = !isJ || isS;
-            if (activeTab === 'JURIDICO' && !isJ) return false;
-            if (activeTab === 'ADMINISTRATIVO' && !isA) return false;
-            return true;
-        });
-
-        const sortedSubordinates = [...filteredSubordinates].sort((a, b) => {
-            return getRank(String(a.role || '')) - getRank(String(b.role || ''));
-        });
-
-        const roleGroups: ColaboradorCard[][] = [];
-        let currentRole: string | null = null;
-        let currentGroup: ColaboradorCard[] = [];
-
-        for (const sub of sortedSubordinates) {
-            const rStr = String(sub.role || '');
-            if (rStr !== currentRole) {
-                if (currentGroup.length > 0) roleGroups.push(currentGroup);
-                currentRole = rStr;
-                currentGroup = [sub];
-            } else {
-                currentGroup.push(sub);
-            }
-        }
-        if (currentGroup.length > 0) roleGroups.push(currentGroup);
-
-        return (
-            <div className={`flex flex-col items-center transition-opacity duration-300 ${!isMatch ? 'opacity-30 grayscale print:opacity-100 print:grayscale-0' : ''}`}>
-                {/* The Droppable Area for this Leader */}
-                <Droppable droppableId={colab.id} type="COLAB">
-                    {(provided, snapshot) => (
-                        <div
-                            ref={provided.innerRef}
-                            {...provided.droppableProps}
-                            className={`relative flex flex-col items-center transition-all duration-300 w-[240px] z-10 group hover:z-50
-                ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
-                        >
-                            {/* Visual drop indicator */}
-                            <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1]
-                                ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`}
-                            />
-
-                            <Draggable draggableId={colab.id} index={0}>
-                                {(dragProvided, dragSnapshot) => (
-                                    <div
-                                        ref={dragProvided.innerRef}
-                                        {...dragProvided.draggableProps}
-                                        {...dragProvided.dragHandleProps}
-                                        className={`flex flex-col items-center cursor-pointer w-full ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
-                                        onClick={() => setSelectedColabForModal(colab.fullData)}
-                                        title="Clique para expandir perfil"
-                                    >
-                                        {/* Avatar Circular */}
-                                        <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
-                                            {colab.photo_url || colab.foto_url ? (
-                                                <img
-                                                    src={colab.photo_url || colab.foto_url}
-                                                    alt={colab.name}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
-                                                    <UserIcon className="w-10 h-10" />
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Name, Role and Practice Area */}
-                                        <div className="mt-4 text-center px-2 flex flex-col items-center gap-1.5">
-                                            <div>
-                                                <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight">{colab.name}</h4>
-                                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">
-                                                    {roleStr}
-                                                </span>
-                                            </div>
-                                            {colab.equipe && colab.equipe !== 'Sem Equipe' && (
-                                                <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-full">
-                                                    {String(colab.equipe)}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Competências Trigger */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                setEditingPosition({ top: rect.top, left: rect.right + 16 });
-                                                setEditingCompetenciasId(colab.id);
-                                                setEditingCompetenciasText(colab.competencias || '');
-                                            }}
-                                            className="absolute -right-2 top-0 p-1.5 bg-white border border-gray-100 rounded-full shadow-sm text-gray-400 hover:text-[#1e3a8a] opacity-0 group-hover:opacity-100 transition-opacity z-20"
-                                            title="Editar Competências"
-                                        >
-                                            <Tag className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                )}
-                            </Draggable>
-                            {provided.placeholder}
-                        </div>
-                    )}
-                </Droppable>
-
-                {/* Render Lines and Subordinates (Horizontal Tree) */}
-                {roleGroups.length > 0 && (
-                    <div className="flex flex-col items-center mt-2 w-full">
-                        {/* Vertical line down from parent */}
-                        <div className="w-[2px] h-8 bg-gray-300"></div>
-
-                        <div className="flex flex-col items-center w-full relative z-10">
-                            {roleGroups.map((group, groupIndex) => (
-                                <div key={groupIndex} className="flex justify-center w-full relative pb-16">
-                                    {/* Line down to the NEXT group */}
-                                    {groupIndex < roleGroups.length - 1 && (
-                                        <div className="absolute top-0 left-1/2 w-[2px] h-full bg-gray-300 -translate-x-1/2 -z-10"></div>
-                                    )}
-
-                                    <div className="flex justify-center relative pt-4 w-full">
-                                        {group.map((sub, index) => (
-                                            <div key={sub.id} className="relative flex flex-col items-center px-4">
-                                                {/* Horizontal connector lines */}
-                                                {group.length > 1 && (
-                                                    <>
-                                                        {index > 0 && <div className="absolute top-0 left-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
-                                                        {index < group.length - 1 && <div className="absolute top-0 right-0 w-1/2 h-[2px] bg-gray-300 -mt-4"></div>}
-                                                    </>
-                                                )}
-                                                {/* Vertical stem down to this node */}
-                                                <div className="absolute top-0 left-1/2 w-[2px] h-4 bg-gray-300 -mt-4 -translate-x-1/2"></div>
-
-                                                <OrganogramNode colab={sub} level={level + 1} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-        );
-    };
 
 
     if (colsLoading) {
@@ -408,19 +393,28 @@ export function Organograma() {
     }
 
     // Find pure top level nodes based on active tab
-    const roots = topLevelNodes.filter(c => {
-        const roleStr = String(c.role || '');
-        const isSocio = roleStr.toLowerCase().includes('sócio');
-        const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
-        const isAdministrativo = !isJuridico || isSocio;
+    const roots = useMemo(() => {
+        return topLevelNodes.filter(c => {
+            if (activeTab === 'JURIDICO') return c.isJuridico;
+            if (activeTab === 'ADMINISTRATIVO') return c.isAdministrativo;
+            return false;
+        });
+    }, [topLevelNodes, activeTab]);
 
-        if (activeTab === 'JURIDICO') return isJuridico;
-        if (activeTab === 'ADMINISTRATIVO') return isAdministrativo;
-        return false;
-    });
+    const nodeContext = useMemo(() => ({
+        activeTab,
+        searchQuery,
+        setSelectedColabForModal,
+        setEditingPosition,
+        setEditingCompetenciasId,
+        setEditingCompetenciasText,
+        subordinatesMap
+    }), [activeTab, searchQuery, subordinatesMap]);
 
     return (
-        <div className={`${isMaximized ? 'fixed inset-0 z-[100] bg-white w-full h-full p-6 space-y-6 overflow-auto' : 'p-8 w-full space-y-8'} animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen print:p-0 print:bg-white`}>
+        <div
+            ref={containerRef}
+            className={`${isMaximized ? 'fixed inset-0 z-[100] bg-white w-full h-full p-6 space-y-6 overflow-auto' : 'p-8 w-full space-y-8'} animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen print:p-0 print:bg-white`}>
 
             {/* Header Section (Padrão Recrutamento) */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
@@ -529,7 +523,7 @@ export function Organograma() {
                             {roots.length > 0 ? (
                                 roots.map((root, index) => (
                                     <div key={root.id} className="relative flex flex-col items-center w-full">
-                                        <OrganogramNode colab={root} />
+                                        <OrganogramNode colab={root} context={nodeContext} />
                                         {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
                                     </div>
                                 ))
@@ -553,13 +547,8 @@ export function Organograma() {
                                     >
                                         {data.filter(c => {
                                             if (c.leader_id || roots.some(r => r.id === c.id)) return false;
-                                            const roleStr = String(c.role || '');
-                                            const isSocio = roleStr.toLowerCase().includes('sócio');
-                                            const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
-                                            const isAdministrativo = !isJuridico || isSocio;
-
-                                            if (activeTab === 'JURIDICO' && !isJuridico) return false;
-                                            if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return false;
+                                            if (activeTab === 'JURIDICO' && !c.isJuridico) return false;
+                                            if (activeTab === 'ADMINISTRATIVO' && !c.isAdministrativo) return false;
                                             return true;
                                         }).map((colab, index) => (
                                             <Draggable key={colab.id} draggableId={colab.id} index={index}>
@@ -601,13 +590,8 @@ export function Organograma() {
                                         {provided.placeholder}
                                         {data.filter(c => {
                                             if (c.leader_id || roots.some(r => r.id === c.id)) return false;
-                                            const roleStr = String(c.role || '');
-                                            const isSocio = roleStr.toLowerCase().includes('sócio');
-                                            const isJuridico = JURIDICO_HIERARCHY.includes(roleStr) || isSocio || roleStr.toLowerCase().includes('advogado') || roleStr.toLowerCase().includes('estagiário');
-                                            const isAdministrativo = !isJuridico || isSocio;
-
-                                            if (activeTab === 'JURIDICO' && !isJuridico) return false;
-                                            if (activeTab === 'ADMINISTRATIVO' && !isAdministrativo) return false;
+                                            if (activeTab === 'JURIDICO' && !c.isJuridico) return false;
+                                            if (activeTab === 'ADMINISTRATIVO' && !c.isAdministrativo) return false;
                                             return true;
                                         }).length === 0 && (
                                                 <div className="w-full text-center text-xs font-bold text-gray-400 uppercase tracking-widest py-8">
