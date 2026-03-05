@@ -82,30 +82,36 @@ const PerfilSection: React.FC<PerfilSectionProps> = ({ collaboratorId }) => {
     const handleSave = async () => {
         try {
             setSaving(true);
-            console.log('Salvando perfil...', { collaboratorId, perfil });
+            console.log('Iniciando salvamento de perfil...', { id: collaboratorId, perfilValue: perfil, competenciasValue: competencias });
+
             const { data: updateData, error } = await supabase
                 .from('collaborators')
-                .update({ perfil, competencias })
+                .update({
+                    perfil: perfil,
+                    competencias: competencias
+                })
                 .eq('id', collaboratorId)
                 .select();
 
-            console.log('Update result:', { updateData, error });
+            console.log('Resultado da atualização do perfil:', { updateData, error });
             if (error) throw error;
+
             if (!updateData || updateData.length === 0) {
-                console.warn('Aviso: Nenhuma linha foi atualizada. Verifique se o ID existe.');
+                console.warn('Alerta: Nenhuma linha foi atualizada no perfil. O ID existe?');
+                throw new Error('Não foi possível encontrar o registro do colaborador para salvar.');
             }
 
-            // Upsert tags
+            // Upsert tags na nuvem para futuras buscas
             const lines = perfil.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             if (lines.length > 0) {
                 const tagsToInsert = lines.map(t => ({ tag: t }));
                 await supabase.from('perfil_tags').upsert(tagsToInsert, { onConflict: 'tag' });
             }
 
-            toast.success('Perfil atualizado com sucesso!');
+            toast.success('Perfil e Competências atualizados com sucesso!');
         } catch (error: any) {
-            console.error('Erro ao salvar perfil:', error);
-            toast.error(`Erro ao salvar: ${error.message || 'Erro desconhecido'}`);
+            console.error('Falha crítica ao salvar perfil:', error);
+            toast.error(`Erro ao salvar: ${error.message || 'Houve um erro no servidor'}`);
         } finally {
             setSaving(false);
         }

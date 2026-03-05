@@ -226,10 +226,10 @@ export function DadosCorporativosSection({
                     <label className="text-[9px] font-black text-[#1e3a8a] uppercase tracking-widest">Data da Mudança de Cargo</label>
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, role: formData.original_role, role_change_date: '' })}
+                      onClick={() => setFormData({ ...formData, original_role: formData.role, role_change_date: '' })}
                       className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase tracking-tighter"
                     >
-                      Cancelar Mudança
+                      Remover Agendamento
                     </button>
                   </div>
                   <div className="relative">

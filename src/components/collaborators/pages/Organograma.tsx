@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2 } from 'lucide-react';
+import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2, ArrowUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Define the exact hierarchy order for Jurídico
@@ -45,6 +45,16 @@ export function Organograma() {
     const [editingCompetenciasId, setEditingCompetenciasId] = useState<string | null>(null);
     const [editingCompetenciasText, setEditingCompetenciasText] = useState('');
     const [editingPosition, setEditingPosition] = useState<{ top: number, left: number } | null>(null);
+    const [showBackToTop, setShowBackToTop] = useState(false);
+
+    // Watch scroll for Back to Top button
+    useEffect(() => {
+        const handleScroll = () => {
+            setShowBackToTop(window.scrollY > 400);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
     // For now, we focus on Jurídico as requested, but all are loaded
@@ -158,24 +168,39 @@ export function Organograma() {
         }
     };
 
+    // Optimized lookups: Map of LeaderId -> List of Subordinates
+    const subordinatesMap = useMemo(() => {
+        const map = new Map<string | null, ColaboradorCard[]>();
+        data.forEach(c => {
+            const lid = c.leader_id || null;
+            if (!map.has(lid)) map.set(lid, []);
+            map.get(lid)!.push(c);
+        });
+        return map;
+    }, [data]);
+
     // Grouping logic for rendering
     const getSubordinates = (leaderId: string | null) => {
-        return data.filter(c => (c.leader_id || null) === leaderId);
+        return subordinatesMap.get(leaderId) || [];
     };
 
     // Helper to check if a node or any of its descendants have administrative subordinates
-    const hasAdministrativeSubordinates = (leaderId: string): boolean => {
-        const subs = data.filter(c => c.leader_id === leaderId);
+    const hasAdministrativeSubordinates = (leaderId: string, visited = new Set<string>()): boolean => {
+        if (visited.has(leaderId)) return false; // Cycle protection
+        visited.add(leaderId);
+
+        const subs = subordinatesMap.get(leaderId) || [];
         for (const sub of subs) {
             const roleStr = String(sub.role || '').toLowerCase();
             const isSocio = roleStr.includes('sócio');
             const isJur = JURIDICO_HIERARCHY.some(h => h.toLowerCase() === roleStr) || roleStr.includes('advogado') || roleStr.includes('estagiário');
             const isAdm = !isJur || isSocio;
 
-            // If a direct subordinate is admin and not a socio (or is a socio but then we check deeper), consider it
+            // If a direct subordinate is admin and not a socio, consider it
             if (isAdm && !isSocio) return true;
+
             // Recursively check
-            if (hasAdministrativeSubordinates(sub.id)) return true;
+            if (hasAdministrativeSubordinates(sub.id, visited)) return true;
         }
         return false;
     };
@@ -484,8 +509,6 @@ export function Organograma() {
                         </button>
                     </div>
                 </div>
-
-
             </div>
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 mb-2">
@@ -735,33 +758,45 @@ export function Organograma() {
                 </div>
             )}
 
-            {/* Hovering Zoom Controls Panel */}
-            <div className="fixed bottom-8 right-8 z-[110] bg-white p-2 rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-100 flex items-center gap-2 animate-in slide-in-from-right-4">
-                <button
-                    onClick={() => setZoomLevel(prev => Math.max(0.4, prev - 0.1))}
-                    className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
-                    title="Reduzir Zoom"
-                >
-                    <ZoomOut className="w-5 h-5" />
-                </button>
-                <span className="text-[11px] font-black text-[#0a192f] min-w-[3rem] text-center w-12">
-                    {Math.round(zoomLevel * 100)}%
-                </span>
-                <button
-                    onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
-                    className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
-                    title="Aumentar Zoom"
-                >
-                    <ZoomIn className="w-5 h-5" />
-                </button>
-                <div className="w-px h-6 bg-gray-200 mx-1"></div>
-                <button
-                    onClick={() => setZoomLevel(1)}
-                    className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
-                    title="Restaurar tamanho (100%)"
-                >
-                    <Network className="w-4 h-4 mx-auto mb-0.5" />
-                </button>
+            {/* Hovering Zoom Controls & Navigation Panel */}
+            <div className="fixed bottom-8 right-8 z-[110] flex items-center gap-3">
+                {showBackToTop && (
+                    <button
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        className="p-3 bg-white border border-blue-100 rounded-2xl shadow-xl text-[#1e3a8a] hover:bg-blue-50 transition-all animate-in slide-in-from-bottom-4"
+                        title="Voltar ao Topo"
+                    >
+                        <ArrowUp className="w-5 h-5" />
+                    </button>
+                )}
+
+                <div className="bg-white p-2 rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-100 flex items-center gap-2 animate-in slide-in-from-right-4">
+                    <button
+                        onClick={() => setZoomLevel(prev => Math.max(0.4, prev - 0.1))}
+                        className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
+                        title="Reduzir Zoom"
+                    >
+                        <ZoomOut className="w-5 h-5" />
+                    </button>
+                    <span className="text-[11px] font-black text-[#0a192f] min-w-[3rem] text-center w-12">
+                        {Math.round(zoomLevel * 100)}%
+                    </span>
+                    <button
+                        onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
+                        className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
+                        title="Aumentar Zoom"
+                    >
+                        <ZoomIn className="w-5 h-5" />
+                    </button>
+                    <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                    <button
+                        onClick={() => setZoomLevel(1)}
+                        className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
+                        title="Restaurar tamanho (100%)"
+                    >
+                        <Network className="w-4 h-4 mx-auto mb-0.5" />
+                    </button>
+                </div>
             </div>
         </div>
     );
