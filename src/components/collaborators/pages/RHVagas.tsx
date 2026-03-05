@@ -52,6 +52,11 @@ export function RHVagas() {
   const [selectedVagaId, setSelectedVagaId] = useState<string | null>(null)
   const [selectedCandidatoId, setSelectedCandidatoId] = useState<string | null>(null)
 
+  // Match System State
+  const [matchMode, setMatchMode] = useState<'vaga' | 'candidato'>('vaga')
+  const [selectedMatchVagaId, setSelectedMatchVagaId] = useState<string | null>(null)
+  const [selectedMatchCandidatoId, setSelectedMatchCandidatoId] = useState<string | null>(null)
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -124,6 +129,77 @@ export function RHVagas() {
 
     setCandidatos(talentosAbertos)
   }
+
+  // ==== MATCH SYSTEM LOGIC ====
+
+  // Helper: Extrair tags de uma string multiline 'perfil'
+  const extractTags = (perfilStr?: string): string[] => {
+    if (!perfilStr) return [];
+    return perfilStr
+      .split('\n')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+  };
+
+  // Helper: Calcular similaridade básica entre arrays de tags
+  const calculateMatchScore = (sourceTags: string[], targetTags: string[]) => {
+    if (sourceTags.length === 0 || targetTags.length === 0) return { score: 0, matches: 0, matchedTags: [] };
+
+    const sourceLower = sourceTags.map(t => t.toLowerCase());
+    const targetLower = targetTags.map(t => t.toLowerCase());
+
+    const matched = targetLower.filter(t => sourceLower.includes(t));
+    const score = Math.round((matched.length / sourceTags.length) * 100);
+
+    return {
+      score: score > 100 ? 100 : score, // Cap em 100%
+      matches: matched.length,
+      matchedTags: matched
+    };
+  };
+
+  // State derivado: Vaga Ativa no Match e lista de Candidatos Ordenada
+  const activeMatchVaga = vagas.find(v => v.id === selectedMatchVagaId);
+  const matchedCandidatos = (() => {
+    if (!activeMatchVaga || matchMode !== 'vaga') return [];
+    const vagaTags = extractTags(activeMatchVaga.perfil);
+
+    return candidatos.map(c => {
+      const candidatoTags = extractTags(c.perfil);
+      const match = calculateMatchScore(vagaTags, candidatoTags);
+      return {
+        candidato: c,
+        score: match.score,
+        matches: match.matches,
+        totalTags: vagaTags.length,
+        matchedTags: match.matchedTags,
+        candidatoTags
+      };
+    }).sort((a, b) => b.score - a.score);
+  })();
+
+  // State derivado: Candidato Ativo no Match e lista de Vagas Ordenada
+  const activeMatchCandidato = candidatos.find(c => c.id === selectedMatchCandidatoId);
+  const matchedVagas = (() => {
+    if (!activeMatchCandidato || matchMode !== 'candidato') return [];
+    const candidatoTags = extractTags(activeMatchCandidato.perfil);
+
+    return vagas
+      .filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização') // Apenas ativas
+      .map(v => {
+        const vagaTags = extractTags(v.perfil);
+        const match = calculateMatchScore(candidatoTags, vagaTags); // Queremos saber o quanto a vaga atende aos requisitos/skills do candidato (invertido)
+        return {
+          vaga: v,
+          score: match.score, // Score baseado em quantas skills do candidato a vaga "exige" ou tem match
+          matches: match.matches,
+          totalTags: candidatoTags.length > 0 ? candidatoTags.length : vagaTags.length, // Tratamento para não quebrar a UI
+          matchedTags: match.matchedTags,
+          vagaTags
+        };
+      }).sort((a, b) => b.score - a.score);
+  })();
+  // ============================
 
   const handleOpenSelectionModal = () => {
     setIsSelectionModalOpen(true)
@@ -504,23 +580,256 @@ export function RHVagas() {
       )}
 
       {activeTab === 'filtros' && (
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 space-y-8 flex-1 overflow-auto custom-scrollbar">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-            <h2 className="text-lg font-bold text-[#1e3a8a]">Opções de Filtro</h2>
-            <button
-              onClick={() => {
-                setFilterLider('')
-                setFilterPartner('')
-                setFilterLocal('')
-                setFilterCargo('')
-                setSearchTerm('')
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors text-xs font-bold uppercase tracking-wider"
-            >
-              <X className="h-4 w-4" /> Limpar Filtros
-            </button>
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-gray-100 pb-4 mb-6 gap-4 shrink-0">
+            <div>
+              <h2 className="text-xl font-black text-[#1e3a8a] tracking-tight">Match Inteligente (ATS)</h2>
+              <p className="text-xs font-semibold text-gray-500 mt-1">Encontre a aderência perfeita cruzando perfis e vagas</p>
+            </div>
+
+            <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto">
+              <button
+                onClick={() => setMatchMode('vaga')}
+                className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${matchMode === 'vaga' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <Briefcase className="h-4 w-4" /> Por Vaga
+              </button>
+              <button
+                onClick={() => setMatchMode('candidato')}
+                className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap ${matchMode === 'candidato' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <User className="h-4 w-4" /> Por Candidato
+              </button>
+            </div>
           </div>
-          <p className="text-gray-500 text-sm">Filtros avançados em desenvolvimento para vagas...</p>
+
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            {matchMode === 'vaga' ? (
+              // VISÃO POR VAGA
+              <div className="space-y-6">
+                <div className="bg-blue-50/50 p-4 sm:p-6 rounded-2xl border border-blue-100">
+                  <h3 className="text-sm font-bold text-[#0a192f] mb-3">1. Selecione a Vaga Alvo</h3>
+                  <div className="relative">
+                    <select
+                      value={selectedMatchVagaId || ''}
+                      onChange={(e) => setSelectedMatchVagaId(e.target.value)}
+                      className="w-full sm:max-w-md appearance-none bg-white border border-blue-200 text-[#0a192f] text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] transition-all cursor-pointer"
+                    >
+                      <option value="">Selecione uma vaga em aberto...</option>
+                      {vagas.filter(v => v.status === 'Aberta' || v.status === 'Aguardando Autorização').map(v => (
+                        <option key={v.id} value={v.id}>
+                          {v.vaga_id_text} - {v.role?.name || 'Sem cargo'} ({v.location?.name || 'Sem local'})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 left-0 sm:left-auto sm:right-0 ml-auto sm:ml-0 w-10 flex items-center justify-center text-blue-500 max-w-[calc(100%-1rem)] sm:max-w-md pr-2 sm:pr-0">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    </div>
+                  </div>
+
+                  {selectedMatchVagaId && (
+                    <div className="mt-4 animate-in slide-in-from-top-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-800/60 mb-2">Tags Exigidas pela Vaga</p>
+                      {activeMatchVaga && extractTags(activeMatchVaga.perfil).length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {extractTags(activeMatchVaga.perfil).map((tag, i) => (
+                            <span key={i} className="px-2.5 py-1 bg-white text-blue-700 border border-blue-200 rounded-lg text-xs font-bold shadow-sm">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-blue-600/60 font-medium italic">Esta vaga não possui tags de perfil registradas. O match não será preciso.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {selectedMatchVagaId && (
+                  <div>
+                    <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-600" /> Talentos Compatíveis Ordenados
+                    </h3>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                      <table className="w-full min-w-max text-left border-collapse">
+                        <thead className="bg-[#1e3a8a]">
+                          <tr>
+                            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-48">Aderência (Match)</th>
+                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px]">Candidato</th>
+                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px]">Cargo Atual/Pretendido</th>
+                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Tags do Candidato (Highlight do Match)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {matchedCandidatos.map((m, idx) => (
+                            <tr key={m.candidato.id} onClick={() => { setSelectedCandidatoId(m.candidato.id); setIsCandidatoModalOpen(true); }} className="hover:bg-blue-50/50 cursor-pointer transition-colors">
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="flex flex-col gap-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className={`text-sm font-black ${m.score >= 80 ? 'text-green-600' : m.score >= 50 ? 'text-amber-500' : 'text-gray-400'}`}>
+                                      {m.score}%
+                                    </span>
+                                    <span className="text-[10px] font-bold text-gray-500">{m.matches} de {m.totalTags}</span>
+                                  </div>
+                                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${m.score >= 80 ? 'bg-green-500' : m.score >= 50 ? 'bg-amber-400' : 'bg-gray-300'}`}
+                                      style={{ width: `${m.score}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-3 py-4">
+                                <p className="font-bold text-sm text-[#0a192f]">{m.candidato.nome}</p>
+                                <p className="text-[10px] text-gray-500 mt-0.5">{m.candidato.email}</p>
+                              </td>
+                              <td className="px-3 py-4 text-xs font-semibold text-gray-700">
+                                {roleOptions.find(r => String(r.value) === String(m.candidato.role))?.label || m.candidato.role || '-'}
+                              </td>
+                              <td className="px-3 py-4">
+                                <div className="flex flex-wrap gap-1.5">
+                                  {m.candidatoTags.map((tag, i) => {
+                                    const isMatch = m.matchedTags.includes(tag.toLowerCase());
+                                    return (
+                                      <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                        {tag}
+                                      </span>
+                                    );
+                                  })}
+                                  {m.candidatoTags.length === 0 && <span className="text-xs text-gray-400 italic">Sem tags</span>}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {matchedCandidatos.length === 0 && (
+                            <tr>
+                              <td colSpan={4} className="px-4 py-8 text-center text-sm font-semibold text-gray-500">
+                                Nenhum candidato avaliado ou lista vazia.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // VISÃO POR CANDIDATO
+              <div className="space-y-6">
+                <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl border border-emerald-100">
+                  <h3 className="text-sm font-bold text-[#0a192f] mb-3">1. Selecione o Candidato Alvo</h3>
+                  <div className="relative">
+                    <select
+                      value={selectedMatchCandidatoId || ''}
+                      onChange={(e) => setSelectedMatchCandidatoId(e.target.value)}
+                      className="w-full sm:max-w-md appearance-none bg-white border border-emerald-200 text-[#0a192f] text-sm font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#059669] transition-all cursor-pointer"
+                    >
+                      <option value="">Selecione um talento da base...</option>
+                      {candidatos.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome} - {roleOptions.find(r => String(r.value) === String(c.role))?.label || c.role || 'Sem cargo'}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 left-0 sm:left-auto sm:right-0 ml-auto sm:ml-0 w-10 flex items-center justify-center text-emerald-600 max-w-[calc(100%-1rem)] sm:max-w-md pr-2 sm:pr-0">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    </div>
+                  </div>
+
+                  {selectedMatchCandidatoId && (
+                    <div className="mt-4 animate-in slide-in-from-top-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800/60 mb-2">Habilidades (Tags) do Candidato</p>
+                      {activeMatchCandidato && extractTags(activeMatchCandidato.perfil).length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {extractTags(activeMatchCandidato.perfil).map((tag, i) => (
+                            <span key={i} className="px-2.5 py-1 bg-white text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold shadow-sm">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-emerald-600/60 font-medium italic">Este candidato não possui tags de perfil registradas. Preencha no cadastro para utilizar o match.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {selectedMatchCandidatoId && (
+                  <div>
+                    <h3 className="text-sm font-bold text-[#0a192f] mb-3 flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-emerald-600" /> Vagas Abertas Compatíveis
+                    </h3>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                      <table className="w-full min-w-max text-left border-collapse">
+                        <thead className="bg-[#059669]">
+                          <tr>
+                            <th className="px-4 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tl-xl w-48">Aderência (Match)</th>
+                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[200px]">Vaga</th>
+                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider min-w-[150px]">Líder / Sócio</th>
+                            <th className="px-3 py-3 text-[10px] font-black text-white uppercase tracking-wider rounded-tr-xl">Tags da Vaga (Highlight do Match)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {matchedVagas.map((m, idx) => (
+                            <tr key={m.vaga.id} onClick={() => handleOpenViewModal(m.vaga.id)} className="hover:bg-emerald-50/40 cursor-pointer transition-colors">
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="flex flex-col gap-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className={`text-sm font-black ${m.score >= 80 ? 'text-green-600' : m.score >= 50 ? 'text-amber-500' : 'text-gray-400'}`}>
+                                      {m.score}%
+                                    </span>
+                                    <span className="text-[10px] font-bold text-gray-500">{m.matches} de {m.totalTags}</span>
+                                  </div>
+                                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${m.score >= 80 ? 'bg-green-500' : m.score >= 50 ? 'bg-amber-400' : 'bg-gray-300'}`}
+                                      style={{ width: `${m.score}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-3 py-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[9px] font-black tracking-widest uppercase">{m.vaga.vaga_id_text}</span>
+                                  <p className="font-bold text-sm text-[#0a192f] truncate">{m.vaga.role?.name || 'Sem cargo'}</p>
+                                </div>
+                                <p className="text-[10px] text-gray-500 mt-1">{m.vaga.location?.name || 'Local não informado'}</p>
+                              </td>
+                              <td className="px-3 py-4 text-xs font-semibold text-gray-700">
+                                <p>{m.vaga.leader?.name || '-'}</p>
+                                <p className="text-[10px] text-gray-500">{m.vaga.partner?.name || '-'}</p>
+                              </td>
+                              <td className="px-3 py-4">
+                                <div className="flex flex-wrap gap-1.5">
+                                  {m.vagaTags.map((tag, i) => {
+                                    const isMatch = m.matchedTags.includes(tag.toLowerCase());
+                                    return (
+                                      <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isMatch ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                        {tag}
+                                      </span>
+                                    );
+                                  })}
+                                  {m.vagaTags.length === 0 && <span className="text-xs text-gray-400 italic">Sem tags registradas</span>}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {matchedVagas.length === 0 && (
+                            <tr>
+                              <td colSpan={4} className="px-4 py-8 text-center text-sm font-semibold text-gray-500">
+                                Nenhuma vaga avaliada ou lista vazia.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
