@@ -109,7 +109,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
     if (data) {
       setUsers(data.map((u: any) => ({
         id: u.id, user_id: u.user_id, nome: u.email.split('@')[0],
-        email: u.email, cargo: u.role === 'admin' ? 'Administrador' : 'Colaborador',
+        email: u.email, cargo: u.role === 'admin' ? 'Administrador' : (u.role === 'readonly' ? 'Visualização' : 'Colaborador'),
         role: u.role || 'user', ativo: !!u.user_id, allowed_modules: u.allowed_modules || []
       })))
     }
@@ -123,7 +123,7 @@ export function Settings({ onModuleHome, onLogout }: { onModuleHome?: () => void
 
     try {
       const emailNormalizado = userForm.email.toLowerCase().trim();
-      const roleFinal = userForm.cargo === 'Administrador' ? 'admin' : 'user';
+      const roleFinal = userForm.cargo === 'Administrador' ? 'admin' : (userForm.cargo === 'Visualização' ? 'readonly' : 'user');
 
       const { data: existingProfile } = await supabase
         .from('user_profiles')

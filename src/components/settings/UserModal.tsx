@@ -50,6 +50,7 @@ export function UserModal({
                 <option>Administrador</option>
                 <option>Sócio</option>
                 <option>Colaborador</option>
+                <option>Visualização</option>
               </select>
             </div>
           </div>

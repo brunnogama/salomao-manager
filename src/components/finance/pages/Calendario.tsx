@@ -17,9 +17,10 @@ import {
   GraduationCap,
   Pencil,
   Trash2,
-  CalendarDays as MonthIcon
+  MonthIcon
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { useAuth } from '../../../contexts/AuthContext'
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -29,6 +30,9 @@ const MESES = [
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 export function Calendario() {
+  const { userRole } = useAuth()
+  const isReadOnly = userRole === 'readonly'
+
   const [currentDate] = useState(new Date())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
@@ -210,12 +214,14 @@ export function Calendario() {
         </div>
 
         <div className="flex items-center gap-3 shrink-0 w-full md:w-auto mt-2 md:mt-0 justify-end flex-wrap">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-          >
-            <Plus className="h-4 w-4" /> Novo Lançamento
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            >
+              <Plus className="h-4 w-4" /> Novo Lançamento
+            </button>
+          )}
         </div>
       </div>
 

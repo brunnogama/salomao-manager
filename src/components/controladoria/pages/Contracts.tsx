@@ -134,7 +134,8 @@ export function Contracts() {
         .eq('id', user.id)
         .maybeSingle();
       if (profile) {
-        setUserRole(profile.role as 'admin' | 'editor' | 'viewer');
+        const role = profile.role === 'readonly' ? 'viewer' : profile.role;
+        setUserRole(role as 'admin' | 'editor' | 'viewer');
       }
     }
   };

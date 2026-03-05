@@ -10,6 +10,7 @@ interface AuthContextType {
     isResettingPassword: boolean;
     user: any; // Using any to match existing usage in App.tsx temporarily, should be refined
     isAuthorized: boolean | null;
+    userRole: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [isResettingPassword, setIsResettingPassword] = useState(false);
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const checkAuthorization = async (currentSession: Session | null) => {
         console.log('🔍 [AuthContext] checkAuthorization init. Session exists:', !!currentSession);
@@ -40,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (email === 'marcio.gama@salomaoadv.com.br') {
             setIsAuthorized(true);
+            setUserRole('admin');
             setLoading(false);
             return;
         }
@@ -47,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const { data, error } = await supabase
                 .from('user_profiles')
-                .select('user_id')
+                .select('user_id, role')
                 .eq('email', email)
                 .maybeSingle();
 
@@ -57,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else if (data && data.user_id) {
                 // Tem perfil e o user_id não é nulo -> Autorizado
                 setIsAuthorized(true);
+                setUserRole(data.role as string || 'user');
             } else if (data && !data.user_id) {
                 // Tem perfil mas user_id é nulo -> Pendente na fila
                 setIsAuthorized(false);
@@ -176,7 +180,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut,
         isResettingPassword,
         user: session?.user ?? null,
-        isAuthorized
+        isAuthorized,
+        userRole
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

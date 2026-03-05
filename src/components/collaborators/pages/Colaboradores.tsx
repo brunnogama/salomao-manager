@@ -59,7 +59,8 @@ interface ColaboradoresProps {
 
 
 export function Colaboradores({ }: ColaboradoresProps) {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
+  const isReadOnly = userRole === 'readonly';
   const [colaboradores, setColaboradores] = useState<Collaborator[]>([])
   const [partners, setPartners] = useState<Partial<Partner>[]>([])
   const [roles, setRoles] = useState<Role[]>([])
@@ -1359,12 +1360,14 @@ export function Colaboradores({ }: ColaboradoresProps) {
             >
               <Users className="h-4 w-4" /> Equipe
             </button>
-            <button
-              onClick={() => setActiveMainTab('Relatórios')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Relatórios' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <FileSpreadsheet className="h-4 w-4" /> Relatórios
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={() => setActiveMainTab('Relatórios')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${activeMainTab === 'Relatórios' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <FileSpreadsheet className="h-4 w-4" /> Relatórios
+              </button>
+            )}
           </div>
 
           {activeMainTab === 'Colaboradores' ? (
@@ -1403,20 +1406,22 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
 
 
-              <button
-                onClick={() => {
-                  setFormData({ status: 'active', state: '' })
-                  setPhotoPreview(null)
-                  setActiveFormTab(1)
-                  setShowFormModal(true)
-                }}
-                className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
-                title="Novo Colaborador"
-              >
-                <Plus className="h-5 w-5" />
-              </button>
+              {!isReadOnly && (
+                <button
+                  onClick={() => {
+                    setFormData({ status: 'active', state: '' })
+                    setPhotoPreview(null)
+                    setActiveFormTab(1)
+                    setShowFormModal(true)
+                  }}
+                  className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 shrink-0"
+                  title="Novo Colaborador"
+                >
+                  <Plus className="h-5 w-5" />
+                </button>
+              )}
 
-              {selectedIds.length > 0 && (
+              {!isReadOnly && selectedIds.length > 0 && (
                 <button
                   onClick={handleGenerateLinks}
                   disabled={generatingLinks}
@@ -1611,75 +1616,76 @@ export function Colaboradores({ }: ColaboradoresProps) {
 
       {activeMainTab === 'Colaboradores' && (
         <>
-          {/* CONTROLS CARD - Search | Filters */}
-          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+          {!isReadOnly && (
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 animate-in slide-in-from-top-5 duration-600">
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
 
-              {/* Active Count Card */}
-              <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
-                <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
-                  <Users className="h-4 w-4" />
+                {/* Active Count Card */}
+                <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-2.5 shrink-0 animate-in fade-in slide-in-from-left-4 duration-700">
+                  <div className="p-1.5 bg-blue-100 rounded-lg text-[#1e3a8a]">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Ativos</p>
+                    <p className="text-sm font-bold text-[#1e3a8a] leading-none">{activeCount}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] font-black text-blue-900/40 uppercase tracking-widest leading-none mb-1">Ativos</p>
-                  <p className="text-sm font-bold text-[#1e3a8a] leading-none">{activeCount}</p>
+
+                {/* Search Bar - Expanded */}
+                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
+                  <Search className="h-4 w-4 text-gray-400 mr-3 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Buscar..."
+                    className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400 pr-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+                      title="Limpar busca"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
-              </div>
 
-              {/* Search Bar - Expanded */}
-              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 w-full flex-1 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a] transition-all relative">
-                <Search className="h-4 w-4 text-gray-400 mr-3 shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400 pr-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
-                    title="Limpar busca"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Filters Row - Auto-sizing */}
-              <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
-                <FilterSelect
-                  icon={User}
-                  value={filterLider}
-                  onChange={setFilterLider}
-                  options={liderOptions}
-                  placeholder="Líder"
-                />
-                <FilterSelect
-                  icon={Users}
-                  value={filterPartner}
-                  onChange={setFilterPartner}
-                  options={partnerOptions}
-                  placeholder="Sócio"
-                />
-                <FilterSelect
-                  icon={Building2}
-                  value={filterLocal}
-                  onChange={setFilterLocal}
-                  options={locationOptions}
-                  placeholder="Local"
-                />
-                <FilterSelect
-                  icon={Briefcase}
-                  value={filterCargo}
-                  onChange={setFilterCargo}
-                  options={roleOptions}
-                  placeholder="Cargo"
-                />
+                {/* Filters Row - Auto-sizing */}
+                <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
+                  <FilterSelect
+                    icon={User}
+                    value={filterLider}
+                    onChange={setFilterLider}
+                    options={liderOptions}
+                    placeholder="Líder"
+                  />
+                  <FilterSelect
+                    icon={Users}
+                    value={filterPartner}
+                    onChange={setFilterPartner}
+                    options={partnerOptions}
+                    placeholder="Sócio"
+                  />
+                  <FilterSelect
+                    icon={Building2}
+                    value={filterLocal}
+                    onChange={setFilterLocal}
+                    options={locationOptions}
+                    placeholder="Local"
+                  />
+                  <FilterSelect
+                    icon={Briefcase}
+                    value={filterCargo}
+                    onChange={setFilterCargo}
+                    options={roleOptions}
+                    placeholder="Cargo"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Table/Grid */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0 overflow-hidden animate-in slide-in-from-bottom-6 duration-700">
@@ -1784,10 +1790,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
-                              <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
-                            </div>
+                            {!isReadOnly && (
+                              <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -1853,10 +1861,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
-                              <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
-                            </div>
+                            {!isReadOnly && (
+                              <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -1900,10 +1910,12 @@ export function Colaboradores({ }: ColaboradoresProps) {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
-                              <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
-                            </div>
+                            {!isReadOnly && (
+                              <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={(e) => { e.stopPropagation(); handleEdit(c) }} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95"><Pencil className="h-4 w-4" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete(c) }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95"><Trash2 className="h-4 w-4" /></button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}

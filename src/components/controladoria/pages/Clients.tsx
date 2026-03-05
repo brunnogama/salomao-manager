@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { useAuth } from '../../../contexts/AuthContext';
 import {
   Users,
   Search,
@@ -25,7 +26,8 @@ import { useDatabaseSync } from '../../../hooks/useDatabaseSync';
 import { maskCNPJ } from '../utils/masks';
 
 export function Clients() {
-
+  const { userRole } = useAuth();
+  const isReadOnly = userRole === 'readonly';
 
   const [clients, setClients] = useState<Client[]>([]);
 
@@ -142,12 +144,14 @@ export function Clients() {
         </div>
 
         <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
-          <button
-            onClick={handleNew}
-            className="flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-          >
-            <Plus className="h-4 w-4" /> Novo Cliente
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={handleNew}
+              className="flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-2.5 sm:py-2.5 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            >
+              <Plus className="h-4 w-4" /> Novo Cliente
+            </button>
+          )}
         </div>
       </div>
 
@@ -284,26 +288,30 @@ export function Clients() {
 
                     {/* Ações Column */}
                     <div className="col-span-2 flex items-center justify-end gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(client);
-                        }}
-                        className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all"
-                        title="Editar cliente"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(client.id!);
-                        }}
-                        className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
-                        title="Excluir cliente"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {!isReadOnly && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(client);
+                            }}
+                            className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all"
+                            title="Editar cliente"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(client.id!);
+                            }}
+                            className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+                            title="Excluir cliente"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -430,13 +438,15 @@ export function Clients() {
                 >
                   Fechar
                 </button>
-                <button
-                  onClick={() => handleEdit(viewingClient)}
-                  className="flex items-center justify-center gap-2 px-6 py-3 sm:py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
-                >
-                  <Edit className="w-4 h-4" />
-                  Editar Cliente
-                </button>
+                {!isReadOnly && (
+                  <button
+                    onClick={() => handleEdit(viewingClient)}
+                    className="flex items-center justify-center gap-2 px-6 py-3 sm:py-2 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 w-full sm:w-auto"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Editar Cliente
+                  </button>
+                )}
               </div>
             </div>
           </div>

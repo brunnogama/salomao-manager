@@ -17,6 +17,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
+import { useAuth } from '../../../contexts/AuthContext'
 
 interface GEDProps {
   userName?: string;
@@ -38,6 +39,9 @@ interface Documento {
 }
 
 export function GED() {
+  const { userRole } = useAuth()
+  const isReadOnly = userRole === 'readonly'
+
   const [userName, setUserName] = useState('Usuário')
   const [documentos, setDocumentos] = useState<Documento[]>([])
   const [loading, setLoading] = useState(true)
@@ -199,9 +203,11 @@ export function GED() {
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto mt-2 md:mt-0 justify-end flex-wrap">
-          <button onClick={() => setIsUploadModalOpen(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95">
-            <Plus className="h-4 w-4" /> Novo Documento
-          </button>
+          {!isReadOnly && (
+            <button onClick={() => setIsUploadModalOpen(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all active:scale-95">
+              <Plus className="h-4 w-4" /> Novo Documento
+            </button>
+          )}
         </div>
       </div>
 
@@ -295,7 +301,9 @@ export function GED() {
                   <div className="flex gap-1">
                     <button onClick={(e) => { e.stopPropagation(); handleDownload(doc); }} className="p-1.5 hover:bg-blue-100 rounded-lg transition-all" title="Baixar"><Download className="h-3.5 w-3.5 text-blue-600" /></button>
                     <button onClick={(e) => { e.stopPropagation(); setSelectedDoc(doc); setIsViewModalOpen(true); }} className="p-1.5 hover:bg-emerald-100 rounded-lg transition-all" title="Visualizar"><Eye className="h-3.5 w-3.5 text-emerald-600" /></button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(doc); }} className="p-1.5 hover:bg-red-100 rounded-lg transition-all text-red-500" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
+                    {!isReadOnly && (
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(doc); }} className="p-1.5 hover:bg-red-100 rounded-lg transition-all text-red-500" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -438,6 +446,9 @@ function UploadModal({ isOpen, onClose, onSuccess, userName }: any) {
 }
 
 function ViewDocumentModal({ documento, isOpen, onClose, onDownload, onDelete }: any) {
+  const { userRole } = useAuth()
+  const isReadOnly = userRole === 'readonly'
+
   if (!isOpen) return null
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-[#0a192f]/60 backdrop-blur-md animate-in fade-in duration-300">
@@ -472,7 +483,9 @@ function ViewDocumentModal({ documento, isOpen, onClose, onDownload, onDelete }:
           </div>
         </div>
         <div className="px-10 py-6 border-t border-gray-50 bg-gray-50/50 shrink-0 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
-          <button onClick={() => onDelete(documento)} className="flex items-center justify-center gap-2 px-6 py-3 text-red-500 hover:bg-red-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"><Trash2 className="h-4 w-4" /> Excluir Documento</button>
+          {!isReadOnly ? (
+            <button onClick={() => onDelete(documento)} className="flex items-center justify-center gap-2 px-6 py-3 text-red-500 hover:bg-red-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"><Trash2 className="h-4 w-4" /> Excluir Documento</button>
+          ) : <div />}
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <button onClick={onClose} className="px-6 py-3 text-gray-400 hover:text-gray-600 text-[10px] font-black uppercase tracking-widest transition-all">Fechar</button>
             <button onClick={() => onDownload(documento)} className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-10 py-3 bg-[#1e3a8a] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-[#112240] transition-all transform active:scale-95"><Download className="h-4 w-4" /> Baixar Documento</button>

@@ -14,7 +14,8 @@ import {
   Mail,
   Building2
 } from 'lucide-react'
-import { supabase } from '../../../lib/supabase'
+import { supabase } from '../../../../lib/supabase'
+import { useAuth } from '../../../../contexts/AuthContext'
 import { FinanceModalCliente } from '../components/FinanceModalCliente'
 
 interface FinanceClientesProps {
@@ -36,6 +37,9 @@ export function FinanceClientes({
   onModuleHome,
   onLogout
 }: FinanceClientesProps) {
+  const { userRole } = useAuth()
+  const isReadOnly = userRole === 'readonly'
+
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -167,12 +171,14 @@ export function FinanceClientes({
             />
           </div>
 
-          <button
-            onClick={handleNovoCliente}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-          >
-            <Plus className="h-4 w-4" /> Novo Cliente
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={handleNovoCliente}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#1e3a8a] to-[#112240] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            >
+              <Plus className="h-4 w-4" /> Novo Cliente
+            </button>
+          )}
         </div>
 
         {/* STATS CARDS */}
@@ -281,21 +287,31 @@ export function FinanceClientes({
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleEditCliente(cliente)}
-                            className="p-2 text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-all"
-                            title="Editar cliente"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCliente(cliente.id, cliente.nome)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                            title="Excluir cliente"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                        <div className="flex items-center justify-end gap-2 text-[#b0b0b0]">
+                          {!isReadOnly && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleEditCliente(cliente)
+                                }}
+                                className="p-2 text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-all"
+                                title="Editar cliente"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteCliente(cliente.id, cliente.nome)
+                                }}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                title="Excluir cliente"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -317,7 +333,7 @@ export function FinanceClientes({
                   : 'Comece cadastrando seu primeiro cliente'
                 }
               </p>
-              {!searchTerm && (
+              {!searchTerm && !isReadOnly && (
                 <button
                   onClick={handleNovoCliente}
                   className="flex items-center gap-2 px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95 mt-4"

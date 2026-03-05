@@ -27,6 +27,7 @@ import { FinanceModalEditarDatas } from '../components/FinanceModalEditarDatas'
 import { ConfirmationModal } from '../../../ui/ConfirmationModal'
 import { useFinanceContasReceber, FaturaStatus, Fatura } from '../hooks/useFinanceContasReceber'
 import { SearchableSelect } from '../../../crm/SearchableSelect'
+import { useAuth } from '../../../../contexts/AuthContext'
 
 interface FinanceContasReceberProps {
   userEmail?: string;
@@ -42,6 +43,9 @@ const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 export function FinanceContasReceber({
   userEmail = ''
 }: FinanceContasReceberProps) {
+  const { userRole } = useAuth()
+  const isReadOnly = userRole === 'readonly'
+
   const [activeTab, setActiveTab] = useState<'lista' | 'calendario'>('lista')
   const [activeFilter, setActiveFilter] = useState<'todos' | 'aguardando' | 'radar' | 'pago'>('todos')
   const [searchTerm, setSearchTerm] = useState('')
@@ -278,12 +282,14 @@ export function FinanceContasReceber({
           >
             <Download className="h-4 w-4" /> Exportar XLSX
           </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
-          >
-            <Mail className="h-4 w-4" /> Enviar Fatura
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg hover:shadow-xl transition-all active:scale-95"
+            >
+              <Mail className="h-4 w-4" /> Enviar Fatura
+            </button>
+          )}
         </div>
       </div>
 
@@ -467,13 +473,17 @@ export function FinanceContasReceber({
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {fatura.status !== 'pago' && (
+                              {!isReadOnly && (
                                 <>
-                                  <button onClick={(e) => handleConfirmarPagamento(e, fatura)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all hover:scale-110 active:scale-95" title="Confirmar Recebimento"><Check className="h-4 w-4" /></button>
-                                  <button onClick={(e) => handleOpenEditDates(e, fatura)} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95" title="Editar Prazos"><Pencil className="h-4 w-4" /></button>
+                                  {fatura.status !== 'pago' && (
+                                    <>
+                                      <button onClick={(e) => handleConfirmarPagamento(e, fatura)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all hover:scale-110 active:scale-95" title="Confirmar Recebimento"><Check className="h-4 w-4" /></button>
+                                      <button onClick={(e) => handleOpenEditDates(e, fatura)} className="p-2 text-[#1e3a8a] hover:bg-[#1e3a8a]/10 rounded-xl transition-all hover:scale-110 active:scale-95" title="Editar Prazos"><Pencil className="h-4 w-4" /></button>
+                                    </>
+                                  )}
+                                  <button onClick={(e) => handleDeleteFatura(e, fatura)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95" title="Excluir"><Trash2 className="h-4 w-4" /></button>
                                 </>
                               )}
-                              <button onClick={(e) => handleDeleteFatura(e, fatura)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all hover:scale-110 active:scale-95" title="Excluir"><Trash2 className="h-4 w-4" /></button>
                             </div>
                           </td>
                         </tr>
