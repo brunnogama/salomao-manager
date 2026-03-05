@@ -482,10 +482,15 @@ export function Organograma() {
 
             if (error) throw error;
 
-            // Sync main state after DB change
-            await fetchColaboradores();
+            // Optimistic Update: Update local 'data' state directly
+            // This ensures the UI reflects change instantly without full re-render/scroll-jump
+            setData(prev => prev.map(c =>
+                c.id === draggableId
+                    ? { ...c, leader_id: leaderToUpdate || undefined }
+                    : c
+            ));
 
-            const leaderName = leaderToUpdate
+            const leaderToUpdateName = leaderToUpdate
                 ? data.find(c => c.id === leaderToUpdate)?.name || 'novo líder'
                 : 'nenhum';
 
@@ -493,7 +498,7 @@ export function Organograma() {
                 <div className="flex flex-col gap-1">
                     <span className="font-bold text-[#0a192f]">Hierarquia Atualizada!</span>
                     <span className="text-sm text-gray-600">
-                        {draggedColab.name} agora responde para <strong className="text-[#1e3a8a]">{leaderName}</strong>.
+                        {draggedColab.name} agora responde para <strong className="text-[#1e3a8a]">{leaderToUpdateName}</strong>.
                     </span>
                 </div>,
                 { duration: 4000 }
