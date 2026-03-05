@@ -22,6 +22,7 @@ import { VagaFormModal } from '../components/VagaFormModal'
 import { VagaViewModal } from '../components/VagaViewModal'
 import { CandidatoFormModal } from '../components/CandidatoFormModal'
 import { VagasSelectionModal, VagasCreationType } from '../components/VagasSelectionModal'
+import { formatDateToDisplay } from '../utils/colaboradoresUtils'
 
 export function RHVagas() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -577,13 +578,11 @@ export function RHVagas() {
                   const hasInterview = c.candidato_historico?.some((h: any) => h.tipo === 'Entrevista');
                   const interviewDates = c.candidato_historico
                     ?.filter((h: any) => h.tipo === 'Entrevista')
-                    .map((h: any) => {
-                      const rawDate = h.entrevista_data || h.data_registro;
-                      return rawDate ? new Date(rawDate) : null;
-                    })
+                    .map((h: any) => h.entrevista_data || h.data_registro || null)
                     .filter(Boolean)
-                    .sort((a: any, b: any) => b.getTime() - a.getTime());
-                  const lastInterviewDate = interviewDates && interviewDates.length > 0 ? interviewDates[0] : null;
+                    .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime());
+                  const lastInterviewDateRaw = interviewDates && interviewDates.length > 0 ? interviewDates[0] : null;
+
 
                   // Ocultar se já for colaborador (estamos em uma página de recrutamento/vagas ativos)
                   // Nota: Precisamos carregar a lista de IDs de candidatos que já são colaboradores se quisermos ser precisos,
@@ -637,7 +636,7 @@ export function RHVagas() {
                         )}
                       </td>
                       <td className="px-3 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap text-center">
-                        {lastInterviewDate ? lastInterviewDate.toLocaleDateString('pt-BR') : '-'}
+                        {lastInterviewDateRaw ? formatDateToDisplay(lastInterviewDateRaw) : '-'}
                       </td>
                       <td className="px-3 py-3 text-right whitespace-nowrap">
                         <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
