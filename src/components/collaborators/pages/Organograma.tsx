@@ -241,7 +241,7 @@ const AdminOrganogramTree = React.memo(({
 
     // Reusable Diretor Financeiro mini-node (Droppable)
     const DiretorSection = ({ atuacaoName }: { atuacaoName: string }) => (
-        <Droppable droppableId={`root-${diretorFinanceiro.id}-${atuacaoName}`} type="COLAB">
+        <Droppable droppableId={`root:${diretorFinanceiro.id}:${atuacaoName}`} type="COLAB">
             {(provided, snapshot) => (
                 <div
                     ref={provided.innerRef}
@@ -468,8 +468,8 @@ export function Organograma() {
 
         const newLeaderIdRaw = destination.droppableId;
         // Resolve root droppable IDs back to actual director ID
-        let newLeaderId = newLeaderIdRaw.startsWith('root-')
-            ? newLeaderIdRaw.split('-')[1]
+        let newLeaderId = newLeaderIdRaw.startsWith('root:')
+            ? newLeaderIdRaw.split(':')[1]
             : newLeaderIdRaw;
 
         const leaderToUpdate = newLeaderId === 'unassigned' ? null : newLeaderId;
@@ -514,7 +514,7 @@ export function Organograma() {
         if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
         const destId = destination.droppableId;
-        const resolvedDestId = destId.startsWith('root-') ? destId.split('-')[1] : destId;
+        const resolvedDestId = destId.startsWith('root:') ? destId.split(':')[1] : destId;
 
         if (draggableId === resolvedDestId) {
             toast.error('Um colaborador não pode ser líder dele mesmo.');
