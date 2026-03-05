@@ -45,7 +45,7 @@ serve(async (req) => {
       .from('candidato_ged')
       .select('url, nome_arquivo')
       .eq('candidato_id', candidatoId)
-      .eq('Categoria', 'Currículo');
+      .eq('categoria', 'Currículo');
 
     if (gedError || !geds || geds.length === 0) {
       throw new Error("O candidato não possui um arquivo classificado como 'Currículo' no GED.");

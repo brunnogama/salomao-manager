@@ -145,7 +145,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
         }
 
         // Verifica se há CV no pending docs ou GED pra avisar o user
-        const hasStoredCV = gedDocs.some(d => d.Categoria === 'Currículo');
+        const hasStoredCV = gedDocs.some(d => d.categoria === 'Currículo');
         const hasPendingCV = pendingGedDocs.some(d => d.category === 'Currículo');
 
         if (!hasStoredCV && !hasPendingCV) {
@@ -331,7 +331,7 @@ export function CandidatoFormModal({ isOpen, onClose, candidatoId, onSave }: Can
                             candidato_id: finalCandidatoId,
                             nome_arquivo: doc.file.name,
                             tamanho: doc.file.size,
-                            Categoria: doc.category,
+                            categoria: doc.category,
                             url: publicUrl,
                             // At present we assume the current user is logged in
                             uploaded_by: (await supabase.auth.getUser()).data.user?.id || null
