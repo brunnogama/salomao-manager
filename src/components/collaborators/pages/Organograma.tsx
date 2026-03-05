@@ -25,6 +25,7 @@ interface ColaboradorCard {
     name: string;
     role: string;
     equipe: string;
+    atuacao: string;
     leader_id?: string;
     competencias?: string;
     photo_url?: string;
@@ -221,8 +222,15 @@ export function Organograma() {
         return () => window.removeEventListener('scroll', handleScroll, true);
     }, []);
 
+    // Fetch atuação lookup table
+    const [atuacoesMap, setAtuacoesMap] = useState<Map<string, string>>(new Map());
+    useEffect(() => {
+        supabase.from('atuacao_id').select('id, name').then(({ data: atuData }) => {
+            if (atuData) setAtuacoesMap(new Map(atuData.map(a => [String(a.id), a.name])));
+        });
+    }, []);
+
     // Filter and sort collaborators based on Jurídico hierarchy initially
-    // For now, we focus on Jurídico as requested, but all are loaded
     useEffect(() => {
         if (colaboradores.length > 0) {
             const mapped = colaboradores
@@ -236,11 +244,15 @@ export function Organograma() {
                         roleLower.includes('advogado') ||
                         roleLower.includes('estagiário');
 
+                    const atuacaoId = String((c as any).atuacao || '');
+                    const atuacaoName = atuacoesMap.get(atuacaoId) || atuacaoId || '';
+
                     return {
                         id: c.id,
                         name: c.name,
                         role: roleStr || 'Sem Cargo',
                         equipe: (typeof c.teams === 'object' ? (c.teams as any)?.name : c.equipe) || 'Geral',
+                        atuacao: atuacaoName,
                         leader_id: c.leader_id || undefined,
                         competencias: c.competencias || '',
                         photo_url: c.photo_url || c.foto_url,
@@ -253,7 +265,7 @@ export function Organograma() {
                 });
             setData(mapped as ColaboradorCard[]);
         }
-    }, [colaboradores]);
+    }, [colaboradores, atuacoesMap]);
 
     const updateCompetencias = useCallback(async (id: string, text: string) => {
         setData(prev => prev.map(c => c.id === id ? { ...c, competencias: text } : c));
@@ -522,17 +534,112 @@ export function Organograma() {
                             className="flex flex-col items-center gap-16 pb-32 transition-transform duration-300 min-w-max w-full"
                             style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
                         >
-                            {roots.length > 0 ? (
-                                roots.map((root, index) => (
-                                    <div key={root.id} className="relative flex flex-col items-center w-full">
-                                        <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
-                                        {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
-                                    </div>
-                                ))
+                            {activeTab === 'ADMINISTRATIVO' ? (
+                                /* Administrative: Diretor Financeiro on top, then sectors by Atuação */
+                                (() => {
+                                    const diretorFinanceiro = data.find(c => c.role.toLowerCase().includes('diretor financeiro'));
+                                    const adminMembers = data.filter(c => c.isAdministrativo && !c.isSocio && c.role.toLowerCase() !== 'diretor financeiro');
+
+                                    // Group by atuação
+                                    const sectorMap = new Map<string, ColaboradorCard[]>();
+                                    adminMembers.forEach(c => {
+                                        const sector = c.atuacao || 'Sem Atuação';
+                                        if (!sectorMap.has(sector)) sectorMap.set(sector, []);
+                                        sectorMap.get(sector)!.push(c);
+                                    });
+                                    const sectors = Array.from(sectorMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                                    return (
+                                        <div className="flex flex-col items-center w-full">
+                                            {/* Diretor Financeiro */}
+                                            {diretorFinanceiro && (
+                                                <div className="flex flex-col items-center mb-4">
+                                                    <div
+                                                        className="flex flex-col items-center cursor-pointer group"
+                                                        onClick={() => setSelectedColabForModal(diretorFinanceiro.fullData)}
+                                                        title="Clique para expandir perfil"
+                                                    >
+                                                        <div className="w-28 h-28 rounded-full bg-white shadow-lg border-[3px] border-[#1e3a8a]/20 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/40">
+                                                            {diretorFinanceiro.photo_url || diretorFinanceiro.foto_url ? (
+                                                                <img src={diretorFinanceiro.photo_url || diretorFinanceiro.foto_url} alt={diretorFinanceiro.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                                    <UserIcon className="w-12 h-12" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="mt-4 text-center">
+                                                            <h4 className="text-[14px] leading-tight font-black text-[#0a192f] tracking-tight">{diretorFinanceiro.name}</h4>
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1">{diretorFinanceiro.role}</span>
+                                                        </div>
+                                                    </div>
+                                                    {/* Vertical line down */}
+                                                    <div className="w-[2px] h-10 bg-gray-300 mt-4"></div>
+                                                </div>
+                                            )}
+
+                                            {/* Horizontal line connecting all sectors */}
+                                            {sectors.length > 1 && (
+                                                <div className="relative w-full flex justify-center mb-0">
+                                                    <div style={{ width: `${Math.min(90, sectors.length * 20)}%` }} className="h-[2px] bg-gray-300"></div>
+                                                </div>
+                                            )}
+
+                                            {/* Sectors side by side */}
+                                            <div className="flex flex-wrap justify-center gap-0 w-full">
+                                                {sectors.map(([sectorName, members]) => (
+                                                    <div key={sectorName} className="flex flex-col items-center px-6 min-w-[200px]">
+                                                        {/* Vertical line from horizontal to sector header */}
+                                                        <div className="w-[2px] h-6 bg-gray-300"></div>
+                                                        {/* Sector header */}
+                                                        <div className="bg-gradient-to-r from-[#1e3a8a] to-[#0a192f] text-white px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-md mb-4 whitespace-nowrap">
+                                                            {sectorName}
+                                                        </div>
+                                                        {/* Members in this sector */}
+                                                        <div className="flex flex-wrap justify-center gap-6">
+                                                            {members.map(member => (
+                                                                <div
+                                                                    key={member.id}
+                                                                    className="flex flex-col items-center cursor-pointer group w-[160px]"
+                                                                    onClick={() => setSelectedColabForModal(member.fullData)}
+                                                                    title="Clique para expandir perfil"
+                                                                >
+                                                                    <div className="w-20 h-20 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                                                                        {member.photo_url || member.foto_url ? (
+                                                                            <img src={member.photo_url || member.foto_url} alt={member.name} className="w-full h-full object-cover" />
+                                                                        ) : (
+                                                                            <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
+                                                                                <UserIcon className="w-8 h-8" />
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="mt-3 text-center px-1">
+                                                                        <h4 className="text-[12px] leading-tight font-black text-[#0a192f] tracking-tight">{member.name}</h4>
+                                                                        <span className="text-[9px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-0.5">{member.role}</span>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })()
                             ) : (
-                                <div className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest">
-                                    Nenhuma estrutura principal encontrada.
-                                </div>
+                                /* Jurídico tab: tree-based rendering */
+                                roots.length > 0 ? (
+                                    roots.map((root, index) => (
+                                        <div key={root.id} className="relative flex flex-col items-center w-full">
+                                            <OrganogramNode colab={root} context={nodeContext} visitedIds={new Set<string>()} />
+                                            {index < roots.length - 1 && <div className="w-full max-w-4xl h-[2px] bg-gray-200 mt-20"></div>}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest">
+                                        Nenhuma estrutura principal encontrada.
+                                    </div>
+                                )
                             )}
                         </div>
 
