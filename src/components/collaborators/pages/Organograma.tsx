@@ -45,7 +45,9 @@ const OrganogramNode = React.memo(({
     colab,
     context,
     visitedIds,
-    level = 0
+    level = 0,
+    isDense = false,
+    isSuperDense = false
 }: {
     colab: ColaboradorCard,
     context: {
@@ -58,7 +60,9 @@ const OrganogramNode = React.memo(({
         subordinatesMap: Map<string | null, ColaboradorCard[]>,
     },
     visitedIds: Set<string>,
-    level?: number
+    level?: number,
+    isDense?: boolean,
+    isSuperDense?: boolean
 }) => {
     const { activeTab, searchQuery, setSelectedColabForModal, setEditingPosition, setEditingCompetenciasId, setEditingCompetenciasText, subordinatesMap } = context;
     const subordinates = subordinatesMap.get(colab.id) || [];
@@ -111,7 +115,7 @@ const OrganogramNode = React.memo(({
                     <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`relative flex flex-col items-center transition-all duration-300 w-[240px] z-10 group hover:z-50 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
+                        className={`relative flex flex-col items-center transition-all duration-300 ${isSuperDense ? 'w-[170px]' : isDense ? 'w-[210px]' : 'w-[240px]'} z-10 group hover:z-50 ${snapshot.isDraggingOver ? 'scale-105' : ''}`}
                     >
                         <div className={`absolute inset-0 -m-4 rounded-3xl transition-colors z-[-1] ${snapshot.isDraggingOver ? 'bg-[#1e3a8a]/5 border-2 border-dashed border-[#1e3a8a]/30' : 'bg-transparent'}`} />
 
@@ -124,22 +128,22 @@ const OrganogramNode = React.memo(({
                                     className={`flex flex-col items-center cursor-pointer w-full ${dragSnapshot.isDragging ? 'opacity-50 scale-105' : ''}`}
                                     onClick={() => setSelectedColabForModal(colab.fullData)}
                                 >
-                                    <div className="w-24 h-24 rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30">
+                                    <div className={`${isSuperDense ? 'w-16 h-16' : isDense ? 'w-20 h-20' : 'w-24 h-24'} rounded-full bg-white shadow-md border-[3px] border-[#1e3a8a]/10 flex items-center justify-center overflow-hidden flex-shrink-0 transition-all duration-300 group-hover:shadow-xl group-hover:scale-110 group-hover:border-[#1e3a8a]/30`}>
                                         {colab.photo_url ? (
                                             <img src={colab.photo_url} alt={colab.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full bg-blue-50 flex items-center justify-center text-[#1e3a8a]/40">
-                                                <UserIcon className="w-10 h-10" />
+                                                <UserIcon className={isSuperDense ? 'w-6 h-6' : isDense ? 'w-8 h-8' : 'w-10 h-10'} />
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="mt-4 text-center px-2 flex flex-col items-center gap-1.5">
+                                    <div className={`${isSuperDense ? 'mt-2' : 'mt-4'} text-center px-2 flex flex-col items-center gap-1.5`}>
                                         <div>
-                                            <h4 className="text-[13px] leading-tight font-black text-[#0a192f] tracking-tight truncate max-w-[200px]">{colab.name}</h4>
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate max-w-[200px]">{roleStr}</span>
+                                            <h4 className={`${isSuperDense ? 'text-[11px]' : isDense ? 'text-[12px]' : 'text-[13px]'} leading-tight font-black text-[#0a192f] tracking-tight truncate ${isSuperDense ? 'max-w-[140px]' : isDense ? 'max-w-[170px]' : 'max-w-[200px]'}`}>{colab.name}</h4>
+                                            <span className={`${isSuperDense ? 'text-[8px]' : 'text-[10px]'} font-bold uppercase tracking-widest text-[#1e3a8a] block mt-1 truncate ${isSuperDense ? 'max-w-[140px]' : isDense ? 'max-w-[180px]' : 'max-w-[200px]'}`}>{roleStr}</span>
                                         </div>
-                                        {colab.equipe && colab.equipe !== 'Sem Equipe' && colab.equipe !== 'Geral' && (
+                                        {colab.equipe && colab.equipe !== 'Sem Equipe' && colab.equipe !== 'Geral' && !isSuperDense && (
                                             <span className="inline-block px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-[9px] font-black uppercase tracking-wider text-gray-500 shadow-sm truncate max-w-[180px]">
                                                 {colab.equipe}
                                             </span>
@@ -189,7 +193,14 @@ const OrganogramNode = React.memo(({
                                                 transform: group.length > 9 ? 'scale(0.85)' : group.length > 7 ? 'scale(0.9)' : 'scale(1)',
                                                 transformOrigin: 'top center'
                                             }}>
-                                                <OrganogramNode colab={sub} context={context} visitedIds={nextVisited} level={level + 1} />
+                                                <OrganogramNode
+                                                    colab={sub}
+                                                    context={context}
+                                                    visitedIds={nextVisited}
+                                                    level={level + 1}
+                                                    isDense={group.length > 7 && group.length <= 12}
+                                                    isSuperDense={group.length > 12}
+                                                />
                                             </div>
                                         </div>
                                     ))}
@@ -330,6 +341,8 @@ const AdminOrganogramTree = React.memo(({
                                                     colab={colab}
                                                     context={context}
                                                     visitedIds={new Set<string>([diretorFinanceiro.id])}
+                                                    isDense={topLevel.length > 7 && topLevel.length <= 12}
+                                                    isSuperDense={topLevel.length > 12}
                                                 />
                                             </div>
                                         </div>
