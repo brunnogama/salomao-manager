@@ -385,9 +385,8 @@ export function Organograma() {
             const isDiretorFinanceiro = roleStr.toLowerCase().includes('diretor financeiro');
 
             if (activeTab === 'ADMINISTRATIVO') {
-                if (isDiretorFinanceiro) return true;
-                if (isSocio) return hasAdministrativeSubordinates(c.id);
-                return !c.leader_id;
+                // Only Diretor Financeiro is root in the Administrative tree
+                return isDiretorFinanceiro;
             }
 
             // Juridico tab
