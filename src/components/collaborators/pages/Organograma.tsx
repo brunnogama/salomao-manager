@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 // Define the exact hierarchy order for Jurídico
 const JURIDICO_HIERARCHY = [
     'Sócios',
+    'Consultor Jurídico',
+    'Coordenador Jurídico',
     'Advogado Sênior III',
     'Advogado Sênior II',
     'Advogado Sênior I',
@@ -17,7 +19,9 @@ const JURIDICO_HIERARCHY = [
     'Advogado Júnior III',
     'Advogado Júnior II',
     'Advogado Júnior I',
-    'Estagiário'
+    'Estagiário',
+    'Analista Jurídico',
+    'Assistente Jurídico'
 ];
 
 interface ColaboradorCard {
@@ -407,11 +411,18 @@ export function Organograma() {
                 .map(c => {
                     const roleStr = typeof c.roles === 'object' ? (c.roles as any)?.name : (c.role as string);
                     const roleLower = String(roleStr || '').toLowerCase();
-                    const isSocio = roleLower.includes('sócio');
-                    const isJuridico = JURIDICO_HIERARCHY.some(h => h.toLowerCase() === roleLower) ||
+                    const isSocio = roleLower.includes('sócio') || roleLower.includes('socio');
+                    const isJuridico = JURIDICO_HIERARCHY.some(h => roleLower.includes(h.toLowerCase())) ||
                         isSocio ||
                         roleLower.includes('advogado') ||
-                        roleLower.includes('estagiário');
+                        roleLower.includes('estagiário') ||
+                        roleLower.includes('estagiario') ||
+                        roleLower.includes('jurídico') ||
+                        roleLower.includes('juridico');
+
+                    // Specific check for Admin even if name contains 'Juridico'
+                    const explicitlyAdmin = (String(c.equipe || '').toLowerCase().includes('adm') ||
+                        String(c.atuacao || '').toLowerCase().includes('adm'));
 
                     const atuacaoId = String((c as any).atuacao || '');
                     const atuacaoName = atuacoesMap.get(atuacaoId) || atuacaoId || '';
@@ -426,8 +437,8 @@ export function Organograma() {
                         competencias: c.competencias || '',
                         photo_url: c.photo_url || c.foto_url,
                         foto_url: c.foto_url,
-                        isJuridico,
-                        isAdministrativo: !isJuridico || isSocio,
+                        isJuridico: isJuridico && !explicitlyAdmin,
+                        isAdministrativo: !isJuridico || isSocio || explicitlyAdmin,
                         isSocio,
                         fullData: c
                     };
@@ -601,7 +612,7 @@ export function Organograma() {
         subordinatesMap
     }), [activeTab, searchQuery, subordinatesMap]);
 
-    if (colsLoading) {
+    if (colsLoading && data.length === 0) {
         return (
             <div className="flex items-center justify-center h-full min-h-[400px]">
                 <div className="flex flex-col items-center gap-4">
