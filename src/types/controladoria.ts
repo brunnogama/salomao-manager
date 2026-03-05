@@ -199,6 +199,7 @@ export interface Collaborator {
   rateios?: { id: string; name: string };
 
   cadastro_atualizado?: boolean;
+  competencias?: string;
 
   created_at?: string;
   updated_at?: string;

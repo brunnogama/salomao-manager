@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useColaboradores } from '../hooks/useColaboradores';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Network, Search, AlertCircle, Save, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2 } from 'lucide-react';
+import { Network, Search, AlertCircle, Loader2, User as UserIcon, ZoomIn, ZoomOut, Maximize, Minimize, Printer, X, Briefcase, Mail, Phone, Tag, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Define the exact hierarchy order for Jurídico
@@ -33,14 +33,14 @@ interface ColaboradorCard {
 }
 
 export function Organograma() {
-    const { colaboradores, loading: colsLoading, fetchColaboradores } = useColaboradores();
+    const { colaboradores, loading: colsLoading } = useColaboradores();
     const [data, setData] = useState<ColaboradorCard[]>([]);
-    const [savingId, setSavingId] = useState<string | null>(null);
     const [savingCompetenciasId, setSavingCompetenciasId] = useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
     const [selectedColabForModal, setSelectedColabForModal] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'JURIDICO' | 'ADMINISTRATIVO'>('JURIDICO');
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
 
     // Filter and sort collaborators based on Jurídico hierarchy initially
@@ -114,7 +114,6 @@ export function Organograma() {
 
         // Attempt to save to Supabase
         try {
-            setSavingId(draggableId);
 
             const leaderToUpdate = newLeaderId === 'unassigned' ? null : newLeaderId;
 
@@ -153,7 +152,6 @@ export function Organograma() {
             toast.error('Erro ao alterar hierarquia.');
             // Revert is automatic since we didn't update state if failed
         } finally {
-            setSavingId(null);
         }
     };
 
@@ -377,8 +375,8 @@ export function Organograma() {
     return (
         <div className={`${isMaximized ? 'fixed inset-0 z-[100] bg-white w-full h-full p-6 space-y-6 overflow-auto' : 'p-8 max-w-[1600px] mx-auto space-y-8'} animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen print:p-0 print:bg-white`}>
 
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
+            {/* Header Section (Padrão Recrutamento) */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-transparent rounded-bl-full opacity-50 pointer-events-none" />
 
                 <div className="relative z-10">
@@ -393,93 +391,85 @@ export function Organograma() {
                     </p>
                 </div>
 
-                {/* Top Controls: Search, Print, Tabs */}
-                <div className="flex flex-col md:flex-row items-center justify-end gap-4 relative z-10 w-full md:w-auto mt-4 md:mt-0 print:hidden">
-                    {/* Search */}
-                    <div className="relative w-full md:w-64">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Buscar nome ou área..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] sm:text-sm transition-all shadow-sm"
-                        />
-                    </div>
-
-                    {/* Print Button */}
-                    <button
-                        onClick={() => window.print()}
-                        className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-[#1e3a8a] hover:bg-blue-50 hover:border-blue-200 flex items-center justify-center transition-all shadow-sm"
-                        title="Imprimir / PDF"
-                    >
-                        <Printer className="w-5 h-5" />
-                    </button>
-
-                    {/* Maximize Button */}
-                    <button
-                        onClick={() => setIsMaximized(!isMaximized)}
-                        className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-[#1e3a8a] hover:bg-blue-50 hover:border-blue-200 flex items-center justify-center transition-all shadow-sm hidden md:flex"
-                        title={isMaximized ? "Minimizar" : "Maximizar"}
-                    >
-                        {isMaximized ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                    </button>
-
-                    <div className="w-px h-8 bg-gray-200 hidden md:block mx-1"></div>
-
-                    {/* Tabs */}
-                    <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner w-full md:w-auto">
+                <div className="flex items-center gap-3 shrink-0 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto justify-end mt-2 md:mt-0 custom-scrollbar">
+                    {/* Tabs (Padrão Recrutamento) */}
+                    <div className="flex items-center bg-gray-100/80 p-1 rounded-xl shrink-0">
                         <button
                             onClick={() => setActiveTab('JURIDICO')}
-                            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'JURIDICO' ? 'bg-white text-[#1e3a8a] shadow-sm scale-100' : 'text-gray-500 hover:text-gray-700 hover:bg-white/50 scale-95'}`}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'JURIDICO' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Jurídico
                         </button>
                         <button
                             onClick={() => setActiveTab('ADMINISTRATIVO')}
-                            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'ADMINISTRATIVO' ? 'bg-white text-[#1e3a8a] shadow-sm scale-100' : 'text-gray-500 hover:text-gray-700 hover:bg-white/50 scale-95'}`}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'ADMINISTRATIVO' ? 'bg-white text-[#1e3a8a] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Administrativo
                         </button>
                     </div>
+
+                    <div className="flex items-center gap-2 border-l border-gray-100 pl-4 ml-2">
+                        {/* Search Ícone Expansível */}
+                        <div className={`flex items-center bg-gray-50 border border-gray-200 rounded-xl transition-all relative overflow-hidden ${isSearchExpanded ? 'w-full md:w-64 px-4 py-2 focus-within:ring-2 focus-within:ring-[#1e3a8a]/20 focus-within:border-[#1e3a8a]' : 'w-10 h-10 justify-center cursor-pointer hover:bg-gray-100'}`}
+                            onClick={() => !isSearchExpanded && setIsSearchExpanded(true)}>
+                            <Search className={`text-gray-400 shrink-0 ${isSearchExpanded ? 'h-4 w-4 mr-3' : 'h-5 w-5'}`} />
+                            {isSearchExpanded && (
+                                <>
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar nome ou área..."
+                                        className="bg-transparent border-none text-sm w-full outline-none text-gray-700 font-medium placeholder:text-gray-400 pr-8"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        autoFocus
+                                        onBlur={(e) => {
+                                            if (!e.target.value) setIsSearchExpanded(false);
+                                        }}
+                                    />
+                                    {(searchQuery || isSearchExpanded) && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSearchQuery('');
+                                                setIsSearchExpanded(false);
+                                            }}
+                                            className="absolute right-3 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+                                            title="Fechar busca"
+                                        >
+                                            <X className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Print Button */}
+                        <button
+                            onClick={() => window.print()}
+                            className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-[#1e3a8a] hover:bg-blue-50 transition-all shadow-sm shrink-0"
+                            title="Imprimir / PDF"
+                        >
+                            <Printer className="w-5 h-5" />
+                        </button>
+
+                        {/* Maximize Button */}
+                        <button
+                            onClick={() => setIsMaximized(!isMaximized)}
+                            className="hidden md:flex items-center justify-center w-10 h-10 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-[#1e3a8a] hover:bg-blue-50 transition-all shadow-sm shrink-0"
+                            title={isMaximized ? "Minimizar" : "Maximizar"}
+                        >
+                            {isMaximized ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                        </button>
+                    </div>
                 </div>
 
-                {/* Zoom Controls */}
-                <div className="flex items-center gap-2 mt-4 md:mt-0 relative z-10 bg-gray-50 p-2 rounded-2xl border border-gray-100 shadow-sm">
-                    <button
-                        onClick={() => setZoomLevel(prev => Math.max(0.4, prev - 0.1))}
-                        className="p-2 hover:bg-white rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a] shadow-sm hover:shadow"
-                        title="Reduzir Zoom"
-                    >
-                        <ZoomOut className="w-5 h-5" />
-                    </button>
-                    <span className="text-xs font-black text-[#0a192f] min-w-[3rem] text-center">
-                        {Math.round(zoomLevel * 100)}%
-                    </span>
-                    <button
-                        onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
-                        className="p-2 hover:bg-white rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a] shadow-sm hover:shadow"
-                        title="Aumentar Zoom"
-                    >
-                        <ZoomIn className="w-5 h-5" />
-                    </button>
-                    <div className="w-px h-6 bg-gray-200 mx-1"></div>
-                    <button
-                        onClick={() => setZoomLevel(1)}
-                        className="p-2 hover:bg-white rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a] shadow-sm hover:shadow"
-                        title="Tamanho Original"
-                    >
-                        <span className="text-[10px] font-bold px-1 uppercase tracking-wider">100%</span>
-                    </button>
-                </div>
+
             </div>
 
-            <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 flex gap-3 text-blue-800 text-sm font-medium">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <div>
-                    <strong className="font-bold text-[#1e3a8a]">Dica:</strong> Arraste um colaborador para cima de outro para alterar sua subordinação (Líder). As alterações refletem imediatamente no cadastro oficial do colaborador. As competências digitadas são salvas automaticamente após você terminar de digitar.
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 mb-2">
+                <div className="text-[11px] font-bold text-gray-400 bg-white border border-gray-100 px-4 py-2 rounded-xl shadow-sm inline-flex items-center gap-2 max-w-fit">
+                    <AlertCircle className="w-4 h-4 text-[#1e3a8a]" />
+                    Arraste um colaborador para alterar sua subordinação. Alterações são imediatas.
                 </div>
             </div>
 
@@ -689,6 +679,35 @@ export function Organograma() {
                         </div>
                     </div>
                 )}
+
+            {/* Hovering Zoom Controls Panel */}
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-white p-2 rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-100 flex items-center gap-2 animate-in slide-in-from-bottom-5">
+                <button
+                    onClick={() => setZoomLevel(prev => Math.max(0.4, prev - 0.1))}
+                    className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
+                    title="Reduzir Zoom"
+                >
+                    <ZoomOut className="w-5 h-5" />
+                </button>
+                <span className="text-[11px] font-black text-[#0a192f] min-w-[3rem] text-center w-12">
+                    {Math.round(zoomLevel * 100)}%
+                </span>
+                <button
+                    onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
+                    className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
+                    title="Aumentar Zoom"
+                >
+                    <ZoomIn className="w-5 h-5" />
+                </button>
+                <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                <button
+                    onClick={() => setZoomLevel(1)}
+                    className="p-2 hover:bg-blue-50 rounded-xl transition-colors text-gray-500 hover:text-[#1e3a8a]"
+                    title="Restaurar tamanho (100%)"
+                >
+                    <Network className="w-4 h-4 mx-auto mb-0.5" />
+                </button>
+            </div>
         </div>
     );
 }
