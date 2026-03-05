@@ -27,6 +27,7 @@ interface SearchableSelectProps {
   disableFormatting?: boolean;
   dropdownWidth?: string | number; // Largura personalizada do dropdown
   align?: 'left' | 'right'; // Alinhamento do dropdown
+  icon?: React.ReactNode; // Ícone opcional no trigger
 }
 
 export function SearchableSelect({
@@ -43,7 +44,8 @@ export function SearchableSelect({
   uppercase = false,
   disableFormatting = false,
   dropdownWidth,
-  align = 'left'
+  align = 'left',
+  icon
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -255,9 +257,12 @@ export function SearchableSelect({
           ${isOpen ? 'border-[#1e3a8a] bg-white ring-2 ring-[#1e3a8a]/10' : 'border-gray-200'}
         `}
       >
-        <span className={`text-sm font-medium truncate ${value ? "text-gray-900" : "text-gray-400"}`}>
-          {selectedOption ? formatText(getName(selectedOption)) : placeholder}
-        </span>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {icon && <div className="flex-shrink-0">{icon}</div>}
+          <span className={`text-sm font-medium truncate ${value ? "text-gray-900" : "text-gray-400"}`}>
+            {selectedOption ? formatText(getName(selectedOption)) : placeholder}
+          </span>
+        </div>
 
         <div className="flex items-center gap-1">
           {value && !disabled && (

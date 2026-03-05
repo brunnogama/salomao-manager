@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react'
-import { Briefcase, Calendar, Clock } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { Briefcase, Calendar, Clock, Crown } from 'lucide-react'
 import { Collaborator } from '../../../types/controladoria'
 import { SearchableSelect } from '../../crm/SearchableSelect'
 import { ManagedSelect } from '../../crm/ManagedSelect'
 import { differenceInMonths, differenceInYears } from 'date-fns'
 import { TransporteSection } from './TransporteSection'
+import { supabase } from '../../../lib/supabase'
 
 interface DadosCorporativosSectionProps {
   formData: Partial<Collaborator>
@@ -20,6 +21,34 @@ export function DadosCorporativosSection({
   isViewMode = false
 }: DadosCorporativosSectionProps) {
   const [activeTab, setActiveTab] = useState<'contratacao' | 'desligamento'>('contratacao')
+
+  const [roleName, setRoleName] = useState<string>('')
+
+  // Fetch role name when role ID changes
+  useEffect(() => {
+    async function fetchRoleName() {
+      if (!formData.role) {
+        setRoleName('')
+        return
+      }
+      const { data, error } = await supabase
+        .from('roles')
+        .select('name')
+        .eq('id', formData.role)
+        .single()
+
+      if (data && !error) {
+        setRoleName(data.name)
+      } else {
+        setRoleName('')
+      }
+    }
+    fetchRoleName()
+  }, [formData.role])
+
+  const isSocio = useMemo(() => {
+    return roleName.toLowerCase().includes('sócio') || roleName.toLowerCase().includes('socio')
+  }, [roleName])
 
   // Calculate duration if dates are available
   const duration = useMemo(() => {
@@ -250,20 +279,38 @@ export function DadosCorporativosSection({
                 </div>
               )}
 
-              <SearchableSelect
-                label="Tipo da Contratação"
-                value={formData.contract_type || ''}
-                onChange={(v) => setFormData({ ...formData, contract_type: v })}
-                options={[
-                  { id: 'ADVOGADO', name: 'ADVOGADO' },
-                  { id: 'CLT', name: 'CLT' },
-                  { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' },
-                  { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' },
-                  { id: 'PJ', name: 'PJ' }
-                ]}
-                uppercase={false}
-                disabled={isViewMode}
-              />
+              {isSocio ? (
+                <div className="animate-in fade-in slide-in-from-left-2 duration-300">
+                  <SearchableSelect
+                    label="Tipo de Sócio"
+                    value={formData.contract_type || ''}
+                    onChange={(v) => setFormData({ ...formData, contract_type: v })}
+                    options={[
+                      { id: 'Sócio de Serviço', name: 'Sócio de Serviço' },
+                      { id: 'Sócio de Capital', name: 'Sócio de Capital' },
+                      { id: 'Sócio Administrador', name: 'Sócio Administrador' }
+                    ]}
+                    uppercase={false}
+                    disabled={isViewMode}
+                    icon={<Crown className="w-3 h-3 text-amber-500" />}
+                  />
+                </div>
+              ) : (
+                <SearchableSelect
+                  label="Tipo da Contratação"
+                  value={formData.contract_type || ''}
+                  onChange={(v) => setFormData({ ...formData, contract_type: v })}
+                  options={[
+                    { id: 'ADVOGADO', name: 'ADVOGADO' },
+                    { id: 'CLT', name: 'CLT' },
+                    { id: 'ESTAGIÁRIO', name: 'ESTAGIÁRIO' },
+                    { id: 'JOVEM APRENDIZ', name: 'JOVEM APRENDIZ' },
+                    { id: 'PJ', name: 'PJ' }
+                  ]}
+                  uppercase={false}
+                  disabled={isViewMode}
+                />
+              )}
 
               {/* Row 4 */}
               <ManagedSelect
